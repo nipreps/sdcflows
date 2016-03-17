@@ -15,7 +15,7 @@ from multiprocessing import cpu_count
 
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
-from fmriprep.workflows import fmri_preprocess
+from workflows import fmri_preprocess
 from mriqc.utils import gather_bids_data
 
 from nipype import config as ncfg
