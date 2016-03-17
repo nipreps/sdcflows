@@ -98,7 +98,7 @@ def main():
     if not any([len(subjects[k]) > 0 for k in subjects.keys()]):
         raise RuntimeError('No scans found in %s' % settings['bids_root'])
 
-    fmriwf = fmri_preprocess(subjects=subjects, settings=settings)
+    fmriwf = fmri_preprocess(subject_list=subjects, settings=settings)
     fmriwf.run(**plugin_settings)
 
 
