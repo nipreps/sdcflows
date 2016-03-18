@@ -28,15 +28,15 @@ https://github.com/poldracklab/preprocessing-workflow
 Dependencies
 ============
 
-#. `FSL <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/>`_
-#. `ANTs <http://stnava.github.io/ANTs/>`_
-#. `Nipype <http://nipy.org/nipype/>`_
-#. `NumPy <http://www.numpy.org/>`_
-#. `Matplotlib <http://matplotlib.org/>`_
-#. `PyYAML <http://pyyaml.org/>`_
-#. `MRIQC <https://github.com/poldracklab/mriqc>`_
-#. `NiBabel <http://nipy.org/nibabel/>`_
-#. `PyLab <http://scipy.github.io/old-wiki/pages/PyLab>`_
+- [FSL](http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
+- [ANTs](http://stnava.github.io/ANTs/)
+- [Nipype](http://nipy.org/nipype/)
+- [NumPy](http://www.numpy.org/)
+- [Matplotlib](http://matplotlib.org/)
+- [PyYAML](http://pyyaml.org/)
+- [MRIQC](https://github.com/poldracklab/mriqc)
+- [NiBabel](http://nipy.org/nibabel/)
+- [PyLab](http://scipy.github.io/old-wiki/pages/PyLab)
 
 
 All requirements are listed in ``requirements.txt`` file.
