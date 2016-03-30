@@ -15,6 +15,7 @@ dependencies:
     - sudo ln -sf /usr/lib/ants/N4BiasFieldCorrection /usr/local/bin/
     - echo "source /etc/fsl/fsl.sh" >> $HOME/.profile
     - echo "source /etc/afni/afni.sh" >> $HOME/.profile
+    - echo "PATH=$PATH:/usr/lib/ants/" >> $HOME/.profile
     - pip install --upgrade pip
     - pip install numpy
     - pip install sphinx sphinx-autobuild
