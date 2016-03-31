@@ -1,0 +1,42 @@
+dependencies:
+  cache_directories:
+    - "~/examples/"
+    - "~/.apt-cache"
+    - "~/workdir"
+  pre:
+    # Let CircleCI cache the apt archive
+    - sudo rm -rf /var/cache/apt/archives && sudo ln -s ~/.apt-cache /var/cache/apt/archives && mkdir -p ~/.apt-cache/partial
+    - wget -O- http://neuro.debian.net/lists/precise.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+    - sudo apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu:80 0xA5D32F012649A5A9
+    - sudo apt-get update
+    - bash ./circle_setup.sh
+  override:
+    - sudo apt-get install -y fsl-core fsl-atlases fsl-mni152-templates afni ants
+    - sudo ln -sf /usr/lib/ants/N4BiasFieldCorrection /usr/local/bin/
+    - echo "source /etc/fsl/fsl.sh" >> $HOME/.profile
+    - echo "source /etc/afni/afni.sh" >> $HOME/.profile
+    - echo "export PATH=$PATH:/usr/lib/ants/:/usr/lib/fsl/5.0/" >> $HOME/.profile
+    - echo "export ANTSPATH=/usr/lib/ants/" >> $HOME/.profile
+    - pip install --upgrade pip
+    - pip install numpy
+    - pip install sphinx sphinx-autobuild
+    - yes s | pip install -e git+https://github.com/oesteban/nipype@exp/mriqc#egg=nipype
+    - pip install -r requirements.txt
+    - pip install -e .
+machine:
+  environment:
+    FSLOUTPUTTYPE: NIFTI_GZ
+test:
+  override:
+    # Test mriqcp
+    # - sphinx-build -b html docs/source ~/outdir/doc
+    - source $HOME/.profile; fmriprep -i ~/examples/ds003_sub-01/ -o ~/outdir/single-subject -w ~/workdir/single-subject
+general:
+  artifacts:
+    - "~/outdir/doc"
+    - "~/outdir/single-subject"
+    - "~/workdir/single-subject"
+    - "~/outdir/multiple-subject-func"
+    - "~/workdir/multiple-subject-func"
+    - "~/outdir/multiple-subject-anat"
+    - "~/workdir/multiple-subject-anat"
