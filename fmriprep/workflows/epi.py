@@ -121,9 +121,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (fugue_sbref, outputnode, [('unwarped_file', 'sbref_unwarped')]),
         (fugue_dilate, outputnode, [('fmap_out_file', 'sbref_fmap')]),
         (flt_fmap_mag_sbref, outputnode, [('out_matrix_file', 'mag2sbref_matrix')]),
-        (strip_corrected_sbref, outputnode, [('out_file', 'sbref_brain_corrected')]),
-        (sbref_bet, flt_fmap_mag_brain_sbref_brain, [('out_file', 'sbref_brain')]),
-
+        (strip_corrected_sbref, outputnode, [('out_file', 'sbref_brain_corrected')])
     ])
     return workflow
 
