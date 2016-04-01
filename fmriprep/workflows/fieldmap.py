@@ -30,7 +30,7 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         fields=['fmap_scaled', 'fmap_mask', 'mag_brain', 'out_topup', 'fmap_unmasked']), name='outputnode')
 
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name="Merge_Fieldmaps")
-    motion_correct_SE_maps = pe.Node(fsl.MCFLIRT(), name="Motion_Correction")
+    hmc_se_pair = pe.Node(fsl.MCFLIRT(), name="Motion_Correction")
 
     # Run topup to estimate filed distortions
     topup = pe.Node(fsl.TOPUP(), name="TopUp")
@@ -52,21 +52,21 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         BinaryMaths(operation='mul'), name="Fmap_Multiplied_by_Mask")
 
     # Skull strip SE Fieldmap magnitude image to get reference brain and mask
-    fmap_mag_BET = pe.Node(fsl.BET(mask=True, robust=True), name="Fmap_Mag_BET")
+    mag_bet = pe.Node(fsl.BET(mask=True, robust=True), name="Fmap_Mag_BET")
     # Might want to turn off bias reduction if it is being done in a separate node!
-    #fmap_mag_BET.inputs.reduce_bias = True
+    #mag_bet.inputs.reduce_bias = True
     # fugue --loadfmap=${fmaprads} --mask=${vout}_fieldmaprads_mask --unmaskfmap --savefmap=${vout}_fieldmaprads_unmasked --unwarpdir=${fdir}   # the direction here should take into account the initial affine (it needs to be the direction in the EPI)
     fugue_unmask = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
                                  save_unmasked_fmap=True), name="Fmap_Unmasking")
 
     workflow.connect([
         (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
-        (fslmerge, motion_correct_SE_maps, [('merged_file', 'in_file')]),
-        (inputnode, motion_correct_SE_maps, [('sbref', 'ref_file')]),
+        (fslmerge, hmc_se_pair, [('merged_file', 'in_file')]),
+        (inputnode, hmc_se_pair, [('sbref', 'ref_file')]),
         # (create_parameters_node, topup, [('parameters_file', 'encoding_file')]),
-        (motion_correct_SE_maps, topup, [('out_file', 'in_file')]),
+        (hmc_se_pair, topup, [('out_file', 'in_file')]),
         (topup, fmap_scale, [('out_field', 'in_file')]),
-        (topup, fmap_mag_BET, [('out_corrected', 'in_file')]),
+        (topup, mag_bet, [('out_corrected', 'in_file')]),
         (topup, fmapmagbrain_abs, [('out_corrected', 'in_file')]),
         (fmapmagbrain_abs, fmapmagbrain_bin, [('out_file', 'in_file')]),
         (fmap_scale, fmap_abs, [('out_file', 'in_file')]),
@@ -76,8 +76,8 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         (fmap_scale, fugue_unmask, [('out_file', 'fmap_in_file')]),
         (fmap_mul, fugue_unmask, [('out_file', 'mask_file')]),
         (fmap_scale, outputnode, [('out_file', 'fmap_scaled')]),
-        (fmap_mag_BET, outputnode, [('out_file', 'mag_brain'),
-                                    ('mask_file', 'fmap_mask')]),
+        (mag_bet, outputnode, [('out_file', 'mag_brain'),
+                               ('mask_file', 'fmap_mask')]),
         (topup, outputnode, [('out_corrected', 'out_topup')]),
         (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')])
     ])
