@@ -49,18 +49,27 @@ def collect_bids_data(dataset)
                     modality = filename.split('_')[-1]
                     if 'bold.nii' in modality:
                         imaging_data[subject][session]['epi'] = scan_file
-                    if 'bold.json' in modality:
-                        imaging_data[subject][session]['epi_meta'] = scan_file
+                    elif 'bold.json' in modality:
+                        fp = open(scan_file)
+                        scan_file_json = json.load(fp)
+                        fp.close()
+                        imaging_data[subject][session]['epi_meta'] = scan_file_json
                     elif 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'] = scan_file
                     elif 'sbref_json' in modality:
-                        imaging_data[subject][session]['sbref_meta'] = scan_file
+                        fp = open(scan_file)
+                        scan_file_json = json.load(fp)
+                        fp.close()
+                        imaging_data[subject][session]['sbref_meta'] = scan_file_json
                     elif 'T1W' in modality:
                         imaging_data[subject][session]['t1'] = scan_file
                     elif 'epi.nii' in modality:
                         imaging_data[subject][session]['fieldmaps'].append(scan_file)
                     elif 'epi.json' in modality:
-                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
+                        fp = open(scan_file)
+                        scan_file_json = json.load(fp)
+                        fp.close()
+                        imaging_data[subject][session]['fieldmaps'].append(scan_file_json)
                     else:
                         pass
     return imaging_data
