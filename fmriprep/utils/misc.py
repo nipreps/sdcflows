@@ -8,7 +8,7 @@ def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
             if x.startswith(prefix)]
 
-def collect_bids_data(dataset):
+def collect_bids_data(dataset, include_types=None):
     imaging_data = {}
     if include_types is None:
         # include all scan types by default
@@ -40,9 +40,6 @@ def collect_bids_data(dataset):
                 scan_files = glob(os.path.join(
                     dataset, session, scan_type,
                     '*'))
-
-                if len(scan_files) == 0:
-                    _no_files_warning(session)
 
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
@@ -104,9 +101,6 @@ def collect_sub_ses_data(dataset, subject, session):
                 scan_files = glob(os.path.join(
                     dataset, session, scan_type,
                     '*'))
-
-                if len(scan_files) == 0:
-                    _no_files_warning(session)
 
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
