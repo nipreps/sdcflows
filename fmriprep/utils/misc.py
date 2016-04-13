@@ -140,4 +140,4 @@ def collect_sub_ses_data(dataset, subject, session):
 
 
 if __name__ == '__main__':
-    collect_bids_data()
+    pass
