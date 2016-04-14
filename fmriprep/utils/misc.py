@@ -1,4 +1,5 @@
 from glob import glob
+import json
 import os
 
 preproc_inputs = {'fieldmaps': [], 'fieldmaps_meta': [], 'epi': '', 'epi_meta': '', 'sbref': '',
