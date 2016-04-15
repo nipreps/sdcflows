@@ -1,4 +1,5 @@
 from glob import glob
+import json
 import os
 
 preproc_inputs = {'fieldmaps': [], 'fieldmaps_meta': [], 'epi': '', 'epi_meta': '', 'sbref': '',
@@ -8,7 +9,7 @@ def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
             if x.startswith(prefix)]
 
-def collect_bids_data(dataset)
+def collect_bids_data(dataset, include_types=None):
     imaging_data = {}
     if include_types is None:
         # include all scan types by default
@@ -41,9 +42,6 @@ def collect_bids_data(dataset)
                     dataset, session, scan_type,
                     '*'))
 
-                if len(scan_files) == 0:
-                    _no_files_warning(session)
-
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
                     modality = filename.split('_')[-1]
@@ -56,7 +54,7 @@ def collect_bids_data(dataset)
                         imaging_data[subject][session]['epi_meta'] = scan_file_json
                     elif 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'] = scan_file
-                    elif 'sbref_json' in modality:
+                    elif 'sbref.json' in modality:
                         fp = open(scan_file)
                         scan_file_json = json.load(fp)
                         fp.close()
@@ -105,9 +103,6 @@ def collect_sub_ses_data(dataset, subject, session):
                     dataset, session, scan_type,
                     '*'))
 
-                if len(scan_files) == 0:
-                    _no_files_warning(session)
-
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
                     modality = filename.split('_')[-1]
@@ -139,3 +134,5 @@ def collect_sub_ses_data(dataset, subject, session):
     return imaging_data
 
 
+if __name__ == '__main__':
+    pass
