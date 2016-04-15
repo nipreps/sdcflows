@@ -54,7 +54,7 @@ def collect_bids_data(dataset, include_types=None):
                         imaging_data[subject][session]['epi_meta'] = scan_file_json
                     elif 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'] = scan_file
-                    elif 'sbref_json' in modality:
+                    elif 'sbref.json' in modality:
                         fp = open(scan_file)
                         scan_file_json = json.load(fp)
                         fp.close()
