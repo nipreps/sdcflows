@@ -11,15 +11,15 @@ fMRI preprocessing workflow
 """
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
+from multiprocessing import cpu_count
 import os
 import os.path as op
-from multiprocessing import cpu_count
 
-from mriqc.utils import gather_bids_data
 from nipype import config as ncfg
 
 from fmriprep.workflows import fmri_preprocess
 from fmriprep.workflows.anatomical import t1w_preprocessing
+from fmriprep.utils.misc import collect_bids_data
 
 
 __author__ = "Oscar Esteban"
@@ -95,16 +95,13 @@ def main():
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
-    subjects = gather_bids_data(settings['bids_root'])
+    subjects = collect_bids_data(settings['bids_root'])
 
     if not any([len(subjects[k]) > 0 for k in subjects.keys()]):
         raise RuntimeError('No scans found in %s' % settings['bids_root'])
 
-    #fmriwf = fmri_preprocess(subject_list=subjects, settings=settings)
-    #fmriwf.run(**plugin_settings)
-    t1w_preproc = t1w_preprocessing(settings=settings)
-    t1w_preproc.inputs.inputnode.t1 = subjects['anat'][0][-1]
-    t1w_preproc.run(**plugin_settings)
+    fmriwf = fmri_preprocess(subject_list=subjects, settings=settings)
+    fmriwf.run(**plugin_settings)
 
 
 if __name__ == '__main__':
