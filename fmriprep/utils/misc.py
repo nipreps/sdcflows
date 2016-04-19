@@ -99,30 +99,22 @@ def collect_sub_ses_data(dataset, subject, session):
                     filename = scan_file.split('/')[-1]
                     modality = filename.split('_')[-1]
                     if 'bold.nii' in modality:
-                        imaging_data['epi'] = scan_file
+                        imaging_data[subject][session]['epi'] = scan_file
                     elif 'bold.json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
-                        imaging_data['epi_meta'] = scan_file_json
+                        imaging_data[subject][session]['epi_meta'] = scan_file
                     elif 'sbref.nii' in modality:
-                        imaging_data['sbref'] = scan_file
-                    elif 'sbref_json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
-                        imaging_data['sbref_meta'] = scan_file_json
-                    elif 'T1W' in modality:
-                        imaging_data['t1'] = scan_file
+                        imaging_data[subject][session]['sbref'] = scan_file
+                    elif 'sbref.json' in modality:
+                        imaging_data[subject][session]['sbref_meta'] = scan_file
+                    elif 'T1w.nii' in modality:
+                        imaging_data[subject][session]['t1'] = scan_file
                     elif 'epi.nii' in modality:
-                        imaging_data['fieldmaps'].append(scan_file)
+                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
                     elif 'epi.json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
-                        imaging_data['fieldmaps'].append(scan_file_json)
+                        imaging_data[subject][session]['fieldmaps_meta'].append(scan_file)
                     else:
                         pass
+
     return imaging_data
 
 
