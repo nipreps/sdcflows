@@ -48,17 +48,18 @@ def collect_bids_data(dataset, include_types=None):
                     if 'bold.nii' in modality:
                         imaging_data[subject][session]['epi'] = scan_file
                     elif 'bold.json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
-                        imaging_data[subject][session]['epi_meta'] = scan_file_json
+                        #fp = open(scan_file)
+                        #scan_file_json = json.load(fp)
+                        #fp.close()
+                        #imaging_data[subject][session]['epi_meta'] = scan_file_json
+                        imaging_data[subject][session]['epi_meta'] = scan_file
                     elif 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'] = scan_file
                     elif 'sbref.json' in modality:
                         fp = open(scan_file)
                         scan_file_json = json.load(fp)
                         fp.close()
-                        imaging_data[subject][session]['sbref_meta'] = scan_file_json
+                        imaging_data[subject][session]['sbref_meta'] = scan_file
                     elif 'T1w.nii' in modality:
                         imaging_data[subject][session]['t1'] = scan_file
                     elif 'epi.nii' in modality:
@@ -67,7 +68,7 @@ def collect_bids_data(dataset, include_types=None):
                         fp = open(scan_file)
                         scan_file_json = json.load(fp)
                         fp.close()
-                        imaging_data[subject][session]['fieldmaps'].append(scan_file_json)
+                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
                     else:
                         pass
     return imaging_data
