@@ -17,7 +17,7 @@ import os.path as op
 
 from nipype import config as ncfg
 
-from fmriprep.workflows import fmri_preprocess
+from fmriprep.workflows import fmri_preprocess_multiple
 from fmriprep.workflows.anatomical import t1w_preprocessing
 from fmriprep.utils.misc import collect_bids_data
 
@@ -100,8 +100,8 @@ def main():
     if not any([len(subjects[k]) > 0 for k in subjects.keys()]):
         raise RuntimeError('No scans found in %s' % settings['bids_root'])
 
-    fmriwf = fmri_preprocess(subject_list=subjects, settings=settings)
-    fmriwf.run(**plugin_settings)
+    fmriwf = fmri_preprocess_multiple(subjects, plugin_settings, settings=settings)
+    #fmriwf.run(**plugin_settings)
 
 
 if __name__ == '__main__':
