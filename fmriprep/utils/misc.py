@@ -28,7 +28,7 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-', scan_ses
             imaging_data[subject] = {}
         subj_dir = os.path.join(dataset, subject)
 
-        sessions = _walk_dir_for_prefix(subj_dir, scan_ses)
+        sessions = _walk_dir_for_prefix(subj_dir, scan_session)
 
         for scan_type in include_types:
             # seems easier to consider the case of multi-session vs.
