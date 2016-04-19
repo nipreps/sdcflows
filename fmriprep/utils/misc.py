@@ -1,4 +1,5 @@
 from glob import glob
+import copy
 import json
 import os
 
@@ -37,7 +38,7 @@ def collect_bids_data(dataset, include_types=None):
 
             for session in subject_sessions:
                 if session not in imaging_data[subject]:
-                    imaging_data[subject][session] = preproc_inputs.copy()
+                    imaging_data[subject][session] = copy.deepcopy(preproc_inputs)
                 scan_files = glob(os.path.join(
                     dataset, session, scan_type,
                     '*'))
@@ -48,27 +49,17 @@ def collect_bids_data(dataset, include_types=None):
                     if 'bold.nii' in modality:
                         imaging_data[subject][session]['epi'] = scan_file
                     elif 'bold.json' in modality:
-                        #fp = open(scan_file)
-                        #scan_file_json = json.load(fp)
-                        #fp.close()
-                        #imaging_data[subject][session]['epi_meta'] = scan_file_json
                         imaging_data[subject][session]['epi_meta'] = scan_file
                     elif 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'] = scan_file
                     elif 'sbref.json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
                         imaging_data[subject][session]['sbref_meta'] = scan_file
                     elif 'T1w.nii' in modality:
                         imaging_data[subject][session]['t1'] = scan_file
                     elif 'epi.nii' in modality:
                         imaging_data[subject][session]['fieldmaps'].append(scan_file)
                     elif 'epi.json' in modality:
-                        fp = open(scan_file)
-                        scan_file_json = json.load(fp)
-                        fp.close()
-                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
+                        imaging_data[subject][session]['fieldmaps_meta'].append(scan_file)
                     else:
                         pass
     return imaging_data
