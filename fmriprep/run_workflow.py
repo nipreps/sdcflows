@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-04-20 14:36:38
+# @Last Modified time: 2016-04-20 14:46:04
 
 """
 fMRI preprocessing workflow
@@ -96,19 +96,26 @@ def main():
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
-    imaging_data = get_subject(opts.subject_id)
-    workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
+    workflow = fmri_preprocess_single(settings=settings)
     workflow.base_dir = settings['work_dir']
+
+    imaging_data = get_subject(opts.subject_id)
+
+    # Set inputnode of the full-workflow
+    for key in imaging_data.keys():
+        setattr(workflow.inputs, 'inputnode.%s' % key, imaging_data[key])
+
     workflow.run(**plugin_settings)
 
-def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
-    for subject in subject_list:
-        for session in subject_list[subject]:
-            imaging_data = subject_list[subject][session]
-            workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
-            workflow.base_dir = settings['work_dir']
-            workflow.run(**plugin_settings)
-            return
+# # This might be usefull in some future, but in principle we want single-subject runs.
+# def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
+#     for subject in subject_list:
+#         for session in subject_list[subject]:
+#             imaging_data = subject_list[subject][session]
+#             workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
+#             workflow.base_dir = settings['work_dir']
+#             workflow.run(**plugin_settings)
+#             return
 
 
 if __name__ == '__main__':
