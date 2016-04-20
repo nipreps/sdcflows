@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-04-20 14:46:04
+# @Last Modified time: 2016-04-20 15:05:18
 
 """
 fMRI preprocessing workflow
@@ -18,7 +18,7 @@ import os.path as op
 from nipype import config as ncfg
 
 from .workflows import fmri_preprocess_single
-from .utils.misc import collect_bids_data
+from .utils.misc import get_subject
 
 from fmriprep import __version__
 
@@ -99,11 +99,13 @@ def main():
     workflow = fmri_preprocess_single(settings=settings)
     workflow.base_dir = settings['work_dir']
 
-    imaging_data = get_subject(opts.subject_id)
+    imaging_data = get_subject(opts.bids_root, opts.subject_id)
 
     # Set inputnode of the full-workflow
     for key in imaging_data.keys():
-        setattr(workflow.inputs, 'inputnode.%s' % key, imaging_data[key])
+        setattr(workflow.inputs.inputnode, key, imaging_data[key])
+
+    print workflow.inputs.inputnode
 
     workflow.run(**plugin_settings)
 
