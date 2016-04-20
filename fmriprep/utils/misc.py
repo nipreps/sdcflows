@@ -10,8 +10,23 @@ def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
             if x.startswith(prefix)]
 
-# if no scan_subject or scan_session are defined return all bids data for a 
-# given bids directory. Otherwise just the data for a given subject or scan 
+def get_subject(subject_id, session_id=None, run_id=None, include_types=None):
+    """
+    Returns the imaging_data structure for the subject subject_id.
+    If session is None, then the BIDS structure is not multisession.
+    If run_id is None, it is assumed that the session does not have several runs.
+    """
+    imaging_data = {}
+    if include_types is None:
+        # include all scan types by default
+        include_types = ['func', 'anat', 'fmap']  # Please notice that dwi is not here
+
+    # Fill in the code here
+
+    return imaging_data
+
+# if no scan_subject or scan_session are defined return all bids data for a
+# given bids directory. Otherwise just the data for a given subject or scan
 # can be returned
 def collect_bids_data(dataset, include_types=None, scan_subject='sub-', scan_session='ses-'):
     imaging_data = {}

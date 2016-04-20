@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-03-10 12:51:17
+# @Last Modified time: 2016-04-20 14:36:38
 
 """
 fMRI preprocessing workflow
@@ -17,20 +17,10 @@ import os.path as op
 
 from nipype import config as ncfg
 
-from fmriprep.workflows import fmri_preprocess_multiple
-from fmriprep.workflows.anatomical import t1w_preprocessing
-from fmriprep.utils.misc import collect_bids_data
+from .workflows import fmri_preprocess_single
+from .utils.misc import collect_bids_data
 
-
-__author__ = "Oscar Esteban"
-__copyright__ = ("Copyright 2016, Center for Reproducible Neuroscience, "
-                 "Stanford University")
-__credits__ = "Oscar Esteban"
-__license__ = "BSD"
-__version__ = "0.0.1"
-__maintainer__ = "Oscar Esteban"
-__email__ = "code@oscaresteban.es"
-__status__ = "Prototype"
+from fmriprep import __version__
 
 
 def main():
@@ -39,8 +29,15 @@ def main():
                             formatter_class=RawTextHelpFormatter)
 
     g_input = parser.add_argument_group('Inputs')
-    g_input.add_argument('-i', '--bids-root', action='store',
+    g_input.add_argument('-B', '--bids-root', action='store',
                          default=os.getcwd())
+    g_input.add_argument('-S', '--subject-id', action='store', required=True)
+    g_input.add_argument('-s', '--session-id', action='store', default='single_session')
+    g_input.add_argument('-r', '--run-id', action='store', default='single_run')
+    g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
+    g_input.add_argument('-v', '--version', action='store_true', default=False,
+                         help='Show current fmriprep version')
+
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
     g_input.add_argument(
@@ -55,6 +52,10 @@ def main():
     g_outputs.add_argument('-w', '--work-dir', action='store')
 
     opts = parser.parse_args()
+
+    if opts.version:
+        print 'fmriprep version ' + __version__
+        exit(0)
 
     settings = {'bids_root': op.abspath(opts.bids_root),
                 'output_dir': os.getcwd(),
@@ -95,12 +96,19 @@ def main():
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
-    subjects = collect_bids_data(settings['bids_root'])
+    imaging_data = get_subject(opts.subject_id)
+    workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
+    workflow.base_dir = settings['work_dir']
+    workflow.run(**plugin_settings)
 
-    if not any([len(subjects[k]) > 0 for k in subjects.keys()]):
-        raise RuntimeError('No scans found in %s' % settings['bids_root'])
-
-    fmri_preprocess_multiple(subjects, plugin_settings, settings=settings)
+def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
+    for subject in subject_list:
+        for session in subject_list[subject]:
+            imaging_data = subject_list[subject][session]
+            workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
+            workflow.base_dir = settings['work_dir']
+            workflow.run(**plugin_settings)
+            return
 
 
 if __name__ == '__main__':
