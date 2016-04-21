@@ -51,6 +51,14 @@ class TestCollectBids(unittest.TestCase):
                     match = re.search(fieldmap_pattern, fieldmap)
                     self.assertTrue(match)
     
+    def test_fieldmaps_meta(self):
+        for subject in self.imaging_data:
+            fieldmap_meta_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.json".format(subject)
+            for session in self.imaging_data[subject]:
+                for fieldmap_meta in self.imaging_data[subject][session]['fieldmaps_meta']:
+                    match = re.search(fieldmap_meta_pattern, fieldmap_meta)
+                    self.assertTrue(match)
+    
         
 if __name__ == '__main__':
     unittest.main() 
