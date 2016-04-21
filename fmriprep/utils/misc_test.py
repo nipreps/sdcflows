@@ -1,5 +1,6 @@
 import json
 import misc
+import re
 import unittest
 
 class TestCollectBids(unittest.TestCase):
@@ -41,6 +42,15 @@ class TestCollectBids(unittest.TestCase):
             for session in self.imaging_data[subject]:
                 self.assertIn(t1_template.format(subject=subject), 
                               self.imaging_data[subject][session]['t1'])
+
+    def test_fieldmaps(self):
+        for subject in self.imaging_data:
+            fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz".format(subject)
+            for session in self.imaging_data[subject]:
+                for fieldmap in self.imaging_data[subject][session]['fieldmaps']:
+                    match = re.search(fieldmap_pattern, fieldmap)
+                    self.assertTrue(match)
+    
         
 if __name__ == '__main__':
     unittest.main() 
