@@ -34,7 +34,8 @@ def get_subject(bids_root, subject_id, session_id=None, run_id=None, include_typ
 # if no scan_subject or scan_session are defined return all bids data for a
 # given bids directory. Otherwise just the data for a given subject or scan
 # can be returned
-def collect_bids_data(dataset, include_types=None, scan_subject='sub-', scan_session='ses-'):
+def collect_bids_data(dataset, include_types=None, scan_subject='sub-', 
+                      scan_session='ses-'):
     imaging_data = {}
     if include_types is None:
         # include all scan types by default
@@ -69,23 +70,30 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-', scan_ses
 
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
-                    modality = filename.split('_')[-1]
-                    if 'bold.nii' in modality:
-                        imaging_data[subject][session]['epi'] = scan_file
-                    elif 'bold.json' in modality:
-                        imaging_data[subject][session]['epi_meta'] = scan_file
-                    elif 'sbref.nii' in modality:
-                        imaging_data[subject][session]['sbref'] = scan_file
-                    elif 'sbref.json' in modality:
-                        imaging_data[subject][session]['sbref_meta'] = scan_file
-                    elif 'T1w.nii' in modality:
-                        imaging_data[subject][session]['t1'] = scan_file
-                    elif 'epi.nii' in modality:
-                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
-                    elif 'epi.json' in modality:
-                        imaging_data[subject][session]['fieldmaps_meta'].append(scan_file)
+                    filename_parts = filename.split('_')
+                    modality = filename_parts[-1]
+                    # temporary conditional until runs and tasks are handled
+                    # in the imaging data structure
+                    if 'rest_acq-LR_run-1' in filename:
+                        if 'bold.nii' in modality:
+                            imaging_data[subject][session]['epi'] = scan_file
+                        elif 'bold.json' in modality:
+                            imaging_data[subject][session]['epi_meta'] = scan_file
+                        elif 'sbref.nii' in modality:
+                            imaging_data[subject][session]['sbref'] = scan_file
+                        elif 'sbref.json' in modality:
+                            imaging_data[subject][session]['sbref_meta'] = scan_file
+                        else:
+                            pass
                     else:
-                        pass
+                        if 'epi.nii' in modality:
+                            imaging_data[subject][session]['fieldmaps'].append(scan_file)
+                        elif 'epi.json' in modality:
+                            imaging_data[subject][session]['fieldmaps_meta'].append(scan_file)
+                        elif 'T1w.nii' in modality:
+                            imaging_data[subject][session]['t1'] = scan_file
+                        else:
+                            pass
     return imaging_data
 
 if __name__ == '__main__':
