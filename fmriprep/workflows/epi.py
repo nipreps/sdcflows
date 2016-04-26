@@ -246,18 +246,4 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
     return workflow
 
 
-def create_encoding_file(fieldmaps, fieldmaps_meta):
-    """Creates a valid encoding file for topup"""
-    import json
-    import nibabel as nb
-    with open("parameters.txt", "w") as parameters_file:
-        for fieldmap, fieldmap_meta in zip(fieldmaps, fieldmaps_meta):
-            meta = json.load(open(fieldmap_meta))
-            pedir = {'x': 0, 'y': 1, 'z': 2}
-            line_values = [0, 0, 0, meta["TotalReadoutTime"]]
-            line_values[pedir[meta["PhaseEncodingDirection"][0]]
-                        ] = 1 + (-2*(len(meta["PhaseEncodingDirection"]) == 2))
-            for i in range(nb.load(fieldmap).shape[-1]):
-                parameters_file.write(
-                    " ".join([str(i) for i in line_values]) + "\n")
-    return os.path.abspath("parameters.txt")
+

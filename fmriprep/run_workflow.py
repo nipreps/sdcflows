@@ -17,8 +17,8 @@ import os.path as op
 
 from nipype import config as ncfg
 
-from .workflows import fmri_preprocess_single
-from .utils.misc import get_subject
+from workflows import fmri_preprocess_single
+from utils.misc import get_subject
 
 from fmriprep import __version__
 
