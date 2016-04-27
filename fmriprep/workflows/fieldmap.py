@@ -35,6 +35,7 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         input_names=["fieldmaps", "fieldmaps_meta"], output_names=["parameters_file"],
         function=create_encoding_file), name="Create_Parameters", updatehash=True)
 
+    
 
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name="Merge_Fieldmaps")
     hmc_se_pair = pe.Node(fsl.MCFLIRT(), name="Motion_Correction")
@@ -96,13 +97,14 @@ def create_encoding_file(fieldmaps, fieldmaps_meta):
     """Creates a valid encoding file for topup"""
     import json
     import nibabel as nb
+    import os
+    
     with open("parameters.txt", "w") as parameters_file:
         for fieldmap, fieldmap_meta in zip(fieldmaps, fieldmaps_meta):
             meta = json.load(open(fieldmap_meta))
-            print(meta)
-            pedir = {'x': 0, 'y': 1, 'z': 2, 'i': 0, 'j': 1, 'k': 2}
+            pedir = {'i': 0, 'j': 1, 'k': 2}
             line_values = [0, 0, 0, meta["TotalReadoutTime"]]
-            line_values[pedir[meta["PhaseEncodingDirection"][-1]]] = 1 + (-2*(len(meta["PhaseEncodingDirection"]) == 2))
+            line_values[pedir[meta["PhaseEncodingDirection"][0]]] = 1 + (-2*(len(meta["PhaseEncodingDirection"]) == 2))
             for i in range(nb.load(fieldmap).shape[-1]):
                 parameters_file.write(
                     " ".join([str(i) for i in line_values]) + "\n")
