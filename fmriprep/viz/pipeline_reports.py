@@ -223,9 +223,7 @@ def reports():
         Function(
             input_names=[
                 "output_file", "first_plot", "second_plot", "third_plot",
-                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot",
-                "eighth_plot", "ninth_plot", "tenth_plot", "eleventh_plot",
-                "twelfth_plot"
+                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot"
             ],
             output_names=["output_file"],
             function=generate_report
