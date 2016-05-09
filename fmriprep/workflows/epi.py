@@ -138,8 +138,8 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 'sbref', 'sbref_brain', 'sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix',
                 'fmap_unmasked', 'wm_seg']), name='inputnode')
-    # outputnode = pe.Node(niu.IdentityInterface(
-    #     fields=['epi_brain', 'epi2sbref_matrix']), name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi_brain', 'epi2sbref_matrix', 'stripped_epi']), name='outputnode')
 
     # Skull strip EPI  (try ComputeMask(BaseInterface))
     epi_bet = pe.Node(
@@ -240,7 +240,10 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
         (split_epi, aw_final, [('out_files', 'in_file')]),
         (convert_fmap_shift, aw_final, [('out_file', 'field_file')]),
         (aw_final, merge_epi, [('out_file', 'in_files')]),
-        (merge_epi, epi_mean, [('merged_file', 'in_file')])
+        (merge_epi, epi_mean, [('merged_file', 'in_file')]),
+        (epi_bet, outputnode, [('out_file', 'stripped_epi')]),
+        (epi_mean, outputnode, [('out_file', 'corrected_epi_mean)]),
+        (sbref_bet, outputnode, [('out_file', 't1_brain')])
 
     ])
     return workflow
