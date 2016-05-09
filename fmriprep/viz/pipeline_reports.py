@@ -153,6 +153,7 @@ def reports():
     )
     T1_SkullStrip.inputs.out_file = "T1_SkullStrip_Overlay.png"
 
+    '''
     parcels_2_EPI = Node(
         Function(
             input_names=["in_file", "overlay_file", "out_file"],
@@ -182,6 +183,7 @@ def reports():
         name="Parcels_to_SBRef"
     )
     parcels_2_sbref.inputs.out_file = "Parcels_to_SBRef_Overlay.png"
+    '''
 
     epi_2_sbref = Node(
         Function(
@@ -203,6 +205,7 @@ def reports():
     )
     sbref_2_t1.inputs.out_file = "SBRef_to_T1_Overlay.png"
 
+    '''
     T1_2_MNI = Node(
         Function(
             input_names=["in_file", "overlay_file", "out_file"],
@@ -214,6 +217,7 @@ def reports():
     T1_2_MNI.inputs.out_file = "T1_to_MNI_Overlay.png"
     T1_2_MNI.inputs.overlay_file = ("/share/sw/free/fsl/5.0.7/fsl/data/"
                                     "standard/MNI152_T1_2mm_brain.nii.gz")
+    '''
 
     final_pdf = Node(
         Function(
@@ -246,20 +250,20 @@ def reports():
         (inputnode, SBRef_BET, [("sbref", "overlay_file")]),
         (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
         (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
-        (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
-        (inputnode, parcels_2_EPI, [("corrected_epi_mean", "overlay_file")]),
-        (inputnode, parcels_2_T1, [("parcels_t1", "in_file")]),
-        (inputnode, parcels_2_T1, [("t1", "overlay_file")]),
-        (inputnode, parcels_2_sbref, [("parcels_native", "in_file")]),
+        #  (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
+        #  (inputnode, parcels_2_EPI, [("corrected_epi_mean", "overlay_file")]),
+        #  (inputnode, parcels_2_T1, [("parcels_t1", "in_file")]),
+        #  (inputnode, parcels_2_T1, [("t1", "overlay_file")]),
+        #  (inputnode, parcels_2_sbref, [("parcels_native", "in_file")]),
         #  prob should use corrected sbref brain mask
-        (inputnode, parcels_2_sbref, [("corrected_sbref", "overlay_file")]),
+        #  (inputnode, parcels_2_sbref, [("corrected_sbref", "overlay_file")]),
         (inputnode, epi_2_sbref, [("corrected_epi_mean", "in_file")]),
         (inputnode, epi_2_sbref, [("corrected_sbref", "overlay_file")]),
-        (inputnode, sbref_2_t1, [("sbref_t1", "in_file")]),
+        #  (inputnode, sbref_2_t1, [("sbref_t1", "in_file")]),
         (inputnode, sbref_2_t1, [("t1", "overlay_file")]),
         (inputnode, epi_unwarp_overlay, [("corrected_epi_mean", "in_file")]),
         (raw_epi_mean, epi_unwarp_overlay, [("out_file", "overlay_file")]),
-        (inputnode, T1_2_MNI, [("t1_mni", "in_file")]),
+        #  (inputnode, T1_2_MNI, [("t1_mni", "in_file")]),
         #  replace sbref to mni and epi to mni with sbref and epi unwarping,
         #  also replace epi to t1 with parcel to sbref
         (fmap_overlay, final_pdf, [("out_file", "first_plot")]),
@@ -270,14 +274,14 @@ def reports():
         (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
         (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
         (sbref_2_t1, final_pdf, [("out_file",  "eighth_plot")]),
-        (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
-        (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
-        (parcels_2_EPI, final_pdf, [("out_file",  "eleventh_plot")]),
-        (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
+        #  (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
+        #  (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
+        #  (parcels_2_EPI, final_pdf, [("out_file",  "eleventh_plot")]),
+        #  (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
     ])
 
+    return report_workflow
 
-Report_workflow.write_graph()
-#  Report_workflow.run()
-Report_workflow.run(plugin=plugin, plugin_args=plugin_args)
-#  Report_workflow.run(plugin=plugin, plugin_args=plugin_args,updatehash=True)
+if __name__ == '__main__':
+    report_wf = reports()
+    report_wf.write_graph()
