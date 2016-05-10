@@ -19,8 +19,9 @@ from nipype import config as ncfg
 
 from workflows import fmri_preprocess_single
 from utils.misc import get_subject
+from viz.pipeline_reports import run_report_workflow
 
-from fmriprep import __version__
+from __init__ import __version__
 
 
 def main():
@@ -54,7 +55,7 @@ def main():
     opts = parser.parse_args()
 
     if opts.version:
-        print 'fmriprep version ' + __version__
+        print('fmriprep version ' + __version__)
         exit(0)
 
     settings = {'bids_root': op.abspath(opts.bids_root),
@@ -105,9 +106,10 @@ def main():
     for key in imaging_data.keys():
         setattr(workflow.inputs.inputnode, key, imaging_data[key])
 
-    print workflow.inputs.inputnode
+    print(workflow.inputs.inputnode)
 
     workflow.run(**plugin_settings)
+    run_report_workflow(workflow)
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
 # def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
