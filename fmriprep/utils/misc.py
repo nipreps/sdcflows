@@ -22,7 +22,7 @@ def get_subject(bids_root, subject_id, session_id=None, run_id=None, include_typ
     subject_data = collect_bids_data(bids_root, include_types=None)['sub-' + subject_id]
 
     if session_id is None:
-        subject_data = subject_data[subject_data.keys()[0]]
+        subject_data = subject_data[list(subject_data.keys())[0]]
     else:
         raise NotImplementedError
 
