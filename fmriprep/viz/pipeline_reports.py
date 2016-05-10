@@ -14,13 +14,8 @@ from nipype.interfaces.utility import Function
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.pipeline.engine import Workflow, Node
-from variables_reports import (data_dir, work_dir, subject_list, plugin,
-                               plugin_args)
 
 from twelve_image_report_function_w_error import generate_report
-
-Report_workflow = Workflow(name="Report_workflow")
-Report_workflow.base_dir = work_dir
 
 mpl.use('Agg')
 
@@ -67,7 +62,7 @@ def reports():
         fields=['fmap_mag', 'fmap_mag_brain', 'raw_epi', 'stripped_epi',
                 'corrected_epi_mean', 'sbref', 'sbref_brain', 'sbref_brain',
                 'sbref_t1', 'corrected_sbref', 't1', 't1_brain', 't1_mni',
-                'parcels_t1', 'parcels_native']), name='inputnode')
+                'parcels_t1', 'parcels_native', 'fieldmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['wm_seg']),
                          name='outputnode')
 
@@ -239,7 +234,7 @@ def reports():
         (inputnode, fmap_mag_BET, [("fmap_mag_brain", "in_file")]),
         (fmap_mag_mean, fmap_mag_BET, [("out_file", "overlay_file")]),
         (inputnode, raw_epi_mean, [("raw_epi", "in_file")]),
-        (inputnode, stripped_epi_mean, [("stripped_EPI", "in_file")]),
+        (inputnode, stripped_epi_mean, [("stripped_epi", "in_file")]),
         (stripped_epi_mean, EPI_BET_report, [("out_file", "in_file")]),
         (raw_epi_mean, EPI_BET_report, [("out_file", "overlay_file")]),
         (inputnode, sbref_unwarp_overlay, [("corrected_sbref", "in_file")]),
