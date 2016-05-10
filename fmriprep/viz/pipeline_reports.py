@@ -15,7 +15,7 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.pipeline.engine import Workflow, Node
 
-from twelve_image_report_function_w_error import generate_report
+from .twelve_image_report_function_w_error import generate_report
 
 mpl.use('Agg')
 
@@ -148,38 +148,6 @@ def generate_report_workflow():
     )
     T1_SkullStrip.inputs.out_file = "T1_SkullStrip_Overlay.png"
 
-    '''
-    parcels_2_EPI = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=anatomical_overlay
-        ),
-        name="Parcels_to_EPI_Overlay"
-    )
-    parcels_2_EPI.inputs.out_file = "Parcels_to_EPI_Overlay.png"
-
-    parcels_2_T1 = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=anatomical_overlay
-        ),
-        name="Parcels_to_T1_Overlay"
-    )
-    parcels_2_T1.inputs.out_file = "Parcels_to_T1_Overlay.png"
-
-    parcels_2_sbref = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=anatomical_overlay
-        ),
-        name="Parcels_to_SBRef"
-    )
-    parcels_2_sbref.inputs.out_file = "Parcels_to_SBRef_Overlay.png"
-    '''
-
     epi_2_sbref = Node(
         Function(
             input_names=["in_file", "overlay_file", "out_file"],
@@ -199,20 +167,6 @@ def generate_report_workflow():
         name="SBRef_to_T1_Overlay"
     )
     sbref_2_t1.inputs.out_file = "SBRef_to_T1_Overlay.png"
-
-    '''
-    T1_2_MNI = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=anatomical_overlay
-        ),
-        name="T1_to_MNI_Overlay"
-    )
-    T1_2_MNI.inputs.out_file = "T1_to_MNI_Overlay.png"
-    T1_2_MNI.inputs.overlay_file = ("/share/sw/free/fsl/5.0.7/fsl/data/"
-                                    "standard/MNI152_T1_2mm_brain.nii.gz")
-    '''
 
     final_pdf = Node(
         Function(
@@ -278,7 +232,7 @@ def generate_report_workflow():
 
 def run_report_workflow(preproc_wf):
     report_wf = generate_report_workflow()
-    connector_workflow = pe.workflow()
+    connector_workflow = Workflow(name="preproc_report_connector")
     connector_workflow.connect([
         (preproc_wf, report_wf, [
             ('outputnode.fieldmap', 'inputnode.fieldmap'),
@@ -288,7 +242,9 @@ def run_report_workflow(preproc_wf):
             ('outputnode.t1', 'inputnode.t1'),
             ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
             ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
-            ('outputnode.t1_brain', 'inputnode.t1_brain')
+            ('outputnode.t1_brain', 'inputnode.t1_brain'),
+            ('inputnode.epi', 'inputnode.raw_epi'),
+            ('inputnode.sbref', 'inputnode.sbref')
         ])
 
     ])
