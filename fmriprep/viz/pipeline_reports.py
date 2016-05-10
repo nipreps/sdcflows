@@ -227,26 +227,26 @@ def generate_report_workflow():
         #  (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
     ])
 
+    report_workflow.inputnode = inputnode
+
     return report_workflow
 
 
 def run_report_workflow(preproc_wf):
     report_wf = generate_report_workflow()
-    connector_workflow = Workflow(name="preproc_report_connector")
-    connector_workflow.connect([
-        (preproc_wf, report_wf, [
-            ('outputnode.fieldmap', 'inputnode.fieldmap'),
-            ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
-            ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
-            ('outputnode.fmap_mag_brain', 'inputnode.fmap_mag_brain'),
-            ('outputnode.t1', 'inputnode.t1'),
-            ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
-            ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
-            ('outputnode.t1_brain', 'inputnode.t1_brain'),
-            ('inputnode.epi', 'inputnode.raw_epi'),
-            ('inputnode.sbref', 'inputnode.sbref')
+    report_wf.connect([
+        (preproc_wf, report_wf.inputnode, [
+            ('outputnode.fieldmap', 'fieldmap'),
+            ('outputnode.corrected_sbref', 'corrected_sbref'),
+            ('outputnode.fmap_mag', 'fmap_mag'),
+            ('outputnode.fmap_mag_brain', 'fmap_mag_brain'),
+            ('outputnode.t1', 't1'),
+            ('outputnode.stripped_epi', 'stripped_epi'),
+            ('outputnode.corrected_epi_mean', 'corrected_epi_mean'),
+            ('outputnode.t1_brain', 't1_brain'),
+            ('inputnode.epi', 'raw_epi'),
+            ('inputnode.sbref', 'sbref')
         ])
-
     ])
     report_wf.run()
 
