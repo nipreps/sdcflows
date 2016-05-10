@@ -54,7 +54,7 @@ def stripped_brain_overlay(in_file, overlay_file, out_file):
     return os.path.abspath(out_file)
 
 
-def reports():
+def generate_report_workflow():
 
     report_workflow = Workflow(name="report_workflow")
 
@@ -275,6 +275,26 @@ def reports():
 
     return report_workflow
 
+
+def run_report_workflow(preproc_wf):
+    report_wf = generate_report_workflow()
+    connector_workflow = pe.workflow()
+    connector_workflow.connect([
+        (preproc_wf, report_wf, [
+            ('outputnode.fieldmap', 'inputnode.fieldmap'),
+            ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
+            ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
+            ('outputnode.fmap_mag_brain', 'inputnode.fmap_mag_brain'),
+            ('outputnode.t1', 'inputnode.t1'),
+            ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
+            ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
+            ('outputnode.t1_brain', 'inputnode.t1_brain')
+        ])
+
+    ])
+    report_wf.run()
+
+
 if __name__ == '__main__':
-    report_wf = reports()
+    report_wf = generate_report_workflow()
     report_wf.write_graph()
