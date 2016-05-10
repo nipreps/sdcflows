@@ -29,7 +29,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                 'in_topup']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix', 'sbref_brain',
-                'sbref_brain_corrected']), name='outputnode')
+                'sbref_brain_corrected', 't1_brain']), name='outputnode')
 
     # Skull strip SBRef to get reference brain
     sbref_bet = pe.Node(
@@ -118,6 +118,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (aw_fmap_unmasked_sbref, fugue_dilate, [('out_file', 'fmap_in_file')]),
         (fmap_unmasked_bin, fugue_dilate, [('out_file', 'mask_file')]),
 
+        (sbref_bet, outputnode, [('out_file', 't1_brain')]),
         (fugue_sbref, outputnode, [('unwarped_file', 'sbref_unwarped')]),
         (fugue_dilate, outputnode, [('fmap_out_file', 'sbref_fmap')]),
         (flt_fmap_mag_sbref, outputnode, [('out_matrix_file', 'mag2sbref_matrix')]),
@@ -139,7 +140,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
         fields=['epi', 'sbref', 'sbref_brain', 'sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix',
                 'fmap_unmasked', 'wm_seg']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'epi2sbref_matrix', 'stripped_epi']), name='outputnode')
+        fields=['epi_brain', 'epi2sbref_matrix', 'stripped_epi', 'corrected_epi_mean']), name='outputnode')
 
     # Skull strip EPI  (try ComputeMask(BaseInterface))
     epi_bet = pe.Node(
@@ -242,9 +243,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
         (aw_final, merge_epi, [('out_file', 'in_files')]),
         (merge_epi, epi_mean, [('merged_file', 'in_file')]),
         (epi_bet, outputnode, [('out_file', 'stripped_epi')]),
-        (epi_mean, outputnode, [('out_file', 'corrected_epi_mean)]),
-        (sbref_bet, outputnode, [('out_file', 't1_brain')])
-
+        (epi_mean, outputnode, [('out_file', 'corrected_epi_mean')])
     ])
     return workflow
 
