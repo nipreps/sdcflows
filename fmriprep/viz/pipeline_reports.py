@@ -4,11 +4,6 @@ Created on Wed Jan 27 14:32:13 2016
 
 @author: craigmoodie
 """
-import os.path
-import matplotlib as mpl
-from nilearn.plotting import plot_anat
-from nilearn.plotting import plot_epi
-from nilearn.plotting import plot_roi
 from nipype.interfaces.fsl import MeanImage
 from nipype.interfaces.utility import Function
 from nipype.interfaces import utility as niu
@@ -17,10 +12,13 @@ from nipype.pipeline.engine import Workflow, Node
 
 from .twelve_image_report_function_w_error import generate_report
 
-mpl.use('Agg')
 
 
 def anatomical_overlay(in_file, overlay_file, out_file):
+    import os.path
+    import matplotlib as mpl
+    mpl.use('Agg')
+    from nilearn.plotting import plot_anat as plot_anat
     mask_display = plot_anat(in_file)
     mask_display.add_edges(overlay_file)
     mask_display.dim = -1
@@ -33,6 +31,10 @@ def anatomical_overlay(in_file, overlay_file, out_file):
 
 
 def parcel_overlay(in_file, overlay_file, out_file):
+    import os.path
+    import matplotlib as mpl
+    mpl.use('Agg')
+    from nilearn.plotting import plot_epi
     mask_display = plot_epi(in_file)
     mask_display.add_edges(overlay_file)
     #  mask_display.add_contours(overlay_file)
@@ -44,6 +46,10 @@ def parcel_overlay(in_file, overlay_file, out_file):
 
 
 def stripped_brain_overlay(in_file, overlay_file, out_file):
+    import os.path
+    import matplotlib as mpl
+    mpl.use('Agg')
+    from nilearn.plotting import plot_roi
     mask_display = plot_roi(in_file, overlay_file, output_file=out_file,
                             title=out_file, display_mode="ortho", dim=-1)
     #  mask_display.bg_img(overlay_file)
