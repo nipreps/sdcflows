@@ -14,8 +14,8 @@ def generate_report(output_file, first_plot, second_plot, third_plot,
     from matplotlib.backends.backend_pdf import PdfPages
     import matplotlib.image as mimage
 
-    plots = ["output_file", "first_plot", "second_plot", "third_plot",
-             "fifth_plot", "sixth_plot", "seventh_plot"]
+    plots = [output_file, first_plot, second_plot, third_plot,
+             fifth_plot, sixth_plot, seventh_plot]
     #  error_image = ""
     #  error = mimage.imread(error_image)
     report = PdfPages(output_file)
