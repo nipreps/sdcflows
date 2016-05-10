@@ -12,10 +12,10 @@ import matplotlib.image as mimage
 
 
 def generate_report(output_file, first_plot, second_plot, third_plot,
-                    fourth_plot, fifth_plot, sixth_plot, seventh_plot):
+                    fifth_plot, sixth_plot, seventh_plot):
 
     plots = ["output_file", "first_plot", "second_plot", "third_plot",
-             "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot"]
+             "fifth_plot", "sixth_plot", "seventh_plot"]
     error_image = "some/path/"
     error = mimage.imread(error_image)
     report = PdfPages(output_file)

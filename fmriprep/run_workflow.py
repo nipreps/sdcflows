@@ -38,7 +38,7 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
             ('outputnode.t1', 'inputnode.t1'),
             ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
             ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
-            ('outputnode.t1_brain', 'inputnode.t1_brain'),
+            ('outputnode.sbref_brain', 'inputnode.sbref_brain'),
             ('inputnode.epi', 'inputnode.raw_epi'),
             ('inputnode.sbref', 'inputnode.sbref')
         ])

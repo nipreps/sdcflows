@@ -172,7 +172,7 @@ def generate_report_workflow():
         Function(
             input_names=[
                 "output_file", "first_plot", "second_plot", "third_plot",
-                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot"
+                "fifth_plot", "sixth_plot", "seventh_plot"
             ],
             output_names=["output_file"],
             function=generate_report
@@ -195,8 +195,8 @@ def generate_report_workflow():
         (inputnode, sbref_unwarp_overlay, [("sbref", "overlay_file")]),
         (inputnode, SBRef_BET, [("sbref_brain", "in_file")]),
         (inputnode, SBRef_BET, [("sbref", "overlay_file")]),
-        (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
-        (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
+        # (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
+        # (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
         #  (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
         #  (inputnode, parcels_2_EPI, [("corrected_epi_mean", "overlay_file")]),
         #  (inputnode, parcels_2_T1, [("parcels_t1", "in_file")]),
@@ -216,7 +216,7 @@ def generate_report_workflow():
         (fmap_overlay, final_pdf, [("out_file", "first_plot")]),
         (EPI_BET_report, final_pdf, [("out_file", "second_plot")]),
         (SBRef_BET, final_pdf, [("out_file", "third_plot")]),
-        (T1_SkullStrip, final_pdf, [("out_file",  "fourth_plot")]),
+        # (T1_SkullStrip, final_pdf, [("out_file",  "fourth_plot")]),
         (sbref_unwarp_overlay, final_pdf, [("out_file",  "fifth_plot")]),
         (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
         (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
@@ -230,25 +230,6 @@ def generate_report_workflow():
     report_workflow.inputnode = inputnode
 
     return report_workflow
-
-
-def run_report_workflow(preproc_wf):
-    report_wf = generate_report_workflow()
-    report_wf.connect([
-        (preproc_wf, report_wf.inputnode, [
-            ('outputnode.fieldmap', 'fieldmap'),
-            ('outputnode.corrected_sbref', 'corrected_sbref'),
-            ('outputnode.fmap_mag', 'fmap_mag'),
-            ('outputnode.fmap_mag_brain', 'fmap_mag_brain'),
-            ('outputnode.t1', 't1'),
-            ('outputnode.stripped_epi', 'stripped_epi'),
-            ('outputnode.corrected_epi_mean', 'corrected_epi_mean'),
-            ('outputnode.t1_brain', 't1_brain'),
-            ('inputnode.epi', 'raw_epi'),
-            ('inputnode.sbref', 'sbref')
-        ])
-    ])
-    report_wf.run()
 
 
 if __name__ == '__main__':
