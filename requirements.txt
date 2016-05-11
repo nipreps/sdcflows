@@ -1,6 +1,8 @@
 numpy
+scikit-learn
 matplotlib
 nilearn
+sklearn
 nibabel
 -e git+https://github.com/oesteban/nipype@3b8528cb2eac0b5d321ea90d1094ebdc1cec7d1a#egg=nipype
 
