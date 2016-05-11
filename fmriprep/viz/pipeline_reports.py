@@ -10,7 +10,7 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.pipeline.engine import Workflow, Node
 
-from .twelve_image_report_function_w_error import generate_report
+from .pdf_compose import generate_report
 
 
 
