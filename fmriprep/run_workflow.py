@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-04-20 15:05:18
+# @Last Modified time: 2016-05-11 11:48:02
 
 """
 fMRI preprocessing workflow
@@ -18,9 +18,9 @@ import os.path as op
 from nipype import config as ncfg
 from nipype.pipeline import engine as pe
 
-from workflows import fmri_preprocess_single
-from utils.misc import get_subject
-from viz.pipeline_reports import generate_report_workflow
+from .workflows import fmri_preprocess_single
+from .utils.misc import get_subject
+from .viz.pipeline_reports import generate_report_workflow
 
 from __init__ import __version__
 
