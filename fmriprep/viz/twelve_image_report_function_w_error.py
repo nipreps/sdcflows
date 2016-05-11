@@ -14,17 +14,17 @@ def generate_report(output_file, first_plot, second_plot, third_plot,
     from matplotlib.backends.backend_pdf import PdfPages
     import matplotlib.image as mimage
 
-    plots = [output_file, first_plot, second_plot, third_plot,
+    plots = [first_plot, second_plot, third_plot,
              fifth_plot, sixth_plot, seventh_plot]
     #  error_image = ""
     #  error = mimage.imread(error_image)
     report = PdfPages(output_file)
     fig = plt.figure()
-    grid = GridSpec(4, 3)
+    grid = GridSpec(3, 2)
 
     plot_iterator = iter(plots)
-    for i in range(0, 3):
-        for j in range(0, 4):
+    for i in range(0, 2):
+        for j in range(0, 3):
             plot = next(plot_iterator)
             if plot is None:
                 #  plot = error
