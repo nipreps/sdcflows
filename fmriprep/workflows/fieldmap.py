@@ -25,9 +25,17 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
 
     workflow = pe.Workflow(name=name)
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps', 'sbref']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmap_scaled', 'fmap_mask', 'mag_brain', 'out_topup', 'fmap_unmasked']), name='outputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps', 'fieldmaps_meta', 
+                        'sbref']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['fmap_scaled', 'fmap_mask', 
+                        'mag_brain', 'out_topup', 'fmap_unmasked']), name='outputnode')
+
+
+    create_parameters_node = pe.Node(interface=niu.Function(
+        input_names=["fieldmaps", "fieldmaps_meta"], output_names=["parameters_file"],
+        function=create_encoding_file), name="Create_Parameters", updatehash=True)
+
+    
 
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name="Merge_Fieldmaps")
     hmc_se_pair = pe.Node(fsl.MCFLIRT(), name="Motion_Correction")
@@ -63,7 +71,9 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
         (fslmerge, hmc_se_pair, [('merged_file', 'in_file')]),
         (inputnode, hmc_se_pair, [('sbref', 'ref_file')]),
-        # (create_parameters_node, topup, [('parameters_file', 'encoding_file')]),
+        (inputnode, create_parameters_node, [('fieldmaps', 'fieldmaps'),
+                                        ('fieldmaps_meta', 'fieldmaps_meta')]),
+        (create_parameters_node, topup, [('parameters_file', 'encoding_file')]),
         (hmc_se_pair, topup, [('out_file', 'in_file')]),
         (topup, fmap_scale, [('out_field', 'in_file')]),
         (topup, mag_bet, [('out_corrected', 'in_file')]),
@@ -82,3 +92,20 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')])
     ])
     return workflow
+
+def create_encoding_file(fieldmaps, fieldmaps_meta):
+    """Creates a valid encoding file for topup"""
+    import json
+    import nibabel as nb
+    import os
+    
+    with open("parameters.txt", "w") as parameters_file:
+        for fieldmap, fieldmap_meta in zip(fieldmaps, fieldmaps_meta):
+            meta = json.load(open(fieldmap_meta))
+            pedir = {'i': 0, 'j': 1, 'k': 2}
+            line_values = [0, 0, 0, meta["TotalReadoutTime"]]
+            line_values[pedir[meta["PhaseEncodingDirection"][0]]] = 1 + (-2*(len(meta["PhaseEncodingDirection"]) == 2))
+            for i in range(nb.load(fieldmap).shape[-1]):
+                parameters_file.write(
+                    " ".join([str(i) for i in line_values]) + "\n")
+    return os.path.abspath("parameters.txt")

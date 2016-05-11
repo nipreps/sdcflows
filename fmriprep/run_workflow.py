@@ -16,11 +16,40 @@ import os
 import os.path as op
 
 from nipype import config as ncfg
+from nipype.pipeline import engine as pe
 
-from .workflows import fmri_preprocess_single
-from .utils.misc import get_subject
+from workflows import fmri_preprocess_single
+from utils.misc import get_subject
+from viz.pipeline_reports import generate_report_workflow
 
-from fmriprep import __version__
+from __init__ import __version__
+
+def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None):
+    preproc_wf = fmri_preprocess_single(settings=settings)
+    report_wf = generate_report_workflow()
+
+    connector_wf = pe.Workflow(name=name)
+    connector_wf.connect([
+        (preproc_wf, report_wf, [
+            ('outputnode.fieldmap', 'inputnode.fieldmap'),
+            ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
+            ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
+            ('outputnode.fmap_mag_brain', 'inputnode.fmap_mag_brain'),
+            ('outputnode.t1', 'inputnode.t1'),
+            ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
+            ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
+            ('outputnode.sbref_brain', 'inputnode.sbref_brain'),
+            ('inputnode.epi', 'inputnode.raw_epi'),
+            ('inputnode.sbref', 'inputnode.sbref')
+        ])
+    ])
+
+    # Set inputnode of the full-workflow
+    for key in imaging_data.keys():
+        setattr(preproc_wf.inputs.inputnode, key, imaging_data[key])
+
+    return connector_wf
+
 
 
 def main():
@@ -54,7 +83,7 @@ def main():
     opts = parser.parse_args()
 
     if opts.version:
-        print 'fmriprep version ' + __version__
+        print('fmriprep version ' + __version__)
         exit(0)
 
     settings = {'bids_root': op.abspath(opts.bids_root),
@@ -96,16 +125,11 @@ def main():
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
-    workflow = fmri_preprocess_single(settings=settings)
-    workflow.base_dir = settings['work_dir']
-
     imaging_data = get_subject(opts.bids_root, opts.subject_id)
 
-    # Set inputnode of the full-workflow
-    for key in imaging_data.keys():
-        setattr(workflow.inputs.inputnode, key, imaging_data[key])
-
-    print workflow.inputs.inputnode
+    #  workflow = fmri_preprocess_single(settings=settings)
+    workflow = preproc_and_reports(imaging_data, settings=settings)
+    workflow.base_dir = settings['work_dir']
 
     workflow.run(**plugin_settings)
 
