@@ -233,8 +233,6 @@ def generate_report_workflow():
         #  (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
     ])
 
-    report_workflow.inputnode = inputnode
-
     return report_workflow
 
 
