@@ -35,7 +35,7 @@ ARG GIT_BRANCH
 ENV GIT_BRANCH ${GIT_BRANCH:-master}
 
 ARG GIT_URL
-ENV GIT_URL ${GIT_URL:-"https://github.com/poldracklab/fmriprep.git"}
+ENV GIT_URL ${GIT_URL:-"https://github.com/poldracklab/preprocessing-workflow.git"}
 
 WORKDIR /root/src
 RUN git clone $GIT_URL && \
