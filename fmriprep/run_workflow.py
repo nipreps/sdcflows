@@ -18,17 +18,14 @@ from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
 import os
 import os.path as op
-
-from nipype import config as ncfg
-from nipype.pipeline import engine as pe
-
-from fmriprep import __version__
-from .workflows import fmri_preprocess_single
-from .utils.misc import get_subject
-from .viz.pipeline_reports import generate_report_workflow
-
+import matplotlib
+matplotlib.use('Agg')
 
 def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None):
+    from nipype.pipeline import engine as pe
+    from .workflows import fmri_preprocess_single
+    from .viz.pipeline_reports import generate_report_workflow
+    
     preproc_wf = fmri_preprocess_single(settings=settings)
     report_wf = generate_report_workflow()
 
@@ -58,6 +55,11 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
 
 def main():
     """Entry point"""
+    from nipype import config as ncfg
+    from nipype.pipeline import engine as pe
+    from fmriprep import __version__
+    from .utils.misc import get_subject
+    
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
 
