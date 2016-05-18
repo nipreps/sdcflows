@@ -213,6 +213,87 @@ def get_atomic_data(dataset, include_types=None, sub_id=None,
 
     return imaging_data
 
+#  get all functional images for a subject/session. Once we have these we can
+#  look at the other modalities and see which ones should be associated with
+#  the images based on their file names
+def get_funcs(func_files):
+    functional_data = []
+    for func_file in func_files:
+        filename = func_file.split('/')[-1]
+        filename_parts = filename.split('_')
+        modality = filename_parts[-1]
+        if 'bold.nii' not in modality:
+            continue
+        
+        bold = func_file
+        bold_json = re.sub('nii(\.gz)?$', 'json', bold)
+        functional_data.append((bold, bold_json))
+   
+    return functional_data
+
+#  Given any run, acq, or rec ids we expect to find a t1 file with them in
+#  their filename. If none of theses are present there should only be one
+#  suitable file to be used by all functional images of the same subject and
+#  session.
+def get_anat(anat_files, run_id=None, acq_id=None, rec_id=None):
+    t1 = []
+    for anat_file in anat_files:    
+        if run_id is not None:
+            run_match = re.search('run-{}_'.format(run_id), anat_file)
+            if not run_match:
+                continue
+
+        if acq_id is not None:
+            acq_match = re.search('acq-{}_'.format(acq_id), anat_file)
+            if not acq_match:
+                continue
+
+        if rec_id is not None:
+            rec_match = re.search('rec-{}_'.format(rec_id), anat_file)
+            if not rec_match:
+                continue
+
+        if file_type == 'anat':
+            if 'T1w.nii' in modality:
+                t1.append(anat_file)
+            continue
+
+    if len(t1) == 0:
+        raise NoT1sFound
+    elif len(t1) > 1:
+        raise MultipleValidT1s
+    else:
+        return t1[0]
+        
+def get_dwi(dwi_files, run_id=None, acq_id=None):
+    dwi_data = []
+    for dwi_file in dwi_files:    
+        if run_id is not None:
+            run_match = re.search('run-{}_'.format(run_id), dwi_file)
+            if not run_match:
+                continue
+
+        if acq_id is not None:
+            acq_match = re.search('acq-{}_'.format(acq_id), dwi_file)
+            if not acq_match:
+                continue
+
+        if 'sbref.nii' in modality:
+            sbref = func_file
+            bold_json = re.sub('nii(\.gz)?$', 'json', bold)
+            dwi_data.append((bold, bold_json))
+
+    if len(dwi_data) == 0:
+        raise NoDWIsFound
+    elif len(dwi_data) > 1:
+        raise MultipleValidDWIs
+    else:
+        return dwi_data[0]
+
+#  intendedfor logic goes here
+def get_fmap(fmap_files):
+    return
+
 def get_ids(dataset):
     ids = {'subjects': set(), 'sessions': set(), 'tasks': set(), 
            'acquisitions': set(), 'reconstructions': set()}
