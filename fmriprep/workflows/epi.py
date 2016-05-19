@@ -144,7 +144,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         niu.IdentityInterface(fields=['epi_brain', 'epi2sbref_matrix',
                               'stripped_epi', 'corrected_epi_mean',
                               'merged_epi', 'stripped_epi_mask', 
-                              'epi_mmotion_params']),
+                              'epi_motion_params']),
         name='outputnode'
     )
 
@@ -253,7 +253,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (epi_bet, outputnode, [('mask_file', 'stripped_epi_mask')]),
         (epi_mean, outputnode, [('out_file', 'corrected_epi_mean')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'epi2sbref_matrix')]),
-        (motion_corrected_epi, outputnode, [('par_file', 'epi_motion_params')])
+        (motion_correct_epi, outputnode, [('par_file', 'epi_motion_params')])
     ])
     return workflow
 
