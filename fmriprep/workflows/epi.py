@@ -250,10 +250,10 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (merge_epi, epi_mean, [('merged_file', 'in_file')]),
         (merge_epi, outputnode, [('merged_file', 'merged_epi')]),
         (epi_bet, outputnode, [('out_file', 'stripped_epi')]),
-        (epi_bet, outputnode, [('mask_file', 'stripped_epi_mask')],
+        (epi_bet, outputnode, [('mask_file', 'stripped_epi_mask')]),
         (epi_mean, outputnode, [('out_file', 'corrected_epi_mean')]),
-        (flt_bbr, outputnode, [('out_matrix_file', 'epi2sbref_matrix')]
-        (motion_corrected_epi, outputnode, [('par_file', 'epi_motion_params')],
+        (flt_bbr, outputnode, [('out_matrix_file', 'epi2sbref_matrix')]),
+        (motion_corrected_epi, outputnode, [('par_file', 'epi_motion_params')])
     ])
     return workflow
 
