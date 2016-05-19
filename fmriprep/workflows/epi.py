@@ -31,44 +31,40 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         fields=['sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix', 'sbref_brain',
                 'sbref_brain_corrected', 't1_brain']), name='outputnode')
 
-    # Skull strip SBRef to get reference brain
+    #  Skull strip SBRef to get reference brain
     sbref_bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6), name="sbref_bet")
 
-    # Skull strip the SBRef with ANTS Brain Extraction
-
-    #from nipype.interfaces.ants.segmentation import BrainExtraction
-    #SBRef_skull_strip = pe.Node(BrainExtraction(), name = "antsreg_T1_Brain_Extraction")
-    #SBRef_skull_strip.inputs.dimension = 3
-    #SBRef_skull_strip.inputs.brain_template = "T_template0.nii.gz"
-    #SBRef_skull_strip.inputs.brain_probability_mask = "T_template0_BrainCerebellumProbabilityMask.nii.gz"
-    #SBRef_skull_strip.inputs.extraction_registration_mask = "T_template0_BrainCerebellumRegistrationMask.nii.gz"
-
-    # Unwarp SBRef using Fugue  (N.B. duplicated in epi_reg_workflow!!!!!)
+    #  Unwarp SBRef using Fugue  (N.B. duplicated in epi_reg_workflow!!!!!)
     fugue_sbref = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time),
                           name="SBRef_Unwarping")
 
     strip_corrected_sbref = pe.Node(fsl.BET(mask=True, frac=0.6, robust=True),
                                     name="BET_Corrected_SBRef")
 
-    ################################ Run the commands from epi_reg_dof #######
-    # WITH FIELDMAP (unwarping steps)
-    # flirt -in ${fmapmagbrain} -ref ${vrefbrain} -dof ${dof} -omat
-    # ${vout}_fieldmap2str_init.mat
-    flt_fmap_mag_brain_sbref_brain = pe.Node(fsl.FLIRT(dof=6, bins=640, cost_func='mutualinfo'),
-                                             name="Fmap_Mag_Brain_2_SBRef_Brain_Affine_Transform")
+    #  Run the commands from epi_reg_dof
+    #  WITH FIELDMAP (unwarping steps)
+    #  flirt -in ${fmapmagbrain} -ref ${vrefbrain} -dof ${dof} -omat
+    #  ${vout}_fieldmap2str_init.mat
+    flt_fmap_mag_brain_sbref_brain = pe.Node(
+        fsl.FLIRT(dof=6, bins=640, cost_func='mutualinfo'),
+        name="Fmap_Mag_Brain_2_SBRef_Brain_Affine_Transform"
+    )
 
-    # flirt -in ${fmapmaghead} -ref ${vrefhead} -dof ${dof} -init
-    # ${vout}_fieldmap2str_init.mat -omat ${vout}_fieldmap2str.mat -out
-    # ${vout}_fieldmap2str -nosearch
-    flt_fmap_mag_sbref = pe.Node(fsl.FLIRT(dof=6, no_search=True, bins=640, cost_func='mutualinfo'),
-                                 name="Fmap_Mag_2_SBRef_Affine_Transform")
+    #  flirt -in ${fmapmaghead} -ref ${vrefhead} -dof ${dof} -init
+    #  ${vout}_fieldmap2str_init.mat -omat ${vout}_fieldmap2str.mat -out
+    #  ${vout}_fieldmap2str -nosearch
+    flt_fmap_mag_sbref = pe.Node(
+        fsl.FLIRT(dof=6, no_search=True, bins=640, cost_func='mutualinfo'),
+        name="Fmap_Mag_2_SBRef_Affine_Transform"
+    )
 
-    # the following is a NEW HACK to fix extrapolation when fieldmap is too small
-    # applywarp -i ${vout}_fieldmaprads_unmasked -r ${vrefhead}
-    # --premat=${vout}_fieldmap2str.mat -o ${vout}_fieldmaprads2str_pad0
-    aw_fmap_unmasked_sbref = pe.Node(
-        fsl.ApplyWarp(relwarp=True), name="Apply_Warp_Fmap_Unmasked_2_SBRef")
+    #  the following is a NEW HACK to fix extrapolation when fieldmap is too 
+    #  small
+    #  applywarp -i ${vout}_fieldmaprads_unmasked -r ${vrefhead}
+    #  --premat=${vout}_fieldmap2str.mat -o ${vout}_fieldmaprads2str_pad0
+    aw_fmap_unmasked_sbref = pe.Node(fsl.ApplyWarp(relwarp=True), 
+                                     name="Apply_Warp_Fmap_Unmasked_2_SBRef")
 
     # fslmaths ${vout}_fieldmaprads2str_pad0 -abs -bin
     # ${vout}_fieldmaprads2str_innermask
@@ -80,8 +76,11 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     # fugue --loadfmap=${vout}_fieldmaprads2str_pad0
     # --mask=${vout}_fieldmaprads2str_innermask --unmaskfmap
     # --unwarpdir=${fdir} --savefmap=${vout}_fieldmaprads2str_dilated
-    fugue_dilate = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
-                                     save_unmasked_fmap=True), name="Fmap_Dilating")
+    fugue_dilate = pe.Node(
+        fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time, 
+                  save_unmasked_fmap=True), 
+        name="Fmap_Dilating"
+    )
 
     # epi_reg --epi=sub-S2529LVY1263171_task-nback_run-1_bold_brain
     # --t1=../Preprocessing_test_workflow/_subject_id_S2529LVY1263171/Bias_Field_Correction/sub-S2529LVY1263171_run-1_T1w_corrected.nii.gz
@@ -117,7 +116,6 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (fmap_unmasked_abs, fmap_unmasked_bin, [('out_file', 'in_file')]),
         (aw_fmap_unmasked_sbref, fugue_dilate, [('out_file', 'fmap_in_file')]),
         (fmap_unmasked_bin, fugue_dilate, [('out_file', 'mask_file')]),
-
         (sbref_bet, outputnode, [('out_file', 'sbref_brain')]),
         (fugue_sbref, outputnode, [('unwarped_file', 'sbref_unwarped')]),
         (fugue_dilate, outputnode, [('fmap_out_file', 'sbref_fmap')]),
