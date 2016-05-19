@@ -298,7 +298,7 @@ def check_intended_for(fmap_json_file, func_file):
     try:
         fmap_json_fp = open(fmap_json_file, 'r')
         fmap_json = json.loads(fmap_json_fp.readlines())
-        intended_for = fmap_json['IntendedFor"]
+        intended_for = fmap_json["IntendedFor"]
     except OSError:
         return None
     except ValueError:
