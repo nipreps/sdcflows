@@ -59,11 +59,11 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         name="Fmap_Mag_2_SBRef_Affine_Transform"
     )
 
-    #  the following is a NEW HACK to fix extrapolation when fieldmap is too 
+    #  the following is a NEW HACK to fix extrapolation when fieldmap is too
     #  small
     #  applywarp -i ${vout}_fieldmaprads_unmasked -r ${vrefhead}
     #  --premat=${vout}_fieldmap2str.mat -o ${vout}_fieldmaprads2str_pad0
-    aw_fmap_unmasked_sbref = pe.Node(fsl.ApplyWarp(relwarp=True), 
+    aw_fmap_unmasked_sbref = pe.Node(fsl.ApplyWarp(relwarp=True),
                                      name="Apply_Warp_Fmap_Unmasked_2_SBRef")
 
     # fslmaths ${vout}_fieldmaprads2str_pad0 -abs -bin
@@ -77,8 +77,8 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     # --mask=${vout}_fieldmaprads2str_innermask --unmaskfmap
     # --unwarpdir=${fdir} --savefmap=${vout}_fieldmaprads2str_dilated
     fugue_dilate = pe.Node(
-        fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time, 
-                  save_unmasked_fmap=True), 
+        fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
+                  save_unmasked_fmap=True),
         name="Fmap_Dilating"
     )
 
@@ -124,8 +124,8 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     ])
     return workflow
 
-
-def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: disable=R0914
+# pylint: disable=R0914
+def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
     """ A workflow to correct EPI images """
     if settings is None:
         settings = {}
@@ -134,11 +134,19 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
 
     workflow = pe.Workflow(name=name)
 
-    inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi', 'sbref', 'sbref_brain', 'sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix',
-                'fmap_unmasked', 'wm_seg']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'epi2sbref_matrix', 'stripped_epi', 'corrected_epi_mean']), name='outputnode')
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=['epi', 'sbref', 'sbref_brain',
+                              'sbref_unwarped', 'sbref_fmap',
+                              'mag2sbref_matrix', 'fmap_unmasked', 'wm_seg']),
+        name='inputnode'
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['epi_brain', 'epi2sbref_matrix',
+                              'stripped_epi', 'corrected_epi_mean',
+                              'merged_epi', 'stripped_epi_mask', 
+                              'epi_mmotion_params']),
+        name='outputnode'
+    )
 
     # Skull strip EPI  (try ComputeMask(BaseInterface))
     epi_bet = pe.Node(
@@ -240,8 +248,12 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):  # pylint: dis
         (convert_fmap_shift, aw_final, [('out_file', 'field_file')]),
         (aw_final, merge_epi, [('out_file', 'in_files')]),
         (merge_epi, epi_mean, [('merged_file', 'in_file')]),
+        (merge_epi, outputnode, [('merged_file', 'merged_epi')]),
         (epi_bet, outputnode, [('out_file', 'stripped_epi')]),
-        (epi_mean, outputnode, [('out_file', 'corrected_epi_mean')])
+        (epi_bet, outputnode, [('mask_file', 'stripped_epi_mask')],
+        (epi_mean, outputnode, [('out_file', 'corrected_epi_mean')]),
+        (flt_bbr, outputnode, [('out_matrix_file', 'epi2sbref_matrix')]
+        (motion_corrected_epi, outputnode, [('par_file', 'epi_motion_params')],
     ])
     return workflow
 
