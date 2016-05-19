@@ -1,5 +1,6 @@
 from glob import glob
 import copy
+import json
 import os
 import re
 
@@ -290,9 +291,21 @@ def get_dwi(dwi_files, run_id=None, acq_id=None):
     else:
         return dwi_data[0]
 
-#  intendedfor logic goes here
-def get_fmap(fmap_files):
+def get_fmap(fmap_files, run_id=None, acq_id=None):
     return
+
+def check_intended_for(fmap_json_file, func_file):
+    try:
+        fmap_json_fp = open(fmap_json_file, 'r')
+        fmap_json = json.loads(fmap_json_fp.readlines())
+        intended_for = fmap_json['IntendedFor"]
+    except OSError:
+        return None
+    except ValueError:
+        raise InvalidFmapJsonFile
+    except KeyError:
+        return None
+    
 
 def get_ids(dataset):
     ids = {'subjects': set(), 'sessions': set(), 'tasks': set(), 
