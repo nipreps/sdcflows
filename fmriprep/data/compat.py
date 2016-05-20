@@ -1,3 +1,6 @@
+"""
+Compatibility layer for Python 3/Python 2 single codebase
+"""
 import sys
 import hashlib
 
