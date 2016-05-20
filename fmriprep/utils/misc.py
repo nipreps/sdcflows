@@ -1,25 +1,31 @@
 from glob import glob
 import copy
+import json
 import os
+import re
 
-INPUTS_SPEC = {'fieldmaps': [], 'fieldmaps_meta': [], 'epi': '', 'epi_meta': '', 'sbref': '',
-                  'sbref_meta': '', 't1': ''}
+INPUTS_SPEC = {'fieldmaps': [], 'fieldmaps_meta': [], 'epi': '',
+               'epi_meta': '', 'sbref': '', 'sbref_meta': '', 't1': ''}
+
 
 def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
             if x.startswith(prefix)]
 
-def get_subject(bids_root, subject_id, session_id=None, run_id=None, include_types=None):
+
+def get_subject(bids_root, subject_id, session_id=None, run_id=None,
+                include_types=None):
     """
     Returns the imaging_data structure for the subject subject_id.
     If session is None, then the BIDS structure is not multisession.
-    If run_id is None, it is assumed that the session does not have several runs.
+    If run_id is None, it is assumed that the session does not have several
+    runs.
     """
     if include_types is None:
-        # include all scan types by default
-        include_types = ['func', 'anat', 'fmap']  # Please notice that dwi is not here
-
-    subject_data = collect_bids_data(bids_root, include_types=None)['sub-' + subject_id]
+        # Please notice that dwi is not here
+        include_types = ['func', 'anat', 'fmap']
+    subject_data = collect_bids_data(bids_root, include_types=None)
+    subject_data = subject_data['sub-' + subject_id]
 
     if session_id is None:
         subject_data = subject_data[list(subject_data.keys())[0]]
@@ -31,14 +37,14 @@ def get_subject(bids_root, subject_id, session_id=None, run_id=None, include_typ
 
     return subject_data
 
+
 # if no scan_subject or scan_session are defined return all bids data for a
 # given bids directory. Otherwise just the data for a given subject or scan
 # can be returned
-def collect_bids_data(dataset, include_types=None, scan_subject='sub-', 
+def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                       scan_session='ses-'):
     imaging_data = {}
     if include_types is None:
-        # include all scan types by default
         include_types = ['func', 'anat', 'fmap', 'dwi']
 
     subjects = _walk_dir_for_prefix(dataset, scan_subject)
@@ -64,9 +70,8 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
             for session in subject_sessions:
                 if session not in imaging_data[subject]:
                     imaging_data[subject][session] = copy.deepcopy(INPUTS_SPEC)
-                scan_files = glob(os.path.join(
-                    dataset, session, scan_type,
-                    '*'))
+                scan_files = glob(os.path.join(dataset, session, scan_type,
+                                               '*'))
 
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
