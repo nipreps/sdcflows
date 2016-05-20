@@ -229,7 +229,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (inputnode, convert_fmap_shift, [('sbref_unwarped', 'reference')]),
         (inputnode, aw_final, [('sbref_unwarped', 'ref_file')]),
         (inputnode, aw_fmap_unmasked_epi, [('fmap_unmasked', 'in_file')]),
-        (epi_bet, motion_correct_epi, [('out_file', 'in_file')]),
+        (inputnode, motion_correct_epi, [('epi', 'in_file')]),
         (epi_bet, flt_epi_sbref, [('out_file', 'in_file')]),
         (epi_bet, flt_bbr, [('out_file', 'in_file')]),
         (epi_bet, aw_fmap_unmasked_epi, [('out_file', 'ref_file')]),
@@ -256,6 +256,3 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (motion_correct_epi, outputnode, [('par_file', 'epi_motion_params')])
     ])
     return workflow
-
-
-
