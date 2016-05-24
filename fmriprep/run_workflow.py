@@ -32,6 +32,8 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
     connector_wf = pe.Workflow(name=name)
     connector_wf.connect([
         (preproc_wf, report_wf, [
+            ('outputnode.t1_2_mni', 'inputnode.t1_2_mni'),
+            ('outputnode.stripped_t1', 'inputnode.t1_brain'),
             ('outputnode.fieldmap', 'inputnode.fieldmap'),
             ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
             ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
@@ -138,6 +140,7 @@ def main():
     workflow.base_dir = settings['work_dir']
 
     workflow.run(**plugin_settings)
+    workflow.write_graph()
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
 # def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):

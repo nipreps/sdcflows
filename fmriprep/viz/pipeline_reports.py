@@ -4,12 +4,16 @@ Created on Wed Jan 27 14:32:13 2016
 
 @author: craigmoodie
 """
+
+import os.path as op
+
 from nipype.interfaces.fsl import MeanImage
 from nipype.interfaces.utility import Function
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.pipeline.engine import Workflow, Node
 
+from ..data import get_mni_template
 from .pdf_compose import generate_report
 
 
@@ -67,8 +71,10 @@ def generate_report_workflow():
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['fmap_mag', 'fmap_mag_brain', 'raw_epi', 'stripped_epi',
                 'corrected_epi_mean', 'sbref', 'sbref_brain', 'sbref_brain',
-                'sbref_t1', 'corrected_sbref', 't1', 't1_brain', 't1_mni',
-                'parcels_t1', 'parcels_native', 'fieldmap']), name='inputnode')
+                'sbref_t1', 'corrected_sbref', 't1', 't1_brain', 't1_2_mni',
+                'parcels_t1', 'parcels_native', 'fieldmap', 't1_segmentation']),
+        name='inputnode'
+    )
     outputnode = pe.Node(niu.IdentityInterface(fields=['wm_seg']),
                          name='outputnode')
 
@@ -173,12 +179,25 @@ def generate_report_workflow():
         name="SBRef_to_T1_Overlay"
     )
     sbref_2_t1.inputs.out_file = "SBRef_to_T1_Overlay.png"
+    
+    t1_2_mni = Node(
+        Function(
+            input_names=["in_file", "overlay_file", "out_file"],
+            output_names=["out_file"],
+            function=anatomical_overlay
+        ), 
+        name="t1_to_mni"
+    )
+    t1_2_mni.inputs.out_file = "t1_to_mni_overlay.png"
+    t1_2_mni.inputs.overlay_file = op.join(get_mni_template(), 
+                                           'MNI152_T1_2mm.nii.gz') 
 
     final_pdf = Node(
         Function(
             input_names=[
                 "output_file", "first_plot", "second_plot", "third_plot",
-                "fifth_plot", "sixth_plot", "seventh_plot"
+                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot", 
+                "t1_2_mni_plot"
             ],
             output_names=["output_file"],
             function=generate_report
@@ -201,8 +220,9 @@ def generate_report_workflow():
         (inputnode, sbref_unwarp_overlay, [("sbref", "overlay_file")]),
         (inputnode, SBRef_BET, [("sbref_brain", "in_file")]),
         (inputnode, SBRef_BET, [("sbref", "overlay_file")]),
-        # (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
-        # (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
+        (inputnode, t1_2_mni, [("t1_2_mni", "in_file")]),
+        (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
+        (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
         #  (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
         #  (inputnode, parcels_2_EPI, [("corrected_epi_mean", "overlay_file")]),
         #  (inputnode, parcels_2_T1, [("parcels_t1", "in_file")]),
@@ -222,10 +242,11 @@ def generate_report_workflow():
         (fmap_overlay, final_pdf, [("out_file", "first_plot")]),
         (EPI_BET_report, final_pdf, [("out_file", "second_plot")]),
         (SBRef_BET, final_pdf, [("out_file", "third_plot")]),
-        # (T1_SkullStrip, final_pdf, [("out_file",  "fourth_plot")]),
+        (T1_SkullStrip, final_pdf, [("out_file",  "fourth_plot")]),
         (sbref_unwarp_overlay, final_pdf, [("out_file",  "fifth_plot")]),
         (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
         (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
+        (t1_2_mni, final_pdf, [("out_file", "t1_2_mni_plot")]),
         #  (sbref_2_t1, final_pdf, [("out_file",  "eighth_plot")]),
         #  (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
         #  (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
