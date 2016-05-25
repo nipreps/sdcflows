@@ -26,7 +26,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref', 'mag_brain', 'fmap_scaled', 'fmap_mask', 'fmap_unmasked',
-                'in_topup']), name='inputnode')
+                'in_topup', 't1', 'stripped_t1']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix', 'sbref_brain',
                 'sbref_brain_corrected', 't1_brain']), name='outputnode')
@@ -41,6 +41,16 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
 
     strip_corrected_sbref = pe.Node(fsl.BET(mask=True, frac=0.6, robust=True),
                                     name="BET_Corrected_SBRef")
+
+    flt_sbref_brain_t1_brain = pe.Node(
+        fsl.FLIRT(dof=6, bins=640, cost_func='mutualinfo'),
+        name='sbref_brain_2_t1_brain_affine_transform'
+    )
+
+    flt_sbref_2_t1 = pe.Node(
+        fsl.FLIRT(dof=6, bins=640, cost_func='mutualinfo'),
+        name='sbref_2_t1_affine_transform'
+    )
 
     #  Run the commands from epi_reg_dof
     #  WITH FIELDMAP (unwarping steps)
@@ -100,7 +110,12 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (inputnode, fugue_sbref, [('fmap_mask', 'mask_file')]),
         (inputnode, flt_fmap_mag_sbref, [('in_topup', 'in_file')]),
         (inputnode, aw_fmap_unmasked_sbref, [('fmap_unmasked', 'in_file')]),
-        #(inputnode, SBRef_skull_strip, [("sbref", "in_file")]),
+        #  (inputnode, flt_sbref_brain_t1_brain, [('stripped_t1', 'reference')]),
+        #  (strip_corrected_sbref, flt_sbref_brain_t1_brain, [('out_file', 'in_file')]),
+        #  (fugue_sbref, flt_sbref_2_t1, [('unwarped_file', 'in_file')]),
+        #  (inputnode, flt_sbref_2_t1, [('t1', 'reference')]),
+        #  (flt_sbref_brain_t1_brain, flt_sbref_2_t1, [('out_matrix_file', 'in_matrix_file')]),
+        #  (inputnode, SBRef_skull_strip, [("sbref", "in_file")]),
         (fugue_sbref, strip_corrected_sbref, [('unwarped_file', 'in_file')]),
         # might need to switch to [strip_corrected_sbref, "in_file"] here
         # instead of [sbref_bet, "out_file"]
@@ -109,7 +124,8 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (sbref_bet, flt_fmap_mag_brain_sbref_brain, [('out_file', 'reference')]),
         (fugue_sbref, flt_fmap_mag_sbref, [('unwarped_file', 'reference')]),
         (flt_fmap_mag_brain_sbref_brain, flt_fmap_mag_sbref, [
-            ('out_matrix_file', 'in_matrix_file')]),
+            ('out_matrix_file', 'in_matrix_file')
+        ]),
         (flt_fmap_mag_sbref, aw_fmap_unmasked_sbref, [('out_matrix_file', 'premat')]),
         (fugue_sbref, aw_fmap_unmasked_sbref, [('unwarped_file', 'ref_file')]),
         (aw_fmap_unmasked_sbref, fmap_unmasked_abs, [('out_file', 'in_file')]),
@@ -144,7 +160,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         niu.IdentityInterface(fields=['epi_brain', 'epi2sbref_matrix',
                               'stripped_epi', 'corrected_epi_mean',
                               'merged_epi', 'stripped_epi_mask', 
-                              'epi_motion_params']),
+                              'epi_motion_params', 'bbr_sbref_2_t1']),
         name='outputnode'
     )
 
