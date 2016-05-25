@@ -8,7 +8,7 @@ Created on Sun Jul 26 16:54:08 2015
 
 def generate_report(output_file, first_plot, second_plot, third_plot,
                     fourth_plot, fifth_plot, sixth_plot, seventh_plot, 
-                    t1_2_mni_plot):
+                    eighth_plot, t1_2_mni_plot):
     import os.path
     import pylab as plt
     from matplotlib.gridspec import GridSpec
@@ -16,7 +16,7 @@ def generate_report(output_file, first_plot, second_plot, third_plot,
     import matplotlib.image as mimage
 
     plots = [first_plot, second_plot, third_plot, fourth_plot,
-             fifth_plot, sixth_plot, t1_2_mni_plot, seventh_plot]
+             fifth_plot, sixth_plot, t1_2_mni_plot, seventh_plot, eighth_plot]
     #  error_image = ""
     #  error = mimage.imread(error_image)
     report = PdfPages(output_file)
@@ -29,6 +29,7 @@ def generate_report(output_file, first_plot, second_plot, third_plot,
             try:
                 plot = next(plot_iterator)
             except:
+                print('{}, {}'.format(i, j))
                 continue
             if plot is None:
                 #  plot = error
