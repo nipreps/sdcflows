@@ -39,7 +39,7 @@ ENV GIT_URL ${GIT_URL:-"https://github.com/poldracklab/preprocessing-workflow.gi
 
 WORKDIR /root/src
 RUN git clone $GIT_URL && \
-    cd fmriprep && \
+    cd preprocessing-workflow && \
     git checkout $GIT_BRANCH && \
     source activate crnenv && \
     python setup.py install
