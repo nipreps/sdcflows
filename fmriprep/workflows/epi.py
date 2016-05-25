@@ -11,8 +11,11 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 import os
 import os.path as op
 from nipype.pipeline import engine as pe
+from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+
+from ..viz import stripped_brain_overlay
 
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
@@ -101,6 +104,21 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     # --fmapmagbrain=Magnitude_brain.nii.gz --echospacing=dwell_time
     # --pedir=x- -v
 
+    sbref_stripped_overlay= pe.Node(
+        niu.Function(
+            input_names=["in_file", "overlay_file", "out_file"],
+            output_names=["out_file"],
+            function=stripped_brain_overlay
+        ),
+        name="sbref_stripped_overlay"
+    )
+    sbref_stripped_overlay.inputs.out_file = "sbref_stripped_overlay.png"
+
+    datasink = pe.Node(
+        interface=nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
+        name="datasink",
+        parameterization=False
+    )
 
     workflow.connect([
         (inputnode, sbref_bet, [('sbref', 'in_file')]),
@@ -136,7 +154,10 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (fugue_sbref, outputnode, [('unwarped_file', 'sbref_unwarped')]),
         (fugue_dilate, outputnode, [('fmap_out_file', 'sbref_fmap')]),
         (flt_fmap_mag_sbref, outputnode, [('out_matrix_file', 'mag2sbref_matrix')]),
-        (strip_corrected_sbref, outputnode, [('out_file', 'sbref_brain_corrected')])
+        (strip_corrected_sbref, outputnode, [('out_file', 'sbref_brain_corrected')]),
+        (inputnode, sbref_stripped_overlay, [('sbref', 'in_file')]),
+        (sbref_bet, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
+        (sbref_stripped_overlay, datasink, [('out_file', '@sbref_stripped_overlay')])
     ])
     return workflow
 
