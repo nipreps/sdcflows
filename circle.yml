@@ -22,7 +22,7 @@ test:
   override:
     # Run tests file
     - bash build/circle_tests.sh:
-        timeout: 2400
+        timeout: 4800
 
 general:
   artifacts:
