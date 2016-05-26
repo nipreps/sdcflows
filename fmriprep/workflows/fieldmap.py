@@ -8,9 +8,15 @@ Fieldmap-processing workflows.
 Originally coded by Craig Moodie. Refactored by the CRN Developers.
 """
 
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
+import os.path as op
+
 from nipype.interfaces import fsl
+from nipype.interfaces import io as nio
+from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
+
+from ..viz import stripped_brain_overlay
+
 
 def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R0914
     """
@@ -67,6 +73,27 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
     fugue_unmask = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
                                  save_unmasked_fmap=True), name="Fmap_Unmasking")
 
+
+    fmap_mag_mean = pe.Node(fsl.MeanImage(), name="fmap_mag_mean")
+    fmap_mag_mean.inputs.output_type = "NIFTI_GZ"
+    fmap_mag_mean.inputs.dimension = 'T'
+
+    field_map_magnitude_overlay = pe.Node(
+        niu.Function(
+            input_names=["in_file", "overlay_file", "out_file"],
+            output_names=["out_file"],
+            function=stripped_brain_overlay
+        ),
+        name="field_map_magnitude_overlay"
+    )
+    field_map_magnitude_overlay.inputs.out_file = "field_map_magnitude_overlay.png"
+
+    datasink = pe.Node(
+        interface=nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
+        name="datasink",
+        parameterization=False
+    )
+
     workflow.connect([
         (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
         (fslmerge, hmc_se_pair, [('merged_file', 'in_file')]),
@@ -89,7 +116,11 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
         (mag_bet, outputnode, [('out_file', 'mag_brain'),
                                ('mask_file', 'fmap_mask')]),
         (topup, outputnode, [('out_corrected', 'out_topup')]),
-        (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')])
+        (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')]),
+        (topup, fmap_mag_mean, [('out_corrected', 'in_file')]),
+        (fmap_mag_mean, field_map_magnitude_overlay, [('out_file', 'overlay_file')]),
+        (mag_bet, field_map_magnitude_overlay, [('mask_file', 'in_file')]),
+        (field_map_magnitude_overlay, datasink, [('out_file', '@field_map_magnitude_overlay')])
     ])
     return workflow
 
