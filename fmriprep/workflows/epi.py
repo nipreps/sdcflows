@@ -155,8 +155,8 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (fugue_dilate, outputnode, [('fmap_out_file', 'sbref_fmap')]),
         (flt_fmap_mag_sbref, outputnode, [('out_matrix_file', 'mag2sbref_matrix')]),
         (strip_corrected_sbref, outputnode, [('out_file', 'sbref_brain_corrected')]),
-        (inputnode, sbref_stripped_overlay, [('sbref', 'in_file')]),
-        (sbref_bet, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
+        (inputnode, sbref_stripped_overlay, [('sbref', 'overlay_file')]),
+        (sbref_bet, sbref_stripped_overlay, [('mask_file', 'in_file')]),
         (sbref_stripped_overlay, datasink, [('out_file', '@sbref_stripped_overlay')])
     ])
     return workflow
