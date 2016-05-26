@@ -122,8 +122,10 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
 
     workflow.connect([
         (inputnode, sbref_bet, [('sbref', 'in_file')]),
-        (inputnode, fugue_sbref, [('sbref', 'in_file')]),
-        (inputnode, fugue_sbref, [('fmap_scaled', 'fmap_in_file')]),
+        (inputnode, fugue_sbref, [
+            ('sbref', 'in_file'),
+            ('fmap_scaled', 'fmap_in_file')
+        ]),
         (inputnode, flt_fmap_mag_brain_sbref_brain, [('mag_brain', 'in_file')]),
         (inputnode, fugue_sbref, [('fmap_mask', 'mask_file')]),
         (inputnode, flt_fmap_mag_sbref, [('in_topup', 'in_file')]),
