@@ -74,7 +74,7 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
                                  save_unmasked_fmap=True), name="Fmap_Unmasking")
 
 
-    fmap_mag_mean = pe.Node(fsl.MeanImage(), name="Fieldmap_mean")
+    fmap_mag_mean = pe.Node(fsl.MeanImage(), name="fmap_mag_mean")
     fmap_mag_mean.inputs.output_type = "NIFTI_GZ"
     fmap_mag_mean.inputs.dimension = 'T'
 
@@ -117,9 +117,9 @@ def se_pair_workflow(name='SE_PairFMap', settings=None):  # pylint: disable=R091
                                ('mask_file', 'fmap_mask')]),
         (topup, outputnode, [('out_corrected', 'out_topup')]),
         (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')]),
-        (mag_bet, fmap_mag_mean, [('out_file', 'in_file')]),
+        (topup, fmap_mag_mean, [('out_corrected', 'in_file')]),
         (fmap_mag_mean, field_map_magnitude_overlay, [('out_file', 'overlay_file')]),
-        (topup, field_map_magnitude_overlay, [('out_corrected', 'in_file')]),
+        (mag_bet, field_map_magnitude_overlay, [('mask_file', 'in_file')]),
         (field_map_magnitude_overlay, datasink, [('out_file', '@field_map_magnitude_overlay')])
     ])
     return workflow
