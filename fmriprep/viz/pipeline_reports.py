@@ -154,15 +154,6 @@ def generate_report_workflow():
         name="SBRef_BET"
     )
     SBRef_BET.inputs.out_file = "SBRef_BET_Overlay.png"
-    T1_SkullStrip = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=stripped_brain_overlay
-        ),
-        name="T1_SkullStrip"
-    )
-    T1_SkullStrip.inputs.out_file = "T1_SkullStrip_Overlay.png"
 
     epi_2_sbref = Node(
         Function(
@@ -184,19 +175,19 @@ def generate_report_workflow():
     )
     sbref_2_t1.inputs.out_file = "SBRef_to_T1_Overlay.png"
 
-    final_pdf = Node(
-        Function(
-            input_names=[
-                "output_file", "first_plot", "second_plot", "third_plot",
-                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot",
-                "eighth_plot"
-            ],
-            output_names=["output_file"],
-            function=generate_report
-        ),
-        name="Final_pdf"
-    )
-    final_pdf.inputs.output_file = "Preprocessing_Quality_Report.pdf"
+#    final_pdf = Node(
+#        Function(
+#            input_names=[
+#                "output_file", "first_plot", "second_plot", "third_plot",
+#                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot",
+#                "eighth_plot"
+#            ],
+#            output_names=["output_file"],
+#            function=generate_report
+#        ),
+#        name="Final_pdf"
+#    )
+#    final_pdf.inputs.output_file = "Preprocessing_Quality_Report.pdf"
 
 
     report_workflow.connect([
@@ -213,8 +204,6 @@ def generate_report_workflow():
         (inputnode, sbref_unwarp_overlay, [("sbref", "overlay_file")]),
         (inputnode, SBRef_BET, [("sbref_brain", "in_file")]),
         (inputnode, SBRef_BET, [("sbref", "overlay_file")]),
-        (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
-        (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
         #  (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
         #  (inputnode, parcels_2_EPI, [("corrected_epi_mean", "overlay_file")]),
         #  (inputnode, parcels_2_T1, [("parcels_t1", "in_file")]),
@@ -231,19 +220,18 @@ def generate_report_workflow():
         #  (inputnode, T1_2_MNI, [("t1_mni", "in_file")]),
         #  replace sbref to mni and epi to mni with sbref and epi unwarping,
         #  also replace epi to t1 with parcel to sbref
-        (fmap_overlay, final_pdf, [("out_file", "first_plot")]),
-        (EPI_BET_report, final_pdf, [("out_file", "second_plot")]),
-        (SBRef_BET, final_pdf, [("out_file", "third_plot")]),
-        (T1_SkullStrip, final_pdf, [("out_file",  "fourth_plot")]),
-        (sbref_unwarp_overlay, final_pdf, [("out_file",  "fifth_plot")]),
-        (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
-        (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
-        # (t1_2_mni, final_pdf, [("out_file", "t1_2_mni_plot")]),
-        (sbref_2_t1, final_pdf, [("out_file",  "eighth_plot")]),
-        #  (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
-        #  (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
-        #  (parcels_2_EPI, final_pdf, [("out_file",  "eleventh_plot")]),
-        #  (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
+#        (fmap_overlay, final_pdf, [("out_file", "first_plot")]),
+#        (EPI_BET_report, final_pdf, [("out_file", "second_plot")]),
+#        (SBRef_BET, final_pdf, [("out_file", "third_plot")]),
+#        (sbref_unwarp_overlay, final_pdf, [("out_file",  "fifth_plot")]),
+#        (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
+#        (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
+#        # (t1_2_mni, final_pdf, [("out_file", "t1_2_mni_plot")]),
+#        (sbref_2_t1, final_pdf, [("out_file",  "eighth_plot")]),
+#        #  (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
+#        #  (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
+#        #  (parcels_2_EPI, final_pdf, [("out_file",  "eleventh_plot")]),
+#        #  (parcels_2_sbref, final_pdf, [("out_file",  "twelfth_plot")]),
     ])
 
     return report_workflow
