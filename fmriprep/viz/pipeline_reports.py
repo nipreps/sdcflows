@@ -180,24 +180,12 @@ def generate_report_workflow():
         name="SBRef_to_T1_Overlay"
     )
     sbref_2_t1.inputs.out_file = "SBRef_to_T1_Overlay.png"
-    
-    t1_2_mni = Node(
-        Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=anatomical_overlay
-        ), 
-        name="t1_to_mni"
-    )
-    t1_2_mni.inputs.out_file = "t1_to_mni_overlay.png"
-    t1_2_mni.inputs.overlay_file = op.join(get_mni_template(), 
-                                           'MNI152_T1_2mm.nii.gz') 
 
     final_pdf = Node(
         Function(
             input_names=[
                 "output_file", "first_plot", "second_plot", "third_plot",
-                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot", 
+                "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot",
                 "eighth_plot", "t1_2_mni_plot"
             ],
             output_names=["output_file"],
@@ -222,7 +210,6 @@ def generate_report_workflow():
         (inputnode, sbref_unwarp_overlay, [("sbref", "overlay_file")]),
         (inputnode, SBRef_BET, [("sbref_brain", "in_file")]),
         (inputnode, SBRef_BET, [("sbref", "overlay_file")]),
-        (inputnode, t1_2_mni, [("t1_2_mni", "in_file")]),
         (inputnode, T1_SkullStrip, [("t1_brain", "in_file")]),
         (inputnode, T1_SkullStrip, [("t1", "overlay_file")]),
         #  (inputnode, parcels_2_EPI, [("parcels_native", "in_file")]),
@@ -248,7 +235,7 @@ def generate_report_workflow():
         (sbref_unwarp_overlay, final_pdf, [("out_file",  "fifth_plot")]),
         (epi_unwarp_overlay, final_pdf, [("out_file",  "sixth_plot")]),
         (epi_2_sbref, final_pdf, [("out_file",  "seventh_plot")]),
-        (t1_2_mni, final_pdf, [("out_file", "t1_2_mni_plot")]),
+        # (t1_2_mni, final_pdf, [("out_file", "t1_2_mni_plot")]),
         (sbref_2_t1, final_pdf, [("out_file",  "eighth_plot")]),
         #  (T1_2_MNI, final_pdf, [("out_file",  "ninth_plot")]),
         #  (parcels_2_T1, final_pdf, [("out_file",  "tenth_plot")]),
