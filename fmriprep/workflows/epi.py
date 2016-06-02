@@ -176,13 +176,14 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 'sbref', 'sbref_brain',
                               'sbref_unwarped', 'sbref_fmap',
-                              'mag2sbref_matrix', 'fmap_unmasked', 'wm_seg']),
+                              'mag2sbref_matrix', 'fmap_unmasked', 'wm_seg',
+                              't1_brain']),
         name='inputnode'
     )
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_brain', 'epi2sbref_matrix',
                               'stripped_epi', 'corrected_epi_mean',
-                              'merged_epi', 'stripped_epi_mask', 
+                              'merged_epi', 'stripped_epi_mask',
                               'epi_motion_params', 'bbr_sbref_2_t1']),
         name='outputnode'
     )
@@ -261,18 +262,17 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (inputnode, split_epi, [('epi', 'in_file')]),
         (inputnode, motion_correct_epi, [('sbref', 'ref_file')]),
         (inputnode, flt_epi_sbref, [('sbref_brain', 'reference')]),
-        (inputnode, flt_bbr, [('sbref_unwarped', 'reference'),
+        (inputnode, flt_bbr, [('sbref_unwarped', 'in_file'),
                               ('sbref_fmap', 'fieldmap'),
-                              ('wm_seg', 'wm_seg')]),
+                              ('wm_seg', 'wm_seg'),
+                              ('t1_brain', 'reference')]),
         (inputnode, concat_mats, [('mag2sbref_matrix', 'in_file')]),
         (inputnode, convert_fmap_shift, [('sbref_unwarped', 'reference')]),
         (inputnode, aw_final, [('sbref_unwarped', 'ref_file')]),
         (inputnode, aw_fmap_unmasked_epi, [('fmap_unmasked', 'in_file')]),
         (inputnode, motion_correct_epi, [('epi', 'in_file')]),
         (epi_bet, flt_epi_sbref, [('out_file', 'in_file')]),
-        (epi_bet, flt_bbr, [('out_file', 'in_file')]),
         (epi_bet, aw_fmap_unmasked_epi, [('out_file', 'ref_file')]),
-        (flt_epi_sbref, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (invt_bbr, concat_mats, [('out_file', 'in_file2')]),
         (concat_mats, aw_fmap_unmasked_epi, [('out_file', 'premat')]),
