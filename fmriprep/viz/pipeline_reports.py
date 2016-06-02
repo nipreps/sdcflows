@@ -186,7 +186,7 @@ def generate_report_workflow():
             input_names=[
                 "output_file", "first_plot", "second_plot", "third_plot",
                 "fourth_plot", "fifth_plot", "sixth_plot", "seventh_plot",
-                "eighth_plot", "t1_2_mni_plot"
+                "eighth_plot"
             ],
             output_names=["output_file"],
             function=generate_report
