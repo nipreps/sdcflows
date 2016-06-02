@@ -29,10 +29,10 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref', 'mag_brain', 'fmap_scaled', 'fmap_mask', 'fmap_unmasked',
-                'in_topup', 't1', 'stripped_t1']), name='inputnode')
+                'in_topup', 't1', 't1_brain', 't1_seg']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix', 'sbref_brain',
-                'sbref_brain_corrected', 't1_brain']), name='outputnode')
+                'sbref_brain_corrected', 't1_brain', 'wm_seg', 'sbref_2_t1_transform']), name='outputnode')
 
     #  Skull strip SBRef to get reference brain
     sbref_bet = pe.Node(
@@ -53,6 +53,14 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     flt_sbref_2_t1 = pe.Node(
         fsl.FLIRT(dof=6, bins=640, cost_func='mutualinfo'),
         name='sbref_2_t1_affine_transform'
+    )
+
+    # Affine transform of T1 segmentation into SBRref space
+    flt_wmseg_sbref = pe.Node(fsl.FLIRT(dof=6, bins=64, cost_func='mutualinfo'),
+                              name="WMSeg_2_SBRef_Brain_Affine_Transform")
+
+    invert_wmseg_sbref = pe.Node(
+        fsl.ConvertXFM(invert_xfm=True), name="invert_wmseg_sbref"
     )
 
     #  Run the commands from epi_reg_dof
@@ -121,6 +129,16 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     )
 
     workflow.connect([
+
+        (inputnode, flt_wmseg_sbref, [('sbref', 'reference')]),
+        (inputnode, flt_wmseg_sbref, [('t1_seg', 'in_file')]),
+        (flt_wmseg_sbref, invert_wmseg_sbref, [('out_matrix_file', 'in_file')]),
+        (flt_wmseg_sbref, outputnode, [('out_file', 'wm_seg')]),
+        (invert_wmseg_sbref, outputnode, [('out_file', 'sbref_2_t1_transform')]),
+
+
+
+
         (inputnode, sbref_bet, [('sbref', 'in_file')]),
         (inputnode, fugue_sbref, [
             ('sbref', 'in_file'),
