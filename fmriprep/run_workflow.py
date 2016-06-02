@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-05-11 13:30:01
+# @Last Modified time: 2016-06-02 09:54:04
 """
 fMRI preprocessing workflow
 =====
@@ -25,7 +25,7 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
     from nipype.pipeline import engine as pe
     from .workflows import fmri_preprocess_single
     from .viz.pipeline_reports import generate_report_workflow
-    
+
     preproc_wf = fmri_preprocess_single(settings=settings)
     report_wf = generate_report_workflow()
 
@@ -63,19 +63,20 @@ def main():
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
     from .utils.misc import get_subject
-    
+
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
 
     g_input = parser.add_argument_group('Inputs')
-    g_input.add_argument('-B', '--bids-root', action='store',
-                         default=os.getcwd())
+    g_input.add_argument('-B', '--bids-root', action='store', default=os.getcwd())
     g_input.add_argument('-S', '--subject-id', action='store', required=True)
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
     g_input.add_argument('-v', '--version', action='store_true', default=False,
                          help='Show current fmriprep version')
+    g_input.add_argument('--debug', action='store_true', default=False,
+                         help='run debug version of workflow')
 
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
@@ -96,11 +97,13 @@ def main():
         print('fmriprep version ' + __version__)
         exit(0)
 
-    settings = {'bids_root': op.abspath(opts.bids_root),
-                'output_dir': os.getcwd(),
-                'write_graph': opts.write_graph,
-                'skip': [],
-                'nthreads': opts.nthreads}
+    settings = {
+        'bids_root': op.abspath(opts.bids_root),
+        'output_dir': os.getcwd(),
+        'write_graph': opts.write_graph,
+        'nthreads': opts.nthreads,
+        'debug': opts.debug
+    }
 
     if opts.output_dir:
         settings['output_dir'] = op.abspath(opts.output_dir)
@@ -108,6 +111,7 @@ def main():
     if not op.exists(settings['output_dir']):
         os.makedirs(settings['output_dir'])
 
+    # Logging and work directory
     if opts.work_dir:
         settings['work_dir'] = op.abspath(opts.work_dir)
 
@@ -121,6 +125,7 @@ def main():
             'execution': {'crashdump_dir': log_dir}
         })
 
+    # nipype plugin configuration
     plugin_settings = {'plugin': 'Linear'}
     if opts.use_plugin is not None:
         from yaml import load as loadyml
@@ -135,14 +140,16 @@ def main():
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
-    imaging_data = get_subject(opts.bids_root, opts.subject_id)
+    # Retrieve BIDS data
+    imaging_data = get_subject(settings['bids_root'], opts.subject_id)
 
-    #  workflow = fmri_preprocess_single(settings=settings)
+    # Build main workflow and run
     workflow = preproc_and_reports(imaging_data, settings=settings)
     workflow.base_dir = settings['work_dir']
 
+    if opts.write_graph:
+        workflow.write_graph()
     workflow.run(**plugin_settings)
-    workflow.write_graph()
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
 # def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
