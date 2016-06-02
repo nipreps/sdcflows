@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-02 09:53:09
+# @Last Modified time: 2016-06-02 09:55:42
 """
 fMRI preprocessing workflow
 =====
@@ -152,7 +152,6 @@ def main():
 
     if opts.write_graph:
         workflow.write_graph()
-
     workflow.run(**plugin_settings)
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
