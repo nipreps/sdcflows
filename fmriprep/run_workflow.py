@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-01 16:31:22
+# @Last Modified time: 2016-06-02 09:07:38
 """
 fMRI preprocessing workflow
 =====
@@ -75,6 +75,8 @@ def main():
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
     g_input.add_argument('-v', '--version', action='store_true', default=False,
                          help='Show current fmriprep version')
+    g_input.add_argument('--debug', action='store_true', default=False,
+                         help='run debug version of workflow')
 
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
@@ -99,7 +101,8 @@ def main():
         'bids_root': op.abspath(opts.bids_root),
         'output_dir': os.getcwd(),
         'write_graph': opts.write_graph,
-        'nthreads': opts.nthreads
+        'nthreads': opts.nthreads,
+        'debug': opts.debug
     }
 
     if opts.output_dir:
