@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-02 09:07:38
+# @Last Modified time: 2016-06-02 09:53:09
 """
 fMRI preprocessing workflow
 =====
@@ -77,6 +77,8 @@ def main():
                          help='Show current fmriprep version')
     g_input.add_argument('--debug', action='store_true', default=False,
                          help='run debug version of workflow')
+    g_input.add_argument('--skull-strip-ants', action='store_true', default=False,
+                         help='run debug version of workflow')
 
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
@@ -102,7 +104,8 @@ def main():
         'output_dir': os.getcwd(),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
-        'debug': opts.debug
+        'debug': opts.debug,
+        'skull_strip_ants': opts.skull_strip_ants
     }
 
     if opts.output_dir:
@@ -146,7 +149,10 @@ def main():
     # Build main workflow and run
     workflow = preproc_and_reports(imaging_data, settings=settings)
     workflow.base_dir = settings['work_dir']
-    workflow.write_graph()
+
+    if opts.write_graph:
+        workflow.write_graph()
+
     workflow.run(**plugin_settings)
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
