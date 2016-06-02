@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-02 09:07:38
+# @Last Modified time: 2016-06-02 09:54:04
 """
 fMRI preprocessing workflow
 =====
@@ -146,7 +146,9 @@ def main():
     # Build main workflow and run
     workflow = preproc_and_reports(imaging_data, settings=settings)
     workflow.base_dir = settings['work_dir']
-    workflow.write_graph()
+
+    if opts.write_graph:
+        workflow.write_graph()
     workflow.run(**plugin_settings)
 
 # # This might be usefull in some future, but in principle we want single-subject runs.
