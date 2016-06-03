@@ -143,6 +143,11 @@ def create_encoding_file(fieldmaps, in_dict):
     import numpy as np
     import os
 
+    if not isinstance(fieldmaps, list):
+        fieldmaps = [fieldmaps]
+    if not isinstance(in_dict, list):
+        in_dict = [in_dict]
+
     pe_dirs = {'i': 0, 'j': 1, 'k': 2}
     enc_table = []
     for fmap, meta in zip(fieldmaps, in_dict):

@@ -3,7 +3,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-EPI MRI -processing workflows.
+Preprocessing workflows for :abbr:`SB (single-band)`-reference (SBRef)
+images.
 
 Originally coded by Craig Moodie. Refactored by the CRN Developers.
 """
@@ -137,6 +138,24 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
 
     return workflow
 
+
+def _extract_wm(in_file):
+    import os.path as op
+    import nibabel as nb
+    import numpy as np
+
+    im = nb.load(in_file)
+    data = im.get_data().astype(np.uint8)
+    data[data != 3] = 0
+    data[data > 0] = 1
+
+    out_file = op.abspath('wm_mask.nii.gz')
+    nb.Nifti1Image(data, im.get_affine(), im.get_header()).to_filename(out_file)
+    return out_file
+
+###################################
+# Deprecated code
+###################################
 
 def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
     """Legacy SBref processing workflow"""

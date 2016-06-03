@@ -22,6 +22,49 @@ from .fieldmap import create_encoding_file
 from ..viz import stripped_brain_overlay
 
 # pylint: disable=R0914
+def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
+    """ A workflow to correct EPI images """
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']), name='outputnode')
+
+    # Read metadata
+    meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
+                      iterfield=['in_file'], name='metadata')
+
+    encfile = pe.Node(interface=niu.Function(
+        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
+        function=create_encoding_file), name='TopUp_encfile', updatehash=True)
+
+    # Skull strip EPI  (try ComputeMask(BaseInterface))
+    epi_bet = pe.Node(fsl.BET(
+        mask=True, functional=True, frac=0.6), name="EPI_bet")
+
+    # Run MCFLIRT to get motion matrices with the SBRef as reference
+    epi_hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
+    fslsplit = pe.Node(fsl.Split(dimension='t'), name='EPI_split')
+
+    # Now, we cannot use the LSR method
+    unwarp_epi = pe.MapNode(fsl.ApplyTOPUP(method='jac', in_index=[1]),
+                            iterfield=['in_files'], name='TopUpApply')
+
+    workflow.connect([
+        (inputnode, meta, [('epi', 'in_file')]),
+        (inputnode, epi_bet, [('epi', 'in_file')]),
+        (inputnode, encfile, [('epi', 'fieldmaps')]),
+        (epi_bet, epi_hmc, [('out_file', 'in_file')]),
+        (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
+        (inputnode, unwarp_epi, [('fmap_fieldcoef', 'in_topup_fieldcoef'),
+                                 ('fmap_movpar', 'in_topup_movpar')]),
+        (encfile, unwarp_epi, [('parameters_file', 'encoding_file')]),
+        (epi_hmc, fslsplit, [('out_file', 'in_file')]),
+        (fslsplit, unwarp_epi, [('out_files', 'in_files')])
+    ])
+
+    return workflow
+
+# pylint: disable=R0914
 def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
     """ A workflow to correct EPI images """
     if settings is None:
@@ -153,17 +196,3 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
         (motion_correct_epi, outputnode, [('par_file', 'epi_motion_params')])
     ])
     return workflow
-
-def _extract_wm(in_file):
-    import os.path as op
-    import nibabel as nb
-    import numpy as np
-
-    im = nb.load(in_file)
-    data = im.get_data().astype(np.uint8)
-    data[data != 3] = 0
-    data[data > 0] = 1
-
-    out_file = op.abspath('wm_mask.nii.gz')
-    nb.Nifti1Image(data, im.get_affine(), im.get_header()).to_filename(out_file)
-    return out_file
