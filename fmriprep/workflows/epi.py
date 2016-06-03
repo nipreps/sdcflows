@@ -45,16 +45,16 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     sbref_bet = pe.MapNode(fsl.BET(mask=True, functional=True, frac=0.6),
                            iterfield=['in_file'], name="sbref_bet")
 
-    # Head motion correction
+    # Head motion correction (using fieldmap magnitude as reference)
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name='SBref_merge')
     hmc_se = pe.Node(fsl.MCFLIRT(cost='normcorr', mean_vol=True), name='SBref_head_motion_corr')
     fslsplit = pe.Node(fsl.Split(dimension='t'), name='SBref_split')
 
-    # Use the least-squares method to correct the dropout of the SE images
+    # Use the least-squares method to correct the dropout of the SBRef images
     unwarp_mag = pe.Node(fsl.ApplyTOPUP(method='lsr'), name='TopUpApply')
 
     # Remove bias
-    inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SE_bias')
+    inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SBref_bias')
 
     workflow.connect([
         (inputnode, meta, [('sbref', 'in_file')]),
@@ -70,6 +70,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         (hmc_se, fslsplit, [('out_file', 'in_file')]),
         (fslsplit, unwarp_mag, [('out_files', 'in_files')]),
         (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
+        (inu_n4, outputnode, [('output_image', 'sbref_unwarped')])
     ])
     return workflow
 
