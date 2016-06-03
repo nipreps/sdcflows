@@ -45,11 +45,12 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     hmc_se = pe.Node(fsl.MCFLIRT(), name='SE_head_motion_corr')
     fslsplit = pe.Node(fsl.Split(dimension='t'), name='SE_split')
 
-    # Run topup to estimate field distortions
-    topup = pe.Node(fsl.TOPUP(), name='TopUp')
+    # Run topup to estimate field distortions, do not estimate movement
+    # since it is done in hmc_se
+    topup = pe.Node(fsl.TOPUP(estmov=0), name='TopUp')
 
     # Use the least-squares method to correct the dropout of the SE images
-    unwarp_mag = pe.Node(fsl.ApplyTOPUP(in_index=[1], method='lsr'), name='TopUpApply')
+    unwarp_mag = pe.Node(fsl.ApplyTOPUP(method='lsr'), name='TopUpApply')
 
     # Remove bias
     inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SE_bias')
