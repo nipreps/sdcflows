@@ -29,13 +29,10 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     if settings is None:
         settings = {}
 
-    dwell_time = settings['epi'].get('dwell_time', 0.000700012460221792)
     workflow = pe.Workflow(name=name)
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps', 'fieldmaps_meta',
-                        'sbref']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['out_field', 'fmap_rads', 'fmap_mask',
-                        'mag_brain', 'out_topup', 'fmap_unmasked']), name='outputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['out_field', 'fmap_mask', 'mag_brain',
+                         'out_topup']), name='outputnode')
 
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
@@ -45,8 +42,9 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
         input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
         function=create_encoding_file), name='TopUp_encfile', updatehash=True)
 
+    # Head motion correction
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name='SE_merge')
-    hmc_se = pe.Node(fsl.MCFLIRT(), name='SE_head_motion_corr')
+    hmc_se = pe.Node(fsl.MCFLIRT(cost='normcorr', mean_vol=True), name='SE_head_motion_corr')
     fslsplit = pe.Node(fsl.Split(dimension='t'), name='SE_split')
 
     # Run topup to estimate field distortions, do not estimate movement
@@ -62,26 +60,11 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     # Skull strip corrected SE image to get reference brain and mask
     mag_bet = pe.Node(fsl.BET(mask=True, robust=True), name='SE_brain')
 
-    # Convert topup fieldmap to rad/s [ 1 Hz = 6.283 rad/s]
-    fmap_scale = pe.Node(fsl.BinaryMaths(operation='mul', operand_value=6.283),
-                         name='fmap_scale')
-
-    # Compute a mask from the fieldmap (??)
-    fmap_abs = pe.Node(fsl.UnaryMaths(operation='abs', args='-bin'), name='fmap_abs')
-    fmap_mul = pe.Node(fsl.BinaryMaths(operation='mul'), name='fmap_mul_mask')
-
-    # Compute an smoothed field without mask
-    # TODO: unwarp_direction, dwell_time dynamically set
-    # TODO: IMHO this should disappear
-    fugue_unmask = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
-                                     save_unmasked_fmap=True), name='fmap_unmask')
-
     workflow.connect([
         (inputnode, meta, [('fieldmaps', 'in_file')]),
         (inputnode, encfile, [('fieldmaps', 'fieldmaps')]),
         (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
         (fslmerge, hmc_se, [('merged_file', 'in_file')]),
-        (inputnode, hmc_se, [('sbref', 'ref_file')]),
         (meta, encfile, [('out_dict', 'in_dict')]),
         (encfile, topup, [('parameters_file', 'encoding_file')]),
         (hmc_se, topup, [('out_file', 'in_file')]),
@@ -92,19 +75,11 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
         (fslsplit, unwarp_mag, [('out_files', 'in_files')]),
         (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
         (inu_n4, mag_bet, [('output_image', 'in_file')]),
-        (topup, fmap_scale, [('out_field', 'in_file')]),
-        (mag_bet, fmap_mul, [('mask_file', 'operand_file')]),
 
-        (fmap_scale, fmap_abs, [('out_file', 'in_file')]),
-        (fmap_abs, fmap_mul, [('out_file', 'in_file')]),
-        (fmap_scale, fugue_unmask, [('out_file', 'fmap_in_file')]),
-        (fmap_mul, fugue_unmask, [('out_file', 'mask_file')]),
         (topup, outputnode, [('out_field', 'out_field')]),
-        (fmap_scale, outputnode, [('out_file', 'fmap_rads')]),
         (mag_bet, outputnode, [('out_file', 'mag_brain'),
                                ('mask_file', 'fmap_mask')]),
-        (unwarp_mag, outputnode, [('out_corrected', 'out_topup')]),
-        (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')])
+        (unwarp_mag, outputnode, [('out_corrected', 'out_topup')])
     ])
 
     # Reports section
@@ -122,6 +97,44 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     ])
 
     return workflow
+
+def fieldmap_to_phasediff(name='Fieldmap2Phasediff', settings=None):
+    if settings is None:
+        settings = {}
+
+    dwell_time = settings['epi'].get('dwell_time', 0.000700012460221792)
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmap', 'fmap_mask']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['fmap_rads', 'fmap_unmasked']), name='outputnode')
+
+    # Convert topup fieldmap to rad/s [ 1 Hz = 6.283 rad/s]
+    fmap_scale = pe.Node(fsl.BinaryMaths(operation='mul', operand_value=6.283),
+                         name='fmap_scale')
+
+    # Compute a mask from the fieldmap (??)
+    fmap_abs = pe.Node(fsl.UnaryMaths(operation='abs', args='-bin'), name='fmap_abs')
+    fmap_mul = pe.Node(fsl.BinaryMaths(operation='mul'), name='fmap_mul_mask')
+
+    # Compute an smoothed field without mask
+    # TODO: unwarp_direction, dwell_time dynamically set
+    # TODO: IMHO this should disappear
+    fugue_unmask = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
+                                     save_unmasked_fmap=True), name='fmap_unmask')
+
+    workflow.connect([
+        (inputnode, fmap_scale, [('fieldmap', 'in_file')]),
+        (inputnode, fmap_mul, [('fmap_mask', 'operand_file')]),
+        (fmap_scale, fmap_abs, [('out_file', 'in_file')]),
+        (fmap_abs, fmap_mul, [('out_file', 'in_file')]),
+        (fmap_scale, fugue_unmask, [('out_file', 'fmap_in_file')]),
+        (fmap_mul, fugue_unmask, [('out_file', 'mask_file')]),
+        (fmap_scale, outputnode, [('out_file', 'fmap_rads')]),
+        (fugue_unmask, outputnode, [('fmap_out_file', 'fmap_unmasked')])
+    ])
+    return workflow
+
 
 def create_encoding_file(fieldmaps, in_dict):
     """Creates a valid encoding file for topup"""

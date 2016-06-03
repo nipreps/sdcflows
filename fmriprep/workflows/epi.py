@@ -182,7 +182,7 @@ def correction_workflow(name='EPIUnwarpWorkflow', settings=None):
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_brain', 'epi2sbref_matrix',
                               'stripped_epi', 'corrected_epi_mean',
-                              'merged_epi', 'stripped_epi_mask', 
+                              'merged_epi', 'stripped_epi_mask',
                               'epi_motion_params', 'bbr_sbref_2_t1']),
         name='outputnode'
     )
