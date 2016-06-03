@@ -32,7 +32,7 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_field', 'fmap_mask', 'mag_brain',
-                         'out_topup']), name='outputnode')
+                                                       'out_topup']), name='outputnode')
 
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
@@ -98,16 +98,14 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
 
     return workflow
 
-def fieldmap_to_phasediff(name='Fieldmap2Phasediff', settings=None):
-    if settings is None:
-        settings = {}
+def fieldmap_to_phasediff(name='Fieldmap2Phasediff'):
+    """Legacy workflow to create a phasediff map from a fieldmap, to be digested by FUGUE"""
 
-    dwell_time = settings['epi'].get('dwell_time', 0.000700012460221792)
     workflow = pe.Workflow(name=name)
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmap', 'fmap_mask']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmap_rads', 'fmap_unmasked']), name='outputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmap', 'fmap_mask', 'unwarp_direction',
+                                                      'dwell_time']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['fmap_rads', 'fmap_unmasked']),
+                         name='outputnode')
 
     # Convert topup fieldmap to rad/s [ 1 Hz = 6.283 rad/s]
     fmap_scale = pe.Node(fsl.BinaryMaths(operation='mul', operand_value=6.283),
@@ -118,14 +116,13 @@ def fieldmap_to_phasediff(name='Fieldmap2Phasediff', settings=None):
     fmap_mul = pe.Node(fsl.BinaryMaths(operation='mul'), name='fmap_mul_mask')
 
     # Compute an smoothed field without mask
-    # TODO: unwarp_direction, dwell_time dynamically set
-    # TODO: IMHO this should disappear
-    fugue_unmask = pe.Node(fsl.FUGUE(unwarp_direction='x', dwell_time=dwell_time,
-                                     save_unmasked_fmap=True), name='fmap_unmask')
+    fugue_unmask = pe.Node(fsl.FUGUE(save_unmasked_fmap=True), name='fmap_unmask')
 
     workflow.connect([
         (inputnode, fmap_scale, [('fieldmap', 'in_file')]),
         (inputnode, fmap_mul, [('fmap_mask', 'operand_file')]),
+        (inputnode, fugue_unmask, [('unwarp_direction', 'unwarp_direction'),
+                                   ('dwell_time', 'dwell_time')]),
         (fmap_scale, fmap_abs, [('out_file', 'in_file')]),
         (fmap_abs, fmap_mul, [('out_file', 'in_file')]),
         (fmap_scale, fugue_unmask, [('out_file', 'fmap_in_file')]),
@@ -147,7 +144,8 @@ def create_encoding_file(fieldmaps, in_dict):
     enc_table = []
     for fmap, meta in zip(fieldmaps, in_dict):
         line_values = [0, 0, 0, meta['TotalReadoutTime']]
-        line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (-2*(len(meta['PhaseEncodingDirection']) == 2))
+        line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (
+            -2*(len(meta['PhaseEncodingDirection']) == 2))
         nvols = nb.load(fmap).shape[-1]
         enc_table += [line_values] * nvols
 
