@@ -16,6 +16,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
 
+from ..interfaces import ReadSidecarJSON
 from ..viz import stripped_brain_overlay
 
 
@@ -36,10 +37,13 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_field', 'fmap_rads', 'fmap_mask',
                         'mag_brain', 'out_topup', 'fmap_unmasked']), name='outputnode')
 
+    # Read metadata
+    meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
+                      iterfield=['in_file'], name='metadata')
 
-    create_parameters_node = pe.Node(interface=niu.Function(
-        input_names=['fieldmaps', 'fieldmaps_meta'], output_names=['parameters_file'],
-        function=create_encoding_file), name='Create_Parameters', updatehash=True)
+    encfile = pe.Node(interface=niu.Function(
+        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
+        function=create_encoding_file), name='TopUp_encfile', updatehash=True)
 
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name='SE_merge')
     hmc_se = pe.Node(fsl.MCFLIRT(), name='SE_head_motion_corr')
@@ -73,16 +77,17 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
                                      save_unmasked_fmap=True), name='fmap_unmask')
 
     workflow.connect([
+        (inputnode, meta, [('fieldmaps', 'in_file')]),
+        (inputnode, encfile, [('fieldmaps', 'fieldmaps')]),
         (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
         (fslmerge, hmc_se, [('merged_file', 'in_file')]),
         (inputnode, hmc_se, [('sbref', 'ref_file')]),
-        (inputnode, create_parameters_node, [('fieldmaps', 'fieldmaps'),
-                                        ('fieldmaps_meta', 'fieldmaps_meta')]),
-        (create_parameters_node, topup, [('parameters_file', 'encoding_file')]),
+        (meta, encfile, [('out_dict', 'in_dict')]),
+        (encfile, topup, [('parameters_file', 'encoding_file')]),
         (hmc_se, topup, [('out_file', 'in_file')]),
         (topup, unwarp_mag, [('out_fieldcoef', 'in_topup_fieldcoef'),
                              ('out_movpar', 'in_topup_movpar')]),
-        (create_parameters_node, unwarp_mag, [('parameters_file', 'encoding_file')]),
+        (encfile, unwarp_mag, [('parameters_file', 'encoding_file')]),
         (hmc_se, fslsplit, [('out_file', 'in_file')]),
         (fslsplit, unwarp_mag, [('out_files', 'in_files')]),
         (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
@@ -118,19 +123,20 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
 
     return workflow
 
-def create_encoding_file(fieldmaps, fieldmaps_meta):
+def create_encoding_file(fieldmaps, in_dict):
     """Creates a valid encoding file for topup"""
     import json
     import nibabel as nb
+    import numpy as np
     import os
 
-    with open('parameters.txt', 'w') as parameters_file:
-        for fieldmap, fieldmap_meta in zip(fieldmaps, fieldmaps_meta):
-            meta = json.load(open(fieldmap_meta))
-            pedir = {'i': 0, 'j': 1, 'k': 2}
-            line_values = [0, 0, 0, meta['TotalReadoutTime']]
-            line_values[pedir[meta['PhaseEncodingDirection'][0]]] = 1 + (-2*(len(meta['PhaseEncodingDirection']) == 2))
-            for i in range(nb.load(fieldmap).shape[-1]):
-                parameters_file.write(
-                    ' '.join([str(i) for i in line_values]) + '\n')
+    pe_dirs = {'i': 0, 'j': 1, 'k': 2}
+    enc_table = []
+    for fmap, meta in zip(fieldmaps, in_dict):
+        line_values = [0, 0, 0, meta['TotalReadoutTime']]
+        line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (-2*(len(meta['PhaseEncodingDirection']) == 2))
+        nvols = nb.load(fmap).shape[-1]
+        enc_table += [line_values] * nvols
+
+    np.savetxt(os.path.abspath('parameters.txt'), enc_table, fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])
     return os.path.abspath('parameters.txt')
