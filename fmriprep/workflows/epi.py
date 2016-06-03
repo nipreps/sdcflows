@@ -14,19 +14,73 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
+from ..interfaces import ReadSidecarJSON
+from .fieldmap import create_encoding_file
 from ..viz import stripped_brain_overlay
-
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
     if settings is None:
         settings = {}
 
-    dwell_time = settings['epi'].get('dwell_time', 0.000700012460221792)
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['sbref', 'fmap_ref_brain', 'fmap_fieldcoef', 'fmap_movpar',
+                't1', 't1_brain', 't1_seg']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['sbref_unwarped', 'sbref_fmap', 'mag2sbref_matrix', 'sbref_brain',
+                'sbref_brain_corrected', 't1_brain', 'wm_seg', 'sbref_2_t1_transform']), name='outputnode')
+
+    # Read metadata
+    meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
+                      iterfield=['in_file'], name='metadata')
+
+    encfile = pe.Node(interface=niu.Function(
+        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
+        function=create_encoding_file), name='TopUp_encfile', updatehash=True)
+
+    #  Skull strip SBRef to get reference brain
+    sbref_bet = pe.MapNode(fsl.BET(mask=True, functional=True, frac=0.6),
+                           iterfield=['in_file'], name="sbref_bet")
+
+    # Head motion correction
+    fslmerge = pe.Node(fsl.Merge(dimension='t'), name='SBref_merge')
+    hmc_se = pe.Node(fsl.MCFLIRT(cost='normcorr', mean_vol=True), name='SBref_head_motion_corr')
+    fslsplit = pe.Node(fsl.Split(dimension='t'), name='SBref_split')
+
+    # Use the least-squares method to correct the dropout of the SE images
+    unwarp_mag = pe.Node(fsl.ApplyTOPUP(method='lsr'), name='TopUpApply')
+
+    # Remove bias
+    inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SE_bias')
+
+    workflow.connect([
+        (inputnode, meta, [('sbref', 'in_file')]),
+        (inputnode, sbref_bet, [('sbref', 'in_file')]),
+        (inputnode, encfile, [('sbref', 'fieldmaps')]),
+        (inputnode, hmc_se, [('fmap_ref_brain', 'ref_file')]),
+        (sbref_bet, fslmerge, [('out_file', 'in_files')]),
+        (inputnode, unwarp_mag, [('fmap_fieldcoef', 'in_topup_fieldcoef'),
+                                 ('fmap_movpar', 'in_topup_movpar')]),
+        (meta, encfile, [('out_dict', 'in_dict')]),
+        (fslmerge, hmc_se, [('merged_file', 'in_file')]),
+        (encfile, unwarp_mag, [('parameters_file', 'encoding_file')]),
+        (hmc_se, fslsplit, [('out_file', 'in_file')]),
+        (fslsplit, unwarp_mag, [('out_files', 'in_files')]),
+        (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
+    ])
+    return workflow
+
+
+
+def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
+    """SBref processing workflow"""
+    if settings is None:
+        settings = {}
 
     workflow = pe.Workflow(name=name)
-
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['sbref', 'mag_brain', 'fmap_scaled', 'fmap_mask', 'fmap_unmasked',
                 'in_topup', 't1', 't1_brain', 't1_seg']), name='inputnode')

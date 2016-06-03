@@ -31,8 +31,8 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['out_field', 'fmap_mask', 'mag_brain',
-                                                       'out_topup']), name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=[
+        'out_field', 'fmap_mask', 'mag_brain', 'fmap_fieldcoef', 'fmap_movpar']), name='outputnode')
 
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
@@ -79,7 +79,8 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
         (topup, outputnode, [('out_field', 'out_field')]),
         (mag_bet, outputnode, [('out_file', 'mag_brain'),
                                ('mask_file', 'fmap_mask')]),
-        (unwarp_mag, outputnode, [('out_corrected', 'out_topup')])
+        (topup, outputnode, [('out_fieldcoef', 'fmap_fieldcoef'),
+                             ('out_movpar', 'fmap_movpar')])
     ])
 
     # Reports section
@@ -146,7 +147,11 @@ def create_encoding_file(fieldmaps, in_dict):
         line_values = [0, 0, 0, meta['TotalReadoutTime']]
         line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (
             -2*(len(meta['PhaseEncodingDirection']) == 2))
-        nvols = nb.load(fmap).shape[-1]
+
+        nvols = 1
+        if len(nb.load(fmap).shape) > 3:
+            nvols = nb.load(fmap).shape[3]
+
         enc_table += [line_values] * nvols
 
     np.savetxt(os.path.abspath('parameters.txt'), enc_table, fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])

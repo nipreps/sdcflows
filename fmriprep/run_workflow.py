@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-02 09:55:42
+# @Last Modified time: 2016-06-03 12:14:53
 """
 fMRI preprocessing workflow
 =====
@@ -27,33 +27,34 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
     from .viz.pipeline_reports import generate_report_workflow
 
     preproc_wf = fmri_preprocess_single(settings=settings)
-    report_wf = generate_report_workflow()
+#    report_wf = generate_report_workflow()
 
-    connector_wf = pe.Workflow(name=name)
-    connector_wf.connect([
-        (preproc_wf, report_wf, [
-            ('outputnode.t1_2_mni', 'inputnode.t1_2_mni'),
-            ('outputnode.stripped_t1', 'inputnode.t1_brain'),
-            ('outputnode.t1', 'inputnode.t1'),
-            ('outputnode.t1_segmentation', 'inputnode.t1_segmentation'),
-            ('outputnode.t1_wm_seg', 'inputnode.t1_wm_seg'),
-            ('outputnode.fieldmap', 'inputnode.fieldmap'),
-            ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
-            ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
-            ('outputnode.fmap_mag_brain', 'inputnode.fmap_mag_brain'),
-            ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
-            ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
-            ('outputnode.sbref_brain', 'inputnode.sbref_brain'),
-            ('inputnode.epi', 'inputnode.raw_epi'),
-            ('inputnode.sbref', 'inputnode.sbref')
-        ])
-    ])
+#    connector_wf = pe.Workflow(name=name)
+#    connector_wf.connect([
+#        (preproc_wf, report_wf, [
+#            ('outputnode.t1_2_mni', 'inputnode.t1_2_mni'),
+#            ('outputnode.stripped_t1', 'inputnode.t1_brain'),
+#            ('outputnode.t1', 'inputnode.t1'),
+#            ('outputnode.t1_segmentation', 'inputnode.t1_segmentation'),
+#            ('outputnode.t1_wm_seg', 'inputnode.t1_wm_seg'),
+#            ('outputnode.fieldmap', 'inputnode.fieldmap'),
+#            ('outputnode.corrected_sbref', 'inputnode.corrected_sbref'),
+#            ('outputnode.fmap_mag', 'inputnode.fmap_mag'),
+#            ('outputnode.fmap_mag_brain', 'inputnode.fmap_mag_brain'),
+#            ('outputnode.stripped_epi', 'inputnode.stripped_epi'),
+#            ('outputnode.corrected_epi_mean', 'inputnode.corrected_epi_mean'),
+#            ('outputnode.sbref_brain', 'inputnode.sbref_brain'),
+#            ('inputnode.epi', 'inputnode.raw_epi'),
+#            ('inputnode.sbref', 'inputnode.sbref')
+#        ])
+#    ])
 
     # Set inputnode of the full-workflow
     for key in imaging_data.keys():
         setattr(preproc_wf.inputs.inputnode, key, imaging_data[key])
 
-    return connector_wf
+    return preproc_wf
+#    return connector_wf
 
 
 
