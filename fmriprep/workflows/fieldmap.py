@@ -16,6 +16,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
 
+from ..utils.misc import gen_list
 from ..interfaces import ReadSidecarJSON
 from ..viz import stripped_brain_overlay
 
@@ -72,7 +73,8 @@ def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R09
                              ('out_movpar', 'in_topup_movpar')]),
         (encfile, unwarp_mag, [('parameters_file', 'encoding_file')]),
         (hmc_se, fslsplit, [('out_file', 'in_file')]),
-        (fslsplit, unwarp_mag, [('out_files', 'in_files')]),
+        (fslsplit, unwarp_mag, [('out_files', 'in_files'),
+                                (('out_files', gen_list), 'in_index')]),
         (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
         (inu_n4, mag_bet, [('output_image', 'in_file')]),
 

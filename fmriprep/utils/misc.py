@@ -6,6 +6,8 @@ import re
 
 INPUTS_SPEC = {'fieldmaps': [], 'epi': '', 'sbref': [], 't1': ''}
 
+def gen_list(inlist, base=1):
+    return range(base, len(inlist) + base)
 
 def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
