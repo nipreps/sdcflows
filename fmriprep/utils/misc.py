@@ -4,9 +4,10 @@ import json
 import os
 import re
 
-INPUTS_SPEC = {'fieldmaps': [], 'fieldmaps_meta': [], 'epi': '',
-               'epi_meta': '', 'sbref': '', 'sbref_meta': '', 't1': ''}
+INPUTS_SPEC = {'fieldmaps': [], 'epi': '', 'sbref': [], 't1': ''}
 
+def gen_list(inlist, base=1):
+    return range(base, len(inlist) + base)
 
 def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
@@ -77,28 +78,20 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                     filename = scan_file.split('/')[-1]
                     filename_parts = filename.split('_')
                     modality = filename_parts[-1]
+                    if 'sbref.nii' in modality:
+                        imaging_data[subject][session]['sbref'].append(scan_file)
+                    elif 'epi.nii' in modality:
+                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
+                    elif 'T1w.nii' in modality:
+                        imaging_data[subject][session]['t1'] = scan_file
                     # temporary conditional until runs and tasks are handled
                     # in the imaging data structure
-                    if 'rest_acq-LR_run-1' in filename:
+                    elif 'rest_acq-LR_run-1' in filename:
                         if 'bold.nii' in modality:
                             imaging_data[subject][session]['epi'] = scan_file
-                        elif 'bold.json' in modality:
-                            imaging_data[subject][session]['epi_meta'] = scan_file
-                        elif 'sbref.nii' in modality:
-                            imaging_data[subject][session]['sbref'] = scan_file
-                        elif 'sbref.json' in modality:
-                            imaging_data[subject][session]['sbref_meta'] = scan_file
-                        else:
-                            pass
                     else:
-                        if 'epi.nii' in modality:
-                            imaging_data[subject][session]['fieldmaps'].append(scan_file)
-                        elif 'epi.json' in modality:
-                            imaging_data[subject][session]['fieldmaps_meta'].append(scan_file)
-                        elif 'T1w.nii' in modality:
-                            imaging_data[subject][session]['t1'] = scan_file
-                        else:
-                            pass
+                        pass
+
     return imaging_data
 
 if __name__ == '__main__':
