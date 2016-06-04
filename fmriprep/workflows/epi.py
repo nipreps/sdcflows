@@ -26,8 +26,10 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     """ A workflow to correct EPI images """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']), name='outputnode')
+        fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar',
+                'fmap_mask']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_correct', 'epi_mean']),
+                         name='outputnode')
 
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
@@ -49,17 +51,43 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     unwarp_epi = pe.MapNode(fsl.ApplyTOPUP(method='jac', in_index=[1]),
                             iterfield=['in_files'], name='TopUpApply')
 
+    # Merge back
+    fslmerge = pe.Node(fsl.Merge(dimension='t'), name='EPI_corr_merge')
+
+    # Compute mean
+    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
+
     workflow.connect([
         (inputnode, meta, [('epi', 'in_file')]),
         (inputnode, epi_bet, [('epi', 'in_file')]),
         (inputnode, encfile, [('epi', 'fieldmaps')]),
+        (meta, encfile, [('out_dict', 'in_dict')]),
         (epi_bet, epi_hmc, [('out_file', 'in_file')]),
         (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
         (inputnode, unwarp_epi, [('fmap_fieldcoef', 'in_topup_fieldcoef'),
                                  ('fmap_movpar', 'in_topup_movpar')]),
         (encfile, unwarp_epi, [('parameters_file', 'encoding_file')]),
         (epi_hmc, fslsplit, [('out_file', 'in_file')]),
-        (fslsplit, unwarp_epi, [('out_files', 'in_files')])
+        (fslsplit, unwarp_epi, [('out_files', 'in_files')]),
+        (unwarp_epi, fslmerge, [('out_corrected', 'in_files')]),
+        (fslmerge, epi_mean, [('merged_file', 'in_file')]),
+        (fslmerge, outputnode, [('merged_file', 'epi_correct')]),
+        (epi_mean, outputnode, [('out_file', 'epi_mean')])
+    ])
+
+    # Plot result
+    png_epi_corr= pe.Node(niu.Function(
+        input_names=["in_file", "overlay_file", "out_file"], output_names=["out_file"],
+        function=stripped_brain_overlay), name="PNG_epi_corr")
+    png_epi_corr.inputs.out_file = "corrected_EPI.png"
+
+    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
+                       name="datasink", parameterization=False)
+
+    workflow.connect([
+        (epi_mean, png_epi_corr, [('out_file', 'overlay_file')]),
+        (inputnode, png_epi_corr, [('fmap_mask', 'in_file')]),
+        (png_epi_corr, datasink, [('out_file', '@corrected_EPI')])
     ])
 
     return workflow
