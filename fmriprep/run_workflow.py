@@ -63,7 +63,7 @@ def main():
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
-    from .utils.misc import get_subject
+    from fmriprep.utils.misc import get_subject
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
