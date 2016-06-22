@@ -23,18 +23,11 @@ class TestCollectBids(unittest.TestCase):
         epi_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.nii.gz"
         self.assert_key_exists(epi_template, 'epi')
 
-    def test_epi_meta(self):
-        epi_meta_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.json"
-        self.assert_key_exists(epi_meta_template, 'epi_meta')
-
     def test_sbref(self):
-        sbref_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_sbref.nii.gz"
+        sbref_template = (self.dataset + "/{subject}/func/"
+                          "{subject}_task-rest_acq-LR_run-1_sbref.nii.gz")
         self.assert_key_exists(sbref_template, 'sbref')
 
-    def test_sbref_meta(self):
-        sbref_meta_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_sbref.json"
-        self.assert_key_exists(sbref_meta_template, 'sbref_meta')
-    
     def test_t1(self):
         t1_template = "{subject}/anat/{subject}_run-1_T1w.nii.gz"
         self.assert_key_exists(t1_template, 't1')
@@ -43,11 +36,8 @@ class TestCollectBids(unittest.TestCase):
         fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz"
         self.assert_fieldmap_files_exist(fieldmap_pattern, 'fieldmaps')
     
-    def test_fieldmaps_meta(self):
-        fieldmap_meta_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.json"
-        self.assert_fieldmap_files_exist(fieldmap_meta_pattern, 'fieldmaps_meta')
-
     # HELPER ASSERTIONS
+
     def assert_fieldmap_files_exist(self, pattern, key):
         for subject in self.imaging_data:
             search_pattern = pattern.format(subject)
