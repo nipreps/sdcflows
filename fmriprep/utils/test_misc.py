@@ -14,12 +14,6 @@ class TestCollectBids(unittest.TestCase):
             raise Exception("Couldn't find data at " + self.dataset + 
                             ". Download from " + url) from e
 
-    def assert_key_exists(self, template, key):
-        for subject in self.imaging_data:
-            for session in self.imaging_data[subject]:
-                self.assertIn(template.format(subject=subject),
-                              self.imaging_data[subject][session][key])
-
     def test_collect_bids_data(self):
         ''' test data has at least one subject with at least one session '''
         self.assertNotEqual(0, len(self.imaging_data))
@@ -46,21 +40,27 @@ class TestCollectBids(unittest.TestCase):
         self.assert_key_exists(t1_template, 't1')
 
     def test_fieldmaps(self):
-        for subject in self.imaging_data:
-            fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz".format(subject)
-            for session in self.imaging_data[subject]:
-                for fieldmap in self.imaging_data[subject][session]['fieldmaps']:
-                    match = re.search(fieldmap_pattern, fieldmap)
-                    self.assertTrue(match)
+        fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz"
+        self.assert_fieldmap_files_exist(fieldmap_pattern, 'fieldmaps')
     
     def test_fieldmaps_meta(self):
+        fieldmap_meta_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.json"
+        self.assert_fieldmap_files_exist(fieldmap_meta_pattern, 'fieldmaps_meta')
+
+    # HELPER ASSERTIONS
+    def assert_fieldmap_files_exist(self, pattern, key):
         for subject in self.imaging_data:
-            fieldmap_meta_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.json".format(subject)
+            search_pattern = pattern.format(subject)
             for session in self.imaging_data[subject]:
-                for fieldmap_meta in self.imaging_data[subject][session]['fieldmaps_meta']:
-                    match = re.search(fieldmap_meta_pattern, fieldmap_meta)
+                for fieldmap in self.imaging_data[subject][session][key]:
+                    match = re.search(search_pattern, fieldmap)
                     self.assertTrue(match)
-    
+
+    def assert_key_exists(self, template, key):
+        for subject in self.imaging_data:
+            for session in self.imaging_data[subject]:
+                self.assertIn(template.format(subject=subject),
+                              self.imaging_data[subject][session][key])
         
 if __name__ == '__main__':
     unittest.main() 
