@@ -1,5 +1,5 @@
 import json
-import misc
+import fmriprep.utils.misc as misc
 import re
 import unittest
 
