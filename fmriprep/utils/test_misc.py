@@ -4,6 +4,7 @@ import re
 import unittest
 
 class TestCollectBids(unittest.TestCase):
+    @classmethod
     def setUp(self):
         self.dataset = "test_data/aa_conn"
         try:
@@ -13,40 +14,36 @@ class TestCollectBids(unittest.TestCase):
             raise Exception("Couldn't find data at " + self.dataset + 
                             ". Download from " + url) from e
 
-    def test_epi(self):
-        epi_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.nii.gz"
+    def assert_key_exists(self, template, key):
         for subject in self.imaging_data:
             for session in self.imaging_data[subject]:
-                self.assertIn(epi_template.format(subject=subject), 
-                              self.imaging_data[subject][session]['epi'])
+                self.assertIn(template.format(subject=subject),
+                              self.imaging_data[subject][session][key])
+
+    def test_collect_bids_data(self):
+        ''' test data has at least one subject with at least one session '''
+        self.assertNotEqual(0, len(self.imaging_data))
+        self.assertNotEqual(0, len(next(iter(self.imaging_data.values()))))
+
+    def test_epi(self):
+        epi_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.nii.gz"
+        self.assert_key_exists(epi_template, 'epi')
 
     def test_epi_meta(self):
         epi_meta_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.json"
-        for subject in self.imaging_data:
-            for session in self.imaging_data[subject]:
-                self.assertIn(epi_meta_template.format(subject=subject), 
-                              self.imaging_data[subject][session]['epi_meta'])
+        self.assert_key_exists(epi_meta_template, 'epi_meta')
 
     def test_sbref(self):
         sbref_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_sbref.nii.gz"
-        for subject in self.imaging_data:
-            for session in self.imaging_data[subject]:
-                self.assertIn(sbref_template.format(subject=subject), 
-                              self.imaging_data[subject][session]['sbref'])
+        self.assert_key_exists(sbref_template, 'sbref')
 
     def test_sbref_meta(self):
         sbref_meta_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_sbref.json"
-        for subject in self.imaging_data:
-            for session in self.imaging_data[subject]:
-                self.assertIn(sbref_meta_template.format(subject=subject), 
-                              self.imaging_data[subject][session]['sbref_meta'])
+        self.assert_key_exists(sbref_meta_template, 'sbref_meta')
     
     def test_t1(self):
         t1_template = "{subject}/anat/{subject}_run-1_T1w.nii.gz"
-        for subject in self.imaging_data:
-            for session in self.imaging_data[subject]:
-                self.assertIn(t1_template.format(subject=subject), 
-                              self.imaging_data[subject][session]['t1'])
+        self.assert_key_exists(t1_template, 't1')
 
     def test_fieldmaps(self):
         for subject in self.imaging_data:
