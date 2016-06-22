@@ -16,9 +16,9 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
 
-from ..utils.misc import gen_list
-from ..interfaces import ReadSidecarJSON
-from ..viz import stripped_brain_overlay
+from fmriprep.utils.misc import gen_list
+from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.viz import stripped_brain_overlay
 
 
 def se_pair_workflow(name='Fieldmap_SEs', settings=None):  # pylint: disable=R0914
