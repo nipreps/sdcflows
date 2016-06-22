@@ -6,7 +6,11 @@ import unittest
 class TestCollectBids(unittest.TestCase):
     def setUp(self):
         self.dataset = "../../test_data/aa_conn"
-        self.imaging_data = misc.collect_bids_data(self.dataset)
+        try:
+            self.imaging_data = misc.collect_bids_data(self.dataset)
+        except Exception as e:
+            url = "http://googledrive.com/host/0BxI12kyv2olZbl9GN3BIOVVoelE"
+            raise Exception("couldn't find test data. Download tar from " + url) from e
 
     def test_epi(self):
         epi_template = "{subject}/func/{subject}_task-rest_acq-LR_run-1_bold.nii.gz"
