@@ -3,6 +3,10 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
+from nipype.interfaces import fsl
+
 def fieldmap_to_phasediff(name='Fieldmap2Phasediff'):
     """Legacy workflow to create a phasediff map from a fieldmap, to be digested by FUGUE"""
 
