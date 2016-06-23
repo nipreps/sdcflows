@@ -1,15 +1,38 @@
 import json
-import fmriprep.workflows.fieldmap as fieldmap
+from fmriprep.workflows.fieldmap import (se_pair_workflow,
+                                         fieldmap_to_phasediff)
 import re
 import unittest
 import mock
+from nipype.pipeline import engine as pe
 
 class TestFieldMap(unittest.TestCase):
 
     SOME_INT = 3
 
     def test_se_pair_workflow(self):
-        pass
+        # SET UP INPUTS
+        mock_settings = {
+            'work_dir': '.'
+        }
+
+        # RUN
+        result = se_pair_workflow.se_pair_workflow(settings=mock_settings)
+
+        # ASSERT
+        self.assertEqual(result.name,
+                         se_pair_workflow.SE_PAIR_WORKFLOW_NAME)
+        self.assertIsInstance(result, pe.Workflow)
+
+        # in lieu of a good way to check equality of DAGs
+        result_nodes = [result.get_node(name).interface.__class__.__name__
+                        for name in result.list_node_names()]
+        self.assertItemsEqual(result_nodes,
+                              ['Function', 'N4BiasFieldCorrection', 'BET',
+                               'MCFLIRT', 'Merge', 'Split', 'TOPUP',
+                               'ApplyTOPUP', 'Function', 'DataSink',
+                               'IdentityInterface', 'ReadSidecarJSON',
+                               'IdentityInterface'])
 
     @mock.patch('nibabel.load')
     @mock.patch('numpy.savetxt')
@@ -26,7 +49,7 @@ class TestFieldMap(unittest.TestCase):
                               self.SOME_INT)
 
         # RUN
-        out_file = fieldmap.se_pair_workflow.create_encoding_file(fieldmaps, in_dict)
+        out_file = se_pair_workflow.create_encoding_file(fieldmaps, in_dict)
 
         # ASSERT
         # the output file is called parameters.txt
