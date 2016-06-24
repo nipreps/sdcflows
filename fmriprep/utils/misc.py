@@ -4,6 +4,8 @@ import json
 import os
 import re
 
+from fmriprep.workflows.fieldmap import FieldmapDecider
+
 INPUTS_SPEC = {'fieldmaps': [], 'epi': '', 'sbref': [], 't1': ''}
 
 def gen_list(inlist, base=1):
@@ -80,7 +82,7 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                     modality = filename_parts[-1]
                     if 'sbref.nii' in modality:
                         imaging_data[subject][session]['sbref'].append(scan_file)
-                    elif 'epi.nii' in modality:
+                    elif is_fieldmap_file(modality):
                         imaging_data[subject][session]['fieldmaps'].append(scan_file)
                     elif 'T1w.nii' in modality:
                         imaging_data[subject][session]['t1'] = scan_file
@@ -93,6 +95,13 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                         pass
 
     return imaging_data
+
+def is_fieldmap_file(string):
+    is_fieldmap_file = False
+    for suffix in FieldmapDecider.suffixes.values():
+        if re.search(suffix, string):
+            is_fieldmap_file = True
+    return is_fieldmap_file
 
 if __name__ == '__main__':
     pass
