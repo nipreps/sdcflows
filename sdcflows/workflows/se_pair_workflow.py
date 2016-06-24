@@ -15,9 +15,9 @@ from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
 
-SE_PAIR_WORKFLOW_NAME = 'Fieldmap_SEs'
+WORKFLOW_NAME = 'Fieldmap_SEs'
 
-def se_pair_workflow(name=SE_PAIR_WORKFLOW_NAME, settings=None):  # pylint: disable=R0914
+def se_pair_workflow(name=WORKFLOW_NAME, settings=None):  # pylint: disable=R0914
     """
     Estimates the fieldmap using TOPUP on series of :abbr:`SE (Spin-Echo)` images
     acquired with varying :abbr:`PE (phase encoding)` direction.

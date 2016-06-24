@@ -2,13 +2,20 @@ import json
 from fmriprep.workflows.fieldmap import (se_pair_workflow,
                                          fieldmap_to_phasediff)
 import re
-import unittest
 import mock
-from nipype.pipeline import engine as pe
+from test.workflows.utilities import TestWorkflow
 
-class TestFieldMap(unittest.TestCase):
+class TestFieldMap(TestWorkflow):
 
     SOME_INT = 3
+
+    def test_fieldmap_to_phasediff(self):
+        pass
+        # SET UP INPUTS
+
+        # RUN
+
+        # ASSERT
 
     def test_se_pair_workflow(self):
         # SET UP INPUTS
@@ -16,28 +23,31 @@ class TestFieldMap(unittest.TestCase):
             'work_dir': '.'
         }
 
+        # SET UP EXPECTATIONS
+        expected_interfaces = ['Function', 'N4BiasFieldCorrection', 'BET',
+                               'MCFLIRT', 'Merge', 'Split', 'TOPUP',
+                               'ApplyTOPUP', 'Function', 'DataSink',
+                               'IdentityInterface', 'ReadSidecarJSON',
+                               'IdentityInterface']
+        expected_outputs = ['fieldmaps', 'outputnode.mag_brain',
+                            'outputnode.fmap_mask', 'outputnode.fmap_fieldcoef',
+                            'outputnode.fmap_movpar']
+        expected_inputs = ['inputnode.fieldmaps']
+
         # RUN
         result = se_pair_workflow.se_pair_workflow(settings=mock_settings)
 
         # ASSERT
-        self.assertEqual(result.name,
-                         se_pair_workflow.SE_PAIR_WORKFLOW_NAME)
-        self.assertIsInstance(result, pe.Workflow)
-
-        # in lieu of a good way to check equality of DAGs
-        result_nodes = [result.get_node(name).interface.__class__.__name__
-                        for name in result.list_node_names()]
-        self.assertItemsEqual(result_nodes,
-                              ['Function', 'N4BiasFieldCorrection', 'BET',
-                               'MCFLIRT', 'Merge', 'Split', 'TOPUP',
-                               'ApplyTOPUP', 'Function', 'DataSink',
-                               'IdentityInterface', 'ReadSidecarJSON',
-                               'IdentityInterface'])
+        self.assertIsAlmostExpectedWorkflow(se_pair_workflow.WORKFLOW_NAME,
+                                            expected_interfaces,
+                                            expected_inputs,
+                                            expected_outputs,
+                                            result)
 
     @mock.patch('nibabel.load')
     @mock.patch('numpy.savetxt')
     def test_create_encoding_file(self, mock_savetxt, mock_load):
-        # SETUP INPUTS
+        # SET UP INPUTS
         fieldmaps = 'some_file.nii.gz'
         in_dict = { 'TotalReadoutTime': 'a_time',
                     'PhaseEncodingDirection': ['i']
@@ -60,5 +70,3 @@ class TestFieldMap(unittest.TestCase):
         mock_savetxt.assert_called_once_with(mock.ANY, expected_enc_table, 
                                              fmt=mock.ANY)
 
-    def test_fieldmap_to_phasediff(self):
-        pass
