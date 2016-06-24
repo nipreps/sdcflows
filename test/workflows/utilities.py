@@ -13,10 +13,11 @@ class TestWorkflow(unittest.TestCase):
                         for name in actual.list_node_names()]
         actual_interfaces = [node.interface.__class__.__name__
                              for node in actual_nodes]
-        self.assertItemsEqual(actual_interfaces, expected_interfaces)
+        self.assertItemsEqual(expected_interfaces, actual_interfaces)
 
         # assert expected inputs, outputs exist
         actual_inputs, actual_outputs = self.get_inputs_outputs(actual_nodes)
+
         self.assertIsSubsetOfList(expected_outputs, actual_outputs)
         self.assertIsSubsetOfList(expected_inputs, actual_inputs)
 

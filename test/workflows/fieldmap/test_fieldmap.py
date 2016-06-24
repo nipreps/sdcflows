@@ -10,12 +10,22 @@ class TestFieldMap(TestWorkflow):
     SOME_INT = 3
 
     def test_fieldmap_to_phasediff(self):
-        pass
-        # SET UP INPUTS
+        # SET UP EXPECTATIONS
+        expected_interfaces = ['UnaryMaths', 'BinaryMaths', 'BinaryMaths',
+                               'FUGUE', 'IdentityInterface',
+                               'IdentityInterface']
+        expected_inputs = []
+        expected_outputs = []
 
         # RUN
+        result = fieldmap_to_phasediff.fieldmap_to_phasediff()
 
         # ASSERT
+        self.assertIsAlmostExpectedWorkflow(fieldmap_to_phasediff.WORKFLOW_NAME,
+                                            expected_interfaces,
+                                            expected_inputs,
+                                            expected_outputs,
+                                            result)
 
     def test_se_pair_workflow(self):
         # SET UP INPUTS
