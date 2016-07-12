@@ -7,7 +7,7 @@ import mock
 class TestBase(unittest.TestCase):
 
     def test_fmri_preprocess_single(self):
-        ''' Tests that it runs without errors '''
+        ''' Tests fmri_preprocess_single for code errors, not correctness '''
         # NOT a test for correctness
         # SET UP INPUTS
         test_settings = {
