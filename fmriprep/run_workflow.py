@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
+import logging
 import os
 import os.path as op
 import matplotlib
@@ -56,8 +57,6 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
     return preproc_wf
 #    return connector_wf
 
-
-
 def main():
     """Entry point"""
     from nipype import config as ncfg
@@ -97,7 +96,7 @@ def main():
     opts = parser.parse_args()
 
     if opts.version:
-        print('fmriprep version ' + __version__)
+        logging.info('fmriprep version ' + __version__)
         exit(0)
 
     settings = {
@@ -116,9 +115,11 @@ def main():
         os.makedirs(settings['output_dir'])
 
     # Logging and work directory
-    settings['work_dir'] = (op.abspath(opts.work_dir)
-                            if opts.work_dir
-                            else op.abspath('.'))
+    if opts.work_dir:
+        settings['work_dir'] = op.abspath(opts.work_dir)
+    else:
+        logging.warning("No working directory set; using current directory.")
+        settings['work_dir'] = op.abspath('.')
 
     log_dir = op.join(settings['work_dir'], 'log')
     if not op.exists(log_dir):
