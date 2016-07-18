@@ -111,19 +111,17 @@ def main():
         'work_dir': op.abspath(opts.work_dir)
     }
 
+    log_dir = op.join(settings['work_dir'], 'log')
+
     # Check and create output and working directories
     # Using locks to prevent https://github.com/poldracklab/mriqc/issues/111
-    with LockFile(settings['output_dir']):
+    with LockFile('.fmriprep-folders-lock'):
         if not op.exists(settings['output_dir']):
             os.makedirs(settings['output_dir'])
 
-    with LockFile(settings['work_dir']):
         if not op.exists(settings['work_dir']):
             os.makedirs(settings['work_dir'])
 
-    # Logging
-    log_dir = op.join(settings['work_dir'], 'log')
-    with LockFile(log_dir):
         if not op.exists(log_dir):
             os.makedirs(log_dir)
 
