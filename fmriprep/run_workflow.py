@@ -100,6 +100,12 @@ def main():
         print('fmriprep version ' + __version__)
         exit(0)
 
+    # Warn for default work/output directories
+    if (opts.work_dir == parser.get_default('work_dir') or
+          opts.output_dir == parser.get_default('output_dir')):
+        logging.warning("work-dir and/or output-dir not specified. Using " +
+                        opts.work_dir + " and " + opts.output_dir)
+
     settings = {
         'bids_root': op.abspath(opts.bids_root),
         'write_graph': opts.write_graph,
