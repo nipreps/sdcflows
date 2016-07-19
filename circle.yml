@@ -21,8 +21,10 @@ dependencies:
 test:
   override:
     # run unit tests
+    - source activate crnenv
     - pwd
     - python -m unittest discover test
+    - source deactivate crnenv
     # Run tests file
     - bash build/circle_tests.sh:
         timeout: 4800
