@@ -17,10 +17,10 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
-from ..utils.misc import gen_list
-from ..interfaces import ReadSidecarJSON
+from fmriprep.utils.misc import gen_list
+from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
-from ..viz import stripped_brain_overlay
+from fmriprep.viz import stripped_brain_overlay
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
