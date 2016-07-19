@@ -1,4 +1,6 @@
 numpy
+lockfile
+future
 scikit-learn
 matplotlib
 nilearn

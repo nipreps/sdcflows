@@ -19,8 +19,7 @@ from multiprocessing import cpu_count
 import logging
 import os
 import os.path as op
-import matplotlib
-matplotlib.use('Agg')
+from lockfile import LockFile
 
 def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None):
     from nipype.pipeline import engine as pe
@@ -90,40 +89,40 @@ def main():
         help='nipype plugin configuration file')
 
     g_outputs = parser.add_argument_group('Outputs')
-    g_outputs.add_argument('-o', '--output-dir', action='store')
-    g_outputs.add_argument('-w', '--work-dir', action='store')
+    g_outputs.add_argument('-o', '--output-dir', action='store',
+                           default=op.join(os.getcwd(), 'out'))
+    g_outputs.add_argument('-w', '--work-dir', action='store',
+                           default=op.join(os.getcwd(), 'work'))
 
     opts = parser.parse_args()
 
     if opts.version:
-        logging.info('fmriprep version ' + __version__)
+        print('fmriprep version ' + __version__)
         exit(0)
 
     settings = {
         'bids_root': op.abspath(opts.bids_root),
-        'output_dir': os.getcwd(),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
         'debug': opts.debug,
-        'skull_strip_ants': opts.skull_strip_ants
+        'skull_strip_ants': opts.skull_strip_ants,
+        'output_dir': op.abspath(opts.output_dir),
+        'work_dir': op.abspath(opts.work_dir)
     }
 
-    if opts.output_dir:
-        settings['output_dir'] = op.abspath(opts.output_dir)
-
-    if not op.exists(settings['output_dir']):
-        os.makedirs(settings['output_dir'])
-
-    # Logging and work directory
-    if opts.work_dir:
-        settings['work_dir'] = op.abspath(opts.work_dir)
-    else:
-        logging.warning("No working directory set; using current directory.")
-        settings['work_dir'] = op.abspath('.')
-
     log_dir = op.join(settings['work_dir'], 'log')
-    if not op.exists(log_dir):
-        os.makedirs(log_dir)
+
+    # Check and create output and working directories
+    # Using locks to prevent https://github.com/poldracklab/mriqc/issues/111
+    with LockFile('.fmriprep-folders-lock'):
+        if not op.exists(settings['output_dir']):
+            os.makedirs(settings['output_dir'])
+
+        if not op.exists(settings['work_dir']):
+            os.makedirs(settings['work_dir'])
+
+        if not op.exists(log_dir):
+            os.makedirs(log_dir)
 
     # Set nipype config
     ncfg.update_config({
