@@ -16,10 +16,10 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
-from ..utils.misc import gen_list
-from ..interfaces import ReadSidecarJSON
-from .fieldmap import create_encoding_file
-from ..viz import stripped_brain_overlay
+from fmriprep.utils.misc import gen_list
+from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.workflows.fieldmap import create_encoding_file
+from fmriprep.viz import stripped_brain_overlay
 
 # pylint: disable=R0914
 def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):

@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
+import logging
 import os
 import os.path as op
 from lockfile import LockFile
@@ -54,8 +55,6 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
 
     return preproc_wf
 #    return connector_wf
-
-
 
 def main():
     """Entry point"""
@@ -100,6 +99,12 @@ def main():
     if opts.version:
         print('fmriprep version ' + __version__)
         exit(0)
+
+    # Warn for default work/output directories
+    if (opts.work_dir == parser.get_default('work_dir') or
+          opts.output_dir == parser.get_default('output_dir')):
+        logging.warning("work-dir and/or output-dir not specified. Using " +
+                        opts.work_dir + " and " + opts.output_dir)
 
     settings = {
         'bids_root': op.abspath(opts.bids_root),
