@@ -6,7 +6,8 @@ import mock
 
 class TestBase(unittest.TestCase):
 
-    def test_fmri_preprocess_single(self):
+    @mock.patch('fmriprep.workflows.sbref.sbref_t1_registration')
+    def test_fmri_preprocess_single(self, mock_registration):
         ''' Tests fmri_preprocess_single for code errors, not correctness '''
         # NOT a test for correctness
         # SET UP INPUTS
