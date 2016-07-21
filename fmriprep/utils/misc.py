@@ -4,8 +4,6 @@ import json
 import os
 import re
 
-from fmriprep.workflows.fieldmap import FieldmapDecider
-
 INPUTS_SPEC = {'fieldmaps': [], 'epi': '', 'sbref': [], 't1': ''}
 
 def gen_list(inlist, base=1):
@@ -98,10 +96,19 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
 
 def is_fieldmap_file(string):
     is_fieldmap_file = False
-    for suffix in FieldmapDecider.suffixes.values():
+    for suffix in fieldmap_suffixes.values():
         if re.search(suffix, string):
             is_fieldmap_file = True
     return is_fieldmap_file
+
+fieldmap_suffixes = {
+    'phasediff': r"phasediff\.nii",
+    'magnitude': r"magnitude[0-9]*\.nii",
+    'phase': r"phase[0-9]+\.nii",
+    'fieldmap': r"fieldmap\.nii",
+    'topup': r"epi\.nii"
+}
+
 
 if __name__ == '__main__':
     pass
