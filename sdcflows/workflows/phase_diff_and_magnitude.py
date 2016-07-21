@@ -7,12 +7,9 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
 from nipype.workflows.dmri import fsl
 from nipype.pipeline import engine as pe
-from nipype.utils import (b0_indices, time_avg, apply_all_corrections, b0_average,
-                          hmc_split, dwi_flirt, eddy_rotate_bvecs, rotate_bvecs,
-                          insert_mat, extract_bval, recompose_dwi, recompose_xfm,
+from nipype.utils import (time_avg,
                           siemens2rads, rads2radsec, demean_image,
-                          cleanup_edge_pipeline, add_empty_vol, vsm2warp,
-                          compute_readout,)
+                          cleanup_edge_pipeline, add_empty_vol)
 
 class PhaseDiffAndMagnitudes(FieldmapDecider):
     ''' Fieldmap preprocessing workflow for fieldmap data structure 
