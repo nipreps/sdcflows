@@ -7,12 +7,12 @@
 # @Date:   2016-01-05 11:29:40
 # @Email:  code@oscaresteban.es
 # @Last modified by:   oesteban
-# @Last Modified time: 2016-06-01 16:56:23
+# @Last Modified time: 2016-07-21 10:19:33
 """
 Data grabbers
 """
 
-from .utils import _get_dataset_dir, _fetch_file
+from fmriprep.data.utils import _get_dataset_dir, _fetch_file
 
 def get_mni_template(data_dir=None, url=None, resume=True, verbose=1):
     """Download and load the necessary files from the mni template
