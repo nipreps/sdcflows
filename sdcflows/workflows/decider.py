@@ -17,7 +17,7 @@ class FieldmapDecider(Workflow):
     # 8.9.3 fieldmap image (and one magnitude image)
     # 8.9.4 multiple phase encoded directions (topup)
 
-    inputs = {}
+    inputs = { 'fieldmaps' = None }
     outputs = { 'fieldmaps' = None,
                 'outputnode.mag_brain' = None,
                 'outputnode.fmap_mask' = None,
@@ -31,12 +31,11 @@ class FieldmapDecider(Workflow):
         try:
             a_filename = subj_data[next(iter(dictionary))]['fieldmaps'][0]
         except IndexError as e:
-            raise_from("No fieldmap data found", e)
+            raise_from(NotImplementedError("No fieldmap data found"), e)
 
         for filename in subj_data[next(iter(subj_data))]['fieldmaps']:
             if re.search(misc.fieldmap_suffixes['phasediff'], filename): # 8.9.1
-                return PhaseDiffAndMagnitudeToFieldmap()
-                raise NotImplementedError("No workflow for phasediff fieldmap data")
+                return PhaseDiffAndMagnitudes()
             elif re.search(misc.fieldmap_suffixes['phase'], filename): # 8.9.2
                 raise NotImplementedError("No workflow for phase fieldmap data")
             elif re.search(misc.fieldmap_suffixes['fieldmap'], a_filename): # 8.9.3
