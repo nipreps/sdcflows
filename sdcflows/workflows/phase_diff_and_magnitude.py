@@ -126,12 +126,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (addvol, vsm, [('out_file', 'fmap_in_file')]),
             (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
-            (inputnode, split, [('in_file', 'in_file')]),
-            (split, unwarp, [('out_files', 'in_file')]),
-            (vsm, unwarp, [('shift_out_file', 'shift_in_file')]),
-            (r_params, unwarp, [
-                (('enc_dir', _fix_enc_dir), 'unwarp_direction')]),
-            (unwarp, thres, [('unwarped_file', 'in_file')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
         ])
         return wf
