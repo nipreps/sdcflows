@@ -132,14 +132,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (r_params, unwarp, [
                 (('enc_dir', _fix_enc_dir), 'unwarp_direction')]),
             (unwarp, thres, [('unwarped_file', 'in_file')]),
-            (thres, merge, [('out_file', 'in_files')]),
-            (r_params, vsm2dfm, [
-                (('enc_dir', _fix_enc_dir), 'inputnode.enc_dir')]),
-            (merge, vsm2dfm, [('merged_file', 'inputnode.in_ref')]),
-            (vsm, vsm2dfm, [('shift_out_file', 'inputnode.in_vsm')]),
-            (merge, outputnode, [('merged_file', 'out_file')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
-            (vsm2dfm, outputnode, [('outputnode.out_warp', 'out_warp')])
         ])
         return wf
 
