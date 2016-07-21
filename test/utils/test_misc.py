@@ -4,12 +4,10 @@ import re
 import unittest
 from future.utils import raise_from
 
-from future.utils import raise_from
-
 class TestCollectBids(unittest.TestCase):
     @classmethod
     def setUp(self):
-        self.dataset = "test_data/aa_conn"
+        self.dataset = "test_data/AA_Conn"
         try:
             self.imaging_data = misc.collect_bids_data(self.dataset)
         except Exception as e:
