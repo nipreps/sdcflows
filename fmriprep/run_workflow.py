@@ -21,6 +21,7 @@ import os
 import os.path as op
 from lockfile import LockFile
 
+
 def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None):
     from nipype.pipeline import engine as pe
     from fmriprep.workflows import fmri_preprocess_single
@@ -162,15 +163,6 @@ def main():
         workflow.write_graph()
     workflow.run(**plugin_settings)
 
-# # This might be usefull in some future, but in principle we want single-subject runs.
-# def fmri_preprocess_multiple(subject_list, plugin_settings, settings=None):
-#     for subject in subject_list:
-#         for session in subject_list[subject]:
-#             imaging_data = subject_list[subject][session]
-#             workflow = fmri_preprocess_single(imaging_data=imaging_data, settings=settings)
-#             workflow.base_dir = settings['work_dir']
-#             workflow.run(**plugin_settings)
-#             return
 
 
 if __name__ == '__main__':
