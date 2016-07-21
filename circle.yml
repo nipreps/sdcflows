@@ -4,9 +4,8 @@ machine:
 
 dependencies:
   cache_directories:
-    - "~/scratch"
     - "~/downloads/"
-    - "~/docker"
+    - "~/docker/"
 
   pre:
     # Download test data
@@ -14,10 +13,8 @@ dependencies:
     - pip install coverage
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker info
-    - docker pull oesteban/crn_nipype
-    - mkdir -p ~/docker; docker save oesteban/crn_nipype > ~/docker/image.tar
-    - docker build -t oesteban/fmriprep .
+    - docker build -t oesteban/fmriprep:latest .
+    - mkdir -p ~/docker; docker save oesteban/fmriprep:latest > ~/docker/image.tar
 test:
   override:
     # Run tests file
