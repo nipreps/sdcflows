@@ -17,10 +17,10 @@ class FieldmapDecider(Workflow):
     # 8.9.3 fieldmap image (and one magnitude image)
     # 8.9.4 multiple phase encoded directions (topup)
 
-    inputs = { 'fieldmaps' = None }
-    outputs = { 'fieldmaps' = None,
-                'outputnode.mag_brain' = None,
-                'outputnode.fmap_mask' = None,
+    # inputs/outputs could be specified with TraitedSpecs?
+    inputs = { 'inputnode.fieldmaps' = None }
+    outputs = { 'outputnode.mag_brain' = None, # fsl mcflirt aligns mags, fsl something (see epi.py for mean epi) average of magnitudes
+                'outputnode.fmap_mask' = None, 
                 'outputnode.fmap_fieldcoef' = None,
                 'outputnode.fmap_movpar' = None]
 
@@ -39,8 +39,8 @@ class FieldmapDecider(Workflow):
             elif re.search(misc.fieldmap_suffixes['phase'], filename): # 8.9.2
                 raise NotImplementedError("No workflow for phase fieldmap data")
             elif re.search(misc.fieldmap_suffixes['fieldmap'], a_filename): # 8.9.3
-                return fieldmap_to_phasediff() # ???
-            elif re.search(misc.fieldmap_suffixes['topup'], a_filename): #8.0.4
-                return se_pair_workflow() # ???
+                return fieldmap_to_phasediff()
+            elif re.search(misc.fieldmap_suffixes['topup'], a_filename): #8.9.4
+                return se_pair_workflow()
 
         raise IOError("Unrecognized fieldmap structure")

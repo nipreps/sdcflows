@@ -51,7 +51,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         # ideally use mcflirt to align and then average w fsl something
         firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
 
-        # de-gradiant the fields ("illumination problem")
+        # de-gradient the fields ("illumination problem")
         n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
 
         bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
