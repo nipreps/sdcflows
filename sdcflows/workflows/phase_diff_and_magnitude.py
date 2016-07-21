@@ -85,8 +85,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             function=add_empty_vol), name='AddEmptyVol')
         vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                       name="ComputeVSM")
-
-        vsm2dfm = _make_workflow_vsm2warp()
         
         wf = pe.Workflow(name=name)
         wf.connect([
@@ -153,8 +151,3 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                         'acc_factor': 2, 'enc_dir': u'AP'}
         return pe.Node(JSONFileGrabber(defaults=epi_defaults),
                            name='SettingsGrabber')
-
-    def _make_workflow_vsm2warp():
-        vsm2dfm = vsm2warp()
-        vsm2dfm.inputs.inputnode.scaling = 1.0
-        return vsm2dfm
