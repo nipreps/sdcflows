@@ -4,7 +4,6 @@ machine:
 
 dependencies:
   cache_directories:
-    - "~/scratch"
     - "~/downloads/"
     - "~/docker"
 
@@ -13,10 +12,8 @@ dependencies:
     - bash build/circle_setup.sh
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker info
-    - docker pull oesteban/crn_nipype
-    - mkdir -p ~/docker; docker save oesteban/crn_nipype > ~/docker/image.tar
-    - docker build -t oesteban/fmriprep .
+    - docker build -t oesteban/fmriprep:latest .
+    - mkdir -p ~/docker; docker save oesteban/fmriprep:latest > ~/docker/image.tar
 test:
   override:
     - docker run -t -v ~/scratch/data:/root/src/preprocessing-workflow/test_data --entrypoint="/usr/bin/run_unittests" -w "/root/src/preprocessing-workflow" oesteban/fmriprep
