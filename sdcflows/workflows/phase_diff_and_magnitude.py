@@ -1,41 +1,37 @@
+from __future__ import division
+
+import logging
+
+from nipype.interfaces.io import JSONFileGrabber
+from nipype.interfaces import utility as niu
+from nipype.interfaces import ants
+from nipype.workflows.dmri import fsl
+from nipype.pipeline import engine as pe
+from nipype.utils import (b0_indices, time_avg, apply_all_corrections, b0_average,
+                          hmc_split, dwi_flirt, eddy_rotate_bvecs, rotate_bvecs,
+                          insert_mat, extract_bval, recompose_dwi, recompose_xfm,
+                          siemens2rads, rads2radsec, demean_image,
+                          cleanup_edge_pipeline, add_empty_vol, vsm2warp,
+                          compute_readout,)
+
 class PhaseDiffAndMagnitudes(FieldmapDecider):
     ''' Fieldmap preprocessing workflow for fieldmap data structure 
-    8.9.1 in BIDS 1.0.0 '''
+    8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
 
     def __init__():
         return _make_workflow()
 
-    # copied as-is from nipype
+    # based on
     # https://github.com/nipy/nipype/blob/bd36a5dadab73e39d8d46b1f1ad826df3fece5c1/nipype/workflows/dmri/fsl/artifacts.py#L514
-    def sdc_fmb(name='fmb_correction', interp='Linear',
-                fugue_params=dict(smooth3d=2.0)):
+    def _make_workflow(name='phase_diff_and_magnitudes', interp='Linear',
+                       fugue_params=dict(smooth3d=2.0)):
         """
-        SDC stands for susceptibility distortion correction. FMB stands for
-        fieldmap-based.
-        
-        The fieldmap based (FMB) method implements SDC by using a mapping of the
-        B0 field as proposed by [Jezzard95]_. This workflow uses the implementation
-        of FSL (`FUGUE <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE>`_). Phase
+        Maps the B0 field as proposed by [Jezzard95]_. Phase
         unwrapping is performed using `PRELUDE
         <http://fsl.fmrib.ox.ac.uk/fsl/fsl-4.1.9/fugue/prelude.html>`_
         [Jenkinson03]_. Preparation of the fieldmap is performed reproducing the
         script in FSL `fsl_prepare_fieldmap
         <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide#SIEMENS_data>`_.
-        
-        
-        
-        Example
-        -------
-        
-        >>> from nipype.workflows.dmri.fsl.artifacts import sdc_fmb
-        >>> fmb = sdc_fmb()
-        >>> fmb.inputs.inputnode.in_file = 'diffusion.nii'
-        >>> fmb.inputs.inputnode.in_ref = list(range(0, 30, 6))
-        >>> fmb.inputs.inputnode.in_mask = 'mask.nii'
-        >>> fmb.inputs.inputnode.bmap_mag = 'magnitude.nii'
-        >>> fmb.inputs.inputnode.bmap_pha = 'phase.nii'
-        >>> fmb.inputs.inputnode.settings = 'epi_param.txt'
-        >>> fmb.run() # doctest: +SKIP
         
         .. warning:: Only SIEMENS format fieldmaps are supported.
         
@@ -51,22 +47,17 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         MRM 49(1):193-197, 2003, doi: 10.1002/mrm.10354.
         
         """
-        epi_defaults = {'delta_te': 2.46e-3, 'echospacing': 0.77e-3,
-                        'acc_factor': 2, 'enc_dir': u'AP'}
-        
         inputnode = pe.Node(niu.IdentityInterface(
             fields=['in_file', 'in_ref', 'in_mask', 'bmap_pha', 'bmap_mag',
                     'settings']), name='inputnode')
-        
         outputnode = pe.Node(niu.IdentityInterface(
             fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
-        
-        r_params = pe.Node(JSONFileGrabber(defaults=epi_defaults),
-                           name='SettingsGrabber')
+
+        r_params = _make_node_r_params()
+
         eff_echo = pe.Node(niu.Function(function=_eff_t_echo,
                                         input_names=['echospacing', 'acc_factor'],
                                         output_names=['eff_echo']), name='EffEcho')
-        
         firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
         n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
         bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
@@ -79,36 +70,14 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         rad2rsec = pe.Node(niu.Function(
             input_names=['in_file', 'delta_te'], output_names=['out_file'],
             function=rads2radsec), name='ToRadSec')
-        
         baseline = pe.Node(niu.Function(
             input_names=['in_file', 'index'], output_names=['out_file'],
             function=time_avg), name='Baseline')
         
-        fmm2b0 = pe.Node(ants.Registration(output_warped_image=True),
-                         name="FMm_to_B0")
-        fmm2b0.inputs.transforms = ['Rigid'] * 2
-        fmm2b0.inputs.transform_parameters = [(1.0,)] * 2
-        fmm2b0.inputs.number_of_iterations = [[50], [20]]
-        fmm2b0.inputs.dimension = 3
-        fmm2b0.inputs.metric = ['Mattes', 'Mattes']
-        fmm2b0.inputs.metric_weight = [1.0] * 2
-        fmm2b0.inputs.radius_or_number_of_bins = [64, 64]
-        fmm2b0.inputs.sampling_strategy = ['Regular', 'Random']
-        fmm2b0.inputs.sampling_percentage = [None, 0.2]
-        fmm2b0.inputs.convergence_threshold = [1.e-5, 1.e-8]
-        fmm2b0.inputs.convergence_window_size = [20, 10]
-        fmm2b0.inputs.smoothing_sigmas = [[6.0], [2.0]]
-        fmm2b0.inputs.sigma_units = ['vox'] * 2
-        fmm2b0.inputs.shrink_factors = [[6], [1]]  # ,[1] ]
-        fmm2b0.inputs.use_estimate_learning_rate_once = [True] * 2
-        fmm2b0.inputs.use_histogram_matching = [True] * 2
-        fmm2b0.inputs.initial_moving_transform_com = 0
-        fmm2b0.inputs.collapse_output_transforms = True
-        fmm2b0.inputs.winsorize_upper_quantile = 0.995
+        fmm2b0 = _make_node_fmm2b0()
         
         applyxfm = pe.Node(ants.ApplyTransforms(
             dimension=3, interpolation=interp), name='FMp_to_B0')
-        
         pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
         demean = pe.Node(niu.Function(
             input_names=['in_file', 'in_mask'], output_names=['out_file'],
@@ -119,18 +88,16 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         addvol = pe.Node(niu.Function(
             input_names=['in_file'], output_names=['out_file'],
             function=add_empty_vol), name='AddEmptyVol')
-        
         vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                       name="ComputeVSM")
-        
         split = pe.Node(fsl.Split(dimension='t'), name='SplitDWIs')
         merge = pe.Node(fsl.Merge(dimension='t'), name='MergeDWIs')
+
         unwarp = pe.MapNode(fsl.FUGUE(icorr=True, forward_warping=False),
                             iterfield=['in_file'], name='UnwarpDWIs')
         thres = pe.MapNode(fsl.Threshold(thresh=0.0), iterfield=['in_file'],
                            name='RemoveNegative')
-        vsm2dfm = vsm2warp()
-        vsm2dfm.inputs.inputnode.scaling = 1.0
+        vsm2dfm = _make_workflow_vsm2warp()
         
         wf = pe.Workflow(name=name)
         wf.connect([
@@ -188,3 +155,40 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (vsm2dfm, outputnode, [('outputnode.out_warp', 'out_warp')])
         ])
         return wf
+
+    def _make_node_r_params():
+        epi_defaults = {'delta_te': 2.46e-3, 'echospacing': 0.77e-3,
+                        'acc_factor': 2, 'enc_dir': u'AP'}        
+        return pe.Node(JSONFileGrabber(defaults=epi_defaults),
+                           name='SettingsGrabber')
+
+    def _make_node_fmm2b0():
+        fmm2b0 = pe.Node(ants.Registration(output_warped_image=True),
+                         name="FMm_to_B0")
+
+        fmm2b0.inputs.transforms = ['Rigid'] * 2
+        fmm2b0.inputs.transform_parameters = [(1.0,)] * 2
+        fmm2b0.inputs.number_of_iterations = [[50], [20]]
+        fmm2b0.inputs.dimension = 3
+        fmm2b0.inputs.metric = ['Mattes', 'Mattes']
+        fmm2b0.inputs.metric_weight = [1.0] * 2
+        fmm2b0.inputs.radius_or_number_of_bins = [64, 64]
+        fmm2b0.inputs.sampling_strategy = ['Regular', 'Random']
+        fmm2b0.inputs.sampling_percentage = [None, 0.2]
+        fmm2b0.inputs.convergence_threshold = [1.e-5, 1.e-8]
+        fmm2b0.inputs.convergence_window_size = [20, 10]
+        fmm2b0.inputs.smoothing_sigmas = [[6.0], [2.0]]
+        fmm2b0.inputs.sigma_units = ['vox'] * 2
+        fmm2b0.inputs.shrink_factors = [[6], [1]]  # ,[1] ]
+        fmm2b0.inputs.use_estimate_learning_rate_once = [True] * 2
+        fmm2b0.inputs.use_histogram_matching = [True] * 2
+        fmm2b0.inputs.initial_moving_transform_com = 0
+        fmm2b0.inputs.collapse_output_transforms = True
+        fmm2b0.inputs.winsorize_upper_quantile = 0.995
+
+        return fmm2b0
+
+    def _make_workflow_vsm2warp():
+        vsm2dfm = vsm2warp()
+        vsm2dfm.inputs.inputnode.scaling = 1.0
+        return vsm2dfm
