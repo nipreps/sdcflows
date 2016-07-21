@@ -1,6 +1,7 @@
 import unittest
 from nipype.pipeline import engine
 
+# invoke tests with ``python -m unittest discover test``
 class TestWorkflow(unittest.TestCase):
     def assertIsAlmostExpectedWorkflow(self, expected_name, expected_interfaces,
                                        expected_inputs, expected_outputs, 
@@ -13,7 +14,10 @@ class TestWorkflow(unittest.TestCase):
                         for name in actual.list_node_names()]
         actual_interfaces = [node.interface.__class__.__name__
                              for node in actual_nodes]
-        self.assertItemsEqual(expected_interfaces, actual_interfaces)
+
+        # assert lists equal
+        self.assertIsSubsetOfList(expected_interfaces, actual_interfaces)
+        self.assertIsSubsetOfList(actual_interfaces, expected_interfaces)
 
         # assert expected inputs, outputs exist
         actual_inputs, actual_outputs = self.get_inputs_outputs(actual_nodes)

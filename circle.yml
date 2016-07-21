@@ -20,9 +20,6 @@ dependencies:
     - docker build -t oesteban/fmriprep .
 test:
   override:
-    # run unit tests
-    - pwd
-    - python -m unittest discover test
     # Run tests file
     - bash build/circle_tests.sh:
         timeout: 4800
