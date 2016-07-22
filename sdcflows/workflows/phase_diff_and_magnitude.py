@@ -39,20 +39,27 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         MRM 49(1):193-197, 2003, doi: 10.1002/mrm.10354.
         
         """
-        inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps'], name='inputnode'))
+        inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps'],
+                                                  name='inputnode'))
 
-        sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
-                                          input_names=['fieldmaps'],
-                                          output_names=[fieldmap_suffixes.keys().sort()],
-            name='SortFmaps')
+        outputnode = pe.Node(niu.IdentityInterface(fields=['mag_brain',
+                                                           'fmap_mask',
+                                                           'fmap_fieldcoef',
+                                                           'fmap_movpar'],
+                                                   name='outputnode'))
 
         oldinputnode = pe.Node(niu.IdentityInterface(
             fields=['bmap_pha', # phase diff filename (per Oscar); might actually be the data itself?
                     'bmap_mag']), # list of magnitude image filenames
                                name='oldinputnode')
 
-        outputnode = pe.Node(niu.IdentityInterface(
-            fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
+        oldoutputnode = pe.Node(niu.IdentityInterface(
+            fields=['out_file', 'out_vsm', 'out_warp']), name='oldoutputnode')
+
+        sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
+                                          input_names=['fieldmaps'],
+                                          output_names=[fieldmap_suffixes.keys().sort()],
+            name='SortFmaps')
 
         ingest_fmap_data = _Ingest_Fieldmap_Data_Workflow()
 
@@ -99,9 +106,15 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                   ('acc_factor', 'acc_factor')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
-            (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
+            (vsm, oldoutputnode, [('shift_out_file', 'out_vsm')]),
+
+            (oldoutputnode, outputnode, [('', 'mag_brain'),
+                                         ('', 'fmap_mask'),
+                                         ('', 'fmap_fieldcoef'),
+                                         ('', 'fmap_movpar')]),
         ])
         return wf
+
 
     def _make_node_r_params():
         # find these values in data--see bids spec
