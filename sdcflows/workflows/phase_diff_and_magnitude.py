@@ -47,10 +47,9 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             name='SortFmaps')
 
         oldinputnode = pe.Node(niu.IdentityInterface(
-            fields=['in_mask', # skull-stripped image (e.g. using BET) fsl.BET(frac=0.3, mask=True, robust=True) -- looks like this is done twice??
-                    'bmap_pha', # ask. prob phase diff
-                    'bmap_mag', # ask. prob magnitude images
-                    'settings']), name='inputnode') # ask. called "epi_param" in original caller
+            fields=['bmap_pha', # phase diff filename (per Oscar); might actually be the data itself?
+                    'bmap_mag', # list of magnitude image filenames
+                    'settings']), name='inputnode') # used in r_params; will be removed
 
         outputnode = pe.Node(niu.IdentityInterface(
             fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
@@ -76,8 +75,18 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                        ('magnitude', 'bmap_mag')]),
 
             (oldinputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
-                                           ('bmap_pha', 'inputnode.bmap_pha')]),
+                                              ('bmap_pha', 'inputnode.bmap_pha')]),
+            (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
+            (ingest_fmap_data, wrangle_fmap_data, [('skull_strip_mask_file',
+                                                    'inputnode.in_mask')]),
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
+
+            (ingest_fmap_data, pre_fugue, [('skull_strip_mask_file',
+                                            'mask_file')]), # ??? verify
+            (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
+                                             'inputnode.fmap_out_file')]),
+            (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
 
             (oldinputnode, r_params, [('settings', 'in_file')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
@@ -86,15 +95,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                   ('acc_factor', 'acc_factor')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
-            (oldinputnode, pre_fugue, [('in_mask', 'mask_file')]),
-            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
-            (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
-                                             'inputnode.fmap_out_file')]),
-
-            (oldinputnode, wrangle_fmap_data, [('in_mask', 'inputnode.in_mask')]),
-            (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
-
-            (oldinputnode, vsm, [('in_mask', 'mask_file')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
         ])
         return wf
@@ -120,7 +120,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                                               'bmap_pha']),
                                 name='inputnode')
             outputnode = pe.Node(niu.IdentityInterface(
-                                     fields=['unwrapped_phase_file']),
+                                     fields=['unwrapped_phase_file',
+                                             'skull_strip_mask_file']),
                                  name='outputnode')
 
             # ideally use mcflirt to align and then average w fsl something
@@ -147,6 +148,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                 (firstmag, n4, [('roi_file', 'input_image')]),
                 (n4, prelude, [('output_image', 'magnitude_file')]),
                 (n4, bet, [('output_image', 'in_file')]),
+                (bet, outputnode, [('mask_file', 'skull_strip_mask_file')]
+
                 (bet, dilate, [('mask_file', 'in_file')]),
                 (dilate, prelude, [('out_file', 'mask_file')]),
 
