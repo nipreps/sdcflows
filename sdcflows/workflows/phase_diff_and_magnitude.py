@@ -70,11 +70,13 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         wf.connect([
             (inputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
                                            ('bmap_pha', 'inputnode.bmap_pha')])
+            (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]
+
             (inputnode, r_params, [('settings', 'in_file')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
-            (prelude, rad2rsec, [('unwrapped_phase_file', 'in_file')]),
+
             
             # shortcut from rad2rsec to pre_fugue
             (rad2rsec, pre_fugue, [('out_file','fmap_in_file')] # ??? verify
@@ -90,7 +92,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
-        ])
+        ]))
         return wf
 
     def _make_node_r_params():
@@ -111,7 +113,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             inputnode = pe.Node(niu.IdentityInterface(fields=['bmap_mag',
                                                               'bmap_pha']),
                                 name='inputnode')
-            outputnode = pe.Node(niu.IdentityInterface(fields=['''do this''']),
+            outputnode = pe.Node(niu.IdentityInterface(
+                                     fields=['unwrapped_phase_file']),
                                  name='outputnode')
 
             # ideally use mcflirt to align and then average w fsl something
