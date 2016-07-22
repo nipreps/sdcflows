@@ -54,45 +54,37 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             function=rads2radsec), name='ToRadSec')
 
         pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
-        demean = pe.Node(niu.Function(
-            input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=demean_image), name='DemeanFmap')
-        
-        cleanup = cleanup_edge_pipeline()
-        
-        addvol = pe.Node(niu.Function(
-            input_names=['in_file'], output_names=['out_file'],
-            function=add_empty_vol), name='AddEmptyVol')
+
+        wrangle_fmap_data = _Wrangle_Fieldmap_Data_Workflow()
+
         vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                       name="ComputeVSM")
         
         wf = pe.Workflow(name=name)
         wf.connect([
             (inputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
-                                           ('bmap_pha', 'inputnode.bmap_pha')])
-            (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]
+                                           ('bmap_pha', 'inputnode.bmap_pha')]),
+            (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
 
             (inputnode, r_params, [('settings', 'in_file')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
 
-            
             # shortcut from rad2rsec to pre_fugue
-            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')] # ??? verify
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
 
             (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
-            (pre_fugue, demean, [('fmap_out_file', 'in_file')]),
-            (inputnode, demean, [('in_mask', 'in_mask')]),
-            (demean, cleanup, [('out_file', 'inputnode.in_file')]),
-            (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
-            (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
+            (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
+                                             'inputnode.fmap_out_file')]),
+            (inputnode, wrangle_fmap_data, [('in_mask', 'inputnode.in_mask')]),
+            (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
+
             (inputnode, vsm, [('in_mask', 'mask_file')]),
-            (addvol, vsm, [('out_file', 'fmap_in_file')]),
             (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
-        ]))
+        ])
         return wf
 
     def _make_node_r_params():
@@ -110,6 +102,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         unwrapping usig FSL's PRELUDE'''
 
         def __init__():
+            name="IngestFmapData"
+
             inputnode = pe.Node(niu.IdentityInterface(fields=['bmap_mag',
                                                               'bmap_pha']),
                                 name='inputnode')
@@ -145,7 +139,41 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
                 (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
                 (pha2rads, prelude, [('out_file', 'phase_file')]),
-                (prelude, outputnode, [('unwrapped_phase_file', 'output')]),
+                (prelude, outputnode, [('unwrapped_phase_file', 
+                                        'unwrapped_phase_file')]),
             ])
             return wf
 
+    class _Wrangle_Fieldmap_Data_Workflow(Workflow):
+        '''  Normalizes ("demeans") fieldmap data, cleans it up and
+        organizes it for output'''
+
+        def __init__():
+            name='WrangleFmapData'
+
+            inputnode = pe.Node(niu.IdentityInterface(fields=['fmap_out_file',
+                                                              'in_mask']),
+                                name='inputnode')
+            outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']),
+                                 name='outputnode')
+
+            demean = pe.Node(niu.Function(
+                input_names=['in_file', 'in_mask'], output_names=['out_file'],
+                function=demean_image), name='DemeanFmap')
+
+            cleanup = cleanup_edge_pipeline()
+
+            addvol = pe.Node(niu.Function(
+                input_names=['in_file'], output_names=['out_file'],
+                function=add_empty_vol), name='AddEmptyVol')
+
+            wf = pe.Workflow(name=name)
+            wf.connect([
+                (inputnode, demean, [('fmap_out_file', 'in_file'),
+                                     ('in_mask', 'in_mask')]),
+                (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+                (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
+                (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
+                (addvol, outputnode, [('outputnode.out_file', 'out_file')]),
+            ])
+            return wf
