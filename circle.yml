@@ -10,15 +10,14 @@ dependencies:
   pre:
     # Download test data
     - bash build/circle_setup.sh
-    - pip install coverage
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build -t oesteban/fmriprep:latest .
     - mkdir -p ~/docker; docker save oesteban/fmriprep:latest > ~/docker/image.tar
 test:
   override:
-    # Run tests file
-    - bash build/circle_tests.sh:
+    - docker run -t -v ~/scratch/data:/root/src/preprocessing-workflow/test_data --entrypoint="/usr/bin/run_unittests" -w "/root/src/preprocessing-workflow" oesteban/fmriprep
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/scratch:/scratch -w /scratch --entrypoint="/usr/bin/run_fmriprep" oesteban/fmriprep -B /scratch/data/AA_Conn -S S5271NYO -o /scratch/outputs/ms-fmriprep/out -w /scratch/outputs/ms-fmriprep/work --debug :
         timeout: 4800
 
 general:
