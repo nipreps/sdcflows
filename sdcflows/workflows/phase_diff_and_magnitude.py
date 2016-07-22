@@ -67,22 +67,21 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
 
             (inputnode, r_params, [('settings', 'in_file')]),
+            (r_params, rad2rsec, [('delta_te', 'delta_te')]),
+            (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
-            (r_params, rad2rsec, [('delta_te', 'delta_te')]),
-
-            # shortcut from rad2rsec to pre_fugue
-            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
+            (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
             (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
             (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
                                              'inputnode.fmap_out_file')]),
+
             (inputnode, wrangle_fmap_data, [('in_mask', 'inputnode.in_mask')]),
             (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
 
             (inputnode, vsm, [('in_mask', 'mask_file')]),
-            (r_params, vsm, [('delta_te', 'asym_se_time')]),
-            (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
         ])
         return wf
@@ -132,8 +131,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             wf.connect([
                 (inputnode, firstmag, [('bmap_mag', 'in_file')]),
                 (firstmag, n4, [('roi_file', 'input_image')]),
-                (n4, bet, [('output_image', 'in_file')]),
                 (n4, prelude, [('output_image', 'magnitude_file')]),
+                (n4, bet, [('output_image', 'in_file')]),
                 (bet, dilate, [('mask_file', 'in_file')]),
                 (dilate, prelude, [('out_file', 'mask_file')]),
 
@@ -172,6 +171,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                 (inputnode, demean, [('fmap_out_file', 'in_file'),
                                      ('in_mask', 'in_mask')]),
                 (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+
                 (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
                 (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
                 (addvol, outputnode, [('outputnode.out_file', 'out_file')]),
