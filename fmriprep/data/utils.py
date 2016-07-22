@@ -7,7 +7,7 @@
 # @Date:   2016-01-05 11:29:40
 # @Email:  code@oscaresteban.es
 # @Last modified by:   oesteban
-# @Last Modified time: 2016-05-11 13:37:57
+# @Last Modified time: 2016-07-21 10:19:45
 """
 Utilities for data grabbers (from nilearn)
 """
@@ -21,7 +21,7 @@ import time
 import base64
 import hashlib
 import subprocess as sp
-from .compat import _urllib, md5_hash
+from fmriprep.data.compat import _urllib, md5_hash
 
 
 def _fetch_file(url, dataset_dir, filetype=None, resume=True, overwrite=False,
