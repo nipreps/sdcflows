@@ -7,9 +7,9 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
 from nipype.workflows.dmri import fsl
 from nipype.pipeline import engine as pe
-from nipype.utils import (time_avg,
-                          siemens2rads, rads2radsec, demean_image,
-                          cleanup_edge_pipeline, add_empty_vol)
+from nipype.workflows.dmri.fsl.utils import (time_avg,
+                                             siemens2rads, rads2radsec, demean_image,
+                                             cleanup_edge_pipeline, add_empty_vol)
 
 class PhaseDiffAndMagnitudes(FieldmapDecider):
     ''' Fieldmap preprocessing workflow for fieldmap data structure 
@@ -42,27 +42,13 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         inputnode = pe.Node(niu.IdentityInterface(
             fields=['in_file', 'in_ref', 'in_mask', 'bmap_pha', 'bmap_mag',
                     'settings']), name='inputnode')
+
         outputnode = pe.Node(niu.IdentityInterface(
             fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
 
-        # ideally use mcflirt to align and then average w fsl something
-        firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
+        ingest_fmap_data = _Ingest_Fieldmap_Data_Workflow()
 
-        # de-gradient the fields ("illumination problem")
-        n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
-
-        bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
-
-        # uses mask from bet; outputs a mask
-        dilate = pe.Node(fsl.maths.MathsCommand(
-            nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
-
-        # phase diff -> radians
-        pha2rads = pe.Node(niu.Function(
-            input_names=['in_file'], output_names=['out_file'],
-            function=siemens2rads), name='PreparePhase')
-
-        prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
+        
         rad2rsec = pe.Node(niu.Function(
             input_names=['in_file', 'delta_te'], output_names=['out_file'],
             function=rads2radsec), name='ToRadSec')
@@ -82,22 +68,16 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         
         wf = pe.Workflow(name=name)
         wf.connect([
+            (inputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
+                                           ('bmap_pha', 'inputnode.bmap_pha')])
             (inputnode, r_params, [('settings', 'in_file')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
-            (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
-            (inputnode, firstmag, [('bmap_mag', 'in_file')]),
-            (firstmag, n4, [('roi_file', 'input_image')]),
-            (n4, bet, [('output_image', 'in_file')]),
-            (bet, dilate, [('mask_file', 'in_file')]),
-            (pha2rads, prelude, [('out_file', 'phase_file')]),
-            (n4, prelude, [('output_image', 'magnitude_file')]),
-            (dilate, prelude, [('out_file', 'mask_file')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
             (prelude, rad2rsec, [('unwrapped_phase_file', 'in_file')]),
             
             # shortcut from rad2rsec to pre_fugue
-            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')] # ??? verify
 
             (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
             (pre_fugue, demean, [('fmap_out_file', 'in_file')]),
@@ -121,3 +101,48 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                         'acc_factor': 2, 'enc_dir': u'AP'}
         return pe.Node(JSONFileGrabber(defaults=epi_defaults),
                            name='SettingsGrabber')
+
+    class _Ingest_Fieldmap_Data_Workflow(Workflow):
+        ''' Takes phase diff and one magnitude file, handles the
+        illumination problem, extracts the brain, and does phase
+        unwrapping usig FSL's PRELUDE'''
+
+        def __init__():
+            inputnode = pe.Node(niu.IdentityInterface(fields=['bmap_mag',
+                                                              'bmap_pha']),
+                                name='inputnode')
+            outputnode = pe.Node(niu.IdentityInterface(fields=['''do this''']),
+                                 name='outputnode')
+
+            # ideally use mcflirt to align and then average w fsl something
+            firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
+
+            # de-gradient the fields ("illumination problem")
+            n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
+            bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
+            # uses mask from bet; outputs a mask
+            dilate = pe.Node(fsl.maths.MathsCommand(
+                nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
+
+            # phase diff -> radians
+            pha2rads = pe.Node(niu.Function(
+                input_names=['in_file'], output_names=['out_file'],
+                function=siemens2rads), name='PreparePhase')
+
+            prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
+
+            wf = pe.Workflow(name=name)
+            wf.connect([
+                (inputnode, firstmag, [('bmap_mag', 'in_file')]),
+                (firstmag, n4, [('roi_file', 'input_image')]),
+                (n4, bet, [('output_image', 'in_file')]),
+                (n4, prelude, [('output_image', 'magnitude_file')]),
+                (bet, dilate, [('mask_file', 'in_file')]),
+                (dilate, prelude, [('out_file', 'mask_file')]),
+
+                (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
+                (pha2rads, prelude, [('out_file', 'phase_file')]),
+                (prelude, outputnode, [('unwrapped_phase_file', 'output')]),
+            ])
+            return wf
+
