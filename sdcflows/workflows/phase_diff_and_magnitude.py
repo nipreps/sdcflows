@@ -39,9 +39,18 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         MRM 49(1):193-197, 2003, doi: 10.1002/mrm.10354.
         
         """
-        inputnode = pe.Node(niu.IdentityInterface(
-            fields=['in_file', 'in_ref', 'in_mask', 'bmap_pha', 'bmap_mag',
-                    'settings']), name='inputnode')
+        inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps'], name='inputnode'))
+
+        sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
+                                          input_names=['fieldmaps'],
+                                          output_names=[fieldmap_suffixes.keys().sort()],
+            name='SortFmaps')
+
+        oldinputnode = pe.Node(niu.IdentityInterface(
+            fields=['in_mask', # skull-stripped image (e.g. using BET) fsl.BET(frac=0.3, mask=True, robust=True) -- looks like this is done twice??
+                    'bmap_pha', # ask. prob phase diff
+                    'bmap_mag', # ask. prob magnitude images
+                    'settings']), name='inputnode') # ask. called "epi_param" in original caller
 
         outputnode = pe.Node(niu.IdentityInterface(
             fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
@@ -62,26 +71,30 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         
         wf = pe.Workflow(name=name)
         wf.connect([
-            (inputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
+            (inputnode, sortfmaps, [('fieldmaps', 'fieldmaps')]),
+            (sortfmaps, oldinputnode, [('phasediff', 'bmap_pha'),
+                                       ('magnitude', 'bmap_mag')]),
+
+            (oldinputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
                                            ('bmap_pha', 'inputnode.bmap_pha')]),
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
 
-            (inputnode, r_params, [('settings', 'in_file')]),
+            (oldinputnode, r_params, [('settings', 'in_file')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
             (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
-            (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
+            (oldinputnode, pre_fugue, [('in_mask', 'mask_file')]),
             (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
             (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
                                              'inputnode.fmap_out_file')]),
 
-            (inputnode, wrangle_fmap_data, [('in_mask', 'inputnode.in_mask')]),
+            (oldinputnode, wrangle_fmap_data, [('in_mask', 'inputnode.in_mask')]),
             (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
 
-            (inputnode, vsm, [('in_mask', 'mask_file')]),
+            (oldinputnode, vsm, [('in_mask', 'mask_file')]),
             (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
         ])
         return wf
@@ -115,6 +128,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
             # de-gradient the fields ("illumination problem")
             n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
+
             bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
             # uses mask from bet; outputs a mask
             dilate = pe.Node(fsl.maths.MathsCommand(

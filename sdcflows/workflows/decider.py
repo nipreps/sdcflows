@@ -34,13 +34,23 @@ class FieldmapDecider(Workflow):
             raise_from(NotImplementedError("No fieldmap data found"), e)
 
         for filename in subj_data[next(iter(subj_data))]['fieldmaps']:
-            if re.search(misc.fieldmap_suffixes['phasediff'], filename): # 8.9.1
+            if is_fmap_type('phasediff', filename): # 8.9.1
                 return PhaseDiffAndMagnitudes()
-            elif re.search(misc.fieldmap_suffixes['phase'], filename): # 8.9.2
+            elif is_fmap_type('phase', filename): # 8.9.2
                 raise NotImplementedError("No workflow for phase fieldmap data")
-            elif re.search(misc.fieldmap_suffixes['fieldmap'], a_filename): # 8.9.3
+            elif is_fmap_type('fieldmap', filename): # 8.9.3
                 return fieldmap_to_phasediff()
-            elif re.search(misc.fieldmap_suffixes['topup'], a_filename): #8.9.4
+            elif is_fmap_type('topup', filename): #8.9.4
                 return se_pair_workflow()
 
         raise IOError("Unrecognized fieldmap structure")
+
+    def sort_fmaps(files):
+        fmaps = {}
+        for type in fieldmap_suffixes.keys():
+            fmaps[type] = [doc for doc in files if is_fmap_type(type, doc)]
+        # funky return statement so sort_fmaps can be a Function interface
+        return (fmaps[key] for key in fieldmap_suffixes.keys().sort())
+
+    def is_fmap_type(fmap_type, filename):
+        return re.search(misc.fieldmap_suffixes[fmap_type], filename)
