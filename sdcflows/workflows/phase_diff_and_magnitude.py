@@ -66,9 +66,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         rad2rsec = pe.Node(niu.Function(
             input_names=['in_file', 'delta_te'], output_names=['out_file'],
             function=rads2radsec), name='ToRadSec')
-        baseline = pe.Node(niu.Function(
-            input_names=['in_file', 'index'], output_names=['out_file'],
-            function=time_avg), name='Baseline')
 
         pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
         demean = pe.Node(niu.Function(
@@ -90,8 +87,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                   ('acc_factor', 'acc_factor')]),
             (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
             (inputnode, firstmag, [('bmap_mag', 'in_file')]),
-            (inputnode, baseline, [('in_file', 'in_file'),
-                                   ('in_ref', 'index')]),
             (firstmag, n4, [('roi_file', 'input_image')]),
             (n4, bet, [('output_image', 'in_file')]),
             (bet, dilate, [('mask_file', 'in_file')]),
@@ -101,18 +96,9 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
             (prelude, rad2rsec, [('unwrapped_phase_file', 'in_file')]),
             
-            (baseline, fmm2b0, [('out_file', 'fixed_image')]),
-            (n4, fmm2b0, [('output_image', 'moving_image')]),
-            (inputnode, fmm2b0, [('in_mask', 'fixed_image_mask')]),
-            (dilate, fmm2b0, [('out_file', 'moving_image_mask')]),
-            
-            (baseline, applyxfm, [('out_file', 'reference_image')]),
-            (rad2rsec, applyxfm, [('out_file', 'input_image')]),
-            (fmm2b0, applyxfm, [
-                ('forward_transforms', 'transforms'),
-                ('forward_invert_flags', 'invert_transform_flags')]),
-            
-            (applyxfm, pre_fugue, [('output_image', 'fmap_in_file')]),
+            # shortcut from rad2rsec to pre_fugue
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]
+
             (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
             (pre_fugue, demean, [('fmap_out_file', 'in_file')]),
             (inputnode, demean, [('in_mask', 'in_mask')]),
