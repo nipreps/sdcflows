@@ -44,14 +44,9 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
         outputnode = pe.Node(niu.IdentityInterface(fields=['mag_brain',
                                                            'fmap_mask',
-                                                           'fmap_fieldcoef',
-                                                           'fmap_movpar'],
+                                                           'fmap_fieldcoef', # in sepair this comes from topup.out_fieldcoef; ask what to do
+                                                           'fmap_movpar'], # same as above; topup.out_movpar
                                                    name='outputnode'))
-
-        oldinputnode = pe.Node(niu.IdentityInterface(
-            fields=['bmap_pha', # phase diff filename (per Oscar); might actually be the data itself?
-                    'bmap_mag']), # list of magnitude image filenames
-                               name='oldinputnode')
 
         oldoutputnode = pe.Node(niu.IdentityInterface(fields=['out_vsm']), # voxel shift map file
                                 name='oldoutputnode')
@@ -65,6 +60,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
         r_params = _make_node_r_params()
  
+        # oscar said it wasn't necessary but it appears to be
         eff_echo = pe.Node(niu.Function(function=_eff_t_echo, # what does this reference?
                                         input_names=['echospacing', 'acc_factor'],
                                         output_names=['eff_echo']), name='EffEcho')
@@ -79,15 +75,12 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
         vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                       name="ComputeVSM")
-        
+
         wf = pe.Workflow(name=name)
         wf.connect([
             (inputnode, sortfmaps, [('fieldmaps', 'fieldmaps')]),
-            (sortfmaps, oldinputnode, [('phasediff', 'bmap_pha'),
-                                       ('magnitude', 'bmap_mag')]),
-
-            (oldinputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
-                                              ('bmap_pha', 'inputnode.bmap_pha')]),
+            (sortfmaps, ingest_fmap_data, [('phasediff', 'inputnode.bmap_pha'),
+                                           ('magnitude', 'bmap_mag')])
             (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
             (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain'), # ??? verify
                                             ('skull_strip_mask_file', 'fmap_mask']), # ??? verify
@@ -109,8 +102,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
             (vsm, oldoutputnode, [('shift_out_file', 'out_vsm')]),
-            (oldoutputnode, outputnode, [('', 'fmap_mask'),
-                                         ('', 'fmap_fieldcoef'),
+            (oldoutputnode, outputnode, [('', 'fmap_fieldcoef'),
                                          ('', 'fmap_movpar')]),
         ])
         return wf
