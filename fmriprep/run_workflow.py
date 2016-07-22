@@ -27,7 +27,7 @@ def preproc_and_reports(imaging_data, name='preproc_and_reports', settings=None)
     from fmriprep.workflows import fmri_preprocess_single
     from fmriprep.viz.pipeline_reports import generate_report_workflow
 
-    preproc_wf = fmri_preprocess_single(settings=settings)
+    preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
     #  report_wf = generate_report_workflow()
 
     # Set inputnode of the full-workflow

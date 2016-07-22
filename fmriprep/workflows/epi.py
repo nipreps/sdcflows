@@ -23,7 +23,7 @@ from fmriprep.viz import stripped_brain_overlay
 
 
 # pylint: disable=R0914
-def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', settings=None):
+def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 'sbref_brain']),
@@ -40,13 +40,23 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', settings=None):
     )
     epi_hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
 
-
     workflow.connect([
         (inputnode, epi_bet, [('epi', 'in_file')]),
         (epi_bet, epi_hmc, [('out_file', 'in_file')]),
-        (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
         (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
+
+    if subject_data['sbref'] is None:
+        epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
+        workflow.connect([
+            (inputnode, epi_mean, [('epi', 'in_file')]),
+            (epi_mean, epi_hmc, [('out_file', 'ref_file')]),
+        ])
+    else:
+        workflow.connect([
+            (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
+        ])
+        
 
     return workflow
 
