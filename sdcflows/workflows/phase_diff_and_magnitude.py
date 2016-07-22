@@ -53,8 +53,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                     'bmap_mag']), # list of magnitude image filenames
                                name='oldinputnode')
 
-        oldoutputnode = pe.Node(niu.IdentityInterface(
-            fields=['out_file', 'out_vsm', 'out_warp']), name='oldoutputnode')
+        oldoutputnode = pe.Node(niu.IdentityInterface(fields=['out_vsm']),
+                                name='oldoutputnode')
 
         sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
                                           input_names=['fieldmaps'],
@@ -107,7 +107,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
             (vsm, oldoutputnode, [('shift_out_file', 'out_vsm')]),
-
             (oldoutputnode, outputnode, [('', 'mag_brain'),
                                          ('', 'fmap_mask'),
                                          ('', 'fmap_fieldcoef'),
