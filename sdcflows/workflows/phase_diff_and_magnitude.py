@@ -48,14 +48,19 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
 
         oldinputnode = pe.Node(niu.IdentityInterface(
             fields=['bmap_pha', # phase diff filename (per Oscar); might actually be the data itself?
-                    'bmap_mag', # list of magnitude image filenames
-                    'settings']), name='inputnode') # used in r_params; will be removed
+                    'bmap_mag']), # list of magnitude image filenames
+                               name='oldinputnode')
 
         outputnode = pe.Node(niu.IdentityInterface(
             fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
 
         ingest_fmap_data = _Ingest_Fieldmap_Data_Workflow()
 
+        r_params = _make_node_r_params()
+ 
+        eff_echo = pe.Node(niu.Function(function=_eff_t_echo, # what does this reference?
+                                        input_names=['echospacing', 'acc_factor'],
+                                        output_names=['eff_echo']), name='EffEcho')
         
         rad2rsec = pe.Node(niu.Function(
             input_names=['in_file', 'delta_te'], output_names=['out_file'],
@@ -88,7 +93,6 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                              'inputnode.fmap_out_file')]),
             (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
 
-            (oldinputnode, r_params, [('settings', 'in_file')]),
             (r_params, rad2rsec, [('delta_te', 'delta_te')]),
             (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
