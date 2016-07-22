@@ -4,8 +4,6 @@ import re
 import unittest
 from future.utils import raise_from
 
-from future.utils import raise_from
-
 class TestCollectBids(unittest.TestCase):
     @classmethod
     def setUp(self):
