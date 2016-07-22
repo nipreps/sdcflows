@@ -48,13 +48,15 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                                            'fmap_movpar'], # same as above; topup.out_movpar
                                                    name='outputnode'))
 
-        oldoutputnode = pe.Node(niu.IdentityInterface(fields=['out_vsm']), # voxel shift map file
-                                name='oldoutputnode')
+        vsm2topup = pe.Node(niu.Function(function=_vsm_to_topup,
+                                         input_names=['vsm'], # voxel shift map file
+                                         output_names=['fmap_fieldcoef', 'fmap_movpar'],
+                                         name='vsm2topup'))
 
         sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
                                           input_names=['fieldmaps'],
                                           output_names=[fieldmap_suffixes.keys().sort()],
-            name='SortFmaps')
+                                          name='SortFmaps'))
 
         ingest_fmap_data = _Ingest_Fieldmap_Data_Workflow()
 
@@ -83,7 +85,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                            ('magnitude', 'bmap_mag')])
             (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
             (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain'), # ??? verify
-                                            ('skull_strip_mask_file', 'fmap_mask']), # ??? verify
+                                            ('skull_strip_mask_file', 'fmap_mask')]), # ??? verify
             (ingest_fmap_data, wrangle_fmap_data, [('skull_strip_mask_file',
                                                     'inputnode.in_mask')]), # ??? verify
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
@@ -101,12 +103,16 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                   ('acc_factor', 'acc_factor')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
-            (vsm, oldoutputnode, [('shift_out_file', 'out_vsm')]),
-            (oldoutputnode, outputnode, [('', 'fmap_fieldcoef'),
-                                         ('', 'fmap_movpar')]),
+            (vsm, vsm2topup, [('shift_out_file', 'vsm')]),
+            (vsm2topup, outputnode, [('fmap_fieldcoef', 'fmap_fieldcoef'),
+                                     ('fmap_movpar', 'fmap_movpar')]),
         ])
         return wf
 
+        def _vsm_to_topup(vsm):
+            # OSCAR'S CODE HERE
+            raise NotImplementedError()
+            return fmap_fieldcoef, fmap_movpar
 
     def _make_node_r_params():
         # find these values in data--see bids spec
