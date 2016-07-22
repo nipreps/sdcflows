@@ -17,7 +17,8 @@ from fmriprep.viz import stripped_brain_overlay
 
 WORKFLOW_NAME = 'Fieldmap_SEs'
 
-def se_pair_workflow(name=WORKFLOW_NAME, settings=None):  # pylint: disable=R0914
+# pylint: disable=R0914
+def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
     """
     Estimates the fieldmap using TOPUP on series of :abbr:`SE (Spin-Echo)` images
     acquired with varying :abbr:`PE (phase encoding)` direction.
