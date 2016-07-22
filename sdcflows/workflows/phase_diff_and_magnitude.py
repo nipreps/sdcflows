@@ -89,7 +89,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (oldinputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
                                               ('bmap_pha', 'inputnode.bmap_pha')]),
             (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
-            (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain')]), # ??? verify
+            (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain'), # ??? verify
+                                            ('skull_strip_mask_file', 'fmap_mask']), # ??? verify
             (ingest_fmap_data, wrangle_fmap_data, [('skull_strip_mask_file',
                                                     'inputnode.in_mask')]), # ??? verify
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
