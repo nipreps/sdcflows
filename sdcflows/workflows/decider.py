@@ -47,6 +47,16 @@ class FieldmapDecider(Workflow):
 
         raise IOError("Unrecognized fieldmap structure")
 
+    def sort_fmaps(files):
+        fmaps = {}
+        for type in fieldmap_suffixes.keys():
+            fmaps[type] = [doc for doc in files if is_fmap_type(type, doc)]
+        # funky return statement so sort_fmaps can be a Function interface
+        return (fmaps[key] for key in fieldmap_suffixes.keys().sort())
+
+    def is_fmap_type(fmap_type, filename):
+        return re.search(misc.fieldmap_suffixes[fmap_type], filename)
+
 def fieldmap_decider(subject_data, settings):
     ''' Initialize FieldmapDecider to automatically find a
     Fieldmap preprocessing workflow '''

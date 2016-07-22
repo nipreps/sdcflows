@@ -5,14 +5,11 @@ import logging
 from nipype.interfaces.io import JSONFileGrabber
 from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
-from nipype.workflows.dmri import fsl
+from nipype.interfaces import fsl
 from nipype.pipeline import engine as pe
-from nipype.utils import (b0_indices, time_avg, apply_all_corrections, b0_average,
-                          hmc_split, dwi_flirt, eddy_rotate_bvecs, rotate_bvecs,
-                          insert_mat, extract_bval, recompose_dwi, recompose_xfm,
-                          siemens2rads, rads2radsec, demean_image,
-                          cleanup_edge_pipeline, add_empty_vol, vsm2warp,
-                          compute_readout,)
+from nipype.workflows.dmri.fsl.utils import (time_avg,
+                                             siemens2rads, rads2radsec, demean_image,
+                                             cleanup_edge_pipeline, add_empty_vol)
 
 class PhaseDiffAndMagnitudes(FieldmapDecider):
     ''' Fieldmap preprocessing workflow for fieldmap data structure 
@@ -42,108 +39,80 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         MRM 49(1):193-197, 2003, doi: 10.1002/mrm.10354.
         
         """
-        inputnode = pe.Node(niu.IdentityInterface(
-            fields=['in_file', 'in_ref', 'in_mask', 'bmap_pha', 'bmap_mag',
-                    'settings']), name='inputnode')
-        outputnode = pe.Node(niu.IdentityInterface(
-            fields=['out_file', 'out_vsm', 'out_warp']), name='outputnode')
+        inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps'],
+                                                  name='inputnode'))
 
-        # ideally use mcflirt to align and then average w fsl something
-        firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
+        outputnode = pe.Node(niu.IdentityInterface(fields=['mag_brain',
+                                                           'fmap_mask',
+                                                           'fmap_fieldcoef', # in sepair this comes from topup.out_fieldcoef; ask what to do
+                                                           'fmap_movpar'], # same as above; topup.out_movpar
+                                                   name='outputnode'))
 
-        # de-gradiant the fields ("illumination problem")
-        n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
+        vsm2topup = pe.Node(niu.Function(function=_vsm_to_topup,
+                                         input_names=['vsm'], # voxel shift map file
+                                         output_names=['fmap_fieldcoef', 'fmap_movpar'],
+                                         name='vsm2topup'))
 
-        bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
+        sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
+                                          input_names=['fieldmaps'],
+                                          output_names=[fieldmap_suffixes.keys().sort()],
+                                          name='SortFmaps'))
 
-        # uses mask from bet; outputs a mask
-        dilate = pe.Node(fsl.maths.MathsCommand(
-            nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
+        ingest_fmap_data = _Ingest_Fieldmap_Data_Workflow()
 
-        # phase diff -> radians
-        pha2rads = pe.Node(niu.Function(
-            input_names=['in_file'], output_names=['out_file'],
-            function=siemens2rads), name='PreparePhase')
-
-        prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
+        r_params = _make_node_r_params()
+ 
+        # oscar said it wasn't necessary but it appears to be
+        eff_echo = pe.Node(niu.Function(function=_eff_t_echo, # what does this reference?
+                                        input_names=['echospacing', 'acc_factor'],
+                                        output_names=['eff_echo']), name='EffEcho')
+        
         rad2rsec = pe.Node(niu.Function(
             input_names=['in_file', 'delta_te'], output_names=['out_file'],
             function=rads2radsec), name='ToRadSec')
-        baseline = pe.Node(niu.Function(
-            input_names=['in_file', 'index'], output_names=['out_file'],
-            function=time_avg), name='Baseline')
 
         pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
-        demean = pe.Node(niu.Function(
-            input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=demean_image), name='DemeanFmap')
-        
-        cleanup = cleanup_edge_pipeline()
-        
-        addvol = pe.Node(niu.Function(
-            input_names=['in_file'], output_names=['out_file'],
-            function=add_empty_vol), name='AddEmptyVol')
+
+        wrangle_fmap_data = _Wrangle_Fieldmap_Data_Workflow()
+
         vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                       name="ComputeVSM")
 
-        vsm2dfm = _make_workflow_vsm2warp()
-        
         wf = pe.Workflow(name=name)
         wf.connect([
-            (inputnode, r_params, [('settings', 'in_file')]),
+            (inputnode, sortfmaps, [('fieldmaps', 'fieldmaps')]),
+            (sortfmaps, ingest_fmap_data, [('phasediff', 'inputnode.bmap_pha'),
+                                           ('magnitude', 'bmap_mag')])
+            (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
+            (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain'), # ??? verify
+                                            ('skull_strip_mask_file', 'fmap_mask')]), # ??? verify
+            (ingest_fmap_data, wrangle_fmap_data, [('skull_strip_mask_file',
+                                                    'inputnode.in_mask')]), # ??? verify
+            (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
+            (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
+
+            (ingest_fmap_data, pre_fugue, [('skull_strip_mask_file', # ??? verify
+                                            'mask_file')]), # ??? verify
+            (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
+                                             'inputnode.fmap_out_file')]),
+            (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
+
+            (r_params, rad2rsec, [('delta_te', 'delta_te')]),
+            (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (r_params, eff_echo, [('echospacing', 'echospacing'),
                                   ('acc_factor', 'acc_factor')]),
-            (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
-            (inputnode, firstmag, [('bmap_mag', 'in_file')]),
-            (inputnode, baseline, [('in_file', 'in_file'),
-                                   ('in_ref', 'index')]),
-            (firstmag, n4, [('roi_file', 'input_image')]),
-            (n4, bet, [('output_image', 'in_file')]),
-            (bet, dilate, [('mask_file', 'in_file')]),
-            (pha2rads, prelude, [('out_file', 'phase_file')]),
-            (n4, prelude, [('output_image', 'magnitude_file')]),
-            (dilate, prelude, [('out_file', 'mask_file')]),
-            (r_params, rad2rsec, [('delta_te', 'delta_te')]),
-            (prelude, rad2rsec, [('unwrapped_phase_file', 'in_file')]),
-            
-            (baseline, fmm2b0, [('out_file', 'fixed_image')]),
-            (n4, fmm2b0, [('output_image', 'moving_image')]),
-            (inputnode, fmm2b0, [('in_mask', 'fixed_image_mask')]),
-            (dilate, fmm2b0, [('out_file', 'moving_image_mask')]),
-            
-            (baseline, applyxfm, [('out_file', 'reference_image')]),
-            (rad2rsec, applyxfm, [('out_file', 'input_image')]),
-            (fmm2b0, applyxfm, [
-                ('forward_transforms', 'transforms'),
-                ('forward_invert_flags', 'invert_transform_flags')]),
-            
-            (applyxfm, pre_fugue, [('output_image', 'fmap_in_file')]),
-            (inputnode, pre_fugue, [('in_mask', 'mask_file')]),
-            (pre_fugue, demean, [('fmap_out_file', 'in_file')]),
-            (inputnode, demean, [('in_mask', 'in_mask')]),
-            (demean, cleanup, [('out_file', 'inputnode.in_file')]),
-            (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
-            (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
-            (inputnode, vsm, [('in_mask', 'mask_file')]),
-            (addvol, vsm, [('out_file', 'fmap_in_file')]),
-            (r_params, vsm, [('delta_te', 'asym_se_time')]),
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
-            (inputnode, split, [('in_file', 'in_file')]),
-            (split, unwarp, [('out_files', 'in_file')]),
-            (vsm, unwarp, [('shift_out_file', 'shift_in_file')]),
-            (r_params, unwarp, [
-                (('enc_dir', _fix_enc_dir), 'unwarp_direction')]),
-            (unwarp, thres, [('unwarped_file', 'in_file')]),
-            (thres, merge, [('out_file', 'in_files')]),
-            (r_params, vsm2dfm, [
-                (('enc_dir', _fix_enc_dir), 'inputnode.enc_dir')]),
-            (merge, vsm2dfm, [('merged_file', 'inputnode.in_ref')]),
-            (vsm, vsm2dfm, [('shift_out_file', 'inputnode.in_vsm')]),
-            (merge, outputnode, [('merged_file', 'out_file')]),
-            (vsm, outputnode, [('shift_out_file', 'out_vsm')]),
-            (vsm2dfm, outputnode, [('outputnode.out_warp', 'out_warp')])
+
+            (vsm, vsm2topup, [('shift_out_file', 'vsm')]),
+            (vsm2topup, outputnode, [('fmap_fieldcoef', 'fmap_fieldcoef'),
+                                     ('fmap_movpar', 'fmap_movpar')]),
         ])
         return wf
+
+        def _vsm_to_topup(vsm):
+            # OSCAR'S CODE HERE
+            raise NotImplementedError()
+            return fmap_fieldcoef, fmap_movpar
 
     def _make_node_r_params():
         # find these values in data--see bids spec
@@ -154,7 +123,91 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
         return pe.Node(JSONFileGrabber(defaults=epi_defaults),
                            name='SettingsGrabber')
 
-    def _make_workflow_vsm2warp():
-        vsm2dfm = vsm2warp()
-        vsm2dfm.inputs.inputnode.scaling = 1.0
-        return vsm2dfm
+    class _Ingest_Fieldmap_Data_Workflow(Workflow):
+        ''' Takes phase diff and one magnitude file, handles the
+        illumination problem, extracts the brain, and does phase
+        unwrapping usig FSL's PRELUDE'''
+
+        def __init__():
+            name="IngestFmapData"
+
+            inputnode = pe.Node(niu.IdentityInterface(fields=['bmap_mag',
+                                                              'bmap_pha']),
+                                name='inputnode')
+            outputnode = pe.Node(niu.IdentityInterface(
+                                     fields=['unwrapped_phase_file',
+                                             'skull_strip_mask_file',
+                                             'mag_brain']),
+                                 name='outputnode')
+
+            # ideally use mcflirt to align and then average w fsl something
+            firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
+
+            # de-gradient the fields ("illumination problem")
+            n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
+
+            bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
+            # uses mask from bet; outputs a mask
+            dilate = pe.Node(fsl.maths.MathsCommand(
+                nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
+
+            # phase diff -> radians
+            pha2rads = pe.Node(niu.Function(
+                input_names=['in_file'], output_names=['out_file'],
+                function=siemens2rads), name='PreparePhase')
+
+            prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
+
+            wf = pe.Workflow(name=name)
+            wf.connect([
+                (inputnode, firstmag, [('bmap_mag', 'in_file')]),
+                (firstmag, n4, [('roi_file', 'input_image')]),
+                (n4, prelude, [('output_image', 'magnitude_file')]),
+                (n4, bet, [('output_image', 'in_file')]),
+                (bet, outputnode, [('mask_file', 'skull_strip_mask_file'), # ??? verify
+                                   ('out_file', 'mag_brain')]
+
+                (bet, dilate, [('mask_file', 'in_file')]),
+                (dilate, prelude, [('out_file', 'mask_file')]),
+
+                (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
+                (pha2rads, prelude, [('out_file', 'phase_file')]),
+                (prelude, outputnode, [('unwrapped_phase_file', 
+                                        'unwrapped_phase_file')]),
+            ])
+            return wf
+
+    class _Wrangle_Fieldmap_Data_Workflow(Workflow):
+        '''  Normalizes ("demeans") fieldmap data, cleans it up and
+        organizes it for output'''
+
+        def __init__():
+            name='WrangleFmapData'
+
+            inputnode = pe.Node(niu.IdentityInterface(fields=['fmap_out_file',
+                                                              'in_mask']),
+                                name='inputnode')
+            outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']),
+                                 name='outputnode')
+
+            demean = pe.Node(niu.Function(
+                input_names=['in_file', 'in_mask'], output_names=['out_file'],
+                function=demean_image), name='DemeanFmap')
+
+            cleanup = cleanup_edge_pipeline()
+
+            addvol = pe.Node(niu.Function(
+                input_names=['in_file'], output_names=['out_file'],
+                function=add_empty_vol), name='AddEmptyVol')
+
+            wf = pe.Workflow(name=name)
+            wf.connect([
+                (inputnode, demean, [('fmap_out_file', 'in_file'),
+                                     ('in_mask', 'in_mask')]),
+                (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+
+                (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
+                (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
+                (addvol, outputnode, [('outputnode.out_file', 'out_file')]),
+            ])
+            return wf
