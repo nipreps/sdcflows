@@ -5,7 +5,7 @@ import logging
 from nipype.interfaces.io import JSONFileGrabber
 from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
-from nipype.workflows.dmri import fsl
+from nipype.interfaces import fsl
 from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (time_avg,
                                              siemens2rads, rads2radsec, demean_image,
@@ -53,7 +53,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                     'bmap_mag']), # list of magnitude image filenames
                                name='oldinputnode')
 
-        oldoutputnode = pe.Node(niu.IdentityInterface(fields=['out_vsm']),
+        oldoutputnode = pe.Node(niu.IdentityInterface(fields=['out_vsm']), # voxel shift map file
                                 name='oldoutputnode')
 
         sort_fmaps = pe.Node(niu.Function(function=sort_fmaps,
@@ -89,12 +89,13 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (oldinputnode, ingest_fmap_data, [('bmap_mag','inputnode.bmap_mag'),
                                               ('bmap_pha', 'inputnode.bmap_pha')]),
             (ingest_fmap_data, vsm, [('skull_strip_mask_file', 'mask_file')]),
+            (ingest_fmap_data, outputnode, [('mag_brain', 'mag_brain')]), # ??? verify
             (ingest_fmap_data, wrangle_fmap_data, [('skull_strip_mask_file',
-                                                    'inputnode.in_mask')]),
+                                                    'inputnode.in_mask')]), # ??? verify
             (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
             (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
 
-            (ingest_fmap_data, pre_fugue, [('skull_strip_mask_file',
+            (ingest_fmap_data, pre_fugue, [('skull_strip_mask_file', # ??? verify
                                             'mask_file')]), # ??? verify
             (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
                                              'inputnode.fmap_out_file')]),
@@ -107,8 +108,7 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
             (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
 
             (vsm, oldoutputnode, [('shift_out_file', 'out_vsm')]),
-            (oldoutputnode, outputnode, [('', 'mag_brain'),
-                                         ('', 'fmap_mask'),
+            (oldoutputnode, outputnode, [('', 'fmap_mask'),
                                          ('', 'fmap_fieldcoef'),
                                          ('', 'fmap_movpar')]),
         ])
@@ -137,7 +137,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                                 name='inputnode')
             outputnode = pe.Node(niu.IdentityInterface(
                                      fields=['unwrapped_phase_file',
-                                             'skull_strip_mask_file']),
+                                             'skull_strip_mask_file',
+                                             'mag_brain']),
                                  name='outputnode')
 
             # ideally use mcflirt to align and then average w fsl something
@@ -164,7 +165,8 @@ class PhaseDiffAndMagnitudes(FieldmapDecider):
                 (firstmag, n4, [('roi_file', 'input_image')]),
                 (n4, prelude, [('output_image', 'magnitude_file')]),
                 (n4, bet, [('output_image', 'in_file')]),
-                (bet, outputnode, [('mask_file', 'skull_strip_mask_file')]
+                (bet, outputnode, [('mask_file', 'skull_strip_mask_file'), # ??? verify
+                                   ('out_file', 'mag_brain')]
 
                 (bet, dilate, [('mask_file', 'in_file')]),
                 (dilate, prelude, [('out_file', 'mask_file')]),
