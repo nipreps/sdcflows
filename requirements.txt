@@ -6,5 +6,5 @@ matplotlib
 nilearn
 sklearn
 nibabel
--e git+https://github.com/oesteban/nipype@3b8528cb2eac0b5d321ea90d1094ebdc1cec7d1a#egg=nipype
+-e git+https://github.com/nipy/nipype@aa3a0bf794236e3ff0915675239d16adb65bee74#egg=nipype
 mriqc
