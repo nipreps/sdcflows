@@ -10,6 +10,7 @@ class TestDecider(TestWorkflow):
     # ideally this would be a true unit test but in the interests of
     # time it is more like a smoke test
     # also it won't run in circle ci or anywhere w/o some set up
+    @unittest.skip("see above; uncomment for development")
     def test_decider_phasediff_and_mags(self):
         logging.basicConfig(level=logging.DEBUG)
         # SET UP INPUTS
