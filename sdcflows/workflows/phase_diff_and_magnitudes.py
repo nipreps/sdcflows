@@ -10,11 +10,20 @@ from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (siemens2rads, rads2radsec,
                                              demean_image, cleanup_edge_pipeline,
                                              add_empty_vol)
-from fmriprep.workflows.fieldmap.helper import sort_fmaps
+
 from fmriprep.utils.misc import fieldmap_suffixes
 
 ''' Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
+
+def _sort_fmaps(fieldmaps):
+    ''' just a little data massaging'''
+    from fmriprep.workflows.fieldmap.helper import sort_fmaps
+
+    fmaps = sort_fmaps(fieldmaps)
+    # there is only one phasediff image
+    return fmaps['phasediff'][0], fmaps['magnitude']
+
 # based on
 # https://github.com/nipy/nipype/blob/bd36a5dadab73e39d8d46b1f1ad826df3fece5c1/nipype/workflows/dmri/fsl/artifacts.py#L514
 def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
@@ -49,9 +58,9 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
                                      input_names=['vsm'], # voxel shift map file
                                      output_names=['fmap_fieldcoef', 'fmap_movpar']),
                         name='vsm2topup')
-    sortfmaps = pe.Node(niu.Function(function=sort_fmaps,
+    sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
                                       input_names=['fieldmaps'],
-                                      output_names=sorted(fieldmap_suffixes.keys())),
+                                      output_names=['phasediff', 'magnitude']),
                         name='SortFmaps')
 
     ingest_fmap_data = _ingest_fieldmap_data_workflow()

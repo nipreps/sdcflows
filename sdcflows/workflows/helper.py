@@ -10,8 +10,7 @@ def sort_fmaps(fieldmaps): # i.e. filenames
         fmaps[fmap_type] = []
         fmaps[fmap_type] = [doc for doc in fieldmaps
                             if is_fmap_type(fmap_type, doc)]
-    # funky return statement so sort_fmaps can be a Function interface
-    return [fmaps[key] for key in sorted(misc.fieldmap_suffixes.keys())]
+    return fmaps
         
 def is_fmap_type(fmap_type, filename):
     return re.search(misc.fieldmap_suffixes[fmap_type], filename)
