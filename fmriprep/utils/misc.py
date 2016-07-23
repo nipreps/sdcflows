@@ -86,8 +86,7 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                         imaging_data[subject][session]['t1'] = scan_file
                     # temporary conditional until runs and tasks are handled
                     # in the imaging data structure
-                    elif 'rest_acq-LR_run-1' in filename:
-                        if 'bold.nii' in modality:
+                    elif 'bold.nii' in filename:
                             imaging_data[subject][session]['epi'] = scan_file
                     else:
                         pass
