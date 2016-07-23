@@ -22,7 +22,9 @@ def _sort_fmaps(fieldmaps):
 
     fmaps = sort_fmaps(fieldmaps)
     # there is only one phasediff image
-    return fmaps['phasediff'][0], fmaps['magnitude']
+    # there may be more than one magnitude image, but the workflow (GetFirst
+    # node) needs to change first
+    return fmaps['phasediff'][0], fmaps['magnitude'][0]
 
 # based on
 # https://github.com/nipy/nipype/blob/bd36a5dadab73e39d8d46b1f1ad826df3fece5c1/nipype/workflows/dmri/fsl/artifacts.py#L514
