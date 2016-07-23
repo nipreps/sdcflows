@@ -81,19 +81,12 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
         (sortfmaps, ingest_fmap_data, [('phasediff', 'inputnode.bmap_pha'),
                                        ('magnitude', 'inputnode.bmap_mag')]),
         (ingest_fmap_data, vsm, [('outputnode.skull_strip_mask_file', 'mask_file')]),
-
-
-
-
         (ingest_fmap_data, outputnode, [('outputnode.mag_brain', 'mag_brain'), # ??? verify
                                          ('outputnode.skull_strip_mask_file', 'fmap_mask')]), # ??? verify
         (ingest_fmap_data, wrangle_fmap_data, [('outputnode.skull_strip_mask_file',
                                                 'inputnode.in_mask')]), # ??? verify
         (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
         (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
-
-
-
 
         (ingest_fmap_data, pre_fugue, [('outputnode.skull_strip_mask_file', # ??? verify
                                         'mask_file')]), # ??? verify
