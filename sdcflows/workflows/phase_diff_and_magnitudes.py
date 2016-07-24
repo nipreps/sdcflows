@@ -82,7 +82,7 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
     pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
 
     wrangle_fmap_data = _wrangle_fieldmap_data_workflow()
-    print(wrangle_fmap_data)
+
     vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
                   name="ComputeVSM")
 

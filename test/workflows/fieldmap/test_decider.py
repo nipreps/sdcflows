@@ -1,4 +1,5 @@
 import logging
+import unittest
 
 from fmriprep.workflows.fieldmap import decider
 from fmriprep.utils import misc
