@@ -46,7 +46,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None)
         (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
 
-    if subject_data['sbref'] is None:
+    if subject_data['sbref'] == []: 
         epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
         workflow.connect([
             (inputnode, epi_mean, [('epi', 'in_file')]),
