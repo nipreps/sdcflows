@@ -1,5 +1,9 @@
-from fmriprep.utils import misc
-import re
+
+
+def is_fmap_type(fmap_type, filename):
+    from fmriprep.utils import misc
+    import re
+    return re.search(misc.fieldmap_suffixes[fmap_type], filename)
 
 def sort_fmaps(fieldmaps): # i.e. filenames
     from fmriprep.utils import misc
@@ -11,6 +15,4 @@ def sort_fmaps(fieldmaps): # i.e. filenames
         fmaps[fmap_type] = [doc for doc in fieldmaps
                             if is_fmap_type(fmap_type, doc)]
     return fmaps
-        
-def is_fmap_type(fmap_type, filename):
-    return re.search(misc.fieldmap_suffixes[fmap_type], filename)
+

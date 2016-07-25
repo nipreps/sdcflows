@@ -5,5 +5,6 @@
 """
 Fieldmap-processing workflows.
 
-Originally coded by Craig Moodie. Refactored by the CRN Developers.
 """
+
+from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
