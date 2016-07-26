@@ -2,6 +2,7 @@ from glob import glob
 import copy
 import json
 import os
+import pprint
 import re
 
 INPUTS_SPEC = {'fieldmaps': [], 'epi': [], 'sbref': [], 't1': ''}
@@ -89,12 +90,16 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                         imaging_data[subject][session]['epi'].append(scan_file)
                     else:
                         pass
-                runs = []
-                for epi_file in imaging_data[subject][session]['epi']:
-                    new_session_data = copy.deepcopy(imaging_data[subject][session])
-                    new_session_data['epi'] = epi_file
-                    runs.append(new_session_data)
-                imaging_data[subject][session] = runs
+
+    for subject in imaging_data.keys():
+        for session in imaging_data[subject].keys():
+            print(subject, session)
+            runs = []
+            for epi_file in imaging_data[subject][session]['epi']:
+                new_session_data = copy.deepcopy(imaging_data[subject][session])
+                new_session_data['epi'] = epi_file
+                runs.append(new_session_data)
+            imaging_data[subject][session] = runs
 
     return imaging_data
 
