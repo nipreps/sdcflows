@@ -22,22 +22,29 @@ def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
     """
     Estimates the fieldmap using TOPUP on series of :abbr:`SE (Spin-Echo)` images
     acquired with varying :abbr:`PE (phase encoding)` direction.
+
+    Outputs::
+
+      outputnode.mag_brain - The average magnitude image, skull-stripped
+      outputnode.fmap_mask - The brain mask applied to the fieldmap
+      outputnode.fieldmap - The estimated fieldmap in Hz
+
     """
 
     if settings is None:
         settings = {}
 
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=[
-        'out_field', 'fmap_mask', 'mag_brain', 'fmap_fieldcoef', 'fmap_movpar']), name='outputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['input_images']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['fieldmap', 'fmap_mask', 'mag_brain']), name='outputnode')
 
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
                       iterfield=['in_file'], name='metadata')
 
     encfile = pe.Node(interface=niu.Function(
-        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
+        input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
         function=create_encoding_file), name='TopUp_encfile', updatehash=True)
 
     # Head motion correction
@@ -59,9 +66,9 @@ def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
     mag_bet = pe.Node(fsl.BET(mask=True, robust=True), name='SE_brain')
 
     workflow.connect([
-        (inputnode, meta, [('fieldmaps', 'in_file')]),
-        (inputnode, encfile, [('fieldmaps', 'fieldmaps')]),
-        (inputnode, fslmerge, [('fieldmaps', 'in_files')]),
+        (inputnode, meta, [('input_images', 'in_file')]),
+        (inputnode, encfile, [('input_images', 'input_images')]),
+        (inputnode, fslmerge, [('input_images', 'in_files')]),
         (fslmerge, hmc_se, [('merged_file', 'in_file')]),
         (meta, encfile, [('out_dict', 'in_dict')]),
         (encfile, topup, [('parameters_file', 'encoding_file')]),
@@ -75,11 +82,9 @@ def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
         (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
         (inu_n4, mag_bet, [('output_image', 'in_file')]),
 
-        (topup, outputnode, [('out_field', 'out_field')]),
+        (topup, outputnode, [('out_field', 'fieldmap')]),
         (mag_bet, outputnode, [('out_file', 'mag_brain'),
-                               ('mask_file', 'fmap_mask')]),
-        (topup, outputnode, [('out_fieldcoef', 'fmap_fieldcoef'),
-                             ('out_movpar', 'fmap_movpar')])
+                               ('mask_file', 'fmap_mask')])
     ])
 
     # Reports section
@@ -98,21 +103,21 @@ def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
 
     return workflow
 
-def create_encoding_file(fieldmaps, in_dict):
+def create_encoding_file(input_images, in_dict):
     """Creates a valid encoding file for topup"""
     import json
     import nibabel as nb
     import numpy as np
     import os
 
-    if not isinstance(fieldmaps, list):
-        fieldmaps = [fieldmaps]
+    if not isinstance(input_images, list):
+        input_images = [input_images]
     if not isinstance(in_dict, list):
         in_dict = [in_dict]
 
     pe_dirs = {'i': 0, 'j': 1, 'k': 2}
     enc_table = []
-    for fmap, meta in zip(fieldmaps, in_dict):
+    for fmap, meta in zip(input_images, in_dict):
         line_values = [0, 0, 0, meta['TotalReadoutTime']]
         line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (
             -2*(len(meta['PhaseEncodingDirection']) == 2))
