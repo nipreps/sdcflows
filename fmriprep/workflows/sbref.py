@@ -45,7 +45,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                              ('fmap_mask', 'inputnode.fmap_mask'),
                              ('fieldmap', 'inputnode.fieldmap')]),
         (inputnode, gen_movpar, [('sbref', 'in_files'),
-                                 ('hmc_mats', 'in_mats')])
+                                 ('hmc_mats', 'in_mats')]),
         (unwarp, outputnode, [('outputnode.out_file', 'sbref_unwarped')])
     ])
 

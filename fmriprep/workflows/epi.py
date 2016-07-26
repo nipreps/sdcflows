@@ -18,7 +18,7 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
+from fmriprep.workflows.fieldmap.base import create_encoding_file
 from fmriprep.viz import stripped_brain_overlay
 
 
@@ -46,7 +46,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None)
         (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
 
-    if subject_data['sbref'] == []: 
+    if subject_data['sbref'] == []:
         epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
         workflow.connect([
             (inputnode, epi_mean, [('epi', 'in_file')]),
@@ -56,7 +56,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None)
         workflow.connect([
             (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
         ])
-        
+
 
     return workflow
 
@@ -65,7 +65,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     """ A workflow to correct EPI images """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar',
+        fields=['epi', 'sbref_brain', 'fieldmap', 'fmap_movpar',
                 'fmap_mask', 'epi_brain']), name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_correct', 'epi_mean']),
@@ -80,7 +80,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     )
 
     encfile = pe.Node(interface=niu.Function(
-        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
+        input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
         function=create_encoding_file), name='TopUp_encfile', updatehash=True)
 
     fslsplit = pe.Node(fsl.Split(dimension='t'), name='EPI_split')
@@ -97,10 +97,10 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
     workflow.connect([
         (inputnode, meta, [('epi', 'in_file')]),
-        (inputnode, encfile, [('epi', 'fieldmaps')]),
+        (inputnode, encfile, [('epi', 'input_images')]),
         (inputnode, fslsplit, [('epi_brain', 'in_file')]),
         (meta, encfile, [('out_dict', 'in_dict')]),
-        (inputnode, unwarp_epi, [('fmap_fieldcoef', 'in_topup_fieldcoef'),
+        (inputnode, unwarp_epi, [('fieldmap', 'in_topup_fieldcoef'),
                                  ('fmap_movpar', 'in_topup_movpar')]),
         (encfile, unwarp_epi, [('parameters_file', 'encoding_file')]),
         (fslsplit, unwarp_epi, [('out_files', 'in_files')]),

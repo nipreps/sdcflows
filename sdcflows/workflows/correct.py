@@ -8,6 +8,7 @@ Apply susceptibility distortion correction (SDC)
 """
 import os.path as op
 from nipype.interfaces import fsl
+from nipype.interfaces import ants
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection

@@ -96,18 +96,16 @@ def mcflirt2topup(in_files, in_mats, out_movpar=None):
 
     import os.path as op
     import numpy as np
-    from nipype.interfaces.base import isdefined
+    params = np.zeros((len(in_files), 6))
 
-    params = np.zeros(len(in_files), 6)
-
-    if isdefined(in_mats):
+    if in_mats:
         if len(in_mats) != len(in_files):
             raise RuntimeError('Number of input matrices and files do not match')
         else:
             raise NotImplementedError
 
     if out_movpar is None:
-        fname, fext = op.splitext(op.basename(in_mats[0]))
+        fname, fext = op.splitext(op.basename(in_files[0]))
         if fext == '.gz':
             fname, _ = op.splitext(fname)
         out_movpar = op.abspath('./%s_movpar.txt' % fname)
