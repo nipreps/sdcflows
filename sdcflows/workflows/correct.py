@@ -34,6 +34,10 @@ def sdc_correct(name=SDC_CORRECT_NAME, topup_meth='lsr', bet_frac=0.6):
                 'hmc_movpar']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']), name='outputnode')
 
+    # TODO: use http://nipype.readthedocs.io/en/latest/interfaces/generated/nipype.interfaces.fsl.utils.html#avscale
+    # 1) Check hmc_movpar is only one file, with format Nx6 (N=len(in_file))
+    # 2) If hmc_movpar is a list, use avscale to generate the Nx6 matrix.
+
     # Read metadata
     meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
                       iterfield=['in_file'], name='metadata')
