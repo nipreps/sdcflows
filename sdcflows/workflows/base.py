@@ -2,10 +2,6 @@ from future.utils import raise_from
 
 from nipype.pipeline import Workflow
 
-from fmriprep.workflows.fieldmap.fieldmap_to_phasediff import fieldmap_to_phasediff
-from fmriprep.workflows.fieldmap.se_pair_workflow import se_pair_workflow
-from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
-
 def is_fmap_type(fmap_type, filename):
     from fmriprep.utils import misc
     import re
@@ -47,12 +43,15 @@ def fieldmap_decider(subject_data, settings):
 
     for filename in subject_data['fieldmaps']:
         if is_fmap_type('phasediff', filename): # 8.9.1
+            from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
             return phase_diff_and_magnitudes()
         elif is_fmap_type('phase', filename): # 8.9.2
             raise NotImplementedError("No workflow for phase fieldmap data")
         elif is_fmap_type('fieldmap', filename): # 8.9.3
+            from fmriprep.workflows.fieldmap.fieldmap_to_phasediff import fieldmap_to_phasediff
             return fieldmap_to_phasediff(settings=settings)
         elif is_fmap_type('topup', filename): # 8.0.4
+            from fmriprep.workflows.fieldmap.se_pair_workflow import se_pair_workflow
             return se_pair_workflow(settings=settings)
 
     raise IOError("Unrecognized fieldmap structure")
