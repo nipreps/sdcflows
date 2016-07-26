@@ -19,8 +19,7 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.base import mcflirt2topup
-from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
+from fmriprep.workflows.fieldmap.base import create_encoding_file, mcflirt2topup
 from fmriprep.workflows.fieldmap.correct import sdc_correct
 from fmriprep.viz import stripped_brain_overlay
 

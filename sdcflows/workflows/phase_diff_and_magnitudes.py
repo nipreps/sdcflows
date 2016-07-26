@@ -19,7 +19,7 @@ from fmriprep.utils.misc import fieldmap_suffixes
 
 def _sort_fmaps(input_images):
     ''' just a little data massaging'''
-    from fmriprep.workflows.fieldmap.helper import sort_fmaps
+    from fmriprep.workflows.fieldmap.base import sort_fmaps
 
     fmaps = sort_fmaps(input_images)
     # there is only one phasediff image

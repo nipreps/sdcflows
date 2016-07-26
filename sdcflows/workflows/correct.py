@@ -12,11 +12,10 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
-from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
-
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 SDC_CORRECT_NAME = 'SDC_Apply'
 
@@ -108,7 +107,7 @@ def sdc_correct(name=SDC_CORRECT_NAME, topup_meth='lsr', bet_frac=0.6):
         (bet_target, to_coeff, [('out_file', 'reference')]),
         (hmc_se, fslsplit, [('out_file', 'in_file')]),
         (fslsplit, unwarp, [('out_files', 'in_files'),
-                                (('out_files', gen_list), 'in_index')]),
+                            (('out_files', gen_list), 'in_index')]),
         (to_coeff, unwarp, [('out_file', 'in_topup_fieldcoef')]),
         (encfile, unwarp, [('parameters_file', 'encoding_file')]),
         (unwarp, outputnode, [('out_corrected', 'out_file')])

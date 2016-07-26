@@ -14,6 +14,7 @@ from nipype.pipeline import engine as pe
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
+from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 WORKFLOW_NAME = 'Fieldmap_SEs'
 
@@ -102,31 +103,3 @@ def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
     ])
 
     return workflow
-
-def create_encoding_file(input_images, in_dict):
-    """Creates a valid encoding file for topup"""
-    import json
-    import nibabel as nb
-    import numpy as np
-    import os
-
-    if not isinstance(input_images, list):
-        input_images = [input_images]
-    if not isinstance(in_dict, list):
-        in_dict = [in_dict]
-
-    pe_dirs = {'i': 0, 'j': 1, 'k': 2}
-    enc_table = []
-    for fmap, meta in zip(input_images, in_dict):
-        line_values = [0, 0, 0, meta['TotalReadoutTime']]
-        line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (
-            -2*(len(meta['PhaseEncodingDirection']) == 2))
-
-        nvols = 1
-        if len(nb.load(fmap).shape) > 3:
-            nvols = nb.load(fmap).shape[3]
-
-        enc_table += [line_values] * nvols
-
-    np.savetxt(os.path.abspath('parameters.txt'), enc_table, fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])
-    return os.path.abspath('parameters.txt')
