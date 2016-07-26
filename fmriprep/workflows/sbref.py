@@ -19,7 +19,9 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.workflows.base import mcflirt2topup
 from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
+from fmriprep.workflows.fieldmap.correct import sdc_correct
 from fmriprep.viz import stripped_brain_overlay
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
@@ -29,48 +31,23 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['sbref', 'fmap_ref_brain', 'fmap_mask',
-                        'fmap_fieldcoef', 'fmap_movpar']), name='inputnode')
+                        'fieldmap', 'hmc_mats']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped']), name='outputnode')
 
-    # Read metadata
-    meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
-                      iterfield=['in_file'], name='metadata')
+    gen_movpar = pe.Node(niu.Function(
+        input_names=['in_files', 'in_mats'], output_names=['out_movpar'],
+        function=mcflirt2topup), name='MotionParameters')
 
-    encfile = pe.Node(interface=niu.Function(
-        input_names=['fieldmaps', 'in_dict'], output_names=['parameters_file'],
-        function=create_encoding_file), name='TopUp_encfile', updatehash=True)
-
-    #  Skull strip SBRef to get reference brain
-    sbref_bet = pe.MapNode(fsl.BET(mask=True, functional=True, frac=0.6),
-                           iterfield=['in_file'], name="sbref_bet")
-
-    # Head motion correction (using fieldmap magnitude as reference)
-    fslmerge = pe.Node(fsl.Merge(dimension='t'), name='SBref_merge')
-    hmc_se = pe.Node(fsl.MCFLIRT(cost='normcorr', mean_vol=True), name='SBref_head_motion_corr')
-    fslsplit = pe.Node(fsl.Split(dimension='t'), name='SBref_split')
-
-    # Use the least-squares method to correct the dropout of the SBRef images
-    unwarp_mag = pe.Node(fsl.ApplyTOPUP(method='lsr'), name='TopUpApply')
-
-    # Remove bias
-    inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SBref_bias')
+    unwarp = sdc_correct()
 
     workflow.connect([
-        (inputnode, meta, [('sbref', 'in_file')]),
-        (inputnode, sbref_bet, [('sbref', 'in_file')]),
-        (inputnode, encfile, [('sbref', 'fieldmaps')]),
-        (inputnode, hmc_se, [('fmap_ref_brain', 'ref_file')]),
-        (sbref_bet, fslmerge, [('out_file', 'in_files')]),
-        (inputnode, unwarp_mag, [('fmap_fieldcoef', 'in_topup_fieldcoef'),
-                                 ('fmap_movpar', 'in_topup_movpar')]),
-        (meta, encfile, [('out_dict', 'in_dict')]),
-        (fslmerge, hmc_se, [('merged_file', 'in_file')]),
-        (encfile, unwarp_mag, [('parameters_file', 'encoding_file')]),
-        (hmc_se, fslsplit, [('out_file', 'in_file')]),
-        (fslsplit, unwarp_mag, [('out_files', 'in_files'),
-                                (('out_files', gen_list), 'in_index')]),
-        (unwarp_mag, inu_n4, [('out_corrected', 'input_image')]),
-        (inu_n4, outputnode, [('output_image', 'sbref_unwarped')])
+        (inputnode, unwarp, [('sbref', 'inputnode.in_file'),
+                             ('fmap_ref_brain', 'inputnode.fmap_ref'),
+                             ('fmap_mask', 'inputnode.fmap_mask'),
+                             ('fieldmap', 'inputnode.fieldmap')]),
+        (inputnode, gen_movpar, [('sbref', 'in_files'),
+                                 ('hmc_mats', 'in_mats')])
+        (unwarp, outputnode, [('outputnode.out_file', 'sbref_unwarped')])
     ])
 
     # Plot result
@@ -83,7 +60,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                        name="datasink", parameterization=False)
 
     workflow.connect([
-        (inu_n4, png_sbref_corr, [('output_image', 'overlay_file')]),
+        (unwarp, png_sbref_corr, [('outputnode.out_file', 'overlay_file')]),
         (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')]),
         (png_sbref_corr, datasink, [('out_file', '@corrected_SBRef')])
     ])
