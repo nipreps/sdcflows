@@ -78,7 +78,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None)
 def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
-    maps the SBRef space into the T1-space
+    maps the EPI space into the T1-space
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
@@ -91,6 +91,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     )
 
     epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
+
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
         niu.Function(input_names=['in_file'], output_names=['out_file'],
@@ -108,8 +109,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     workflow.connect([
         (inputnode, epi_mean, [('epi', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (epi_mean, flt_bbr, [('out_file', 'in_file'),
-                              ('t1_brain', 'reference')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (epi_mean, flt_bbr, [('out_file', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
@@ -117,7 +118,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     ])
 
     # Plots for report
-    png_sbref_t1= pe.Node(niu.Function(
+    png_sbref_t1 = pe.Node(niu.Function(
         input_names=["in_file", "overlay_file", "out_file"],
         output_names=["out_file"],
         function=stripped_brain_overlay),
