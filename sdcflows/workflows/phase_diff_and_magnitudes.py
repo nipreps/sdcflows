@@ -27,8 +27,7 @@ def _sort_fmaps(input_images):
     return fmaps['phasediff'][0], fmaps['magnitude']
 
 
-def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
-                              fugue_params=dict(smooth3d=2.0)):
+def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
