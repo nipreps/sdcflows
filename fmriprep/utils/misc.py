@@ -91,16 +91,6 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                     else:
                         pass
 
-    for subject in imaging_data.keys():
-        for session in imaging_data[subject].keys():
-            print(subject, session)
-            runs = []
-            for epi_file in imaging_data[subject][session]['epi']:
-                new_session_data = copy.deepcopy(imaging_data[subject][session])
-                new_session_data['epi'] = epi_file
-                runs.append(new_session_data)
-            imaging_data[subject][session] = runs
-
     return imaging_data
 
 def is_fieldmap_file(string):
