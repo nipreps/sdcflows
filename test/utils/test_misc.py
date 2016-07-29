@@ -2,17 +2,22 @@ import json
 import fmriprep.utils.misc as misc
 import re
 import unittest
+import test.constant as c
 from future.utils import raise_from
 
 class TestCollectBids(unittest.TestCase):
+    subject_id = 'sub-S5271NYO'
+
     @classmethod
     def setUp(self):
-        self.dataset = "test_data/AA_Conn"
         try:
-            self.imaging_data = misc.collect_bids_data(self.dataset)
+            all_subjects = misc.collect_bids_data(c.DATASET)
+            self.imaging_data = {
+                self.subject_id: all_subjects[self.subject_id]
+            }
         except Exception as e:
             url = "http://googledrive.com/host/0BxI12kyv2olZbl9GN3BIOVVoelE"
-            raise_from(Exception("Couldn't find data at " + self.dataset + 
+            raise_from(Exception("Couldn't find data at " + c.DATASET + 
                                  ". Download from " + url), e)
 
     def test_collect_bids_data(self):
@@ -25,7 +30,7 @@ class TestCollectBids(unittest.TestCase):
         self.assert_key_exists(epi_template, 'epi')
 
     def test_sbref(self):
-        sbref_template = (self.dataset + "/{subject}/func/"
+        sbref_template = (c.DATASET + "/{subject}/func/"
                           "{subject}_task-rest_acq-LR_run-1_sbref.nii.gz")
         self.assert_key_exists(sbref_template, 'sbref')
 
