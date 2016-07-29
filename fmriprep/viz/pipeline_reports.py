@@ -13,7 +13,6 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.pipeline.engine import Workflow, Node
 
-from fmriprep.data import get_mni_template
 from fmriprep.viz.pdf_compose import generate_report
 
 
