@@ -2,9 +2,10 @@ from glob import glob
 import copy
 import json
 import os
+import pprint
 import re
 
-INPUTS_SPEC = {'fieldmaps': [], 'epi': '', 'sbref': [], 't1': ''}
+INPUTS_SPEC = {'fieldmaps': [], 'epi': [], 'sbref': [], 't1': ''}
 
 def gen_list(inlist, base=1):
     return range(base, len(inlist) + base)
@@ -73,7 +74,6 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                     imaging_data[subject][session] = copy.deepcopy(INPUTS_SPEC)
                 scan_files = glob(os.path.join(dataset, session, scan_type,
                                                '*'))
-
                 for scan_file in scan_files:
                     filename = scan_file.split('/')[-1]
                     filename_parts = filename.split('_')
@@ -87,7 +87,7 @@ def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
                     # temporary conditional until runs and tasks are handled
                     # in the imaging data structure
                     elif 'bold.nii' in filename:
-                            imaging_data[subject][session]['epi'] = scan_file
+                        imaging_data[subject][session]['epi'].append(scan_file)
                     else:
                         pass
 
