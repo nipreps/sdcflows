@@ -91,16 +91,13 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     # 5. T1w to MNI registration
     epi_to_t1 = pe.Node(ants.Registration(float=True), name="EPI_To_T1_Registration")
-    epi_to_t1.inputs.fixed_image = op.join(get_mni_template(), 'MNI152_T1_1mm.nii.gz')
-    epi_to_t1.inputs.fixed_image_mask = op.join(
-        get_mni_template(), 'MNI152_T1_1mm_brain_mask.nii.gz')
 
     # Hack to avoid re-running ANTs all the times
     grabber_interface = nio.JSONFileGrabber()
     setattr(grabber_interface, '_always_run', False)
     epi_to_t1_params = pe.Node(grabber_interface, name='t1_2_mni_params')
     epi_to_t1_params.inputs.in_file = (
-        pkgr.resource_filename('fmriprep', 'data/registration_settings.json')
+        pkgr.resource_filename('fmriprep', 'data/epi_registration_settings.json')
     )
 
 
