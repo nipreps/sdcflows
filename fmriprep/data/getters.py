@@ -24,13 +24,13 @@ def get_mni_template_ras(data_dir=None, url=None, resume=True, verbose=1):
 
     """
     if url is None:
-        url = "http://googledrive.com/host/0BxI12kyv2olZSl9rRFMtUFQtdVk"
+        url = "http://googledrive.com/host/0BxI12kyv2olZemt4STY1aG80cXc"
 
     dataset_name = 'mni_template_RAS'
     data_dir = _get_dataset_dir(dataset_name, data_dir=data_dir, verbose=verbose)
 
     if _fetch_file(url, data_dir, filetype='tar', resume=resume, verbose=verbose,
-                   md5sum='5d6129a6a05170841096f7ce80b9c400'):
+                   md5sum='a4669f0e7acceae148bb39450b2b21b4'):
         return data_dir
     else:
         return None

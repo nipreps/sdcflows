@@ -44,8 +44,10 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
                          name='outputnode')
 
     # Reorient to RAS and skull-stripping
-    orient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
-                         name='Reorient')
+    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    orient = pe.MapNode(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
+                        iterfield=['in_file'], name='ReorientEPI')
+    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
     bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
         name="EPI_bet"
@@ -55,8 +57,10 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
 
     workflow.connect([
-        (inputnode, orient, [('epi', 'in_file')]),
-        (orient, bet, [('out_file', 'in_file')]),
+        (inputnode, split, [('epi', 'in_file')]),
+        (split, orient, [('out_files', 'in_file')]),
+        (orient, merge, [('out_file', 'in_files')]),
+        (merge, bet, [('merged_file', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
         (hmc, outputnode, [('out_file', 'epi_brain'),
                            ('mat_file', 'xforms')]),
