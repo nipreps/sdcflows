@@ -19,7 +19,7 @@
     "float": true,
     "use_estimate_learning_rate_once": [ true, true ],
     "use_histogram_matching": [ true, true ],
-    "collapse_output_transforms": false,
+    "collapse_output_transforms": true,
     "write_composite_transform": false,
     "output_transform_prefix": "ants_t1_to_mni",
     "output_warped_image": true
