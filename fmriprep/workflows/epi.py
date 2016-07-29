@@ -20,7 +20,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
-from fmriprep.data import get_mni_template
+from fmriprep.data import get_mni_template_ras
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.utils.misc import gen_list
 from fmriprep.viz import stripped_brain_overlay
@@ -167,8 +167,11 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
 
     epi_to_T1_transform = pe.Node(ants.ApplyTransforms(), name="EPIToT1Transform")
+    epi_t1_mni = pe.Node(ants.ApplyTransforms(), name="EPIToT1ToMNITransform")
+    epi_t1_mni.inputs.reference_image = op.join(get_mni_template_ras(),
+                                                'MNI152_T1_1mm.nii.gz')
     epi_to_mni_transform = pe.Node(ants.ApplyTransforms(), name="EPIToMNITransform")
-    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template(),
+    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template_ras(),
                                                           'MNI152_T1_1mm.nii.gz')
     epi_to_mni_transform.terminal_output = 'file'
 
@@ -186,8 +189,11 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in2')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (inputnode, epi_to_mni_transform, [('epi', 'input_image')]),
+        (inputnode, epi_t1_mni, [('epi', 'input_image'),
+                                 ('t1_2_mni_forward_transform', 'transforms')]),
         (epi_to_mni_transform, datasink, [('output_image', '@epi_mni')]),
-        (epi_to_T1_transform, datasink, [('output_image', '@epi_t1')])
+        (epi_to_T1_transform, datasink, [('output_image', '@epi_t1')]),
+        (epi_t1_mni, datasink, [('output_image', '@epi_t1_mni')])
     ])
 
     return workflow

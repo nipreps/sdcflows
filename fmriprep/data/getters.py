@@ -14,6 +14,27 @@ Data grabbers
 
 from fmriprep.data.utils import _get_dataset_dir, _fetch_file
 
+def get_mni_template_ras(data_dir=None, url=None, resume=True, verbose=1):
+    """Download and load the necessary files from the mni template
+
+
+    :param str data_dir: path of the data directory. Used to force data storage
+        in a non-standard location.
+    :param str url: download URL of the dataset. Overwrite the default URL.
+
+    """
+    if url is None:
+        url = "http://googledrive.com/host/0BxI12kyv2olZSl9rRFMtUFQtdVk"
+
+    dataset_name = 'mni_template_RAS'
+    data_dir = _get_dataset_dir(dataset_name, data_dir=data_dir, verbose=verbose)
+
+    if _fetch_file(url, data_dir, filetype='tar', resume=resume, verbose=verbose,
+                   md5sum='5d6129a6a05170841096f7ce80b9c400'):
+        return data_dir
+    else:
+        return None
+
 def get_mni_template(data_dir=None, url=None, resume=True, verbose=1):
     """Download and load the necessary files from the mni template
 
