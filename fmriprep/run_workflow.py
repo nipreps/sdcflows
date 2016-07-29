@@ -22,25 +22,6 @@ import os.path as op
 from lockfile import LockFile
 
 
-def preproc_and_reports(imaging_data, plugin_settings, name='preproc_and_reports', settings=None):
-    from nipype.pipeline import engine as pe
-    from fmriprep.workflows import fmri_preprocess_single
-    from fmriprep.viz.pipeline_reports import generate_report_workflow
-
-    i = 0
-    for data in imaging_data:
-        preproc_wf = fmri_preprocess_single(data, settings=settings)
-        preproc_wf.base_dir = op.join(settings['work_dir'], str(i))
-        i += 1
-        # Set inputnode of the full-workflow
-        for key in data.keys():
-            setattr(preproc_wf.inputs.inputnode, key, data[key])
-        preproc_wf.run(**plugin_settings)
-
-
-    return preproc_wf
-    #  return connector_wf
-
 def main():
     """Entry point"""
     from nipype import config as ncfg
@@ -140,8 +121,11 @@ def main():
     imaging_data = get_subject(settings['bids_root'], opts.subject_id)
 
     # Build main workflow and run
-    workflow = preproc_and_reports(imaging_data, plugin_settings, settings=settings)
-    workflow.base_dir = settings['work_dir']
+    preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
+    preproc_wf.base_dir = settings['work_dir']
+    for key in data.keys():
+        setattr(preproc_wf.inputs.inputnode, key, imaging_data[key])
+    preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
         workflow.write_graph()
