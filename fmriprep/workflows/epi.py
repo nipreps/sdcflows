@@ -10,7 +10,6 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 import os
 import os.path as op
-import pkg_resources as pkgr
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
@@ -18,18 +17,21 @@ from nipype.interfaces import c3
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
+from nipype.interfaces import freesurfer as fs
 
-from fmriprep.data import get_mni_template
+from fmriprep.data import get_mni_template_ras
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.utils.misc import gen_list
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
 from fmriprep.workflows.sbref import _extract_wm
 
 
 # pylint: disable=R0914
-def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
+def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
+    """
+    Performs :abbr:`HMC (head motion correction)` over the input
+    :abbr:`EPI (echo-planar imaging)` image.
+    """
     workflow = pe.Workflow(name=name)
 
     infields = ['epi', 't1_brain']
@@ -37,30 +39,43 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
         infields += ['sbref_brain']
 
     inputnode = pe.Node(niu.IdentityInterface(fields=infields),
-                        name='inputnode', iterfields=['epi'])
-    inputnode.iterables = [('epi', subject_data['epi'])]
-    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
+                        name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain', 'xforms']),
                          name='outputnode')
 
-    epi_bet = pe.Node(
+    # Reorient to RAS and skull-stripping
+    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    orient = pe.MapNode(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
+                        iterfield=['in_file'], name='ReorientEPI')
+    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
+    bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
         name="EPI_bet"
     )
-    epi_hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
+
+    # Head motion correction (hmc)
+    hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
 
     workflow.connect([
-        (inputnode, epi_bet, [('epi', 'in_file')]),
-        (epi_bet, epi_hmc, [('out_file', 'in_file')]),
-        (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
+        (inputnode, split, [('epi', 'in_file')]),
+        (split, orient, [('out_files', 'in_file')]),
+        (orient, merge, [('out_file', 'in_files')]),
+        (merge, bet, [('merged_file', 'in_file')]),
+        (bet, hmc, [('out_file', 'in_file')]),
+        (hmc, outputnode, [('out_file', 'epi_brain'),
+                           ('mat_file', 'xforms')]),
     ])
 
+    # If we have an SBRef, it should be the reference,
+    # align to mean volume otherwise
     if sbref_present:
         workflow.connect([
-            (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
+            (inputnode, hmc, [('sbref_brain', 'ref_file')]),
         ])
     else:
-        epi_hmc.inputs.mean_vol = True
+        hmc.inputs.mean_vol = True
 
+    # Write corrected file in the designated output dir
     datasink = pe.Node(
         nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
         name="datasink",
@@ -68,7 +83,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
     )
 
     workflow.connect([
-        (epi_hmc, datasink, [('out_file', '@epi_hmc')]),
+        (hmc, datasink, [('out_file', '@epi_hmc')]),
     ])
 
     return workflow
@@ -148,20 +163,33 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
             'mat_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
-            't1'
+            't1',
+            'hmc_xforms'
         ]),
         name='inputnode'
     )
+
+    def _aslist(in_value):
+        if isinstance(in_value, list):
+            return in_value
+        return [in_value]
 
     #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
     #  something ANTs will like.
     convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                        name='convert2itk')
 
-    merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
+    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    merge_transforms = pe.MapNode(niu.Merge(3),
+                                  iterfield=['in3'], name="MergeTransforms")
+    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
+    epi_to_T1_transform = pe.Node(ants.ApplyTransforms(), name="EPIToT1Transform")
+    epi_t1_mni = pe.Node(ants.ApplyTransforms(), name="EPIToT1ToMNITransform")
+    epi_t1_mni.inputs.reference_image = op.join(get_mni_template_ras(),
+                                                'MNI152_T1_1mm.nii.gz')
     epi_to_mni_transform = pe.Node(ants.ApplyTransforms(), name="EPIToMNITransform")
-    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template(),
+    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template_ras(),
                                                           'MNI152_T1_1mm.nii.gz')
     epi_to_mni_transform.terminal_output = 'file'
 
@@ -169,11 +197,21 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
                        name="datasink", parameterization=False)
 
     workflow.connect([
-        (inputnode, merge_transforms, [('mat_epi_to_t1', 'in1')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in2')]),
+        (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
+                                  ('epi', 'source_file'),
+                                  ('t1', 'reference_file')]),
+        (convert2itk, merge_transforms, [(('itk_transform', _aslist), 'in2')]),
+        (convert2itk, epi_to_T1_transform, [('itk_transform', 'transforms')]),
+        (inputnode, epi_to_T1_transform, [('epi', 'input_image'),
+                                          ('t1', 'reference_image')]),
+        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (inputnode, epi_to_mni_transform, [('epi', 'input_image')]),
+        (inputnode, epi_t1_mni, [('epi', 'input_image'),
+                                 ('t1_2_mni_forward_transform', 'transforms')]),
         (epi_to_mni_transform, datasink, [('output_image', '@epi_mni')]),
+        (epi_to_T1_transform, datasink, [('output_image', '@epi_t1')]),
+        (epi_t1_mni, datasink, [('output_image', '@epi_t1_mni')])
     ])
 
     return workflow

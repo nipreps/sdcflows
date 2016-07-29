@@ -83,6 +83,9 @@ def main():
         'work_dir': op.abspath(opts.work_dir)
     }
 
+    if opts.debug:
+        settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
+
     log_dir = op.join(settings['work_dir'], 'log')
 
     # Check and create output and working directories
@@ -124,8 +127,6 @@ def main():
     # Build main workflow and run
     preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
-    for key in imaging_data.keys():
-        setattr(preproc_wf.inputs.inputnode, key, imaging_data[key])
     preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
