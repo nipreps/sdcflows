@@ -174,7 +174,6 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
             return in_value
         return [in_value]
 
-
     #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
     #  something ANTs will like.
     convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
