@@ -37,7 +37,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
         infields += ['sbref_brain']
 
     inputnode = pe.Node(niu.IdentityInterface(fields=infields),
-                        name='inputnode', iterfields=['epi'])
+                        name='inputnode')
     inputnode.iterables = [('epi', subject_data['epi'])]
     outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
                          name='outputnode')
@@ -73,7 +73,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
 
     return workflow
 
-def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings=None):
+def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
@@ -81,10 +81,8 @@ def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 't1_brain', 't1_seg']),
-        name='inputnode',
-        iterfields=['epi']
+        name='inputnode'
     )
-    inputnode.iterables = [('epi', subject_data['epi'])]
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1']),
         name='outputnode'
@@ -143,7 +141,7 @@ def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings
 
     return workflow
 
-def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=None):
+def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
@@ -152,10 +150,14 @@ def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=N
             'epi',
             't1'
         ]),
-        name='inputnode',
-        iterfields=['epi']
+        name='inputnode'
     )
-    inputnode.iterables = [('epi', subject_data['epi'])]
+
+    def _aslist(in_value):
+        if isinstance(in_value, list):
+            return in_value
+        return [in_value]
+
 
     #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
     #  something ANTs will like.
@@ -164,6 +166,7 @@ def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=N
 
     merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
 
+    epi_to_T1_transform = pe.Node(ants.ApplyTransforms(), name="EPIToT1Transform")
     epi_to_mni_transform = pe.Node(ants.ApplyTransforms(), name="EPIToMNITransform")
     epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template(),
                                                           'MNI152_T1_1mm.nii.gz')
@@ -173,11 +176,18 @@ def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=N
                        name="datasink", parameterization=False)
 
     workflow.connect([
-        (inputnode, merge_transforms, [('mat_epi_to_t1', 'in1')]),
+        (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
+                                  ('epi', 'source_file'),
+                                  ('t1', 'reference_file')]),
+        (convert2itk, merge_transforms, [(('itk_transform', _aslist), 'in1')]),
+        (convert2itk, epi_to_T1_transform, [('itk_transform', 'transforms')]),
+        (inputnode, epi_to_T1_transform, [('epi', 'input_image'),
+                                          ('t1', 'reference_image')]),
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in2')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (inputnode, epi_to_mni_transform, [('epi', 'input_image')]),
         (epi_to_mni_transform, datasink, [('output_image', '@epi_mni')]),
+        (epi_to_T1_transform, datasink, [('output_image', '@epi_t1')])
     ])
 
     return workflow
@@ -188,8 +198,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar',
-                'fmap_mask', 'epi_brain']), name='inputnode', iterfields=['epi'])
-    inputnode.iterables = [('epi', subject_data['epi'])]
+                'fmap_mask', 'epi_brain']), name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_correct', 'epi_mean']),
         name='outputnode'
