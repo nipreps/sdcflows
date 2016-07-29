@@ -180,7 +180,10 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                        name='convert2itk')
 
-    merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
+    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    merge_transforms = pe.MapNode(niu.Merge(3),
+                                  iterfield=['in3'], name="MergeTransforms")
+    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
     epi_to_T1_transform = pe.Node(ants.ApplyTransforms(), name="EPIToT1Transform")
     epi_t1_mni = pe.Node(ants.ApplyTransforms(), name="EPIToT1ToMNITransform")
