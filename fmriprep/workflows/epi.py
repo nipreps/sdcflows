@@ -28,6 +28,10 @@ from fmriprep.workflows.sbref import _extract_wm
 
 # pylint: disable=R0914
 def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
+    """
+    Performs :abbr:`HMC (head motion correction)` over the input
+    :abbr:`EPI (echo-planar imaging)` image.
+    """
     workflow = pe.Workflow(name=name)
 
     infields = ['epi', 't1_brain']
@@ -40,29 +44,34 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
     outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
                          name='outputnode')
 
-    epi_orient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
+    # Reorient to RAS and skull-stripping
+    orient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
                          name='Reorient')
-    epi_bet = pe.Node(
+    bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
         name="EPI_bet"
     )
 
-    epi_hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
+    # Head motion correction (hmc)
+    hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
 
     workflow.connect([
-        (inputnode, epi_orient, [('epi', 'in_file')]),
-        (epi_orient, epi_bet, [('out_file', 'in_file')]),
-        (epi_bet, epi_hmc, [('out_file', 'in_file')]),
-        (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
+        (inputnode, orient, [('epi', 'in_file')]),
+        (orient, bet, [('out_file', 'in_file')]),
+        (bet, hmc, [('out_file', 'in_file')]),
+        (hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
 
+    # If we have an SBRef, it should be the reference,
+    # align to mean volume otherwise
     if sbref_present:
         workflow.connect([
-            (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
+            (inputnode, hmc, [('sbref_brain', 'ref_file')]),
         ])
     else:
-        epi_hmc.inputs.mean_vol = True
+        hmc.inputs.mean_vol = True
 
+    # Write corrected file in the designated output dir
     datasink = pe.Node(
         nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
         name="datasink",
@@ -70,7 +79,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
     )
 
     workflow.connect([
-        (epi_hmc, datasink, [('out_file', '@epi_hmc')]),
+        (hmc, datasink, [('out_file', '@epi_hmc')]),
     ])
 
     return workflow
