@@ -28,16 +28,17 @@ from fmriprep.workflows.sbref import _extract_wm
 
 
 # pylint: disable=R0914
-def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None):
+def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'sbref_brain', 't1_brain']),
-        name='inputnode'
-    )
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_brain']),
-        name='outputnode'
-    )
+
+    infields = ['epi', 't1_brain']
+    if sbref_present:
+        infields += ['sbref_brain']
+
+    inputnode = pe.Node(niu.IdentityInterface(fields=infields),
+                        name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
+                         name='outputnode')
 
     epi_bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
@@ -51,17 +52,13 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', settings=None)
         (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
 
-    if subject_data['sbref'] == []: 
-        epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
-        workflow.connect([
-            (inputnode, epi_mean, [('epi', 'in_file')]),
-            (epi_mean, epi_hmc, [('out_file', 'ref_file')]),
-        ])
-    else:
+    if sbref_present:
         workflow.connect([
             (inputnode, epi_hmc, [('sbref_brain', 'ref_file')]),
         ])
-        
+    else:
+        epi_hmc.inputs.mean_vol = True
+
     datasink = pe.Node(
         nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
         name="datasink",
@@ -81,7 +78,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 't1', 't1_seg']),
+        niu.IdentityInterface(fields=['epi', 't1_brain', 't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -89,17 +86,37 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='outputnode'
     )
 
-    # 5. T1w to MNI registration
-    epi_to_t1 = pe.Node(ants.Registration(float=True), name="EPI_To_T1_Registration")
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'), name="Flirt_BBR_init")
 
-    # Hack to avoid re-running ANTs all the times
-    grabber_interface = nio.JSONFileGrabber()
-    setattr(grabber_interface, '_always_run', False)
-    epi_to_t1_params = pe.Node(grabber_interface, name='t1_2_mni_params')
-    epi_to_t1_params.inputs.in_file = (
-        pkgr.resource_filename('fmriprep', 'data/epi_registration_settings.json')
+    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
+    flt_bbr.inputs.schedule = settings['fsl'].get(
+        'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
+
+    # make equivalent warp fields
+    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
+
+    workflow.connect([
+        (inputnode, epi_mean, [('epi', 'in_file')]),
+        (inputnode, wm_mask, [('t1_seg', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
+        (epi_mean, flt_bbr_init, [('out_file', 'in_file')]),
+        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (epi_mean, flt_bbr, [('out_file', 'in_file')]),
+        (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
+        (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
+        (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
+        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')])
+    ])
+
+    # Plots for report
+    png_sbref_t1 = pe.Node(niu.Function(
+        input_names=["in_file", "overlay_file", "out_file"],
+        output_names=["out_file"],
+        function=stripped_brain_overlay),
+        name="PNG_sbref_t1"
     )
-
+    png_sbref_t1.inputs.out_file = "sbref_to_t1.png"
 
     datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
                        name="datasink", parameterization=False)
@@ -125,11 +142,16 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
         name='inputnode'
     )
 
+    #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
+    #  something ANTs will like.
+    convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                       name='convert2itk')
+
     merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
 
     epi_to_mni_transform = pe.Node(ants.ApplyTransforms(), name="EPIToMNITransform")
-    epi_to_mni_transform.reference_image = op.join(get_mni_template(), 
-                                                   'MNI152_T1_1mm.nii.gz')
+    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template(),
+                                                          'MNI152_T1_1mm.nii.gz')
     epi_to_mni_transform.terminal_output = 'file'
 
     datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
