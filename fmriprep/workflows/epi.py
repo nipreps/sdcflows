@@ -73,7 +73,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
 
     return workflow
 
-def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings=None):
+def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
@@ -81,10 +81,8 @@ def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 't1_brain', 't1_seg']),
-        name='inputnode',
-        iterfields=['epi']
+        name='inputnode'
     )
-    inputnode.iterables = [('epi', subject_data['epi'])]
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1']),
         name='outputnode'
@@ -143,7 +141,7 @@ def epi_mean_t1_registration(subject_data, name='EPIMeanNormalization', settings
 
     return workflow
 
-def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=None):
+def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
@@ -152,10 +150,8 @@ def epi_mni_transformation(subject_data, name="EPIMNITransformation", settings=N
             'epi',
             't1'
         ]),
-        name='inputnode',
-        iterfields=['epi']
+        name='inputnode'
     )
-    inputnode.iterables = [('epi', subject_data['epi'])]
 
     #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
     #  something ANTs will like.
@@ -188,8 +184,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 'sbref_brain', 'fmap_fieldcoef', 'fmap_movpar',
-                'fmap_mask', 'epi_brain']), name='inputnode', iterfields=['epi'])
-    inputnode.iterables = [('epi', subject_data['epi'])]
+                'fmap_mask', 'epi_brain']), name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_correct', 'epi_mean']),
         name='outputnode'
