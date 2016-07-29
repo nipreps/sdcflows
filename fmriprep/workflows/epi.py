@@ -179,6 +179,7 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     #  something ANTs will like.
     convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                        name='convert2itk')
+    pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
 
     gen_ref = pe.Node(niu.Function(
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
@@ -187,13 +188,18 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
                                          'MNI152_T1_1mm.nii.gz')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                         iterfield=['transform_file'], name='hcm2itk')
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name="MergeTransforms")
-    epi_to_mni_transform = pe.Node(
+    epi_to_mni_transform = pe.MapNode(
         ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
         name="EPIToMNITransform")
+#    merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
+#    epi_to_mni_transform = pe.MapNode(
+#        ants.ApplyTransforms(), iterfield=['input_image'],
+#        name="EPIToMNITransform")
     epi_to_mni_transform.terminal_output = 'file'
-
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
 
@@ -201,14 +207,18 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
                        name="datasink", parameterization=False)
 
     workflow.connect([
-        (inputnode, gen_ref, [('epi', 'moving_image')]),
+        (inputnode, pick_1st, [('epi', 'in_file')]),
+        (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
+        (inputnode, hcm2itk, [('hmc_xforms', 'transform_file')]),
+        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
+                             ('roi_file', 'reference_file')]),
+        (hcm2itk, merge_transforms, [('itk_transform', 'in3')]),
         (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
-                                  ('epi', 'source_file'),
                                   ('t1', 'reference_file')]),
+        (pick_1st, convert2itk, [('roi_file', 'source_file')]),
+        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       ('hmc_xforms', 'in3')]),
         (convert2itk, merge_transforms, [(('itk_transform', _aslist), 'in2')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
