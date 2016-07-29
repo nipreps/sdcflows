@@ -124,8 +124,6 @@ def main():
     # Build main workflow and run
     preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
-    for key in imaging_data.keys():
-        setattr(preproc_wf.inputs.inputnode, key, imaging_data[key])
     preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:

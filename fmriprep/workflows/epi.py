@@ -27,7 +27,7 @@ from fmriprep.workflows.sbref import _extract_wm
 
 
 # pylint: disable=R0914
-def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
+def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
@@ -40,8 +40,7 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
 
     inputnode = pe.Node(niu.IdentityInterface(fields=infields),
                         name='inputnode')
-    inputnode.iterables = [('epi', subject_data['epi'])]
-    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain', 'xforms']),
                          name='outputnode')
 
     # Reorient to RAS and skull-stripping
@@ -59,7 +58,8 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
         (inputnode, orient, [('epi', 'in_file')]),
         (orient, bet, [('out_file', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
-        (hmc, outputnode, [('out_file', 'epi_brain')]),
+        (hmc, outputnode, [('out_file', 'epi_brain'),
+                           ('mat_file', 'xforms')]),
     ])
 
     # If we have an SBRef, it should be the reference,
@@ -159,7 +159,8 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
             'mat_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
-            't1'
+            't1',
+            'hmc_xforms'
         ]),
         name='inputnode'
     )
