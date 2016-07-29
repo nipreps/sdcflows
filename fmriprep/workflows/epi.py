@@ -180,39 +180,40 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                        name='convert2itk')
 
+    gen_ref = pe.Node(niu.Function(
+        input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
+        function=_gen_reference), name='GenNewMNIReference')
+    gen_ref.inputs.fixed_image = op.join(get_mni_template_ras(),
+                                         'MNI152_T1_1mm.nii.gz')
+
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name="MergeTransforms")
+    epi_to_mni_transform = pe.Node(
+        ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
+        name="EPIToMNITransform")
+    epi_to_mni_transform.terminal_output = 'file'
+
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
-    epi_to_T1_transform = pe.Node(ants.ApplyTransforms(), name="EPIToT1Transform")
-    epi_t1_mni = pe.Node(ants.ApplyTransforms(), name="EPIToT1ToMNITransform")
-    epi_t1_mni.inputs.reference_image = op.join(get_mni_template_ras(),
-                                                'MNI152_T1_1mm.nii.gz')
-    epi_to_mni_transform = pe.Node(ants.ApplyTransforms(), name="EPIToMNITransform")
-    epi_to_mni_transform.inputs.reference_image = op.join(get_mni_template_ras(),
-                                                          'MNI152_T1_1mm.nii.gz')
-    epi_to_mni_transform.terminal_output = 'file'
 
     datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
                        name="datasink", parameterization=False)
 
     workflow.connect([
+        (inputnode, gen_ref, [('epi', 'moving_image')]),
         (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
                                   ('epi', 'source_file'),
                                   ('t1', 'reference_file')]),
+        (inputnode, split, [('epi', 'in_file')]),
+        (split, epi_to_mni_transform, [('out_files', 'input_image')]),
+        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+                                       ('hmc_xforms', 'in3')]),
         (convert2itk, merge_transforms, [(('itk_transform', _aslist), 'in2')]),
-        (convert2itk, epi_to_T1_transform, [('itk_transform', 'transforms')]),
-        (inputnode, epi_to_T1_transform, [('epi', 'input_image'),
-                                          ('t1', 'reference_image')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
-        (inputnode, epi_to_mni_transform, [('epi', 'input_image')]),
-        (inputnode, epi_t1_mni, [('epi', 'input_image'),
-                                 ('t1_2_mni_forward_transform', 'transforms')]),
-        (epi_to_mni_transform, datasink, [('output_image', '@epi_mni')]),
-        (epi_to_T1_transform, datasink, [('output_image', '@epi_t1')]),
-        (epi_t1_mni, datasink, [('output_image', '@epi_t1_mni')])
+        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+        (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
+        (merge, datasink, [('merged_file', '@epi_mni')])
     ])
 
     return workflow
@@ -283,3 +284,38 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     ])
 
     return workflow
+
+
+def _gen_reference(fixed_image, moving_image, out_file=None):
+    import os.path as op
+    import numpy as np
+    import nibabel as nb
+    from nibabel.affines import apply_affine
+
+    if out_file is None:
+        fname, ext = op.splitext(op.basename(fixed_image))
+        if ext == '.gz':
+            fname, ext2 = op.splitext(fname)
+            ext = ext2 + ext
+        out_file = op.abspath('%s_wm%s' % (fname, ext))
+
+    imref = nb.load(fixed_image)
+    immov = nb.load(moving_image)
+
+    orig = apply_affine(imref.affine, [-0.5] * 3)
+    end = apply_affine(imref.affine, [s - 0.5 for s in imref.get_data().shape[:3]])
+
+    mov_spacing = immov.get_header().get_zooms()[:3]
+    new_sizes = np.ceil((end-orig)/mov_spacing)
+
+    new_affine = immov.affine
+    ref_center = apply_affine(imref.affine, (0.5 * (np.array(imref.get_data().shape[:3]))))
+
+    new_center = new_affine[:3, :3].dot(new_sizes)
+    new_affine[:3, 3] = -0.5 * new_center + ref_center
+
+    new_ref_im = nb.Nifti1Image(np.zeros(tuple(new_sizes.astype(int))),
+                                new_affine, immov.get_header())
+    new_ref_im.to_filename(out_file)
+
+    return out_file
