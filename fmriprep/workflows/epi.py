@@ -10,7 +10,6 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 import os
 import os.path as op
-import pkg_resources as pkgr
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
@@ -18,11 +17,10 @@ from nipype.interfaces import c3
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
+from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.utils.misc import gen_list
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
 from fmriprep.workflows.sbref import _extract_wm
@@ -42,14 +40,18 @@ def epi_hmc(subject_data, name='EPIHeadMotionCorrectionWorkflow', sbref_present=
     outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain']),
                          name='outputnode')
 
+    epi_orient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
+                         name='Reorient')
     epi_bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
         name="EPI_bet"
     )
+
     epi_hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
 
     workflow.connect([
-        (inputnode, epi_bet, [('epi', 'in_file')]),
+        (inputnode, epi_orient, [('epi', 'in_file')]),
+        (epi_orient, epi_bet, [('out_file', 'in_file')]),
         (epi_bet, epi_hmc, [('out_file', 'in_file')]),
         (epi_hmc, outputnode, [('out_file', 'epi_brain')]),
     ])
