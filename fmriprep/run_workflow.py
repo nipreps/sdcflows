@@ -83,6 +83,9 @@ def main():
         'work_dir': op.abspath(opts.work_dir)
     }
 
+    if opts.debug:
+        settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
+
     log_dir = op.join(settings['work_dir'], 'log')
 
     # Check and create output and working directories
