@@ -13,7 +13,8 @@ from shutil import copy
 import re
 import simplejson as json
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File, InputMultiPath)
+                                    BaseInterfaceInputSpec, File, InputMultiPath,
+                                    OutputMultiPath)
 from lockfile import LockFile
 
 
@@ -26,7 +27,7 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='written file path')
+    out_file = OutputMultiPath(File(exists=True, desc='written file path'))
 
 class DerivativesDataSink(BaseInterface):
     input_spec = DerivativesDataSinkInputSpec
