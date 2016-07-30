@@ -13,14 +13,15 @@ from shutil import copy
 import re
 import simplejson as json
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File)
+                                    BaseInterfaceInputSpec, File, InputMultiPath)
 from lockfile import LockFile
 
 
 class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
-    base_directory = Directory(
+    base_directory = traits.Directory(
         desc='Path to the base directory for storing data.')
-    in_file = File(exists=True, mandatory=True, desc='the object to be saved')
+    in_file = InputMultiPath(File(), exists=True, mandatory=True,
+                             desc='the object to be saved')
     source_file = File(exists=True, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
 
@@ -30,17 +31,15 @@ class DerivativesDataSinkOutputSpec(TraitedSpec):
 class DerivativesDataSink(BaseInterface):
     input_spec = DerivativesDataSinkInputSpec
     output_spec = DerivativesDataSinkOutputSpec
+    _always_run = True
 
     def __init__(self, **inputs):
-        self._results = {}
+        self._results = {'out_file': []}
         super(DerivativesDataSink, self).__init__(**inputs)
 
     def _run_interface(self, runtime):
-        _, fname = op.split(self.inputs.source_file)
-        srcname, ext = op.splitext(op.basename(self.inputs.in_file))
-        if ext == '.gz':
-            srcname, ext2 = op.splitext(op.basename(srcname))
-            ext = ext2 + ext
+        fname, _ = _splitext(self.inputs.source_file)
+        _, ext = _splitext(self.inputs.in_file[0])
 
         m = re.search(
             '^(?P<subject_id>sub-[a-zA-Z0-9]+)_((?P<ses_id>ses-[a-zA-Z0-9]+)_)?'
@@ -63,11 +62,22 @@ class DerivativesDataSink(BaseInterface):
             if not op.exists(out_path):
                 os.makedirs(out_path)
 
-        out_file = op.join(out_path, srcname)
-        out_file += '_{}{}'.format(self.inputs.suffix, ext)
+        base_fname = op.join(out_path, fname)
 
-        copy(self.inputs.in_file, out_file)
-        self._results['out_file'] = out_file
+        formatstr = '{bname}_{suffix}{ext}'
+        if len(self.inputs.in_file) > 1:
+            formatstr = '{bname}_{suffix}{i:04d}{ext}'
+
+
+        for i, fname in enumerate(self.inputs.in_file):
+            out_file = formatstr.format(
+                bname=base_fname,
+                suffix=self.inputs.suffix,
+                i=i,
+                ext=ext)
+            self._results['out_file'].append(out_file)
+            copy(self.inputs.in_file[i], out_file)
+
         return runtime
 
     def _list_outputs(self):
@@ -162,3 +172,10 @@ def get_metadata_for_nifti(in_file):
                 merged_param_dict.update(param_dict)
 
     return merged_param_dict
+
+def _splitext(fname):
+    fname, ext = op.splitext(op.basename(fname))
+    if ext == '.gz':
+        fname, ext2 = op.splitext(fname)
+        ext = ext2 + ext
+    return fname, ext

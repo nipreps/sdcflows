@@ -56,14 +56,23 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name='EPI_hmc')
 
+    pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
+    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                         iterfield=['transform_file'], name='hcm2itk')
+
     workflow.connect([
         (inputnode, split, [('epi', 'in_file')]),
+        (inputnode, pick_1st, [('epi', 'in_file')]),
         (split, orient, [('out_files', 'in_file')]),
         (orient, merge, [('out_file', 'in_files')]),
         (merge, bet, [('merged_file', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
-        (hmc, outputnode, [('out_file', 'epi_brain'),
-                           ('mat_file', 'xforms')]),
+
+        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
+        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
+                             ('roi_file', 'reference_file')]),
+        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+        (hmc, outputnode, [('out_file', 'epi_brain')])
     ])
 
     # If we have an SBRef, it should be the reference,
@@ -76,12 +85,18 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         hmc.inputs.mean_vol = True
 
     # Write corrected file in the designated output dir
-    datasink = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir']), name='BIDSds')
+    ds_hmc = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc'), name='DerivativesHMC')
+    ds_mats = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc'), name='DerivativesHMCmats')
 
     workflow.connect([
-        (inputnode, datasink, [('epi', 'source_file')]),
-        (hmc, datasink, [('out_file', 'in_file')]),
+        (inputnode, ds_hmc, [('epi', 'source_file')]),
+        (inputnode, ds_mats, [('epi', 'source_file')]),
+        (hmc, ds_hmc, [('out_file', 'in_file')]),
+        (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
     ])
 
     return workflow
@@ -185,8 +200,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
                                          'MNI152_T1_1mm.nii.gz')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
-    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                         iterfield=['transform_file'], name='hcm2itk')
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name='MergeTransforms')
     epi_to_mni_transform = pe.MapNode(
@@ -206,10 +219,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
-        (inputnode, hcm2itk, [('hmc_xforms', 'transform_file')]),
-        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
-                             ('roi_file', 'reference_file')]),
-        (hcm2itk, merge_transforms, [('itk_transform', 'in3')]),
+        (inputnode, merge_transforms, [('hmc_xforms', 'in3')]),
         (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
                                   ('t1', 'reference_file')]),
         (pick_1st, convert2itk, [('roi_file', 'source_file')]),
