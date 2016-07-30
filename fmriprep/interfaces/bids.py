@@ -7,18 +7,81 @@
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
 # @Last Modified time: 2016-06-03 10:06:55
+import os
 import os.path as op
+from shutil import copy
+import re
 import simplejson as json
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File)
+from lockfile import LockFile
+
+
+class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
+    base_directory = Directory(
+        desc='Path to the base directory for storing data.')
+    in_file = File(exists=True, mandatory=True, desc='the object to be saved')
+    source_file = File(exists=True, mandatory=True, desc='the input func file')
+    suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
+
+class DerivativesDataSinkOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='written file path')
+
+class DerivativesDataSink(BaseInterface):
+    input_spec = DerivativesDataSinkInputSpec
+    output_spec = DerivativesDataSinkOutputSpec
+
+    def __init__(self, **inputs):
+        self._results = {}
+        super(DerivativesDataSink, self).__init__(**inputs)
+
+    def _run_interface(self, runtime):
+        _, fname = op.split(self.inputs.source_file)
+        srcname, ext = op.splitext(op.basename(self.inputs.in_file))
+        if ext == '.gz':
+            srcname, ext2 = op.splitext(op.basename(srcname))
+            ext = ext2 + ext
+
+        m = re.search(
+            '^(?P<subject_id>sub-[a-zA-Z0-9]+)_((?P<ses_id>ses-[a-zA-Z0-9]+)_)?'
+            '(?P<task_id>task-[a-zA-Z0-9]+)(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
+            '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?',
+            fname
+        )
+
+        base_directory = os.getcwd()
+        if isdefined(self.inputs.base_directory):
+            base_directory = op.abspath(self.inputs.base_directory)
+
+        out_path = 'derivatives/{subject_id}'.format(**m.groupdict())
+        if m.groupdict().get('ses_id') is not None:
+            out_path += '/{ses_id}'.format(**m.groupdict())
+        out_path += '/func'
+
+        out_path = op.join(base_directory, out_path)
+        with LockFile(op.join(base_directory, '.fmriprep-lock')):
+            if not op.exists(out_path):
+                os.makedirs(out_path)
+
+        out_file = op.join(out_path, srcname)
+        out_file += '_{}{}'.format(self.inputs.suffix, ext)
+
+        copy(self.inputs.in_file, out_file)
+        self._results['out_file'] = out_file
+        return runtime
+
+    def _list_outputs(self):
+        return self._results
 
 
 class ReadSidecarJSONInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='the input nifti file')
     fields = traits.List(traits.Str, desc='get only certain fields')
 
+
 class ReadSidecarJSONOutputSpec(TraitedSpec):
     out_dict = traits.Dict()
+
 
 class ReadSidecarJSON(BaseInterface):
     """

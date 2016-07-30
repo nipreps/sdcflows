@@ -20,7 +20,7 @@ from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
-from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.se_pair_workflow import create_encoding_file
 from fmriprep.workflows.sbref import _extract_wm
@@ -50,11 +50,11 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
     bet = pe.Node(
         fsl.BET(mask=True, functional=True, frac=0.6),
-        name="EPI_bet"
+        name='EPI_bet'
     )
 
     # Head motion correction (hmc)
-    hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name="EPI_hmc")
+    hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name='EPI_hmc')
 
     workflow.connect([
         (inputnode, split, [('epi', 'in_file')]),
@@ -77,13 +77,11 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
 
     # Write corrected file in the designated output dir
     datasink = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
-        name="datasink",
-        parameterization=False
-    )
+        DerivativesDataSink(base_directory=settings['output_dir']), name='BIDSds')
 
     workflow.connect([
-        (hmc, datasink, [('out_file', '@epi_hmc')]),
+        (inputnode, datasink, [('epi', 'source_file')]),
+        (hmc, datasink, [('out_file', 'in_file')]),
     ])
 
     return workflow
@@ -103,7 +101,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='outputnode'
     )
 
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
+    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_mean')
 
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
@@ -113,14 +111,14 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     )
 
 
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'), name="Flirt_BBR_init")
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'), name='Flirt_BBR_init')
 
-    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
+    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name='Flirt_BBR')
     flt_bbr.inputs.schedule = settings['fsl'].get(
         'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
 
     # make equivalent warp fields
-    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
+    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='Flirt_BBR_Inv')
 
     workflow.connect([
         (inputnode, epi_mean, [('epi', 'in_file')]),
@@ -138,15 +136,15 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     # Plots for report
     png_sbref_t1 = pe.Node(niu.Function(
-        input_names=["in_file", "overlay_file", "out_file"],
-        output_names=["out_file"],
+        input_names=['in_file', 'overlay_file', 'out_file'],
+        output_names=['out_file'],
         function=stripped_brain_overlay),
-        name="PNG_sbref_t1"
+        name='PNG_sbref_t1'
     )
-    png_sbref_t1.inputs.out_file = "sbref_to_t1.png"
+    png_sbref_t1.inputs.out_file = 'sbref_to_t1.png'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
-                       name="datasink", parameterization=False)
+    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
+                       name='datasink', parameterization=False)
 
     workflow.connect([
         (flt_bbr, png_sbref_t1, [('out_file', 'overlay_file')]),
@@ -156,7 +154,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     return workflow
 
-def epi_mni_transformation(name="EPIMNITransformation", settings=None):
+def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
@@ -190,20 +188,20 @@ def epi_mni_transformation(name="EPIMNITransformation", settings=None):
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
     merge_transforms = pe.MapNode(niu.Merge(3),
-                                  iterfield=['in3'], name="MergeTransforms")
+                                  iterfield=['in3'], name='MergeTransforms')
     epi_to_mni_transform = pe.MapNode(
         ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
-        name="EPIToMNITransform")
-#    merge_transforms = pe.Node(niu.Merge(2), name="MergeTransforms")
+        name='EPIToMNITransform')
+#    merge_transforms = pe.Node(niu.Merge(2), name='MergeTransforms')
 #    epi_to_mni_transform = pe.MapNode(
 #        ants.ApplyTransforms(), iterfield=['input_image'],
-#        name="EPIToMNITransform")
+#        name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
-                       name="datasink", parameterization=False)
+    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
+                       name='datasink', parameterization=False)
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
@@ -260,7 +258,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     fslmerge = pe.Node(fsl.Merge(dimension='t'), name='EPI_corr_merge')
 
     # Compute mean
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name="EPI_mean")
+    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_mean')
 
     workflow.connect([
         (inputnode, meta, [('epi', 'in_file')]),
@@ -279,12 +277,12 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
     # Plot result
     png_epi_corr= pe.Node(niu.Function(
-        input_names=["in_file", "overlay_file", "out_file"], output_names=["out_file"],
-        function=stripped_brain_overlay), name="PNG_epi_corr")
-    png_epi_corr.inputs.out_file = "corrected_EPI.png"
+        input_names=['in_file', 'overlay_file', 'out_file'], output_names=['out_file'],
+        function=stripped_brain_overlay), name='PNG_epi_corr')
+    png_epi_corr.inputs.out_file = 'corrected_EPI.png'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
-                       name="datasink", parameterization=False)
+    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['output_dir'], 'images')),
+                       name='datasink', parameterization=False)
 
     workflow.connect([
         (epi_mean, png_epi_corr, [('out_file', 'overlay_file')]),
