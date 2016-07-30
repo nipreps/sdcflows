@@ -40,7 +40,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
 
     inputnode = pe.Node(niu.IdentityInterface(fields=infields),
                         name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain', 'xforms']),
+    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain', 'xforms', 'epi_mask']),
                          name='outputnode')
 
     # Reorient to RAS and skull-stripping
@@ -48,10 +48,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     orient = pe.MapNode(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
                         iterfield=['in_file'], name='ReorientEPI')
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
-    bet = pe.Node(
-        fsl.BET(mask=True, functional=True, frac=0.6),
-        name='EPI_bet'
-    )
+    bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name='EPI_hmc')
@@ -73,6 +70,15 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
                              ('roi_file', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, outputnode, [('out_file', 'epi_brain')])
+    ])
+
+    # Calculate EPI mask on the average after HMC
+    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
+    bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
+    workflow.connect([
+        (hmc, epi_mean, [('out_file', 'in_file')]),
+        (epi_mean, bet_hmc, [('out_file', 'in_file')]),
+        (bet_hmc, outputnode, [('mask_file', 'epi_mask')])
     ])
 
     # If we have an SBRef, it should be the reference,
@@ -176,6 +182,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             'mat_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
+            'epi_mask',
             't1',
             'hmc_xforms'
         ]),
@@ -205,19 +212,17 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     epi_to_mni_transform = pe.MapNode(
         ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
-#    merge_transforms = pe.Node(niu.Merge(2), name='MergeTransforms')
-#    epi_to_mni_transform = pe.MapNode(
-#        ants.ApplyTransforms(), iterfield=['input_image'],
-#        name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
-
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
-                       name='datasink', parameterization=False)
+    # Write corrected file in the designated output dir
+    ds_mni = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc_mni'), name='DerivativesHMCMNI')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
+        (inputnode, ds_mni, [('epi', 'source_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
         (inputnode, merge_transforms, [('hmc_xforms', 'in3')]),
         (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
@@ -230,7 +235,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
-        (merge, datasink, [('merged_file', '@epi_mni')])
+        (merge, ds_mni, [('merged_file', 'in_file')])
     ])
 
     return workflow
