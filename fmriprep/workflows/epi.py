@@ -40,8 +40,8 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
 
     inputnode = pe.Node(niu.IdentityInterface(fields=infields),
                         name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['epi_brain', 'xforms', 'epi_mask']),
-                         name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean']), name='outputnode')
 
     # Reorient to RAS and skull-stripping
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
@@ -78,7 +78,8 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     workflow.connect([
         (hmc, epi_mean, [('out_file', 'in_file')]),
         (epi_mean, bet_hmc, [('out_file', 'in_file')]),
-        (bet_hmc, outputnode, [('mask_file', 'epi_mask')])
+        (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
+                               ('out_file', 'epi_mean')])
     ])
 
     # If we have an SBRef, it should be the reference,
@@ -114,15 +115,13 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 't1_brain', 't1_seg']),
+        niu.IdentityInterface(fields=['epi', 'epi_mean', 't1_brain', 't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1']),
         name='outputnode'
     )
-
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_mean')
 
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
@@ -142,13 +141,12 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='Flirt_BBR_Inv')
 
     workflow.connect([
-        (inputnode, epi_mean, [('epi', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
-        (epi_mean, flt_bbr_init, [('out_file', 'in_file')]),
+        (inputnode, flt_bbr_init, [('epi_mean', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (epi_mean, flt_bbr, [('out_file', 'in_file')]),
+        (inputnode, flt_bbr, [('epi_mean', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
@@ -164,13 +162,16 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     )
     png_sbref_t1.inputs.out_file = 'sbref_to_t1.png'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
-                       name='datasink', parameterization=False)
+    # Write corrected file in the designated output dir
+    ds_png = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='epi_to_t1'), name='DerivativesPNG')
 
     workflow.connect([
         (flt_bbr, png_sbref_t1, [('out_file', 'overlay_file')]),
         (inputnode, png_sbref_t1, [('t1_seg', 'in_file')]),
-        (png_sbref_t1, datasink, [('out_file', '@epi_to_t1')])
+        (inputnode, ds_png, [('epi', 'source_file')]),
+        (png_sbref_t1, ds_png, [('out_file', 'in_file')])
     ])
 
     return workflow
@@ -311,13 +312,15 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
         function=stripped_brain_overlay), name='PNG_epi_corr')
     png_epi_corr.inputs.out_file = 'corrected_EPI.png'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['output_dir'], 'images')),
-                       name='datasink', parameterization=False)
+    ds_png = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='sdc'), name='DerivativesPNG')
 
     workflow.connect([
         (epi_mean, png_epi_corr, [('out_file', 'overlay_file')]),
         (inputnode, png_epi_corr, [('fmap_mask', 'in_file')]),
-        (png_epi_corr, datasink, [('out_file', '@corrected_EPI')])
+        (inputnode, ds_png, [('epi', 'source_file')]),
+        (png_epi_corr, ds_png, [('out_file', 'in_file')])
     ])
 
     return workflow
