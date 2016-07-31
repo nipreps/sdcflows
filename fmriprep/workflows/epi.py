@@ -98,12 +98,17 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     ds_mats = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc'), name='DerivativesHMCmats')
+    ds_mask = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc_bmask'), name='DerivativesEPImask')
 
     workflow.connect([
         (inputnode, ds_hmc, [('epi', 'source_file')]),
         (inputnode, ds_mats, [('epi', 'source_file')]),
+        (inputnode, ds_mask, [('epi', 'source_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
+        (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
     ])
 
     return workflow
