@@ -43,11 +43,19 @@ class DerivativesDataSink(BaseInterface):
         _, ext = _splitext(self.inputs.in_file[0])
 
         m = re.search(
-            '^(?P<subject_id>sub-[a-zA-Z0-9]+)_((?P<ses_id>ses-[a-zA-Z0-9]+)_)?'
-            '(?P<task_id>task-[a-zA-Z0-9]+)(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
+            '^(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
+            '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
             '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?',
             fname
         )
+
+        # TODO this quick and dirty modality detection needs to be implemented
+        # correctly
+        mod = 'func'
+        if 'anat' in op.dirname(self.inputs.source_file):
+            mod = 'anat'
+        elif 'dwi' in op.dirname(self.inputs.source_file):
+            mod = 'dwi'
 
         base_directory = os.getcwd()
         if isdefined(self.inputs.base_directory):
@@ -56,7 +64,7 @@ class DerivativesDataSink(BaseInterface):
         out_path = 'derivatives/{subject_id}'.format(**m.groupdict())
         if m.groupdict().get('ses_id') is not None:
             out_path += '/{ses_id}'.format(**m.groupdict())
-        out_path += '/func'
+        out_path += '/{}'.format(mod)
 
         out_path = op.join(base_directory, out_path)
         with LockFile(op.join(base_directory, '.fmriprep-lock')):
