@@ -143,6 +143,10 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv')
 
+    # Write EPI mean in T1w space
+    ds_t1w = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc_t1'), name='DerivHMC_T1w')
     # Write registrated file in the designated output dir
     ds_tfm_fwd = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -170,9 +174,10 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (fsl2itk_inv, outputnode, [('itk_transform', 'mat_t1_to_epi')]),
         (inputnode, ds_tfm_fwd, [('epi', 'source_file')]),
         (inputnode, ds_tfm_inv, [('epi', 'source_file')]),
+        (inputnode, ds_t1w, [('epi', 'source_file')]),
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
-        (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')])
-
+        (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
+        (flt_bbr, ds_t1w, [('out_file', 'in_file')])
     ])
 
     # Plots for report
@@ -205,6 +210,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             'mat_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
+            'epi_ras',
             'epi_mask',
             't1',
             'hmc_xforms'
@@ -247,7 +253,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             suffix='hmc_mni_bmask'), name='DerivativesHMCMNImask')
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi', 'in_file')]),
+        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
         (inputnode, ds_mni, [('epi', 'source_file')]),
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
@@ -256,7 +262,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
                                        ('hmc_xforms', 'in3')]),
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('mat_epi_to_t1', _aslist), 'in2')]),
-        (inputnode, split, [('epi', 'in_file')]),
+        (inputnode, split, [('epi_ras', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
