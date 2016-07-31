@@ -34,7 +34,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     """
     workflow = pe.Workflow(name=name)
 
-    infields = ['epi', 't1_brain']
+    infields = ['epi', 'epi_ras', 't1_brain']
     if sbref_present:
         infields += ['sbref_brain']
 
@@ -43,11 +43,6 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean']), name='outputnode')
 
-    # Reorient to RAS and skull-stripping
-    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
-    orient = pe.MapNode(fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
-                        iterfield=['in_file'], name='ReorientEPI')
-    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
     bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
 
     # Head motion correction (hmc)
@@ -58,11 +53,8 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
                          iterfield=['transform_file'], name='hcm2itk')
 
     workflow.connect([
-        (inputnode, split, [('epi', 'in_file')]),
-        (inputnode, pick_1st, [('epi', 'in_file')]),
-        (split, orient, [('out_files', 'in_file')]),
-        (orient, merge, [('out_file', 'in_files')]),
-        (merge, bet, [('merged_file', 'in_file')]),
+        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
+        (inputnode, bet, [('epi_ras', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
 
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
