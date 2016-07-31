@@ -114,9 +114,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     maps the EPI space into the T1-space
     """
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_mean', 't1_brain', 't1_seg']),
-        name='inputnode'
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi', 'epi_mean', 't1_brain', 't1_seg']), name='inputnode'
     )
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1']),
@@ -131,8 +130,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     )
 
 
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'), name='Flirt_BBR_init')
-
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
+        name='Flirt_BBR_init')
     flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name='Flirt_BBR')
     flt_bbr.inputs.schedule = settings['fsl'].get(
         'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
@@ -140,17 +139,43 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='Flirt_BBR_Inv')
 
+    #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
+    #  something ANTs will like.
+    fsl2itk_fwd = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_fwd')
+    fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_inv')
+
+    # Write registrated file in the designated output dir
+    ds_tfm_fwd = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='epi2t1w_affine'), name='DerivEPI_to_T1w_fwd')
+    ds_tfm_inv = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='t1w2epi_affine'), name='DerivEPI_to_T1w_inv')
+
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
+        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+                                  ('epi_mean', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('epi_mean', 'reference_file'),
+                                  ('t1_brain', 'source_file')]),
         (inputnode, flt_bbr_init, [('epi_mean', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
         (inputnode, flt_bbr, [('epi_mean', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
-        (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
-        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')])
+        (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
+        (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'mat_epi_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'mat_t1_to_epi')]),
+        (inputnode, ds_tfm_fwd, [('epi', 'source_file')]),
+        (inputnode, ds_tfm_inv, [('epi', 'source_file')]),
+        (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
+        (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')])
+
     ])
 
     # Plots for report
@@ -195,10 +220,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             return in_value
         return [in_value]
 
-    #  EPI to T1 transform matrix is from fsl, using c3 tools to convert to
-    #  something ANTs will like.
-    convert2itk = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                       name='convert2itk')
     pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
 
     gen_ref = pe.Node(niu.Function(
@@ -233,21 +254,17 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, ds_mni, [('epi', 'source_file')]),
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
-        (inputnode, merge_transforms, [('hmc_xforms', 'in3')]),
-        (inputnode, convert2itk, [('mat_epi_to_t1', 'transform_file'),
-                                  ('t1', 'reference_file')]),
-        (pick_1st, convert2itk, [('roi_file', 'source_file')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1')]),
+        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+                                       (('mat_epi_to_t1', _aslist), 'in2'),
+                                       ('hmc_xforms', 'in3')]),
+        (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
+                                      (('mat_epi_to_t1', _aslist), 'in2')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
-        (convert2itk, merge_transforms, [(('itk_transform', _aslist), 'in2')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
         (merge, ds_mni, [('merged_file', 'in_file')]),
-
-        (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1')]),
-        (convert2itk, mask_merge_tfms, [(('itk_transform', _aslist), 'in2')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')]),
