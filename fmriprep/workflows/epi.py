@@ -52,6 +52,18 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
 
+    
+    avscale = pe.MapNode(fsl.AvScale(), name='AvScale', iterfield=['mat_file'])
+
+    avs_format = pe.Node(
+        niu.Function(input_names=['inlist'], output_names=['out_file'], function=_tsv_format),
+        name='AVScale_Format'
+    )
+
+    ds_motion = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc'), name='MotionParamsHMC')
+
     workflow.connect([
         (inputnode, pick_1st, [('epi_ras', 'in_file')]),
         (inputnode, bet, [('epi_ras', 'in_file')]),
@@ -61,7 +73,10 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('out_file', 'epi_brain')])
+        (hmc, outputnode, [('out_file', 'epi_brain')]),
+        (hmc, avscale, [('mat_file', 'mat_file')]),
+        (avscale, avs_format, [('rotation_translation_matrix', 'inlist')]),
+        (avs_format, ds_motion, [('out_file', '@motion_params')])
     ])
 
     # Calculate EPI mask on the average after HMC
@@ -379,3 +394,13 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
     new_ref_im.to_filename(out_file)
 
     return out_file
+
+def _tsv_format(inlist):
+    import numpy as np
+    import os.path as op
+    inlist = np.array(inlist, dtype=np.float32).reshape(-1, 6)
+
+    out_file = op.abspath('hcm_avscale_params.txt')
+    np.savetxt(out_file, inlist, deliter=r'\t')
+    return out_file
+
