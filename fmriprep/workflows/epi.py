@@ -53,16 +53,11 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
                          iterfield=['transform_file'], name='hcm2itk')
 
 
-    avscale = pe.MapNode(fsl.AvScale(), name='AvScale', iterfield=['mat_file'])
-
+    avscale = pe.MapNode(fsl.utils.AvScale(), name='AvScale', iterfield=['mat_file'])
     avs_format = pe.Node(
         niu.Function(input_names=['inlist'], output_names=['out_file'], function=_tsv_format),
         name='AVScale_Format'
     )
-
-    ds_motion = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-            suffix='hmc'), name='MotionParamsHMC')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi_ras', 'in_file')]),
@@ -75,8 +70,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, outputnode, [('out_file', 'epi_brain')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
-        (avscale, avs_format, [('rotation_translation_matrix', 'inlist')]),
-        (avs_format, ds_motion, [('out_file', '@motion_params')])
+        (avscale, avs_format, [('rotation_translation_matrix', 'inlist')])
     ])
 
     # Calculate EPI mask on the average after HMC
@@ -109,13 +103,19 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc_bmask'), name='DerivativesEPImask')
 
+    ds_motion = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc'), name='DerivativesParamsHMC')
+
     workflow.connect([
         (inputnode, ds_hmc, [('epi', 'source_file')]),
         (inputnode, ds_mats, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
+        (inputnode, ds_motion, [('epi', 'source_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
+        (avs_format, ds_motion, [('out_file', 'in_file')])
     ])
 
     return workflow
@@ -401,6 +401,6 @@ def _tsv_format(inlist):
     inlist = np.array(inlist, dtype=np.float32).reshape(-1, 6)
 
     out_file = op.abspath('hcm_avscale_params.tsv')
-    np.savetxt(out_file, inlist, deliter=r'\t')
+    np.savetxt(out_file, inlist, delimiter='\t')
     return out_file
 
