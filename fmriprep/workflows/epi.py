@@ -52,7 +52,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
 
-    
+
     avscale = pe.MapNode(fsl.AvScale(), name='AvScale', iterfield=['mat_file'])
 
     avs_format = pe.Node(
@@ -342,7 +342,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     ])
 
     # Plot result
-    png_epi_corr= pe.Node(niu.Function(
+    png_epi_corr = pe.Node(niu.Function(
         input_names=['in_file', 'overlay_file', 'out_file'], output_names=['out_file'],
         function=stripped_brain_overlay), name='PNG_epi_corr')
     png_epi_corr.inputs.out_file = 'corrected_EPI.png'
@@ -400,7 +400,7 @@ def _tsv_format(inlist):
     import os.path as op
     inlist = np.array(inlist, dtype=np.float32).reshape(-1, 6)
 
-    out_file = op.abspath('hcm_avscale_params.txt')
+    out_file = op.abspath('hcm_avscale_params.tsv')
     np.savetxt(out_file, inlist, deliter=r'\t')
     return out_file
 
