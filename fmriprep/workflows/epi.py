@@ -53,32 +53,31 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
                          iterfield=['transform_file'], name='hcm2itk')
 
 
-    avscale = pe.MapNode(fsl.utils.AvScale(), name='AvScale', iterfield=['mat_file'])
+    avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
+                         iterfield=['mat_file'])
     avs_format = pe.Node(
-        niu.Function(input_names=['inlist'], output_names=['out_file'], function=_tsv_format),
-        name='AVScale_Format'
-    )
+        niu.Function(input_names=['translations', 'rot_angles'], output_names=['out_file'],
+                     function=_tsv_format), name='AVScale_Format')
+
+    # Calculate EPI mask on the average after HMC
+    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
+    bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi_ras', 'in_file')]),
         (inputnode, bet, [('epi_ras', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
-
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, outputnode, [('out_file', 'epi_brain')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
-        (avscale, avs_format, [('rotation_translation_matrix', 'inlist')])
-    ])
-
-    # Calculate EPI mask on the average after HMC
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
-    bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
-    workflow.connect([
+        (avscale, avs_format, [('translations', 'translations'),
+                               ('rot_angles', 'rot_angles')]),
         (hmc, epi_mean, [('out_file', 'in_file')]),
         (epi_mean, bet_hmc, [('out_file', 'in_file')]),
+        (epi_mean, avscale, [('out_file', 'ref_file')]),
         (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
                                ('out_file', 'epi_mean')])
     ])
@@ -395,12 +394,18 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
 
     return out_file
 
-def _tsv_format(inlist):
+def _tsv_format(translations, rot_angles, fmt=None):
     import numpy as np
     import os.path as op
-    inlist = np.array(inlist, dtype=np.float32).reshape(-1, 6)
+    parameters = np.hstack((translations, rot_angles)).astype(np.float32)
 
-    out_file = op.abspath('hcm_avscale_params.tsv')
-    np.savetxt(out_file, inlist, delimiter='\t')
+    if fmt is None:
+        out_file = op.abspath('movpar.tsv')
+        np.savetxt(out_file, parameters,
+                   header='Motion parameters: X, Y, Z, Rx, Ry, Rz',
+                   delimiter='\t')
+    else:
+        raise NotImplementedError
+
     return out_file
 
