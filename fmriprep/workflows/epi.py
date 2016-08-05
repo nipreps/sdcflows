@@ -52,24 +52,32 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
 
-    workflow.connect([
-        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
-        (inputnode, bet, [('epi_ras', 'in_file')]),
-        (bet, hmc, [('out_file', 'in_file')]),
 
-        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
-        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
-                             ('roi_file', 'reference_file')]),
-        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('out_file', 'epi_brain')])
-    ])
+    avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
+                         iterfield=['mat_file'])
+    avs_format = pe.Node(
+        niu.Function(input_names=['translations', 'rot_angles'], output_names=['out_file'],
+                     function=_tsv_format), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
     epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
     bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
+
     workflow.connect([
+        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
+        (inputnode, bet, [('epi_ras', 'in_file')]),
+        (bet, hmc, [('out_file', 'in_file')]),
+        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
+        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
+                             ('roi_file', 'reference_file')]),
+        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+        (hmc, outputnode, [('out_file', 'epi_brain')]),
+        (hmc, avscale, [('mat_file', 'mat_file')]),
+        (avscale, avs_format, [('translations', 'translations'),
+                               ('rot_angles', 'rot_angles')]),
         (hmc, epi_mean, [('out_file', 'in_file')]),
         (epi_mean, bet_hmc, [('out_file', 'in_file')]),
+        (epi_mean, avscale, [('out_file', 'ref_file')]),
         (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
                                ('out_file', 'epi_mean')])
     ])
@@ -94,13 +102,19 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc_bmask'), name='DerivativesEPImask')
 
+    ds_motion = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc'), name='DerivativesParamsHMC')
+
     workflow.connect([
         (inputnode, ds_hmc, [('epi', 'source_file')]),
         (inputnode, ds_mats, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
+        (inputnode, ds_motion, [('epi', 'source_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
+        (avs_format, ds_motion, [('out_file', 'in_file')])
     ])
 
     return workflow
@@ -327,7 +341,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     ])
 
     # Plot result
-    png_epi_corr= pe.Node(niu.Function(
+    png_epi_corr = pe.Node(niu.Function(
         input_names=['in_file', 'overlay_file', 'out_file'], output_names=['out_file'],
         function=stripped_brain_overlay), name='PNG_epi_corr')
     png_epi_corr.inputs.out_file = 'corrected_EPI.png'
@@ -379,3 +393,19 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
     new_ref_im.to_filename(out_file)
 
     return out_file
+
+def _tsv_format(translations, rot_angles, fmt=None):
+    import numpy as np
+    import os.path as op
+    parameters = np.hstack((translations, rot_angles)).astype(np.float32)
+
+    if fmt is None:
+        out_file = op.abspath('movpar.tsv')
+        np.savetxt(out_file, parameters,
+                   header='Motion parameters: X, Y, Z, Rx, Ry, Rz',
+                   delimiter='\t')
+    else:
+        raise NotImplementedError
+
+    return out_file
+
