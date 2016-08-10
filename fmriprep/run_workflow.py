@@ -24,6 +24,7 @@ from lockfile import LockFile
 
 def main():
     """Entry point"""
+    from grabbids.bids import BIDSLayout
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
@@ -122,10 +123,11 @@ def main():
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
     # Retrieve BIDS data
-    imaging_data = get_subject(settings['bids_root'], opts.subject_id)
+    #  imaging_data = get_subject(settings['bids_root'], opts.subject_id)
+    layout = BIDSLayout(settings['bids_root']
 
     # Build main workflow and run
-    preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
+    preproc_wf = fmri_preprocess_single(layout, opts.subject_id, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 

@@ -7,7 +7,7 @@ from fmriprep.workflows.fieldmap.se_pair_workflow import se_pair_workflow
 from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
 from fmriprep.workflows.fieldmap.helper import (is_fmap_type)
 
-def fieldmap_decider(subject_data, settings):
+def fieldmap_decider(fieldmaps, settings):
     ''' Initialize FieldmapDecider to automatically find a
     Fieldmap preprocessing workflow '''
 
@@ -29,7 +29,7 @@ def fieldmap_decider(subject_data, settings):
     except IndexError as e:
         raise_from(NotImplementedError("No fieldmap data found"), e)
 
-    for filename in subject_data['fieldmaps']:
+    for filename in fieldmaps:
         if is_fmap_type('phasediff', filename): # 8.9.1
             return phase_diff_and_magnitudes()
         elif is_fmap_type('phase', filename): # 8.9.2
