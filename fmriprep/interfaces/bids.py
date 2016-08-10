@@ -7,18 +7,100 @@
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
 # @Last Modified time: 2016-06-03 10:06:55
+import os
 import os.path as op
+from shutil import copy
+import re
 import simplejson as json
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File)
+                                    BaseInterfaceInputSpec, File, InputMultiPath,
+                                    OutputMultiPath)
+from lockfile import LockFile
+
+
+class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
+    base_directory = traits.Directory(
+        desc='Path to the base directory for storing data.')
+    in_file = InputMultiPath(File(), exists=True, mandatory=True,
+                             desc='the object to be saved')
+    source_file = File(exists=True, mandatory=True, desc='the input func file')
+    suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
+
+class DerivativesDataSinkOutputSpec(TraitedSpec):
+    out_file = OutputMultiPath(File(exists=True, desc='written file path'))
+
+class DerivativesDataSink(BaseInterface):
+    input_spec = DerivativesDataSinkInputSpec
+    output_spec = DerivativesDataSinkOutputSpec
+    _always_run = True
+
+    def __init__(self, **inputs):
+        self._results = {'out_file': []}
+        super(DerivativesDataSink, self).__init__(**inputs)
+
+    def _run_interface(self, runtime):
+        fname, _ = _splitext(self.inputs.source_file)
+        _, ext = _splitext(self.inputs.in_file[0])
+
+        m = re.search(
+            '^(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
+            '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
+            '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?',
+            fname
+        )
+
+        # TODO this quick and dirty modality detection needs to be implemented
+        # correctly
+        mod = 'func'
+        if 'anat' in op.dirname(self.inputs.source_file):
+            mod = 'anat'
+        elif 'dwi' in op.dirname(self.inputs.source_file):
+            mod = 'dwi'
+
+        base_directory = os.getcwd()
+        if isdefined(self.inputs.base_directory):
+            base_directory = op.abspath(self.inputs.base_directory)
+
+        out_path = 'derivatives/{subject_id}'.format(**m.groupdict())
+        if m.groupdict().get('ses_id') is not None:
+            out_path += '/{ses_id}'.format(**m.groupdict())
+        out_path += '/{}'.format(mod)
+
+        out_path = op.join(base_directory, out_path)
+        with LockFile(op.join(base_directory, '.fmriprep-lock')):
+            if not op.exists(out_path):
+                os.makedirs(out_path)
+
+        base_fname = op.join(out_path, fname)
+
+        formatstr = '{bname}_{suffix}{ext}'
+        if len(self.inputs.in_file) > 1:
+            formatstr = '{bname}_{suffix}{i:04d}{ext}'
+
+
+        for i, fname in enumerate(self.inputs.in_file):
+            out_file = formatstr.format(
+                bname=base_fname,
+                suffix=self.inputs.suffix,
+                i=i,
+                ext=ext)
+            self._results['out_file'].append(out_file)
+            copy(self.inputs.in_file[i], out_file)
+
+        return runtime
+
+    def _list_outputs(self):
+        return self._results
 
 
 class ReadSidecarJSONInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='the input nifti file')
     fields = traits.List(traits.Str, desc='get only certain fields')
 
+
 class ReadSidecarJSONOutputSpec(TraitedSpec):
     out_dict = traits.Dict()
+
 
 class ReadSidecarJSON(BaseInterface):
     """
@@ -99,3 +181,10 @@ def get_metadata_for_nifti(in_file):
                 merged_param_dict.update(param_dict)
 
     return merged_param_dict
+
+def _splitext(fname):
+    fname, ext = op.splitext(op.basename(fname))
+    if ext == '.gz':
+        fname, ext2 = op.splitext(fname)
+        ext = ext2 + ext
+    return fname, ext
