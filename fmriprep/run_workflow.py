@@ -124,7 +124,7 @@ def main():
 
     # Retrieve BIDS data
     #  imaging_data = get_subject(settings['bids_root'], opts.subject_id)
-    layout = BIDSLayout(settings['bids_root']
+    layout = BIDSLayout(settings['bids_root'])
 
     # Build main workflow and run
     preproc_wf = fmri_preprocess_single(layout, opts.subject_id, settings=settings)
