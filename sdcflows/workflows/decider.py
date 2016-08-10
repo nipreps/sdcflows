@@ -25,7 +25,7 @@ def fieldmap_decider(fieldmaps, settings):
     #             'outputnode.fmap_movpar': None}
 
     try:
-        subject_data['fieldmaps'][0]
+        fieldmaps[0]
     except IndexError as e:
         raise_from(NotImplementedError("No fieldmap data found"), e)
 

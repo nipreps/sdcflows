@@ -15,16 +15,17 @@ from __future__ import unicode_literals
 
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
-from multiprocessing import cpu_count
+from lockfile import LockFile
 import logging
+from multiprocessing import cpu_count
 import os
 import os.path as op
-from lockfile import LockFile
+import pkg_resources as pkgr
 
 
 def main():
     """Entry point"""
-    from grabbids.bids import BIDSLayout
+    from grabbit.core import Layout
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
@@ -123,8 +124,8 @@ def main():
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
     # Retrieve BIDS data
-    #  imaging_data = get_subject(settings['bids_root'], opts.subject_id)
-    layout = BIDSLayout(settings['bids_root'])
+    bids_spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
+    layout = Layout(settings['bids_root'], config=bids_spec)
 
     # Build main workflow and run
     preproc_wf = fmri_preprocess_single(layout, opts.subject_id, settings=settings)
