@@ -125,10 +125,12 @@ def main():
 
     # Retrieve BIDS data
     bids_spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
+    print(bids_spec)
     layout = Layout(settings['bids_root'], config=bids_spec)
 
     # Build main workflow and run
-    preproc_wf = fmri_preprocess_single(layout, opts.subject_id, settings=settings)
+    subject = 'sub-{}'.format(opts.subject_id)
+    preproc_wf = fmri_preprocess_single(layout, subject, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
