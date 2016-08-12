@@ -125,20 +125,17 @@ def main():
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
     # Retrieve BIDS data
-    bids_spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
-    layout = Layout(settings['bids_root'], config=bids_spec)
     subject_data = collect_bids_data(settings['bids_root'], opts.subject_id)
     
     pp(subject_data)
 
     # Build main workflow and run
-    subject = 'sub-{}'.format(opts.subject_id)
-    preproc_wf = fmri_preprocess_single(layout, subject, settings=settings)
-    preproc_wf.base_dir = settings['work_dir']
+    #  preproc_wf = fmri_preprocess_single(subject_data, settings=settings)
+    #  preproc_wf.base_dir = settings['work_dir']
     #  preproc_wf.run(**plugin_settings)
 
-    if opts.write_graph:
-        preproc_wf.write_graph()
+    #  if opts.write_graph:
+    #    preproc_wf.write_graph()
 
 
 
