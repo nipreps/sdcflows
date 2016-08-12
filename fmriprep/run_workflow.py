@@ -22,6 +22,7 @@ import os
 import os.path as op
 import pkg_resources as pkgr
 
+from pprint import pprint as pp
 
 def main():
     """Entry point"""
@@ -30,7 +31,7 @@ def main():
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
     from fmriprep.workflows.base import fmri_preprocess_single
-    from fmriprep.utils.misc import get_subject
+    from fmriprep.utils.misc import collect_bids_data
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -125,18 +126,19 @@ def main():
 
     # Retrieve BIDS data
     bids_spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
-    print(bids_spec)
     layout = Layout(settings['bids_root'], config=bids_spec)
+    subject_data = collect_bids_data(settings['bids_root'], opts.subject_id)
+    
+    pp(subject_data)
 
     # Build main workflow and run
     subject = 'sub-{}'.format(opts.subject_id)
     preproc_wf = fmri_preprocess_single(layout, subject, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
-    preproc_wf.run(**plugin_settings)
+    #  preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
-        workflow.write_graph()
-    #  workflow.run(**plugin_settings)
+        preproc_wf.write_graph()
 
 
 

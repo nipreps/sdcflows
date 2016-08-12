@@ -1,9 +1,13 @@
-from glob import glob
 import copy
+from glob import glob
+import itertools
 import json
 import os
+import pkg_resources as pkgr
 import pprint
 import re
+
+from grabbit import Layout
 
 INPUTS_SPEC = {'fieldmaps': [], 'epi': [], 'sbref': [], 't1': ''}
 
@@ -13,85 +17,6 @@ def gen_list(inlist, base=1):
 def _walk_dir_for_prefix(target_dir, prefix):
     return [x for x in next(os.walk(target_dir))[1]
             if x.startswith(prefix)]
-
-
-def get_subject(bids_root, subject_id, session_id=None, run_id=None,
-                include_types=None):
-    """
-    Returns the imaging_data structure for the subject subject_id.
-    If session is None, then the BIDS structure is not multisession.
-    If run_id is None, it is assumed that the session does not have several
-    runs.
-    """
-    if include_types is None:
-        # Please notice that dwi is not here
-        include_types = ['func', 'anat', 'fmap']
-    subject_data = collect_bids_data(bids_root, include_types=None)
-    subject_data = subject_data['sub-' + subject_id]
-
-    if session_id is None:
-        subject_data = subject_data[list(subject_data.keys())[0]]
-    else:
-        raise NotImplementedError
-
-    if run_id is not None:
-        raise NotImplementedError
-
-    return subject_data
-
-
-# if no scan_subject or scan_session are defined return all bids data for a
-# given bids directory. Otherwise just the data for a given subject or scan
-# can be returned
-def collect_bids_data(dataset, include_types=None, scan_subject='sub-',
-                      scan_session='ses-'):
-    imaging_data = {}
-    if include_types is None:
-        include_types = ['func', 'anat', 'fmap', 'dwi']
-
-    subjects = _walk_dir_for_prefix(dataset, scan_subject)
-    if len(subjects) == 0:
-        raise GeneratorExit("No BIDS subjects found to examine.")
-
-    for subject in subjects:
-        if subject not in imaging_data:
-            imaging_data[subject] = {}
-        subj_dir = os.path.join(dataset, subject)
-
-        sessions = _walk_dir_for_prefix(subj_dir, scan_session)
-
-        for scan_type in include_types:
-            # seems easier to consider the case of multi-session vs.
-            # single session separately?
-            if len(sessions) > 0:
-                subject_sessions = [os.path.join(subject, x)
-                                    for x in sessions]
-            else:
-                subject_sessions = [subject]
-
-            for session in subject_sessions:
-                if session not in imaging_data[subject]:
-                    imaging_data[subject][session] = copy.deepcopy(INPUTS_SPEC)
-                scan_files = glob(os.path.join(dataset, session, scan_type,
-                                               '*'))
-                for scan_file in scan_files:
-                    filename = scan_file.split('/')[-1]
-                    filename_parts = filename.split('_')
-                    modality = filename_parts[-1]
-                    if 'sbref.nii' in modality:
-                        imaging_data[subject][session]['sbref'].append(scan_file)
-                    elif is_fieldmap_file(modality):
-                        imaging_data[subject][session]['fieldmaps'].append(scan_file)
-                    elif 'T1w.nii' in modality:
-                        imaging_data[subject][session]['t1'] = scan_file
-                    # temporary conditional until runs and tasks are handled
-                    # in the imaging data structure
-                    elif 'bold.nii' in filename:
-                        imaging_data[subject][session]['epi'].append(scan_file)
-                    else:
-                        pass
-
-    return imaging_data
 
 def is_fieldmap_file(string):
     is_fieldmap_file = False
@@ -108,6 +33,67 @@ fieldmap_suffixes = {
     'topup': r"epi\.nii"
 }
 
+
+def collect_bids_data(dataset, subject, session=None, run=None):
+    subject = str(subject)
+    if not subject.startswith('sub-'):
+        subject = 'sub-{}'.format(subject)
+
+    bids_spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
+    layout = Layout(dataset, config=bids_spec)
+    
+    ret_list = []
+
+    if session:
+        session_list = [session]
+    else:
+        session_list = layout.unique('session')
+        if session_list == []:
+            session_list = [None]
+    
+    if run:
+        run_list = [run]
+    else:
+        run_list = layout.unique('run')
+        if run_list == []:
+            run_list = [None]
+
+    
+    queries = {
+        'fieldmaps': {'fieldmap': '.*'},
+        'epi': {'func': '.*'},
+        'sbref': {'type': 'sbref'},
+        't1': {'type': 'T1w'}
+    }
+    print(session_list)
+    print(run_list)
+    for sess in session_list:
+        sess_run_kwargs = {}
+        sess_run_kwargs['subject'] = subject
+        if sess:
+            sess_run_kwargs['session'] = sess
+        for run in run_list:
+            if run:
+                sess_run_kwargs['run'] = run
+            imaging_data = copy.deepcopy(INPUTS_SPEC)
+            for key in queries.keys():
+                layout_kwargs = dict(sess_run_kwargs, **queries[key])
+                print(layout_kwargs)
+                files = [x.filename for x in layout.get(**layout_kwargs)]
+                if len(files) == 0 and layout_kwargs.pop('run', None):
+                    files = [x for x in layout.get(**layout_kwargs)]
+                    run_found = False
+                    for file in files:
+                        if hasattr(file, 'run'):
+                            run_found = True
+                    if not run_found:
+                        files = [x.filename for x in files]
+                    else:
+                        files = []
+                imaging_data[key] = files
+            ret_list.append(imaging_data)
+    return ret_list
+            
 
 if __name__ == '__main__':
     pass
