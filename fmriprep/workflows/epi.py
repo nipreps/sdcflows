@@ -20,7 +20,7 @@ from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
-from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink
+from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink, FormatHMCParam
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
@@ -55,9 +55,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
 
     avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
                          iterfield=['mat_file'])
-    avs_format = pe.Node(
-        niu.Function(input_names=['translations', 'rot_angles'], output_names=['out_file'],
-                     function=_tsv_format), name='AVScale_Format')
+    avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
     epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
@@ -393,19 +391,3 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
     new_ref_im.to_filename(out_file)
 
     return out_file
-
-def _tsv_format(translations, rot_angles, fmt=None):
-    import numpy as np
-    import os.path as op
-    parameters = np.hstack((translations, rot_angles)).astype(np.float32)
-
-    if fmt is None:
-        out_file = op.abspath('movpar.tsv')
-        np.savetxt(out_file, parameters,
-                   header='Motion parameters: X, Y, Z, Rx, Ry, Rz',
-                   delimiter='\t')
-    else:
-        raise NotImplementedError
-
-    return out_file
-
