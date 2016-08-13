@@ -98,14 +98,9 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
 
-    add_dims = pe.Node(niu.Function(
-        input_names=['in_file'], output_names=['out_file'], function=_add_empty), name='Fmap4D')
-
-    # Convert to valid fieldcoeff:
-    # 1. Warputils; 2. Remove dims and set correct header.
-    to_coeff = pe.Node(fsl.WarpUtils(out_format='spline', warp_resolution=(4., 4., 4.)),
-                       name='ComputeCoeffs')
-
+    to_coeff = pe.Node(niu.Function(
+        input_names=['in_file', 'in_ref'], output_names=['out_file'],
+        function=_gen_coeff), name='GenCoeffFile')
 
     # Use the least-squares method to correct the dropout of the SBRef images
     unwarp = pe.Node(fsl.ApplyTOPUP(), name='TopUpApply')
@@ -118,7 +113,7 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
             (align, getref, [('out_file', 'in_file')]),
             (getref, fmap2ref, [('out_file', 'fixed_image')]),
             (getref, applyxfm, [('out_file', 'reference_image')]),
-            (getref, to_coeff, [('out_file', 'reference')]),
+            (getref, to_coeff, [('out_file', 'in_ref')]),
         ])
     else:
         getref = pe.Node(niu.Select(), name='PickFirst')
@@ -127,7 +122,7 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
             (align, getref, [('ref_vol', 'index')]),
             (getref, fmap2ref, [('out', 'fixed_image')]),
             (getref, applyxfm, [('out', 'reference_image')]),
-            (getref, to_coeff, [('out', 'reference')]),
+            (getref, to_coeff, [('out', 'in_ref')]),
         ])
 
 
@@ -149,8 +144,7 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
             ('forward_transforms', 'transforms'),
             ('forward_invert_flags', 'invert_transform_flags')]),
         (align, fslsplit, [('out_file', 'in_file')]),
-        (applyxfm, add_dims, [('output_image', 'in_file')]),
-        (add_dims, to_coeff, [('out_file', 'in_file')]),
+        (applyxfm, to_coeff, [('output_image', 'in_file')]),
         (fslsplit, unwarp, [('out_files', 'in_files'),
                             (('out_files', gen_list), 'in_index')]),
         (to_coeff, unwarp, [('out_file', 'in_topup_fieldcoef')]),
@@ -160,7 +154,7 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
     return workflow
 
 
-def _multiple_pe_hmc(in_files, in_movpar, in_ref):
+def _multiple_pe_hmc(in_files, reference, in_movpar, in_ref):
     """
     This function interprets that we are dealing with a
     multiple PE (phase encoding) input if it finds several
@@ -205,21 +199,54 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref):
                 avs_format.run().outputs.out_file,
                 'lsr', in_ref)
 
-
-def _add_empty(in_file, out_file=None):
-    import os.path as op
+def _gen_coeff(in_file, in_ref, out_file=None):
+    """Convert to a valid fieldcoeff"""
     import numpy as np
     import nibabel as nb
+    from nipype.interfaces import fsl
 
-    if out_file is None:
+    def _gen_fname(in_file, suffix='process'):
+        import os.path as op
         fname, fext = op.splitext(op.basename(in_file))
         if fext == '.gz':
             fname, _ = op.splitext(fname)
-        out_file = op.abspath('./%s_fmap4D.nii.gz' % fname)
+        return op.abspath('./{}_{}'.format(fname, suffix))
 
+    if out_file is None:
+        out_file = _gen_fname(in_file, 'fieldcoeff.nii.gz')
+
+    # 1. Add one dimension (4D image) of 3D coordinates
     im0 = nb.load(in_file)
     data = np.zeros_like(im0.get_data())
+    sizes = data.shape[:3]
     im1 = nb.Nifti1Image(data, im0.get_affine(), im0.get_header())
     im4d = nb.concat_images([im0, im1, im1])
-    im4d.to_filename(out_file)
+    im4d_fname = _gen_fname(in_file, 'field4D.nii.gz')
+    im4d.to_filename(im4d_fname)
+
+    # 2. Warputils to compute bspline coefficients
+    to_coeff = fsl.WarpUtils(out_format='spline', knot_space=(2, 2, 2))
+    to_coeff.inputs.in_file = im4d_fname
+    to_coeff.inputs.reference = in_ref
+
+    # 3. Remove unnecessary dims (Y and Z)
+    get_first = fsl.Extract(t_min=0, t_size=1)
+    get_first.inputs.in_file = to_coeff.run().outputs.out_file
+
+    # 4. Set correct header
+    # see https://github.com/poldracklab/preprocessing-workflow/issues/92
+    img = nb.load(get_first.run().outputs.roi_file)
+    hdr = img.get_header().copy()
+    hdr['intent_code'] = 2016
+
+    sform = np.eye(4)
+    sform[:3, 3] = sizes
+    qform = np.zeros((4, 4))
+    qform[:3, 3] = sizes
+    hdr.set_sform(sform)
+    hdr.set_qform(qform)
+
+    nb.Nifti1Image(img.get_data(), img.get_affine(), hdr).to_filename(out_file)
     return out_file
+
+
