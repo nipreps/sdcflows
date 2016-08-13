@@ -219,6 +219,7 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     im0 = nb.load(in_file)
     data = np.zeros_like(im0.get_data())
     sizes = data.shape[:3]
+    spacings = im0.get_header().get_zooms()[:3]
     im1 = nb.Nifti1Image(data, im0.get_affine(), im0.get_header())
     im4d = nb.concat_images([im0, im1, im1])
     im4d_fname = _gen_fname(in_file, 'field4D.nii.gz')
@@ -230,23 +231,24 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     to_coeff.inputs.reference = in_ref
 
     # 3. Remove unnecessary dims (Y and Z)
-    get_first = fsl.Extract(t_min=0, t_size=1)
+    get_first = fsl.ExtractROI(t_min=0, t_size=1)
     get_first.inputs.in_file = to_coeff.run().outputs.out_file
 
     # 4. Set correct header
     # see https://github.com/poldracklab/preprocessing-workflow/issues/92
     img = nb.load(get_first.run().outputs.roi_file)
     hdr = img.get_header().copy()
+    hdr['intent_p1'] = spacings[0]
+    hdr['intent_p2'] = spacings[1]
+    hdr['intent_p3'] = spacings[2]
     hdr['intent_code'] = 2016
 
     sform = np.eye(4)
     sform[:3, 3] = sizes
-    qform = np.zeros((4, 4))
-    qform[:3, 3] = sizes
-    hdr.set_sform(sform)
-    hdr.set_qform(qform)
+    hdr.set_sform(sform, code='scanner')
+    hdr['qform_code'] = 1
 
-    nb.Nifti1Image(img.get_data(), img.get_affine(), hdr).to_filename(out_file)
+    nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_file)
     return out_file
 
 
