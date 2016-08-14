@@ -18,9 +18,9 @@ from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
-SDC_CORRECT_NAME = 'SDC_Apply'
+SDC_UNWARP_NAME = 'SDC_unwarp'
 
-def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
+def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
     """
     This workflow takes an estimated fieldmap and a target image and applies TOPUP,
     an :abbr:`SDC (susceptibility-derived distortion correction)` method in FSL to

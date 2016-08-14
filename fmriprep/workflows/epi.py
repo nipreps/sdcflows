@@ -21,7 +21,7 @@ from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
 from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink, FormatHMCParam
-from fmriprep.workflows.fieldmap.base import create_encoding_file
+from fmriprep.workflows.fieldmap import create_encoding_file
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
 

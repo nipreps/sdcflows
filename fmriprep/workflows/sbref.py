@@ -19,8 +19,7 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.fieldmap.base import create_encoding_file, mcflirt2topup
-from fmriprep.workflows.fieldmap.correct import sdc_correct
+from fmriprep.workflows.fieldmap.base import create_encoding_file, mcflirt2topup, sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
@@ -37,7 +36,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         input_names=['in_files', 'in_mats'], output_names=['out_movpar'],
         function=mcflirt2topup), name='MotionParameters')
 
-    unwarp = sdc_correct()
+    unwarp = sdc_unwarp()
 
     workflow.connect([
         (inputnode, unwarp, [('sbref', 'inputnode.in_file'),
