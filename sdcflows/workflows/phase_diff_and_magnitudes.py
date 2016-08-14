@@ -7,187 +7,79 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
 from nipype.interfaces import fsl
 from nipype.pipeline import engine as pe
-from nipype.workflows.dmri.fsl.utils import (siemens2rads, rads2radsec,
-                                             demean_image, cleanup_edge_pipeline,
-                                             add_empty_vol)
+from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup_edge_pipeline,
+                                             add_empty_vol, rads2radsec)
 
+from fmriprep.interfaces.bids import ReadSidecarJSON
 from fmriprep.utils.misc import fieldmap_suffixes
+
 
 ''' Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
 
-def _sort_fmaps(fieldmaps):
+def _sort_fmaps(input_images):
     ''' just a little data massaging'''
-    from fmriprep.workflows.fieldmap.helper import sort_fmaps
+    from fmriprep.workflows.fieldmap.base import sort_fmaps
 
-    fmaps = sort_fmaps(fieldmaps)
+    fmaps = sort_fmaps(input_images)
     # there is only one phasediff image
-    # there may be more than one magnitude image, but the workflow (GetFirst
-    # node) needs to change first
-    return fmaps['phasediff'][0], fmaps['magnitude'][0]
+    # there may be more than one magnitude image
+    return fmaps['phasediff'][0], fmaps['magnitude']
 
-# based on
-# https://github.com/nipy/nipype/blob/bd36a5dadab73e39d8d46b1f1ad826df3fece5c1/nipype/workflows/dmri/fsl/artifacts.py#L514
-def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes', interp='Linear',
-                              fugue_params=dict(smooth3d=2.0)):
+
+def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
     """
-    Phase
-    unwrapping is performed using `PRELUDE
-    <http://fsl.fmrib.ox.ac.uk/fsl/fsl-4.1.9/fugue/prelude.html>`_
-    [Jenkinson03]_. Preparation of the fieldmap is performed reproducing the
-    script in FSL `fsl_prepare_fieldmap
-    <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide#SIEMENS_data>`_.
+    Estimates the fieldmap using a phase-difference image and one or more
+    magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
+    acquisitions. The `original code was taken from nipype
+    <https://github.com/nipy/nipype/blob/master/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
 
-    .. warning:: Only SIEMENS format fieldmaps are supported.
+    Outputs::
 
-    .. admonition:: References
+      outputnode.mag_brain - The average magnitude image, skull-stripped
+      outputnode.fmap_mask - The brain mask applied to the fieldmap
+      outputnode.fieldmap - The estimated fieldmap in Hz
 
-    .. [Jenkinson03] Jenkinson M., `Fast, automated, N-dimensional
-    phase-unwrapping algorithm <http://dx.doi.org/10.1002/mrm.10354>`_,
-    MRM 49(1):193-197, 2003, doi: 10.1002/mrm.10354.
 
     """
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fieldmaps']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['input_images']),
                         name='inputnode')
 
-    outputnode = pe.Node(niu.IdentityInterface(fields=['mag_brain',
-                                                       'fmap_mask',
-                                                       'fmap_fieldcoef', # in sepair this comes from topup.out_fieldcoef; ask what to do
-                                                       'fmap_movpar']), # same as above; topup.out_movpar
-                         name='outputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['mag_brain', 'fmap_mask', 'fieldmap']), name='outputnode')
 
-    vsm2topup = pe.Node(niu.Function(function=_vsm_to_topup,
-                                     input_names=['vsm'], # voxel shift map file
-                                     output_names=['fmap_fieldcoef', 'fmap_movpar']),
-                        name='vsm2topup')
     sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
-                                      input_names=['fieldmaps'],
+                                      input_names=['input_images'],
                                       output_names=['phasediff', 'magnitude']),
                         name='SortFmaps')
 
-    ingest_fmap_data = _ingest_fieldmap_data_workflow()
+    # Read phasediff echo times
+    meta = pe.Node(ReadSidecarJSON(fields=['EchoTime1', 'EchoTime2']), name='metadata')
+    dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
+                               function=_delta_te), name='ComputeDeltaTE')
 
-    r_params = _make_node_r_params()
+    # ideally use mcflirt first to align the magnitude images
+    magmrg = pe.Node(fsl.Merge(dimension='t'), name='MagsMerge')
+    magavg = pe.Node(fsl.MeanImage(dimension='T', nan2zeros=True), name='MagsAverage')
 
-    # oscar said it wasn't necessary but it appears to be
-    eff_echo = pe.Node(niu.Function(function=_eff_t_echo,
-                                    input_names=['echospacing', 'acc_factor'],
-                                    output_names=['eff_echo']),
-                       name='EffEcho')
-
-    rad2rsec = pe.Node(niu.Function(
-        input_names=['in_file', 'delta_te'], output_names=['out_file'],
-        function=rads2radsec), name='ToRadSec')
-
-    pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='PreliminaryFugue')
-
-    wrangle_fmap_data = _wrangle_fieldmap_data_workflow()
-
-    vsm = pe.Node(fsl.FUGUE(save_shift=True, **fugue_params),
-                  name="ComputeVSM")
-
-    wf = pe.Workflow(name=name)
-    wf.connect([
-        (inputnode, sortfmaps, [('fieldmaps', 'fieldmaps')]),
-        (sortfmaps, ingest_fmap_data, [('phasediff', 'inputnode.bmap_pha'),
-                                       ('magnitude', 'inputnode.bmap_mag')]),
-        (ingest_fmap_data, vsm, [('outputnode.skull_strip_mask_file', 'mask_file')]),
-        (ingest_fmap_data, outputnode, [('outputnode.mag_brain', 'mag_brain'), # ??? verify
-                                         ('outputnode.skull_strip_mask_file', 'fmap_mask')]), # ??? verify
-        (ingest_fmap_data, wrangle_fmap_data, [('outputnode.skull_strip_mask_file',
-                                                'inputnode.in_mask')]), # ??? verify
-        (ingest_fmap_data, rad2rsec, [('outputnode.unwrapped_phase_file', 'in_file')]),
-        (rad2rsec, pre_fugue, [('out_file','fmap_in_file')]), # ??? verify
-
-        (ingest_fmap_data, pre_fugue, [('outputnode.skull_strip_mask_file', # ??? verify
-                                        'mask_file')]), # ??? verify
-        (pre_fugue, wrangle_fmap_data, [('fmap_out_file',
-                                         'inputnode.fmap_out_file')]),
-        (wrangle_fmap_data, vsm, [('outputnode.out_file', 'fmap_in_file')]),
-
-        (r_params, rad2rsec, [('delta_te', 'delta_te')]),
-        (r_params, vsm, [('delta_te', 'asym_se_time')]),
-        (r_params, eff_echo, [('echospacing', 'echospacing'),
-                              ('acc_factor', 'acc_factor')]),
-        (eff_echo, vsm, [('eff_echo', 'dwell_time')]),
-
-        (vsm, vsm2topup, [('shift_out_file', 'vsm')]),
-        (vsm2topup, outputnode, [('fmap_fieldcoef', 'fmap_fieldcoef'),
-                                 ('fmap_movpar', 'fmap_movpar')])
-    ])
-    return wf
-
-def _make_node_r_params():
-    # find these values in data--see bids spec
-    # delta_te from phase diff
-    # echospacing, acc_factor, enc_dir from sbref/epi
-    epi_defaults = {'delta_te': 2.46e-3, 'echospacing': 0.77e-3,
-                    'acc_factor': 2, 'enc_dir': u'AP'}
-    return pe.Node(JSONFileGrabber(defaults=epi_defaults),
-                   name='SettingsGrabber')
-
-def _ingest_fieldmap_data_workflow():
-    ''' Takes phase diff and one magnitude file, handles the
-    illumination problem, extracts the brain, and does phase
-    unwrapping usig FSL's PRELUDE'''
-    name="IngestFmapData"
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=['bmap_mag',
-                                                      'bmap_pha']),
-                        name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['unwrapped_phase_file',
-                'skull_strip_mask_file',
-                'mag_brain']),
-                         name='outputnode')
-
-    # ideally use mcflirt to align and then average w fsl something
-    firstmag = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='GetFirst')
-
-    # de-gradient the fields ("illumination problem")
+    # de-gradient the fields ("bias/illumination artifact")
     n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
 
-    bet = pe.Node(fsl.BET(frac=0.4, mask=True), name='BrainExtraction')
+    bet = pe.Node(fsl.BET(frac=0.8, mask=True), name='BrainExtraction')
     # uses mask from bet; outputs a mask
-    dilate = pe.Node(fsl.maths.MathsCommand(
-        nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
+    # dilate = pe.Node(fsl.maths.MathsCommand(
+    #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
 
     # phase diff -> radians
     pha2rads = pe.Node(niu.Function(
         input_names=['in_file'], output_names=['out_file'],
         function=siemens2rads), name='PreparePhase')
 
+    # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
 
-    wf = pe.Workflow(name=name)
-    wf.connect([
-        (inputnode, firstmag, [('bmap_mag', 'in_file')]),
-        (firstmag, n4, [('roi_file', 'input_image')]),
-        (n4, prelude, [('output_image', 'magnitude_file')]),
-        (n4, bet, [('output_image', 'in_file')]),
-        (bet, outputnode, [('mask_file', 'skull_strip_mask_file'), # ??? verify
-                           ('out_file', 'mag_brain')]),
-
-        (bet, dilate, [('mask_file', 'in_file')]),
-        (dilate, prelude, [('out_file', 'mask_file')]),
-
-        (inputnode, pha2rads, [('bmap_pha', 'in_file')]),
-        (pha2rads, prelude, [('out_file', 'phase_file')]),
-        (prelude, outputnode, [('unwrapped_phase_file',
-                                'unwrapped_phase_file')]),
-    ])
-    return wf
-
-def _wrangle_fieldmap_data_workflow():
-    '''  Normalizes ("demeans") fieldmap data, cleans it up and
-    organizes it for output'''
-    name='WrangleFmapData'
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=['fmap_out_file',
-                                                      'in_mask']),
-                        name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']),
-                         name='outputnode')
+    denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
+                                        kernel_size=3), name='PhaseDenoise')
 
     demean = pe.Node(niu.Function(
         input_names=['in_file', 'in_mask'], output_names=['out_file'],
@@ -195,27 +87,102 @@ def _wrangle_fieldmap_data_workflow():
 
     cleanup = cleanup_edge_pipeline()
 
-    addvol = pe.Node(niu.Function(
-        input_names=['in_file'], output_names=['out_file'],
-        function=add_empty_vol), name='AddEmptyVol')
+    compfmap = pe.Node(niu.Function(
+        input_names=['in_file', 'delta_te'], output_names=['out_file'],
+        function=phdiff2fmap), name='ComputeFieldmap')
 
-    wf = pe.Workflow(name=name)
-    wf.connect([
-        (inputnode, demean, [('fmap_out_file', 'in_file'),
-                             ('in_mask', 'in_mask')]),
+    # The phdiff2fmap interface is equivalent to:
+    # rad2rsec (using rads2radsec from nipype.workflows.dmri.fsl.utils)
+    # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
+    # rsec2hz (divide by 2pi)
+
+    workflow = pe.Workflow(name=name)
+    workflow.connect([
+        (inputnode, sortfmaps, [('input_images', 'input_images')]),
+        (sortfmaps, meta, [('phasediff', 'in_file')]),
+        (sortfmaps, magmrg, [('magnitude', 'in_files')]),
+        (magmrg, magavg, [('merged_file', 'in_file')]),
+        (magavg, n4, [('out_file', 'input_image')]),
+        (n4, prelude, [('output_image', 'magnitude_file')]),
+        (n4, bet, [('output_image', 'in_file')]),
+        (bet, prelude, [('mask_file', 'mask_file')]),
+        (sortfmaps, pha2rads, [('phasediff', 'in_file')]),
+        (pha2rads, prelude, [('out_file', 'phase_file')]),
+        (meta, dte, [('out_dict', 'in_values')]),
+        (dte, compfmap, [('delta_te', 'delta_te')]),
+        (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
+        (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup, [('out_file', 'inputnode.in_file')]),
-
-        (inputnode, cleanup, [('in_mask', 'inputnode.in_mask')]),
-        (cleanup, addvol, [('outputnode.out_file', 'in_file')]),
-        (addvol, outputnode, [('out_file', 'out_file')]),
+        (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
+        (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
+        (compfmap, outputnode, [('out_file', 'fieldmap')]),
+        (bet, outputnode, [('mask_file', 'fmap_mask'),
+                           ('out_file', 'mag_brain')])
     ])
-    return wf
 
-def _vsm_to_topup(vsm):
-    # OSCAR'S CODE HERE
-    raise NotImplementedError()
-    return fmap_fieldcoef, fmap_movpar
+    return workflow
 
-def _eff_t_echo(echospacing, acc_factor):
-    eff_echo = echospacing / (1.0 * acc_factor)
-    return eff_echo
+
+# ------------------------------------------------------
+# Helper functions
+# ------------------------------------------------------
+
+def phdiff2fmap(in_file, delta_te, out_file=None):
+    """
+    Converts the input phase-difference map into a fieldmap in Hz,
+    using the eq. (1) of [Hutton2002]_:
+
+      .. math:
+
+          \Delta B_0 (\text{T}^{-1}) = \frac{\Delta \Theta}{2\pi\Gamma\,\Delta\text{TE}}
+
+    In this case, we do not take into account the gyromagnetic ratio of the
+    proton (:math:`\Gamma`), since it will be applied inside TOPUP:
+
+      .. math:
+
+          \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi,\Delta\text{TE}}
+
+
+
+      .. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
+                      Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
+                      <http://dx.doi.org/10.1006/nimg.2001.1054>`_.
+    """
+    import numpy as np
+    import nibabel as nb
+    import os.path as op
+    import math
+
+    GYROMAG_RATIO_H_PROTON_MHZ = 42.576
+
+    if out_file is None:
+        fname, fext = op.splitext(op.basename(in_file))
+        if fext == '.gz':
+            fname, _ = op.splitext(fname)
+        out_file = op.abspath('./%s_fmap.nii.gz' % fname)
+
+    im = nb.load(in_file)
+    data = (im.get_data().astype(np.float32) / (2. * math.pi * delta_te))
+
+    nb.Nifti1Image(data, im.affine, im.header).to_filename(out_file)
+    return out_file
+
+
+def _delta_te(in_values):
+    if isinstance(in_values, float):
+        te2 = in_values
+        te1 = 0.
+
+    if isinstance(in_values, dict):
+        te1 = in_values['EchoTime1']
+        te2 = in_values['EchoTime2']
+
+    if isinstance(in_values, list):
+        te2, te1 = in_values
+        if isinstance(te1, list):
+            te1 = te1[1]
+        if isinstance(te2, list):
+            te2 = te2[1]
+
+    return abs(float(te2)-float(te1))

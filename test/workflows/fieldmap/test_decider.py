@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from fmriprep.workflows.fieldmap import decider
+from fmriprep.workflows.fieldmap.base import fieldmap_decider
 from fmriprep.utils import misc
 
 from test.workflows.utilities import TestWorkflow
@@ -17,9 +17,10 @@ class TestDecider(TestWorkflow):
         # SET UP INPUTS
         subject_data = misc.get_subject(c.DATASET, '100003')
 
-        print(subject_data)
-
         # RUN
-        wf = decider.fieldmap_decider(subject_data, {})
-        wf.inputs.inputnode.fieldmaps = subject_data['fieldmaps']
-        wf.run()
+        wf = fieldmap_decider(subject_data, {})
+
+        # Unit tests of the decider should check different BIDS-valid
+        # structures and see if the decision is correct. There's not
+        # much of a point in running smoke test wrapped as unit tests.
+        # If we also test some BIDS-invalid inputs... that'd be great!
