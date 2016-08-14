@@ -6,14 +6,13 @@
 Apply susceptibility distortion correction (SDC)
 
 """
-import os.path as op
+import pkg_resources as pkgr
+
+from nipype.pipeline import engine as pe
 from nipype.interfaces import fsl
-from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
-from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
-from nipype.pipeline import engine as pe
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
@@ -74,26 +73,12 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
     # of the target image (the one that shall be corrected)
     fmap2ref = pe.Node(ants.Registration(output_warped_image=True),
                        name='Fieldmap2ImageRegistration')
-    fmap2ref.inputs.transforms = ['Translation', 'Rigid']
-    fmap2ref.inputs.transform_parameters = [(0.5,), (.1,)]
-    fmap2ref.inputs.number_of_iterations = [[50], [20]]
-    fmap2ref.inputs.dimension = 3
-    fmap2ref.inputs.metric = ['Mattes', 'Mattes']
-    fmap2ref.inputs.metric_weight = [1.0] * 2
-    fmap2ref.inputs.radius_or_number_of_bins = [64, 64]
-    fmap2ref.inputs.sampling_strategy = ['Random', 'Random']
-    fmap2ref.inputs.sampling_percentage = [0.2, 0.2]
-    fmap2ref.inputs.convergence_threshold = [1.e-7, 1.e-8]
-    fmap2ref.inputs.convergence_window_size = [20, 10]
-    fmap2ref.inputs.smoothing_sigmas = [[10.0], [2.0]]
-    fmap2ref.inputs.sigma_units = ['mm'] * 2
-    fmap2ref.inputs.shrink_factors = [[4], [1]]  # ,[1] ]
-    fmap2ref.inputs.use_estimate_learning_rate_once = [True] * 2
-    fmap2ref.inputs.use_histogram_matching = [True] * 2
-    fmap2ref.inputs.initial_moving_transform_com = 0
-    fmap2ref.inputs.collapse_output_transforms = True
-    fmap2ref.inputs.winsorize_upper_quantile = 0.998
-    fmap2ref.inputs.winsorize_lower_quantile = 0.015
+
+    grabber = nio.JSONFileGrabber()
+    setattr(grabber, '_always_run', False)
+    fmap2ref_params = pe.Node(grabber, name='Fieldmap2ImageRegistration_params')
+    fmap2ref_params.inputs.in_file = (
+        pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json'))
 
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
@@ -151,6 +136,33 @@ def sdc_correct(name=SDC_CORRECT_NAME, ref_vol=None):
         (encfile, unwarp, [('parameters_file', 'encoding_file')]),
         (unwarp, outputnode, [('out_corrected', 'out_file')])
     ])
+
+    # Connect registration settings in the end, not to clutter the code
+    workflow.connect([
+        (fmap2ref_params, fmap2ref, [
+            ('transforms', 'transforms'),
+            ('transform_parameters', 'transform_parameters'),
+            ('number_of_iterations', 'number_of_iterations'),
+            ('dimension', 'dimension'),
+            ('metric', 'metric'),
+            ('metric_weight', 'metric_weight'),
+            ('radius_or_number_of_bins', 'radius_or_number_of_bins'),
+            ('sampling_strategy', 'sampling_strategy'),
+            ('sampling_percentage', 'sampling_percentage'),
+            ('convergence_threshold', 'convergence_threshold'),
+            ('convergence_window_size', 'convergence_window_size'),
+            ('smoothing_sigmas', 'smoothing_sigmas'),
+            ('sigma_units', 'sigma_units'),
+            ('shrink_factors', 'shrink_factors'),
+            ('use_estimate_learning_rate_once', 'use_estimate_learning_rate_once'),
+            ('use_histogram_matching', 'use_histogram_matching'),
+            ('initial_moving_transform_com', 'initial_moving_transform_com'),
+            ('collapse_output_transforms', 'collapse_output_transforms'),
+            ('winsorize_upper_quantile', 'winsorize_upper_quantile'),
+            ('winsorize_lower_quantile', 'winsorize_lower_quantile')
+        ])
+    ])
+
     return workflow
 
 
