@@ -39,8 +39,6 @@ def main():
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
-    g_input.add_argument('-v', '--version', action='store_true', default=False,
-                         help='Show current fmriprep version')
     g_input.add_argument('--debug', action='store_true', default=False,
                          help='run debug version of workflow')
     g_input.add_argument('--skull-strip-ants', action='store_true', default=False,
@@ -61,11 +59,10 @@ def main():
     g_outputs.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
 
-    opts = parser.parse_args()
+    g_input.add_argument('-v', '--version', action='version',
+                         version='fmriprep v{}'.format(__version__))
 
-    if opts.version:
-        print('fmriprep version ' + __version__)
-        exit(0)
+    opts = parser.parse_args()
 
     # Warn for default work/output directories
     if (opts.work_dir == parser.get_default('work_dir') or
