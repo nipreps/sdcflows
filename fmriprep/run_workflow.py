@@ -27,7 +27,7 @@ def main():
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
-    from fmriprep.workflows.base import fmri_preprocess_single
+    from fmriprep.workflows import fmriprep_single
     from fmriprep.utils.misc import get_subject
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
@@ -122,13 +122,12 @@ def main():
     imaging_data = get_subject(settings['bids_root'], opts.subject_id)
 
     # Build main workflow and run
-    preproc_wf = fmri_preprocess_single(imaging_data, settings=settings)
+    preproc_wf = fmriprep_single(imaging_data, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
         workflow.write_graph()
-    #  workflow.run(**plugin_settings)
 
 
 

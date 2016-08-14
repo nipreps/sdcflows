@@ -19,7 +19,7 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.fieldmap.base import create_encoding_file, mcflirt2topup, sdc_unwarp
+from fmriprep.workflows.fieldmap import create_encoding_file, mcflirt2topup, sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
