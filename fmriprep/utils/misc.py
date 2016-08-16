@@ -4,7 +4,6 @@ import itertools
 import json
 import os
 import pkg_resources as pkgr
-from pprint import pprint as pp
 import re
 
 from grabbit import Layout
@@ -79,19 +78,21 @@ def collect_bids_data(dataset, subject, session=None, run=None):
         unique_list = layout.unique(key)
         if unique_list:
             get_kwargs[key] = unique_list
-    attr_kwargs = itertools.product(*get_kwargs.values())
 
-    print(list(attr_kwargs))
-    '''
-    for elem in attr_kwargs:
+    query_kwargs = []
+    for key in get_kwargs:
+        query_kwargs.append([(key, x) for x in get_kwargs[key]])
+
+    query_kwargs = itertools.product(*query_kwargs)
+
+    for elem in query_kwargs:
         epi_files = [x.filename for x 
-                     in layout.get(**dict(, **queries['epi']))]
+                     in layout.get(**dict(dict(elem), **queries['epi']))]
         sbref_files = [x.filename for x
-                       in layout.get(**dict(, **queries['sbref']))]
+                       in layout.get(**dict(dict(elem), **queries['sbref']))]
         if epi_files:
             imaging_data['func'].append({'epi': epi_files, 'sbref': sbref_files})
     return imaging_data
-    '''
 
 
 if __name__ == '__main__':
