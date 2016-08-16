@@ -8,7 +8,7 @@ import re
 
 from grabbit import Layout
 
-INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': []}
+INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
 def gen_list(inlist, base=1):
     return range(base, len(inlist) + base)
@@ -62,6 +62,8 @@ def collect_bids_data(dataset, subject, session=None, run=None):
         't1': {'type': 'T1w', 'ext': 'nii'}
     }
     
+    #  Add a subject key pair to each query we make so that we only deal with
+    #  files related to this workflows specific subject. Could be made opt...
     for key in queries.keys():
         queries[key]['subject'] = subject
 
@@ -70,6 +72,8 @@ def collect_bids_data(dataset, subject, session=None, run=None):
     imaging_data['fieldmaps'] = fieldmap_files
     t1_files = [x.filename for x in layout.get(**queries['t1'])]
     imaging_data['t1'] = t1_files
+    sbref_files = [x.filename for x in layout.get(**queries['sbref'])]
+    imaging_data['sbref'] = sbref_files
 
     loop_on = ['session', 'run', 'acquisition', 'task']
     get_kwargs = {}
@@ -88,10 +92,8 @@ def collect_bids_data(dataset, subject, session=None, run=None):
     for elem in query_kwargs:
         epi_files = [x.filename for x 
                      in layout.get(**dict(dict(elem), **queries['epi']))]
-        sbref_files = [x.filename for x
-                       in layout.get(**dict(dict(elem), **queries['sbref']))]
         if epi_files:
-            imaging_data['func'].append({'epi': epi_files, 'sbref': sbref_files})
+            imaging_data['func'].append(epi_files)
     return imaging_data
 
 

@@ -127,6 +127,8 @@ def main():
     # Retrieve BIDS data
     subject_data = collect_bids_data(settings['bids_root'], opts.subject_id)
     
+    pp(subject_data)
+
     # Build main workflow and run
     preproc_wf = fmri_preprocess_single(subject_data, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
