@@ -5,5 +5,7 @@
 """
 Fieldmap-processing workflows.
 
-Originally coded by Craig Moodie. Refactored by the CRN Developers.
 """
+from fmriprep.workflows.fieldmap.base import create_encoding_file, mcflirt2topup
+from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
+from fmriprep.workflows.fieldmap.unwarp import sdc_unwarp

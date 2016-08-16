@@ -30,8 +30,8 @@ def main():
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
-    from fmriprep.workflows.base import fmri_preprocess_single
-    from fmriprep.utils.misc import collect_bids_data
+    from fmriprep.workflows import fmriprep_single
+    from fmriprep.utils.misc import get_subject
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -42,8 +42,6 @@ def main():
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
-    g_input.add_argument('-v', '--version', action='store_true', default=False,
-                         help='Show current fmriprep version')
     g_input.add_argument('--debug', action='store_true', default=False,
                          help='run debug version of workflow')
     g_input.add_argument('--skull-strip-ants', action='store_true', default=False,
@@ -64,11 +62,10 @@ def main():
     g_outputs.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
 
-    opts = parser.parse_args()
+    g_input.add_argument('-v', '--version', action='version',
+                         version='fmriprep v{}'.format(__version__))
 
-    if opts.version:
-        print('fmriprep version ' + __version__)
-        exit(0)
+    opts = parser.parse_args()
 
     # Warn for default work/output directories
     if (opts.work_dir == parser.get_default('work_dir') or
@@ -130,7 +127,7 @@ def main():
     pp(subject_data)
 
     # Build main workflow and run
-    preproc_wf = fmri_preprocess_single(subject_data, settings=settings)
+    preproc_wf = fmriprep_single(imaging_data, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     #  preproc_wf.run(**plugin_settings)
 

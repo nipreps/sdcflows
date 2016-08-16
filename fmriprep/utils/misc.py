@@ -25,7 +25,7 @@ def is_fieldmap_file(string):
     return is_fieldmap_file
 
 fieldmap_suffixes = {
-    'phasediff': r"phasediff\.nii",
+    'phasediff': r"phasediff[0-9]*\.nii",
     'magnitude': r"magnitude[0-9]*\.nii",
     'phase': r"phase[0-9]+\.nii",
     'fieldmap': r"fieldmap\.nii",
