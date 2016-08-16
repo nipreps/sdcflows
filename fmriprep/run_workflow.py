@@ -127,15 +127,13 @@ def main():
     # Retrieve BIDS data
     subject_data = collect_bids_data(settings['bids_root'], opts.subject_id)
     
-    pp(subject_data)
-
     # Build main workflow and run
-    #  preproc_wf = fmri_preprocess_single(subject_data, settings=settings)
-    #  preproc_wf.base_dir = settings['work_dir']
+    preproc_wf = fmri_preprocess_single(subject_data, settings=settings)
+    preproc_wf.base_dir = settings['work_dir']
     #  preproc_wf.run(**plugin_settings)
 
-    #  if opts.write_graph:
-    #    preproc_wf.write_graph()
+    if opts.write_graph:
+        preproc_wf.write_graph()
 
 
 
