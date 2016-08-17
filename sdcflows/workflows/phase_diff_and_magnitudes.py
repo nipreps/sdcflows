@@ -49,8 +49,8 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
         fields=['mag_brain', 'fmap_mask', 'fieldmap']), name='outputnode')
 
     sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
-                                      input_names=['input_images'],
-                                      output_names=['phasediff', 'magnitude']),
+                                     input_names=['input_images'],
+                                     output_names=['phasediff', 'magnitude']),
                         name='SortFmaps')
 
     # Read phasediff echo times
