@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-06-03 12:14:53
+# @Last Modified time: 2016-08-17 09:05:11
 """
 fMRI preprocessing workflow
 =====
@@ -31,7 +31,6 @@ def main():
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
     from fmriprep.workflows import fmriprep_single
-    from fmriprep.utils.misc import get_subject
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -123,7 +122,7 @@ def main():
 
     # Retrieve BIDS data
     subject_data = collect_bids_data(settings['bids_root'], opts.subject_id)
-    
+
     pp(subject_data)
 
     # Build main workflow and run
