@@ -214,8 +214,7 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
 
         # Head motion correction
         fslmerge = fsl.Merge(dimension='t', in_files=in_files)
-        hmc = fsl.MCFLIRT(cost='normcorr', ref_vol=in_ref,
-                          save_mats=True, save_plots=True)
+        hmc = fsl.MCFLIRT(ref_vol=in_ref, save_mats=True, save_plots=True)
         hmc.inputs.in_file = fslmerge.run().outputs.merged_file
         hmc_res = hmc.run()
         out_file = hmc_res.outputs.out_file

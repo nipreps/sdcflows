@@ -46,7 +46,7 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
 
     # Head motion correction (hmc)
-    hmc = pe.Node(fsl.MCFLIRT(save_mats=True), name='EPI_hmc')
+    hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True), name='EPI_hmc')
 
     pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),

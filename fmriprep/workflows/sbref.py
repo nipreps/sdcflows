@@ -15,6 +15,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
 
 from fmriprep.utils.misc import gen_list
@@ -38,7 +39,6 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
     bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
-
 
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
@@ -83,6 +83,9 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     outputnode = pe.Node(niu.IdentityInterface(fields=['mat_sbr_to_t1', 'mat_t1_to_sbr']),
                          name='outputnode')
 
+    # Make sure sbref is in RAS coordinates
+    reorient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'), name='SBRefReorient')
+
     # Extract wm mask from segmentation
     wm_mask = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
                       function=_extract_wm), name='WM_mask')
@@ -95,9 +98,10 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
     workflow.connect([
+        (inputnode, reorient, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr, [('sbref_brain', 'in_file'),
-                              ('t1_brain', 'reference')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (reorient, flt_bbr, [('out_file', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
