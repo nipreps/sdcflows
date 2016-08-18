@@ -10,7 +10,7 @@ from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup_edge_pipeline,
                                              add_empty_vol, rads2radsec)
 
-from fmriprep.interfaces.bids import ReadSidecarJSON
+from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 
 
@@ -19,12 +19,8 @@ from fmriprep.utils.misc import fieldmap_suffixes
 
 def _sort_fmaps(input_images):
     ''' just a little data massaging'''
-    from fmriprep.workflows.fieldmap.base import sort_fmaps
-
-    fmaps = sort_fmaps(input_images)
-    # there is only one phasediff image
-    # there may be more than one magnitude image
-    return fmaps['phasediff'][0], fmaps['magnitude']
+    return (sorted([fname for fname in input_images if 'magnitude' in fname]),
+            sorted([fname for fname in input_images if 'phasediff' in fname]))
 
 
 def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
@@ -36,9 +32,9 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
 
     Outputs::
 
-      outputnode.mag_brain - The average magnitude image, skull-stripped
+      outputnode.fmap_ref - The average magnitude image, skull-stripped
       outputnode.fmap_mask - The brain mask applied to the fieldmap
-      outputnode.fieldmap - The estimated fieldmap in Hz
+      outputnode.fmap - The estimated fieldmap in Hz
 
 
     """
@@ -46,26 +42,29 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['mag_brain', 'fmap_mask', 'fieldmap']), name='outputnode')
+        fields=['fmap_ref', 'fmap_mask', 'fmap']), name='outputnode')
 
     sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
                                      input_names=['input_images'],
-                                     output_names=['phasediff', 'magnitude']),
+                                     output_names=['magnitude', 'phasediff']),
                         name='SortFmaps')
+
+    def _pick1st(inlist):
+        return inlist[0]
+
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(fields=['EchoTime1', 'EchoTime2']), name='metadata')
     dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
                                function=_delta_te), name='ComputeDeltaTE')
 
-    # ideally use mcflirt first to align the magnitude images
-    magmrg = pe.Node(fsl.Merge(dimension='t'), name='MagsMerge')
-    magavg = pe.Node(fsl.MeanImage(dimension='T', nan2zeros=True), name='MagsAverage')
+    # Merge input magnitude images
+    magmrg = pe.Node(IntraModalMerge(), name='MagnitudeFuse')
+
 
     # de-gradient the fields ("bias/illumination artifact")
-    n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='Bias')
-
-    bet = pe.Node(fsl.BET(frac=0.8, mask=True), name='BrainExtraction')
+    n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
+    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='MagnitudeBET')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -99,14 +98,13 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
     workflow = pe.Workflow(name=name)
     workflow.connect([
         (inputnode, sortfmaps, [('input_images', 'input_images')]),
-        (sortfmaps, meta, [('phasediff', 'in_file')]),
+        (sortfmaps, meta, [(('phasediff', _pick1st), 'in_file')]),
         (sortfmaps, magmrg, [('magnitude', 'in_files')]),
-        (magmrg, magavg, [('merged_file', 'in_file')]),
-        (magavg, n4, [('out_file', 'input_image')]),
+        (magmrg, n4, [('out_avg', 'input_image')]),
         (n4, prelude, [('output_image', 'magnitude_file')]),
         (n4, bet, [('output_image', 'in_file')]),
         (bet, prelude, [('mask_file', 'mask_file')]),
-        (sortfmaps, pha2rads, [('phasediff', 'in_file')]),
+        (sortfmaps, pha2rads, [(('phasediff', _pick1st), 'in_file')]),
         (pha2rads, prelude, [('out_file', 'phase_file')]),
         (meta, dte, [('out_dict', 'in_values')]),
         (dte, compfmap, [('delta_te', 'delta_te')]),
@@ -115,9 +113,9 @@ def phase_diff_and_magnitudes(name='phase_diff_and_magnitudes'):
         (demean, cleanup, [('out_file', 'inputnode.in_file')]),
         (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
         (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
-        (compfmap, outputnode, [('out_file', 'fieldmap')]),
+        (compfmap, outputnode, [('out_file', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
-                           ('out_file', 'mag_brain')])
+                           ('out_file', 'fmap_ref')])
     ])
 
     return workflow

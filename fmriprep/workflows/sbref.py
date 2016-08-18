@@ -15,36 +15,41 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
+from nipype.interfaces import ants
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.fieldmap import create_encoding_file, mcflirt2topup, sdc_unwarp
+from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
+from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
 def sbref_workflow(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
-    if settings is None:
-        settings = {}
 
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['sbref', 'fmap_ref_brain', 'fmap_mask',
-                        'fieldmap', 'hmc_mats']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['sbref', 'fmap', 'fmap_ref', 'fmap_mask']),
+                        name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped']), name='outputnode')
 
-    gen_movpar = pe.Node(niu.Function(
-        input_names=['in_files', 'in_mats'], output_names=['out_movpar'],
-        function=mcflirt2topup), name='MotionParameters')
+    # Merge input sbrefs
+    # sbrefmrg = pe.Node(IntraModalMerge(), name='SBRefFuse')
+    # inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
+    # bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
 
+    # Unwarping
     unwarp = sdc_unwarp()
+    unwarp.inputs.inputnode.hmc_movpar = ''
 
     workflow.connect([
-        (inputnode, unwarp, [('sbref', 'inputnode.in_file'),
-                             ('fmap_ref_brain', 'inputnode.fmap_ref'),
-                             ('fmap_mask', 'inputnode.fmap_mask'),
-                             ('fieldmap', 'inputnode.fieldmap')]),
-        (inputnode, gen_movpar, [('sbref', 'in_files'),
-                                 ('hmc_mats', 'in_mats')]),
+        (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
+                             ('fmap_ref', 'inputnode.fmap_ref'),
+                             ('fmap_mask', 'inputnode.fmap_mask')]),
+        (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
+        # (inputnode, sbrefmrg, [('sbref', 'in_files')]),
+        # (sbrefmrg, unwarp, [('out_file', 'inputnode.in_file'),
+        #                     ('out_mats', 'inputnode.hmc_movpar')]),
+        # (sbrefmrg, inu, [('out_avg', 'input_image')]),
+        # (inu, bet, [('output_image', 'in_file')]),
+        # (bet, unwarp, [('mask_file', 'inputnode.in_mask')]),
         (unwarp, outputnode, [('outputnode.out_file', 'sbref_unwarped')])
     ])
 

@@ -13,8 +13,6 @@ def is_fmap_type(fmap_type, filename):
 def sort_fmaps(fieldmaps): # i.e. filenames
     from fmriprep.utils import misc
     from fmriprep.workflows.fieldmap.base import is_fmap_type
-    LOGGER.info('fieldmaps={}', ', '.join(fieldmaps))
-
     fmaps = {}
     for fmap_type in misc.fieldmap_suffixes.keys():
         fmaps[fmap_type] = []
