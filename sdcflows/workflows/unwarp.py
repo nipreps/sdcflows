@@ -84,9 +84,10 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
 
-    to_coeff = pe.Node(niu.Function(
-        input_names=['in_file', 'in_ref'], output_names=['out_file'],
-        function=_gen_coeff), name='GenCoeffFile')
+    topup_adapt = pe.Node(niu.Function(
+        input_names=['in_file', 'in_ref', 'in_movpar'],
+        output_names=['out_fieldcoef', 'out_movpar'],
+        function=_gen_coeff), name='TopUpAdapt')
 
     # Use the least-squares method to correct the dropout of the SBRef images
     unwarp = pe.Node(fsl.ApplyTOPUP(method=method), name='TopUpApply')
@@ -104,19 +105,20 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
         (align, fmap2ref, [('ref_vol', 'fixed_image'),
                            ('ref_mask', 'fixed_image_mask')]),
         (align, applyxfm, [('ref_vol', 'reference_image')]),
-        (align, to_coeff, [('ref_vol', 'in_ref')]),
+        (align, topup_adapt, [('ref_vol', 'in_ref'),
+                              ('out_movpar', 'in_movpar')]),
 
         (meta, encfile, [('out_dict', 'in_dict')]),
-        (align, unwarp, [('out_movpar', 'in_topup_movpar')]),
 
         (fmap2ref, applyxfm, [
             ('forward_transforms', 'transforms'),
             ('forward_invert_flags', 'invert_transform_flags')]),
         (align, fslsplit, [('out_file', 'in_file')]),
-        (applyxfm, to_coeff, [('output_image', 'in_file')]),
+        (applyxfm, topup_adapt, [('output_image', 'in_file')]),
         (fslsplit, unwarp, [('out_files', 'in_files'),
                             (('out_files', gen_list), 'in_index')]),
-        (to_coeff, unwarp, [('out_file', 'in_topup_fieldcoef')]),
+        (topup_adapt, unwarp, [('out_fieldcoef', 'in_topup_fieldcoef'),
+                               ('out_movpar', 'in_topup_movpar')]),
         (encfile, unwarp, [('parameters_file', 'encoding_file')]),
         (unwarp, outputnode, [('out_corrected', 'out_file')])
     ])
@@ -150,7 +152,9 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     return workflow
 
 def _get_metadata(in_file):
+    import nibabel as nb
     from fmriprep.interfaces import ReadSidecarJSON
+    AXIS_MAP = {'i': 0, 'j': 1, 'k': 2}
 
     r = ReadSidecarJSON(
         fields=['TotalReadoutTime', 'PhaseEncodingDirection'],
@@ -169,9 +173,13 @@ def _get_metadata(in_file):
     )
     try:
         out_dict = r.run().outputs.out_dict
-        return out_dict
     except KeyError:
         pass
+
+    pe = AXIS_MAP[out_dict['PhaseEncodingDirection'][0]]
+    pe_size = nb.load(in_file).get_data().shape[pe]
+
+    out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
 
     return out_dict
 
@@ -223,21 +231,21 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
 
 
 
-def _gen_coeff(in_file, in_ref, out_file=None):
+def _gen_coeff(in_file, in_ref, in_movpar):
     """Convert to a valid fieldcoeff"""
+    from shutil import copy
     import numpy as np
     import nibabel as nb
     from nipype.interfaces import fsl
 
-    def _gen_fname(in_file, suffix='process'):
+    def _get_fname(in_file):
         import os.path as op
         fname, fext = op.splitext(op.basename(in_file))
         if fext == '.gz':
             fname, _ = op.splitext(fname)
-        return op.abspath('./{}_{}'.format(fname, suffix))
+        return op.abspath(fname)
 
-    if out_file is None:
-        out_file = _gen_fname(in_file, 'fieldcoeff.nii.gz')
+    out_topup = _get_fname(in_file)
 
     # 1. Add one dimension (4D image) of 3D coordinates
     im0 = nb.load(in_file)
@@ -246,7 +254,7 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     spacings = im0.get_header().get_zooms()[:3]
     im1 = nb.Nifti1Image(data, im0.get_affine(), im0.get_header())
     im4d = nb.concat_images([im0, im1, im1])
-    im4d_fname = _gen_fname(in_file, 'field4D.nii.gz')
+    im4d_fname = '{}_{}'.format(out_topup, 'field4D.nii.gz')
     im4d.to_filename(im4d_fname)
 
     # 2. Warputils to compute bspline coefficients
@@ -272,7 +280,13 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     hdr.set_sform(sform, code='scanner')
     hdr['qform_code'] = 1
 
-    nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_file)
-    return out_file
+    mpar = np.loadtxt(in_movpar)
+    out_movpar = '{}_movpar.txt'.format(out_topup)
+    np.savetxt(out_movpar, np.zeros_like(mpar))
+    #copy(in_movpar, out_movpar)
+    out_fieldcoef = '{}_fieldcoef.nii.gz'.format(out_topup)
+    nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_fieldcoef)
+
+    return out_fieldcoef, out_movpar
 
 

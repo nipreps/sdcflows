@@ -30,14 +30,12 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped']), name='outputnode')
 
-    # Merge input sbrefs
-    # sbrefmrg = pe.Node(IntraModalMerge(), name='SBRefFuse')
-    # inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    # bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
-
     # Unwarping
     unwarp = sdc_unwarp()
     unwarp.inputs.inputnode.hmc_movpar = ''
+
+    mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRef_mean')
+
 
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
@@ -50,7 +48,8 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
         # (sbrefmrg, inu, [('out_avg', 'input_image')]),
         # (inu, bet, [('output_image', 'in_file')]),
         # (bet, unwarp, [('mask_file', 'inputnode.in_mask')]),
-        (unwarp, outputnode, [('outputnode.out_file', 'sbref_unwarped')])
+        (unwarp, mean, [('outputnode.out_file', 'in_file')]),
+        (mean, outputnode, [('out_file', 'sbref_unwarped')])
     ])
 
     # Plot result
@@ -63,7 +62,7 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                        name="datasink", parameterization=False)
 
     workflow.connect([
-        (unwarp, png_sbref_corr, [('outputnode.out_file', 'overlay_file')]),
+        (mean, png_sbref_corr, [('out_file', 'overlay_file')]),
         (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')]),
         (png_sbref_corr, datasink, [('out_file', '@corrected_SBRef')])
     ])
