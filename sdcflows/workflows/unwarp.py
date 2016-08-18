@@ -15,7 +15,6 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
@@ -156,29 +155,35 @@ def _get_metadata(in_file):
     from fmriprep.interfaces import ReadSidecarJSON
     AXIS_MAP = {'i': 0, 'j': 1, 'k': 2}
 
-    r = ReadSidecarJSON(
+    info = ReadSidecarJSON(
         fields=['TotalReadoutTime', 'PhaseEncodingDirection'],
         in_file=in_file
     )
 
     try:
-        out_dict = r.run().outputs.out_dict
+        out_dict = info.run().outputs.out_dict
         return out_dict
     except KeyError:
         pass
 
-    r = ReadSidecarJSON(
+    info = ReadSidecarJSON(
         fields=['EffectiveEchoSpacing', 'PhaseEncodingDirection'],
         in_file=in_file
     )
     try:
-        out_dict = r.run().outputs.out_dict
+        out_dict = info.run().outputs.out_dict
     except KeyError:
         pass
 
-    pe = AXIS_MAP[out_dict['PhaseEncodingDirection'][0]]
-    pe_size = nb.load(in_file).get_data().shape[pe]
+    pe_axis = AXIS_MAP[out_dict['PhaseEncodingDirection'][0]]
+    pe_size = nb.load(in_file).get_data().shape[pe_axis]
 
+    # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
+    #     processing/459-epi-distortion-correction-echo-spacing.html
+    # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
+    # Particularly "the final column is the time (in seconds) between the readout of the
+    # centre of the first echo and the centre of the last echo (equal to dwell-time
+    # multiplied by # of phase-encode steps minus one)"
     out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
 
     return out_dict
