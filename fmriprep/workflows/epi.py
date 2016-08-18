@@ -27,26 +27,21 @@ from fmriprep.workflows.sbref import _extract_wm
 
 
 # pylint: disable=R0914
-def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, settings=None):
+def epi_hmc(name='EPI_HMC', settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
     """
     workflow = pe.Workflow(name=name)
-
-    infields = ['epi', 'epi_ras', 't1_brain']
-    if sbref_present:
-        infields += ['sbref_brain']
-
-    inputnode = pe.Node(niu.IdentityInterface(fields=infields),
-                        name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean']), name='outputnode')
 
     bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
 
     # Head motion correction (hmc)
-    hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True), name='EPI_hmc')
+    hmc = pe.Node(fsl.MCFLIRT(
+        save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
 
     pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
@@ -58,12 +53,11 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_hmc_mean')
     bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
-        (inputnode, bet, [('epi_ras', 'in_file')]),
+        (inputnode, pick_1st, [('epi', 'in_file')]),
+        (inputnode, bet, [('epi', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
@@ -73,21 +67,11 @@ def epi_hmc(name='EPIHeadMotionCorrectionWorkflow', sbref_present=False, setting
         (hmc, avscale, [('mat_file', 'mat_file')]),
         (avscale, avs_format, [('translations', 'translations'),
                                ('rot_angles', 'rot_angles')]),
-        (hmc, epi_mean, [('out_file', 'in_file')]),
-        (epi_mean, bet_hmc, [('out_file', 'in_file')]),
-        (epi_mean, avscale, [('out_file', 'ref_file')]),
+        (hmc, bet_hmc, [('mean_img', 'in_file')]),
+        (hmc, avscale, [('mean_img', 'ref_file')]),
         (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
                                ('out_file', 'epi_mean')])
     ])
-
-    # If we have an SBRef, it should be the reference,
-    # align to mean volume otherwise
-    if sbref_present:
-        workflow.connect([
-            (inputnode, hmc, [('sbref_brain', 'ref_file')]),
-        ])
-    else:
-        hmc.inputs.mean_vol = True
 
     # Write corrected file in the designated output dir
     ds_hmc = pe.Node(
@@ -142,8 +126,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
         name='Flirt_BBR_init')
     flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name='Flirt_BBR')
-    flt_bbr.inputs.schedule = settings['fsl'].get(
-        'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
+    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
+                                      'etc/flirtsch/bbr.sch')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='Flirt_BBR_Inv')
@@ -213,6 +197,36 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (png_sbref_t1, ds_png, [('out_file', 'in_file')])
     ])
 
+    return workflow
+
+def epi_sbref_registration(name='EPI_SBrefRegistration'):
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi_brain', 'sbref_brain']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi_registered', 'out_mat']), name='outputnode')
+
+    mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
+    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+    epi_sbref = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
+                        name='EPI2SBRefRegistration')
+
+    epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
+    epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
+    epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
+    workflow.connect([
+        (inputnode, epi_split, [('epi_brain', 'in_file')]),
+        (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
+        (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
+        (inputnode, mean, [('epi_brain', 'in_file')]),
+        (mean, inu, [('out_file', 'input_image')]),
+        (inu, epi_sbref, [('output_image', 'in_file')]),
+        (epi_split, epi_xfm, [('out_files', 'in_file')]),
+        (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
+        (epi_xfm, epi_merge, [('out_file', 'in_files')]),
+        (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
+        (epi_merge, outputnode, [('merged_file', 'epi_registered')])
+    ])
     return workflow
 
 def epi_mni_transformation(name='EPIMNITransformation', settings=None):

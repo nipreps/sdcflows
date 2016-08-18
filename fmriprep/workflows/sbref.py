@@ -24,7 +24,7 @@ from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge, \
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
-def sbref_workflow(name='SBrefPreprocessing', settings=None):
+def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
 
     workflow = pe.Workflow(name=name)
@@ -90,9 +90,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     wm_mask = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
                       function=_extract_wm), name='WM_mask')
 
+    # BBR works better with initialization
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
+        name='Flirt_BBR_init')
     flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
-    flt_bbr.inputs.schedule = settings['fsl'].get(
-        'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
+    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
@@ -100,8 +102,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     workflow.connect([
         (inputnode, reorient, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (reorient, flt_bbr_init, [('out_file', 'in_file')]),
         (reorient, flt_bbr, [('out_file', 'in_file')]),
+        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
