@@ -280,6 +280,8 @@ def _gen_coeff(in_file, in_ref, in_movpar):
     hdr.set_sform(sform, code='scanner')
     hdr['qform_code'] = 1
 
+    # For some reason, MCFLIRT's parameters
+    # are not compatible, fill with zeroes for now
     mpar = np.loadtxt(in_movpar)
     out_movpar = '{}_movpar.txt'.format(out_topup)
     np.savetxt(out_movpar, np.zeros_like(mpar))

@@ -18,7 +18,8 @@ from nipype.interfaces import fsl
 from nipype.interfaces import ants
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
+from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge, \
+    DerivativesDataSink
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
@@ -34,7 +35,9 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
     unwarp = sdc_unwarp()
     unwarp.inputs.inputnode.hmc_movpar = ''
 
-    mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRef_mean')
+    mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
+    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
+    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
 
 
     workflow.connect([
@@ -42,29 +45,30 @@ def sbref_workflow(name='SBrefPreprocessing', settings=None):
                              ('fmap_ref', 'inputnode.fmap_ref'),
                              ('fmap_mask', 'inputnode.fmap_mask')]),
         (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
-        # (inputnode, sbrefmrg, [('sbref', 'in_files')]),
-        # (sbrefmrg, unwarp, [('out_file', 'inputnode.in_file'),
-        #                     ('out_mats', 'inputnode.hmc_movpar')]),
-        # (sbrefmrg, inu, [('out_avg', 'input_image')]),
-        # (inu, bet, [('output_image', 'in_file')]),
-        # (bet, unwarp, [('mask_file', 'inputnode.in_mask')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
-        (mean, outputnode, [('out_file', 'sbref_unwarped')])
+        (mean, inu, [('out_file', 'input_image')]),
+        (inu, bet, [('output_image', 'in_file')]),
+        (bet, outputnode, [('out_file', 'sbref_unwarped')])
     ])
 
     # Plot result
+    def _first(inlist):
+        return sorted(inlist)[0]
+
     png_sbref_corr= pe.Node(niu.Function(
         input_names=["in_file", "overlay_file", "out_file"], output_names=["out_file"],
         function=stripped_brain_overlay), name="PNG_sbref_corr")
     png_sbref_corr.inputs.out_file = "corrected_SBRef.png"
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
-                       name="datasink", parameterization=False)
+    datasink = pe.Node(DerivativesDataSink(
+        base_directory=settings['output_dir'], suffix='sdc'),
+        name='datasink')
 
     workflow.connect([
+        (inputnode, datasink, [(('sbref', _first), 'source_file')]),
+        (bet, datasink, [('out_file', 'in_file')]),
         (mean, png_sbref_corr, [('out_file', 'overlay_file')]),
-        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')]),
-        (png_sbref_corr, datasink, [('out_file', '@corrected_SBRef')])
+        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')])
     ])
     return workflow
 

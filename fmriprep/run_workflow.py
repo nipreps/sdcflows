@@ -91,6 +91,10 @@ def main():
         if not op.exists(settings['output_dir']):
             os.makedirs(settings['output_dir'])
 
+        derivatives = op.join(settings['output_dir'], 'derivatives')
+        if not op.exists(derivatives):
+            os.makedirs(derivatives)
+
         if not op.exists(settings['work_dir']):
             os.makedirs(settings['work_dir'])
 
