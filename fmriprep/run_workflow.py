@@ -35,7 +35,7 @@ def main():
 
     g_input = parser.add_argument_group('Inputs')
     g_input.add_argument('-B', '--bids-root', action='store', default=os.getcwd())
-    g_input.add_argument('-S', '--subject-id', action='store', nargs='+')
+    g_input.add_argument('-S', '--subject-id', '--participant_label', action='store', nargs='+')
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
@@ -124,7 +124,8 @@ def main():
 
     # Determine subjects to be processed
     subject_list = opts.subject_id
-    if not subject_list or subject_list is None:
+
+    if not subject_list or len(subject_list) == 0:
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
             op.join(settings['bids_root'], 'sub-*'))]
 
