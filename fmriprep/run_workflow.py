@@ -34,8 +34,11 @@ def main():
                             formatter_class=RawTextHelpFormatter)
 
     g_input = parser.add_argument_group('Inputs')
-    g_input.add_argument('-B', '--bids-root', action='store', default=os.getcwd())
+    # Arguments as specified by BIDS-Apps
+    g_input.add_argument('bids_dir', action='store', default=os.getcwd())
     g_input.add_argument('-S', '--subject-id', '--participant_label', action='store', nargs='+')
+
+    # Additional arguments
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
@@ -71,7 +74,7 @@ def main():
                         opts.work_dir + " and " + opts.output_dir)
 
     settings = {
-        'bids_root': op.abspath(opts.bids_root),
+        'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
         'debug': opts.debug,
