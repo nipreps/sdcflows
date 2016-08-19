@@ -39,9 +39,11 @@ def main():
     g_input.add_argument('bids_dir', action='store', default=os.getcwd())
     g_input.add_argument('output_dir', action='store',
                          default=op.join(os.getcwd(), 'out'))
+    g_input.add_argument('analysis_level', choices=['participant'])
 
     # optional arguments
-    g_input.add_argument('-S', '--subject-id', '--participant_label', action='store', nargs='+')
+    g_input.add_argument('-S', '--subject-id', '--participant_label',
+                         action='store', nargs='+')
 
     # fmriprep-specific arguments
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
