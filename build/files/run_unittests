@@ -1,3 +1,2 @@
 #!/bin/bash
-source activate crnenv
 python -m unittest discover test
