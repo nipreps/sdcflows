@@ -15,12 +15,11 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
 
-def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
+def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     """
     This workflow takes an estimated fieldmap and a target image and applies TOPUP,
     an :abbr:`SDC (susceptibility-derived distortion correction)` method in FSL to
@@ -34,7 +33,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
       inputnode.fmap_ref - the fieldmap reference (generally, a *magnitude* image or the
                            resulting SE image)
       inputnode.fmap_mask - a brain mask in fieldmap-space
-      inputnode.fieldmap - a fieldmap in Hz
+      inputnode.fmap - a fieldmap in Hz
       inputnode.hmc_movpar - the head motion parameters (iff inputnode.in_file is only
                              one 4D file)
 
@@ -47,21 +46,22 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_file', 'in_mask', 'fmap_ref', 'fmap_mask', 'fieldmap',
+        fields=['in_file', 'fmap_ref', 'fmap_mask', 'fmap',
                 'hmc_movpar']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']), name='outputnode')
 
     # Compute movpar file iff we have several images with different
     # PE directions.
     align = pe.Node(niu.Function(
-        input_names=['in_files', 'in_movpar', 'in_ref'],
-        output_names=['out_file', 'out_movpar', 'method', 'ref_vol'],
+        input_names=['in_files', 'in_movpar'],
+        output_names=['out_file', 'ref_vol', 'ref_mask', 'out_movpar'],
         function=_multiple_pe_hmc), name='AlignMultiplePE')
     align.inputs.in_ref = ref_vol
 
     # Read metadata
-    meta = pe.MapNode(ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
-                      iterfield=['in_file'], name='metadata')
+    meta = pe.MapNode(niu.Function(
+        input_names=['in_file'], output_names=['out_dict'], function=_get_metadata),
+        iterfield=['in_file'], name='metadata')
 
     encfile = pe.Node(interface=niu.Function(
         input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
@@ -83,56 +83,41 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
 
-    to_coeff = pe.Node(niu.Function(
-        input_names=['in_file', 'in_ref'], output_names=['out_file'],
-        function=_gen_coeff), name='GenCoeffFile')
+    topup_adapt = pe.Node(niu.Function(
+        input_names=['in_file', 'in_ref', 'in_movpar'],
+        output_names=['out_fieldcoef', 'out_movpar'],
+        function=_gen_coeff), name='TopUpAdapt')
 
     # Use the least-squares method to correct the dropout of the SBRef images
-    unwarp = pe.Node(fsl.ApplyTOPUP(), name='TopUpApply')
-
-
-    if ref_vol is None:
-        getref = pe.Node(fsl.MeanImage(dimension='T'), name='ImageAverage')
-
-        workflow.connect([
-            (align, getref, [('out_file', 'in_file')]),
-            (getref, fmap2ref, [('out_file', 'fixed_image')]),
-            (getref, applyxfm, [('out_file', 'reference_image')]),
-            (getref, to_coeff, [('out_file', 'in_ref')]),
-        ])
-    else:
-        getref = pe.Node(niu.Select(), name='PickFirst')
-        workflow.connect([
-            (fslsplit, getref, [('out_files', 'inlist')]),
-            (align, getref, [('ref_vol', 'index')]),
-            (getref, fmap2ref, [('out', 'fixed_image')]),
-            (getref, applyxfm, [('out', 'reference_image')]),
-            (getref, to_coeff, [('out', 'in_ref')]),
-        ])
+    unwarp = pe.Node(fsl.ApplyTOPUP(method=method), name='TopUpApply')
 
 
     workflow.connect([
         (inputnode, meta, [('in_file', 'in_file')]),
         (inputnode, align, [('in_file', 'in_files'),
                             ('hmc_movpar', 'in_movpar')]),
-        (inputnode, applyxfm, [('fieldmap', 'input_image')]),
+        (inputnode, applyxfm, [('fmap', 'input_image')]),
         (inputnode, encfile, [('in_file', 'input_images')]),
+        (inputnode, fmap2ref, [('fmap_ref', 'moving_image'),
+                               ('fmap_mask', 'moving_image_mask')]),
+
+        (align, fmap2ref, [('ref_vol', 'fixed_image'),
+                           ('ref_mask', 'fixed_image_mask')]),
+        (align, applyxfm, [('ref_vol', 'reference_image')]),
+        (align, topup_adapt, [('ref_vol', 'in_ref'),
+                              ('out_movpar', 'in_movpar')]),
+
         (meta, encfile, [('out_dict', 'in_dict')]),
 
-        (align, unwarp, [('out_movpar', 'in_topup_movpar'),
-                         ('method', 'method')]),
-
-        (inputnode, fmap2ref, [('in_mask', 'fixed_image_mask'),
-                               ('fmap_ref', 'moving_image'),
-                               ('fmap_mask', 'moving_image_mask')]),
         (fmap2ref, applyxfm, [
             ('forward_transforms', 'transforms'),
             ('forward_invert_flags', 'invert_transform_flags')]),
         (align, fslsplit, [('out_file', 'in_file')]),
-        (applyxfm, to_coeff, [('output_image', 'in_file')]),
+        (applyxfm, topup_adapt, [('output_image', 'in_file')]),
         (fslsplit, unwarp, [('out_files', 'in_files'),
                             (('out_files', gen_list), 'in_index')]),
-        (to_coeff, unwarp, [('out_file', 'in_topup_fieldcoef')]),
+        (topup_adapt, unwarp, [('out_fieldcoef', 'in_topup_fieldcoef'),
+                               ('out_movpar', 'in_topup_movpar')]),
         (encfile, unwarp, [('parameters_file', 'encoding_file')]),
         (unwarp, outputnode, [('out_corrected', 'out_file')])
     ])
@@ -165,8 +150,46 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None):
 
     return workflow
 
+def _get_metadata(in_file):
+    import nibabel as nb
+    from fmriprep.interfaces import ReadSidecarJSON
+    AXIS_MAP = {'i': 0, 'j': 1, 'k': 2}
 
-def _multiple_pe_hmc(in_files, reference, in_movpar, in_ref):
+    info = ReadSidecarJSON(
+        fields=['TotalReadoutTime', 'PhaseEncodingDirection'],
+        in_file=in_file
+    )
+
+    try:
+        out_dict = info.run().outputs.out_dict
+        return out_dict
+    except KeyError:
+        pass
+
+    info = ReadSidecarJSON(
+        fields=['EffectiveEchoSpacing', 'PhaseEncodingDirection'],
+        in_file=in_file
+    )
+    try:
+        out_dict = info.run().outputs.out_dict
+    except KeyError:
+        pass
+
+    pe_axis = AXIS_MAP[out_dict['PhaseEncodingDirection'][0]]
+    pe_size = nb.load(in_file).get_data().shape[pe_axis]
+
+    # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
+    #     processing/459-epi-distortion-correction-echo-spacing.html
+    # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
+    # Particularly "the final column is the time (in seconds) between the readout of the
+    # centre of the first echo and the centre of the last echo (equal to dwell-time
+    # multiplied by # of phase-encode steps minus one)"
+    out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
+
+    return out_dict
+
+
+def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
     """
     This function interprets that we are dealing with a
     multiple PE (phase encoding) input if it finds several
@@ -178,54 +201,55 @@ def _multiple_pe_hmc(in_files, reference, in_movpar, in_ref):
 
     It just forwards the two inputs otherwise.
     """
-    if len(in_files) == 1:
-        return in_files[0], in_movpar, 'jac', in_ref
-    else:
-        import os
-        from nipype.interfaces import fsl
-        from fmripep.interfaces import FormatHMCParam
+    import os
+    from nipype.interfaces import fsl
+    from nipype.interfaces import ants
 
+    if len(in_files) == 1:
+        out_file = in_files[0]
+        out_movpar = in_movpar
+    else:
         if in_ref is None:
             in_ref = 0
 
         # Head motion correction
-        fslmerge = fsl.Merge(dimension='t')
-        fslmerge.inputs.in_file = in_files
-        hmc = fsl.MCFLIRT(cost='normcorr', ref_vol=in_ref, save_mats=True)
+        fslmerge = fsl.Merge(dimension='t', in_files=in_files)
+        hmc = fsl.MCFLIRT(ref_vol=in_ref, save_mats=True, save_plots=True)
         hmc.inputs.in_file = fslmerge.run().outputs.merged_file
         hmc_res = hmc.run()
+        out_file = hmc_res.outputs.out_file
+        out_movpar = hmc_res.outputs.par_file
 
-        translations = []
-        rot_angles = []
-        for mat_file in hmc_res.outputs.mat_file:
-            avscale = fsl.utils.AvScale(
-                all_param=True, mat_file=mat_file, ref_file=in_files[0])
-            avres = avscale.run()
-            translations.append(avres.outputs.translations)
-            rot_angles.append(avres.outputs.rot_angles)
+    mean = fsl.MeanImage(
+        dimension='T', in_file=out_file)
+    inu = ants.N4BiasFieldCorrection(
+        dimension=3, input_image=mean.run().outputs.out_file)
+    inu_res = inu.run()
+    out_ref = inu_res.outputs.output_image
+    bet = fsl.BET(
+        frac=0.6, mask=True, in_file=out_ref)
+    out_mask = bet.run().outputs.mask_file
 
-        avs_format = FormatHMCParam(translations=translations,
-                                    rot_angles=rot_angles,
-                                    fmt='movpar_file')
-        return (hmc_res.outputs.out_file,
-                avs_format.run().outputs.out_file,
-                'lsr', in_ref)
+    return (out_file, out_ref, out_mask, out_movpar)
 
-def _gen_coeff(in_file, in_ref, out_file=None):
+
+
+
+def _gen_coeff(in_file, in_ref, in_movpar):
     """Convert to a valid fieldcoeff"""
+    from shutil import copy
     import numpy as np
     import nibabel as nb
     from nipype.interfaces import fsl
 
-    def _gen_fname(in_file, suffix='process'):
+    def _get_fname(in_file):
         import os.path as op
         fname, fext = op.splitext(op.basename(in_file))
         if fext == '.gz':
             fname, _ = op.splitext(fname)
-        return op.abspath('./{}_{}'.format(fname, suffix))
+        return op.abspath(fname)
 
-    if out_file is None:
-        out_file = _gen_fname(in_file, 'fieldcoeff.nii.gz')
+    out_topup = _get_fname(in_file)
 
     # 1. Add one dimension (4D image) of 3D coordinates
     im0 = nb.load(in_file)
@@ -234,7 +258,7 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     spacings = im0.get_header().get_zooms()[:3]
     im1 = nb.Nifti1Image(data, im0.get_affine(), im0.get_header())
     im4d = nb.concat_images([im0, im1, im1])
-    im4d_fname = _gen_fname(in_file, 'field4D.nii.gz')
+    im4d_fname = '{}_{}'.format(out_topup, 'field4D.nii.gz')
     im4d.to_filename(im4d_fname)
 
     # 2. Warputils to compute bspline coefficients
@@ -260,7 +284,15 @@ def _gen_coeff(in_file, in_ref, out_file=None):
     hdr.set_sform(sform, code='scanner')
     hdr['qform_code'] = 1
 
-    nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_file)
-    return out_file
+    # For some reason, MCFLIRT's parameters
+    # are not compatible, fill with zeroes for now
+    mpar = np.loadtxt(in_movpar)
+    out_movpar = '{}_movpar.txt'.format(out_topup)
+    np.savetxt(out_movpar, np.zeros_like(mpar))
+    #copy(in_movpar, out_movpar)
+    out_fieldcoef = '{}_fieldcoef.nii.gz'.format(out_topup)
+    nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_fieldcoef)
+
+    return out_fieldcoef, out_movpar
 
 

@@ -15,52 +15,60 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
+from nipype.interfaces import freesurfer as fs
+from nipype.interfaces import ants
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.workflows.fieldmap import create_encoding_file, mcflirt2topup, sdc_unwarp
+from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge, \
+    DerivativesDataSink
+from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
-def sbref_workflow(name='SBrefPreprocessing', settings=None):
+def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
-    if settings is None:
-        settings = {}
 
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['sbref', 'fmap_ref_brain', 'fmap_mask',
-                        'fieldmap', 'hmc_mats']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['sbref', 'fmap', 'fmap_ref', 'fmap_mask']),
+                        name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped']), name='outputnode')
 
-    gen_movpar = pe.Node(niu.Function(
-        input_names=['in_files', 'in_mats'], output_names=['out_movpar'],
-        function=mcflirt2topup), name='MotionParameters')
-
+    # Unwarping
     unwarp = sdc_unwarp()
+    unwarp.inputs.inputnode.hmc_movpar = ''
+
+    mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
+    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
+    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
 
     workflow.connect([
-        (inputnode, unwarp, [('sbref', 'inputnode.in_file'),
-                             ('fmap_ref_brain', 'inputnode.fmap_ref'),
-                             ('fmap_mask', 'inputnode.fmap_mask'),
-                             ('fieldmap', 'inputnode.fieldmap')]),
-        (inputnode, gen_movpar, [('sbref', 'in_files'),
-                                 ('hmc_mats', 'in_mats')]),
-        (unwarp, outputnode, [('outputnode.out_file', 'sbref_unwarped')])
+        (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
+                             ('fmap_ref', 'inputnode.fmap_ref'),
+                             ('fmap_mask', 'inputnode.fmap_mask')]),
+        (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
+        (unwarp, mean, [('outputnode.out_file', 'in_file')]),
+        (mean, inu, [('out_file', 'input_image')]),
+        (inu, bet, [('output_image', 'in_file')]),
+        (bet, outputnode, [('out_file', 'sbref_unwarped')])
     ])
 
     # Plot result
+    def _first(inlist):
+        return sorted(inlist)[0]
+
     png_sbref_corr= pe.Node(niu.Function(
         input_names=["in_file", "overlay_file", "out_file"], output_names=["out_file"],
         function=stripped_brain_overlay), name="PNG_sbref_corr")
     png_sbref_corr.inputs.out_file = "corrected_SBRef.png"
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], "images")),
-                       name="datasink", parameterization=False)
+    datasink = pe.Node(DerivativesDataSink(
+        base_directory=settings['output_dir'], suffix='sdc'),
+        name='datasink')
 
     workflow.connect([
-        (unwarp, png_sbref_corr, [('outputnode.out_file', 'overlay_file')]),
-        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')]),
-        (png_sbref_corr, datasink, [('out_file', '@corrected_SBRef')])
+        (inputnode, datasink, [(('sbref', _first), 'source_file')]),
+        (bet, datasink, [('out_file', 'in_file')]),
+        (mean, png_sbref_corr, [('out_file', 'overlay_file')]),
+        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')])
     ])
     return workflow
 
@@ -75,21 +83,30 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     outputnode = pe.Node(niu.IdentityInterface(fields=['mat_sbr_to_t1', 'mat_t1_to_sbr']),
                          name='outputnode')
 
+    # Make sure sbref is in RAS coordinates
+    reorient = pe.Node(fs.MRIConvert(out_type='niigz', out_orientation='RAS'), name='SBRefReorient')
+
     # Extract wm mask from segmentation
     wm_mask = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
                       function=_extract_wm), name='WM_mask')
 
+    # BBR works better with initialization
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
+        name='Flirt_BBR_init')
     flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
-    flt_bbr.inputs.schedule = settings['fsl'].get(
-        'flirt_bbr', op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch'))
+    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
     workflow.connect([
+        (inputnode, reorient, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr, [('sbref_brain', 'in_file'),
-                              ('t1_brain', 'reference')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (reorient, flt_bbr_init, [('out_file', 'in_file')]),
+        (reorient, flt_bbr, [('out_file', 'in_file')]),
+        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
