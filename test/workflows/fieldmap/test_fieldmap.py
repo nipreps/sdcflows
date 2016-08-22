@@ -1,5 +1,5 @@
 import json
-from fmriprep.workflows.fieldmap import (se_pair_workflow,
+from fmriprep.workflows.fieldmap import (se_fmap_workflow,
                                          fieldmap_to_phasediff)
 import re
 import mock
@@ -27,7 +27,7 @@ class TestFieldMap(TestWorkflow):
                                             expected_outputs,
                                             result)
 
-    def test_se_pair_workflow(self):
+    def test_se_fmap_workflow(self):
         # SET UP INPUTS
         mock_settings = {
             'work_dir': '.'
@@ -45,10 +45,10 @@ class TestFieldMap(TestWorkflow):
         expected_inputs = ['inputnode.fieldmaps']
 
         # RUN
-        result = se_pair_workflow.se_pair_workflow(settings=mock_settings)
+        result = se_fmap_workflow.se_fmap_workflow(settings=mock_settings)
 
         # ASSERT
-        self.assertIsAlmostExpectedWorkflow(se_pair_workflow.WORKFLOW_NAME,
+        self.assertIsAlmostExpectedWorkflow(se_fmap_workflow.WORKFLOW_NAME,
                                             expected_interfaces,
                                             expected_inputs,
                                             expected_outputs,
@@ -69,7 +69,7 @@ class TestFieldMap(TestWorkflow):
                               self.SOME_INT)
 
         # RUN
-        out_file = se_pair_workflow.create_encoding_file(fieldmaps, in_dict)
+        out_file = se_fmap_workflow.create_encoding_file(fieldmaps, in_dict)
 
         # ASSERT
         # the output file is called parameters.txt
