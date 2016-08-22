@@ -1,6 +1,9 @@
 from future.utils import raise_from
+from pprint import pprint
 
-from nipype.pipeline import Workflow
+from nipype import logging
+
+LOGGER = logging.getLogger('workflow')
 
 def is_fmap_type(fmap_type, filename):
     from fmriprep.utils import misc
@@ -10,7 +13,6 @@ def is_fmap_type(fmap_type, filename):
 def sort_fmaps(fieldmaps): # i.e. filenames
     from fmriprep.utils import misc
     from fmriprep.workflows.fieldmap.base import is_fmap_type
-
     fmaps = {}
     for fmap_type in misc.fieldmap_suffixes.keys():
         fmaps[fmap_type] = []
@@ -36,6 +38,7 @@ def fieldmap_decider(subject_data, settings):
     #             'outputnode.fmap_fieldcoef': None,
     #             'outputnode.fmap_movpar': None}
 
+    pprint(subject_data)
     try:
         subject_data['fieldmaps'][0]
     except KeyError as e:
