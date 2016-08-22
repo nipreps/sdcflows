@@ -54,8 +54,8 @@ def fieldmap_decider(subject_data, settings):
             from fmriprep.workflows.fieldmap.fieldmap_to_phasediff import fieldmap_to_phasediff
             return fieldmap_to_phasediff(settings=settings)
         elif is_fmap_type('topup', filename): # 8.0.4
-            from fmriprep.workflows.fieldmap.se_pair_workflow import se_pair_workflow
-            return se_pair_workflow(settings=settings)
+            from fmriprep.workflows.fieldmap.se_fmap_workflow import se_fmap_workflow
+            return se_fmap_workflow(settings=settings)
 
     raise IOError("Unrecognized fieldmap structure")
 

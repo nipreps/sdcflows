@@ -19,7 +19,7 @@ from fmriprep.workflows.fieldmap.base import create_encoding_file
 WORKFLOW_NAME = 'Fieldmap_SEs'
 
 # pylint: disable=R0914
-def se_pair_workflow(name=WORKFLOW_NAME, settings=None):
+def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
     """
     Estimates the fieldmap using TOPUP on series of :abbr:`SE (Spin-Echo)` images
     acquired with varying :abbr:`PE (phase encoding)` direction.
