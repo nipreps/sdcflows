@@ -22,8 +22,6 @@ from multiprocessing import cpu_count
 import os
 import os.path as op
 import glob
-import pkg_resources as pkgr
-import pprint
 
 def main():
     """Entry point"""
@@ -136,7 +134,7 @@ def main():
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
             op.join(settings['bids_root'], 'sub-*'))]
 
-    logger.info("subject data is " + pprint.pformat(subject_list))
+    logger.info("subject list: {}", ', '.join(subject_list))
 
     # Build main workflow and run
     preproc_wf = fmriprep_single(subject_list, settings=settings)
