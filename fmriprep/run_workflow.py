@@ -34,8 +34,18 @@ def main():
                             formatter_class=RawTextHelpFormatter)
 
     g_input = parser.add_argument_group('Inputs')
-    g_input.add_argument('-B', '--bids-root', action='store', default=os.getcwd())
-    g_input.add_argument('-S', '--subject-id', action='store', nargs='+')
+    # Arguments as specified by BIDS-Apps
+    # required, positional arguments
+    g_input.add_argument('bids_dir', action='store', default=os.getcwd())
+    g_input.add_argument('output_dir', action='store',
+                         default=op.join(os.getcwd(), 'out'))
+    g_input.add_argument('analysis_level', choices=['participant'])
+
+    # optional arguments
+    g_input.add_argument('-S', '--subject-id', '--participant_label',
+                         action='store', nargs='+')
+
+    # fmriprep-specific arguments
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
@@ -53,12 +63,6 @@ def main():
         "--use-plugin", action='store', default=None,
         help='nipype plugin configuration file')
 
-    g_outputs = parser.add_argument_group('Outputs')
-    g_outputs.add_argument('-o', '--output-dir', action='store',
-                           default=op.join(os.getcwd(), 'out'))
-    g_outputs.add_argument('-w', '--work-dir', action='store',
-                           default=op.join(os.getcwd(), 'work'))
-
     g_input.add_argument('-v', '--version', action='version',
                          version='fmriprep v{}'.format(__version__))
 
@@ -71,13 +75,12 @@ def main():
                         opts.work_dir + " and " + opts.output_dir)
 
     settings = {
-        'bids_root': op.abspath(opts.bids_root),
+        'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
         'debug': opts.debug,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
-        'work_dir': op.abspath(opts.work_dir)
     }
 
     if opts.debug:
@@ -124,7 +127,8 @@ def main():
 
     # Determine subjects to be processed
     subject_list = opts.subject_id
-    if not subject_list or subject_list is None:
+
+    if not subject_list or len(subject_list) == 0:
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
             op.join(settings['bids_root'], 'sub-*'))]
 
