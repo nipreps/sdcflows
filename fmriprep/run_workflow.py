@@ -48,9 +48,7 @@ def main():
                          version='fmriprep v{}'.format(__version__))
 
 
-    g_input = parser.add_argument_group('Inputs')
-
-    # fmriprep-specific arguments
+    g_input = parser.add_argument_group('fMRIprep specific arguments')
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
@@ -68,9 +66,7 @@ def main():
         "--use-plugin", action='store', default=None,
         help='nipype plugin configuration file')
 
-
-
-    g_outputs.add_argument('-w', '--work-dir', action='store',
+    g_input.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
 
     opts = parser.parse_args()
