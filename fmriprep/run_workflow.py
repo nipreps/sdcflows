@@ -142,7 +142,7 @@ def main():
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
             op.join(settings['bids_root'], 'sub-*'))]
 
-    logger.info("subject list: {}", ', '.join(subject_list))
+    logger.info("subject list: %s", ', '.join(subject_list))
 
     # Build main workflow and run
     preproc_wf = fmriprep_single(subject_list, settings=settings)
