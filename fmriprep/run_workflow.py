@@ -82,6 +82,8 @@ def main():
         'work_dir': op.abspath(opts.work_dir)
     }
 
+    # set up logger
+    logger = logging.getLogger('cli')
 
     if opts.debug:
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
@@ -108,8 +110,6 @@ def main():
         if not op.exists(log_dir):
             os.makedirs(log_dir)
 
-    # set up logger
-    logger = logging.getLogger('cli')
     logger.addHandler(logging.FileHandler(op.join(log_dir,'run_workflow')))
 
     # Warn for default work/output directories
