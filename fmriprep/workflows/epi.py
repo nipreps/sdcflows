@@ -14,14 +14,12 @@ import os.path as op
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import c3
-from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
-from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink, FormatHMCParam
-from fmriprep.workflows.fieldmap import create_encoding_file
+from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
+from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
 
