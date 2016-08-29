@@ -83,6 +83,10 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
 
+    fix_movpar = pe.Node(niu.Function(
+        input_names=['in_files'], output_names=['out_movpar'],
+        function=_fix_movpar), name='FixMovPar')
+
     topup_adapt = pe.Node(niu.Function(
         input_names=['in_file', 'in_ref', 'in_movpar'],
         output_names=['out_fieldcoef', 'out_movpar'],
@@ -104,8 +108,8 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
         (align, fmap2ref, [('ref_vol', 'fixed_image'),
                            ('ref_mask', 'fixed_image_mask')]),
         (align, applyxfm, [('ref_vol', 'reference_image')]),
-        (align, topup_adapt, [('ref_vol', 'in_ref'),
-                              ('out_movpar', 'in_movpar')]),
+        (align, topup_adapt, [('ref_vol', 'in_ref')]),
+        #                      ('out_movpar', 'in_movpar')]),
 
         (meta, encfile, [('out_dict', 'in_dict')]),
 
@@ -113,6 +117,8 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
             ('forward_transforms', 'transforms'),
             ('forward_invert_flags', 'invert_transform_flags')]),
         (align, fslsplit, [('out_file', 'in_file')]),
+        (fslsplit, fix_movpar, [('out_files', 'in_files')]),
+        (fix_movpar, topup_adapt, [('out_movpar', 'in_movpar')]),
         (applyxfm, topup_adapt, [('output_image', 'in_file')]),
         (fslsplit, unwarp, [('out_files', 'in_files'),
                             (('out_files', gen_list), 'in_index')]),
@@ -202,8 +208,12 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
     It just forwards the two inputs otherwise.
     """
     import os
+    from six import string_types
     from nipype.interfaces import fsl
     from nipype.interfaces import ants
+
+    if isinstance(in_files, string_types):
+        in_files = [in_files]
 
     if len(in_files) == 1:
         out_file = in_files[0]
@@ -231,8 +241,6 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
     out_mask = bet.run().outputs.mask_file
 
     return (out_file, out_ref, out_mask, out_movpar)
-
-
 
 
 def _gen_coeff(in_file, in_ref, in_movpar):
@@ -284,15 +292,18 @@ def _gen_coeff(in_file, in_ref, in_movpar):
     hdr.set_sform(sform, code='scanner')
     hdr['qform_code'] = 1
 
-    # For some reason, MCFLIRT's parameters
-    # are not compatible, fill with zeroes for now
-    mpar = np.loadtxt(in_movpar)
     out_movpar = '{}_movpar.txt'.format(out_topup)
-    np.savetxt(out_movpar, np.zeros_like(mpar))
-    #copy(in_movpar, out_movpar)
+    copy(in_movpar, out_movpar)
+
     out_fieldcoef = '{}_fieldcoef.nii.gz'.format(out_topup)
     nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_fieldcoef)
 
     return out_fieldcoef, out_movpar
 
-
+def _fix_movpar(in_files):
+    import numpy as np
+    # For some reason, MCFLIRT's parameters
+    # are not compatible, fill with zeroes for now
+    out_movpar = '{}_movpar.txt'.format(in_files[0])
+    np.savetxt(out_movpar, np.zeros((len(in_files), 6)))
+    return out_movpar
