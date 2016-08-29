@@ -326,8 +326,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, bet, [('out_file', 'in_file')]),
-        (bet, outputnode, [('out_file', 'epi_mean')])
-        (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
+        (bet, outputnode, [('out_file', 'epi_mean')]),
+        (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')])
     ])
 
     # Plot result
