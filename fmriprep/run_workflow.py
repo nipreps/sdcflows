@@ -47,27 +47,28 @@ def main():
     parser.add_argument('-v', '--version', action='version',
                          version='fmriprep v{}'.format(__version__))
 
-
+    # Other options
     g_input = parser.add_argument_group('fMRIprep specific arguments')
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
     g_input.add_argument('--debug', action='store_true', default=False,
                          help='run debug version of workflow')
-    g_input.add_argument('--skull-strip-ants', action='store_true', default=False,
-                         help='run debug version of workflow')
-
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
-    g_input.add_argument(
-        "--write-graph", action='store_true', default=False,
-        help="Write workflow graph.")
-    g_input.add_argument(
-        "--use-plugin", action='store', default=None,
-        help='nipype plugin configuration file')
-
+    g_input.add_argument('--write-graph', action='store_true', default=False,
+                         help='Write workflow graph.')
+    g_input.add_argument('--use-plugin', action='store', default=None,
+                         help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
+
+    # ANTs options
+    g_ants = parser.add_argument_group('specific settings for ANTs registrations')
+    g_ants.add_argument('--ants-nthreads', action='store', type=int,
+                        help='number of threads that will be set in ANTs processes')
+    g_ants.add_argument('--skull-strip-ants', action='store_true', default=False,
+                         help='use ANTs-based skull-stripping')
 
     opts = parser.parse_args()
 
@@ -81,12 +82,13 @@ def main():
         'work_dir': op.abspath(opts.work_dir)
     }
 
-    # set up logger
-    logger = logging.getLogger('cli')
 
     if opts.debug:
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
+
+    if opts.ants_nthreads is not None:
+        settings['ants_threads'] = opts.ants_nthreads
 
     log_dir = op.join(settings['work_dir'], 'log')
 
@@ -106,13 +108,13 @@ def main():
         if not op.exists(log_dir):
             os.makedirs(log_dir)
 
+    # set up logger
+    logger = logging.getLogger('cli')
     logger.addHandler(logging.FileHandler(op.join(log_dir,'run_workflow')))
 
     # Warn for default work/output directories
-    if (opts.work_dir == parser.get_default('work_dir') or
-          opts.output_dir == parser.get_default('output_dir')):
-        logger.warning("work-dir and/or output-dir not specified. Using " +
-                        opts.work_dir + " and " + opts.output_dir)
+    if settings['work_dir'] == parser.get_default('work_dir'):
+        logger.info('Using default working directory (%s)', settings['work_dir'])
 
     # Set nipype config
     ncfg.update_config({
@@ -142,7 +144,7 @@ def main():
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
             op.join(settings['bids_root'], 'sub-*'))]
 
-    logger.info("subject list: %s", ', '.join(subject_list))
+    logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
     preproc_wf = fmriprep_single(subject_list, settings=settings)
@@ -151,7 +153,6 @@ def main():
 
     if opts.write_graph:
         preproc_wf.write_graph()
-
 
 
 if __name__ == '__main__':
