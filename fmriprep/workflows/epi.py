@@ -14,14 +14,12 @@ import os.path as op
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import c3
-from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
-from nipype.interfaces import freesurfer as fs
 
 from fmriprep.data import get_mni_template_ras
-from fmriprep.interfaces import ReadSidecarJSON, DerivativesDataSink, FormatHMCParam
-from fmriprep.workflows.fieldmap import create_encoding_file
+from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
+from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
 
@@ -307,49 +305,30 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     """ A workflow to correct EPI images """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi', 'sbref_brain', 'fieldmap', 'fmap_movpar',
-                'fmap_mask', 'epi_brain']), name='inputnode')
+        fields=['epi', 'fmap', 'fmap_ref', 'fmap_mask']), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_correct', 'epi_mean']),
+        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean']),
         name='outputnode'
     )
 
-    # Read metadata
-    meta = pe.MapNode(
-        ReadSidecarJSON(fields=['TotalReadoutTime', 'PhaseEncodingDirection']),
-        iterfield=['in_file'],
-        name='metadata'
-    )
 
-    encfile = pe.Node(interface=niu.Function(
-        input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
-        function=create_encoding_file), name='TopUp_encfile', updatehash=True)
+    unwarp = sdc_unwarp()
+    unwarp.inputs.inputnode.hmc_movpar = ''
 
-    fslsplit = pe.Node(fsl.Split(dimension='t'), name='EPI_split')
-
-    # Now, we cannot use the LSR method
-    unwarp_epi = pe.MapNode(fsl.ApplyTOPUP(method='jac', in_index=[1]),
-                            iterfield=['in_files'], name='TopUpApply')
-
-    # Merge back
-    fslmerge = pe.Node(fsl.Merge(dimension='t'), name='EPI_corr_merge')
-
-    # Compute mean
-    epi_mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPI_mean')
+    # Compute outputs
+    mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
+    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='EPIBET')
 
     workflow.connect([
-        (inputnode, meta, [('epi', 'in_file')]),
-        (inputnode, encfile, [('epi', 'input_images')]),
-        (inputnode, fslsplit, [('epi_brain', 'in_file')]),
-        (meta, encfile, [('out_dict', 'in_dict')]),
-        (inputnode, unwarp_epi, [('fieldmap', 'in_topup_fieldcoef'),
-                                 ('fmap_movpar', 'in_topup_movpar')]),
-        (encfile, unwarp_epi, [('parameters_file', 'encoding_file')]),
-        (fslsplit, unwarp_epi, [('out_files', 'in_files')]),
-        (unwarp_epi, fslmerge, [('out_corrected', 'in_files')]),
-        (fslmerge, epi_mean, [('merged_file', 'in_file')]),
-        (fslmerge, outputnode, [('merged_file', 'epi_correct')]),
-        (epi_mean, outputnode, [('out_file', 'epi_mean')])
+        (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
+                             ('fmap_ref', 'inputnode.fmap_ref'),
+                             ('fmap_mask', 'inputnode.fmap_mask')]),
+        (inputnode, unwarp, [('epi', 'inputnode.in_file')]),
+
+        (unwarp, mean, [('outputnode.out_file', 'in_file')]),
+        (mean, bet, [('out_file', 'in_file')]),
+        (bet, outputnode, [('out_file', 'epi_mean')]),
+        (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')])
     ])
 
     # Plot result
@@ -363,7 +342,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
             suffix='sdc'), name='DerivativesPNG')
 
     workflow.connect([
-        (epi_mean, png_epi_corr, [('out_file', 'overlay_file')]),
+        (bet, png_epi_corr, [('out_file', 'overlay_file')]),
         (inputnode, png_epi_corr, [('fmap_mask', 'in_file')]),
         (inputnode, ds_png, [('epi', 'source_file')]),
         (png_epi_corr, ds_png, [('out_file', 'in_file')])
