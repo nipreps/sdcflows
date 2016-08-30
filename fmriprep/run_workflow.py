@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-08-30 10:09:47
+# @Last Modified time: 2016-08-30 16:52:12
 """
 fMRI preprocessing workflow
 =====
@@ -28,7 +28,7 @@ def main():
     from nipype import config as ncfg
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
-    from fmriprep.workflows import fmriprep_single
+    from fmriprep.workflows import base as fwb
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -62,6 +62,9 @@ def main():
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
+    g_input.add_argument('-t', '--workflow-type', default='ds005', required=True,
+                         action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
+                         help='workflow type, a monkeypatch while it is not automatically identified')
 
     # ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
@@ -147,7 +150,8 @@ def main():
     logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
-    preproc_wf = fmriprep_single(subject_list, settings=settings)
+    workflow_generator = getattr(fwb, 'wf_{}_type'.format(opts.workflow_type))
+    preproc_wf = workflow_generator(subject_list, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
