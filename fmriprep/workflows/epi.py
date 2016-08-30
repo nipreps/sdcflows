@@ -328,8 +328,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
                              ('fmap_ref', 'inputnode.fmap_ref'),
-                             ('fmap_mask', 'inputnode.fmap_mask')]),
-        (inputnode, unwarp, [('epi', 'inputnode.in_file')]),
+                             ('fmap_mask', 'inputnode.fmap_mask'),
+                             ('epi', 'inputnode.in_file')]),
         (inputnode, ds_epi_unwarp, [('epi', 'source_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, bet, [('out_file', 'in_file')]),
@@ -337,7 +337,6 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
         (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
         (unwarp, ds_epi_unwarp, [('outputnode.out_file', 'in_file')])
     ])
-
 
     # Plot result
     png_epi_corr = pe.Node(niu.Function(
