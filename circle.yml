@@ -11,6 +11,7 @@ dependencies:
     # Download test data
     - mkdir -p ~/data ~/docker ~/scratch
     - if [[ ! -d ~/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://3552243d5be815c1b09152da6525cb8fe7b900a6.googledrive.com/host/0BxI12kyv2olZVUswazA3NkFvOXM/ds054_downsampled.tar.gz && tar xzf ds054_downsampled.tar.gz -C ~/data/; fi
+    - if [[ ! -d ~/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://3552243d5be815c1b09152da6525cb8fe7b900a6.googledrive.com/host/0BxI12kyv2olZVUswazA3NkFvOXM/ds005_downsampled.tar.gz && tar xzf ds005_downsampled.tar.gz -C ~/data/; fi
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build -t poldracklab/fmriprep:latest .
@@ -18,7 +19,9 @@ dependencies:
 test:
   override:
 #    - docker run -t -v ~/scratch/data:/root/src/preprocessing-workflow/test_data --entrypoint="/usr/bin/run_unittests" -w "/root/src/preprocessing-workflow" poldracklab/fmriprep:latest
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/data:/data -v ~/scratch:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 /scratch/out participant -w /scratch/work --debug --ants-nthreads 32 :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/data:/data -v ~/scratch:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 /scratch/out participant -w /scratch/work --debug --ants-nthreads 30 :
+        timeout: 4800
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/data:/data -v ~/scratch:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds005 /scratch/out participant -w /scratch/work --debug --ants-nthreads 30 :
         timeout: 4800
 
 general:

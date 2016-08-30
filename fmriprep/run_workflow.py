@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-08-17 15:01:57
+# @Last Modified time: 2016-08-30 10:09:47
 """
 fMRI preprocessing workflow
 =====
@@ -110,7 +110,7 @@ def main():
         if not op.exists(log_dir):
             os.makedirs(log_dir)
 
-    logger.addHandler(logging.FileHandler(op.join(log_dir,'run_workflow')))
+    logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))
 
     # Warn for default work/output directories
     if settings['work_dir'] == parser.get_default('work_dir'):
