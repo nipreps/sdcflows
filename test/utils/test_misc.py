@@ -1,11 +1,16 @@
-import fmriprep.utils.misc as misc
-import re
 import os
+import re
 import unittest
-import pkg_resources as pkgr
 from io import BytesIO
-from urllib.request import urlopen
 from zipfile import ZipFile
+
+import pkg_resources as pkgr
+from future.standard_library import install_aliases
+
+import fmriprep.utils.misc as misc
+
+install_aliases()
+from urllib.request import urlopen
 
 
 
@@ -32,9 +37,6 @@ class TestCollectBids(unittest.TestCase):
                                                        'fmriprep',
                                                        'data/bids.json'))
         }
-        print(cls.imaging_data)
-
-
 
     def test_collect_bids_data(self):
         ''' test data has at least one subject with at least one session '''
@@ -71,8 +73,4 @@ class TestCollectBids(unittest.TestCase):
         for subject in self.imaging_data:
             self.assertIn(template.format(subject=subject),
                           self.imaging_data[subject][key])
-        
-if __name__ == '__main__':
-    unittest.main() 
-    #dataset = "../../test_data/aa_conn"
-    #imaging_data = misc.collect_bids_data(dataset)
+
