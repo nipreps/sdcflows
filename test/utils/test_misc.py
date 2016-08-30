@@ -1,24 +1,39 @@
-import json
 import fmriprep.utils.misc as misc
 import re
+import os
 import unittest
-import test.constant as c
-from future.utils import raise_from
+import pkg_resources as pkgr
+from io import BytesIO
+from urllib.request import urlopen
+from zipfile import ZipFile
+
+
 
 class TestCollectBids(unittest.TestCase):
-    subject_id = 'sub-S5271NYO'
+    fake_data_location = os.path.join("test", "fake_data")
+    subject_id = "100185"
 
     @classmethod
-    def setUp(self):
-        try:
-            all_subjects = misc.collect_bids_data(c.DATASET)
-            self.imaging_data = {
-                self.subject_id: all_subjects[self.subject_id]
-            }
-        except Exception as e:
-            url = "http://googledrive.com/host/0BxI12kyv2olZbl9GN3BIOVVoelE"
-            raise_from(Exception("Couldn't find data at " + c.DATASET + 
-                                 ". Download from " + url), e)
+    def setUp(cls):
+        if not os.path.exists(cls.fake_data_location):
+            print("Downloading test data")
+            url = "http://github.com/chrisfilo/BIDS-examples-1/archive/enh/ds054.zip"
+            with urlopen(url) as zipresp:
+                with ZipFile(BytesIO(zipresp.read())) as zfile:
+                    zfile.extractall(cls.fake_data_location)
+
+        cls.imaging_data = {
+            cls.subject_id: misc.collect_bids_data(os.path.join(cls.fake_data_location,
+                                                                "BIDS-examples-1-enh-ds054",
+                                                               "ds054"),
+                                                   cls.subject_id,
+                                                   spec=pkgr.resource_filename(
+                                                       'fmriprep',
+                                                       'data/bids.json'))
+        }
+        print(cls.imaging_data)
+
+
 
     def test_collect_bids_data(self):
         ''' test data has at least one subject with at least one session '''
@@ -30,7 +45,7 @@ class TestCollectBids(unittest.TestCase):
         self.assert_key_exists(epi_template, 'epi')
 
     def test_sbref(self):
-        sbref_template = (c.DATASET + "/{subject}/func/"
+        sbref_template = (self.fake_data_location + "/{subject}/func/"
                           "{subject}_task-rest_acq-LR_run-1_sbref.nii.gz")
         self.assert_key_exists(sbref_template, 'sbref')
 
