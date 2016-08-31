@@ -94,7 +94,7 @@ def collect_bids_data(dataset, subject, spec=None, session=None, run=None):
         epi_files = [x.filename for x
                      in layout.get(**dict(dict(elem), **queries['epi']))]
         if epi_files:
-            imaging_data['func'].append(epi_files)
+            imaging_data['func'] += epi_files
     return imaging_data
 
 
