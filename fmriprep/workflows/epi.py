@@ -234,7 +234,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             'mat_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
-            'epi_ras',
             'epi_mask',
             't1',
             'hmc_xforms'
@@ -277,7 +276,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             suffix='hmc_mni_bmask'), name='DerivativesHMCMNImask')
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi_ras', 'in_file')]),
+        (inputnode, pick_1st, [('epi', 'in_file')]),
         (inputnode, ds_mni, [('epi', 'source_file')]),
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
@@ -286,7 +285,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
                                        ('hmc_xforms', 'in3')]),
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('mat_epi_to_t1', _aslist), 'in2')]),
-        (inputnode, split, [('epi_ras', 'in_file')]),
+        (inputnode, split, [('epi', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
