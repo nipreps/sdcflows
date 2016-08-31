@@ -5,7 +5,6 @@ from fmriprep.workflows.fieldmap.base import fieldmap_decider
 from fmriprep.utils import misc
 
 from test.workflows.utilities import TestWorkflow
-import test.constant as c
 
 class TestDecider(TestWorkflow):
     # ideally this would be a true unit test but in the interests of
