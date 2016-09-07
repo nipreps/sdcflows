@@ -5,7 +5,7 @@ import json
 import os
 import re
 
-from grabbit import Layout
+from bids.grabbids import BIDSLayout
 
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
@@ -32,15 +32,12 @@ fieldmap_suffixes = {
 }
 
 
-def collect_bids_data(dataset, subject, spec=None, session=None, run=None):
+def collect_bids_data(dataset, subject, session=None, run=None):
     subject = str(subject)
     if not subject.startswith('sub-'):
         subject = 'sub-{}'.format(subject)
 
-    if spec is None:
-        raise RuntimeError('A spec file should be specified')
-
-    layout = Layout(dataset, config=spec)
+    layout = BIDSLayout(dataset)
 
     if session:
         session_list = [session]
