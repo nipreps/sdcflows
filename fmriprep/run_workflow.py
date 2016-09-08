@@ -29,6 +29,7 @@ def main():
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
     from fmriprep.workflows import base as fwb
+    from fmriprep.workflows import base_workflow_enumerator
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -150,8 +151,8 @@ def main():
     logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
-    workflow_generator = getattr(fwb, 'wf_{}_type'.format(opts.workflow_type))
-    preproc_wf = workflow_generator(subject_list, settings=settings)
+    #  workflow_generator = getattr(fwb, 'wf_{}_type'.format(opts.workflow_type))
+    preproc_wf = base_workflow_enemurator(subject_list, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
