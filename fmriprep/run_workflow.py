@@ -29,7 +29,7 @@ def main():
     from nipype.pipeline import engine as pe
     from fmriprep import __version__
     from fmriprep.workflows import base as fwb
-    from fmriprep.workflows import base_workflow_enumerator
+    from fmriprep.workflows.base import base_workflow_enumerator
 
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
