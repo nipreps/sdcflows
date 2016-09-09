@@ -23,6 +23,14 @@ import hashlib
 import subprocess as sp
 from fmriprep.data.compat import _urllib, md5_hash
 
+try:
+    from urllib.parse import urlparse, urlencode
+    from urllib.request import build_opener, urlopen, Request
+    from urllib.error import HTTPError
+except ImportError:
+    from urlparse import urlparse
+    from urllib import urlencode
+    from urllib2 import build_opener, urlopen, Request, HTTPError
 
 def _fetch_file(url, dataset_dir, filetype=None, resume=True, overwrite=False,
                 md5sum=None, username=None, password=None, handlers=None,
@@ -92,8 +100,10 @@ def _fetch_file(url, dataset_dir, filetype=None, resume=True, overwrite=False,
 
     try:
         # Download data
-        url_opener = _urllib.request.build_opener(*handlers)
-        request = _urllib.request.Request(url)
+        #  url_opener = _urllib.request.build_opener(*handlers)
+        url_opener = build_opener(*handlers)
+        #  request = _urllib.request.Request(url)
+        request = Request(url)
         request.add_header('Connection', 'Keep-Alive')
         if username is not None and password is not None:
             if not url.startswith('https'):
