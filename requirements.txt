@@ -8,4 +8,4 @@ nilearn
 sklearn
 nibabel
 niworkflows>=0.0.3a3
-pybids
+-e git+https://github.com/incf/pybids.git@master#egg=pybids
