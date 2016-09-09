@@ -30,7 +30,6 @@ def main():
     from fmriprep import __version__
     from fmriprep.workflows import base as fwb
     from fmriprep.workflows.base import base_workflow_enumerator
-
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
 
@@ -63,7 +62,7 @@ def main():
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
-    g_input.add_argument('-t', '--workflow-type', default='ds005', required=True,
+    g_input.add_argument('-t', '--workflow-type', default='ds005', required=False,
                          action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
                          help='workflow type, a monkeypatch while it is not automatically identified')
 
@@ -151,8 +150,7 @@ def main():
     logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
-    #  workflow_generator = getattr(fwb, 'wf_{}_type'.format(opts.workflow_type))
-    preproc_wf = base_workflow_enemurator(subject_list, settings=settings)
+    preproc_wf = base_workflow_enumerator(subject_list, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
