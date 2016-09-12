@@ -69,5 +69,5 @@ class TestCollectBids(unittest.TestCase):
     def assert_key_exists(self, template, key):
         for subject in self.imaging_data:
             self.assertIn(template.format(subject=subject),
-                          self.imaging_data[subject][key])
+                          '\n'.join(self.imaging_data[subject][key]))
 
