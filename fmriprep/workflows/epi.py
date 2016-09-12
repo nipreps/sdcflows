@@ -72,7 +72,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
     ])
 
     # Write corrected file in the designated output dir
-    '''
     ds_hmc = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc'), name='DerivativesHMC')
@@ -97,7 +96,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (avs_format, ds_motion, [('out_file', 'in_file')])
     ])
-    '''
 
     return workflow
 
