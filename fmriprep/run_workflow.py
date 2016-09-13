@@ -3,33 +3,26 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-08-30 16:52:12
+# @Last Modified time: 2016-09-13 11:30:05
 """
 fMRI preprocessing workflow
 =====
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from argparse import ArgumentParser
-from argparse import RawTextHelpFormatter
-from lockfile import LockFile
-
-import logging
-from multiprocessing import cpu_count
 import os
 import os.path as op
 import glob
+from argparse import ArgumentParser
+from argparse import RawTextHelpFormatter
+from multiprocessing import cpu_count
+from lockfile import LockFile
+
+
 
 def main():
     """Entry point"""
-    from nipype import config as ncfg
-    from nipype.pipeline import engine as pe
     from fmriprep import __version__
-    from fmriprep.workflows import base as fwb
-
     parser = ArgumentParser(description='fMRI Preprocessing workflow',
                             formatter_class=RawTextHelpFormatter)
 
@@ -75,6 +68,11 @@ def main():
 
     opts = parser.parse_args()
 
+
+def create_workflow(opts):
+    import logging
+    from nipype import config as ncfg
+    from fmriprep.workflows import base as fwb
     settings = {
         'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
@@ -157,7 +155,6 @@ def main():
 
     if opts.write_graph:
         preproc_wf.write_graph()
-
 
 if __name__ == '__main__':
     main()
