@@ -7,17 +7,18 @@
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
 # @Last Modified time: 2016-08-17 15:32:43
+from lockfile import LockFile
 import os
 import os.path as op
-from shutil import copy
-import re
-import simplejson as json
 import pkg_resources as pkgr
-from lockfile import LockFile
+import re
+from shutil import copy
+import simplejson as json
 
 from nipype import logging
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
+
 from fmriprep.utils.misc import collect_bids_data
 
 LOGGER = logging.getLogger('interface')
@@ -27,10 +28,9 @@ class FileNotFoundError(IOError):
 
 
 class BIDSDataGrabberInputSpec(BaseInterfaceInputSpec):
-    bids_root = traits.Directory(exists=True, mandatory=True,
-                                 desc='root folder of the BIDS dataset')
+    subject_data = traits.DictStrAny()
     subject_id = traits.Str()
-    spec = File(exists=True, desc='grabbids specification file')
+
 
 class BIDSDataGrabberOutputSpec(TraitedSpec):
     out_dict = traits.Dict(desc='output data structure')
@@ -49,31 +49,25 @@ class BIDSDataGrabber(BaseInterface):
         super(BIDSDataGrabber, self).__init__(**inputs)
 
     def _run_interface(self, runtime):
-        if isdefined(self.inputs.spec):
-            spec = self.inputs.spec
-        else:
-            spec = pkgr.resource_filename('fmriprep', 'data/bids.json')
-
-        bids_dict = collect_bids_data(
-            self.inputs.bids_root, self.inputs.subject_id, spec=spec)
+        bids_dict = self.inputs.subject_data
 
         self._results['out_dict'] = bids_dict
 
         self._results['t1w'] = bids_dict['t1w']
         if not bids_dict['t1w']:
-            raise FileNotFoundError('No T1w images found for subject sub-{}, bids_root={}'.format(
-                self.inputs.subject_id, self.inputs.bids_root))
+            raise FileNotFoundError('No T1w images found for subject sub-{}'.format(
+                self.inputs.subject_id))
 
         self._results['func'] = bids_dict['func']
         if not bids_dict['func']:
-            raise FileNotFoundError('No functional images found for subject sub-{}, bids_root={}'.format(
-                self.inputs.subject_id, self.inputs.bids_root))
+            raise FileNotFoundError('No functional images found for subject sub-{}'.format(
+                self.inputs.subject_id))
 
         for imtype in ['fmap', 'sbref']:
             self._results[imtype] = bids_dict[imtype]
             if not bids_dict[imtype]:
-                LOGGER.warn('No \'{}\' images found for sub-{} in BIDS dataset ({})'.format(
-                    imtype, self.inputs.subject_id, self.inputs.bids_root))
+                LOGGER.warn('No \'{}\' images found for sub-{}'.format(
+                    imtype, self.inputs.subject_id))
 
 
         return runtime

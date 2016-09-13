@@ -54,7 +54,8 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
-    'git+https://github.com/nipy/nipype.git@master#egg=nipype'
+    'git+https://github.com/nipy/nipype.git@master#egg=nipype',
+    'git+https://github.com/incf/pybids.git@master#egg=pybids'
 ]
 
 TESTS_REQUIRES = [

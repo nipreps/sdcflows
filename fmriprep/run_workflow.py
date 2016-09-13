@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-09-13 11:30:05
+# @Last Modified time: 2016-09-13 12:06:16
 """
 fMRI preprocessing workflow
 =====
@@ -55,7 +55,7 @@ def main():
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                            default=op.join(os.getcwd(), 'work'))
-    g_input.add_argument('-t', '--workflow-type', default='ds005', required=True,
+    g_input.add_argument('-t', '--workflow-type', default='ds005', required=False,
                          action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
                          help='workflow type, a monkeypatch while it is not automatically identified')
 
@@ -67,12 +67,15 @@ def main():
                          help='use ANTs-based skull-stripping')
 
     opts = parser.parse_args()
+    create_workflow(opts)
 
 
 def create_workflow(opts):
     import logging
     from nipype import config as ncfg
     from fmriprep.workflows import base as fwb
+    from fmriprep.workflows.base import base_workflow_enumerator
+
     settings = {
         'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
@@ -148,8 +151,7 @@ def create_workflow(opts):
     logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
-    workflow_generator = getattr(fwb, 'wf_{}_type'.format(opts.workflow_type))
-    preproc_wf = workflow_generator(subject_list, settings=settings)
+    preproc_wf = base_workflow_enumerator(subject_list, settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 
