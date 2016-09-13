@@ -57,6 +57,19 @@ LINKS_REQUIRES = [
     'git+https://github.com/nipy/nipype.git@master#egg=nipype'
 ]
 
+TESTS_REQUIRES = [
+    "mock",
+    "codecov"
+]
+
+EXTRA_REQUIRES = {
+    'doc': ['sphinx'],
+    'tests': TESTS_REQUIRES,
+    'duecredit': ['duecredit']
+}
+
+# Enable a handle to install all extra dependencies at once
+EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: MRI processing',
