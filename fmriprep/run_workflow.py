@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-09-13 12:06:16
+# @Last Modified time: 2016-09-13 13:37:43
 """
 fMRI preprocessing workflow
 =====
@@ -115,10 +115,6 @@ def create_workflow(opts):
             os.makedirs(log_dir)
 
     logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))
-
-    # Warn for default work/output directories
-    if settings['work_dir'] == parser.get_default('work_dir'):
-        logger.info('Using default working directory (%s)', settings['work_dir'])
 
     # Set nipype config
     ncfg.update_config({
