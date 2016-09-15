@@ -32,10 +32,7 @@ class TestCollectBids(unittest.TestCase):
 
         cls.imaging_data = {
             cls.subject_id: misc.collect_bids_data(os.path.join(cls.fake_ds_location),
-                                                   cls.subject_id,
-                                                   spec=pkgr.resource_filename(
-                                                       'fmriprep',
-                                                       'data/bids.json'))
+                                                   cls.subject_id)
         }
 
     def test_collect_bids_data(self):
@@ -72,5 +69,5 @@ class TestCollectBids(unittest.TestCase):
     def assert_key_exists(self, template, key):
         for subject in self.imaging_data:
             self.assertIn(template.format(subject=subject),
-                          self.imaging_data[subject][key])
+                          '\n'.join(self.imaging_data[subject][key]))
 

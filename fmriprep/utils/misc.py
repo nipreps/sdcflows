@@ -5,7 +5,7 @@ import json
 import os
 import re
 
-from grabbit import Layout
+from bids.grabbids import BIDSLayout
 
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
@@ -23,6 +23,7 @@ def is_fieldmap_file(string):
             is_fieldmap_file = True
     return is_fieldmap_file
 
+
 fieldmap_suffixes = {
     'phasediff': r"phasediff[0-9]*\.nii(\.gz)?",
     'magnitude': r"magnitude[0-9]*\.nii(\.gz)?",
@@ -32,15 +33,12 @@ fieldmap_suffixes = {
 }
 
 
-def collect_bids_data(dataset, subject, spec=None, session=None, run=None):
+def collect_bids_data(dataset, subject, session=None, run=None):
     subject = str(subject)
-    if not subject.startswith('sub-'):
-        subject = 'sub-{}'.format(subject)
+    if subject.startswith('sub-'):
+        subject = subject[4:]
 
-    if spec is None:
-        raise RuntimeError('A spec file should be specified')
-
-    layout = Layout(dataset, config=spec)
+    layout = BIDSLayout(dataset)
 
     if session:
         session_list = [session]
@@ -75,7 +73,10 @@ def collect_bids_data(dataset, subject, spec=None, session=None, run=None):
     imaging_data['t1w'] = t1_files
     sbref_files = [x.filename for x in layout.get(**queries['sbref'])]
     imaging_data['sbref'] = sbref_files
+    epi_files = [x.filename for x in layout.get(**queries['epi'])]
+    imaging_data['func'] = epi_files
 
+    '''
     loop_on = ['session', 'run', 'acquisition', 'task']
     get_kwargs = {}
 
@@ -95,6 +96,8 @@ def collect_bids_data(dataset, subject, spec=None, session=None, run=None):
                      in layout.get(**dict(dict(elem), **queries['epi']))]
         if epi_files:
             imaging_data['func'] += epi_files
+    '''
+
     return imaging_data
 
 
