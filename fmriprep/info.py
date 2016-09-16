@@ -40,6 +40,9 @@ implementation for each state of preprocessing, and will be updated as newer and
 become available.
 """
 
+DOWNLOAD_URL = ('https://pypi.python.org/packages/source/f/fmriprep/' +
+                'fmriprep-%s.tar.gz').format('__version__')
+
 REQUIRES = [
     'numpy',
     'lockfile',
