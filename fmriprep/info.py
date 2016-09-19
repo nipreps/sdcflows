@@ -1,10 +1,10 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 Base module variables
 """
+from __future__ import unicode_literals
 
 __version__ = '0.1.1a3'
 __author__ = 'The CRN developers'
@@ -39,3 +39,46 @@ such as skull stripping and template registration. This pipeline was designed to
 implementation for each state of preprocessing, and will be updated as newer and better neuroimaging software
 become available.
 """
+
+DOWNLOAD_URL = ('https://pypi.python.org/packages/source/f/fmriprep/' +
+                'fmriprep-%s.tar.gz').format('__version__')
+
+REQUIRES = [
+    'numpy',
+    'lockfile',
+    'future',
+    'scikit-learn',
+    'matplotlib',
+    'nilearn',
+    'sklearn',
+    'nibabel',
+    'niworkflows>=0.0.3a3',
+    'grabbit'
+]
+
+LINKS_REQUIRES = [
+    'git+https://github.com/nipy/nipype.git@master#egg=nipype',
+    'git+https://github.com/incf/pybids.git@master#egg=pybids'
+]
+
+TESTS_REQUIRES = [
+    "mock",
+    "codecov"
+]
+
+EXTRA_REQUIRES = {
+    'doc': ['sphinx'],
+    'tests': TESTS_REQUIRES,
+    'duecredit': ['duecredit']
+}
+
+# Enable a handle to install all extra dependencies at once
+EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
+CLASSIFIERS = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: MRI processing',
+    'Topic :: Scientific/Engineering :: Biomedical Imaging',
+    'License :: OSI Approved :: 3-clause BSD License',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3.5'
+]
