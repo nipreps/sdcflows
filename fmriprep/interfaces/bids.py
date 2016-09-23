@@ -125,9 +125,14 @@ class DerivativesDataSink(BaseInterface):
         out_path += '/{}'.format(mod)
 
         out_path = op.join(base_directory, out_path)
-        with LockFile(op.join(base_directory, '.fmriprep-lock')):
+        try:
             if not op.exists(out_path):
                 os.makedirs(out_path)
+        except OSError as e:
+            #  errno 17 is file exists, anything else may be catastrophic
+            if e.errno != 17:
+                print(e)
+                exit()
 
         base_fname = op.join(out_path, fname)
 
