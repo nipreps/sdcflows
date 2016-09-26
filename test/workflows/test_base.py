@@ -46,7 +46,8 @@ class TestBase(TestWorkflow):
         self.assert_circular(wf005, [
             ('EPIMNITransformation', 'BIDSDatasource',
              [('DerivativesHMCMNI.out_file', 'subject_data')]),
-            ('EPIMNITransformation', 'EPI_HMC', [('DerivativesHMCMNI.out_file', 'inputnode.epi')])
+            ('EPIMNITransformation', 'EPI_HMC', [('DerivativesHMCMNI.out_file', 'inputnode.epi')]),
+            ('EPIMeanNormalization', 'EPI_HMC', [('outputnode.mat_epi_to_t1', 'inputnode.epi')]),
         ])
 
         self.assertNotEqual(wf005.get_node('BIDSDatasource').inputs.subject_data.__class__,
