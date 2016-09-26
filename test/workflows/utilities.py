@@ -1,9 +1,9 @@
 '''  Class and utilities for testing the workflows module '''
 
 import unittest
+from networkx.exception import NetworkXUnfeasible
 
 from nipype.pipeline import engine
-from nipype.interfaces import IdentityInterface
 
 class TestWorkflow(unittest.TestCase):
     ''' Subclass for test within the workflow module.
@@ -12,6 +12,7 @@ class TestWorkflow(unittest.TestCase):
     def assertIsAlmostExpectedWorkflow(self, expected_name, expected_interfaces,
                                        expected_inputs, expected_outputs,
                                        actual):
+        ''' somewhat hacky way to confirm workflows are as expected, but with low confidence '''
         self.assertIsInstance(actual, engine.Workflow)
         self.assertEqual(expected_name, actual.name)
 
@@ -52,7 +53,17 @@ class TestWorkflow(unittest.TestCase):
 
         return actual_inputs, actual_outputs
 
-def stub_node_factory(*args, **kwargs):
-    ''' For use with mock.patch.
-    Stubs out a "Node" to modularize testing of workflow creation and validation '''
-    return engine.Node(IdentityInterface(fields=['inputnode', 'outputnode']), name=kwargs['name'])
+    def assert_circular(self, workflow, circular_connections):
+        ''' check key paths in workflow by specifying some connections that should induce
+        circular paths, which trips a NetworkX error.
+        circular_connections is a list of tuples:
+            ('from_node_name', 'to_node_name', ('from_node.output_field','to_node.input_field'))'''
+
+        for from_node, to_node, fields in circular_connections:
+            from_node = workflow.get_node(from_node)
+            to_node = workflow.get_node(to_node)
+            workflow.connect([(from_node, to_node, fields)])
+
+            self.assertRaises(NetworkXUnfeasible, workflow.write_graph)
+
+            workflow.disconnect([(from_node, to_node, fields)])
