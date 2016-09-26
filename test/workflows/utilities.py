@@ -1,10 +1,16 @@
-import unittest
-from nipype.pipeline import engine
+'''  Class and utilities for testing the workflows module '''
 
-# invoke tests with ``python -m unittest discover test``
+import unittest
+
+from nipype.pipeline import engine
+from nipype.interfaces import IdentityInterface
+
 class TestWorkflow(unittest.TestCase):
+    ''' Subclass for test within the workflow module.
+    invoke tests with ``python -m unittest discover test'''
+
     def assertIsAlmostExpectedWorkflow(self, expected_name, expected_interfaces,
-                                       expected_inputs, expected_outputs, 
+                                       expected_inputs, expected_outputs,
                                        actual):
         self.assertIsInstance(actual, engine.Workflow)
         self.assertEqual(expected_name, actual.name)
@@ -45,3 +51,8 @@ class TestWorkflow(unittest.TestCase):
             actual_outputs += get_io_names(pre, outputs)
 
         return actual_inputs, actual_outputs
+
+def stub_node_factory(*args, **kwargs):
+    ''' For use with mock.patch.
+    Stubs out a "Node" to modularize testing of workflow creation and validation '''
+    return engine.Node(IdentityInterface(fields=['inputnode', 'outputnode']), name=kwargs['name'])
