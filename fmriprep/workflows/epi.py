@@ -33,7 +33,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean']), name='outputnode')
+        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
 
     bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
 
@@ -61,7 +61,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('out_file', 'epi_brain')]),
+        (hmc, outputnode, [('out_file', 'epi_brain'),
+                           ('par_file', 'movpar_file')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
         (avscale, avs_format, [('translations', 'translations'),
                                ('rot_angles', 'rot_angles')]),
