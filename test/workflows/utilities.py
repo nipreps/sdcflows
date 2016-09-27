@@ -72,18 +72,20 @@ class TestWorkflow(unittest.TestCase):
             workflow.disconnect([(from_node, to_node, fields)])
 
     def assert_inputs_set(self, workflow, mandatory_inputs):
-        ''' check that all inputs in the mandatory_inputs list are already set by attempting
-        to connect an arbitrary output to each of the inputs, which trips an error.
+        ''' Check that all inputs in the mandatory_inputs list are already set. An input is "set" if it is
+                a) defined explicitly (e.g. in the Interface declaration) OR
+                b) connected to another node's output (e.g. using the workflow.connect method)
         mandatory_inputs is a dict:
             {'node_name': ['mandatory', 'input', 'fields']}'''
 
         for node_name, fields in mandatory_inputs.items():
             dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
-
             node = workflow.get_node(node_name)
             for field in fields:
-                with self.assertRaises(Exception):
-                    # checks that the input is already connected
-                    workflow.connect([(dummy_node, node, [('dummy', field)])])
-                    # if it isn't already connected, maybe it's set to a constant
-                    self.assertNotEqual(node.inputs.get(field).__class__, trait_undefined)
+                if node.inputs.get(field).__class__ == trait_undefined: # not defined explicitly
+                    # maybe it is connected to an output
+                    with self.assertRaises(Exception):
+                        # throws an error if it is connect to an output
+                        workflow.connect([(dummy_node, node, [('dummy', field)])])
+                else: # the input is defined explicitly
+                    pass
