@@ -4,6 +4,7 @@ import unittest
 from networkx.exception import NetworkXUnfeasible
 
 from nipype.pipeline import engine
+from nipype.interfaces import utility
 
 class TestWorkflow(unittest.TestCase):
     ''' Subclass for test within the workflow module.
@@ -57,7 +58,8 @@ class TestWorkflow(unittest.TestCase):
         ''' check key paths in workflow by specifying some connections that should induce
         circular paths, which trips a NetworkX error.
         circular_connections is a list of tuples:
-            ('from_node_name', 'to_node_name', ('from_node.output_field','to_node.input_field'))'''
+            [('from_node_name', 'to_node_name', ('from_node.output_field','to_node.input_field'))]
+        '''
 
         for from_node, to_node, fields in circular_connections:
             from_node = workflow.get_node(from_node)
@@ -67,3 +69,17 @@ class TestWorkflow(unittest.TestCase):
             self.assertRaises(NetworkXUnfeasible, workflow.write_graph)
 
             workflow.disconnect([(from_node, to_node, fields)])
+
+    def assert_inputs_set(self, workflow, mandatory_inputs):
+        ''' check that all inputs in the mandatory_inputs list are already set by attempting
+        to connect an arbitrary output to each of the inputs, which trips an error.
+        mandatory_inputs is a dict:
+            {'node_name': ['mandatory', 'input', 'fields']}'''
+
+        for node_name, fields in mandatory_inputs.items():
+            dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
+
+            node = workflow.get_node(node_name)
+            for field in fields:
+                with self.assertRaises(Exception):
+                    workflow.connect([(dummy_node, node, [('dummy', field)])])

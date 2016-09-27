@@ -32,9 +32,8 @@ class TestBase(TestWorkflow):
             ('EPI_SBrefRegistration', 'EPI_HMC', [('outputnode.out_mat', 'inputnode.epi')])
         ])
 
-        # Make sure mandatory input is set
-        self.assertNotEqual(wf054.get_node('BIDSDatasource').inputs.subject_data.__class__,
-                            trait_undefined)
+        # Make sure mandatory inputs are set/connected
+        self._assert_mandatory_inputs_set(wf054)
 
     def test_wf_ds005_type(self, _):
         # set up
@@ -53,5 +52,11 @@ class TestBase(TestWorkflow):
             ('EPIMeanNormalization', 'EPI_HMC', [('outputnode.mat_epi_to_t1', 'inputnode.epi')]),
         ])
 
-        self.assertNotEqual(wf005.get_node('BIDSDatasource').inputs.subject_data.__class__,
+        self._assert_mandatory_inputs_set(wf005)
+
+    def _assert_mandatory_inputs_set(self, workflow):
+        self.assert_inputs_set(workflow, {
+            'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file', 'inputnode.t1_seg']
+        })
+        self.assertNotEqual(workflow.get_node('BIDSDatasource').inputs.subject_data.__class__,
                             trait_undefined)
