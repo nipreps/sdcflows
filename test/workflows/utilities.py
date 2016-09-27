@@ -77,15 +77,15 @@ class TestWorkflow(unittest.TestCase):
                 b) connected to another node's output (e.g. using the workflow.connect method)
         mandatory_inputs is a dict:
             {'node_name': ['mandatory', 'input', 'fields']}'''
-
+        dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
+        
         for node_name, fields in mandatory_inputs.items():
-            dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
             node = workflow.get_node(node_name)
             for field in fields:
-                if node.inputs.get(field).__class__ == trait_undefined: # not defined explicitly
+                if node.inputs.get(field).__class__ != trait_undefined: # explicitly defined
+                    pass
+                else: # not explicitly defined
                     # maybe it is connected to an output
                     with self.assertRaises(Exception):
-                        # throws an error if it is connect to an output
+                        # throws an error if the input is already connected
                         workflow.connect([(dummy_node, node, [('dummy', field)])])
-                else: # the input is defined explicitly
-                    pass
