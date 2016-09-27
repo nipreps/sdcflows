@@ -6,11 +6,13 @@ from nipype.interfaces import utility
 from nipype.pipeline import engine as pe
 
 def discover_wf(name="ConfoundDiscoverer"):
-    ''' Given a motion-corrected fMRI ('inputnode.fmri_file'),
-           calculates global regressor, dvars, and tcompcor.
-    If given movement parameters from MCFLIRT ('inputnode.movpar_file'),
-           it also calculates frame displacement
-    If given a segmentation ('inputnode.t1_seg'), it also calculates segment regressors and aCompCor
+    ''' All input fields are required.
+
+    Calculates global regressor, dvars, and tcompcor
+        from motion-corrected fMRI ('inputnode.fmri_file').
+    Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
+    Calculates segment regressors and aCompCor
+        from a white matter/gray matter/CSF segmentation ('inputnode.t1_seg')
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
