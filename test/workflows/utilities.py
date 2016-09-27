@@ -2,6 +2,7 @@
 
 import unittest
 from networkx.exception import NetworkXUnfeasible
+from traits.trait_base import _Undefined as trait_undefined
 
 from nipype.pipeline import engine
 from nipype.interfaces import utility
@@ -82,4 +83,7 @@ class TestWorkflow(unittest.TestCase):
             node = workflow.get_node(node_name)
             for field in fields:
                 with self.assertRaises(Exception):
+                    # checks that the input is already connected
                     workflow.connect([(dummy_node, node, [('dummy', field)])])
+                    # if it isn't already connected, maybe it's set to a constant
+                    self.assertNotEqual(node.inputs.get(field).__class__, trait_undefined)

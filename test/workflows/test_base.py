@@ -1,6 +1,5 @@
 ''' Testing module for fmriprep.workflows.base '''
 import mock
-from traits.trait_base import _Undefined as trait_undefined
 
 from fmriprep.workflows.base import wf_ds054_type, wf_ds005_type
 from test.workflows.utilities import TestWorkflow
@@ -56,7 +55,6 @@ class TestBase(TestWorkflow):
 
     def _assert_mandatory_inputs_set(self, workflow):
         self.assert_inputs_set(workflow, {
+            'BIDSDatasource': ['subject_data'],
             'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file', 'inputnode.t1_seg']
         })
-        self.assertNotEqual(workflow.get_node('BIDSDatasource').inputs.subject_data.__class__,
-                            trait_undefined)

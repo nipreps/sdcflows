@@ -19,4 +19,7 @@ class TestConfounds(TestWorkflow):
             ('outputnode', 'inputnode', [('confounds_file', 'fmri_file')])
         ])
 
-        # Make sure mandatory input is set
+        # Make sure mandatory inputs are set
+        self.assert_inputs_set(workflow, {
+            'SignalExtraction': ['in_file', 'label_files', 'class_labels']
+        })
