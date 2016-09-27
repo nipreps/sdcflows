@@ -72,9 +72,10 @@ class TestWorkflow(unittest.TestCase):
             workflow.disconnect([(from_node, to_node, fields)])
 
     def assert_inputs_set(self, workflow, mandatory_inputs):
-        ''' Check that all inputs in the mandatory_inputs list are already set. An input is "set" if it is
-                a) defined explicitly (e.g. in the Interface declaration) OR
-                b) connected to another node's output (e.g. using the workflow.connect method)
+        ''' Check that all inputs in the mandatory_inputs list are already set. An input is "set"
+        if it is
+            a) defined explicitly (e.g. in the Interface declaration)
+            OR b) connected to another node's output (e.g. using the workflow.connect method)
         mandatory_inputs is a dict:
             {'node_name': ['mandatory', 'input', 'fields']}'''
         dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
@@ -82,10 +83,22 @@ class TestWorkflow(unittest.TestCase):
         for node_name, fields in mandatory_inputs.items():
             node = workflow.get_node(node_name)
             for field in fields:
-                if node.inputs.get(field).__class__ != trait_undefined: # explicitly defined
+                if field_is_defined(node, field):
                     pass
                 else: # not explicitly defined
                     # maybe it is connected to an output
                     with self.assertRaises(Exception):
                         # throws an error if the input is already connected
                         workflow.connect([(dummy_node, node, [('dummy', field)])])
+
+def field_is_defined(node, field_name):
+    ''' returns true if field is a defined trait, false if not '''
+
+    # getting the input object is a headache and
+    name_chain = field_name.split('.')
+    input_ = node.inputs # nipype "Bunch" obj
+    for name in name_chain:
+        # in the last iteration, input_ magically becomes an input object rather than a "Bunch"
+        input_ = input_.get()[name]
+
+    return input_.__class__ != trait_undefined
