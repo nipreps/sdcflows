@@ -1,4 +1,4 @@
-''' Testing class for fmriprep.workflows.base '''
+''' Testing module for fmriprep.workflows.base '''
 import mock
 from traits.trait_base import _Undefined as trait_undefined
 
