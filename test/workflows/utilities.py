@@ -94,7 +94,7 @@ class TestWorkflow(unittest.TestCase):
 def field_is_defined(node, field_name):
     ''' returns true if field is a defined trait, false if not '''
 
-    # getting the input object is a headache and
+    # getting the input object is a headache
     name_chain = field_name.split('.')
     input_ = node.inputs # nipype "Bunch" obj
     for name in name_chain:
