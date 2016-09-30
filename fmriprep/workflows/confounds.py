@@ -5,6 +5,7 @@ Calculates frame displacement, segment regressors, global regressor, dvars, aCom
 from nipype.interfaces import utility, nilearn
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
+from nipype.algorithms import misc
 
 def discover_wf(name="ConfoundDiscoverer"):
     ''' All input fields are required.

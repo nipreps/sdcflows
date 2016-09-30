@@ -23,7 +23,4 @@ class TestConfounds(TestWorkflow):
         ])
 
         # Make sure mandatory inputs are set
-        self.assert_inputs_set(workflow, {
-            'SignalExtraction': ['in_file', 'label_files', 'class_labels'],
-            'ComputeDVARS': ['in_file', 'in_mask']
-        })
+        self.assert_inputs_set(workflow)
