@@ -30,7 +30,8 @@ def discover_wf(name="ConfoundDiscoverer"):
                       name="SignalExtraction")
 
     # DVARS
-    dvars = pe.Node(confounds.ComputeDVARS(), name="ComputeDVARS")
+    dvars = pe.Node(confounds.ComputeDVARS(), name="ComputeDVARS", save_all=True)
+
 
     workflow = pe.Workflow(name=name)
     workflow.connect([
