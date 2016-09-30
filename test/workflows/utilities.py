@@ -80,7 +80,7 @@ class TestWorkflow(unittest.TestCase):
             {'node_name': ['mandatory', 'input', 'fields']}'''
         dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
         node_names = [name for name in workflow.list_node_names() if name.count('.') == 0]
-        for node_name in node_names:
+        for node_name in set(node_names + list(additional_inputs.keys())):
             node = workflow.get_node(node_name)
             mandatory_inputs = list(node.inputs.traits(mandatory=True).keys())
             other_inputs = additional_inputs[node_name] if node_name in additional_inputs else []

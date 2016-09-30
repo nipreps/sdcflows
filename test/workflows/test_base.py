@@ -56,5 +56,6 @@ class TestBase(TestWorkflow):
     def _assert_mandatory_inputs_set(self, workflow):
         self.assert_inputs_set(workflow, {
             'BIDSDatasource': ['subject_data'],
-            'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file', 'inputnode.t1_seg']
+            'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file',
+                                   'inputnode.t1_seg', 'inputnode.epi_mask']
         })
