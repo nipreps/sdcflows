@@ -38,8 +38,12 @@ def discover_wf(name="ConfoundDiscoverer"):
     # Frame displacement
     frame_displace = pe.Node(confounds.FramewiseDisplacement(), name="FramewiseDisplacement")
 
+    # tCompCor
+    tcompcor = pe.Node(confounds.TCompCor(), name="tCompCor")
+
     concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
-                                                                               'frame_displace'],
+                                                                               'frame_displace',
+                                                                               'tcompcor'],
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
 
@@ -50,17 +54,19 @@ def discover_wf(name="ConfoundDiscoverer"):
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
         (inputnode, frame_displace, [('movpar_file', 'in_plots')]),
+        (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
 
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
+        (tcompcor, concat, [('components_file', 'tcompcor')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')])
     ])
 
     return workflow
 
-def _gather_confounds(signals=None, dvars=None, frame_displace=None):
+def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
 
