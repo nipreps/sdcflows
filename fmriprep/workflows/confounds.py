@@ -7,12 +7,13 @@ from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
 from fmriprep.interfaces import mask
+from fmriprep import interfaces
 
 # this should be moved to nipype. Won't do it now bc of slow PR approval there
 # I'm not 100% sure the order is correct
 FAST_DEFAULT_SEGS = ['CSF', 'gray matter', 'white matter']
 
-def discover_wf(name="ConfoundDiscoverer"):
+def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -34,14 +35,11 @@ def discover_wf(name="ConfoundDiscoverer"):
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
                                                class_labels=FAST_DEFAULT_SEGS),
                       name="SignalExtraction")
-
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
                     name="ComputeDVARS")
-
     # Frame displacement
     frame_displace = pe.Node(confounds.FramewiseDisplacement(), name="FramewiseDisplacement")
-
     # CompCor
     tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
     acompcor_roi = pe.Node(mask.BinarizeSegmentation(
@@ -49,15 +47,20 @@ def discover_wf(name="ConfoundDiscoverer"):
                            name="CalcaCompCorROI")
     acompcor = pe.Node(confounds.ACompCor(components_file='acompcor.tsv'), name="aCompCor")
 
+    # misc utilities
     concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
                                                                                'frame_displace',
                                                                                'tcompcor',
                                                                                'acompcor'],
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
+    ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
+                                                          suffix='confounds.tsv'),
+                           name="DerivConfounds")
 
     workflow = pe.Workflow(name=name)
     workflow.connect([
+        # connect inputnode to each confound node
         (inputnode, signals, [('fmri_file', 'in_file'),
                               ('t1_seg', 'label_files')]),
         (inputnode, dvars, [('fmri_file', 'in_file'),
@@ -68,13 +71,18 @@ def discover_wf(name="ConfoundDiscoverer"):
         (acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
 
+        # connect the confound nodes to the concatenate node
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
 
-        (concat, outputnode, [('combined_out', 'confounds_file')])
+        (concat, outputnode, [('combined_out', 'confounds_file')]),
+
+        # print stuff in derivatives
+        (concat, ds_confounds, [('combined_out', 'in_file')]),
+        (inputnode, ds_confounds, [('fmri_file', 'source_file')])
     ])
 
     return workflow
