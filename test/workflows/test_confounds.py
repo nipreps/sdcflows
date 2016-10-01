@@ -25,7 +25,9 @@ class TestConfounds(TestWorkflow):
         ])
 
         # Make sure mandatory inputs are set
-        self.assert_inputs_set(workflow, {'outputnode': ['confounds_file']})
+        self.assert_inputs_set(workflow, {'outputnode': ['confounds_file'],
+                                          'ConcatConfounds': ['signals', 'dvars',
+                                                              'frame_displace']})
 
     def test_gather_confounds_err(self):
         # set up

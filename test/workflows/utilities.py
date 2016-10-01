@@ -72,8 +72,8 @@ class TestWorkflow(unittest.TestCase):
             workflow.disconnect([(from_node, to_node, fields)])
 
     def assert_inputs_set(self, workflow, additional_inputs={}):
-        ''' Check that all mandatory inputs of nodes in the workflow (at the first level) are already set. Additionally, check that inputs in additional_inputs are set. An input is "set"
-        if it is
+        ''' Check that all mandatory inputs of nodes in the workflow (at the first level) are already
+        set. Additionally, check that inputs in additional_inputs are set. An input is "set" if it is
             a) defined explicitly (e.g. in the Interface declaration)
             OR b) connected to another node's output (e.g. using the workflow.connect method)
         additional_inputs is a dict:

@@ -32,10 +32,14 @@ def discover_wf(name="ConfoundDiscoverer"):
                       name="SignalExtraction")
 
     # DVARS
-    dvars = pe.Node(confounds.ComputeDVARS(), name="ComputeDVARS", save_all=True,
-                    remove_zerovariance=True)
+    dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
+                    name="ComputeDVARS")
 
-    concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars'],
+    # Frame displacement
+    frame_displace = pe.Node(confounds.FramewiseDisplacement(), name="FramewiseDisplacement")
+
+    concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
+                                                                               'frame_displace'],
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
 
@@ -45,16 +49,18 @@ def discover_wf(name="ConfoundDiscoverer"):
                               ('t1_seg', 'label_files')]),
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
+        (inputnode, frame_displace, [('movpar_file', 'in_plots')]),
 
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
+        (frame_displace, concat, [('out_file', 'frame_displace')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')])
     ])
 
     return workflow
 
-def _gather_confounds(signals=None, dvars=None):
+def _gather_confounds(signals=None, dvars=None, frame_displace=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
 
