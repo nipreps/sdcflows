@@ -43,7 +43,7 @@ def discover_wf(name="ConfoundDiscoverer"):
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
 
-        (signals, outputnode, [('out_file', 'confounds_file_name')])
+        (signals, outputnode, [('out_file', 'confounds_file')])
     ])
 
     return workflow
