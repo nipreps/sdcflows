@@ -27,7 +27,9 @@ class TestConfounds(TestWorkflow):
         # Make sure mandatory inputs are set
         self.assert_inputs_set(workflow, {'outputnode': ['confounds_file'],
                                           'ConcatConfounds': ['signals', 'dvars', 'frame_displace',
-                                                              'tcompcor']})
+                                                              'tcompcor', 'acompcor'],
+                                          'tCompCor': ['components_file'],
+                                          'aCompCor': ['components_file', 'mask_file'], })
 
     def test_gather_confounds_err(self):
         # set up
@@ -35,7 +37,7 @@ class TestConfounds(TestWorkflow):
         dvars = "signals.tsv"
 
         # run & assert
-        with self.assertRaisesRegexp(RuntimeError, "confound"):
+        with self.assertRaisesRegex(RuntimeError, "confound"):
             _gather_confounds(signals, dvars)
 
     @mock.patch('pandas.read_csv')
