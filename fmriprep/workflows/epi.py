@@ -307,7 +307,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 'fmap', 'fmap_ref', 'fmap_mask']), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean']),
+        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean', 'epi_mask']),
         name='outputnode'
     )
 
@@ -320,7 +320,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='EPIBET')
 
     ds_epi_unwarp = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'], 
+        DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='epi_unwarp'),
         name='DerivUnwarp_EPUnwarp_EPI'
     )
@@ -333,7 +333,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
         (inputnode, ds_epi_unwarp, [('epi', 'source_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, bet, [('out_file', 'in_file')]),
-        (bet, outputnode, [('out_file', 'epi_mean')]),
+        (bet, outputnode, [('out_file', 'epi_mean'),
+                           ('mask_file', 'epi_mask')]),
         (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
         (unwarp, ds_epi_unwarp, [('outputnode.out_file', 'in_file')])
     ])
@@ -346,7 +347,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
     ds_png = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-            suffix='sdc'), name='DerivativesPNG')
+                            suffix='sdc'), name='DerivativesPNG')
 
     workflow.connect([
         (bet, png_epi_corr, [('out_file', 'overlay_file')]),
