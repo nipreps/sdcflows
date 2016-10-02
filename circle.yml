@@ -10,8 +10,8 @@ dependencies:
   pre:
     # Download test data
     - mkdir -p ~/data ~/docker ~/scratch
-    - if [[ ! -d ~/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://3552243d5be815c1b09152da6525cb8fe7b900a6.googledrive.com/host/0BxI12kyv2olZVUswazA3NkFvOXM/ds054_downsampled.tar.gz && tar xzf ds054_downsampled.tar.gz -C ~/data/; fi
-    - if [[ ! -d ~/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://3552243d5be815c1b09152da6525cb8fe7b900a6.googledrive.com/host/0BxI12kyv2olZVUswazA3NkFvOXM/ds005_downsampled.tar.gz && tar xzf ds005_downsampled.tar.gz -C ~/data/; fi
+#    - if [[ ! -d ~/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q  && tar xzf ds054_downsampled.tar.gz -C ~/data/; fi
+    - if [[ ! -d ~/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://ndownloader.figshare.com/files/6217026  && tar xzf ds005_downsampled.tar.gz -C ~/data/; fi
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build -t poldracklab/fmriprep:latest .
