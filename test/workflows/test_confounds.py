@@ -1,4 +1,5 @@
 ''' Testing module for fmriprep.workflows.confounds '''
+import logging
 import mock
 import pandas as pd
 
@@ -7,15 +8,15 @@ from fmriprep.workflows.confounds import discover_wf, _gather_confounds
 from test.workflows.utilities import TestWorkflow
 from test.workflows import stub
 
+logging.disable(logging.INFO) # don't print unnecessary msgs
+
 class TestConfounds(TestWorkflow):
     ''' Testing class for fmriprep.workflows.confounds '''
 
     def test_discover_wf(self):
-        # set up
-
         # run
         workflow = discover_wf(stub.settings())
-        workflow.write_graph()
+        workflow.write_hierarchical_dotfile()
 
         # assert
 
