@@ -53,6 +53,7 @@ REQUIRES = [
     'sklearn',
     'nibabel',
     'niworkflows>=0.0.3a3',
+    'pandas',
     'grabbit'
 ]
 

@@ -5,6 +5,7 @@ import unittest
 import mock
 import nibabel as nb
 import numpy as np
+import os
 
 from fmriprep.interfaces.mask import BinarizeSegmentation
 
@@ -19,9 +20,11 @@ class TestMask(unittest.TestCase):
     @mock.patch.object(nb.nifti1.Nifti1Image, '__eq__', autospec=True,
                        side_effect=lambda me: me.get_data().sum() == 4)
     def test_binarize_segmentation(self, nii_eq, mock_save, mock_load):
-        ''' mocked an equality function for niftis.
+        '''
+        mocked an equality function for niftis.
         it will probably catch errors but not guaranteed '''
         # set up
+        print(os.getcwd())
         segmentation = 'README.rst' # convenient existing file
         out_file = 'setup.py'
 
