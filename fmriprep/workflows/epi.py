@@ -16,8 +16,8 @@ from nipype.interfaces import ants
 from nipype.interfaces import c3
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+from niworkflows.data import get_mni_template_ras
 
-from fmriprep.data import get_mni_template_ras
 from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
@@ -319,7 +319,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='EPIBET')
 
     ds_epi_unwarp = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'], 
+        DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='epi_unwarp'),
         name='DerivUnwarp_EPUnwarp_EPI'
     )
