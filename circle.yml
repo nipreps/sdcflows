@@ -1,30 +1,36 @@
 machine:
+  environment:
+    OSF_PROJECT: "https://files.osf.io/v1/resources/fvuh8/providers/osfstorage"
+    DS005_URL: "${OSF_PROJECT}/57f32a429ad5a101f977eb75"
+    DS054_URL: "${OSF_PROJECT}/57f32c22594d9001ef91bf9e"
+    SCRATCH: $HOME/scratch
   services:
     - docker
 
 dependencies:
   cache_directories:
-    - "~/data/"
-    - "~/docker/"
+    - "~/data"
+    - "~/docker"
 
   pre:
+    - mkdir -p $HOME/data
+    - mkdir -p $HOME/docker
+    - mkdir -p $SCRATCH
     # Download test data
-    - mkdir -p ~/data ~/docker ~/scratch
-    - if [[ ! -d ~/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://ndownloader.figshare.com/articles/3978081 && tar xzf 3978081 -C ~/data/; fi
-    - if [[ ! -d ~/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q https://ndownloader.figshare.com/files/6217026  && tar xzf 6217026 -C ~/data/; fi
+    - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
+    - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
   override:
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
     - docker build -t poldracklab/fmriprep:latest .
-    - mkdir -p ~/docker; docker save poldracklab/fmriprep:latest > ~/docker/image.tar
+    - mkdir -p $HOME/docker; docker save poldracklab/fmriprep:latest > $HOME/docker/image.tar
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/data:/data -v ~/scratch:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 /scratch/out participant -w /scratch/work -t ds054 --debug --ants-nthreads 30 :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v $SCRATCH/ds054:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 out/ participant -w work/ -t ds054 --debug :
         timeout: 4800
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v ~/data:/data -v ~/scratch:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds005 /scratch/out participant -w /scratch/work -t ds005 --debug --ants-nthreads 30 :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v $SCRATCH/ds005:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds005 out/ participant -w work/ -t ds005 --debug :
         timeout: 4800
 
 general:
   artifacts:
-    - "~/scratch/out"
-    - "~/scratch/work"
+    - "~/scratch"
