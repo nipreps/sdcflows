@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-09-13 13:37:43
+# @Last Modified time: 2016-10-03 09:06:10
 """
 fMRI preprocessing workflow
 =====
@@ -35,8 +35,7 @@ def main():
     parser.add_argument('analysis_level', choices=['participant'])
 
     # optional arguments
-    parser.add_argument('-S', '--subject-id', '--participant_label',
-                         action='store', nargs='+')
+    parser.add_argument('--participant_label', action='store', nargs='+')
     parser.add_argument('-v', '--version', action='version',
                          version='fmriprep v{}'.format(__version__))
 
@@ -138,7 +137,7 @@ def create_workflow(opts):
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
     # Determine subjects to be processed
-    subject_list = opts.subject_id
+    subject_list = opts.participant_label
 
     if subject_list is None or not subject_list:
         subject_list = [op.basename(subdir)[4:] for subdir in glob.glob(
