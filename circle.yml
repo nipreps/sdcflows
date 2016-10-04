@@ -1,7 +1,8 @@
 machine:
   environment:
-    DS005_URL: "https://ndownloader.figshare.com/files/6217026"
-    DS054_URL: "https://ndownloader.figshare.com/articles/3978081"
+    OSF_PROJECT: "https://files.osf.io/v1/resources/fvuh8/providers/osfstorage"
+    DS005_URL: "${OSF_PROJECT}/57f32a429ad5a101f977eb75"
+    DS054_URL: "${OSF_PROJECT}/57f32c22594d9001ef91bf9e"
     SCRATCH: $HOME/scratch
   services:
     - docker
