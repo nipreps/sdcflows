@@ -9,12 +9,14 @@ machine:
 
 dependencies:
   cache_directories:
-    - "~/data/"
-    - "~/docker/"
+    - "~/data"
+    - "~/docker"
 
   pre:
+    - mkdir -p $HOME/data
+    - mkdir -p $HOME/docker
+    - mkdir -p $SCRATCH
     # Download test data
-    - mkdir -p $HOME/data $HOME/docker $SCRATCH $SCRATCH/ds005 $SCRATCH/ds054
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
 
@@ -25,9 +27,9 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data -v $SCRATCH/ds054:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 /scratch/out participant -w /scratch/work -t ds054 --debug :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v $SCRATCH/ds054:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds054 out/ participant -w work/ -t ds054 --debug :
         timeout: 4800
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data -v $SCRATCH/ds005:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds005 /scratch/out participant -w /scratch/work -t ds005 --debug :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v $SCRATCH/ds005:/scratch -w /scratch poldracklab/fmriprep:latest /data/ds005 out/ participant -w work/ -t ds005 --debug :
         timeout: 4800
 
 general:
