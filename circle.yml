@@ -1,5 +1,5 @@
 machine:
-  env:
+  environment:
     DS005_URL: "https://ndownloader.figshare.com/files/6217026"
     DS054_URL: "https://ndownloader.figshare.com/articles/3978081"
     SCRATCH: $HOME/scratch
