@@ -3,3 +3,5 @@ source /etc/fsl/fsl.sh
 source /etc/afni/afni.sh
 
 fmriprep $@
+
+chmod 777 -R /scratch/*
