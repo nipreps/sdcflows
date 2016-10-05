@@ -4,4 +4,4 @@ source /etc/afni/afni.sh
 
 fmriprep $@
 
-chmod 777 -R /scratch/*
+chmod 777 -R /out/*
