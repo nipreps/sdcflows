@@ -17,16 +17,17 @@ class TestMask(unittest.TestCase):
 
     @mock.patch.object(nb, 'load', return_value=segmentation_nii)
     @mock.patch.object(nb.nifti1, 'save')
+    @mock.patch.object(os.path, 'isfile', return_value=True)
     @mock.patch.object(nb.nifti1.Nifti1Image, '__eq__', autospec=True,
                        side_effect=lambda me: me.get_data().sum() == 4)
-    def test_binarize_segmentation(self, nii_eq, mock_save, mock_load):
+    def test_binarize_segmentation(self, nii_eq, mock_file_exists, mock_save, mock_load):
         '''
         mocked an equality function for niftis.
         it will probably catch errors but not guaranteed '''
         # set up
         print(os.getcwd())
-        segmentation = 'README.rst' # convenient existing file
-        out_file = 'setup.py'
+        segmentation = 'thisfiletotallyexists'
+        out_file = 'thisonetoo'
 
         # run
         BinarizeSegmentation(in_segments=segmentation, false_values=[0, 1], out_mask=out_file).run()
