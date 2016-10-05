@@ -11,7 +11,7 @@ from bids.grabbids import BIDSLayout
 
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
-def check_folder(folder):
+def make_folder(folder):
     try:
         os.makedirs(folder)
     except OSError as exc:

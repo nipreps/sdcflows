@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-10-05 10:11:51
+# @Last Modified time: 2016-10-05 15:03:18
 """
 fMRI preprocessing workflow
 =====
@@ -16,9 +16,6 @@ import glob
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
-from lockfile import LockFile
-
-
 
 def main():
     """Entry point"""
@@ -72,7 +69,7 @@ def main():
 def create_workflow(opts):
     import logging
     from nipype import config as ncfg
-    from fmriprep.utils import check_folder
+    from fmriprep.utils import make_folder
     from fmriprep.workflows import base as fwb
     from fmriprep.workflows.base import base_workflow_enumerator
 
@@ -100,11 +97,11 @@ def create_workflow(opts):
     derivatives = op.join(settings['output_dir'], 'derivatives')
 
     # Check and create output and working directories
-    # Using check_folder to prevent https://github.com/poldracklab/mriqc/issues/111
-    check_folder(settings['output_dir'])
-    check_folder(settings['work_dir'])
-    check_folder(derivatives)
-    check_folder(log_dir)
+    # Using make_folder to prevent https://github.com/poldracklab/mriqc/issues/111
+    make_folder(settings['output_dir'])
+    make_folder(settings['work_dir'])
+    make_folder(derivatives)
+    make_folder(log_dir)
 
     logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))
 
