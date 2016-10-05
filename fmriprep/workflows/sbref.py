@@ -80,8 +80,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
         (bet, datasink, [('out_file', 'in_file')]),
         (mean, png_sbref_corr, [('out_file', 'overlay_file')]),
-        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')]),
-        (png_sbref_corr, datasink, [('out_file', 'in_file')])
+        (inputnode, png_sbref_corr, [('fmap_mask', 'in_file')])
     ])
     return workflow
 
