@@ -21,7 +21,7 @@ dependencies:
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
     # Cache templates
     - pip install "niworkflows>=0.0.3a7"
-    - python -c "import niworkflows as niw; niw.get_mni_template()"
+    - python -c "from niworkflows.data import get_mni_template; get_mni_template()"
 
   override:
     - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
