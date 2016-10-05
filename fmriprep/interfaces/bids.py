@@ -6,7 +6,7 @@
 # @Author: oesteban
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-08-17 15:32:43
+# @Last Modified time: 2016-10-05 15:03:25
 from lockfile import LockFile
 import os
 import os.path as op
@@ -19,7 +19,7 @@ from nipype import logging
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
 
-from fmriprep.utils.misc import collect_bids_data
+from fmriprep.utils.misc import collect_bids_data, make_folder
 
 LOGGER = logging.getLogger('interface')
 
@@ -125,9 +125,7 @@ class DerivativesDataSink(BaseInterface):
         out_path += '/{}'.format(mod)
 
         out_path = op.join(base_directory, out_path)
-        with LockFile(op.join(base_directory, '.fmriprep-lock')):
-            if not op.exists(out_path):
-                os.makedirs(out_path)
+        make_folder(out_path)
 
         base_fname = op.join(out_path, fname)
 
