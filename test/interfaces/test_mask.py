@@ -25,7 +25,6 @@ class TestMask(unittest.TestCase):
         mocked an equality function for niftis.
         it will probably catch errors but not guaranteed '''
         # set up
-        print(os.getcwd())
         segmentation = 'thisfiletotallyexists'
         out_file = 'thisonetoo'
 
@@ -36,4 +35,4 @@ class TestMask(unittest.TestCase):
         dummy_mask = nb.Nifti1Image(np.array([]), np.eye(4))
 
         mock_load.assert_called_once_with(segmentation)
-        mock_save.assert_called_once_with(dummy_mask, out_file)
+        mock_save.assert_called_once_with(dummy_mask, os.path.join(os.getcwd(), out_file))

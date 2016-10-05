@@ -2,6 +2,7 @@
 #!/usr/bin/env python
 import numpy as np
 import nibabel as nb
+import os
 from nipype.interfaces.base import (traits, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File)
 
@@ -39,13 +40,13 @@ class BinarizeSegmentation(BaseInterface):
         super(BinarizeSegmentation, self).__init__(**inputs)
 
     def _run_interface(self, runtime):
-        segments_data, segments_affine = self._get_inputs()
+        segments_data, segments_affine, output_filename  = self._get_inputs()
 
         mapper = np.vectorize(lambda orig_val: orig_val not in self.inputs.false_values)
         bimap = mapper(segments_data)
 
         bimap_nii = nb.Nifti1Image(bimap.astype(int), segments_affine)
-        nb.nifti1.save(bimap_nii, self.inputs.out_mask)
+        nb.nifti1.save(bimap_nii, output_filename)
 
         return runtime
 
@@ -54,6 +55,7 @@ class BinarizeSegmentation(BaseInterface):
         segments_nii = nb.load(self.inputs.in_segments)
         segments_data = segments_nii.get_data()
         segments_affine = segments_nii.affine
+        output_filename = os.path.join(os.getcwd(), self.inputs.out_mask)
 
         if str(segments_data.dtype)[:2] == 'int':
             raise ValueError('Segmentation must have integer values. Input {} had {}s'
@@ -62,7 +64,7 @@ class BinarizeSegmentation(BaseInterface):
             raise ValueError('Segmentation must be 3-D. Input {} has shape {}'
                              .format(self.inputs.in_segments, segments_data.shape))
 
-        return segments_data, segments_affine
+        return segments_data, segments_affine, output_filename
 
     def _list_outputs(self):
         return {'out_mask': self.inputs.out_mask}
