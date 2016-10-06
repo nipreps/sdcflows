@@ -1,4 +1,5 @@
 ''' Testing module for fmriprep.workflows.confounds '''
+import warnings
 import logging
 import mock
 import pandas as pd
@@ -39,8 +40,11 @@ class TestConfounds(TestWorkflow):
         dvars = "signals.tsv"
 
         # run & assert
-        with self.assertRaisesRegex(RuntimeError, "confound"):
-            _gather_confounds(signals, dvars)
+        with warnings.catch_warnings(): # assertRaisesRegexp is deprecated in python3
+            warnings.simplefilter('ignore')
+            with self.assertRaisesRegexp(RuntimeError, "confound"):
+                _gather_confounds(signals, dvars)
+
 
     @mock.patch('pandas.read_csv')
     @mock.patch.object(pd.DataFrame, 'to_csv', autospec=True)
