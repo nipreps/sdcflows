@@ -35,6 +35,7 @@ class BinarizeSegmentation(BaseInterface):
     '''
     input_spec = BinarizeSegmentationInputSpec
     output_spec = BinarizeSegmentationOutputSpec
+    _results = {}
 
     def __init__(self, **inputs):
         super(BinarizeSegmentation, self).__init__(**inputs)
@@ -47,6 +48,7 @@ class BinarizeSegmentation(BaseInterface):
 
         bimap_nii = nb.Nifti1Image(bimap.astype(int), segments_affine)
         nb.nifti1.save(bimap_nii, output_filename)
+        self._results['out_mask'] = output_filename
 
         return runtime
 
@@ -67,4 +69,4 @@ class BinarizeSegmentation(BaseInterface):
         return segments_data, segments_affine, output_filename
 
     def _list_outputs(self):
-        return {'out_mask': self.inputs.out_mask}
+        return self._results

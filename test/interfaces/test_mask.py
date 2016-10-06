@@ -26,13 +26,17 @@ class TestMask(unittest.TestCase):
         it will probably catch errors but not guaranteed '''
         # set up
         segmentation = 'thisfiletotallyexists'
-        out_file = 'thisonetoo'
+        out_file = 'thisonedoesnot.yet'
 
         # run
-        BinarizeSegmentation(in_segments=segmentation, false_values=[0, 1], out_mask=out_file).run()
+        bi = BinarizeSegmentation(in_segments=segmentation, false_values=[0, 1], out_mask=out_file)
+        bi.run()
 
         # assert
         dummy_mask = nb.Nifti1Image(np.array([]), np.eye(4))
 
         mock_load.assert_called_once_with(segmentation)
-        mock_save.assert_called_once_with(dummy_mask, os.path.join(os.getcwd(), out_file))
+
+        out_file_abs = os.path.abspath(out_file)
+        mock_save.assert_called_once_with(dummy_mask, out_file_abs)
+        self.assertEqual(bi.aggregate_outputs().get()['out_mask'], out_file_abs)
