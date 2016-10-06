@@ -87,11 +87,12 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     return workflow
 
-def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None):
+def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None, acompcor=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
 
-    all_files = [confound for confound in [signals, dvars] if confound != None]
+    all_files = [confound for confound in [signals, dvars, frame_displace, tcompcor, acompcor]
+                 if confound != None]
 
     # make sure there weren't any name conflicts
     if len(all_files) != len(set(all_files)):
