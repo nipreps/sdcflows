@@ -19,9 +19,6 @@ class TestMask(unittest.TestCase):
     @mock.patch.object(nb.nifti1, 'save')
     @mock.patch.object(os.path, 'isfile', return_value=True)
     def test_binarize_segmentation(self, mock_file_exists, mock_save, mock_load):
-        '''
-        mocked an equality function for niftis.
-        it will probably catch errors but not guaranteed '''
         # set up
         segmentation = 'thisfiletotallyexists'
         out_file = 'thisonedoesnot.yet'
