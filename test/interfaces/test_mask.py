@@ -4,10 +4,14 @@
 import os
 import unittest
 import mock
+import logging
+
 import nibabel as nb
 import numpy as np
 
 from fmriprep.interfaces.mask import BinarizeSegmentation
+
+logging.disable(logging.INFO)
 
 class TestMask(unittest.TestCase):
     ''' Testing class for fmriprep.interfaces.mask '''

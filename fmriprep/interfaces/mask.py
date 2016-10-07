@@ -1,12 +1,17 @@
 ''' Utility functions related to masks and masking '''
 #!/usr/bin/env python
+import os
+import logging
+
 import numpy as np
 import nibabel as nb
-import os
 from nipype.interfaces.base import (traits, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File)
 
+LOG = logging.getLogger('interface')
+
 class BinarizeSegmentationInputSpec(BaseInterfaceInputSpec):
+    ''' Takes an integer segmentation (e.g., from FAST) and binarizes it. '''
     in_segments = File(exists=True, mandatory=True, desc='3d tissue class segmentation. '
                        'Values are integers')
     false_values = traits.List([0], usedefault=True,
@@ -37,11 +42,8 @@ class BinarizeSegmentation(BaseInterface):
     output_spec = BinarizeSegmentationOutputSpec
     _results = {}
 
-    def __init__(self, **inputs):
-        super(BinarizeSegmentation, self).__init__(**inputs)
-
     def _run_interface(self, runtime):
-        segments_data, segments_affine, output_filename  = self._get_inputs()
+        segments_data, segments_affine, output_filename = self._get_inputs()
 
         mapper = np.vectorize(lambda orig_val: orig_val not in self.inputs.false_values)
         bimap = mapper(segments_data)
@@ -49,6 +51,9 @@ class BinarizeSegmentation(BaseInterface):
         bimap_nii = nb.Nifti1Image(bimap.astype(int), segments_affine)
         nb.nifti1.save(bimap_nii, output_filename)
         self._results['out_mask'] = output_filename
+
+        LOG.debug('BinarizeSegmentation interface saved mask of shape %s to file %s',
+                  bimap.shape, output_filename)
 
         return runtime
 
@@ -58,6 +63,9 @@ class BinarizeSegmentation(BaseInterface):
         segments_data = segments_nii.get_data()
         segments_affine = segments_nii.affine
         output_filename = os.path.join(os.getcwd(), self.inputs.out_mask)
+
+        LOG.debug('BinarizeSegmentation interface loaded segments data from %s of shape %s',
+                  self.inputs.in_segments, segments_data.shape)
 
         if str(segments_data.dtype)[:2] == 'int':
             raise ValueError('Segmentation must have integer values. Input {} had {}s'
