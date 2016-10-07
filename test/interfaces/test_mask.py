@@ -18,9 +18,7 @@ class TestMask(unittest.TestCase):
     @mock.patch.object(nb, 'load', return_value=segmentation_nii)
     @mock.patch.object(nb.nifti1, 'save')
     @mock.patch.object(os.path, 'isfile', return_value=True)
-    @mock.patch.object(nb.nifti1.Nifti1Image, '__eq__', autospec=True,
-                       side_effect=lambda me: me.get_data().sum() == 4)
-    def test_binarize_segmentation(self, nii_eq, mock_file_exists, mock_save, mock_load):
+    def test_binarize_segmentation(self, mock_file_exists, mock_save, mock_load):
         '''
         mocked an equality function for niftis.
         it will probably catch errors but not guaranteed '''
@@ -33,10 +31,13 @@ class TestMask(unittest.TestCase):
         bi.run()
 
         # assert
-        dummy_mask = nb.Nifti1Image(np.array([]), np.eye(4))
-
         mock_load.assert_called_once_with(segmentation)
 
+        mask, filename = mock_save.call_args[0]
+
         out_file_abs = os.path.abspath(out_file)
-        mock_save.assert_called_once_with(dummy_mask, out_file_abs)
+        self.assertEqual(filename, out_file_abs)
         self.assertEqual(bi.aggregate_outputs().get()['out_mask'], out_file_abs)
+
+        self.assertTrue(np.allclose(mask.get_data(), np.array([[[0, 0], [1, 1]], [[1, 1], [0, 0]]]),
+                                    atol=0, rtol=0)) # all elements of each array are equal
