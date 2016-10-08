@@ -23,14 +23,13 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transforms to the images ('inputnode.t1_transform', 'inputnode.epi_transform').
-        If either transform field is not set, the identity transform is applied
+        If no transform is needed, the transform fields may be set to 'identity'.
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
                                                           'epi_transform']),
-                        mandatory_inputs=False, # in reality all except *_transform are required
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
