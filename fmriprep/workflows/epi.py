@@ -110,7 +110,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         fields=['epi', 'epi_mean', 't1_brain', 't1_seg']), name='inputnode'
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_epi_to_t1']),
+        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi']),
         name='outputnode'
     )
 
