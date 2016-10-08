@@ -2,7 +2,7 @@
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from nipype.interfaces import utility, nilearn
+from nipype.interfaces import utility, nilearn, ants
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
@@ -34,6 +34,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
 
+    # registration using ANTs
+    t1_registration = pe.Node(ants.ApplyTransforms(), name='TransformT1')
+    epi_registration = pe.Node(ants.ApplyTransforms(), name='TransformEPI')
+
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
                                                class_labels=FAST_DEFAULT_SEGS),
@@ -63,16 +67,26 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     workflow = pe.Workflow(name=name)
     workflow.connect([
-        # connect inputnode to each confound node
-        (inputnode, signals, [('fmri_file', 'in_file'),
-                              ('t1_seg', 'label_files')]),
+        # connect inputnode to each non-anatomical confound node
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
         (inputnode, frame_displace, [('movpar_file', 'in_plots')]),
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
-        (inputnode, acompcor_roi, [('t1_seg', 'in_segments')]),
+
+        # anatomically-based confound computation requires coregistration
+        (inputnode, t1_registration, [('t1_seg', 'input_image'),
+                                      ('t1_transform', 'transforms'),
+                                      ('fmri_file', 'reference_image')]),
+        (inputnode, epi_registration, [('fmri_file', 'input_image'),
+                                       ('epi_transform', 'transforms'),
+                                       ('fmri_file', 'reference_image')]),
+        # anatomical confound: signal extraction
+        (epi_registration, signals, [('output_image', 'label_files')]),
+        (t1_registration, signals, [('output_image', 'in_file')]),
+        # anatomical confound: aCompCor
+        (epi_registration, acompcor, [('output_image', 'realigned_file')]),
+        (t1_registration, acompcor_roi, [('output_image', 'in_segments')]),
         (acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
-        (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
 
         # connect the confound nodes to the concatenate node
         (signals, concat, [('out_file', 'signals')]),
