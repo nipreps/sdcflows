@@ -25,7 +25,7 @@ dependencies:
 
   override:
     - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
-    - docker build -t poldracklab/fmriprep:latest .
+    - docker build --quiet -t poldracklab/fmriprep:latest .
     - mkdir -p $HOME/docker; docker save poldracklab/fmriprep:latest > $HOME/docker/image.tar
 test:
   override:
