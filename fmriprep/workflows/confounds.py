@@ -29,7 +29,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'epi_transform']),
+                                                          'epi_transform', 'reference_image']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
@@ -76,10 +76,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         # anatomically-based confound computation requires coregistration
         (inputnode, t1_registration, [('t1_seg', 'input_image'),
                                       ('t1_transform', 'transforms'),
-                                      ('fmri_file', 'reference_image')]),
+                                      ('reference_image', 'reference_image')]),
         (inputnode, epi_registration, [('fmri_file', 'input_image'),
                                        ('epi_transform', 'transforms'),
-                                       ('fmri_file', 'reference_image')]),
+                                       ('reference_image', 'reference_image')]),
         # anatomical confound: signal extraction
         (epi_registration, signals, [('output_image', 'label_files')]),
         (t1_registration, signals, [('output_image', 'in_file')]),

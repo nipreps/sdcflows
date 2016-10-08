@@ -60,5 +60,6 @@ class TestBase(TestWorkflow):
             'BIDSDatasource': ['subject_data'],
             'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file',
                                    'inputnode.t1_seg', 'inputnode.epi_mask',
+                                   'inputnode.reference_image',
                                    'inputnode.t1_transform', 'inputnode.epi_transform']
         })
