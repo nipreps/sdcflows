@@ -43,8 +43,6 @@ class BinarizeSegmentation(BaseInterface):
     _results = {}
 
     def _run_interface(self, runtime):
-        LOG.setLevel(logging.DEBUG)
-
         segments_data, segments_affine, output_filename = self._get_inputs()
 
         mapper = np.vectorize(lambda orig_val: orig_val not in self.inputs.false_values)
