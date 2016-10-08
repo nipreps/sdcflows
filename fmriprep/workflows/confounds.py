@@ -81,8 +81,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                        ('epi_transform', 'transforms'),
                                        ('reference_image', 'reference_image')]),
         # anatomical confound: signal extraction
-        (epi_registration, signals, [('output_image', 'label_files')]),
-        (t1_registration, signals, [('output_image', 'in_file')]),
+        (t1_registration, signals, [('output_image', 'label_files')]),
+        (epi_registration, signals, [('output_image', 'in_file')]),
         # anatomical confound: aCompCor
         (epi_registration, acompcor, [('output_image', 'realigned_file')]),
         (t1_registration, acompcor_roi, [('output_image', 'in_segments')]),
