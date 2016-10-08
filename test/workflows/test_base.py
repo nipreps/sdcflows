@@ -1,6 +1,5 @@
 ''' Testing module for fmriprep.workflows.base '''
 import mock
-import unittest
 
 from fmriprep.workflows.base import wf_ds054_type, wf_ds005_type
 from test.workflows.utilities import TestWorkflow
@@ -8,7 +7,6 @@ from test.workflows.utilities import TestWorkflow
 @mock.patch('fmriprep.interfaces.BIDSDataGrabber') # no actual BIDS dir necessary
 class TestBase(TestWorkflow):
 
-    @unittest.skip('in progress')
     def test_wf_ds054_type(self, _):
         # set up
         mock_subject_data = {'t1w': ['um'], 'sbref': ['um'], 'func': 'um'}
