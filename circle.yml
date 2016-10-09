@@ -39,3 +39,4 @@ general:
   artifacts:
     - "~/ds054/out"
     - "~/ds005/out"
+    - "/scratch/work/workflow_enumerator"
