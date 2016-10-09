@@ -15,7 +15,7 @@ dependencies:
   pre:
     - mkdir -p $HOME/data
     - mkdir -p $HOME/docker
-    - mkdir -p $HOME/ds005/out $HOME/ds054/out
+    - mkdir -p $HOME/ds005/out $HOME/ds054/out $HOME/ds005/work $HOME/ds054/work
     # Download test data
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
@@ -30,13 +30,12 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -w work/ -t ds054 --debug :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds054:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -w /root/work/ -t ds054 --debug :
         timeout: 4800
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds005/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/ participant -w work/ -t ds005 --debug :
+    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds005:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/out participant -w /out/work/ -t ds005 --debug :
         timeout: 4800
 
 general:
   artifacts:
-    - "~/ds054/out"
-    - "~/ds005/out"
-    - "/scratch/work/workflow_enumerator"
+    - "~/ds054"
+    - "~/ds005"
