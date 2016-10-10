@@ -10,7 +10,7 @@ dependencies:
   cache_directories:
     - "~/data"
     - "~/docker"
-    - "~/.cache/stanford-crn"
+    #    - "~/.cache/stanford-crn"
 
   pre:
     - mkdir -p $HOME/data
