@@ -37,5 +37,5 @@ test:
 
 general:
   artifacts:
-    - "~/ds054"
-    - "~/ds005"
+    - "~/ds054/work/workflow_enumerator/100185/EPIUnwarpWorkflow/SDC_unwarp/"
+    #    - "~/ds005"
