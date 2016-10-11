@@ -185,8 +185,12 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     # Write corrected file in the designated output dir
     ds_png = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-            suffix='epi_to_t1'), name='DerivativesPNG')
+        DerivativesDataSink(
+            base_directory=op.join(settings['output_dir'], 'images'),
+            suffix='epi_to_t1'
+        ),
+        name='DerivativesPNG'
+    )
 
     workflow.connect([
         (flt_bbr, png_sbref_t1, [('out_file', 'overlay_file')]),
@@ -264,16 +268,22 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
 
     mask_merge_tfms = pe.Node(niu.Merge(2), name='MaskMergeTfms')
-    mask_mni_tfm = pe.Node(ants.ApplyTransforms(interpolation='NearestNeighbor'),
-                           name='MaskToMNI')
+    mask_mni_tfm = pe.Node(
+        ants.ApplyTransforms(interpolation='NearestNeighbor'),
+        name='MaskToMNI'
+    )
 
     # Write corrected file in the designated output dir
     ds_mni = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-            suffix='hmc_mni'), name='DerivativesHMCMNI')
+                            suffix='hmc_mni'),
+        name='DerivativesHMCMNI'
+    )
     ds_mni_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-            suffix='hmc_mni_bmask'), name='DerivativesHMCMNImask')
+                            suffix='hmc_mni_bmask'),
+        name='DerivativesHMCMNImask'
+    )
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
