@@ -2,5 +2,3 @@
 source /etc/fsl/fsl.sh
 source /etc/afni/afni.sh
 fmriprep $@
-
-chmod 755 -R /out/*
