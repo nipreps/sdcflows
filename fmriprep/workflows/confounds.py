@@ -35,7 +35,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.Node(ants.ApplyTransforms(), name='TransformT1')
+    t1_registration = pe.Node(ants.ApplyTransforms(interpolation='MultiLabel'), name='TransformT1')
     epi_registration = pe.Node(ants.ApplyTransforms(), name='TransformEPI')
 
     # Global and segment regressors
