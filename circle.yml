@@ -37,7 +37,7 @@ test:
 
 general:
   artifacts:
-    - "~/ds054/work/workflow_enumerator/100185/t1_preprocessing/"
+    - "~/ds054/work/workflow_enumerator/100185/t1w_preprocessing/"
     - "~/ds054/work/workflow_enumerator/100185/SBrefPreprocessing/"
     - "~/ds054/work/workflow_enumerator/100185/SBrefSpatialNormalization/"
     - "~/ds054/work/workflow_enumerator/100185/ConfoundDiscoverer/_epi_..data..ds054..sub-100185..func..sub-100185_task-machinegame_run-01_bold.nii.gz/"
