@@ -3,11 +3,21 @@ from glob import glob
 import itertools
 import json
 import os
+from os import path as op
+from errno import EEXIST
 import re
 
 from bids.grabbids import BIDSLayout
 
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
+
+def make_folder(folder):
+    try:
+        os.makedirs(folder)
+    except OSError as exc:
+        if exc.errno == EEXIST:
+            pass
+    return folder
 
 def gen_list(inlist, base=1):
     return range(base, len(inlist) + base)
