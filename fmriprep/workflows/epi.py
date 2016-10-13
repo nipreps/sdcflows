@@ -228,7 +228,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'sbref_brain', 'sbref_brain_mask']),
+        fields=['epi', 'epi_brain', 'sbref_brain', 'sbref_brain_mask']),
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
@@ -242,6 +242,11 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
     epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
+
+    ds_sbref = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+            suffix='hmc_sbref'), name='DerivHMC_SBRef')
+
     workflow.connect([
         (inputnode, epi_split, [('epi_brain', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
@@ -253,7 +258,9 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
         (epi_xfm, epi_merge, [('out_file', 'in_files')]),
         (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
-        (epi_merge, outputnode, [('merged_file', 'epi_registered')])
+        (epi_merge, outputnode, [('merged_file', 'epi_registered')]),
+        (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
+        (inputnode, ds_sbref, [('epi', 'source_file')])
     ])
 
     #  Plot for report
