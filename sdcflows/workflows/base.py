@@ -47,7 +47,7 @@ def fieldmap_decider(fieldmap_data, settings):
     for filename in subject_data['fieldmaps']:
         if is_fmap_type('phasediff', filename): # 8.9.1
             from fmriprep.workflows.fieldmap.phase_diff_and_magnitudes import phase_diff_and_magnitudes
-            return phase_diff_and_magnitudes()
+            return phase_diff_and_magnitudes(settings)
         elif is_fmap_type('phase', filename): # 8.9.2
             raise NotImplementedError("No workflow for phase fieldmap data")
         elif is_fmap_type('fieldmap', filename): # 8.9.3

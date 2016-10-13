@@ -94,12 +94,15 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
         function=stripped_brain_overlay), name='PNG_SE_corr')
     se_png.inputs.out_file = 'corrected_SE_and_mask.png'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
-                       name='datasink', parameterization=False)
+    ds_se_png = pe.Node(
+        nio.DataSink(base_directory=op.join(settings['out_dir'], 'images')),
+        name='dsSEPNG',
+        parameterization=False
+    )
     workflow.connect([
         (unwarp_mag, se_png, [('out_corrected', 'overlay_file')]),
         (mag_bet, se_png, [('mask_file', 'in_file')]),
-        (se_png, datasink, [('out_file', '@corrected_SE_and_mask')])
+        (se_png, ds_se_png, [('out_file', '@corrected_SE_and_mask')])
     ])
 
     return workflow
