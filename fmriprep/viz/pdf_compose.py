@@ -10,10 +10,11 @@ def generate_report(output_file, first_plot, second_plot, third_plot,
                     fourth_plot, fifth_plot, sixth_plot, seventh_plot,
                     eighth_plot, t1_2_mni_plot=None):
     import os.path
+
     import pylab as plt
-    from matplotlib.gridspec import GridSpec
-    from matplotlib.backends.backend_pdf import PdfPages
     import matplotlib.image as mimage
+    from matplotlib.backends.backend_pdf import PdfPages
+    from matplotlib.gridspec import GridSpec
 
     plots = [first_plot, second_plot, third_plot, fourth_plot,
              fifth_plot, sixth_plot, seventh_plot, eighth_plot]
