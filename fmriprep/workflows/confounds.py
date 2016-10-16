@@ -2,7 +2,7 @@
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from nipype.interfaces import utility, nilearn, ants
+from nipype.interfaces import utility, nilearn, ants, c3
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
@@ -23,6 +23,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transforms to the images ('inputnode.t1_transform', 'inputnode.epi_transform').
+        Transforms are assumed to be formatted as fsl affines.
         If no transform is needed, the transform fields may be set to 'identity'.
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
@@ -34,9 +35,13 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
 
+    # convert affine formats to ITK
+    t1_itk_fmt = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True), name='T1ITKFmt')
+    epi_itk_fmt = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True), name='EPIITKFmt')
+
     # registration using ANTs
     t1_registration = pe.Node(ants.ApplyTransforms(interpolation='MultiLabel'), name='TransformT1')
-    epi_registration = pe.Node(ants.ApplyTransforms(), name='TransformEPI')
+    epi_registration = pe.Node(ants.WarpTimeSeriesImageMultiTransform(), name='TransformEPI')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
@@ -74,12 +79,20 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
 
         # anatomically-based confound computation requires coregistration
-        (inputnode, t1_registration, [('t1_seg', 'input_image'),
-                                      ('t1_transform', 'transforms'),
-                                      ('reference_image', 'reference_image')]),
+        (inputnode, t1_itk_fmt, [('t1_seg', 'source_file'),
+                                 ('reference_image', 'reference_file'),
+                                 ('t1_transform', 'transform_file')]),
+        (t1_itk_fmt, t1_registration, [('itk_transform', 'transforms')]),
+        (inputnode, t1_registration, [('reference_image', 'reference_image'),
+                                      ('t1_seg', 'input_image')]),
+
+        (inputnode, epi_itk_fmt, [('fmri_file', 'source_file'),
+                                  ('reference_image', 'reference_file'),
+                                  ('epi_transform', 'transform_file')]),
+        (epi_itk_fmt, epi_registration, [('itk_transform', 'transformation_series')]),
         (inputnode, epi_registration, [('fmri_file', 'input_image'),
-                                       ('epi_transform', 'transforms'),
                                        ('reference_image', 'reference_image')]),
+
         # anatomical confound: signal extraction
         (t1_registration, signals, [('output_image', 'label_files')]),
         (epi_registration, signals, [('output_image', 'in_file')]),
@@ -107,21 +120,17 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None, acompcor=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
+    import os.path as op
 
     all_files = [confound for confound in [signals, dvars, frame_displace, tcompcor, acompcor]
                  if confound != None]
-
-    # make sure there weren't any name conflicts
-    if len(all_files) != len(set(all_files)):
-        raise RuntimeError('A confound-calculating node over-wrote another confound-calculating'
-                           'node\'s results! Check ' + str(all_files))
 
     confounds = pd.DataFrame()
     for file_name in all_files: # assumes they all have headings already
         new = pd.read_csv(file_name, sep="\t")
         confounds = pd.concat((confounds, new), axis=1)
 
-    combined_out = 'confounds.tsv'
-    confounds.to_csv(combined_out, sep="\t")
+    combined_out = op.abspath('confounds.tsv')
+    confounds.to_csv(combined_out, sep=str("\t"))
 
     return combined_out
