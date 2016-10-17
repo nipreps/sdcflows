@@ -36,7 +36,7 @@ class BinarizeSegmentation(BaseInterface):
     >>> biseg.run()
 
     Use case: Get white matter and CSF (as for aCompCor)
-    >>> BinarizeSegmentation(in_seg='fast_out.nii', false_values=[0, 1]).run() # check
+    >>> BinarizeSegmentation(in_seg='fast_out.nii', false_values=[1, 3]).run() # check
     '''
     input_spec = BinarizeSegmentationInputSpec
     output_spec = BinarizeSegmentationOutputSpec

@@ -9,9 +9,7 @@ from nipype.pipeline import engine as pe
 from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
-# this should be moved to nipype. Won't do it now bc of slow PR approval there
-# I'm not 100% sure the order is correct
-FAST_DEFAULT_SEGS = ['CSF', 'gray matter', 'white matter']
+FAST_DEFAULT_SEGS = ['white matter', 'gray matter', 'CSF']
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
@@ -55,7 +53,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     # CompCor
     tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
     acompcor_roi = pe.Node(mask.BinarizeSegmentation(
-        false_values=[FAST_DEFAULT_SEGS.index('gray matter'), 0]), # 0 denotes background
+        false_values=[FAST_DEFAULT_SEGS.index('gray matter') + 1, 0]), # 0 denotes background
                            name="CalcaCompCorROI")
     acompcor = pe.Node(confounds.ACompCor(components_file='acompcor.tsv'), name="aCompCor")
 
