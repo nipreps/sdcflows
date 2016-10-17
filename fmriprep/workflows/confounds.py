@@ -67,7 +67,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
     ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
-                                                          suffix='confounds.tsv'),
+                                                          suffix='confounds'),
                            name="DerivConfounds")
 
     workflow = pe.Workflow(name=name)
