@@ -1,7 +1,8 @@
 ''' Testing module for fmriprep.workflows.confounds '''
-import warnings
 import logging
+import os
 import mock
+
 import pandas as pd
 
 from fmriprep.workflows.confounds import discover_wf, _gather_confounds
@@ -34,18 +35,6 @@ class TestConfounds(TestWorkflow):
                                           'tCompCor': ['components_file'],
                                           'aCompCor': ['components_file', 'mask_file'], })
 
-    def test_gather_confounds_err(self):
-        # set up
-        signals = "signals.tsv"
-        dvars = "signals.tsv"
-
-        # run & assert
-        with warnings.catch_warnings(): # assertRaisesRegexp is deprecated in python3
-            warnings.simplefilter('ignore')
-            with self.assertRaisesRegexp(RuntimeError, "confound"):
-                _gather_confounds(signals, dvars)
-
-
     @mock.patch('pandas.read_csv')
     @mock.patch.object(pd.DataFrame, 'to_csv', autospec=True)
     @mock.patch.object(pd.DataFrame, '__eq__', autospec=True,
@@ -65,4 +54,4 @@ class TestConfounds(TestWorkflow):
         mock_csv_reader.assert_has_calls(calls)
 
         confounds = pd.DataFrame({'a': [0.1], 'b': [0.2]})
-        mock_df.assert_called_once_with(confounds, "confounds.tsv", sep="\t")
+        mock_df.assert_called_once_with(confounds, os.path.abspath("confounds.tsv"), sep="\t")
