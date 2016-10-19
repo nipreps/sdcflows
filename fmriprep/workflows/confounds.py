@@ -3,6 +3,8 @@ Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
 from nipype.interfaces import utility, nilearn, ants, c3
+from nipype.interfaces.base import traits
+from nipype.interfaces.ants.resampling import WarpTimeSeriesImageMultiTransformInputSpec
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
@@ -10,6 +12,7 @@ from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
 FAST_DEFAULT_SEGS = ['white matter', 'gray matter', 'CSF']
+NO_TRANSFORM = 'no_transform'
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
@@ -35,7 +38,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     # registration using ANTs
     t1_registration = pe.Node(ants.ApplyTransforms(interpolation='MultiLabel'), name='TransformT1')
-    epi_registration = pe.Node(ants.WarpTimeSeriesImageMultiTransform(), name='TransformEPI')
+    epi_registration = pe.Node(SkipEPIIdentityTransform(), name='TransformEPI')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
@@ -121,3 +124,27 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
     confounds.to_csv(combined_out, sep=str("\t"))
 
     return combined_out
+
+# Work-around to make memory/space usage more efficient
+class SkipEPIIdentityTransformInputSpec(WarpTimeSeriesImageMultiTransformInputSpec):
+    input_image = traits.File(copyfile=False, desc='make a symlink instead of copyihg the file')
+    transformation_series = traits.Either(
+        WarpTimeSeriesImageMultiTransformInputSpec().transformation_series,
+        traits.Enum(NO_TRANSFORM),
+        desc='If NO_TRANSFORM, do nothing; else use ants.WarpTimeSeriesImageMultiTransform')
+
+class SkipEPIIdentityTransform(ants.WarpTimeSeriesImageMultiTransform):
+    input_spec = SkipEPIIdentityTransformInputSpec
+
+    def _run_interface(self, runtime):
+        self._results = {}
+        if self.inputs.transformation_series == NO_TRANSFORM:
+            # pass on the input filename w/o copying or any manipulation
+            self._results['output_image'] = self.inputs.input_image
+        else: # there is a transform to perform; pass everything on to WarpTimeSeriesImageMultiTransform
+            super(SkipEPIIdentityTransform, self)._run_interface(runtime)
+            self._results = super(SkipEPIIdentityTransform, self)._list_outputs()
+        return runtime
+
+    def _list_outputs(self):
+        return self._results
