@@ -80,7 +80,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['sbref_brain', 't1_brain', 't1_seg']),
                         name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['mat_sbr_to_t1', 'mat_t1_to_sbr']),
+    outputnode = pe.Node(niu.IdentityInterface(fields=['mat_sbr_to_t1', 'mat_t1_to_sbr', 'itk_t1_to_sbr']),
                          name='outputnode')
 
     # Make sure sbref is in RAS coordinates
@@ -99,6 +99,9 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
+    # transform inv to itk format
+    invt_itk_formatter = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True))
+
     workflow.connect([
         (inputnode, reorient, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
@@ -111,6 +114,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')])
+
+        (invt_bbr, invt_itk_formatter, [('out_file', 'transform_file')]),
+        (inputnode, invt_itk_formatter, [('t1_seg', 'source_file'),
+                                        ('sbref_brain', 'reference_file')]),
+        (invt_itk_formatter, outputnode, [('itk_transform', 'itk_t1_to_sbr')])
     ])
 
     # Plots for report

@@ -21,7 +21,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transforms to the images ('inputnode.t1_transform', 'inputnode.epi_transform').
-        Transforms are assumed to be formatted as fsl affines.
+        Transforms are assumed to be ITK/ANTs formatted
         If no transform is needed, the transform fields may be set to 'identity'.
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
@@ -32,10 +32,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
-
-    # convert affine formats to ITK
-    t1_itk_fmt = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True), name='T1ITKFmt')
-    epi_itk_fmt = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True), name='EPIITKFmt')
 
     # registration using ANTs
     t1_registration = pe.Node(ants.ApplyTransforms(interpolation='MultiLabel'), name='TransformT1')
@@ -77,19 +73,12 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
 
         # anatomically-based confound computation requires coregistration
-        (inputnode, t1_itk_fmt, [('t1_seg', 'source_file'),
-                                 ('reference_image', 'reference_file'),
-                                 ('t1_transform', 'transform_file')]),
-        (t1_itk_fmt, t1_registration, [('itk_transform', 'transforms')]),
         (inputnode, t1_registration, [('reference_image', 'reference_image'),
-                                      ('t1_seg', 'input_image')]),
-
-        (inputnode, epi_itk_fmt, [('fmri_file', 'source_file'),
-                                  ('reference_image', 'reference_file'),
-                                  ('epi_transform', 'transform_file')]),
-        (epi_itk_fmt, epi_registration, [('itk_transform', 'transformation_series')]),
+                                      ('t1_seg', 'input_image'),
+                                      ('t1_transform', 'transforms')]),
         (inputnode, epi_registration, [('fmri_file', 'input_image'),
-                                       ('reference_image', 'reference_image')]),
+                                       ('reference_image', 'reference_image'),
+                                       ('epi_transform', 'transformation_series')]),
 
         # anatomical confound: signal extraction
         (t1_registration, signals, [('output_image', 'label_files')]),

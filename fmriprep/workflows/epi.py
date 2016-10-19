@@ -203,12 +203,14 @@ def epi_sbref_registration(name='EPI_SBrefRegistration'):
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_brain', 'sbref_brain']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_registered', 'out_mat']), name='outputnode')
+        fields=['epi_registered', 'out_mat', 'out_itk']), name='outputnode')
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
     epi_sbref = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                         name='EPI2SBRefRegistration')
+
+    itk_formatter = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True))
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
@@ -224,7 +226,12 @@ def epi_sbref_registration(name='EPI_SBrefRegistration'):
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
         (epi_xfm, epi_merge, [('out_file', 'in_files')]),
         (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
-        (epi_merge, outputnode, [('merged_file', 'epi_registered')])
+        (epi_merge, outputnode, [('merged_file', 'epi_registered')]),
+
+        (epi_sbref, itk_formatter, [('out_matrix_file', 'transform_file')]),
+        (inputnode, itk_formatter, [('epi_brain', 'source_file'),
+                                    ('sbref_brain', 'reference_file')]),
+        (itk_formatter, outputnode, [('itk_transform', 'out_itk')])
     ])
     return workflow
 
