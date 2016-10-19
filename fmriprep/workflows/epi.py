@@ -210,7 +210,7 @@ def epi_sbref_registration(name='EPI_SBrefRegistration'):
     epi_sbref = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                         name='EPI2SBRefRegistration')
 
-    itk_formatter = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True))
+    itk_formatter = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True), name='ITKFormatter')
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
