@@ -128,10 +128,8 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
 # Work-around to make memory/space usage more efficient
 class SkipEPIIdentityTransformInputSpec(WarpTimeSeriesImageMultiTransformInputSpec):
     input_image = traits.File(copyfile=False, desc='make a symlink instead of copyihg the file')
-    transformation_series = traits.Either(
-        WarpTimeSeriesImageMultiTransformInputSpec().transformation_series,
-        traits.Enum(NO_TRANSFORM),
-        desc='If NO_TRANSFORM, do nothing; else use ants.WarpTimeSeriesImageMultiTransform')
+    transformation_series = traits.Str(mandatory=True, desc='If NO_TRANSFORM, do nothing; '
+                                       'else use ants.WarpTimeSeriesImageMultiTransform')
 
 class SkipEPIIdentityTransform(ants.WarpTimeSeriesImageMultiTransform):
     input_spec = SkipEPIIdentityTransformInputSpec
