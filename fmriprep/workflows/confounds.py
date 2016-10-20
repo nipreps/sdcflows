@@ -2,9 +2,7 @@
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from nipype.interfaces import utility, nilearn, ants, c3
-from nipype.interfaces.base import traits
-from nipype.interfaces.ants.resampling import WarpTimeSeriesImageMultiTransformInputSpec
+from nipype.interfaces import utility, nilearn, ants
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
@@ -12,7 +10,6 @@ from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
 FAST_DEFAULT_SEGS = ['white matter', 'gray matter', 'CSF']
-NO_TRANSFORM = 'no_transform'
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
@@ -23,22 +20,23 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
-        applying the transforms to the images ('inputnode.t1_transform', 'inputnode.epi_transform').
-        Transforms are assumed to be ITK/ANTs formatted
-        If no transform is needed, the transform fields may be set to 'identity'.
+        applying the transforms to the images ('inputnode.t1_transform',
+        'inputnode.t1_transform_flags'). Transforms are assumed to be ITK/ANTs formatted and ordered
+        in order of application. The transform flags are flags for inverting the transforms: False,
+        no inversion; True, inversion.
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'epi_transform', 'reference_image']),
+                                                          't1_transform_flags', 'reference_image']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.Node(ants.ApplyTransforms(interpolation='MultiLabel'), name='TransformT1')
-    epi_registration = pe.Node(SkipEPIIdentityTransform(), name='TransformEPI')
+    t1_registration = pe.Node(ants.ApplyTransforms(interpolation='NearestNeighbor'),
+                              name='TransformT1')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
@@ -78,16 +76,15 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         # anatomically-based confound computation requires coregistration
         (inputnode, t1_registration, [('reference_image', 'reference_image'),
                                       ('t1_seg', 'input_image'),
-                                      ('t1_transform', 'transforms')]),
-        (inputnode, epi_registration, [('fmri_file', 'input_image'),
-                                       ('reference_image', 'reference_image'),
-                                       ('epi_transform', 'transformation_series')]),
+                                      (('t1_transform', reverse_order), 'transforms'),
+                                      (('t1_transform_flags', reverse_order),
+                                       'invert_transform_flags')]),
 
         # anatomical confound: signal extraction
         (t1_registration, signals, [('output_image', 'label_files')]),
-        (epi_registration, signals, [('output_image', 'in_file')]),
+        (inputnode, signals, [('fmri_file', 'in_file')]),
         # anatomical confound: aCompCor
-        (epi_registration, acompcor, [('output_image', 'realigned_file')]),
+        (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
         (t1_registration, acompcor_roi, [('output_image', 'in_segments')]),
         (acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
 
@@ -115,34 +112,16 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
     all_files = [confound for confound in [signals, dvars, frame_displace, tcompcor, acompcor]
                  if confound != None]
 
-    confounds = pd.DataFrame()
+    confounds_data = pd.DataFrame()
     for file_name in all_files: # assumes they all have headings already
         new = pd.read_csv(file_name, sep="\t")
-        confounds = pd.concat((confounds, new), axis=1)
+        confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
-    confounds.to_csv(combined_out, sep=str("\t"))
+    confounds_data.to_csv(combined_out, sep=str("\t"))
 
     return combined_out
 
-# Work-around to make memory/space usage more efficient
-class SkipEPIIdentityTransformInputSpec(WarpTimeSeriesImageMultiTransformInputSpec):
-    input_image = traits.File(copyfile=False, desc='make a symlink instead of copyihg the file')
-    transformation_series = traits.Str(mandatory=True, desc='If NO_TRANSFORM, do nothing; '
-                                       'else use ants.WarpTimeSeriesImageMultiTransform')
-
-class SkipEPIIdentityTransform(ants.WarpTimeSeriesImageMultiTransform):
-    input_spec = SkipEPIIdentityTransformInputSpec
-
-    def _run_interface(self, runtime):
-        self._results = {}
-        if self.inputs.transformation_series == NO_TRANSFORM:
-            # pass on the input filename w/o copying or any manipulation
-            self._results['output_image'] = self.inputs.input_image
-        else: # there is a transform to perform; pass everything on to WarpTimeSeriesImageMultiTransform
-            super(SkipEPIIdentityTransform, self)._run_interface(runtime)
-            self._results = super(SkipEPIIdentityTransform, self)._list_outputs()
-        return runtime
-
-    def _list_outputs(self):
-        return self._results
+def reverse_order(inlist):
+    inlist.reverse()
+    return inlist
