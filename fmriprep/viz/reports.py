@@ -1,12 +1,13 @@
+from __future__ import unicode_literals
+
+import codecs
 import json
 import re
 import os
 from os.path import join, exists, basename, dirname
 
-import matplotlib.image as mimage
-from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.gridspec import GridSpec
-from matplotlib import pyplot as plt
+import jinja2
+from pkg_resources import resource_filename as pkgrf
 
 class Element(object):
     
@@ -16,6 +17,8 @@ class Element(object):
         self.title = title
         self.description = description
         self.files = []
+        self.files_contents = []
+
 
 class SubReport(object):
 
@@ -25,10 +28,15 @@ class SubReport(object):
         for e in elements:
             element = Element(**e)
             self.elements.append(element)
-    
-    def generate_sub_report_pdf(self):
-        fig = plot.figure(figsize=(8.27, 11.69), dpi=300)
-        return fig
+
+    def generate_sub_report(self, report):
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(searchpath='/'),
+            trim_blocks=True, lstrip_blocks=True
+        )
+        sub_report_tpl = env.get_template('{}_tpl.html'.format(self.name))
+        sub_report_render = sub_report_tpl.render
+        return sub_report_render
 
 class Report(object):
     
@@ -53,10 +61,19 @@ class Report(object):
                 f = join(root, f)
                 for sub_report in self.sub_reports:
                     for element in sub_report.elements:
-                        if element.file_pattern.search(f):
+                        if element.file_pattern.search(f) and f.split('.')[-1] == 'svg':
                             element.files.append(f)
+                            with open(f) as fp:
+                                content = fp.read()
+                                content = '\n'.join(content.split('\n')[1:])
+                                element.files_contents.append(content)
 
     def generate_report(self):
-        full_report = PdfPages('report.pdf')
-        for sub_report in self.sub_reports:
-            full_report.savefiv(sub_report.generate_sub_report())
+        searchpath = pkgrf('fmriprep', '/')
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(searchpath=searchpath),
+            trim_blocks=True, lstrip_blocks=True
+        )
+        report_tpl = env.get_template('viz/report.tpl')
+        report_render = report_tpl.render(sub_reports=self.sub_reports)
+        return report_render
