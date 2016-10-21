@@ -123,5 +123,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
     return combined_out
 
 def reverse_order(inlist):
-    inlist.reverse()
+    ''' if a list, return the list in reversed order; else it is a single item, return it.'''
+    if isinstance(inlist, list):
+        inlist.reverse()
     return inlist
