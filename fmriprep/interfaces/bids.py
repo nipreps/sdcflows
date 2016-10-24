@@ -79,7 +79,7 @@ class BIDSDataGrabber(BaseInterface):
 class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     base_directory = traits.Directory(
         desc='Path to the base directory for storing data.')
-    in_file = InputMultiPath(File(), exists=True, mandatory=True,
+    in_file = InputMultiPath(File(exists=True), mandatory=True,
                              desc='the object to be saved')
     source_file = File(exists=True, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
@@ -125,6 +125,7 @@ class DerivativesDataSink(BaseInterface):
         out_path += '/{}'.format(mod)
 
         out_path = op.join(base_directory, out_path)
+
         make_folder(out_path)
 
         base_fname = op.join(out_path, fname)

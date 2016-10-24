@@ -1,0 +1,41 @@
+{
+"sub_reports":
+[
+    {
+        "name": "Skull Strippings",
+        "elements":
+        [
+            {
+                "name": "t1_stripped_overlay",
+                "file_pattern": "t1_stripped_overlay",
+                "title": "Skull Stripped T1",
+                "description": "Stripped T1 placed over an image of the unstripped T1"
+            },
+            {
+                "name": "sbref_stripped_overlay",
+                "file_pattern": "sbref_stripped_overlay",
+                "title": "Skull Stripped Sbref",
+                "description": "Unwarped and stripped sbref with a background image of an unwarped sbref"
+            },
+            {
+                "name": "fmap_magnitude_stripped_overlay",
+                "file_pattern": "fmap_magnitude_stripped_overlay",
+                "title": "Skull Stripped Field Map Magnitude",
+                "description": "Stripped fieldmap magnitude estimated phase-difference image and one or more magnitude images corresponding to two or more gradient echo sequence acquisitions"
+            }
+        ]
+    },
+    {
+        "name": "Registration Outputs",
+        "elements":
+        [
+            {
+                "name": "sbref_to_t1",
+                "file_pattern": "sbref_to_t1",
+                "title": "Sbref to T1",
+                "description": "Corrected sbref image registred into t1 space."
+            }
+        ]
+    }
+]
+}
