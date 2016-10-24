@@ -30,7 +30,8 @@ class TestFieldMap(TestWorkflow):
     def test_se_fmap_workflow(self):
         # SET UP INPUTS
         mock_settings = {
-            'work_dir': '.'
+            'work_dir': '.',
+            'output_dir': '.'
         }
 
         # SET UP EXPECTATIONS
