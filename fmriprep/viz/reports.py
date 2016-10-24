@@ -40,10 +40,12 @@ class SubReport(object):
 
 class Report(object):
     
-    def __init__(self, path, config):
+    def __init__(self, path, config, out_dir, out_filename='report.html'):
         self.root = path
         self.sub_reports = []
         self._load_config(config)
+        self.out_dir = out_dir
+        self.out_filename = out_filename
 
     def _load_config(self, config):
         if isinstance(config, str):
@@ -76,4 +78,6 @@ class Report(object):
         )
         report_tpl = env.get_template('viz/report.tpl')
         report_render = report_tpl.render(sub_reports=self.sub_reports)
+        with open(os.path.join(self.out_dir, self.out_filename), 'w') as fp:
+            fp.write(report_render)
         return report_render
