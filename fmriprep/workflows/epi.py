@@ -266,7 +266,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (epi_sbref, itk_formatter, [('out_matrix_file', 'transform_file')]),
         (inputnode, itk_formatter, [('epi_brain', 'source_file'),
                                     ('sbref_brain', 'reference_file')]),
-        (itk_formatter, outputnode, [('itk_transform', 'out_itk')])
+        (itk_formatter, outputnode, [('itk_transform', 'out_itk')]),
 
         (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
         (inputnode, ds_sbref, [('epi', 'source_file')])
