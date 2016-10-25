@@ -89,17 +89,20 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
     ])
 
     # Reports section
-    se_png = pe.Node(niu.Function(
+    se_svg = pe.Node(niu.Function(
         input_names=['in_file', 'overlay_file', 'out_file'], output_names=['out_file'],
-        function=stripped_brain_overlay), name='PNG_SE_corr')
-    se_png.inputs.out_file = 'corrected_SE_and_mask.png'
+        function=stripped_brain_overlay), name='SVG_SE_corr')
+    se_svg.inputs.out_file = 'corrected_SE_and_mask.svg'
 
-    datasink = pe.Node(nio.DataSink(base_directory=op.join(settings['work_dir'], 'images')),
-                       name='datasink', parameterization=False)
+    ds_se_svg = pe.Node(
+        nio.DataSink(base_directory=op.join(settings['output_dir'], 'images')),
+        name='dsSESVG',
+        parameterization=False
+    )
     workflow.connect([
-        (unwarp_mag, se_png, [('out_corrected', 'overlay_file')]),
-        (mag_bet, se_png, [('mask_file', 'in_file')]),
-        (se_png, datasink, [('out_file', '@corrected_SE_and_mask')])
+        (unwarp_mag, se_svg, [('out_corrected', 'overlay_file')]),
+        (mag_bet, se_svg, [('mask_file', 'in_file')]),
+        (se_svg, ds_se_svg, [('out_file', '@corrected_SE_and_mask')])
     ])
 
     return workflow
