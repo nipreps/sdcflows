@@ -18,6 +18,7 @@ class Element(object):
         self.description = description
         self.files = []
         self.files_contents = []
+        self.files_subjects = []
 
 
 class SubReport(object):
@@ -81,3 +82,10 @@ class Report(object):
         with open(os.path.join(self.out_dir, self.out_filename), 'w') as fp:
             fp.write(report_render)
         return report_render
+
+def run_reports():
+    path = pkgrf('fmriprep', '../out/images/')
+    out_dir = pkgrf('fmriprep', '../out/')
+    config = pkgrf('fmriprep', 'viz/config.json')
+    report = Report(path, config, out_dir)
+    report.generate_report()

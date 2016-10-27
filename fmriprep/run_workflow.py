@@ -17,6 +17,7 @@ from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
 
+
 def main():
     """Entry point"""
     from fmriprep import __version__
@@ -70,6 +71,7 @@ def create_workflow(opts):
     import logging
     from nipype import config as ncfg
     from fmriprep.utils import make_folder
+    from fmriprep.viz.reports import run_reports
     from fmriprep.workflows import base as fwb
     from fmriprep.workflows.base import base_workflow_enumerator
 
@@ -142,6 +144,8 @@ def create_workflow(opts):
 
     if opts.write_graph:
         preproc_wf.write_graph()
+
+    run_reports()
 
 if __name__ == '__main__':
     main()
