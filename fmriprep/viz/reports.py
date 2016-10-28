@@ -48,8 +48,11 @@ class Report(object):
         self.out_filename = out_filename
 
     def _load_config(self, config):
-        if isinstance(config, str):
+        try:
             config = json.load(open(config, 'r'))
+        except Exception as e:
+            print(e)
+            return
 
         for e in config['sub_reports']:
             sub_report = SubReport(**e)
