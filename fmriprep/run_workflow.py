@@ -145,7 +145,7 @@ def create_workflow(opts):
     if opts.write_graph:
         preproc_wf.write_graph()
 
-    run_reports()
+    run_reports(settings['output_dir'])
 
 if __name__ == '__main__':
     main()
