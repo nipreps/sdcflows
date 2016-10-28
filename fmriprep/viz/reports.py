@@ -4,7 +4,6 @@ import codecs
 import json
 import re
 import os
-from os.path import join, exists, basename, dirname
 
 import jinja2
 from pkg_resources import resource_filename as pkgrf
@@ -61,14 +60,14 @@ class Report(object):
     def index(self):
         for root, directories, filenames in os.walk(self.root):
             for f in filenames:
-                f = join(root, f)
+                f = os.path.join(root, f)
                 for sub_report in self.sub_reports:
                     for element in sub_report.elements:
                         if element.file_pattern.search(f) and f.split('.')[-1] == 'svg':
                             element.files.append(f)
                             with open(f) as fp:
                                 content = fp.read()
-                                content = '\n'.join(content.split('\n')[1:])
+                                content = '\n'.os.path.join(content.split('\n')[1:])
                                 element.files_contents.append(content)
 
     def generate_report(self):
@@ -84,7 +83,7 @@ class Report(object):
         return report_render
 
 def run_reports(out_dir):
-    path = pkgrf('fmriprep', op.join(out_dir, 'images/'))
+    path = pkgrf('fmriprep', os.path.join(out_dir, 'images/'))
     out_dir = pkgrf('fmriprep', out_dir)
     config = pkgrf('fmriprep', 'viz/config.json')
     report = Report(path, config, out_dir)
