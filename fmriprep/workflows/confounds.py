@@ -115,7 +115,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
-    confounds_data.to_csv(combined_out, sep=str("\t"))
+    confounds_data.to_csv(combined_out, sep=str("\t"), index=False)
 
     return combined_out
 
