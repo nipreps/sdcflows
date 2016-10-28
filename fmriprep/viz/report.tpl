@@ -16,8 +16,10 @@
     <h2>{{ sub_report.name }}</h2>
     {% for elem in sub_report.elements %}
         {{ elem.name }}
+        <br>
         {% for image in elem.files_contents %}
             {{ image }}
+            <br>
         {% endfor %}
     {% endfor %}
 {% endfor %}
