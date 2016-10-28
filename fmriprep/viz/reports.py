@@ -67,7 +67,7 @@ class Report(object):
                             element.files.append(f)
                             with open(f) as fp:
                                 content = fp.read()
-                                content = '\n'.os.path.join(content.split('\n')[1:])
+                                content = '\n'.join(content.split('\n')[1:])
                                 element.files_contents.append(content)
 
     def generate_report(self):
