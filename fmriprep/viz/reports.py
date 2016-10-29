@@ -71,7 +71,7 @@ class Report(object):
                             with open(f) as fp:
                                 content = fp.read()
                                 content = '\n'.join(content.split('\n')[1:])
-                                element.files_contents.append(content)
+                                element.files_contents.append((f, content))
 
     def generate_report(self):
         searchpath = pkgrf('fmriprep', '/')

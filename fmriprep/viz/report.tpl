@@ -15,11 +15,11 @@
 {% for sub_report in sub_reports %}
     <h2>{{ sub_report.name }}</h2>
     {% for elem in sub_report.elements %}
-        {{ elem.name }}
+        <h4>{{ elem.name }}<h4/>
         <br>
         {% for image in elem.files_contents %}
-            {{ image }}
-            <br>
+            {{ image.1 }}<br>
+            {{ image.0 }}
         {% endfor %}
     {% endfor %}
 {% endfor %}
