@@ -6,7 +6,7 @@ from nipype.interfaces.base import (
     File, InputMultiPath, OutputMultiPath, Str
 )
 
-from fmriprep.interfaces.bids import splitext
+from fmriprep.interfaces.bids import _splitext
 
 class ImageDataSinkInputSpec(BaseInterfaceInputSpec):
     base_directory = traits.Directory(
