@@ -87,6 +87,7 @@ class Report(object):
 
 def run_reports(out_dir):
     path = os.path.join(out_dir, 'images/')
+    
     config = pkgrf('fmriprep', 'viz/config.json')
-    report = Report(path, config, out_dir)
+    report = Report(path, config, out_dir, out_filename)
     report.generate_report()
