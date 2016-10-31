@@ -62,7 +62,15 @@ class ImageDataSink(BaseInterface):
         make_folder(out_path)
 
         _, out_filename = op.split(self.inputs.in_file)
+
+        #  test incoming origin file for these identifiers, if they exist
+        #  we want to fold them into out filename
+        group_keys = ['ses_id', 'task_id', 'acq_id', 'rec_id', 'run_id']
+        if [x for x in group_keys if m.groupdict().get(x)]:
+            out_filename = '{}_{}'.format(out_filename, origin_fname)
+
         out_file = op.join(out_path, out_filename)
+
 
         self._results['out_file'].append(out_file)
         copy(self.inputs.in_file, out_file)
