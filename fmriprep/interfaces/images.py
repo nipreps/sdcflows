@@ -3,7 +3,7 @@ from shutil import copy
 from nipype import logging
 from nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec, 
-    File, InputMultiPath, OutputMultiPath, Str
+    File, InputMultiPath, OutputMultiPath, traits
 )
 
 from fmriprep.interfaces.bids import _splitext
@@ -13,8 +13,8 @@ class ImageDataSinkInputSpec(BaseInterfaceInputSpec):
         desc='Path to the base directory for storing data.')
     in_file = InputMultiPath(File(exists=True), mandatory=True,
                              desc='the image to be saved')
-    base_file = Str(mandatory=True, desc='the input func file')
-    overlay_file = Str(mandatory=True, desc='the input func file')
+    base_file = traits.Str(desc='the input func file')
+    overlay_file = traits.Str(desc='the input func file')
     origin_file = File(
         exists=True,
         mandatory=False,
