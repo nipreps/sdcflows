@@ -38,6 +38,7 @@ class SubReport(object):
         sub_report_render = sub_report_tpl.render
         return sub_report_render
 
+
 class Report(object):
     
     def __init__(self, path, config, out_dir, out_filename='report.html'):
@@ -87,7 +88,13 @@ class Report(object):
 
 def run_reports(out_dir):
     path = os.path.join(out_dir, 'images/')
-    
     config = pkgrf('fmriprep', 'viz/config.json')
-    report = Report(path, config, out_dir, out_filename)
-    report.generate_report()
+
+    for root, _, _ in os.walk(path):
+        #  relies on the fact that os.walk does not return a trailing /
+        dir = root.split('/')[-1]
+        subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group
+        if subject:
+            out_filename='{}{}'.format(subject, '.html')
+            report = Report(path, config, out_dir, out_filename)
+            report.generate()
