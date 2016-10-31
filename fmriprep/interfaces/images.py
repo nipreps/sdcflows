@@ -16,14 +16,10 @@ from fmriprep.utils.misc import make_folder
 class ImageDataSinkInputSpec(BaseInterfaceInputSpec):
     base_directory = traits.Directory(
         desc='Path to the base directory for storing data.')
-    in_file = File(exists=True, mandatory=True, desc='the image to be saved')
+    in_file = traits.Str(desc='the image to be saved')
     base_file = traits.Str(desc='the input func file')
     overlay_file = traits.Str(desc='the input func file')
-    origin_file = File(
-        exists=True,
-        mandatory=False,
-        desc='File from the dataset that image is primarily derived from'
-    )
+    origin_file = traits.Str(desc='File from the dataset that image is primarily derived from')
 
 class ImageDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
