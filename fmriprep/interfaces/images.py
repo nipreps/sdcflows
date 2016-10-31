@@ -64,7 +64,7 @@ class ImageDataSink(BaseInterface):
         _, out_filename = op.split(self.inputs.in_file)
         out_file = op.join(out_path, out_filename)
 
-        self._results['out_file'].append()
+        self._results['out_file'].append(out_file)
         copy(self.inputs.in_file, out_file)
         json_fname, _ = _splitext(out_filename)
 
