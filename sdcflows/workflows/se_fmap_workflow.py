@@ -12,7 +12,7 @@ from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
 
 from fmriprep.utils.misc import gen_list
-from fmriprep.interfaces import ReadSidecarJSON
+from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
@@ -94,15 +94,18 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
         function=stripped_brain_overlay), name='SVG_SE_corr')
     se_svg.inputs.out_file = 'corrected_SE_and_mask.svg'
 
-    ds_se_svg = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], 'images')),
-        name='dsSESVG',
-        parameterization=False
+    se_svg_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
+        name='SESVGDS',
     )
+
     workflow.connect([
         (unwarp_mag, se_svg, [('out_corrected', 'overlay_file')]),
         (mag_bet, se_svg, [('mask_file', 'in_file')]),
-        (se_svg, ds_se_svg, [('out_file', '@corrected_SE_and_mask')])
+        (unwarp_mag, se_svg_ds, [('out_corrected', 'overlay_file')]),
+        (mag_bet, se_svg_ds, [('mask_file', 'base_file')]),
+        (se_svg, se_svg_ds, [('out_file', 'in_file')]),
+        (inputnode, se_svg_ds, [('fieldmap', 'origin_file')])
     ])
 
     return workflow
