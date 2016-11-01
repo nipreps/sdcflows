@@ -93,8 +93,11 @@ def run_reports(out_dir):
     for root, _, _ in os.walk(path):
         #  relies on the fact that os.walk does not return a trailing /
         dir = root.split('/')[-1]
-        subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group
-        if subject:
-            out_filename='{}{}'.format(subject, '.html')
-            report = Report(path, config, out_dir, out_filename)
-            report.generate()
+        try:
+            subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group
+        except AttributeError:
+            continue
+
+        out_filename='{}{}'.format(subject, '.html')
+        report = Report(path, config, out_dir, out_filename)
+        report.generate_report()
