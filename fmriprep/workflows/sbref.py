@@ -24,6 +24,9 @@ from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
+def _first(inlist):
+    return sorted(inlist)[0]
+
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
 
@@ -58,9 +61,6 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     ])
 
     # Plot result
-    def _first(inlist):
-        return sorted(inlist)[0]
-
     sbref_corr= pe.Node(
         niu.Function(
             input_names=["in_file", "overlay_file", "out_file"],
@@ -88,7 +88,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     sbref_stripped_overlay_ds = pe.Node(
         ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefStrippedOverlay'
+        name='SBRefStrippedOverlayDS'
     )
 
     datasink = pe.Node(
@@ -181,7 +181,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
 
     sbref_t1_ds = pe.Node(
         ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefCorrDS'
+        name='SBRefT1DS'
     )
 
     workflow.connect([
@@ -189,7 +189,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
         (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
         (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
-                                  ('sbref', 'origin_file')]),
+                                  (('sbref', _first), 'origin_file')]),
         (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
     ])
 
