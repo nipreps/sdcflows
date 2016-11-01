@@ -67,7 +67,8 @@ class ImageDataSink(BaseInterface):
         #  we want to fold them into out filename
         group_keys = ['ses_id', 'task_id', 'acq_id', 'rec_id', 'run_id']
         if [x for x in group_keys if m.groupdict().get(x)]:
-            out_filename = '{}_{}'.format(out_filename, origin_fname)
+            out_filename, ext = _splitext(out_filename)
+            out_filename = '{}_{}.{}'.format(out_filename, origin_fname, ext)
 
         out_file = op.join(out_path, out_filename)
 
