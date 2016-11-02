@@ -214,7 +214,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     epi_to_t1.inputs.out_file = 'epi_to_t1.svg'
 
     # Write corrected file in the designated output dir
-    ep1_to_t1_ds = pe.Node(
+    epi_to_t1_ds = pe.Node(
         ImageDataSink(base_directory=settings['output_dir']),
         name="datasink",
     )
