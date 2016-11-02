@@ -18,14 +18,12 @@ from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
 
-from fmriprep.utils.misc import gen_list
+from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
     DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
-def _first(inlist):
-    return sorted(inlist)[0]
 
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""

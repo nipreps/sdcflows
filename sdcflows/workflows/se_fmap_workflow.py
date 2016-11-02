@@ -11,7 +11,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
 
-from fmriprep.utils.misc import gen_list
+from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.base import create_encoding_file
