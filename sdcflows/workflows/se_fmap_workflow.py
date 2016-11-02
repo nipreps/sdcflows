@@ -105,7 +105,7 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
         (unwarp_mag, se_svg_ds, [('out_corrected', 'overlay_file')]),
         (mag_bet, se_svg_ds, [('mask_file', 'base_file')]),
         (se_svg, se_svg_ds, [('out_file', 'in_file')]),
-        (inputnode, se_svg_ds, [('fieldmap', 'origin_file')])
+        (inputnode, se_svg_ds, [(('input_images', _first), 'origin_file')])
     ])
 
     return workflow
