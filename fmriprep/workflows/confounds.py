@@ -1,6 +1,6 @@
 '''
 Workflow for discovering confounds.
-Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor
+Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
 from nipype.interfaces import utility, nilearn, ants
 from nipype.algorithms import confounds
@@ -14,7 +14,7 @@ FAST_DEFAULT_SEGS = ['white matter', 'gray matter', 'CSF']
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
 
-    Calculates global regressor
+    Calculates global regressor and tCompCor
         from motion-corrected fMRI ('inputnode.fmri_file').
     Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.epi_mask')
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
@@ -48,6 +48,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     # Frame displacement
     frame_displace = pe.Node(confounds.FramewiseDisplacement(), name="FramewiseDisplacement")
     # CompCor
+    tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
     acompcor_roi = pe.Node(mask.BinarizeSegmentation(
         false_values=[FAST_DEFAULT_SEGS.index('gray matter') + 1, 0]), # 0 denotes background
                            name="CalcaCompCorROI")
@@ -70,6 +71,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
         (inputnode, frame_displace, [('movpar_file', 'in_plots')]),
+        (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
 
         # anatomically-based confound computation requires coregistration
         (inputnode, t1_registration, [('reference_image', 'reference_image'),
@@ -90,6 +92,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
+        (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
