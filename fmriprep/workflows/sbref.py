@@ -18,11 +18,12 @@ from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
 
-from fmriprep.utils.misc import gen_list
+from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
-    DerivativesDataSink)
+    DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
+
 
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
@@ -58,9 +59,6 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     ])
 
     # Plot result
-    def _first(inlist):
-        return sorted(inlist)[0]
-
     sbref_corr= pe.Node(
         niu.Function(
             input_names=["in_file", "overlay_file", "out_file"],
@@ -71,10 +69,9 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
     sbref_corr.inputs.out_file = "corrected_SBRef.svg"
 
-    datasink = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'], 
-                            suffix='sdc'),
-        name='datasink'
+    sbref_corr_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
+        name='SBRefCorrDS'
     )
 
     sbref_stripped_overlay = pe.Node(
@@ -87,22 +84,33 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
     sbref_stripped_overlay.inputs.out_file = "sbref_stripped_overlay.svg"
 
-    ds_sbref_stripped_overlay = pe.Node(
-        interface=nio.DataSink(
-            base_directory=op.join(settings['output_dir'], 'images')
-        ),
-        name='dsSBRefStrippedOverlay',
-        parameterization=False
+    sbref_stripped_overlay_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
+        name='SBRefStrippedOverlayDS'
     )
-    
+
+    datasink = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'], 
+                            suffix='sdc'),
+        name='datasink'
+    )
+
     workflow.connect([
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
         (bet, datasink, [('out_file', 'in_file')]),
         (mean, sbref_corr, [('out_file', 'overlay_file')]),
         (inputnode, sbref_corr, [('fmap_mask', 'in_file')]),
+        (mean, sbref_corr_ds, [('out_file', 'overlay_file')]),
+        (inputnode, sbref_corr_ds, [('fmap_mask', 'base_file'),
+                                    (('sbref', _first), 'origin_file')]),
+        (sbref_corr, sbref_corr_ds, [('out_file', 'in_file')]),
         (mean, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
         (bet, sbref_stripped_overlay, [('mask_file', 'in_file')]),
-        (sbref_stripped_overlay, ds_sbref_stripped_overlay, [('out_file', '@sbref_stripped_overlay')])
+        (inputnode, sbref_stripped_overlay_ds, [(('sbref', _first), 'origin_file')]),
+        (mean, sbref_stripped_overlay_ds, [('out_file', 'overlay_file')]),
+        (bet, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
+        (sbref_stripped_overlay, sbref_stripped_overlay_ds, [('out_file', 'in_file')])
+
     ])
     return workflow
 
@@ -113,7 +121,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['sbref_brain', 't1_brain', 't1_seg']),
+        niu.IdentityInterface(fields=['sbref', 'sbref_brain', 't1_brain', 't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -169,16 +177,18 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     )
     sbref_t1.inputs.out_file = "sbref_to_t1.svg"
 
-    datasink = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
-        name="datasink",
-        parameterization=False
+    sbref_t1_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
+        name='SBRefT1DS'
     )
 
     workflow.connect([
         (flt_bbr, sbref_t1, [('out_file', 'overlay_file')]),
         (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
-        (sbref_t1, datasink, [('out_file', '@sbref_to_t1')])
+        (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
+        (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
+                                  (('sbref', _first), 'origin_file')]),
+        (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
     ])
 
     return workflow

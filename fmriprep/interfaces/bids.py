@@ -7,17 +7,18 @@
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
 # @Last Modified time: 2016-10-05 15:03:25
-from lockfile import LockFile
 import os
 import os.path as op
 import pkg_resources as pkgr
 import re
-from shutil import copy
 import simplejson as json
+from shutil import copy
 
 from nipype import logging
-from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
+from nipype.interfaces.base import (
+    traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec, 
+    File, InputMultiPath, OutputMultiPath
+)
 
 from fmriprep.utils.misc import collect_bids_data, make_folder
 
