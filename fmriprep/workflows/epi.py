@@ -322,7 +322,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
         function=_gen_reference), name='GenNewMNIReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
-                                         'T1_1mm.nii.gz')
+                                         '1mm_T1.nii.gz')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
     merge_transforms = pe.MapNode(niu.Merge(3),
