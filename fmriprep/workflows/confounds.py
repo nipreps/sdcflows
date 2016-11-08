@@ -2,7 +2,7 @@
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from nipype.interfaces import utility, nilearn, ants
+from nipype.interfaces import utility, nilearn, fsl
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 
@@ -20,23 +20,19 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
-        applying the transforms to the images ('inputnode.t1_transform',
-        'inputnode.t1_transform_flags'). Transforms are assumed to be ITK/ANTs formatted and ordered
-        in order of application. The transform flags are flags for inverting the transforms: False,
-        no inversion; True, inversion.
+        applying the transform to the images. Transforms should be fsl-formatted.
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          't1_transform_flags', 'reference_image']),
+                                                          'reference_image']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.Node(ants.ApplyTransforms(interpolation='NearestNeighbor'),
-                              name='TransformT1')
+    t1_registration = pe.Node(fsl.ApplyXfm(), name='T1Registration')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
@@ -74,18 +70,16 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
 
         # anatomically-based confound computation requires coregistration
-        (inputnode, t1_registration, [('reference_image', 'reference_image'),
-                                      ('t1_seg', 'input_image'),
-                                      (('t1_transform', reverse_order), 'transforms'),
-                                      (('t1_transform_flags', reverse_order),
-                                       'invert_transform_flags')]),
+        (inputnode, t1_registration, [('reference_image', 'reference'),
+                                      ('t1_seg', 'in_file'),
+                                      ('t1_transform', 'in_matrix_file')]),
 
         # anatomical confound: signal extraction
-        (t1_registration, signals, [('output_image', 'label_files')]),
+        (t1_registration, signals, [('out_file', 'label_files')]),
         (inputnode, signals, [('fmri_file', 'in_file')]),
         # anatomical confound: aCompCor
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
-        (t1_registration, acompcor_roi, [('output_image', 'in_segments')]),
+        (t1_registration, acompcor_roi, [('out_file', 'in_segments')]),
         (acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
 
         # connect the confound nodes to the concatenate node
