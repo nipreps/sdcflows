@@ -9,7 +9,7 @@ from nipype.pipeline import engine as pe
 from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
-FAST_DEFAULT_SEGS = ['white matter', 'gray matter', 'CSF']
+FAST_DEFAULT_SEGS = ['CSF', 'gray matter', 'white matter']
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
