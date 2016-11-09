@@ -40,6 +40,9 @@ class TestConfounds(TestWorkflow):
     @mock.patch.object(pd.DataFrame, '__eq__', autospec=True,
                        side_effect=lambda me, them: me.equals(them))
     def test_gather_confounds(self, df_equality, mock_df, mock_csv_reader):
+        ''' asserts that the function for node ConcatConfounds reads and writes
+        the confounds properly '''
+
         # set up
         signals = "signals.tsv"
         dvars = "dvars.tsv"
@@ -54,4 +57,6 @@ class TestConfounds(TestWorkflow):
         mock_csv_reader.assert_has_calls(calls)
 
         confounds = pd.DataFrame({'a': [0.1], 'b': [0.2]})
-        mock_df.assert_called_once_with(confounds, os.path.abspath("confounds.tsv"), sep="\t")
+
+        mock_df.assert_called_once_with(confounds, os.path.abspath("confounds.tsv"),
+                                        index=False, sep="\t")
