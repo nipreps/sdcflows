@@ -15,7 +15,7 @@ from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 from fmriprep.viz import stripped_brain_overlay
-
+from fmriprep.interfaces.reports import BETRPT
 
 ''' Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
@@ -67,7 +67,7 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
 
     # de-gradient the fields ("bias/illumination artifact")
     n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
-    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='MagnitudeBET')
+    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='MagnitudeBET')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')

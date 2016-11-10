@@ -16,6 +16,7 @@ from nipype.interfaces import utility as niu
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.workflows.fieldmap.base import create_encoding_file
+from fmriprep.interfaces.reports import BETRPT
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
 
@@ -236,7 +237,7 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
         dimension=3, input_image=mean.run().outputs.out_file)
     inu_res = inu.run()
     out_ref = inu_res.outputs.output_image
-    bet = fsl.BET(
+    bet = BETRPT(
         frac=0.6, mask=True, in_file=out_ref)
     out_mask = bet.run().outputs.mask_file
 

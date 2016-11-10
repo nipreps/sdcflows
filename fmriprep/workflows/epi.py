@@ -25,7 +25,7 @@ from fmriprep.interfaces.bids import _splitext
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
-
+from fmriprep.interfaces.reports import BETRPT
 
 # pylint: disable=R0914
 def epi_hmc(name='EPI_HMC', settings=None):
@@ -40,7 +40,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
 
     pre_bet_mean = pe.Node(fsl.MeanImage(dimension='T'), name='PreBETMean')
 
-    bet = pe.Node(fsl.BET(functional=True, frac=0.6), name='EPI_bet')
+    bet = pe.Node(BETRPT(functional=True, frac=0.6), name='EPI_bet')
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
@@ -56,7 +56,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
-    bet_hmc = pe.Node(fsl.BET(mask=True, frac=0.6), name='EPI_hmc_bet')
+    bet_hmc = pe.Node(BETRPT(mask=True, frac=0.6), name='EPI_hmc_bet')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
@@ -392,7 +392,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
     # Compute outputs
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
-    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='EPIBET')
+    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='EPIBET')
 
     ds_epi_unwarp = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
