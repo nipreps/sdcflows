@@ -5,10 +5,10 @@ import unittest
 
 from nipype.pipeline import engine as pe
 
-from fmriprep.interfaces.reports import ANTSRPT
+from fmriprep.interfaces.reports import RegistrationRPT
 
 
-class TestANTSRPT(unittest.TestCase):
+class TestFLIRTRPT(unittest.TestCase):
     prefix = 'sub-01_ses-01_'
     def setUp(self):
         _, self.infile_path = tempfile.mkstemp(prefix=self.prefix)
@@ -24,16 +24,12 @@ class TestANTSRPT(unittest.TestCase):
         
     def test_known_file_out(self):
         suffix = 'sfx'
-        ants_rpt = pe.Node(
-            ANTSRPT(
+        flirt_rpt = pe.Node(
+            FLIRTRPT(
             ),
-            name='TestANTSRPT'
+            name='TestFLIRTRPT'
         )
-        ants_rpt.run()
+        flirt_rpt.run()
         
-        deriv_path = os.path.join(
-            self.out_dir, 
-            'derivatives/sub-01/ses-01/func/', 
-            deriv_filename
-        )
-        self.assertTrue(os.path.isfile(deriv_path))
+        flirt_rpt_path = os.path.join(self.out_dir, out_file)
+        self.assertTrue(os.path.isfile(flirt_rpt_path))
