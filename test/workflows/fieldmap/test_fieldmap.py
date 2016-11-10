@@ -37,7 +37,7 @@ class TestFieldMap(TestWorkflow):
         # SET UP EXPECTATIONS
         expected_interfaces = ['Function', 'N4BiasFieldCorrection', 'BET',
                                'MCFLIRT', 'Merge', 'Split', 'TOPUP',
-                               'ApplyTOPUP', 'Function', 'DataSink',
+                               'ApplyTOPUP', 'Function', 'ImageDataSink',
                                'IdentityInterface', 'ReadSidecarJSON',
                                'IdentityInterface']
         expected_outputs = ['outputnode.fieldmap', 'outputnode.fmap_mask',

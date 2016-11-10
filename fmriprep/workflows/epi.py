@@ -19,7 +19,8 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
 
-from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
+from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
+    ImageDataSink)
 from fmriprep.interfaces.bids import _splitext
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
@@ -103,10 +104,9 @@ def epi_hmc(name='EPI_HMC', settings=None):
     #  name needs to be based on source_file
     mean_epi_stripped_overlay.inputs.out_file = 'mean_epi_overlay.svg'
 
-    ds_mean_epi_overlay= pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
-        name="dsMeanEPIOverlay",
-        parameterization=False
+    mean_epi_overlay_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
+        name="MeanEPIOverlayDS",
     )
 
     workflow.connect([
@@ -114,14 +114,17 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (inputnode, ds_mats, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
         (inputnode, ds_motion, [('epi', 'source_file')]),
+        (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (avs_format, ds_motion, [('out_file', 'in_file')]),
         (pre_bet_mean, mean_epi_stripped_overlay, [('out_file', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
-        (mean_epi_stripped_overlay, ds_mean_epi_overlay,
-            [('out_file', '@mean_epi_stripped_overlay')]
+        (pre_bet_mean, mean_epi_overlay_ds, [('out_file', 'overlay_file')]),
+        (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
+        (mean_epi_stripped_overlay, mean_epi_overlay_ds,
+            [('out_file', 'in_file')]
         )
     ])
 
@@ -213,16 +216,18 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     epi_to_t1.inputs.out_file = 'epi_to_t1.svg'
 
     # Write corrected file in the designated output dir
-    datasink = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
+    epi_to_t1_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
         name="datasink",
-        parameterization=False
     )
 
     workflow.connect([
         (flt_bbr, epi_to_t1, [('out_file', 'overlay_file')]),
         (inputnode, epi_to_t1, [('t1_seg', 'in_file')]),
-        (epi_to_t1, datasink, [('out_file', '@epi_to_t1')])
+        (flt_bbr, epi_to_t1_ds, [('out_file', 'overlay_file')]),
+        (inputnode, epi_to_t1_ds, [('t1_seg', 'base_file')]),
+        (epi_to_t1, epi_to_t1_ds, [('out_file', 'in_file')]),
+        (inputnode, epi_to_t1_ds, [('epi', 'origin_file')])
     ])
 
     return workflow
@@ -284,17 +289,19 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     )
     mean_epi_to_sbref_overlay.inputs.out_file = "mean_epi_to_sbref.svg"
 
-    datasink = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
+    mean_epi_to_sbref_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
         name="datasink",
-        parameterization=False
     )
 
     workflow.connect([
         (epi_merge, post_merge_mean, [('merged_file', 'in_file')]),
         (inputnode, mean_epi_to_sbref_overlay, [('sbref_brain_mask', 'in_file')]),
         (post_merge_mean, mean_epi_to_sbref_overlay, [('out_file', 'overlay_file')]),
-        (mean_epi_to_sbref_overlay, datasink, [('out_file', '@mean_epi_to_sbref')])
+        (inputnode, mean_epi_to_sbref_ds, [('sbref_brain_mask', 'base_file')]),
+        (post_merge_mean, mean_epi_to_sbref_ds, [('out_file', 'overlay_file')]),
+        (mean_epi_to_sbref_overlay, mean_epi_to_sbref_ds, [('out_file', 'in_file')]),
+        (inputnode, mean_epi_to_sbref_ds, [('epi', 'origin_file')])
     ])
 
     return workflow
@@ -427,16 +434,18 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     )
     epi_corr.inputs.out_file = 'corrected_EPI.svg'
 
-    datasink = pe.Node(
-        nio.DataSink(base_directory=op.join(settings['output_dir'], "images")),
+    epi_corr_ds = pe.Node(
+        ImageDataSink(base_directory=settings['output_dir']),
         name="datasink",
-        parameterization=False
     )
 
     workflow.connect([
         (bet, epi_corr, [('out_file', 'overlay_file')]),
         (inputnode, epi_corr, [('fmap_mask', 'in_file')]),
-        (epi_corr, datasink, [('out_file', '@corrected_EPI')])
+        (bet, epi_corr_ds, [('out_file', 'overlay_file')]),
+        (inputnode, epi_corr_ds, [('fmap_mask', 'base_file')]),
+        (epi_corr, epi_corr_ds, [('out_file', 'in_file')]),
+        (inputnode, epi_corr_ds, [('epi', 'origin_file')])
     ])
 
     return workflow

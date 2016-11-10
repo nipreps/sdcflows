@@ -30,10 +30,34 @@
         "elements":
         [
             {
-                "name": "sbref_to_t1",
-                "file_pattern": "sbref_to_t1",
+                "name": "t1_seg_native",
+                "file_pattern": "t1_seg_native",
                 "title": "Sbref to T1",
                 "description": "Corrected sbref image registred into t1 space."
+            },
+            {
+                "name": "t1_to_mni_overlay",
+                "file_pattern": "t1_to_mni_overlay",
+                "title": "T1 to MNI",
+                "description": "Corrected anatomical T1 image registered into MNI space"
+            },
+            {
+                "name": "mean_epi_overlay",
+                "file_pattern": "mean_epi_overlay",
+                "title": "EPI",
+                "description": " "
+            },
+            {
+                "name": "corrected_EPI",
+                "file_pattern": "corrected_EPI",
+                "title": "Corrected EPI",
+                "description": " "
+            },
+            {
+                "name": "mean_epi_to_sbref",
+                "file_pattern": "mean_epi_to_sbref",
+                "title": "Mean EPI to SBRef",
+                "description": " "
             }
         ]
     }
