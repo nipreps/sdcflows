@@ -23,7 +23,7 @@ from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
     DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
-
+from fmriprep.interfaces.reports import BETRPT
 
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
@@ -44,7 +44,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    bet = pe.Node(fsl.BET(frac=0.6, mask=True), name='SBRefBET')
+    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='SBRefBET')
 
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
@@ -236,7 +236,7 @@ def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
 
     #  Skull strip SBRef to get reference brain
     sbref_bet = pe.Node(
-        fsl.BET(mask=True, functional=True, frac=0.6), name="sbref_bet")
+        BETRPT(mask=True, functional=True, frac=0.6), name="sbref_bet")
 
     #  Unwarp SBRef using Fugue  (N.B. duplicated in epi_reg_workflow!!!!!)
     fugue_sbref = pe.Node(
@@ -244,7 +244,7 @@ def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
         name="SBRef_Unwarping"
     )
 
-    strip_corrected_sbref = pe.Node(fsl.BET(mask=True, frac=0.6, robust=True),
+    strip_corrected_sbref = pe.Node(BETRPT(mask=True, frac=0.6, robust=True),
                                     name="BET_Corrected_SBRef")
 
     flt_sbref_brain_t1_brain = pe.Node(

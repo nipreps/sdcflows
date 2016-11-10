@@ -15,6 +15,7 @@ from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.base import create_encoding_file
+from fmriprep.interfaces.reports import BETRPT
 
 WORKFLOW_NAME = 'Fieldmap_SEs'
 
@@ -64,7 +65,7 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
     inu_n4 = pe.Node(N4BiasFieldCorrection(dimension=3), name='SE_bias')
 
     # Skull strip corrected SE image to get reference brain and mask
-    mag_bet = pe.Node(fsl.BET(mask=True, robust=True), name='SE_brain')
+    mag_bet = pe.Node(BETRPT(mask=True, robust=True), name='SE_brain')
 
     workflow.connect([
         (inputnode, meta, [('input_images', 'in_file')]),
