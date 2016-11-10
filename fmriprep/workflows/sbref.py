@@ -110,6 +110,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (mean, sbref_stripped_overlay_ds, [('out_file', 'overlay_file')]),
         (bet, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
         (sbref_stripped_overlay, sbref_stripped_overlay_ds, [('out_file', 'in_file')])
+
     ])
     return workflow
 
