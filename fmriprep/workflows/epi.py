@@ -36,7 +36,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean']), name='outputnode')
+        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
 
     pre_bet_mean = pe.Node(fsl.MeanImage(dimension='T'), name='PreBETMean')
 
@@ -67,7 +67,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('out_file', 'epi_brain')]),
+        (hmc, outputnode, [('out_file', 'epi_brain'),
+                           ('par_file', 'movpar_file')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
         (avscale, avs_format, [('translations', 'translations'),
                                ('rot_angles', 'rot_angles')]),
@@ -139,7 +140,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         fields=['epi', 'epi_mean', 't1_brain', 't1_seg']), name='inputnode'
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_epi_to_t1']),
+        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi']),
         name='outputnode'
     )
 
@@ -192,10 +193,11 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (inputnode, flt_bbr, [('epi_mean', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
+        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
         (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
-        (fsl2itk_fwd, outputnode, [('itk_transform', 'mat_epi_to_t1')]),
-        (fsl2itk_inv, outputnode, [('itk_transform', 'mat_t1_to_epi')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
         (inputnode, ds_tfm_fwd, [('epi', 'source_file')]),
         (inputnode, ds_tfm_inv, [('epi', 'source_file')]),
         (inputnode, ds_t1w, [('epi', 'source_file')]),
@@ -237,12 +239,14 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_registered', 'out_mat']), name='outputnode')
+        fields=['epi_registered', 'out_mat', 'out_mat_inv']), name='outputnode')
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
     epi_sbref = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                         name='EPI2SBRefRegistration')
+    # make equivalent inv
+    sbref_epi = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="SBRefEPI")
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
@@ -259,11 +263,16 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, mean, [('epi_brain', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
         (inu, epi_sbref, [('output_image', 'in_file')]),
+
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
         (epi_xfm, epi_merge, [('out_file', 'in_files')]),
         (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
         (epi_merge, outputnode, [('merged_file', 'epi_registered')]),
+
+        (epi_sbref, sbref_epi, [('out_matrix_file', 'in_file')]),
+        (sbref_epi, outputnode, [('out_file', 'out_mat_inv')]),
+
         (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
         (inputnode, ds_sbref, [('epi', 'source_file')])
     ])
@@ -382,7 +391,7 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 'fmap', 'fmap_ref', 'fmap_mask', 't1_seg']), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean']),
+        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean', 'epi_mask']),
         name='outputnode'
     )
 
@@ -408,7 +417,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
         (inputnode, ds_epi_unwarp, [('epi', 'source_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, bet, [('out_file', 'in_file')]),
-        (bet, outputnode, [('out_file', 'epi_mean')]),
+        (bet, outputnode, [('out_file', 'epi_mean'),
+                           ('mask_file', 'epi_mask')]),
         (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
         (unwarp, ds_epi_unwarp, [('outputnode.out_file', 'in_file')])
     ])

@@ -52,10 +52,12 @@ REQUIRES = [
     'nilearn',
     'sklearn',
     'nibabel',
+    'pandas',
     'niworkflows>=0.0.3a7',
     'grabbit',
     'nipype',
     'pybids',
+    'nitime'
 ]
 
 LINKS_REQUIRES = [
