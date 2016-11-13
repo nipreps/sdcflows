@@ -44,14 +44,19 @@ class TestBETRPT(unittest.TestCase):
     def test_generate_report(self):
         ''' test of BET's report under a bunch of diff options for what to output'''
         boo = (True, False)
-
         for outline in boo:
             for mask in boo:
                 for skull in boo:
-                    for no_output in boo:
-                        self._smoke(BETRPT(in_file=os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz'),
-                                           generate_report=True, outline=outline, mask=mask,
-                                           skull=skull, no_output=no_output))
+                    self._smoke(BETRPT(in_file=os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz'),
+                                       generate_report=True, outline=outline, mask=mask,
+                                       skull=skull))
+
+    @in_temporary_directory
+    def test_cannot_generate_report(self):
+        ''' Can't generate a report if there are no nifti outputs. '''
+        with self.assertRaises(Warning):
+            self._smoke(BETRPT(in_file=os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz'),
+                               generate_report=True, outline=False, mask=False, no_output=True))
 
     def test_generate_report_from_4d(self):
         ''' if the in_file was 4d, it should be able to produce the same report
@@ -61,6 +66,9 @@ class TestBETRPT(unittest.TestCase):
     def _smoke(self, bet_interface):
         bet_interface.run()
 
-        self.assertTrue(os.path.isfile(bet_interface.aggregate_outputs().html_report),
-                        'HTML report exists at {}'.format(
-                            bet_interface.aggregate_outputs().html_report))
+        html_report = bet_interface.aggregate_outputs().html_report
+        self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'
+                        .format(html_report))
+
+        # remove it so it doesn't interfere with following tests
+        os.remove(html_report)
