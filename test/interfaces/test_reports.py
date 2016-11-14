@@ -41,14 +41,9 @@ class TestBETRPT(unittest.TestCase):
     ''' tests it using mni as in_file '''
 
     def test_generate_report(self):
-        ''' test of BET's report under a bunch of diff options for what to output'''
-        boo = (True, False)
-        for outline in boo:
-            for mask in boo:
-                for skull in boo:
-                    self._smoke(BETRPT(in_file=os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz'),
-                                       generate_report=True, outline=outline, mask=mask,
-                                       skull=skull))
+        ''' test of BET's report under basic (output binary mask) conditions '''
+        self._smoke(BETRPT(in_file=os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz'),
+                           generate_report=True, mask=True))
 
     def test_cannot_generate_report(self):
         ''' Can't generate a report if there are no nifti outputs. '''
