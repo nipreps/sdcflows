@@ -40,7 +40,6 @@ class TestFLIRTRPT(unittest.TestCase):
 class TestBETRPT(unittest.TestCase):
     ''' tests it using mni as in_file '''
 
-    @in_temporary_directory
     def test_generate_report(self):
         ''' test of BET's report under a bunch of diff options for what to output'''
         boo = (True, False)
@@ -51,7 +50,6 @@ class TestBETRPT(unittest.TestCase):
                                        generate_report=True, outline=outline, mask=mask,
                                        skull=skull))
 
-    @in_temporary_directory
     def test_cannot_generate_report(self):
         ''' Can't generate a report if there are no nifti outputs. '''
         with self.assertRaises(Warning):
@@ -63,12 +61,10 @@ class TestBETRPT(unittest.TestCase):
         anyway (using arbitrary volume) '''
         pass
 
+    @in_temporary_directory
     def _smoke(self, bet_interface):
         bet_interface.run()
 
         html_report = bet_interface.aggregate_outputs().html_report
         self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'
                         .format(html_report))
-
-        # remove it so it doesn't interfere with following tests
-        os.remove(html_report)
