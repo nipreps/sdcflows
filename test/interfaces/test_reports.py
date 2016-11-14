@@ -17,17 +17,11 @@ class TestFLIRTRPT(unittest.TestCase):
 
     @in_temporary_directory
     def test_known_file_out(self):
-        flirt_rpt = pe.Node(
-            FLIRTRPT(generate_report=True),
-            name='TestFLIRTRPT'
-        )
-        flirt_rpt.inputs.reference = os.path.join(MNI_DIR,
-                                                  'MNI152_T1_1mm.nii.gz')
-        flirt_rpt.inputs.in_file = os.path.join(MNI_DIR,
-                                                'MNI152_T1_1mm.nii.gz')
-        flirt_rpt.inputs.out_file = self.out_file
+        template = os.path.join(MNI_DIR, 'MNI152_T1_1mm.nii.gz')
+        flirt_rpt = FLIRTRPT(generate_report=True, in_file=template,
+                             reference=template, out_file=self.out_file)
         flirt_rpt.run()
-        html_report = flirt_rpt.outputs.html_report
+        html_report = flirt_rpt.aggregate_outputs().html_report
         self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'
                         .format(html_report))
 
