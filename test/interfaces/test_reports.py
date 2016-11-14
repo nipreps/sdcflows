@@ -6,40 +6,30 @@ import unittest
 from nipype.pipeline import engine as pe
 from niworkflows.data.getters import get_mni_template_ras
 
-from fmriprep.interfaces.reports import RegistrationRPT, BETRPT
+from fmriprep.interfaces.reports import BETRPT, FLIRTRPT, RegistrationRPT
 from test.utils.tempdir import in_temporary_directory
 
 MNI_DIR = get_mni_template_ras()
 
 class TestFLIRTRPT(unittest.TestCase):
-    prefix = 'sub-01_ses-01_'
     def setUp(self):
-        _, self.infile_path = tempfile.mkstemp(prefix=self.prefix)
-        self.infile_contents = 'test text\n'
-        fp = open(self.infile_path, 'w')
-        fp.write(self.infile_contents)
-        fp.close()
-        self.out_dir = tempfile.mkdtemp()
         self.out_file = "test_flirt.nii.gz"
 
-    def tearDown(self):
-        os.remove(self.infile_path)
-        shutil.rmtree(self.out_dir)
-        
+    @in_temporary_directory
     def test_known_file_out(self):
-        suffix = 'sfx'
         flirt_rpt = pe.Node(
-            FLIRTRPT(),
+            FLIRTRPT(generate_report=True),
             name='TestFLIRTRPT'
         )
-        flirt_rpt.inputs.reference = os.path.join(get_mni_template(),
-                                                   'MNI152_T1_1mm.nii.gz')
-        flirt_rpt.inputs.in_file = os.path.join(get_mni_template(),
-                                           'MNI152_T1_1mm.nii.gz')
+        flirt_rpt.inputs.reference = os.path.join(MNI_DIR,
+                                                  'MNI152_T1_1mm.nii.gz')
+        flirt_rpt.inputs.in_file = os.path.join(MNI_DIR,
+                                                'MNI152_T1_1mm.nii.gz')
         flirt_rpt.inputs.out_file = self.out_file
         flirt_rpt.run()
-        flirt_rpt_path = os.path.join(self.out_dir, self.out_file)
-        self.assertTrue(os.path.isfile(flirt_rpt_path))
+        html_report = flirt_rpt.outputs.html_report
+        self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'
+                        .format(html_report))
 
 class TestBETRPT(unittest.TestCase):
     ''' tests it using mni as in_file '''
