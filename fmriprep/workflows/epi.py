@@ -25,7 +25,7 @@ from fmriprep.interfaces.bids import _splitext
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
-from fmriprep.interfaces.reports import BETRPT
+from fmriprep.interfaces.reports import BETRPT, FLIRTRPT
 
 # pylint: disable=R0914
 def epi_hmc(name='EPI_HMC', settings=None):
@@ -151,9 +151,16 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     )
 
 
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
-        name='Flirt_BBR_init')
-    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name='Flirt_BBR')
+    flt_bbr_init = pe.Node(
+        FLIRTRPT(generate_report=True, dof=6, out_matrix_file='init.mat',
+                 out_file='init.nii.gz'),
+        name='Flirt_BBR_init'
+    )
+    flt_bbr = pe.Node(
+        FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
+                     out_file='bbr.nii.gz'),
+        name='Flirt_BBR'
+    )
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -241,7 +248,9 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
-    epi_sbref = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
+    epi_sbref = pe.Node(FLIRTRPT(generate_report=True, dof=6,
+                                     out_matrix_file='init.mat',
+                                     out_file='init.nii.gz'),
                         name='EPI2SBRefRegistration')
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
