@@ -1,6 +1,8 @@
 import os
 import unittest
-
+import numpy as np
+import nibabel as nb
+from nilearn import image
 from nipype.utils.tmpdirs import InTemporaryDirectory
 from niworkflows.data.getters import get_mni_template_ras
 
@@ -43,7 +45,13 @@ class TestBETRPT(unittest.TestCase):
     def test_generate_report_from_4d(self):
         ''' if the in_file was 4d, it should be able to produce the same report
         anyway (using arbitrary volume) '''
-        pass
+        # makeshift 4d in_file
+        mni_file = os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz')
+        mni_4d = image.concat_imgs([mni_file, mni_file, mni_file])
+        mni_4d_file = os.path.join(os.getcwd(), 'mni_4d.nii.gz')
+        nb.save(mni_4d, mni_4d_file)
+
+        self._smoke(BETRPT(in_file=mni_4d_file, generate_report=True, mask=True))
 
     def _smoke(self, bet_interface):
         with InTemporaryDirectory():
