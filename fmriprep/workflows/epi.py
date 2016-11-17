@@ -15,17 +15,15 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
-from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
 
 from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
     ImageDataSink)
-from fmriprep.interfaces.bids import _splitext
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
-from fmriprep.interfaces.reports import BETRPT, FLIRTRPT
+from fmriprep.interfaces.reports import BETRPT, FLIRTRPT, ApplyXFMRPT
 
 # pylint: disable=R0914
 def epi_hmc(name='EPI_HMC', settings=None):
@@ -254,7 +252,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
                         name='EPI2SBRefRegistration')
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
-    epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm', iterfield=['in_file'])
+    epi_xfm = pe.MapNode(ApplyXFMRPT(), name='EPIapplyxfm', iterfield=['in_file'])
     epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
 
     ds_sbref = pe.Node(
