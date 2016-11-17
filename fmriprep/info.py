@@ -52,7 +52,7 @@ REQUIRES = [
     'nilearn',
     'sklearn',
     'nibabel',
-    'niworkflows>=0.0.3a7',
+    'niworkflows>=0.0.3a12',
     'grabbit',
     'nipype',
     'pybids',
