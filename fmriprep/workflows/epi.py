@@ -252,7 +252,8 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
                         name='EPI2SBRefRegistration')
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
-    epi_xfm = pe.MapNode(ApplyXFMRPT(), name='EPIapplyxfm', iterfield=['in_file'])
+    epi_xfm = pe.MapNode(ApplyXFMRPT(generate_report=True), name='EPIapplyxfm',
+                                     iterfield=['in_file'])
     epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
 
     ds_sbref = pe.Node(
