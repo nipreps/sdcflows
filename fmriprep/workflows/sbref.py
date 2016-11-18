@@ -17,13 +17,13 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
+from niworkflows.common.report_interfaces import BETRPT
 
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
     DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
-from fmriprep.interfaces.reports import BETRPT
 
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""

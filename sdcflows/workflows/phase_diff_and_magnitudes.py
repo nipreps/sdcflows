@@ -11,11 +11,11 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup_edge_pipeline,
                                              add_empty_vol, rads2radsec)
+from niworkflows.common.report_interfaces import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 from fmriprep.viz import stripped_brain_overlay
-from fmriprep.interfaces.reports import BETRPT
 
 ''' Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''

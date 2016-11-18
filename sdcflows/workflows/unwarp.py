@@ -13,10 +13,10 @@ from nipype.interfaces import fsl
 from nipype.interfaces import ants
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
+from niworkflows.common.report_interfaces import BETRPT
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.workflows.fieldmap.base import create_encoding_file
-from fmriprep.interfaces.reports import BETRPT
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
 
@@ -212,7 +212,7 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
     from six import string_types
     from nipype.interfaces import fsl
     from nipype.interfaces import ants
-    from fmriprep.interfaces.reports import BETRPT
+    from niworkflows.common.report_interfaces import BETRPT
 
     if isinstance(in_files, string_types):
         in_files = [in_files]

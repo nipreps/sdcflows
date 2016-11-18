@@ -17,13 +17,13 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
+from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT, ApplyXFMRPT
 
 from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
     ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
-from fmriprep.interfaces.reports import BETRPT, FLIRTRPT, ApplyXFMRPT
 
 # pylint: disable=R0914
 def epi_hmc(name='EPI_HMC', settings=None):
