@@ -94,7 +94,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
         function=_gen_coeff), name='TopUpAdapt')
 
     # Use the least-squares method to correct the dropout of the SBRef images
-    unwarp = pe.Node(fsl.ApplyTOPUP(method=method), name='TopUpApply')
+    unwarp = pe.Node(fsl.ApplyTOPUP(method=method, in_index=[1]), name='TopUpApply')
 
 
     workflow.connect([
@@ -121,8 +121,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
         (fslsplit, fix_movpar, [('out_files', 'in_files')]),
         (fix_movpar, topup_adapt, [('out_movpar', 'in_movpar')]),
         (applyxfm, topup_adapt, [('output_image', 'in_file')]),
-        (fslsplit, unwarp, [('out_files', 'in_files'),
-                            (('out_files', gen_list), 'in_index')]),
+        (align, unwarp, [('out_file', 'in_files')]),
         (topup_adapt, unwarp, [('out_fieldcoef', 'in_topup_fieldcoef'),
                                ('out_movpar', 'in_topup_movpar')]),
         (encfile, unwarp, [('parameters_file', 'encoding_file')]),

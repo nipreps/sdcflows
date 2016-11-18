@@ -52,9 +52,11 @@ REQUIRES = [
     'nilearn',
     'sklearn',
     'nibabel',
+    'pandas',
     'grabbit',
     'nipype',
     'pybids',
+    'nitime'
 ]
 
 LINKS_REQUIRES = [

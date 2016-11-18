@@ -1,11 +1,23 @@
-import unittest
-from nipype.pipeline import engine
+'''  Class and utilities for testing the workflows module '''
 
-# invoke tests with ``python -m unittest discover test``
+import unittest
+import logging
+from networkx.exception import NetworkXUnfeasible
+from traits.trait_base import _Undefined as trait_undefined
+
+from nipype.pipeline import engine
+from nipype.interfaces import utility
+
+logging.disable(logging.INFO)
+
 class TestWorkflow(unittest.TestCase):
+    ''' Subclass for test within the workflow module.
+    invoke tests with ``python -m unittest discover test'''
+
     def assertIsAlmostExpectedWorkflow(self, expected_name, expected_interfaces,
-                                       expected_inputs, expected_outputs, 
+                                       expected_inputs, expected_outputs,
                                        actual):
+        ''' somewhat hacky way to confirm workflows are as expected, but with low confidence '''
         self.assertIsInstance(actual, engine.Workflow)
         self.assertEqual(expected_name, actual.name)
 
@@ -45,3 +57,53 @@ class TestWorkflow(unittest.TestCase):
             actual_outputs += get_io_names(pre, outputs)
 
         return actual_inputs, actual_outputs
+
+    def assert_circular(self, workflow, circular_connections):
+        ''' check key paths in workflow by specifying some connections that should induce
+        circular paths, which trips a NetworkX error.
+        circular_connections is a list of tuples:
+            [('from_node_name', 'to_node_name', ('from_node.output_field','to_node.input_field'))]
+        '''
+
+        for from_node, to_node, fields in circular_connections:
+            from_node = workflow.get_node(from_node)
+            to_node = workflow.get_node(to_node)
+            workflow.connect([(from_node, to_node, fields)])
+
+            self.assertRaises(NetworkXUnfeasible, workflow.write_graph)
+
+            workflow.disconnect([(from_node, to_node, fields)])
+
+    def assert_inputs_set(self, workflow, additional_inputs={}):
+        ''' Check that all mandatory inputs of nodes in the workflow (at the first level) are already
+        set. Additionally, check that inputs in additional_inputs are set. An input is "set" if it is
+            a) defined explicitly (e.g. in the Interface declaration)
+            OR b) connected to another node's output (e.g. using the workflow.connect method)
+        additional_inputs is a dict:
+            {'node_name': ['mandatory', 'input', 'fields']}'''
+        dummy_node = engine.Node(utility.IdentityInterface(fields=['dummy']), name='DummyNode')
+        node_names = [name for name in workflow.list_node_names() if name.count('.') == 0]
+        for node_name in set(node_names + list(additional_inputs.keys())):
+            node = workflow.get_node(node_name)
+            mandatory_inputs = list(node.inputs.traits(mandatory=True).keys())
+            other_inputs = additional_inputs[node_name] if node_name in additional_inputs else []
+            for field in set(mandatory_inputs + other_inputs):
+                if field_is_defined(node, field):
+                    pass
+                else: # not explicitly defined
+                    # maybe it is connected to an output
+                    with self.assertRaises(Exception):
+                        # throws an error if the input is already connected
+                        workflow.connect([(dummy_node, node, [('dummy', field)])])
+
+def field_is_defined(node, field_name):
+    ''' returns true if field is a defined trait, false if not '''
+
+    # getting the input object is a headache
+    name_chain = field_name.split('.')
+    input_ = node.inputs # nipype "Bunch" obj
+    for name in name_chain:
+        # in the last iteration, input_ magically becomes an input object rather than a "Bunch"
+        input_ = input_.get()[name]
+
+    return input_.__class__ != trait_undefined
