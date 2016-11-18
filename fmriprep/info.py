@@ -52,7 +52,6 @@ REQUIRES = [
     'nilearn',
     'sklearn',
     'nibabel',
-    'niworkflows>=0.0.3a12',
     'grabbit',
     'nipype',
     'pybids',
@@ -60,7 +59,8 @@ REQUIRES = [
 
 LINKS_REQUIRES = [
     'git+https://github.com/nipy/nipype.git@master#egg=nipype',
-    'git+https://github.com/incf/pybids.git@master#egg=pybids'
+    'git+https://github.com/incf/pybids.git@master#egg=pybids',
+    'git+https://github.com/poldracklab/niworkflows.git@master#egg=niworkflows',
 ]
 
 TESTS_REQUIRES = [
