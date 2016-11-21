@@ -15,6 +15,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
+from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
 from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT, ApplyXFMRPT
@@ -80,9 +81,11 @@ def epi_hmc(name='EPI_HMC', settings=None):
     ds_hmc = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc'), name='DerivativesHMC')
+
     ds_mats = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc'), name='DerivativesHMCmats')
+
     ds_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc_bmask'), name='DerivativesEPImask')
@@ -90,6 +93,10 @@ def epi_hmc(name='EPI_HMC', settings=None):
     ds_motion = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc'), name='DerivativesParamsHMC')
+
+
+    ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
+    ds_betrpt.inputs.base_directory = op.join(settings['output_dir'], 'reports')
 
     mean_epi_stripped_overlay = pe.Node(
         niu.Function(
@@ -123,7 +130,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
         (mean_epi_stripped_overlay, mean_epi_overlay_ds,
             [('out_file', 'in_file')]
-        )
+        ),
+        (bet, ds_betrpt, [('html_report', '@betrpt')])
     ])
 
     return workflow
@@ -264,6 +272,9 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         DerivativesDataSink(base_directory=settings['output_dir'],
             suffix='hmc_sbref'), name='DerivHMC_SBRef')
 
+    ds_flirtrpt = pe.Node(nio.DataSink(), name="FLIRTRPTDS")
+    ds_flirtrpt.inputs.base_directory = op.join(settings['output_dir'], 'reports')
+
     workflow.connect([
         (inputnode, epi_split, [('epi_brain', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
@@ -282,7 +293,8 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (sbref_epi, outputnode, [('out_file', 'out_mat_inv')]),
 
         (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
-        (inputnode, ds_sbref, [('epi', 'source_file')])
+        (inputnode, ds_sbref, [('epi', 'source_file')]),
+        (epi_sbref, ds_flirtrpt, [('html_report', '@flirtrpt')])
     ])
 
     #  Plot for report
