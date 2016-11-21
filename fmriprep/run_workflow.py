@@ -82,8 +82,7 @@ def create_workflow(opts):
         'debug': opts.debug,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
-        'work_dir': op.abspath(opts.work_dir),
-        'remove_unnecessary_outputs': False
+        'work_dir': op.abspath(opts.work_dir)
     }
 
     # set up logger
