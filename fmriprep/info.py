@@ -56,7 +56,8 @@ REQUIRES = [
     'grabbit',
     'nipype',
     'pybids',
-    'nitime'
+    'nitime',
+    'niworkflows'
 ]
 
 LINKS_REQUIRES = [
