@@ -1,7 +1,7 @@
 import os
-import unittest
 import numpy as np
 import nibabel as nb
+import unittest
 from nilearn import image
 
 from nipype.pipeline import engine as pe
@@ -9,7 +9,8 @@ from nipype.interfaces import IdentityInterface
 from nipype.utils.tmpdirs import InTemporaryDirectory
 
 from niworkflows.data.getters import get_mni_template_ras
-from fmriprep.interfaces.reports import BETRPT, FLIRTRPT, RegistrationRPT, ApplyXFMRPT
+from niworkflows.common.report_interfaces import (BETRPT, FLIRTRPT,
+    RegistrationRPT, ApplyXFMRPT)
 
 MNI_DIR = get_mni_template_ras()
 
@@ -81,8 +82,8 @@ class TestBETRPT(unittest.TestCase):
 
             workflow.run()
 
-#            html_report = betnode.interface.aggregate_outputs().html_report
- #           self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'.format(html_report))
+            #  html_report = betnode.interface.aggregate_outputs().html_report
+            #  self.assertTrue(os.path.isfile(html_report), 'HTML report exists at {}'.format(html_report))
 
     def _smoke(self, bet_interface):
         with InTemporaryDirectory():
