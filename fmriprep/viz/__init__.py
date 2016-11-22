@@ -6,6 +6,5 @@
 The fmriprep reporting engine for visual assessment
 """
 
-from fmriprep.viz.pdf_compose import generate_report
 from fmriprep.viz.pipeline_reports import (anatomical_overlay, parcel_overlay,
-                               stripped_brain_overlay, generate_report_workflow)
+                                           stripped_brain_overlay)

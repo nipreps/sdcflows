@@ -19,6 +19,7 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
 from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT
+from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
     ImageDataSink)
@@ -350,8 +351,8 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     gen_ref = pe.Node(niu.Function(
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
         function=_gen_reference), name='GenNewMNIReference')
-    gen_ref.inputs.fixed_image = op.join(get_mni_template_ras(),
-                                         'MNI152_T1_1mm.nii.gz')
+    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
+                                         '1mm_T1.nii.gz')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
     merge_transforms = pe.MapNode(niu.Merge(3),
