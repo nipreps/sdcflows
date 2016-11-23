@@ -17,7 +17,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
-from niworkflows.common.report_interfaces import BETRPT
+from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
@@ -146,7 +146,8 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     # BBR works better with initialization
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                            name='Flirt_BBR_init')
-    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
+    flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
+                      out_file="bbr.nii.gz"), name="Flirt_BBR")
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
