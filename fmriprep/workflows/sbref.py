@@ -25,6 +25,7 @@ from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
+
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
 
@@ -90,7 +91,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
 
     datasink = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'], 
+        DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='sdc'),
         name='datasink'
     )
@@ -113,6 +114,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     ])
     return workflow
+
 
 def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     """
@@ -147,7 +149,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                            name='Flirt_BBR_init')
     flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
-                      out_file="bbr.nii.gz"), name="Flirt_BBR")
+                               out_file="bbr.nii.gz"), name="Flirt_BBR")
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -201,18 +203,19 @@ def _extract_wm(in_file):
     import nibabel as nb
     import numpy as np
 
-    im = nb.load(in_file)
-    data = im.get_data().astype(np.uint8)
+    image = nb.load(in_file)
+    data = image.get_data().astype(np.uint8)
     data[data != 3] = 0
     data[data > 0] = 1
 
     out_file = op.abspath('wm_mask.nii.gz')
-    nb.Nifti1Image(data, im.get_affine(), im.get_header()).to_filename(out_file)
+    nb.Nifti1Image(data, image.get_affine(), image.get_header()).to_filename(out_file)
     return out_file
 
 ###################################
 # Deprecated code
 ###################################
+
 
 def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
     """Legacy SBref processing workflow"""

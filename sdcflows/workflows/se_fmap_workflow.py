@@ -3,10 +3,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
-import os.path as op
 
 from nipype.interfaces import fsl
-from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
@@ -18,6 +16,7 @@ from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 WORKFLOW_NAME = 'Fieldmap_SEs'
+
 
 # pylint: disable=R0914
 def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):

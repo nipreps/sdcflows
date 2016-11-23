@@ -20,6 +20,7 @@ from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
 
+
 def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     """
     This workflow takes an estimated fieldmap and a target image and applies TOPUP,
@@ -60,9 +61,11 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     align.inputs.in_ref = ref_vol
 
     # Read metadata
-    meta = pe.MapNode(niu.Function(
-        input_names=['in_file'], output_names=['out_dict'], function=_get_metadata),
-        iterfield=['in_file'], name='metadata')
+    meta = pe.MapNode(
+        niu.Function(input_names=['in_file'], output_names=['out_dict'],
+                     function=_get_metadata),
+        iterfield=['in_file'], name='metadata'
+    )
 
     encfile = pe.Node(interface=niu.Function(
         input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
@@ -95,7 +98,6 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
 
     # Use the least-squares method to correct the dropout of the SBRef images
     unwarp = pe.Node(fsl.ApplyTOPUP(method=method, in_index=[1]), name='TopUpApply')
-
 
     workflow.connect([
         (inputnode, meta, [('in_file', 'in_file')]),
@@ -155,6 +157,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     ])
 
     return workflow
+
 
 def _get_metadata(in_file):
     import nibabel as nb
@@ -299,6 +302,7 @@ def _gen_coeff(in_file, in_ref, in_movpar):
     nb.Nifti1Image(img.get_data(), None, hdr).to_filename(out_fieldcoef)
 
     return out_fieldcoef, out_movpar
+
 
 def _fix_movpar(in_files):
     import numpy as np
