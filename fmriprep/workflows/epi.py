@@ -209,6 +209,10 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='DerivEPI_to_T1w_inv'
     )
 
+    ds_flt_bbr = pe.Node(nio.DataSink(), name="FLTBBRDS")
+    ds_flt_bbr.inputs.base_directory = op.join(settings['output_dir'],
+                                                'reports')
+
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
@@ -232,7 +236,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (inputnode, ds_t1w, [('epi', 'source_file')]),
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
         (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
-        (flt_bbr, ds_t1w, [('out_file', 'in_file')])
+        (flt_bbr, ds_t1w, [('out_file', 'in_file')]),
+        (flr_bbr, ds_flt_bber, [('html_report', '@flt_bbr_rpt')])
     ])
 
     # Plots for report
@@ -446,7 +451,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
     # Compute outputs
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
-    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='EPIBET')
+    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
+                  name='EPIBET')
 
     ds_epi_unwarp = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
