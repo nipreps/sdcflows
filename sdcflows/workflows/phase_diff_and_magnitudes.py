@@ -65,7 +65,8 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
 
     # de-gradient the fields ("bias/illumination artifact")
     n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
-    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='MagnitudeBET')
+    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
+                  name='MagnitudeBET')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -137,11 +138,16 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
         parameterization=False
     )
 
+    ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
+    ds_betrpt.inputs.base_directory = op.join(settings['output_dir'],
+                                              'reports')
+
     workflow.connect([
         (magmrg, fmap_magnitude_stripped_overlay, [('out_avg', 'overlay_file')]),
         (bet, fmap_magnitude_stripped_overlay, [('mask_file', 'in_file')]),
         (fmap_magnitude_stripped_overlay, ds_fmap_magnitude_stripped_overlay,
-         [('out_file', '@fmap_magnitude_stripped_overlay')])
+         [('out_file', '@fmap_magnitude_stripped_overlay')]),
+        (bet, ds_betrpt, [('out_report', 'fmap_bet_rpt')])
     ])
 
     return workflow

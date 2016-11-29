@@ -139,7 +139,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
         (mean_epi_stripped_overlay, mean_epi_overlay_ds,
          [('out_file', 'in_file')]),
-        (bet, ds_betrpt, [('html_report', '@betrpt')])
+        (bet, ds_betrpt, [('out_report', '@betrpt')])
     ])
 
     return workflow
@@ -320,7 +320,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
         (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
         (inputnode, ds_sbref, [('epi', 'source_file')]),
-        (epi_sbref, ds_flirtrpt, [('html_report', '@flirtrpt')])
+        (epi_sbref, ds_flirtrpt, [('out_report', '@flirtrpt')])
     ])
 
     #  Plot for report
