@@ -10,7 +10,7 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup_edge_pipeline,
                                              rads2radsec)
-from niworkflows.common.report_interfaces import BETRPT
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes

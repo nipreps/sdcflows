@@ -13,7 +13,7 @@ from nipype.interfaces import fsl
 from nipype.interfaces import ants
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
-from niworkflows.common.report_interfaces import BETRPT
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.workflows.fieldmap.base import create_encoding_file

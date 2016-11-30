@@ -11,13 +11,15 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 import os
 import os.path as op
+
 from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
-from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT
+from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,

@@ -18,7 +18,8 @@ from nipype.interfaces import fsl
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from niworkflows.data import get_mni_template_ras
-from niworkflows.common.report_interfaces import BETRPT, FLIRTRPT
+from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.registration import FLIRTRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
@@ -289,7 +290,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     sbref_epi = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="SBRefEPI")
 
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
-    epi_xfm = pe.MapNode(fsl.ApplyXfm(), name='EPIapplyxfm',
+    epi_xfm = pe.MapNode(fsl.preprocess.ApplyXFM(), name='EPIapplyXFM',
                          iterfield=['in_file'])
     epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
 
