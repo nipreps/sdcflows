@@ -33,7 +33,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.Node(fsl.ApplyXfm(), name='T1Registration')
+    t1_registration = pe.Node(fsl.preprocess.ApplyXFM(), name='T1Registration')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
