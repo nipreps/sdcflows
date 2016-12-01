@@ -8,7 +8,7 @@ from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from nipype.interfaces.ants.segmentation import N4BiasFieldCorrection
 from nipype.pipeline import engine as pe
-from niworkflows.common.report_interfaces import BETRPT
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
