@@ -214,7 +214,7 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
     from six import string_types
     from nipype.interfaces import fsl
     from nipype.interfaces import ants
-    from niworkflows.common.report_interfaces import BETRPT
+    from niworkflows.interfaces.masks import BETRPT
 
     if isinstance(in_files, string_types):
         in_files = [in_files]
@@ -240,7 +240,7 @@ def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
         dimension=3, input_image=mean.run().outputs.out_file)
     inu_res = inu.run()
     out_ref = inu_res.outputs.output_image
-    bet = BETRPT(frac=0.6, mask=True, in_file=out_ref)
+    bet = BETRPT(generate_report=True, frac=0.6, mask=True, in_file=out_ref)
     out_mask = bet.run().outputs.mask_file
 
     return (out_file, out_ref, out_mask, out_movpar)
