@@ -60,8 +60,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
-        (inputnode, bet, [('epi', 'in_file')]),
         (inputnode, pre_bet_mean, [('epi', 'in_file')]),
+        (pre_bet_mean, bet, [('out_file', 'in_file')]),
         (bet, hmc, [('out_file', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
