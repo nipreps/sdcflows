@@ -238,7 +238,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
         (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
         (flt_bbr, ds_t1w, [('out_file', 'in_file')]),
-        (flr_bbr, ds_flt_bbr, [('html_report', 'flt_bbr_rpt')])
+        (flt_bbr, ds_flt_bbr, [('html_report', 'flt_bbr_rpt')])
     ])
 
     # Plots for report
