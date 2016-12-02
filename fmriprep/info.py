@@ -53,17 +53,14 @@ REQUIRES = [
     'sklearn',
     'nibabel',
     'pandas',
-    'niworkflows>=0.0.3a7',
     'grabbit',
-    'nipype',
-    'pybids',
-    'nitime'
+    'pybids>=0.0.1',
+    'nitime',
+    'niworkflows',
+    'nipype'
 ]
 
-LINKS_REQUIRES = [
-    'git+https://github.com/nipy/nipype.git@master#egg=nipype',
-    'git+https://github.com/incf/pybids.git@master#egg=pybids'
-]
+LINKS_REQUIRES = []
 
 TESTS_REQUIRES = [
     "mock",
