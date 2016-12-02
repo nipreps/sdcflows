@@ -39,3 +39,12 @@ general:
   artifacts:
     - "~/ds054/out"
     - "~/ds005/out"
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push poldracklab/fmriprep:latest; fi :
+          timeout: 21600
+      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag poldracklab/fmriprep poldracklab/fmriprep:V$CIRCLE_BUILD_NUM-${CIRCLE_SHA1:0:6} && docker push poldracklab/fmriprep:V$CIRCLE_BUILD_NUM-${CIRCLE_SHA1:0:6}; fi :
+          timeout: 21600
