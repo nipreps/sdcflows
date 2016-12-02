@@ -149,7 +149,8 @@ def create_workflow(opts):
     preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
-        preproc_wf.write_graph()
+        preproc_wf.write_graph(graph2use="colored", format='svg',
+                               simple_form=True)
 
     run_reports(settings['output_dir'])
 
