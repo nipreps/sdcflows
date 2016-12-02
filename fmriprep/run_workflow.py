@@ -61,7 +61,7 @@ def main():
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
     g_ants.add_argument('--ants-nthreads', action='store', type=int,
                         help='number of threads that will be set in ANTs processes')
-    g_ants.add_argument('--skull-strip-ants', action='store_true', default=False,
+    g_ants.add_argument('--skull-strip-ants', action='store_true', default=True,
                         help='use ANTs-based skull-stripping')
 
     opts = parser.parse_args()
