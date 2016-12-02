@@ -20,7 +20,7 @@ dependencies:
     # Download test data
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
-    - printf "[execution]\nstop_on_first_crash = true\nremove_unnecessary_outputs = false" > $HOME/.nipype/nipype.cfg
+    - printf "[execution]\nstop_on_first_crash = true\nremove_unnecessary_outputs = false" > $HOME/nipype.cfg
 
   override:
     - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
@@ -29,9 +29,9 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/.nipype/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug :
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug :
         timeout: 4800
-    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/.nipype/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/ participant -t ds005 --debug --no-skull-strip-ants :
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/ participant -t ds005 --debug --no-skull-strip-ants :
         timeout: 4800
 
 general:
