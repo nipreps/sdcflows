@@ -29,7 +29,7 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug --write-graph:
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug --write-graph :
         timeout: 4800
     - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/ participant -t ds005 --debug --write-graph --no-skull-strip-ants :
         timeout: 4800
