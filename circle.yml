@@ -14,7 +14,9 @@ dependencies:
   pre:
     - mkdir -p $HOME/data
     - mkdir -p $HOME/docker
-    - mkdir -p $HOME/ds005/out $HOME/ds054/out $HOME/ds005/scratch $HOME/ds054/scratch
+    - mkdir -p $HOME/ds005/out $HOME/ds054/out
+    - mkdir -p $HOME/ds005/scratch && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds005/scratch && sudo setfacl -m group:ubuntu:rwx $HOME/ds005/scratch
+    - mkdir -p $HOME/ds054/scratch && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds054/scratch && sudo setfacl -m group:ubuntu:rwx $HOME/ds054/scratch
     # Download test data
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
