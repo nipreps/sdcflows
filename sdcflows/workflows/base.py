@@ -4,7 +4,6 @@ from nipype import logging
 
 LOGGER = logging.getLogger('workflow')
 
-
 def is_fmap_type(fmap_type, filename):
     from fmriprep.utils import misc
     import re
@@ -75,9 +74,30 @@ def create_encoding_file(input_images, in_dict):
     pe_dirs = {'i': 0, 'j': 1, 'k': 2}
     enc_table = []
     for fmap, meta in zip(input_images, in_dict):
-        line_values = [0, 0, 0, meta['TotalReadoutTime']]
-        line_values[pe_dirs[meta['PhaseEncodingDirection'][0]]] = 1 + (
-            -2*(len(meta['PhaseEncodingDirection']) == 2))
+        readout_time = meta.get('TotalReadoutTime')
+        eff_echo = meta.get('EffectiveEchoSpacing')
+        echo_time = meta.get('EchoTime')
+        if not any((readout_time, eff_echo, echo_time)):
+            raise RuntimeError(
+                'One of "TotalReadoutTime", "EffectiveEchoSpacing" or "EchoTime"'
+                ' should be found in the sidecar JSON corresponding to '
+                '"%s".', fmap)
+
+        meta_pe = meta.get('PhaseEncodingDirection')
+        if meta_pe is None:
+            raise RuntimeError('PhaseEncodingDirection not found among '
+                               'metadata of file "%s"', fmap)
+
+        pe_axis = pe_dirs[meta_pe[0]]
+        if readout_time is None:
+            if eff_echo is None:
+                raise NotImplementedError
+
+            pe_size = nb.load(fmap).get_data().shape[pe_axis]
+            readout_time = eff_echo * (pe_size - 1)
+
+        line_values = [0, 0, 0, readout_time]
+        line_values[pe_axis] = 1 + (-2*(len(meta['PhaseEncodingDirection']) == 2))
 
         nvols = 1
         if len(nb.load(fmap).shape) > 3:
@@ -85,8 +105,20 @@ def create_encoding_file(input_images, in_dict):
 
         enc_table += [line_values] * nvols
 
-    np.savetxt(os.path.abspath('parameters.txt'), enc_table, fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])
+    np.savetxt(os.path.abspath('parameters.txt'), enc_table,
+               fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])
     return os.path.abspath('parameters.txt')
+
+
+
+
+    # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
+    #     processing/459-epi-distortion-correction-echo-spacing.html
+    # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
+    # Particularly "the final column is the time (in seconds) between the readout of the
+    # centre of the first echo and the centre of the last echo (equal to dwell-time
+    # multiplied by # of phase-encode steps minus one)"
+    out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
 
 
 def mcflirt2topup(in_files, in_mats, out_movpar=None):

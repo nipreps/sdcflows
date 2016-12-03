@@ -16,6 +16,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.utils.misc import gen_list
+from fmriprep.interfaces.bids import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.base import create_encoding_file
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
@@ -61,11 +62,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
     align.inputs.in_ref = ref_vol
 
     # Read metadata
-    meta = pe.MapNode(
-        niu.Function(input_names=['in_file'], output_names=['out_dict'],
-                     function=_get_metadata),
-        iterfield=['in_file'], name='metadata'
-    )
+    meta = pe.MapNode(ReadSidecarJSON(), iterfield=['in_file'], name='metadata')
 
     encfile = pe.Node(interface=niu.Function(
         input_names=['input_images', 'in_dict'], output_names=['parameters_file'],
@@ -75,14 +72,9 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
-    fmap2ref = pe.Node(ants.Registration(output_warped_image=True),
-                       name='Fieldmap2ImageRegistration')
-
-    grabber = nio.JSONFileGrabber()
-    setattr(grabber, '_always_run', False)
-    fmap2ref_params = pe.Node(grabber, name='Fieldmap2ImageRegistration_params')
-    fmap2ref_params.inputs.in_file = (
-        pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json'))
+    fmap2ref = pe.Node(ants.Registration(
+        from_file=pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json'),
+        output_warped_image=True), name='Fieldmap2ImageRegistration')
 
     applyxfm = pe.Node(ants.ApplyTransforms(
         dimension=3, interpolation='Linear'), name='Fieldmap2ImageApply')
@@ -130,72 +122,7 @@ def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
         (unwarp, outputnode, [('out_corrected', 'out_file')])
     ])
 
-    # Connect registration settings in the end, not to clutter the code
-    workflow.connect([
-        (fmap2ref_params, fmap2ref, [
-            ('transforms', 'transforms'),
-            ('transform_parameters', 'transform_parameters'),
-            ('number_of_iterations', 'number_of_iterations'),
-            ('dimension', 'dimension'),
-            ('metric', 'metric'),
-            ('metric_weight', 'metric_weight'),
-            ('radius_or_number_of_bins', 'radius_or_number_of_bins'),
-            ('sampling_strategy', 'sampling_strategy'),
-            ('sampling_percentage', 'sampling_percentage'),
-            ('convergence_threshold', 'convergence_threshold'),
-            ('convergence_window_size', 'convergence_window_size'),
-            ('smoothing_sigmas', 'smoothing_sigmas'),
-            ('sigma_units', 'sigma_units'),
-            ('shrink_factors', 'shrink_factors'),
-            ('use_estimate_learning_rate_once', 'use_estimate_learning_rate_once'),
-            ('use_histogram_matching', 'use_histogram_matching'),
-            ('initial_moving_transform_com', 'initial_moving_transform_com'),
-            ('collapse_output_transforms', 'collapse_output_transforms'),
-            ('winsorize_upper_quantile', 'winsorize_upper_quantile'),
-            ('winsorize_lower_quantile', 'winsorize_lower_quantile')
-        ])
-    ])
-
     return workflow
-
-
-def _get_metadata(in_file):
-    import nibabel as nb
-    from fmriprep.interfaces import ReadSidecarJSON
-    AXIS_MAP = {'i': 0, 'j': 1, 'k': 2}
-
-    info = ReadSidecarJSON(
-        fields=['TotalReadoutTime', 'PhaseEncodingDirection'],
-        in_file=in_file
-    )
-
-    try:
-        out_dict = info.run().outputs.out_dict
-        return out_dict
-    except KeyError:
-        pass
-
-    info = ReadSidecarJSON(
-        fields=['EffectiveEchoSpacing', 'PhaseEncodingDirection'],
-        in_file=in_file
-    )
-    try:
-        out_dict = info.run().outputs.out_dict
-    except KeyError:
-        pass
-
-    pe_axis = AXIS_MAP[out_dict['PhaseEncodingDirection'][0]]
-    pe_size = nb.load(in_file).get_data().shape[pe_axis]
-
-    # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
-    #     processing/459-epi-distortion-correction-echo-spacing.html
-    # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
-    # Particularly "the final column is the time (in seconds) between the readout of the
-    # centre of the first echo and the centre of the last echo (equal to dwell-time
-    # multiplied by # of phase-encode steps minus one)"
-    out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
-
-    return out_dict
 
 
 def _multiple_pe_hmc(in_files, in_movpar, in_ref=None):
