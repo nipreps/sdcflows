@@ -359,7 +359,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
-            'mat_epi_to_t1',
+            'itk_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
             'epi_mask',
