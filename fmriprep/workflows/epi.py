@@ -273,13 +273,12 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 'epi_brain', 'sbref_brain',
-                                      'sbref_brain_mask']),
+                                      'epi_mean', 'sbref_brain_mask']),
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_registered', 'out_mat', 'out_mat_inv']), name='outputnode')
 
-    mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
     epi_sbref = pe.Node(FLIRTRPT(generate_report=True, dof=6,
                                  out_matrix_file='init.mat',
@@ -305,8 +304,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, epi_split, [('epi_brain', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
-        (inputnode, mean, [('epi_brain', 'in_file')]),
-        (mean, inu, [('out_file', 'input_image')]),
+        (inputnode, inu, [('epi_mean', 'input_image')]),
         (inu, epi_sbref, [('output_image', 'in_file')]),
 
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
