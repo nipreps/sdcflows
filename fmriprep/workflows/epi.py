@@ -85,12 +85,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
         name='DerivativesHMC'
     )
 
-    ds_mats = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc'),
-        name='DerivativesHMCmats'
-    )
-
     ds_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='hmc_bmask'),
@@ -125,12 +119,10 @@ def epi_hmc(name='EPI_HMC', settings=None):
 
     workflow.connect([
         (inputnode, ds_hmc, [('epi', 'source_file')]),
-        (inputnode, ds_mats, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
         (inputnode, ds_motion, [('epi', 'source_file')]),
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
-        (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (avs_format, ds_motion, [('out_file', 'in_file')]),
         (pre_bet_mean, mean_epi_stripped_overlay, [('out_file', 'overlay_file')]),
