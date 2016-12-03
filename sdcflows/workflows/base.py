@@ -93,6 +93,12 @@ def create_encoding_file(input_images, in_dict):
             if eff_echo is None:
                 raise NotImplementedError
 
+            # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
+            #     processing/459-epi-distortion-correction-echo-spacing.html
+            # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
+            # Particularly "the final column is the time (in seconds) between the readout of the
+            # centre of the first echo and the centre of the last echo (equal to dwell-time
+            # multiplied by # of phase-encode steps minus one)"
             pe_size = nb.load(fmap).get_data().shape[pe_axis]
             readout_time = eff_echo * (pe_size - 1)
 
@@ -108,18 +114,6 @@ def create_encoding_file(input_images, in_dict):
     np.savetxt(os.path.abspath('parameters.txt'), enc_table,
                fmt=['%0.1f', '%0.1f', '%0.1f', '%0.20f'])
     return os.path.abspath('parameters.txt')
-
-
-
-
-    # See http://support.brainvoyager.com/functional-analysis-preparation/27-pre-
-    #     processing/459-epi-distortion-correction-echo-spacing.html
-    # See http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TOPUP/ExampleTopupFollowedByApplytopup
-    # Particularly "the final column is the time (in seconds) between the readout of the
-    # centre of the first echo and the centre of the last echo (equal to dwell-time
-    # multiplied by # of phase-encode steps minus one)"
-    out_dict['TotalReadoutTime'] = out_dict['EffectiveEchoSpacing'] * (pe_size - 1)
-
 
 def mcflirt2topup(in_files, in_mats, out_movpar=None):
     """
