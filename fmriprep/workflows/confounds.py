@@ -9,7 +9,7 @@ from nipype.pipeline import engine as pe
 from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
-FAST_DEFAULT_SEGS = ['CSF', 'gray matter', 'white matter']
+FAST_DEFAULT_SEGS = ['CSF', 'GrayMatter', 'WhiteMatter']
 
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
@@ -110,7 +110,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
 
     def less_breakable(a_string):
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
-        return ''.join(a_string.split()).lower().strip('#')
+        return ''.join(a_string.split()).strip('#')
 
     all_files = [confound for confound in [signals, dvars, frame_displace,
                                            tcompcor, acompcor, motion]
