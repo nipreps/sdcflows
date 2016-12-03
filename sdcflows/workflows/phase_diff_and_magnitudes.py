@@ -1,4 +1,13 @@
-from __future__ import division
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+Fieldmap preprocessing workflow for fieldmap data structure
+8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
+
+"""
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import logging
 import os.path as op
@@ -15,9 +24,6 @@ from niworkflows.interfaces.masks import BETRPT
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 from fmriprep.viz import stripped_brain_overlay
-
-''' Fieldmap preprocessing workflow for fieldmap data structure
-8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
 
 
 def _sort_fmaps(input_images):
