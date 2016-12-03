@@ -83,20 +83,14 @@ def epi_hmc(name='EPI_HMC', settings=None):
     # Write corrected file in the designated output dir
     ds_hmc = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc'),
+                            suffix='preproc'),
         name='DerivativesHMC'
     )
 
     ds_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc_bmask'),
+                            suffix='brainmask'),
         name='DerivativesEPImask'
-    )
-
-    ds_motion = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc'),
-        name='DerivativesParamsHMC'
     )
 
     ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
@@ -122,7 +116,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow.connect([
         (inputnode, ds_hmc, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
-        (inputnode, ds_motion, [('epi', 'source_file')]),
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
@@ -187,13 +180,13 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     # Write EPI mean in T1w space
     ds_t1w = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc_t1'),
+                            suffix='space-MNI152NLin2009cAsym_preproc'),
         name='DerivHMC_T1w'
     )
     # Write registrated file in the designated output dir
     ds_tfm_fwd = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='epi2t1w_affine'),
+                            suffix='target-MNI152NLin2009cAsym_affine'),
         name='DerivEPI_to_T1w_fwd'
     )
     ds_tfm_inv = pe.Node(
@@ -288,7 +281,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
     ds_sbref = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc_sbref'), name='DerivHMC_SBRef')
+                            suffix='preproc'), name='DerivHMC_SBRef')
 
     ds_flirtrpt = pe.Node(nio.DataSink(), name="FLIRTRPTDS")
     ds_flirtrpt.inputs.base_directory = op.join(settings['output_dir'],
