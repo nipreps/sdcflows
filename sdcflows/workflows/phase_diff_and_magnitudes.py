@@ -56,7 +56,7 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
         return inlist[0]
 
     # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(fields=['EchoTime1', 'EchoTime2']), name='metadata')
+    meta = pe.Node(ReadSidecarJSON(), name='metadata')
     dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
                                function=_delta_te), name='ComputeDeltaTE')
 
@@ -199,14 +199,18 @@ def phdiff2fmap(in_file, delta_te, out_file=None):
     return out_file
 
 
-def _delta_te(in_values):
+def _delta_te(in_values, te1=None, te2=None):
     if isinstance(in_values, float):
         te2 = in_values
         te1 = 0.
 
     if isinstance(in_values, dict):
-        te1 = in_values['EchoTime1']
-        te2 = in_values['EchoTime2']
+        te1 = in_values.get('EchoTime1')
+        te2 = in_values.get('EchoTime2')
+
+        if not all((te1, te2)):
+            te2 = in_values.get('EchoTimeDifference')
+            te1 = 0
 
     if isinstance(in_values, list):
         te2, te1 = in_values
@@ -214,5 +218,9 @@ def _delta_te(in_values):
             te1 = te1[1]
         if isinstance(te2, list):
             te2 = te2[1]
+
+    if te1 is None or te2 is None:
+        raise RuntimeError(
+            'No echo time information found')
 
     return abs(float(te2)-float(te1))
