@@ -27,7 +27,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'reference_image']),
+                                                          'reference_image', 'motion_confounds_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
@@ -55,7 +55,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
                                                                                'frame_displace',
                                                                                'tcompcor',
-                                                                               'acompcor'],
+                                                                               'acompcor',
+                                                                               'motion'],
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
     ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
@@ -89,6 +90,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
+        (inputnode, concat, [('motion_confounds_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
 
@@ -100,7 +102,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     return workflow
 
 
-def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None, acompcor=None):
+def _gather_confounds(signals=None, dvars=None, frame_displace=None,
+                      tcompcor=None, acompcor=None, motion=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
     import os.path as op
@@ -109,18 +112,21 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=No
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
         return ''.join(a_string.split()).lower().strip('#')
 
-    all_files = [confound for confound in [signals, dvars, frame_displace, tcompcor, acompcor]
+    all_files = [confound for confound in [signals, dvars, frame_displace,
+                                           tcompcor, acompcor, motion]
                  if confound is not None]
 
     confounds_data = pd.DataFrame()
     for file_name in all_files:  # assumes they all have headings already
         new = pd.read_csv(file_name, sep="\t")
         for column_name in new.columns:
-            new.rename(columns={column_name: less_breakable(column_name)}, inplace=True)
+            new.rename(columns={column_name: less_breakable(column_name)},
+                       inplace=True)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
-    confounds_data.to_csv(combined_out, sep=str("\t"), index=False)
+    confounds_data.to_csv(combined_out, sep=str("\t"), index=False,
+                          na_rep="n/a")
 
     return combined_out
 

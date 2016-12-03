@@ -37,7 +37,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
+        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file',
+                'motion_confounds_file']), name='outputnode')
 
     pre_bet_mean = pe.Node(fsl.MeanImage(dimension='T'), name='PreBETMean')
 
@@ -74,6 +75,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
                                ('rot_angles', 'rot_angles')]),
         (hmc, bet_hmc, [('mean_img', 'in_file')]),
         (hmc, avscale, [('mean_img', 'ref_file')]),
+        (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
         (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
                                ('out_file', 'epi_mean')]),
     ])
@@ -124,7 +126,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
-        (avs_format, ds_motion, [('out_file', 'in_file')]),
         (pre_bet_mean, mean_epi_stripped_overlay, [('out_file', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
         (pre_bet_mean, mean_epi_overlay_ds, [('out_file', 'overlay_file')]),
