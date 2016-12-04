@@ -43,7 +43,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
     hmc = pe.Node(fsl.MCFLIRT(
         save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
 
-    pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
 
@@ -56,11 +55,10 @@ def epi_hmc(name='EPI_HMC', settings=None):
                       name='EPI_hmc_bet')
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi', 'in_file')]),
         (inputnode, hmc, [('epi', 'in_file')]),
-        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
-        (pick_1st, hcm2itk, [('roi_file', 'source_file'),
-                             ('roi_file', 'reference_file')]),
+        (hmc, hcm2itk, [('mat_file', 'transform_file'),
+                        ('mean_img', 'source_file'),
+                        ('mean_img', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, outputnode, [('out_file', 'epi_brain'),
                            ('par_file', 'movpar_file')]),
