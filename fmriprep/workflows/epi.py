@@ -39,10 +39,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
 
-    pre_bet_mean = pe.Node(fsl.MeanImage(dimension='T'), name='PreBETMean')
-
-    bet = pe.Node(BETRPT(functional=True, frac=0.6), name='EPI_bet')
-
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
         save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
@@ -56,13 +52,12 @@ def epi_hmc(name='EPI_HMC', settings=None):
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
-    bet_hmc = pe.Node(BETRPT(mask=True, frac=0.6), name='EPI_hmc_bet')
+    bet_hmc = pe.Node(BETRPT(generate_report=True, mask=True, frac=0.6),
+                      name='EPI_hmc_bet')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
-        (inputnode, bet, [('epi', 'in_file')]),
-        (inputnode, pre_bet_mean, [('epi', 'in_file')]),
-        (bet, hmc, [('out_file', 'in_file')]),
+        (inputnode, hmc, [('epi', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
@@ -133,13 +128,13 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (hcm2itk, ds_mats, [('itk_transform', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (avs_format, ds_motion, [('out_file', 'in_file')]),
-        (pre_bet_mean, mean_epi_stripped_overlay, [('out_file', 'overlay_file')]),
+        (hmc, mean_epi_stripped_overlay, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
-        (pre_bet_mean, mean_epi_overlay_ds, [('out_file', 'overlay_file')]),
+        (hmc, mean_epi_overlay_ds, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
         (mean_epi_stripped_overlay, mean_epi_overlay_ds,
          [('out_file', 'in_file')]),
-        (bet, ds_betrpt, [('out_report', '@betrpt')])
+        (bet_hmc, ds_betrpt, [('out_report', '@betrpt')])
     ])
 
     return workflow
