@@ -16,12 +16,12 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
-from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
 from niworkflows.interfaces.masks import BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
+from fmriprep.interfaces.utils import reorient
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
                                  DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
@@ -139,6 +139,10 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
         name='SBRefReorient'
     )
+    reorient = pe.Node(niu.Function(input_names=['in_file'],
+                                    output_names=['out_file'],
+                                    function=reorient),
+                       name='SBRefReorient')
 
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
