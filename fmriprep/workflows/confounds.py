@@ -123,7 +123,6 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         for column_name in new.columns:
             new.rename(columns={column_name: less_breakable(column_name)},
                        inplace=True)
-        print("!!!!!"+file_name)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
