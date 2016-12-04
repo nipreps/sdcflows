@@ -59,4 +59,4 @@ class TestConfounds(TestWorkflow):
         confounds = pd.DataFrame({'a': [0.1], 'b': [0.2]})
 
         mock_df.assert_called_once_with(confounds, os.path.abspath("confounds.tsv"),
-                                        na_rep='n/a', index=False, sep="\t")
+                                        index=False, sep="\t")
