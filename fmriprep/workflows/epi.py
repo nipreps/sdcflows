@@ -157,7 +157,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='inputnode'
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi']),
+        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi',
+                                      'itk_epi_to_t1', 'itk_t1_to_epi']),
         name='outputnode'
     )
 
@@ -227,6 +228,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
+        (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
         (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
@@ -357,7 +359,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
-            'mat_epi_to_t1',
+            'itk_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
             'epi_mask',
@@ -413,10 +415,10 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
         (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('mat_epi_to_t1', _aslist), 'in2'),
+                                       (('itk_epi_to_t1', _aslist), 'in2'),
                                        ('hmc_xforms', 'in3')]),
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
-                                      (('mat_epi_to_t1', _aslist), 'in2')]),
+                                      (('itk_epi_to_t1', _aslist), 'in2')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
