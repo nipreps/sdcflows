@@ -40,10 +40,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
         fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file',
                 'motion_confounds_file']), name='outputnode')
 
-    pre_bet_mean = pe.Node(fsl.MeanImage(dimension='T'), name='PreBETMean')
-
-    bet = pe.Node(BETRPT(functional=True, frac=0.6), name='EPI_bet')
-
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
         save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
@@ -57,13 +53,12 @@ def epi_hmc(name='EPI_HMC', settings=None):
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
-    bet_hmc = pe.Node(BETRPT(mask=True, frac=0.6), name='EPI_hmc_bet')
+    bet_hmc = pe.Node(BETRPT(generate_report=True, mask=True, frac=0.6),
+                      name='EPI_hmc_bet')
 
     workflow.connect([
         (inputnode, pick_1st, [('epi', 'in_file')]),
-        (inputnode, bet, [('epi', 'in_file')]),
-        (inputnode, pre_bet_mean, [('epi', 'in_file')]),
-        (bet, hmc, [('out_file', 'in_file')]),
+        (inputnode, hmc, [('epi', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (pick_1st, hcm2itk, [('roi_file', 'source_file'),
                              ('roi_file', 'reference_file')]),
@@ -121,11 +116,11 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (hmc, mean_epi_stripped_overlay, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
-        (pre_bet_mean, mean_epi_overlay_ds, [('out_file', 'overlay_file')]),
+        (hmc, mean_epi_overlay_ds, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
         (mean_epi_stripped_overlay, mean_epi_overlay_ds,
          [('out_file', 'in_file')]),
-        (bet, ds_betrpt, [('out_report', '@betrpt')])
+        (bet_hmc, ds_betrpt, [('out_report', '@betrpt')])
     ])
 
     return workflow
@@ -143,7 +138,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='inputnode'
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi']),
+        niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi',
+                                      'itk_epi_to_t1', 'itk_t1_to_epi']),
         name='outputnode'
     )
 
@@ -207,6 +203,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
+        (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
         (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
@@ -251,13 +248,12 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 'epi_brain', 'sbref_brain',
-                                      'sbref_brain_mask']),
+                                      'epi_mean', 'sbref_brain_mask']),
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_registered', 'out_mat', 'out_mat_inv']), name='outputnode')
 
-    mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
     epi_sbref = pe.Node(FLIRTRPT(generate_report=True, dof=6,
                                  out_matrix_file='init.mat',
@@ -283,8 +279,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, epi_split, [('epi_brain', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
-        (inputnode, mean, [('epi_brain', 'in_file')]),
-        (mean, inu, [('out_file', 'input_image')]),
+        (inputnode, inu, [('epi_mean', 'input_image')]),
         (inu, epi_sbref, [('output_image', 'in_file')]),
 
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
@@ -335,7 +330,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
-            'mat_epi_to_t1',
+            'itk_epi_to_t1',
             't1_2_mni_forward_transform',
             'epi',
             'epi_mask',
@@ -349,8 +344,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         if isinstance(in_value, list):
             return in_value
         return [in_value]
-
-    pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
 
     gen_ref = pe.Node(niu.Function(
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
@@ -386,15 +379,14 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     )
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi', 'in_file')]),
         (inputnode, ds_mni, [('epi', 'source_file')]),
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
-        (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
+        (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('mat_epi_to_t1', _aslist), 'in2'),
+                                       (('itk_epi_to_t1', _aslist), 'in2'),
                                        ('hmc_xforms', 'in3')]),
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
-                                      (('mat_epi_to_t1', _aslist), 'in2')]),
+                                      (('itk_epi_to_t1', _aslist), 'in2')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, epi_to_mni_transform, [('out_files', 'input_image')]),
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
