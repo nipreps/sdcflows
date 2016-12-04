@@ -59,7 +59,7 @@ def main():
 
     # ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
-    g_ants.add_argument('--ants-nthreads', action='store', type=int,
+    g_ants.add_argument('--ants-nthreads', action='store', type=int, default=0,
                         help='number of threads that will be set in ANTs processes')
     g_ants.add_argument('--skull-strip-ants', dest="skull_strip_ants",
                         action='store_true',
@@ -97,8 +97,7 @@ def create_workflow(opts):
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
 
-    if opts.ants_nthreads is not None:
-        settings['ants_threads'] = opts.ants_nthreads
+    settings['ants_threads'] = opts.ants_nthreads
 
     log_dir = op.join(settings['output_dir'], 'log')
     derivatives = op.join(settings['output_dir'], 'derivatives')
@@ -133,6 +132,9 @@ def create_workflow(opts):
         if settings['nthreads'] > 1:
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
+
+    if settings['ants_nthreads'] == 0:
+        settings['ants_nthreads'] = cpu_count()
 
     # Determine subjects to be processed
     subject_list = opts.participant_label
