@@ -27,7 +27,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'reference_image', 'motion_confounds_file']),
+                                                          'reference_image', 'motion_confounds_file',
+                                                          'source_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
@@ -47,7 +48,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     # CompCor
     tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
     acompcor_roi = pe.Node(mask.BinarizeSegmentation(
-        false_values=[FAST_DEFAULT_SEGS.index('gray matter') + 1, 0]),  # 0 denotes background
+        false_values=[FAST_DEFAULT_SEGS.index('GrayMatter') + 1, 0]),  # 0 denotes background
                            name="CalcaCompCorROI")
     acompcor = pe.Node(confounds.ACompCor(components_file='acompcor.tsv'), name="aCompCor")
 
@@ -96,7 +97,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         # print stuff in derivatives
         (concat, ds_confounds, [('combined_out', 'in_file')]),
-        (inputnode, ds_confounds, [('fmri_file', 'source_file')])
+        (inputnode, ds_confounds, [('source_file', 'source_file')])
     ])
 
     return workflow
@@ -122,6 +123,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         for column_name in new.columns:
             new.rename(columns={column_name: less_breakable(column_name)},
                        inplace=True)
+        print("!!!!!"+file_name)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')

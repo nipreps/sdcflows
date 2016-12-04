@@ -119,7 +119,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
         (hmc, ds_hmc, [('out_file', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
-        (pre_bet_mean, mean_epi_stripped_overlay, [('out_file', 'overlay_file')]),
+        (hmc, mean_epi_stripped_overlay, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
         (pre_bet_mean, mean_epi_overlay_ds, [('out_file', 'overlay_file')]),
         (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
@@ -139,7 +139,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi', 'epi_mean', 't1_brain',
-                                      't1_seg']),
+                                      't1_seg', 't1w']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -177,21 +177,15 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv')
 
-    # Write EPI mean in T1w space
-    ds_t1w = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='space-MNI152NLin2009cAsym_preproc'),
-        name='DerivHMC_T1w'
-    )
     # Write registrated file in the designated output dir
     ds_tfm_fwd = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='target-MNI152NLin2009cAsym_affine'),
+                            suffix='target-T1w_affine'),
         name='DerivEPI_to_T1w_fwd'
     )
     ds_tfm_inv = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='t1w2epi_affine'),
+                            suffix='target-meanBOLD_affine'),
         name='DerivEPI_to_T1w_inv'
     )
 
@@ -218,11 +212,9 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
         (inputnode, ds_tfm_fwd, [('epi', 'source_file')]),
-        (inputnode, ds_tfm_inv, [('epi', 'source_file')]),
-        (inputnode, ds_t1w, [('epi', 'source_file')]),
+        (inputnode, ds_tfm_inv, [('t1w', 'source_file')]),
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
         (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
-        (flt_bbr, ds_t1w, [('out_file', 'in_file')]),
         (flt_bbr, ds_flt_bbr, [('out_report', 'flt_bbr_rpt')])
     ])
 
@@ -384,12 +376,12 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     # Write corrected file in the designated output dir
     ds_mni = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc_mni'),
+                            suffix='space-MNI152NLin2009cAsym_preproc'),
         name='DerivativesHMCMNI'
     )
     ds_mni_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='hmc_mni_bmask'),
+                            suffix='space-MNI152NLin2009cAsym_brainmask'),
         name='DerivativesHMCMNImask'
     )
 
