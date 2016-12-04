@@ -135,14 +135,10 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     )
 
     # Make sure sbref is in RAS coordinates
-    reorient = pe.Node(
-        fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
-        name='SBRefReorient'
-    )
-    reorient = pe.Node(niu.Function(input_names=['in_file'],
-                                    output_names=['out_file'],
-                                    function=reorient),
-                       name='SBRefReorient')
+    to_ras = pe.Node(niu.Function(input_names=['in_file'],
+                                  output_names=['out_file'],
+                                  function=reorient),
+                     name='SBRefReorient')
 
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
@@ -163,12 +159,12 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
     workflow.connect([
-        (inputnode, reorient, [('sbref_brain', 'in_file')]),
+        (inputnode, to_ras, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (reorient, flt_bbr_init, [('out_file', 'in_file')]),
-        (reorient, flt_bbr, [('out_file', 'in_file')]),
+        (to_ras, flt_bbr_init, [('out_file', 'in_file')]),
+        (to_ras, flt_bbr, [('out_file', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
