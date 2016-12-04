@@ -17,7 +17,7 @@ from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.utils.misc import gen_list
 from fmriprep.interfaces.bids import ReadSidecarJSON
-from fmriprep.workflows.fieldmap.base import create_encoding_file
+from fmriprep.workflows.fieldmap.utils import create_encoding_file
 
 SDC_UNWARP_NAME = 'SDC_unwarp'
 
