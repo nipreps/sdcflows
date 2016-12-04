@@ -374,8 +374,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             return in_value
         return [in_value]
 
-    pick_1st = pe.Node(fsl.ExtractROI(t_min=0, t_size=1), name='EPIPickFirst')
-
     gen_ref = pe.Node(niu.Function(
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
         function=_gen_reference), name='GenNewMNIReference')
@@ -410,10 +408,9 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     )
 
     workflow.connect([
-        (inputnode, pick_1st, [('epi', 'in_file')]),
         (inputnode, ds_mni, [('epi', 'source_file')]),
         (inputnode, ds_mni_mask, [('epi', 'source_file')]),
-        (pick_1st, gen_ref, [('roi_file', 'moving_image')]),
+        (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
                                        (('itk_epi_to_t1', _aslist), 'in2'),
                                        ('hmc_xforms', 'in3')]),
