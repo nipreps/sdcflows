@@ -10,15 +10,17 @@ dependencies:
   cache_directories:
     - "~/data"
     - "~/docker"
-    - "~/.cache/stanford-crn"
 
   pre:
     - mkdir -p $HOME/data
     - mkdir -p $HOME/docker
     - mkdir -p $HOME/ds005/out $HOME/ds054/out
+    - mkdir -p $HOME/ds005/scratch && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds005/scratch && sudo setfacl -m group:ubuntu:rwx $HOME/ds005/scratch
+    - mkdir -p $HOME/ds054/scratch && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds054/scratch && sudo setfacl -m group:ubuntu:rwx $HOME/ds054/scratch
     # Download test data
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
+    - printf "[execution]\nstop_on_first_crash = true\nremove_unnecessary_outputs = false" > $HOME/nipype.cfg
 
   override:
     - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
@@ -27,15 +29,19 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds054/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds054 /out/ participant -w work/ -t ds054 --debug :
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug --write-graph -w /scratch:
         timeout: 4800
-    - docker run -i -v /etc/localtime:/etc/localtime:ro -v $HOME/data:/data:ro -v ~/.cache/stanford-crn:/root/.cache/stanford-crn -v $HOME/ds005/out:/out -w /scratch poldracklab/fmriprep:latest /data/ds005 /out/ participant -w work/ -t ds005 --debug --no-skull-strip-ants :
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out poldracklab/fmriprep:latest /data/ds005 /out/ participant -t ds005 --debug --write-graph --no-skull-strip-ants -w /scratch:
         timeout: 4800
+    - find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
+    - find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
 
 general:
   artifacts:
     - "~/ds054/out"
+    - "~/ds054/scratch"
     - "~/ds005/out"
+    - "~/ds005/scratch"
 
 deployment:
   hub:
