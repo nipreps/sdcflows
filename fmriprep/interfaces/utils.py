@@ -97,7 +97,7 @@ def _tsv_format(translations, rot_angles, fmt='confounds'):
     elif fmt == 'confounds':
         out_file = op.abspath('movpar.tsv')
         np.savetxt(out_file, parameters,
-                   header='X\tY\tZ\tRotX\tRotY\tRotZ',
+                   header='Motion parameters: X, Y, Z, Rx, Ry, Rz',
                    delimiter='\t')
     else:
         raise NotImplementedError

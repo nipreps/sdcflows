@@ -84,7 +84,6 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
                              desc='the object to be saved')
     source_file = File(exists=True, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
-    extra_values = traits.List(traits.Str)
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
@@ -133,7 +132,7 @@ class DerivativesDataSink(BaseInterface):
         base_fname = op.join(out_path, fname)
 
         formatstr = '{bname}_{suffix}{ext}'
-        if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
+        if len(self.inputs.in_file) > 1:
             formatstr = '{bname}_{suffix}{i:04d}{ext}'
 
 
@@ -143,8 +142,6 @@ class DerivativesDataSink(BaseInterface):
                 suffix=self.inputs.suffix,
                 i=i,
                 ext=ext)
-            if isdefined(self.inputs.extra_values):
-                out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
             copy(self.inputs.in_file[i], out_file)
 
