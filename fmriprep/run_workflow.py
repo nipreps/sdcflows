@@ -85,6 +85,7 @@ def create_workflow(opts):
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
         'debug': opts.debug,
+        'ants_nthreads': opts.ants_nthreads,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
         'work_dir': op.abspath(opts.work_dir)
@@ -96,8 +97,6 @@ def create_workflow(opts):
     if opts.debug:
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
-
-    settings['ants_threads'] = opts.ants_nthreads
 
     log_dir = op.join(settings['output_dir'], 'log')
     derivatives = op.join(settings['output_dir'], 'derivatives')
