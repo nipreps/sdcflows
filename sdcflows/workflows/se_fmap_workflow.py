@@ -13,7 +13,7 @@ from niworkflows.interfaces.masks import BETRPT
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
-from fmriprep.workflows.fieldmap.base import create_encoding_file
+from fmriprep.workflows.fieldmap.utils import create_encoding_file
 
 WORKFLOW_NAME = 'Fieldmap_SEs'
 
