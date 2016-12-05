@@ -62,12 +62,15 @@ class Report(object):
         self.index()
 
     def index(self):
+        print("indexing")
         for root, directories, filenames in os.walk(self.root):
             for f in filenames:
                 f = os.path.join(root, f)
+                print(f)
                 for sub_report in self.sub_reports:
                     for element in sub_report.elements:
-                        if element.file_pattern.search(f) and f.split('.')[-1] == 'svg':
+                        ext = f.split('.')[-1] 
+                        if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
                             element.files.append(f)
                             with open(f) as fp:
                                 content = fp.read()
@@ -75,6 +78,7 @@ class Report(object):
                                 element.files_contents.append((f, content))
 
     def generate_report(self):
+        print("generate")
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(searchpath=searchpath),
@@ -88,7 +92,7 @@ class Report(object):
 
 
 def run_reports(out_dir):
-    path = os.path.join(out_dir, 'images/')
+    path = os.path.join(out_dir, 'reports/')
     config = pkgrf('fmriprep', 'viz/config.json')
 
     for root, _, _ in os.walk(path):
@@ -101,3 +105,6 @@ def run_reports(out_dir):
             report.generate_report()
         except AttributeError:
             continue
+
+    report = Report(path, config, out_dir, "final_report.html")
+    report.generate_report()
