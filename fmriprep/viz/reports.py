@@ -62,11 +62,9 @@ class Report(object):
         self.index()
 
     def index(self):
-        print("indexing")
         for root, directories, filenames in os.walk(self.root):
             for f in filenames:
                 f = os.path.join(root, f)
-                print(f)
                 for sub_report in self.sub_reports:
                     for element in sub_report.elements:
                         ext = f.split('.')[-1] 
