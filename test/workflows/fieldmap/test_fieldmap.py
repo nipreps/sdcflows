@@ -1,4 +1,5 @@
 import json
+from fmriprep.workflows.fieldmap.utils import create_encoding_file
 from fmriprep.workflows.fieldmap import (se_fmap_workflow,
                                          fieldmap_to_phasediff)
 import re
@@ -69,7 +70,7 @@ class TestFieldMap(TestWorkflow):
                               self.SOME_INT)
 
         # RUN
-        out_file = se_fmap_workflow.create_encoding_file(fieldmaps, in_dict)
+        out_file = create_encoding_file(fieldmaps, in_dict)
 
         # ASSERT
         # the output file is called parameters.txt
@@ -77,6 +78,6 @@ class TestFieldMap(TestWorkflow):
         # nibabel.load was called with fieldmaps
         mock_load.assert_called_with(fieldmaps)
         # numpy.savetxt was called once. It was called with expected_enc_table
-        mock_savetxt.assert_called_once_with(mock.ANY, expected_enc_table, 
+        mock_savetxt.assert_called_once_with(mock.ANY, expected_enc_table,
                                              fmt=mock.ANY)
 
