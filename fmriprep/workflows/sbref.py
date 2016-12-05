@@ -49,6 +49,10 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
 
+    ds_report = pe.Node(nio.DataSink(), name="DS_Report")
+    ds_report.inputs.base_directory = op.join(settings['output_dir'],
+                                              'reports')
+
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
                              ('fmap_ref', 'inputnode.fmap_ref'),
@@ -57,6 +61,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
         (inu, bet, [('output_image', 'in_file')]),
+        (bet, ds_report, [('out_report', 'sbref_preprocess.bet')]),
         (bet, outputnode, [('out_file', 'sbref_unwarped'),
                            ('mask_file', 'sbref_unwarped_mask')])
     ])
@@ -158,6 +163,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
+
+    ds_report = pe.Node(nio.DataSink(), name="DS_Report")
+    ds_report.inputs.base_directory = op.join(settings['output_dir'],
+                                              'reports')
+
     workflow.connect([
         (inputnode, to_ras, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
@@ -169,7 +179,8 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
-        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')])
+        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
+        (flt_bbr, ds_report, [('out_report', 'sbref_t1_registration.flt_bbr')])
     ])
 
     # Plots for report
