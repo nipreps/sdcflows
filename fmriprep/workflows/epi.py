@@ -23,6 +23,7 @@ from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
                                  ImageDataSink)
+from fmriprep.interfaces.utils import nii_concat
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
@@ -264,7 +265,9 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.preprocess.ApplyXFM(), name='EPIapplyXFM',
                          iterfield=['in_file'])
-    epi_merge = pe.Node(fsl.Merge(dimension='t'), name='EPImergeback')
+    epi_merge = pe.Node(niu.Function(input_names=["in_files"],
+                                     output_names=["merged_file"],
+                                     function=nii_concat), name='EPImergeback')
 
     ds_sbref = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -359,7 +362,9 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
-    merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
+    merge = pe.Node(niu.Function(input_names=["in_files"],
+                                 output_names=["merged_file"],
+                                 function=nii_concat), name='MergeEPI')
     merge.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
