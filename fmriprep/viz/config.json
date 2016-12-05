@@ -26,15 +26,21 @@
         ]
     },
     {
+        "name": "Segmentations",
+        "elements":
+        [
+             {
+                "name": "t1w_preprocessing/t1_seg",
+                "file_pattern": "t1w_preprocessing/t1_seg",
+                "title": "T1 Segmentation",
+                "description": " "
+            }
+       ]
+    },
+    {
         "name": "Registration Outputs",
         "elements":
         [
-            {
-                "name": "t1w_preprocessing/t1_seg",
-                "file_pattern": "t1w_preprocessing/t1_seg",
-                "title": "Sbref to T1",
-                "description": "Corrected sbref image registred into t1 space."
-            },
             {
                 "name": "t1w_preprocessing/t1_2_mni",
                 "file_pattern": "t1w_preprocessing/t1_2_mni",
