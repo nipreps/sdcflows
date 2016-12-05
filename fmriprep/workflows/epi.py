@@ -43,6 +43,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
         save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
+    hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
 
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
@@ -350,6 +351,8 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
                                          '1mm_T1.nii.gz')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name='MergeTransforms')
     epi_to_mni_transform = pe.MapNode(
@@ -357,6 +360,8 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(fsl.Merge(dimension='t'), name='MergeEPI')
+    merge.interface.estimated_memory_gb = settings[
+                                              "biggest_epi_file_size_gb"] * 3
 
     mask_merge_tfms = pe.Node(niu.Merge(2), name='MaskMergeTfms')
     mask_mni_tfm = pe.Node(
