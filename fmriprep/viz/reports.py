@@ -104,5 +104,5 @@ def run_reports(out_dir):
         except AttributeError:
             continue
 
-    report = Report(path, config, out_dir, "final_report.html")
+    report = Report(path, config, out_dir, "all_subjects_report.html")
     report.generate_report()
