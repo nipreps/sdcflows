@@ -76,7 +76,6 @@ class Report(object):
                                 element.files_contents.append((f, content))
 
     def generate_report(self):
-        print("generate")
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(searchpath=searchpath),

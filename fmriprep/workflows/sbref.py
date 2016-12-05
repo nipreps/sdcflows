@@ -49,9 +49,11 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
 
-    ds_report = pe.Node(nio.DataSink(), name="DS_Report")
-    ds_report.inputs.base_directory = op.join(settings['output_dir'],
-                                              'reports')
+    ds_report = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+                            suffix='bet', out_path_base='report'),
+        name='DS_Report'
+    )
 
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
@@ -61,7 +63,8 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
         (inu, bet, [('output_image', 'in_file')]),
-        (bet, ds_report, [('out_report', 'sbref_preprocess.bet')]),
+        (bet, ds_report, [('out_report', 'in_file')]),
+        (inputnode, ds_report, [('sbref', 'source_file')]),
         (bet, outputnode, [('out_file', 'sbref_unwarped'),
                            ('mask_file', 'sbref_unwarped_mask')])
     ])
@@ -164,9 +167,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
 
-    ds_report = pe.Node(nio.DataSink(), name="DS_Report")
-    ds_report.inputs.base_directory = op.join(settings['output_dir'],
-                                              'reports')
+    ds_report = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+                            suffix='sbref_t1_flt_bbr', out_path_base='report'),
+        name='DS_Report'
+    )
 
     workflow.connect([
         (inputnode, to_ras, [('sbref_brain', 'in_file')]),
@@ -180,7 +185,8 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
-        (flt_bbr, ds_report, [('out_report', 'sbref_t1_registration.flt_bbr')])
+        (inputnode, ds_report, [('sbref', 'source_file')]),
+        (flt_bbr, ds_report, [('out_report', 'in_file')])
     ])
 
     # Plots for report
