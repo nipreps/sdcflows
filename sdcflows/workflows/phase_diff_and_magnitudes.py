@@ -1,24 +1,30 @@
-from __future__ import division
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+Fieldmap preprocessing workflow for fieldmap data structure
+8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
+
+"""
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import logging
 import os.path as op
 
-from nipype.interfaces.io import JSONFileGrabber
 from nipype.interfaces import ants
 from nipype.interfaces import fsl
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import (siemens2rads, demean_image, cleanup_edge_pipeline,
-                                             add_empty_vol, rads2radsec)
+                                             rads2radsec)
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 from fmriprep.viz import stripped_brain_overlay
-from fmriprep.interfaces.reports import BETRPT
 
-''' Fieldmap preprocessing workflow for fieldmap data structure
-8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
 
 def _sort_fmaps(input_images):
     ''' just a little data massaging'''
@@ -55,19 +61,18 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
     def _pick1st(inlist):
         return inlist[0]
 
-
     # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(fields=['EchoTime1', 'EchoTime2']), name='metadata')
+    meta = pe.Node(ReadSidecarJSON(), name='metadata')
     dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
                                function=_delta_te), name='ComputeDeltaTE')
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='MagnitudeFuse')
 
-
     # de-gradient the fields ("bias/illumination artifact")
     n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
-    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='MagnitudeBET')
+    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
+                  name='MagnitudeBET')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -139,12 +144,16 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
         parameterization=False
     )
 
+    ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
+    ds_betrpt.inputs.base_directory = op.join(settings['output_dir'],
+                                              'reports')
+
     workflow.connect([
         (magmrg, fmap_magnitude_stripped_overlay, [('out_avg', 'overlay_file')]),
         (bet, fmap_magnitude_stripped_overlay, [('mask_file', 'in_file')]),
-        (fmap_magnitude_stripped_overlay, ds_fmap_magnitude_stripped_overlay, 
-            [('out_file', '@fmap_magnitude_stripped_overlay')]
-        )
+        (fmap_magnitude_stripped_overlay, ds_fmap_magnitude_stripped_overlay,
+         [('out_file', '@fmap_magnitude_stripped_overlay')]),
+        (bet, ds_betrpt, [('out_report', 'fmap_bet_rpt')])
     ])
 
     return workflow
@@ -181,7 +190,7 @@ def phdiff2fmap(in_file, delta_te, out_file=None):
     import os.path as op
     import math
 
-    GYROMAG_RATIO_H_PROTON_MHZ = 42.576
+    #  GYROMAG_RATIO_H_PROTON_MHZ = 42.576
 
     if out_file is None:
         fname, fext = op.splitext(op.basename(in_file))
@@ -189,21 +198,25 @@ def phdiff2fmap(in_file, delta_te, out_file=None):
             fname, _ = op.splitext(fname)
         out_file = op.abspath('./%s_fmap.nii.gz' % fname)
 
-    im = nb.load(in_file)
-    data = (im.get_data().astype(np.float32) / (2. * math.pi * delta_te))
+    image = nb.load(in_file)
+    data = (image.get_data().astype(np.float32) / (2. * math.pi * delta_te))
 
-    nb.Nifti1Image(data, im.affine, im.header).to_filename(out_file)
+    nb.Nifti1Image(data, image.affine, image.header).to_filename(out_file)
     return out_file
 
 
-def _delta_te(in_values):
+def _delta_te(in_values, te1=None, te2=None):
     if isinstance(in_values, float):
         te2 = in_values
         te1 = 0.
 
     if isinstance(in_values, dict):
-        te1 = in_values['EchoTime1']
-        te2 = in_values['EchoTime2']
+        te1 = in_values.get('EchoTime1')
+        te2 = in_values.get('EchoTime2')
+
+        if not all((te1, te2)):
+            te2 = in_values.get('EchoTimeDifference')
+            te1 = 0
 
     if isinstance(in_values, list):
         te2, te1 = in_values
@@ -211,5 +224,9 @@ def _delta_te(in_values):
             te1 = te1[1]
         if isinstance(te2, list):
             te2 = te2[1]
+
+    if te1 is None or te2 is None:
+        raise RuntimeError(
+            'No echo time information found')
 
     return abs(float(te2)-float(te1))

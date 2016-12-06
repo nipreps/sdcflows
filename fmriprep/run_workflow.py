@@ -29,13 +29,13 @@ def main():
     # IMPORTANT: they must go directly with the parser object
     parser.add_argument('bids_dir', action='store', default=os.getcwd())
     parser.add_argument('output_dir', action='store',
-                         default=op.join(os.getcwd(), 'out'))
+                        default=op.join(os.getcwd(), 'out'))
     parser.add_argument('analysis_level', choices=['participant'])
 
     # optional arguments
     parser.add_argument('--participant_label', action='store', nargs='+')
     parser.add_argument('-v', '--version', action='version',
-                         version='fmriprep v{}'.format(__version__))
+                        version='fmriprep v{}'.format(__version__))
 
     # Other options
     g_input = parser.add_argument_group('fMRIprep specific arguments')
@@ -51,17 +51,23 @@ def main():
     g_input.add_argument('--use-plugin', action='store', default=None,
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
-                           default=op.join(os.getcwd(), 'work'))
+                         default=op.join(os.getcwd(), 'work'))
     g_input.add_argument('-t', '--workflow-type', default='ds005', required=False,
                          action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
-                         help='workflow type, a monkeypatch while it is not automatically identified')
+                         help='''workflow type, a monkeypatch while it is not 
+                         automatically identified''')
 
     # ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
-    g_ants.add_argument('--ants-nthreads', action='store', type=int,
+    g_ants.add_argument('--ants-nthreads', action='store', type=int, default=0,
                         help='number of threads that will be set in ANTs processes')
-    g_ants.add_argument('--skull-strip-ants', action='store_true', default=False,
-                         help='use ANTs-based skull-stripping')
+    g_ants.add_argument('--skull-strip-ants', dest="skull_strip_ants",
+                        action='store_true',
+                        help='use ANTs-based skull-stripping (default, slow))')
+    g_ants.add_argument('--no-skull-strip-ants', dest="skull_strip_ants",
+                        action='store_false',
+                        help="don't use ANTs-based skull-stripping (use  AFNI instead, fast)")
+    g_ants.set_defaults(skull_strip_ants=True)
 
     opts = parser.parse_args()
     create_workflow(opts)
@@ -72,7 +78,6 @@ def create_workflow(opts):
     from nipype import config as ncfg
     from fmriprep.utils import make_folder
     from fmriprep.viz.reports import run_reports
-    from fmriprep.workflows import base as fwb
     from fmriprep.workflows.base import base_workflow_enumerator
 
     settings = {
@@ -80,6 +85,7 @@ def create_workflow(opts):
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
         'debug': opts.debug,
+        'ants_nthreads': opts.ants_nthreads,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
         'work_dir': op.abspath(opts.work_dir)
@@ -91,9 +97,6 @@ def create_workflow(opts):
     if opts.debug:
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
-
-    if opts.ants_nthreads is not None:
-        settings['ants_threads'] = opts.ants_nthreads
 
     log_dir = op.join(settings['output_dir'], 'log')
     derivatives = op.join(settings['output_dir'], 'derivatives')
@@ -110,7 +113,8 @@ def create_workflow(opts):
     # Set nipype config
     ncfg.update_config({
         'logging': {'log_directory': log_dir, 'log_to_file': True},
-        'execution': {'crashdump_dir': log_dir}
+        'execution': {'crashdump_dir': log_dir, 
+                      'remove_unnecessary_outputs': False}
     })
 
     # nipype plugin configuration
@@ -128,6 +132,9 @@ def create_workflow(opts):
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
 
+    if settings['ants_nthreads'] == 0:
+        settings['ants_nthreads'] = cpu_count()
+
     # Determine subjects to be processed
     subject_list = opts.participant_label
 
@@ -143,7 +150,8 @@ def create_workflow(opts):
     preproc_wf.run(**plugin_settings)
 
     if opts.write_graph:
-        preproc_wf.write_graph()
+        preproc_wf.write_graph(graph2use="colored", format='svg',
+                               simple_form=True)
 
     run_reports(settings['output_dir'])
 

@@ -9,7 +9,8 @@ from nipype.pipeline import engine as pe
 from fmriprep.interfaces import mask
 from fmriprep import interfaces
 
-FAST_DEFAULT_SEGS = ['CSF', 'gray matter', 'white matter']
+FAST_DEFAULT_SEGS = ['CSF', 'GrayMatter', 'WhiteMatter']
+
 
 def discover_wf(settings, name="ConfoundDiscoverer"):
     ''' All input fields are required.
@@ -26,13 +27,14 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'reference_image']),
+                                                          'reference_image', 'motion_confounds_file',
+                                                          'source_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.Node(fsl.ApplyXfm(), name='T1Registration')
+    t1_registration = pe.Node(fsl.preprocess.ApplyXFM(), name='T1Registration')
 
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(include_global=True, detrend=True,
@@ -46,7 +48,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     # CompCor
     tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
     acompcor_roi = pe.Node(mask.BinarizeSegmentation(
-        false_values=[FAST_DEFAULT_SEGS.index('gray matter') + 1, 0]), # 0 denotes background
+        false_values=[FAST_DEFAULT_SEGS.index('GrayMatter') + 1, 0]),  # 0 denotes background
                            name="CalcaCompCorROI")
     acompcor = pe.Node(confounds.ACompCor(components_file='acompcor.tsv'), name="aCompCor")
 
@@ -54,7 +56,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
                                                                                'frame_displace',
                                                                                'tcompcor',
-                                                                               'acompcor'],
+                                                                               'acompcor',
+                                                                               'motion'],
                                       output_names=['combined_out']),
                      name="ConcatConfounds")
     ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
@@ -88,39 +91,46 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
+        (inputnode, concat, [('motion_confounds_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
 
         # print stuff in derivatives
         (concat, ds_confounds, [('combined_out', 'in_file')]),
-        (inputnode, ds_confounds, [('fmri_file', 'source_file')])
+        (inputnode, ds_confounds, [('source_file', 'source_file')])
     ])
 
     return workflow
 
-def _gather_confounds(signals=None, dvars=None, frame_displace=None, tcompcor=None, acompcor=None):
+
+def _gather_confounds(signals=None, dvars=None, frame_displace=None,
+                      tcompcor=None, acompcor=None, motion=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
     import os.path as op
 
     def less_breakable(a_string):
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
-        return ''.join(a_string.split()).lower().strip('#')
+        return ''.join(a_string.split()).strip('#')
 
-    all_files = [confound for confound in [signals, dvars, frame_displace, tcompcor, acompcor]
-                 if confound != None]
+    all_files = [confound for confound in [signals, dvars, frame_displace,
+                                           tcompcor, acompcor, motion]
+                 if confound is not None]
 
     confounds_data = pd.DataFrame()
-    for file_name in all_files: # assumes they all have headings already
+    for file_name in all_files:  # assumes they all have headings already
         new = pd.read_csv(file_name, sep="\t")
         for column_name in new.columns:
-            new.rename(columns={column_name: less_breakable(column_name)}, inplace=True)
+            new.rename(columns={column_name: less_breakable(column_name)},
+                       inplace=True)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
-    confounds_data.to_csv(combined_out, sep=str("\t"), index=False)
+    confounds_data.to_csv(combined_out, sep=str("\t"), index=False,
+                          na_rep="n/a")
 
     return combined_out
+
 
 def reverse_order(inlist):
     ''' if a list, return the list in reversed order; else it is a single item, return it.'''

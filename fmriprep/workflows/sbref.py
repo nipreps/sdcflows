@@ -11,19 +11,22 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 import os
 import os.path as op
+
 from nipype.pipeline import engine as pe
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
-from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import ants
+from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
+from fmriprep.interfaces.utils import reorient
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
                                  DerivativesDataSink, ImageDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
-from fmriprep.interfaces.reports import BETRPT
+
 
 def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     """SBref processing workflow"""
@@ -44,7 +47,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    bet = pe.Node(BETRPT(frac=0.6, mask=True), name='SBRefBET')
+    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
 
     workflow.connect([
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
@@ -90,7 +93,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
 
     datasink = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'], 
+        DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='sdc'),
         name='datasink'
     )
@@ -114,6 +117,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     ])
     return workflow
 
+
 def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
@@ -131,10 +135,10 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     )
 
     # Make sure sbref is in RAS coordinates
-    reorient = pe.Node(
-        fs.MRIConvert(out_type='niigz', out_orientation='RAS'),
-        name='SBRefReorient'
-    )
+    to_ras = pe.Node(niu.Function(input_names=['in_file'],
+                                  output_names=['out_file'],
+                                  function=reorient),
+                     name='SBRefReorient')
 
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
@@ -146,7 +150,8 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     # BBR works better with initialization
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
                            name='Flirt_BBR_init')
-    flt_bbr = pe.Node(fsl.FLIRT(dof=6, cost_func='bbr'), name="Flirt_BBR")
+    flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
+                               out_file="bbr.nii.gz"), name="Flirt_BBR")
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -154,12 +159,12 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
 
     workflow.connect([
-        (inputnode, reorient, [('sbref_brain', 'in_file')]),
+        (inputnode, to_ras, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (reorient, flt_bbr_init, [('out_file', 'in_file')]),
-        (reorient, flt_bbr, [('out_file', 'in_file')]),
+        (to_ras, flt_bbr_init, [('out_file', 'in_file')]),
+        (to_ras, flt_bbr, [('out_file', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
@@ -200,18 +205,19 @@ def _extract_wm(in_file):
     import nibabel as nb
     import numpy as np
 
-    im = nb.load(in_file)
-    data = im.get_data().astype(np.uint8)
+    image = nb.load(in_file)
+    data = image.get_data().astype(np.uint8)
     data[data != 3] = 0
     data[data > 0] = 1
 
     out_file = op.abspath('wm_mask.nii.gz')
-    nb.Nifti1Image(data, im.get_affine(), im.get_header()).to_filename(out_file)
+    nb.Nifti1Image(data, image.get_affine(), image.get_header()).to_filename(out_file)
     return out_file
 
 ###################################
 # Deprecated code
 ###################################
+
 
 def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
     """Legacy SBref processing workflow"""
@@ -237,7 +243,7 @@ def sbref_workflow_deprecated(name='SBrefPreprocessing', settings=None):
 
     #  Skull strip SBRef to get reference brain
     sbref_bet = pe.Node(
-        BETRPT(mask=True, functional=True, frac=0.6), name="sbref_bet")
+        BETRPT(generate_report=True, mask=True, functional=True, frac=0.6), name="sbref_bet")
 
     #  Unwarp SBRef using Fugue  (N.B. duplicated in epi_reg_workflow!!!!!)
     fugue_sbref = pe.Node(
