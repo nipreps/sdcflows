@@ -29,14 +29,8 @@ class SubReport(object):
             element = Element(**e)
             self.elements.append(element)
 
-    def generate_sub_report(self, report):
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(searchpath='/'),
-            trim_blocks=True, lstrip_blocks=True
-        )
-        sub_report_tpl = env.get_template('{}_tpl.html'.format(self.name))
-        sub_report_render = sub_report_tpl.render
-        return sub_report_render
+    def order_by_run(self):
+        pass
 
 
 class Report(object):
