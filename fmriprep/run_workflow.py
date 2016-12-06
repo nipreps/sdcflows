@@ -52,10 +52,9 @@ def main():
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                          default=op.join(os.getcwd(), 'work'))
-    g_input.add_argument('-t', '--workflow-type', default='ds005', required=False,
-                         action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
-                         help='''workflow type, a monkeypatch while it is not 
-                         automatically identified''')
+    g_input.add_argument('-t', '--workflow-type', default='auto', required=False,
+                         action='store', choices=['auto', 'ds005', 'ds054'],
+                         help='specify workflow type manually')
 
     # ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
@@ -88,7 +87,8 @@ def create_workflow(opts):
         'ants_nthreads': opts.ants_nthreads,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
-        'work_dir': op.abspath(opts.work_dir)
+        'work_dir': op.abspath(opts.work_dir),
+        'workflow_type': opts.workflow_type
     }
 
     # set up logger
