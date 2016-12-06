@@ -27,7 +27,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_seg',
                                                           'epi_mask', 't1_transform',
-                                                          'reference_image', 'motion_confounds_file',
+                                                          'reference_image',
+                                                          'motion_confounds_file',
                                                           'source_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
@@ -80,17 +81,18 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         # anatomical confound: signal extraction
         (t1_registration, signals, [('out_file', 'label_files')]),
         (inputnode, signals, [('fmri_file', 'in_file')]),
-        # anatomical confound: aCompCor
-        (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
-        (t1_registration, acompcor_roi, [('out_file', 'in_segments')]),
-        (acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
+        # anatomical confound: aCompCor.
+        # Commented for now: https://github.com/poldracklab/fmriprep/issues/177
+        #(inputnode, acompcor, [('fmri_file', 'realigned_file')]),
+        #(t1_registration, acompcor_roi, [('out_file', 'in_segments')]),
+        #(acompcor_roi, acompcor, [('out_mask', 'mask_file')]),
 
         # connect the confound nodes to the concatenate node
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
-        (acompcor, concat, [('components_file', 'acompcor')]),
+        #(acompcor, concat, [('components_file', 'acompcor')]),
         (inputnode, concat, [('motion_confounds_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
