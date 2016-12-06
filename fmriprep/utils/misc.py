@@ -114,5 +114,13 @@ def collect_bids_data(dataset, subject, session=None, run=None):
     return imaging_data
 
 
+def get_biggest_epi_file_size_gb(files):
+    max_size = 0
+    for file in files:
+        size = os.path.getsize(file)/(1024*1024*1024)
+        if size > max_size:
+            max_size = size
+    return max_size
+
 if __name__ == '__main__':
     pass
