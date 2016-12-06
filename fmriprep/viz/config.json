@@ -2,75 +2,70 @@
 "sub_reports":
 [
     {
-        "name": "Skull Strippings",
+        "name": "Anatomical",
         "elements":
         [
             {
                 "name": "skullstrip_ants/t1_skull_strip",
-                "file_pattern": "skullstrip_ants/t1_skull_strip",
+                "file_pattern": "anat/.*skull_strip",
                 "title": "Skull Stripped T1",
                 "description": "Stripped T1 placed over an image of the unstripped T1"
             },
             {
+                "name": "t1w_preprocessing/t1_seg",
+                "file_pattern": "anat/.*t1_seg",
+                "title": "T1 Segmentation",
+                "description": " "
+            },
+            {
+                "name": "t1w_preprocessing/t1_2_mni",
+                "file_pattern": "anat/.*t1_2_mni",
+                "title": "T1 to MNI",
+                "description": "Corrected anatomical T1 image registered into MNI space"
+            }
+
+        ]
+    },
+    {
+        "name": "Functional",
+        "elements":
+        [
+            {
+                "name": "epi_hmc/bet_hmc",
+                "file_pattern": "func/.*bet_hmc",
+                "title" : "Skull Stripped EPI",
+                "description": "Skull stripped and head motion corrected epi pre registration"
+            },
+            {
                 "name": "sbref_preprocess/bet",
-                "file_pattern": "sbref_preprocess/bet",
+                "file_pattern": "func/.*sbref_bet",
                 "title": "Skull Stripped Sbref",
                 "description": "Unwarped and stripped sbref with a background image of an unwarped sbref"
             },
             {
-                "name": "epi_hmc/bet_hmc",
-                "file_pattern": "epi_hmc/bet_hmc",
-                "title" : "Skull Stripped EPI",
-                "description": "Skull stripped and head motion corrected epi pre registration"
-            }
-        ]
-    },
-    {
-        "name": "Segmentations",
-        "elements":
-        [
-             {
-                "name": "t1w_preprocessing/t1_seg",
-                "file_pattern": "t1w_preprocessing/t1_seg",
-                "title": "T1 Segmentation",
-                "description": " "
-            }
-       ]
-    },
-    {
-        "name": "Registration Outputs",
-        "elements":
-        [
-            {
-                "name": "t1w_preprocessing/t1_2_mni",
-                "file_pattern": "t1w_preprocessing/t1_2_mni",
-                "title": "T1 to MNI",
-                "description": "Corrected anatomical T1 image registered into MNI space"
-            },
-            {
                 "name": "epi_mean_t1_registration/flt_bbr",
-                "file_pattern": "epi_mean_t1_registration/flt_bbr",
+                "file_pattern": "func/.*flt_bbr",
                 "title": "EPI",
                 "description": " "
             },
             {
                 "name": "epi_unwarp/epi_unwarp_bet",
-                "file_pattern": "epi_unwarp/epi_unwarp_bet",
+                "file_pattern": "func/.*epi_unwarp_bet",
                 "title": "Corrected EPI",
                 "description": " "
             },
             {
                 "name": "sbref_t1_registration/flt_bbr",
-                "file_pattern": "sbref_t1_registration/flt_bbr",
+                "file_pattern": "func/.*flt_bbr",
                 "title": "SBRef to T1 registration",
                 "description": " "
             },
             {
                 "name": "epi_sbref_registration/epi_sbref",
-                "file_pattern": "epi_sbref_registration/epi_sbref",
+                "file_pattern": "func/.*epi_sbref",
                 "title": "Mean EPI to SBRef",
                 "description": " "
-            }
+            },
 
         ]
     }
