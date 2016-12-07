@@ -46,16 +46,17 @@ def main():
                          help='run debug version of workflow')
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
+    g_input.add_argument('--mem_mb', action='store', default=0,
+                         type=int, help='try to limit requested memory to this number')
     g_input.add_argument('--write-graph', action='store_true', default=False,
                          help='Write workflow graph.')
     g_input.add_argument('--use-plugin', action='store', default=None,
                          help='nipype plugin configuration file')
     g_input.add_argument('-w', '--work-dir', action='store',
                          default=op.join(os.getcwd(), 'work'))
-    g_input.add_argument('-t', '--workflow-type', default='ds005', required=False,
-                         action='store', choices=['ds005', 'ds054', 'HPC', 'spiral'],
-                         help='''workflow type, a monkeypatch while it is not 
-                         automatically identified''')
+    g_input.add_argument('-t', '--workflow-type', default='auto', required=False,
+                         action='store', choices=['auto', 'ds005', 'ds054'],
+                         help='specify workflow type manually')
 
     # ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
@@ -84,11 +85,13 @@ def create_workflow(opts):
         'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
+        'mem_mb': opts.mem_mb,
         'debug': opts.debug,
         'ants_nthreads': opts.ants_nthreads,
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
-        'work_dir': op.abspath(opts.work_dir)
+        'work_dir': op.abspath(opts.work_dir),
+        'workflow_type': opts.workflow_type
     }
 
     # set up logger
@@ -131,6 +134,8 @@ def create_workflow(opts):
         if settings['nthreads'] > 1:
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
+            if settings['mem_mb']:
+                plugin_settings['plugin_args']['memory_gb'] = settings['mem_mb']/1024
 
     if settings['ants_nthreads'] == 0:
         settings['ants_nthreads'] = cpu_count()
