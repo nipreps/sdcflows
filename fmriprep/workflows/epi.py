@@ -497,9 +497,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
 
 def _gen_reference(fixed_image, moving_image, out_file=None):
     import os.path as op
-    import numpy as np
-    import nibabel as nb
-    from nibabel.affines import apply_affine
+    import numpy
+    from nilearn.image import resample_img, load_img
 
     if out_file is None:
         fname, ext = op.splitext(op.basename(fixed_image))
@@ -508,25 +507,11 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
             ext = ext2 + ext
         out_file = op.abspath('%s_wm%s' % (fname, ext))
 
-    imref = nb.load(fixed_image)
-    immov = nb.load(moving_image)
+    new_zooms = load_img(moving_image).header.get_zooms()
 
-    orig = apply_affine(imref.affine, [-0.5] * 3)
-    end = apply_affine(imref.affine,
-                       [s - 0.5 for s in imref.get_data().shape[:3]])
+    new_ref_im = resample_img(fixed_image, target_affine=numpy.diag(new_zooms),
+                              interpolation='nearest')
 
-    mov_spacing = immov.get_header().get_zooms()[:3]
-    new_sizes = np.ceil((end-orig)/mov_spacing)
-
-    new_affine = immov.affine
-    ref_center = apply_affine(imref.affine, (0.5 * (np.array(
-        imref.get_data().shape[:3]))))
-
-    new_center = new_affine[:3, :3].dot(new_sizes)
-    new_affine[:3, 3] = -0.5 * new_center + ref_center
-
-    new_ref_im = nb.Nifti1Image(np.zeros(tuple(new_sizes.astype(int))),
-                                new_affine, immov.get_header())
     new_ref_im.to_filename(out_file)
 
     return out_file
