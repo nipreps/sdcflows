@@ -64,7 +64,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (mean, inu, [('out_file', 'input_image')]),
         (inu, bet, [('output_image', 'in_file')]),
         (bet, ds_report, [('out_report', 'in_file')]),
-        (inputnode, ds_report, [('sbref', 'source_file')]),
+        (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
         (bet, outputnode, [('out_file', 'sbref_unwarped'),
                            ('mask_file', 'sbref_unwarped_mask')])
     ])
@@ -185,7 +185,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
-        (inputnode, ds_report, [('sbref', 'source_file')]),
+        (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')])
     ])
 
