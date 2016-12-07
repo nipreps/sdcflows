@@ -75,13 +75,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
                                ('out_file', 'epi_mean')]),
     ])
 
-    # Write corrected file in the designated output dir
-    ds_hmc = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='preproc'),
-        name='DerivativesHMC'
-    )
-
     ds_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='brainmask'),
@@ -111,11 +104,9 @@ def epi_hmc(name='EPI_HMC', settings=None):
     )
 
     workflow.connect([
-        (inputnode, ds_hmc, [('epi', 'source_file')]),
         (inputnode, ds_report, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
-        (hmc, ds_hmc, [('out_file', 'in_file')]),
         (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
         (hmc, mean_epi_stripped_overlay, [('mean_img', 'overlay_file')]),
         (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
@@ -125,6 +116,18 @@ def epi_hmc(name='EPI_HMC', settings=None):
          [('out_file', 'in_file')]),
         (bet_hmc, ds_report, [('out_report', 'in_file')])
     ])
+
+    if not settings["skip_native"]:
+        # Write corrected file in the designated output dir
+        ds_hmc = pe.Node(
+            DerivativesDataSink(base_directory=settings['output_dir'],
+                                suffix='preproc'),
+            name='DerivativesHMC'
+        )
+        workflow.connect([
+            (inputnode, ds_hmc, [('epi', 'source_file')]),
+            (hmc, ds_hmc, [('out_file', 'in_file')])
+        ])
 
     return workflow
 
