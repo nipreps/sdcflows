@@ -46,7 +46,7 @@ fieldmap_suffixes = {
 }
 
 
-def collect_bids_data(dataset, subject, session=None, run=None):
+def collect_bids_data(dataset, subject, task=None, session=None, run=None):
     subject = str(subject)
     if subject.startswith('sub-'):
         subject = subject[4:]
@@ -73,6 +73,9 @@ def collect_bids_data(dataset, subject, session=None, run=None):
         'sbref': {'modality': 'func', 'type': 'sbref', 'ext': 'nii'},
         't1w': {'type': 'T1w', 'ext': 'nii'}
     }
+
+    if task:
+        queries['epi']['task'] = task
 
     #  Add a subject key pair to each query we make so that we only deal with
     #  files related to this workflows specific subject. Could be made opt...
