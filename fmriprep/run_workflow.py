@@ -58,7 +58,7 @@ def main():
                          action='store', choices=['auto', 'ds005', 'ds054'],
                          help='specify workflow type manually')
 
-    # ANTs options
+    #  ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
     g_ants.add_argument('--ants-nthreads', action='store', type=int, default=0,
                         help='number of threads that will be set in ANTs processes')
