@@ -57,7 +57,7 @@ def main():
                          help='''workflow type, a monkeypatch while it is not 
                          automatically identified''')
 
-    # ANTs options
+    #  ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
     g_ants.add_argument('--ants-nthreads', action='store', type=int, default=0,
                         help='number of threads that will be set in ANTs processes')
