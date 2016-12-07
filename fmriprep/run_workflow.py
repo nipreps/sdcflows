@@ -46,6 +46,8 @@ def main():
                          help='run debug version of workflow')
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
+    g_input.add_argument('--mem_mb', action='store', default=0,
+                         type=int, help='try to limit requested memory to this number')
     g_input.add_argument('--write-graph', action='store_true', default=False,
                          help='Write workflow graph.')
     g_input.add_argument('--use-plugin', action='store', default=None,
@@ -83,6 +85,7 @@ def create_workflow(opts):
         'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
         'nthreads': opts.nthreads,
+        'mem_mb': opts.mem_mb,
         'debug': opts.debug,
         'ants_nthreads': opts.ants_nthreads,
         'skull_strip_ants': opts.skull_strip_ants,
@@ -131,6 +134,8 @@ def create_workflow(opts):
         if settings['nthreads'] > 1:
             plugin_settings['plugin'] = 'MultiProc'
             plugin_settings['plugin_args'] = {'n_procs': settings['nthreads']}
+            if settings['mem_mb']:
+                plugin_settings['plugin_args']['memory_gb'] = settings['mem_mb']/1024
 
     if settings['ants_nthreads'] == 0:
         settings['ants_nthreads'] = cpu_count()
