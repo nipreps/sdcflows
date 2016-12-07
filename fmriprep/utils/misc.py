@@ -12,6 +12,9 @@ from bids.grabbids import BIDSLayout
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
 def _first(inlist):
+    if not isinstance(inlist, (list, tuple)):
+        inlist = [inlist]
+
     return sorted(inlist)[0]
 
 def make_folder(folder):
