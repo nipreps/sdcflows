@@ -44,7 +44,7 @@
             },
             {
                 "name": "epi_mean_t1_registration/flt_bbr",
-                "file_pattern": "func/.*flt_bbr",
+                "file_pattern": "func/.*mean.*flt_bbr",
                 "title": "EPI",
                 "description": " "
             },
@@ -56,7 +56,7 @@
             },
             {
                 "name": "sbref_t1_registration/flt_bbr",
-                "file_pattern": "func/.*flt_bbr",
+                "file_pattern": "func/.*sbref.*flt_bbr",
                 "title": "SBRef to T1 registration",
                 "description": " "
             },
