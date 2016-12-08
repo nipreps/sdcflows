@@ -44,7 +44,7 @@
             },
             {
                 "name": "epi_mean_t1_registration/flt_bbr",
-                "file_pattern": "func/.*mean.*flt_bbr",
+                "file_pattern": "func/.*_bold_flt_bbr",
                 "title": "EPI",
                 "description": "No SBRef was found so the mean epi was used to generate transformations from EPI space to T1 Space"
             },
