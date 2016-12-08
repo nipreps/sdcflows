@@ -50,7 +50,7 @@ class SubReport(object):
                 #del element.files_contents[index]
             #if element.files_contents is None:
             #    del self.elements[elem_index]
-        keys = run_reps.keys()
+        keys = list(run_reps.keys())
         keys.sort()
         for key in keys:
             self.run_reports.append(run_reps[key])
@@ -143,7 +143,7 @@ def run_reports(out_dir):
         try:
             subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group()
             out_filename = '{}{}'.format(subject, '.html')
-            report = Report(path, config, out_dir, out_filename)
+            report = Report(root, config, out_dir, out_filename)
             report.generate_report()
         except AttributeError:
             continue
