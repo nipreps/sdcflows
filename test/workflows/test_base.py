@@ -11,7 +11,8 @@ class TestBase(TestWorkflow):
         # set up
         mock_subject_data = {'t1w': ['um'], 'sbref': ['um'], 'func': 'um'}
         mock_settings = {'output_dir': '.', 'work_dir': '.',
-                         'ants_nthreads': 1, 'biggest_epi_file_size_gb': 1}
+                         'ants_nthreads': 1, 'biggest_epi_file_size_gb': 1,
+                         'skip_native': False}
 
         # run
         wf054 = wf_ds054_type(mock_subject_data, mock_settings)
@@ -39,7 +40,8 @@ class TestBase(TestWorkflow):
         # set up
         mock_subject_data = {'func': ''}
         mock_settings = {'output_dir': '.', 'ants_nthreads': 1,
-                         'biggest_epi_file_size_gb': 1}
+                         'biggest_epi_file_size_gb': 1,
+                         'skip_native': False}
 
         # run
         wf005 = wf_ds005_type(mock_subject_data, mock_settings)

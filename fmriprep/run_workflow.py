@@ -41,6 +41,7 @@ def main():
     g_input = parser.add_argument_group('fMRIprep specific arguments')
     g_input.add_argument('-s', '--session-id', action='store', default='single_session')
     g_input.add_argument('-r', '--run-id', action='store', default='single_run')
+    g_input.add_argument('--task-id', help='limit the analysis only ot one task', action='store')
     g_input.add_argument('-d', '--data-type', action='store', choices=['anat', 'func'])
     g_input.add_argument('--debug', action='store_true', default=False,
                          help='run debug version of workflow')
@@ -57,8 +58,11 @@ def main():
     g_input.add_argument('-t', '--workflow-type', default='auto', required=False,
                          action='store', choices=['auto', 'ds005', 'ds054'],
                          help='specify workflow type manually')
+    g_input.add_argument('--skip-native', action='store_true',
+                         default=False,
+                         help="don't output timeseries in native space")
 
-    # ANTs options
+    #  ANTs options
     g_ants = parser.add_argument_group('specific settings for ANTs registrations')
     g_ants.add_argument('--ants-nthreads', action='store', type=int, default=0,
                         help='number of threads that will be set in ANTs processes')
@@ -91,7 +95,8 @@ def create_workflow(opts):
         'skull_strip_ants': opts.skull_strip_ants,
         'output_dir': op.abspath(opts.output_dir),
         'work_dir': op.abspath(opts.work_dir),
-        'workflow_type': opts.workflow_type
+        'workflow_type': opts.workflow_type,
+        'skip_native': opts.skip_native
     }
 
     # set up logger
@@ -150,7 +155,8 @@ def create_workflow(opts):
     logger.info('Subject list: %s', ', '.join(subject_list))
 
     # Build main workflow and run
-    preproc_wf = base_workflow_enumerator(subject_list, settings=settings)
+    preproc_wf = base_workflow_enumerator(subject_list, task_id=opts.task_id,
+                                          settings=settings)
     preproc_wf.base_dir = settings['work_dir']
     preproc_wf.run(**plugin_settings)
 

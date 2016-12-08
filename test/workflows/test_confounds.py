@@ -17,7 +17,8 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = discover_wf(stub.settings({'biggest_epi_file_size_gb': 1}))
+        workflow = discover_wf(stub.settings({'biggest_epi_file_size_gb': 1,
+                                              'skip_native': False}))
         workflow.write_hierarchical_dotfile()
 
         # assert
@@ -31,9 +32,10 @@ class TestConfounds(TestWorkflow):
         # Make sure mandatory inputs are set
         self.assert_inputs_set(workflow, {'outputnode': ['confounds_file'],
                                           'ConcatConfounds': ['signals', 'dvars', 'frame_displace',
-                                                              'tcompcor', 'acompcor'],
-                                          'tCompCor': ['components_file'],
-                                          'aCompCor': ['components_file', 'mask_file'], })
+                                                              #'acompcor', See confounds.py
+                                                              'tcompcor'],
+                                          'tCompCor': ['components_file']})
+                                          # 'aCompCor': ['components_file', 'mask_file'], }) see ^^
 
     @mock.patch('pandas.read_csv')
     @mock.patch.object(pd.DataFrame, 'to_csv', autospec=True)
