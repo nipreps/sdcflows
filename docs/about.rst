@@ -36,4 +36,4 @@ speed-up from typical linear, manual processing.
 
 More information and documentation can be found here:
 
-https://preprocessing-workflow.readthedocs.io/
+https://fmriprep.readthedocs.io/
