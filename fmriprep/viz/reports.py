@@ -50,7 +50,7 @@ class SubReport(object):
                 #del element.files_contents[index]
             #if element.files_contents is None:
             #    del self.elements[elem_index]
-        keys = run_reps.keys()
+        keys = list(run_reps.keys())
         keys.sort()
         for key in keys:
             self.run_reports.append(run_reps[key])
