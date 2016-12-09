@@ -263,9 +263,9 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_hmc', 'sbref_brain',
+        niu.IdentityInterface(fields=['epi', 'epi_hmc', 'sbref',
                                       'epi_mean', 'epi_mask',
-                                      'sbref_brain_mask']),
+                                      'sbref_mask']),
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
@@ -296,9 +296,11 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
     workflow.connect([
         (inputnode, epi_split, [('epi_hmc', 'in_file')]),
-        (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
+        (inputnode, epi_sbref, [('sbref', 'reference'),
+                                ('sbref_mask', 'ref_weight'),]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
-        (inputnode, epi_sbref, [('epi_mean', 'in_file')]),
+        (inputnode, epi_sbref, [('epi_mean', 'in_file'),
+                                ('epi_mask', 'in_weight')]),
 
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
