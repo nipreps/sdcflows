@@ -116,7 +116,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     workflow.connect([
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
-        (bet, datasink, [('out_file', 'in_file')]),
+        (skullstripping, datasink, [('out_file', 'in_file')]),
         (mean, sbref_corr, [('out_file', 'overlay_file')]),
         (inputnode, sbref_corr, [('fmap_mask', 'in_file')]),
         (mean, sbref_corr_ds, [('out_file', 'overlay_file')]),
@@ -124,10 +124,10 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
                                     (('sbref', _first), 'origin_file')]),
         (sbref_corr, sbref_corr_ds, [('out_file', 'in_file')]),
         (mean, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay, [('mask_file', 'in_file')]),
+        (skullstripping, sbref_stripped_overlay, [('mask_file', 'in_file')]),
         (inputnode, sbref_stripped_overlay_ds, [(('sbref', _first), 'origin_file')]),
         (mean, sbref_stripped_overlay_ds, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
+        (skullstripping, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
         (sbref_stripped_overlay, sbref_stripped_overlay_ds, [('out_file', 'in_file')])
 
     ])
