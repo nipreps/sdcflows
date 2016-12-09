@@ -142,7 +142,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_mean', 'epi_mask',
+        niu.IdentityInterface(fields=['epi_name_source', 'epi_mean', 'epi_mask',
                                       'bias_corrected_t1', 't1_mask',
                                       't1_seg', 't1w']),
         name='inputnode'
@@ -223,12 +223,12 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
-        (inputnode, ds_tfm_fwd, [('epi', 'source_file')]),
+        (inputnode, ds_tfm_fwd, [('epi_name_source', 'source_file')]),
         (inputnode, ds_tfm_inv, [('t1w', 'source_file')]),
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
         (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')]),
-        (inputnode, ds_report, [('epi', 'source_file')])
+        (inputnode, ds_report, [('epi_name_source', 'source_file')])
     ])
 
     # Plots for report
@@ -254,7 +254,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (flt_bbr, epi_to_t1_ds, [('out_file', 'overlay_file')]),
         (inputnode, epi_to_t1_ds, [('t1_seg', 'base_file')]),
         (epi_to_t1, epi_to_t1_ds, [('out_file', 'in_file')]),
-        (inputnode, epi_to_t1_ds, [('epi', 'origin_file')])
+        (inputnode, epi_to_t1_ds, [('epi_name_source', 'origin_file')])
     ])
 
     return workflow
