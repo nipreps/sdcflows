@@ -298,7 +298,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, epi_split, [('epi', 'in_file')]),
         (inputnode, epi_sbref, [('sbref', 'reference'),
                                 ('sbref_mask', 'ref_weight'),]),
-        (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
+        (inputnode, epi_xfm, [('sbref', 'reference')]),
         (inputnode, epi_sbref, [('epi_mean', 'in_file'),
                                 ('epi_mask', 'in_weight')]),
 
