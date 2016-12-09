@@ -1,0 +1,21 @@
+ds005
+=====
+
+``fmriprep``'s ds005 pipeline is used on datasets for which there are only t1w and at least one BOLD file.
+Use the `--workflow-type ds005` or allow ``fmriprep`` to automatically determine the approriate workflow.
+
+What It Does
+------------
+High-level view of the ds005 pipeline:
+
+.. graphviz:: ds005.dot
+
+Reports
+-------
+
+Some stuff about reports
+
+Other Outputs
+-------------
+
+Some stuff about derivatives.
