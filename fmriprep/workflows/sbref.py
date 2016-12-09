@@ -40,7 +40,6 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped', 'sbref_unwarped_mask']),
                          name='outputnode')
-
     # Unwarping
     unwarp = sdc_unwarp()
     unwarp.inputs.inputnode.hmc_movpar = ''
@@ -142,12 +141,6 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         name='outputnode'
     )
 
-    # Make sure sbref is in RAS coordinates
-    to_ras = pe.Node(niu.Function(input_names=['in_file'],
-                                  output_names=['out_file'],
-                                  function=reorient),
-                     name='SBRefReorient')
-
     # Extract wm mask from segmentation
     wm_mask = pe.Node(
         niu.Function(input_names=['in_file'], output_names=['out_file'],
@@ -174,12 +167,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     )
 
     workflow.connect([
-        (inputnode, to_ras, [('sbref_brain', 'in_file')]),
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
-        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (to_ras, flt_bbr_init, [('out_file', 'in_file')]),
-        (to_ras, flt_bbr, [('out_file', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference'),
+                                   ('sbref_brain', 'in_file')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference'),
+                              ('sbref_brain', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
