@@ -42,10 +42,10 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
                          name='outputnode')
 
     # Make sure sbref is in RAS coordinates
-    to_ras = pe.Node(niu.Function(input_names=['in_file'],
-                                  output_names=['out_file'],
-                                  function=reorient),
-                     name='SBRefReorient')
+    to_ras = pe.MapNode(niu.Function(input_names=['in_file'],
+                                     output_names=['out_file'],
+                                     function=reorient),
+                        name='SBRefReorient', iterfield='in_file')
 
     # Unwarping
     unwarp = sdc_unwarp()
