@@ -44,9 +44,9 @@
             },
             {
                 "name": "epi_mean_t1_registration/flt_bbr",
-                "file_pattern": "func/.*flt_bbr",
+                "file_pattern": "func/.*_bold_flt_bbr",
                 "title": "EPI",
-                "description": " "
+                "description": "No SBRef was found so the mean epi was used to generate transformations from EPI space to T1 Space"
             },
             {
                 "name": "epi_unwarp/epi_unwarp_bet",
@@ -56,14 +56,14 @@
             },
             {
                 "name": "sbref_t1_registration/flt_bbr",
-                "file_pattern": "func/.*flt_bbr",
+                "file_pattern": "func/.*sbref.*flt_bbr",
                 "title": "SBRef to T1 registration",
                 "description": " "
             },
             {
                 "name": "epi_sbref_registration/epi_sbref",
                 "file_pattern": "func/.*epi_sbref",
-                "title": "Mean EPI to SBRef",
+                "title": "EPI to SBRef registration",
                 "description": " "
             }
 
