@@ -116,7 +116,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     workflow.connect([
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
-        (skullstripping, datasink, [('out_file', 'in_file')]),
+        (inu, datasink, [('output_image', 'in_file')]),
         (mean, sbref_corr, [('out_file', 'overlay_file')]),
         (inputnode, sbref_corr, [('fmap_mask', 'in_file')]),
         (mean, sbref_corr_ds, [('out_file', 'overlay_file')]),
