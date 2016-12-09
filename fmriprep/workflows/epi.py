@@ -263,7 +263,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_hmc', 'sbref',
+        niu.IdentityInterface(fields=['epi', 'epi_name_source', 'sbref',
                                       'epi_mean', 'epi_mask',
                                       'sbref_mask']),
         name='inputnode'
@@ -295,7 +295,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         name="DS_Report")
 
     workflow.connect([
-        (inputnode, epi_split, [('epi_hmc', 'in_file')]),
+        (inputnode, epi_split, [('epi', 'in_file')]),
         (inputnode, epi_sbref, [('sbref', 'reference'),
                                 ('sbref_mask', 'ref_weight'),]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
@@ -312,8 +312,8 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (sbref_epi, outputnode, [('out_file', 'out_mat_inv')]),
 
         (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
-        (inputnode, ds_sbref, [('epi', 'source_file')]),
-        (inputnode, ds_report, [('epi', 'source_file')]),
+        (inputnode, ds_sbref, [('epi_name_source', 'source_file')]),
+        (inputnode, ds_report, [('epi_name_source', 'source_file')]),
         (epi_sbref, ds_report, [('out_report', 'in_file')])
     ])
 
@@ -336,12 +336,12 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
     workflow.connect([
         (epi_merge, post_merge_mean, [('merged_file', 'in_file')]),
-        (inputnode, mean_epi_to_sbref_overlay, [('sbref_brain_mask', 'in_file')]),
+        (inputnode, mean_epi_to_sbref_overlay, [('sbref_mask', 'in_file')]),
         (post_merge_mean, mean_epi_to_sbref_overlay, [('out_file', 'overlay_file')]),
-        (inputnode, mean_epi_to_sbref_ds, [('sbref_brain_mask', 'base_file')]),
+        (inputnode, mean_epi_to_sbref_ds, [('sbref_mask', 'base_file')]),
         (post_merge_mean, mean_epi_to_sbref_ds, [('out_file', 'overlay_file')]),
         (mean_epi_to_sbref_overlay, mean_epi_to_sbref_ds, [('out_file', 'in_file')]),
-        (inputnode, mean_epi_to_sbref_ds, [('epi', 'origin_file')])
+        (inputnode, mean_epi_to_sbref_ds, [('epi_name_source', 'origin_file')])
     ])
 
     return workflow
