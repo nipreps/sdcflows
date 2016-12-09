@@ -10,6 +10,36 @@ High-level view of the ds005 pipeline:
 
 .. graphviz:: ds005.dot
 
+BIDSDatasource
+~~~~~~~~~~~~~~
+
+Stuff about BIDSDatasource
+
+t1w_preprocessing
+~~~~~~~~~~~~~~~~~
+
+Stuff about t1w_preprocessing
+
+EPI_HMC
+~~~~~~
+
+Stuff about EPI_HMC (also, why doesn't the graphviz img show any inputs to EPI_HMC?
+
+EPIMeanNormalization
+~~~~~~~~~~~~~~~~~~~~
+
+Stuff about EPIMeanNormalization
+
+EPIMNITransformation
+~~~~~~~~~~~~~~~~~~~~
+
+Stuff about EPIMNITransformation
+
+ConfoundDiscoverer
+~~~~~~~~~~~~~~~~~~
+
+Stuff about ConfoundDiscoverer
+
 Reports
 -------
 
