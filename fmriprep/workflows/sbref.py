@@ -40,13 +40,6 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped', 'sbref_unwarped_mask']),
                          name='outputnode')
-
-    # Make sure sbref is in RAS coordinates
-    to_ras = pe.MapNode(niu.Function(input_names=['in_file'],
-                                     output_names=['out_file'],
-                                     function=reorient),
-                        name='SBRefReorient', iterfield='in_file')
-
     # Unwarping
     unwarp = sdc_unwarp()
     unwarp.inputs.inputnode.hmc_movpar = ''
@@ -63,11 +56,10 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
 
     workflow.connect([
-        (inputnode, to_ras, [('sbref', 'in_file')]),
         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
                              ('fmap_ref', 'inputnode.fmap_ref'),
                              ('fmap_mask', 'inputnode.fmap_mask')]),
-        (to_ras, unwarp, [('out_file', 'inputnode.in_file')]),
+        (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
         (inu, skullstripping, [('output_image', 'in_file')]),
