@@ -53,6 +53,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
                          iterfield=['mat_file'])
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
+    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+
     # Calculate EPI mask on the average after HMC
     skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
                              name='skullstrip_epi')
@@ -69,7 +71,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (hmc, avscale, [('mat_file', 'mat_file')]),
         (avscale, avs_format, [('translations', 'translations'),
                                ('rot_angles', 'rot_angles')]),
-        (hmc, skullstrip_epi, [('mean_img', 'in_file')]),
+        (hmc, inu, [('mean_img', 'input_image')]),
+        (inu, skullstrip_epi, [('output_image', 'in_file')]),
         (hmc, avscale, [('mean_img', 'ref_file')]),
         (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
@@ -267,7 +270,6 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_registered', 'out_mat', 'out_mat_inv']), name='outputnode')
 
-    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
     epi_sbref = pe.Node(FLIRTRPT(generate_report=True, dof=6,
                                  out_matrix_file='init.mat',
                                  out_file='init.nii.gz'),
@@ -295,8 +297,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, epi_split, [('epi_brain', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
-        (inputnode, inu, [('epi_mean', 'input_image')]),
-        (inu, epi_sbref, [('output_image', 'in_file')]),
+        (inputnode, epi_sbref, [('epi_mean', 'in_file')]),
 
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
