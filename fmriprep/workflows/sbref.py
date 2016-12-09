@@ -142,7 +142,9 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['sbref', 'sbref_brain', 't1_brain', 't1_seg']),
+        niu.IdentityInterface(fields=['sbref_name_source', 'sbref',
+                                      'sbref_mask', 't1', 't1_mask',
+                                      't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -177,16 +179,18 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1_brain', 'reference'),
-                                   ('sbref_brain', 'in_file')]),
-        (inputnode, flt_bbr, [('t1_brain', 'reference'),
-                              ('sbref_brain', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1', 'reference'),
+                                   ('t1_mask', 'ref_weight'),
+                                   ('sbref', 'in_file'),
+                                   ('sbref_mask', 'in_weight')]),
+        (inputnode, flt_bbr, [('t1', 'reference'),
+                              ('sbref', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
-        (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
+        (inputnode, ds_report, [(('sbref_name_source', _first), 'source_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')])
     ])
 
@@ -211,7 +215,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
         (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
         (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
-                                  (('sbref', _first), 'origin_file')]),
+                                  (('sbref_name_source', _first), 'origin_file')]),
         (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
     ])
 
