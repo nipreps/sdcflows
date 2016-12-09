@@ -17,7 +17,7 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
 from nipype.interfaces import ants
-from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.masks import ComputeEPIMask
 from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
@@ -53,7 +53,8 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
+    skullstripping = pe.Node(ComputeEPIMask(generate_report=True,
+                                            dilation=1), name='SBRefSkullstripping')
 
     ds_report = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -69,11 +70,11 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (to_ras, unwarp, [('out_file', 'inputnode.in_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
-        (inu, bet, [('output_image', 'in_file')]),
-        (bet, ds_report, [('out_report', 'in_file')]),
+        (inu, skullstripping, [('output_image', 'in_file')]),
+        (skullstripping, ds_report, [('out_report', 'in_file')]),
         (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
-        (bet, outputnode, [('out_file', 'sbref_unwarped'),
-                           ('mask_file', 'sbref_unwarped_mask')])
+        (skullstripping, outputnode, [('mask_file', 'sbref_unwarped_mask')]),
+        (inu, outputnode, [('output_image', 'sbref_unwarped')])
     ])
 
     # Plot result
