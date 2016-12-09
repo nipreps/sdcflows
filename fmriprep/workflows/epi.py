@@ -38,7 +38,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['xforms', 'epi_mask', 'epi_mean', 'movpar_file',
+        fields=['xforms', 'epi_hmc', 'epi_mask', 'epi_mean', 'movpar_file',
                 'motion_confounds_file']), name='outputnode')
 
     # Head motion correction (hmc)
@@ -65,7 +65,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
                         ('mean_img', 'source_file'),
                         ('mean_img', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('out_file', 'epi_brain'),
+        (hmc, outputnode, [('out_file', 'epi_hmc'),
                            ('par_file', 'movpar_file'),
                            ('mean_img', 'epi_mean')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
@@ -263,8 +263,9 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_brain', 'sbref_brain',
-                                      'epi_mean', 'sbref_brain_mask']),
+        niu.IdentityInterface(fields=['epi', 'epi_hmc', 'sbref_brain',
+                                      'epi_mean', 'epi_mask',
+                                      'sbref_brain_mask']),
         name='inputnode'
     )
     outputnode = pe.Node(niu.IdentityInterface(
@@ -294,7 +295,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         name="DS_Report")
 
     workflow.connect([
-        (inputnode, epi_split, [('epi_brain', 'in_file')]),
+        (inputnode, epi_split, [('epi_hmc', 'in_file')]),
         (inputnode, epi_sbref, [('sbref_brain', 'reference')]),
         (inputnode, epi_xfm, [('sbref_brain', 'reference')]),
         (inputnode, epi_sbref, [('epi_mean', 'in_file')]),
