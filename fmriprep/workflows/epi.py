@@ -17,7 +17,7 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
-from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.masks import ComputeEPIMask
 from niworkflows.interfaces.registration import FLIRTRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
@@ -38,7 +38,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_brain', 'xforms', 'epi_mask', 'epi_mean', 'movpar_file',
+        fields=['xforms', 'epi_mask', 'epi_mean', 'movpar_file',
                 'motion_confounds_file']), name='outputnode')
 
     # Head motion correction (hmc)
@@ -54,8 +54,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
     avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     # Calculate EPI mask on the average after HMC
-    bet_hmc = pe.Node(BETRPT(generate_report=True, mask=True, frac=0.6),
-                      name='EPI_hmc_bet')
+    skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+                             name='skullstrip_epi')
 
     workflow.connect([
         (inputnode, hmc, [('epi', 'in_file')]),
@@ -64,15 +64,15 @@ def epi_hmc(name='EPI_HMC', settings=None):
                         ('mean_img', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, outputnode, [('out_file', 'epi_brain'),
-                           ('par_file', 'movpar_file')]),
+                           ('par_file', 'movpar_file'),
+                           ('mean_img', 'epi_mean')]),
         (hmc, avscale, [('mat_file', 'mat_file')]),
         (avscale, avs_format, [('translations', 'translations'),
                                ('rot_angles', 'rot_angles')]),
-        (hmc, bet_hmc, [('mean_img', 'in_file')]),
+        (hmc, skullstrip_epi, [('mean_img', 'in_file')]),
         (hmc, avscale, [('mean_img', 'ref_file')]),
         (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
-        (bet_hmc, outputnode, [('mask_file', 'epi_mask'),
-                               ('out_file', 'epi_mean')]),
+        (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
     ])
 
     ds_mask = pe.Node(
@@ -107,14 +107,14 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (inputnode, ds_report, [('epi', 'source_file')]),
         (inputnode, ds_mask, [('epi', 'source_file')]),
         (inputnode, mean_epi_overlay_ds, [('epi', 'origin_file')]),
-        (bet_hmc, ds_mask, [('mask_file', 'in_file')]),
+        (skullstrip_epi, ds_mask, [('mask_file', 'in_file')]),
         (hmc, mean_epi_stripped_overlay, [('mean_img', 'overlay_file')]),
-        (bet_hmc, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
+        (skullstrip_epi, mean_epi_stripped_overlay, [('mask_file', 'in_file')]),
         (hmc, mean_epi_overlay_ds, [('mean_img', 'overlay_file')]),
-        (bet_hmc, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
+        (skullstrip_epi, mean_epi_overlay_ds, [('mask_file', 'base_file')]),
         (mean_epi_stripped_overlay, mean_epi_overlay_ds,
          [('out_file', 'in_file')]),
-        (bet_hmc, ds_report, [('out_report', 'in_file')])
+        (skullstrip_epi, ds_report, [('out_report', 'in_file')])
     ])
 
     if not settings["skip_native"]:
@@ -139,7 +139,8 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'epi_mean', 't1_brain',
+        niu.IdentityInterface(fields=['epi', 'epi_mean', 'epi_mask',
+                                      'bias_corrected_t1', 't1_mask',
                                       't1_seg', 't1w']),
         name='inputnode'
     )
@@ -199,15 +200,18 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
-        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+        (inputnode, flt_bbr_init, [('bias_corrected_t1', 'reference'),
+                                   ('t1_mask', 'ref_weight'),
+                                   ('epi_mean', 'in_file'),
+                                   ('epi_mask', 'in_weight')
+                                   ]),
+        (inputnode, fsl2itk_fwd, [('bias_corrected_t1', 'reference_file'),
                                   ('epi_mean', 'source_file')]),
         (inputnode, fsl2itk_inv, [('epi_mean', 'reference_file'),
-                                  ('t1_brain', 'source_file')]),
-        (inputnode, flt_bbr_init, [('epi_mean', 'in_file')]),
+                                  ('bias_corrected_t1', 'source_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
-        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (inputnode, flt_bbr, [('epi_mean', 'in_file')]),
+        (inputnode, flt_bbr, [('bias_corrected_t1', 'reference'),
+                              ('epi_mean', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
