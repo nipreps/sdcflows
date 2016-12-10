@@ -69,6 +69,26 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     WM_roi.inputs.erosion_mm = 0
     WM_roi.inputs.epi_mask_erosion_mm = 0
 
+    def concat_rois_func(in_WM, in_mask):
+        import os
+        import nibabel as nb
+
+        WM_nii = nb.load(in_WM)
+        mask_nii = nb.load(in_mask)
+
+        # we have to do this explicitly because of potential differences in
+        # qform_code between the two files that prevent SignalExtraction to do
+        # the concatenation
+        concat_nii = nb.funcs.concat_images([WM_nii, mask_nii],
+                                            check_affines=False)
+        concat_nii.to_filename("concat.nii.gz")
+        return os.path.abspath("concat.nii.gz")
+
+    concat_rois = pe.Node(utility.Function(input_names=['in_WM', 'in_mask'],
+                                           output_names=['concat_file'],
+                                           function=concat_rois_func),
+                          name='concat_rois')
+
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(detrend=True,
                                                class_labels=["WhiteMatter", "GlobalSignal"]),
@@ -95,17 +115,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         new_nii = nb.Nifti1Image(combined, CSF_nii.affine,
                                  CSF_nii.header)
         new_nii.to_filename("logical_and.nii.gz")
-
-        # we have to do this explicitly because of potential differences in
-        # qform_code between the two files that prevent SignalExtraction to do
-        # the concatenation
-        concat_nii = nb.funcs.concat_images([CSF_nii, WM_nii], check_affines=False)
-        concat_nii.to_filename("concat.nii.gz")
-        return os.path.abspath("concat.nii.gz"), os.path.abspath("logical_and.nii.gz")
+        return os.path.abspath("logical_and.nii.gz")
 
     combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM'],
-                                            output_names=['concat_file',
-                                                          'logical_and_file'],
+                                            output_names=['logical_and_file'],
                                             function=combine_rois),
                            name='combine_rois')
 
@@ -164,8 +177,11 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
         (combine_rois, acompcor, [('logical_and_file', 'mask_file')]),
 
+        (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
+        (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
+
         # anatomical confound: signal extraction
-        (combine_rois, signals, [('concat_file', 'label_files')]),
+        (concat_rois, signals, [('concat_file', 'label_files')]),
         (inputnode, signals, [('fmri_file', 'in_file')]),
 
         # connect the confound nodes to the concatenate node
