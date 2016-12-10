@@ -35,7 +35,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                          name='outputnode')
 
     # registration using ANTs
-    t1_registration = pe.MapNode(fsl.preprocess.ApplyXFM(interp='trilinear'),
+    t1_registration = pe.MapNode(fsl.preprocess.ApplyXFM(interp='sinc'),
                                  name='T1Registration', iterfield='in_file')
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
