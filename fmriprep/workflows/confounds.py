@@ -69,9 +69,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     WM_roi.inputs.erosion_mm = 0
     WM_roi.inputs.epi_mask_erosion_mm = 0
 
-    merge = pe.Node(Merge(numinputs=2),
-                    name="merge")
-
     # Global and segment regressors
     signals = pe.Node(nilearn.SignalExtraction(detrend=True,
                                                class_labels=["WhiteMatter", "GlobalSignal"]),
@@ -97,11 +94,18 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         new_nii = nb.Nifti1Image(combined, CSF_nii.affine,
                                  CSF_nii.header)
-        new_nii.to_filename("roi.nii.gz")
-        return os.path.abspath("roi.nii.gz")
+        new_nii.to_filename("logical_and.nii.gz")
+
+        # we have to do this explicitly because of potential differences in
+        # qform_code between the two files that prevent SignalExtraction to do
+        # the concatenation
+        concat_nii = nb.funcs.concat_images([CSF_nii, WM_nii], check_affines=False)
+        concat_nii.to_filename("concat.nii.gz")
+        return os.path.abspath("concat.nii.gz"), os.path.abspath("logical_and.nii.gz")
 
     combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM'],
-                                            output_names=['roi_file'],
+                                            output_names=['concat_file',
+                                                          'logical_and_file'],
                                             function=combine_rois),
                            name='combine_rois')
 
@@ -158,13 +162,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         # anatomical confound: aCompCor.
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
-        (combine_rois, acompcor, [('roi_file', 'mask_file')]),
-
-        (WM_roi, merge, [('roi_file', 'in1')]),
-        (inputnode, merge, [('epi_mask', 'in2')]),
+        (combine_rois, acompcor, [('logical_and_file', 'mask_file')]),
 
         # anatomical confound: signal extraction
-        (merge, signals, [('out', 'label_files')]),
+        (combine_rois, signals, [('concat_file', 'label_files')]),
         (inputnode, signals, [('fmri_file', 'in_file')]),
 
         # connect the confound nodes to the concatenate node
