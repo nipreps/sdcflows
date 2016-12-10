@@ -123,3 +123,35 @@ def reorient(in_file):
     nii = nb.as_closest_canonical(nb.load(in_file))
     nii.to_filename(outfile)
     return os.path.abspath(outfile)
+
+
+def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
+    import os
+    import nibabel as nb
+    import scipy.ndimage as nd
+
+    probability_map_nii = nb.load(in_file)
+    probability_map_data = probability_map_nii.get_data()
+
+    # thresholding
+    probability_map_data[probability_map_data < 0.99] = 0
+
+    epi_mask_nii = nb.load(epi_mask)
+    epi_mask_data = epi_mask_nii.get_data()
+    if epi_mask_erosion_mm:
+        epi_mask_data = nd.binary_erosion(epi_mask_data,
+                                      iterations=int(epi_mask_erosion_mm/max(probability_map_nii.header.get_zooms()))).astype(int)
+    probability_map_data[epi_mask_data != 1] = 0
+
+    # shrinking
+    if erosion_mm:
+        iter_n = int(erosion_mm/max(probability_map_nii.header.get_zooms()))
+        probability_map_data = nd.binary_erosion(probability_map_data,
+                                                 iterations=iter_n).astype(int)
+
+
+    new_nii = nb.Nifti1Image(probability_map_data, probability_map_nii.affine,
+                             probability_map_nii.header)
+    new_nii.to_filename("roi.nii.gz")
+    return os.path.abspath("roi.nii.gz")
+

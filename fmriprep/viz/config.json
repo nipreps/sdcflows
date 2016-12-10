@@ -49,6 +49,12 @@
                 "description": "No SBRef was found so the mean epi was used to generate transformations from EPI space to T1 Space"
             },
             {
+                "name": "epi/acompcor",
+                "file_pattern": "func/.*_acompcor",
+                "title": "aCompCor ROI",
+                "description": "Conservative CSF and white matter mask for extracting physiological and movement confounds."
+            },
+            {
                 "name": "epi_unwarp/epi_unwarp_bet",
                 "file_pattern": "func/.*epi_unwarp_bet",
                 "title": "Corrected EPI",
