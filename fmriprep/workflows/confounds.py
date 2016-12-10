@@ -81,6 +81,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         # the concatenation
         concat_nii = nb.funcs.concat_images([WM_nii, mask_nii],
                                             check_affines=False)
+        concat_nii = nb.Nifti1Image(concat_nii.get_data(), mask_nii.affine,
+                                    mask_nii.header)
         concat_nii.to_filename("concat.nii.gz")
         return os.path.abspath("concat.nii.gz")
 
@@ -96,7 +98,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     signals.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
-    def combine_rois(in_CSF, in_WM):
+    def combine_rois(in_CSF, in_WM, ref_header):
         import os
         import numpy as np
         import nibabel as nb
@@ -112,12 +114,13 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         combined[WM_data != 0] = 1
         combined[CSF_data != 0] = 1
 
-        new_nii = nb.Nifti1Image(combined, CSF_nii.affine,
-                                 CSF_nii.header)
+        new_nii = nb.Nifti1Image(combined, nb.load(ref_header).affine,
+                                 nb.load(ref_header).header)
         new_nii.to_filename("logical_and.nii.gz")
         return os.path.abspath("logical_and.nii.gz")
 
-    combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM'],
+    combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM',
+                                                         'ref_header'],
                                             output_names=['logical_and_file'],
                                             function=combine_rois),
                            name='combine_rois')
@@ -172,6 +175,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         (CSF_roi, combine_rois, [('roi_file', 'in_CSF')]),
         (WM_roi, combine_rois, [('roi_file', 'in_WM')]),
+        (inputnode, combine_rois, [('epi_mask', 'ref_header')]),
 
         # anatomical confound: aCompCor.
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
