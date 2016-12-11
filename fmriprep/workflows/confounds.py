@@ -68,8 +68,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                       output_names=['roi_file', 'eroded_mask'],
                                       function=prepare_roi_from_probtissue),
                       name='WM_roi')
-    WM_roi.inputs.erosion_mm = 3
-    WM_roi.inputs.epi_mask_erosion_mm = 6
+    WM_roi.inputs.erosion_mm = 6
+    WM_roi.inputs.epi_mask_erosion_mm = 10
 
     def concat_rois_func(in_WM, in_mask):
         import os
