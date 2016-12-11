@@ -1,7 +1,7 @@
 ds005
 =====
 
-``fmriprep``'s ds005 pipeline is used on datasets for which there are only t1w and at least one BOLD file.
+``fmriprep``'s ds005 pipeline is used on datasets for which there are only t1ws and at least one functional (EPI) file.
 Use the `--workflow-type ds005` or allow ``fmriprep`` to automatically determine the approriate workflow.
 
 What It Does
@@ -18,6 +18,8 @@ Stuff about BIDSDatasource
 t1w_preprocessing
 ~~~~~~~~~~~~~~~~~
 
+.. graphviz:: t1w_preprocessing.dot
+
 Stuff about t1w_preprocessing
 
 EPI_HMC
@@ -28,7 +30,9 @@ Stuff about EPI_HMC (also, why doesn't the graphviz img show any inputs to EPI_H
 EPIMeanNormalization
 ~~~~~~~~~~~~~~~~~~~~
 
-Stuff about EPIMeanNormalization
+..graphviz:: EPIMeanNormalization.dot
+
+The EPIMeanNormalization sub-workflow uses FSL FLIRT with the BBR cost function to find the transform that maps the EPI space into the T1-space
 
 EPIMNITransformation
 ~~~~~~~~~~~~~~~~~~~~
@@ -37,6 +41,8 @@ Stuff about EPIMNITransformation
 
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
+
+..graphviz:: ConfoundDiscoverer.dot
 
 Stuff about ConfoundDiscoverer
 
