@@ -4,9 +4,8 @@ Calculates frame displacement, segment regressors, global regressor, dvars, aCom
 '''
 from nipype.interfaces import utility, nilearn, fsl
 from nipype.algorithms import confounds
-from nipype.interfaces.utility import Merge
 from nipype.pipeline import engine as pe
-from niworkflows.interfaces.masks import ACompCorRPT
+from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 
 from fmriprep import interfaces
 from fmriprep.interfaces.bids import DerivativesDataSink
@@ -47,14 +46,17 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     frame_displace.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
     # CompCor
-    tcompcor = pe.Node(confounds.TCompCor(components_file='tcompcor.tsv'), name="tCompCor")
+    tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
+                                   generate_report=True,
+                                   percentile_threshold=.05),
+                       name="tCompCor")
     tcompcor.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
     CSF_roi = pe.Node(utility.Function(input_names=['in_file', 'epi_mask',
                                                     'erosion_mm',
                                                     'epi_mask_erosion_mm'],
-                                       output_names=['roi_file'],
+                                       output_names=['roi_file', 'eroded_mask'],
                                        function=prepare_roi_from_probtissue),
                       name='CSF_roi')
     CSF_roi.inputs.erosion_mm = 0
@@ -63,7 +65,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     WM_roi = pe.Node(utility.Function(input_names=['in_file', 'epi_mask',
                                                    'erosion_mm',
                                                    'epi_mask_erosion_mm'],
-                                      output_names=['roi_file'],
+                                      output_names=['roi_file', 'eroded_mask'],
                                       function=prepare_roi_from_probtissue),
                       name='WM_roi')
     WM_roi.inputs.erosion_mm = 0
@@ -116,8 +118,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         new_nii = nb.Nifti1Image(combined, nb.load(ref_header).affine,
                                  nb.load(ref_header).header)
-        new_nii.to_filename("logical_and.nii.gz")
-        return os.path.abspath("logical_and.nii.gz")
+        new_nii.to_filename("logical_or.nii.gz")
+        return os.path.abspath("logical_or.nii.gz")
 
     combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM',
                                                          'ref_header'],
@@ -131,10 +133,16 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     acompcor.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
-    ds_report = pe.Node(
+    ds_report_a = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='acompcor', out_path_base='reports'),
-        name='ds_report'
+        name='ds_report_a'
+    )
+
+    ds_report_t = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+                            suffix='tcompcor', out_path_base='reports'),
+        name='ds_report_t'
     )
 
     # misc utilities
@@ -169,6 +177,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                       ('t1_transform', 'in_matrix_file')]),
         (t1_registration, CSF_roi, [(('out_file', pick_csf), 'in_file')]),
         (inputnode, CSF_roi, [('epi_mask',  'epi_mask')]),
+        (CSF_roi, tcompcor, [('eroded_mask', 'mask_file')]),
 
         (t1_registration, WM_roi, [(('out_file', pick_wm), 'in_file')]),
         (inputnode, WM_roi, [('epi_mask', 'epi_mask')]),
@@ -202,8 +211,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (concat, ds_confounds, [('combined_out', 'in_file')]),
         (inputnode, ds_confounds, [('source_file', 'source_file')]),
 
-        (acompcor, ds_report, [('out_report', 'in_file')]),
-        (inputnode, ds_report, [('source_file', 'source_file')])
+        (acompcor, ds_report_a, [('out_report', 'in_file')]),
+        (inputnode, ds_report_a, [('source_file', 'source_file')]),
+        (tcompcor, ds_report_t, [('out_report', 'in_file')]),
+        (inputnode, ds_report_t, [('source_file', 'source_file')])
     ])
 
     return workflow

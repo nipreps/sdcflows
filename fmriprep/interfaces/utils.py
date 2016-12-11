@@ -125,7 +125,8 @@ def reorient(in_file):
     return os.path.abspath(outfile)
 
 
-def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
+def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0,
+                                erosion_mm=0):
     import os
     import nibabel as nb
     import scipy.ndimage as nd
@@ -142,6 +143,10 @@ def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0, erosio
     if epi_mask_erosion_mm:
         epi_mask_data = nd.binary_erosion(epi_mask_data,
                                       iterations=int(epi_mask_erosion_mm/max(probability_map_nii.header.get_zooms()))).astype(int)
+        eroded_mask_file = os.path.abspath("erodd_mask.nii.gz")
+        nb.Nifti1Image(epi_mask_data, epi_mask_nii.affine, epi_mask_nii.header).to_filename(eroded_mask_file)
+    else:
+        eroded_mask_file = epi_mask
     probability_map_data[epi_mask_data != 1] = 0
 
     # shrinking
@@ -154,5 +159,5 @@ def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0, erosio
     new_nii = nb.Nifti1Image(probability_map_data, probability_map_nii.affine,
                              probability_map_nii.header)
     new_nii.to_filename("roi.nii.gz")
-    return os.path.abspath("roi.nii.gz")
+    return os.path.abspath("roi.nii.gz"), eroded_mask_file
 
