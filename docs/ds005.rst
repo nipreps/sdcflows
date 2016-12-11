@@ -13,7 +13,7 @@ High-level view of the ds005 pipeline:
 BIDSDatasource
 ~~~~~~~~~~~~~~
 
-Stuff about BIDSDatasource
+This node reads the `BIDS`_-formatted input data and kicks off the rest of the workflow.
 
 t1w_preprocessing
 ~~~~~~~~~~~~~~~~~
@@ -43,7 +43,7 @@ EPIMNITransformation
 
 .. graphviz:: EPIMNITransformation.dot
 
-The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing` to map the EPI image to standardized MNI space.
+The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing`_ to map the EPI image to standardized MNI space.
 It also maps the t1w-based mask to MNI space.
 
 ConfoundDiscoverer
@@ -63,7 +63,7 @@ Some stuff about reports.
 Derivatives
 -----------
 
-There are additional files, called "Derivatives", outputted to `<output dir>/derivatives`.
+There are additional files, called "Derivatives", outputted to ``<output dir>/derivatives``.
 See the `BIDS`_ spec for more information.
 
 Derivatives related to t1w files are in the ``anat`` subfolder:
