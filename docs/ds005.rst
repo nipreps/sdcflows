@@ -60,8 +60,8 @@ Reports
 
 Some stuff about reports.
 
-Other Outputs ("Derivatives")
------------------------------
+Derivatives
+-----------
 
 There are additional files, called "Derivatives", outputted to `<output dir>/derivatives`.
 See the `BIDS`_ spec for more information.
@@ -80,3 +80,9 @@ Derivatives related to BOLD files are in the ``func`` subfolder:
 - ``*bold_preproc.nii.gz
 - ``*bold_target-T1w_affine.txt
 <incomplete>
+
+Images
+------
+
+The ``images`` subfolder of the output directory contains images (e.g., ``.svg``, ``.png``) produced by `fmriprep`.
+Each image is accompanied by a ``.json`` file that contains metadata about how the image was produced.
