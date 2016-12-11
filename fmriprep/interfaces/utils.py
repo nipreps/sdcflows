@@ -135,7 +135,7 @@ def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0,
     probability_map_data = probability_map_nii.get_data()
 
     # thresholding
-    probability_map_data[probability_map_data < 0.9] = 0
+    probability_map_data[probability_map_data < 0.95] = 0
     probability_map_data[probability_map_data != 0] = 1
 
     epi_mask_nii = nb.load(epi_mask)
