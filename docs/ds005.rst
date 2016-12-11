@@ -51,16 +51,32 @@ ConfoundDiscoverer
 
 .. graphviz:: ConfoundDiscoverer.dot
 
-Given a motion-corrected fMRI, a brain mask, MCLIFRT movement parameters and a segmentation, the ConfoundDiscoverer sub-workflow calculates potential confounds per volume.
+Given a motion-corrected fMRI, a brain mask, MCFLIRT movement parameters and a segmentation, the ConfoundDiscoverer sub-workflow calculates potential confounds per volume.
 Calculated confounds include the global regressor, segment regressors, tCompCor, aCompCor, and DVARS.
 
 
 Reports
 -------
 
-Some stuff about reports
+Some stuff about reports.
 
-Other Outputs
--------------
+Other Outputs ("Derivatives")
+-----------------------------
 
-Some stuff about derivatives.
+There are additional files, called "Derivatives", outputted to `<output dir>/derivatives`.
+See the `BIDS`_ spec for more information.
+
+Derivatives related to t1w files are in the ``anat`` subfolder:
+
+- ``*T1w_brainmask.nii.gz``
+- ``*T1w_dtissue.nii.gz``
+- ``*T1w_preproc.nii.gz``
+- ``*T1w_target-meanBOLD_affine.txt``
+<incomplete>
+
+Derivatives related to BOLD files are in the ``func`` subfolder:
+
+- ``*bold_brainmask.nii.gz
+- ``*bold_preproc.nii.gz
+- ``*bold_target-T1w_affine.txt
+<incomplete>
