@@ -43,14 +43,17 @@ EPIMNITransformation
 
 ..graphviz:: EPIMNITransformation.dot
 
-The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing` to map the EPI image to standardized MNI space. It also maps the t1w-based mask to MNI space.
+The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing` to map the EPI image to standardized MNI space.
+It also maps the t1w-based mask to MNI space.
 
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
 
 ..graphviz:: ConfoundDiscoverer.dot
 
-Stuff about ConfoundDiscoverer
+Given a motion-corrected fMRI, a brain mask, MCLIFRT movement parameters and a segmentation, the ConfoundDiscoverer sub-workflow calculates potential confounds per volume.
+Calculated confounds include the global regressor, segment regressors, tCompCor, aCompCor, and DVARS.
+
 
 Reports
 -------
