@@ -25,7 +25,11 @@ Stuff about t1w_preprocessing
 EPI_HMC
 ~~~~~~
 
-Stuff about EPI_HMC (also, why doesn't the graphviz img show any inputs to EPI_HMC?
+.. graphviz:: EPI_HMC.dot
+
+The EPI_HMC sub-workflow performs head motion correction over the input EPI (echo-planar imaging) image.
+
+NOTE: why doesn't the graphviz img show any inputs to EPI_HMC?
 
 EPIMeanNormalization
 ~~~~~~~~~~~~~~~~~~~~
@@ -37,7 +41,9 @@ The EPIMeanNormalization sub-workflow uses FSL FLIRT with the BBR cost function 
 EPIMNITransformation
 ~~~~~~~~~~~~~~~~~~~~
 
-Stuff about EPIMNITransformation
+..graphviz:: EPIMNITransformation.dot
+
+The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing` to map the EPI image to standardized MNI space. It also maps the t1w-based mask to MNI space.
 
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
