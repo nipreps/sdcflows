@@ -17,7 +17,7 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
 from nipype.interfaces import ants
-from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.masks import ComputeEPIMask
 from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
@@ -46,7 +46,8 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
+    skullstripping = pe.Node(ComputeEPIMask(generate_report=True,
+                                            dilation=1), name='SBRefSkullstripping')
 
     ds_report = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -61,11 +62,11 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
-        (inu, bet, [('output_image', 'in_file')]),
-        (bet, ds_report, [('out_report', 'in_file')]),
+        (inu, skullstripping, [('output_image', 'in_file')]),
+        (skullstripping, ds_report, [('out_report', 'in_file')]),
         (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
-        (bet, outputnode, [('out_file', 'sbref_unwarped'),
-                           ('mask_file', 'sbref_unwarped_mask')])
+        (skullstripping, outputnode, [('mask_file', 'sbref_unwarped_mask')]),
+        (inu, outputnode, [('output_image', 'sbref_unwarped')])
     ])
 
     # Plot result
@@ -107,7 +108,7 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     workflow.connect([
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
-        (bet, datasink, [('out_file', 'in_file')]),
+        (inu, datasink, [('output_image', 'in_file')]),
         (mean, sbref_corr, [('out_file', 'overlay_file')]),
         (inputnode, sbref_corr, [('fmap_mask', 'in_file')]),
         (mean, sbref_corr_ds, [('out_file', 'overlay_file')]),
@@ -115,10 +116,10 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
                                     (('sbref', _first), 'origin_file')]),
         (sbref_corr, sbref_corr_ds, [('out_file', 'in_file')]),
         (mean, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay, [('mask_file', 'in_file')]),
+        (skullstripping, sbref_stripped_overlay, [('mask_file', 'in_file')]),
         (inputnode, sbref_stripped_overlay_ds, [(('sbref', _first), 'origin_file')]),
         (mean, sbref_stripped_overlay_ds, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
+        (skullstripping, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
         (sbref_stripped_overlay, sbref_stripped_overlay_ds, [('out_file', 'in_file')])
 
     ])
@@ -133,7 +134,9 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['sbref', 'sbref_brain', 't1_brain', 't1_seg']),
+        niu.IdentityInterface(fields=['sbref_name_source', 'sbref',
+                                      'sbref_mask', 't1', 't1_mask',
+                                      't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -168,16 +171,18 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1_brain', 'reference'),
-                                   ('sbref_brain', 'in_file')]),
-        (inputnode, flt_bbr, [('t1_brain', 'reference'),
-                              ('sbref_brain', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1', 'reference'),
+                                   ('t1_mask', 'ref_weight'),
+                                   ('sbref', 'in_file'),
+                                   ('sbref_mask', 'in_weight')]),
+        (inputnode, flt_bbr, [('t1', 'reference'),
+                              ('sbref', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
-        (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
+        (inputnode, ds_report, [(('sbref_name_source', _first), 'source_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')])
     ])
 
@@ -202,7 +207,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
         (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
         (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
-                                  (('sbref', _first), 'origin_file')]),
+                                  (('sbref_name_source', _first), 'origin_file')]),
         (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
     ])
 
