@@ -118,6 +118,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         combined[WM_data != 0] = 1
         combined[CSF_data != 0] = 1
 
+        # we have to do this explicitly because of potential differences in
+        # qform_code between the two files that prevent aCompCor to work
         new_nii = nb.Nifti1Image(combined, nb.load(ref_header).affine,
                                  nb.load(ref_header).header)
         new_nii.to_filename("logical_or.nii.gz")
