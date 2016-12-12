@@ -1,3 +1,5 @@
+.. include:: links.rst
+
 Authors
 -------
 
