@@ -69,17 +69,25 @@ See the `BIDS`_ spec for more information.
 Derivatives related to t1w files are in the ``anat`` subfolder:
 
 ``*T1w_brainmask.nii.gz`` : Nifti
+    Brain mask derived using ANTS or AFNI, depending on the command flag ``--skull-strip-ants``
+``*T1w_space-MNI152NLin2009cAsym_brainmask.nii.gz`` : Nifti
+    Same as above, but in MNI space.
 ``*T1w_dtissue.nii.gz`` : Nifti
     Tissue class map derived using FAST.
 ``*T1w_preproc.nii.gz`` : Nifti
-``*T1w_space-MNI152NLin2009cAsym_brainmask.nii.gz`` : Nifti
+    Bias field corrected t1w file, using ANTS' N4BiasFieldCorrection
+``*T1w_space-MNI152NLin2009cAsym_preproc.nii.gz`` : Nifti
+    Same as above, but in MNI space
+``*T1w_target-meanBOLD_affine.txt`` : ITK-formatted affine
+    The affine matrix to transform T1w into the EPI space, created by FSL and converted by C3DAffineTool
+``*T1w_target-MNI152NLin2009cAsym_affine.mat`` : affine matrix
+    The affine matrix to transform T1w into MNI space
 ``*T1w_space-MNI152NLin2009cAsym_class-CSF_probtissue.nii.gz`` : Nifti
 ``*T1w_space-MNI152NLin2009cAsym_class-GM_probtissue.nii.gz`` : Nifti
 ``*T1w_space-MNI152NLin2009cAsym_class-WM_probtissue.nii.gz`` : Nifti
-``*T1w_space-MNI152NLin2009cAsym_preproc.nii.gz`` : Nifti
-``*T1w_target-meanBOLD_affine.txt`` : ITK-formatted affine
-``*T1w_target-MNI152NLin2009cAsym_affine.mat`` : affine matrix
+    Probability tissue maps, transformed into MNI space
 ``*T1w_target-MNI152NLin2009cAsym_warp.nii.gz`` : Nifti
+    Warp transform to transform t1w into MNI space
 
 Derivatives related to BOLD files are in the ``func`` subfolder:
 
