@@ -68,26 +68,27 @@ See the `BIDS`_ spec for more information.
 
 Derivatives related to t1w files are in the ``anat`` subfolder:
 
-``*T1w_brainmask.nii.gz``
-``*T1w_dtissue.nii.gz``
-``*T1w_preproc.nii.gz``
-``*T1w_space-MNI152NLin2009cAsym_brainmask.nii.gz``
-``*T1w_space-MNI152NLin2009cAsym_class-CSF_probtissue.nii.gz``
-``*T1w_space-MNI152NLin2009cAsym_class-GM_probtissue.nii.gz``
-``*T1w_space-MNI152NLin2009cAsym_class-WM_probtissue.nii.gz``
-``*T1w_space-MNI152NLin2009cAsym_preproc.nii.gz``
-``*T1w_target-meanBOLD_affine.txt``
-``*T1w_target-MNI152NLin2009cAsym_affine.mat``
-``*T1w_target-MNI152NLin2009cAsym_warp.nii.gz``
+``*T1w_brainmask.nii.gz`` : Nifti
+``*T1w_dtissue.nii.gz`` : Nifti
+    Tissue class map derived using FAST.
+``*T1w_preproc.nii.gz`` : Nifti
+``*T1w_space-MNI152NLin2009cAsym_brainmask.nii.gz`` : Nifti
+``*T1w_space-MNI152NLin2009cAsym_class-CSF_probtissue.nii.gz`` : Nifti
+``*T1w_space-MNI152NLin2009cAsym_class-GM_probtissue.nii.gz`` : Nifti
+``*T1w_space-MNI152NLin2009cAsym_class-WM_probtissue.nii.gz`` : Nifti
+``*T1w_space-MNI152NLin2009cAsym_preproc.nii.gz`` : Nifti
+``*T1w_target-meanBOLD_affine.txt`` : ITK-formatted affine
+``*T1w_target-MNI152NLin2009cAsym_affine.mat`` : affine matrix
+``*T1w_target-MNI152NLin2009cAsym_warp.nii.gz`` : Nifti
 
 Derivatives related to BOLD files are in the ``func`` subfolder:
 
-``*bold_brainmask.nii.gz``
-``*bold_confounds.tsv``
-``*bold_preproc.nii.gz``
-``*bold_space-MNI152NLin2009cAsym_brainmask.nii.gz``
-``*bold_space-MNI152NLin2009cAsym_preproc.nii.gz``
-``*bold_target-T1w_affine.txt``
+``*bold_brainmask.nii.gz`` : Nifti
+``*bold_confounds.tsv`` : Tab-Separated Values
+``*bold_preproc.nii.gz`` : Nifti
+``*bold_space-MNI152NLin2009cAsym_brainmask.nii.gz`` : Nifti
+``*bold_space-MNI152NLin2009cAsym_preproc.nii.gz`` : Nifti
+``*bold_target-T1w_affine.txt`` : ITK-formatted affine
 
 Images
 ------
