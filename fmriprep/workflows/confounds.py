@@ -71,7 +71,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     WM_roi.inputs.erosion_mm = 6
     WM_roi.inputs.epi_mask_erosion_mm = 10
 
-    def concat_rois_func(in_WM, in_mask):
+    def concat_rois_func(in_WM, in_mask, ref_header):
         import os
         import nibabel as nb
 
@@ -83,12 +83,14 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         # the concatenation
         concat_nii = nb.funcs.concat_images([WM_nii, mask_nii],
                                             check_affines=False)
-        concat_nii = nb.Nifti1Image(concat_nii.get_data(), mask_nii.affine,
-                                    mask_nii.header)
+        concat_nii = nb.Nifti1Image(concat_nii.get_data(),
+                                    nb.load(ref_header).affine,
+                                    nb.load(ref_header).header)
         concat_nii.to_filename("concat.nii.gz")
         return os.path.abspath("concat.nii.gz")
 
-    concat_rois = pe.Node(utility.Function(input_names=['in_WM', 'in_mask'],
+    concat_rois = pe.Node(utility.Function(input_names=['in_WM', 'in_mask',
+                                                        'ref_header'],
                                            output_names=['concat_file'],
                                            function=concat_rois_func),
                           name='concat_rois')
@@ -192,6 +194,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
         (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
+        (inputnode, signals, [('fmri_file', 'ref_header')]),
 
         # anatomical confound: signal extraction
         (concat_rois, signals, [('concat_file', 'label_files')]),
