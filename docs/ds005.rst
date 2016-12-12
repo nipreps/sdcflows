@@ -58,7 +58,7 @@ Calculated confounds include the global regressor, segment regressors, tCompCor,
 Reports
 -------
 
-Some stuff about reports.
+:download:`View a sample report. <sample_report.html>`
 
 Derivatives
 -----------
