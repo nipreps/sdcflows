@@ -15,7 +15,7 @@ High-level view of the ds005 pipeline:
 BIDSDatasource
 ~~~~~~~~~~~~~~
 
-This node reads the `BIDS`_-formatted input data and kicks off the rest of the workflow.
+This node reads the BIDS_-formatted input data and kicks off the rest of the workflow.
 
 t1w_preprocessing
 ~~~~~~~~~~~~~~~~~
@@ -69,7 +69,7 @@ Derivatives
 -----------
 
 There are additional files, called "Derivatives", outputted to ``<output dir>/derivatives``.
-See the `BIDS`_ spec for more information.
+See the BIDS_ spec for more information.
 
 Derivatives related to t1w files are in the ``anat`` subfolder:
 
