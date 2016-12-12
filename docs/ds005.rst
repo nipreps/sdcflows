@@ -61,7 +61,7 @@ Reports
 ``fmriprep`` outputs summary reports and reportlets (reports of individual steps in the process).
 These reports provide visuals to make visual inspection of the results easy.
 
-:download:`View a sample report. <sample_report.html>`
+:download:`View a sample report. <_static/sample_report.html>`
 
 Derivatives
 -----------
