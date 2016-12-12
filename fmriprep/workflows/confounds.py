@@ -184,7 +184,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         (CSF_roi, combine_rois, [('roi_file', 'in_CSF')]),
         (WM_roi, combine_rois, [('roi_file', 'in_WM')]),
-        (inputnode, combine_rois, [('epi_mask', 'ref_header')]),
+        (inputnode, combine_rois, [('fmri_file', 'ref_header')]),
 
         # anatomical confound: aCompCor.
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
