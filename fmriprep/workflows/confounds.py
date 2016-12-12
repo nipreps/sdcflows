@@ -194,7 +194,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
         (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
         (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
-        (inputnode, signals, [('fmri_file', 'ref_header')]),
+        (inputnode, concat_rois, [('fmri_file', 'ref_header')]),
 
         # anatomical confound: signal extraction
         (concat_rois, signals, [('concat_file', 'label_files')]),
