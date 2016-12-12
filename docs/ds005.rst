@@ -25,7 +25,7 @@ t1w_preprocessing
 The t1w_preprocessing sub-workflow finds transforms between the t1w and MNI space, finds the skull stripping mask, and finds the white matter/gray matter/cerebrospinal fluid segments.
 
 EPI_HMC
-~~~~~~
+~~~~~~~
 
 .. graphviz:: EPI_HMC.dot
 
