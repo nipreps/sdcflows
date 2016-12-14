@@ -29,7 +29,12 @@ The t1w_preprocessing sub-workflow finds the skull stripping mask and the white 
 .. figure:: _static/brainextraction.svg
     :scale: 100%
 
-    Brain extraction (by BET). Hover to pause.
+    Brain extraction (by BET).
+
+.. figure:: _static/segmentation.svg
+    :scale: 100%
+
+    Segmentation (FAST).
 
 EPI_HMC
 ~~~~~~~
