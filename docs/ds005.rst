@@ -53,6 +53,11 @@ It also maps the t1w-based mask to MNI space.
 
 Transforms are concatenated and applied all at once, with one interpolation step, so as little information is lost as possible.
 
+.. figure:: _static/EPIT1Normalization.svg
+    :scale: 100%
+
+    Animation showing EPI to T1 normalization. Hover to pause.
+
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
 
