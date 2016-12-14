@@ -10,7 +10,7 @@ What It Does
 ------------
 High-level view of the ds005 pipeline:
 
-.. graphviz:: ds005.dot
+.. image:: ds005.dot.png
 
 BIDSDatasource
 ~~~~~~~~~~~~~~
@@ -20,28 +20,28 @@ This node reads the BIDS_-formatted t1 data.
 t1w_preprocessing
 ~~~~~~~~~~~~~~~~~
 
-.. graphviz:: t1w_preprocessing.dot
+.. image:: t1w_preprocessing.dot.png
 
 The t1w_preprocessing sub-workflow finds the skull stripping mask and the white matter/gray matter/cerebrospinal fluid segments.
 
 EPI_HMC
 ~~~~~~~
 
-.. graphviz:: EPI_HMC.dot
+.. image:: EPI_HMC.dot.png
 
 The EPI_HMC sub-workflow collects BIDS_-formatted EPI files and performs head motion correction.
 
 EPIMeanNormalization
 ~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: EPIMeanNormalization.dot
+.. image:: EPIMeanNormalization.dot.png
 
 The EPIMeanNormalization sub-workflow uses FSL FLIRT with the BBR cost function to find the transform that maps the EPI space into the T1-space.
 
 EPIMNITransformation
 ~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: EPIMNITransformation.dot
+.. image:: EPIMNITransformation.dot.png
 
 The EPIMNITransformation sub-workflow uses the transform from `EPIMeanNormalization`_ and a t1-to-MNI transform from `t1w_preprocessing`_ to map the EPI image to standardized MNI space.
 It also maps the t1w-based mask to MNI space.
@@ -51,7 +51,7 @@ Transforms are concatenated and applied all at once, with one interpolation step
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: ConfoundDiscoverer.dot
+.. image:: ConfoundDiscoverer.dot.png
 
 Given a motion-corrected fMRI, a brain mask, MCFLIRT movement parameters and a segmentation, the ConfoundDiscoverer sub-workflow calculates potential confounds per volume.
 Calculated confounds include the mean global signal, mean tissue class signal, tCompCor, aCompCor, and DVARS.
