@@ -26,6 +26,11 @@ t1w_preprocessing
 
 The t1w_preprocessing sub-workflow finds the skull stripping mask and the white matter/gray matter/cerebrospinal fluid segments.
 
+.. figure:: _static/brainextraction.svg
+    :scale: 100%
+
+    Brain extraction (by BET). Hover to pause.
+
 EPI_HMC
 ~~~~~~~
 
