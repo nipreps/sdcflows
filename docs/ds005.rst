@@ -56,7 +56,12 @@ Transforms are concatenated and applied all at once, with one interpolation step
 .. figure:: _static/EPIT1Normalization.svg
     :scale: 100%
 
-    Animation showing EPI to T1 normalization. Hover to pause.
+    Animation showing EPI to T1 registration. Hover to pause.
+
+.. figure:: _static/T1MNINormalization.svg
+    :scale: 100%
+
+    Animation showing T1 to MNI normalization. Hover to pause.
 
 ConfoundDiscoverer
 ~~~~~~~~~~~~~~~~~~
