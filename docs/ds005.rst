@@ -15,7 +15,7 @@ High-level view of the ds005 pipeline:
 BIDSDatasource
 ~~~~~~~~~~~~~~
 
-This node reads the BIDS_-formatted input data and kicks off the rest of the workflow.
+This node reads the BIDS_-formatted t1 data.
 
 t1w_preprocessing
 ~~~~~~~~~~~~~~~~~
@@ -29,9 +29,7 @@ EPI_HMC
 
 .. graphviz:: EPI_HMC.dot
 
-The EPI_HMC sub-workflow performs head motion correction over the input EPI (echo-planar imaging) image.
-
-NOTE: why doesn't the graphviz img show any inputs to EPI_HMC?
+The EPI_HMC sub-workflow collects BIDS_-formatted EPI files and performs head motion correction.
 
 EPIMeanNormalization
 ~~~~~~~~~~~~~~~~~~~~
