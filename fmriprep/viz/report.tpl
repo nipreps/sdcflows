@@ -14,6 +14,9 @@
 .elem-title {}
 .elem-desc {}
 .elem-filename {}
+body { 
+    padding-top: 65px; 
+}
 </style>
 </head>
 <body>
