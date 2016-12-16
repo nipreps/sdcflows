@@ -1,3 +1,2 @@
--e git+https://github.com/nipy/nipype.git@8ddca5a03fcad26887c862dc23c82ef23f2ee506#egg=nipype-8ddc
--e git+https://github.com/incf/pybids.git@master#egg=pybids
--e git+https://github.com/poldracklab/niworkflows.git@master#egg=niworkflows
+-e git+https://github.com/nipy/nipype.git@7e6c3c9a6af0482e147ff5aebab6948a539b0a89#egg=nipype
+-e git+https://github.com/poldracklab/niworkflows.git@d158a569c4f8e80ab94ca6d375e283d0a293c7bd#egg=niworkflows

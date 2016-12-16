@@ -61,7 +61,7 @@ class TestBase(TestWorkflow):
         self.assert_inputs_set(workflow, {
             'BIDSDatasource': ['subject_data'],
             'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file',
-                                   'inputnode.t1_seg', 'inputnode.epi_mask',
+                                   'inputnode.t1_tpms', 'inputnode.epi_mask',
                                    'inputnode.reference_image',
                                    'inputnode.t1_transform', 'inputnode.t1_transform_flags']
         })

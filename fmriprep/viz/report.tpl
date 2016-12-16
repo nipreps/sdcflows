@@ -14,6 +14,9 @@
 .elem-title {}
 .elem-desc {}
 .elem-filename {}
+body { 
+    padding-top: 65px; 
+}
 </style>
 </head>
 <body>
@@ -41,6 +44,9 @@
     </ul>
 <div>
 </nav>
+<noscript>
+    <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
+</noscript>
 
 {% for sub_report in sub_reports %}
     <div id="{{ sub_report.name }}">

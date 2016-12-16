@@ -11,7 +11,7 @@ from nipype.pipeline import engine as pe
 from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.utils.misc import _first, gen_list
-from fmriprep.interfaces import ImageDataSink, ReadSidecarJSON
+from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.fieldmap.utils import create_encoding_file
 
@@ -86,26 +86,6 @@ def se_fmap_workflow(name=WORKFLOW_NAME, settings=None):
         (topup, outputnode, [('out_field', 'fieldmap')]),
         (mag_bet, outputnode, [('out_file', 'mag_brain'),
                                ('mask_file', 'fmap_mask')])
-    ])
-
-    # Reports section
-    se_svg = pe.Node(niu.Function(
-        input_names=['in_file', 'overlay_file', 'out_file'], output_names=['out_file'],
-        function=stripped_brain_overlay), name='SVG_SE_corr')
-    se_svg.inputs.out_file = 'corrected_SE_and_mask.svg'
-
-    se_svg_ds = pe.Node(
-        ImageDataSink(base_directory=settings['output_dir']),
-        name='SESVGDS',
-    )
-
-    workflow.connect([
-        (unwarp_mag, se_svg, [('out_corrected', 'overlay_file')]),
-        (mag_bet, se_svg, [('mask_file', 'in_file')]),
-        (unwarp_mag, se_svg_ds, [('out_corrected', 'overlay_file')]),
-        (mag_bet, se_svg_ds, [('mask_file', 'base_file')]),
-        (se_svg, se_svg_ds, [('out_file', 'in_file')]),
-        (inputnode, se_svg_ds, [(('input_images', _first), 'origin_file')])
     ])
 
     return workflow
