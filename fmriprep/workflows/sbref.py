@@ -68,6 +68,17 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (skullstripping, outputnode, [('mask_file', 'sbref_unwarped_mask')]),
         (inu, outputnode, [('output_image', 'sbref_unwarped')])
     ])
+
+    datasink = pe.Node(
+        DerivativesDataSink(base_directory=settings['output_dir'],
+                            suffix='sdc'),
+        name='datasink'
+    )
+
+    workflow.connect([
+        (inputnode, datasink, [(('sbref', _first), 'source_file')]),
+        (inu, datasink, [('output_image', 'in_file')])
+    ])
     return workflow
 
 
