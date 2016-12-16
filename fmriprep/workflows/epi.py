@@ -21,8 +21,7 @@ from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
-from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam,
-                                 ImageDataSink)
+from fmriprep.interfaces import (DerivativesDataSink, FormatHMCParam)
 from fmriprep.interfaces.utils import nii_concat
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay

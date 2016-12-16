@@ -23,7 +23,7 @@ from niworkflows.interfaces.registration import FLIRTRPT
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces.utils import reorient
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
-                                 DerivativesDataSink, ImageDataSink)
+                                 DerivativesDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
@@ -129,31 +129,6 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
         (inputnode, ds_report, [(('sbref_name_source', _first), 'source_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')])
-    ])
-
-    # Plots for report
-    sbref_t1 = pe.Node(
-        niu.Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=stripped_brain_overlay
-        ),
-        name="PNG_sbref_t1"
-    )
-    sbref_t1.inputs.out_file = "sbref_to_t1.svg"
-
-    sbref_t1_ds = pe.Node(
-        ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefT1DS'
-    )
-
-    workflow.connect([
-        (flt_bbr, sbref_t1, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
-        (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
-                                  (('sbref_name_source', _first), 'origin_file')]),
-        (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
     ])
 
     return workflow
