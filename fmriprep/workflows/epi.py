@@ -120,7 +120,7 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['epi_name_source', 'epi_mean', 'epi_mask',
-                                      'bias_corrected_t1', 't1_mask',
+                                      'bias_corrected_t1', 't1_brain', 't1_mask',
                                       't1_seg', 't1w']),
         name='inputnode'
     )
@@ -137,15 +137,15 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         name='WM_mask'
     )
 
+    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
+
     flt_bbr_init = pe.Node(
-        FLIRTRPT(generate_report=True, dof=6, out_matrix_file='init.mat',
-                 out_file='init.nii.gz'),
-        name='Flirt_BBR_init'
+        FLIRTRPT(generate_report=True, dof=6),
+        name='flt_bbr_init'
     )
     flt_bbr = pe.Node(
-        FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
-                 out_file='bbr.nii.gz'),
-        name='Flirt_BBR'
+        FLIRTRPT(generate_report=True, dof=6, cost_func='bbr'),
+        name='flt_bbr'
     )
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
@@ -180,18 +180,18 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('bias_corrected_t1', 'reference'),
-                                   ('t1_mask', 'ref_weight'),
-                                   ('epi_mean', 'in_file'),
-                                   ('epi_mask', 'in_weight')
-                                   ]),
+        (inputnode, explicit_mask_epi, [('epi_mean', 'in_file'),
+                                        ('epi_mask', 'mask_file')
+                                        ]),
+        (explicit_mask_epi, flt_bbr_init, [('out_file', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
         (inputnode, fsl2itk_fwd, [('bias_corrected_t1', 'reference_file'),
                                   ('epi_mean', 'source_file')]),
         (inputnode, fsl2itk_inv, [('epi_mean', 'reference_file'),
                                   ('bias_corrected_t1', 'source_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
-        (inputnode, flt_bbr, [('bias_corrected_t1', 'reference'),
-                              ('epi_mean', 'in_file')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (explicit_mask_epi, flt_bbr, [('out_file', 'in_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
