@@ -92,7 +92,7 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['sbref_name_source', 'sbref',
                                       'sbref_mask', 't1', 't1_mask',
-                                      't1_seg']),
+                                      't1_brain', 't1_seg']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -108,10 +108,11 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
     )
 
     # BBR works better with initialization
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
-                           name='Flirt_BBR_init')
-    flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
-                               out_file="bbr.nii.gz"), name="Flirt_BBR")
+    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
+    flt_bbr_init = pe.Node(FLIRTRPT(generate_report=True, dof=6),
+                           name='flt_bbr_init')
+    flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr'),
+                      name="flt_bbr")
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -127,12 +128,13 @@ def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1', 'reference'),
-                                   ('t1_mask', 'ref_weight'),
-                                   ('sbref', 'in_file'),
-                                   ('sbref_mask', 'in_weight')]),
-        (inputnode, flt_bbr, [('t1', 'reference'),
-                              ('sbref', 'in_file')]),
+        (inputnode, explicit_mask_epi, [('sbref', 'in_file'),
+                                        ('sbref_mask', 'mask_file')
+                                        ]),
+        (explicit_mask_epi, flt_bbr_init, [('out_file', 'in_file')]),
+        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
+        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
+        (explicit_mask_epi, flt_bbr, [('out_file', 'in_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
         (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
