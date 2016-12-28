@@ -23,7 +23,7 @@ from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
 from fmriprep.interfaces.utils import nii_concat
-from fmriprep.utils.misc import fix_multi_T1w_source_name
+from fmriprep.utils.misc import fix_multi_T1w_source_name, _first
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 from fmriprep.workflows.sbref import _extract_wm
@@ -112,14 +112,15 @@ def epi_hmc(name='EPI_HMC', settings=None):
     return workflow
 
 
-def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
+def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
+                            settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_name_source', 'epi_mean', 'epi_mask',
+        niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
                                       'bias_corrected_t1', 't1_brain', 't1_mask',
                                       't1_seg', 't1w']),
         name='inputnode'
@@ -174,20 +175,20 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
 
     ds_report = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='flt_bbr', out_path_base='reports'),
+                            suffix=reportlet_suffix, out_path_base='reports'),
         name='ds_report'
     )
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, explicit_mask_epi, [('epi_mean', 'in_file'),
-                                        ('epi_mask', 'mask_file')
+        (inputnode, explicit_mask_epi, [('ref_epi', 'in_file'),
+                                        ('ref_epi_mask', 'mask_file')
                                         ]),
         (explicit_mask_epi, flt_bbr_init, [('out_file', 'in_file')]),
         (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
         (inputnode, fsl2itk_fwd, [('bias_corrected_t1', 'reference_file'),
-                                  ('epi_mean', 'source_file')]),
-        (inputnode, fsl2itk_inv, [('epi_mean', 'reference_file'),
+                                  ('ref_epi', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('ref_epi', 'reference_file'),
                                   ('bias_corrected_t1', 'source_file')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
         (inputnode, flt_bbr, [('t1_brain', 'reference')]),
@@ -200,12 +201,12 @@ def epi_mean_t1_registration(name='EPIMeanNormalization', settings=None):
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
-        (inputnode, ds_tfm_fwd, [('epi_name_source', 'source_file')]),
+        (inputnode, ds_tfm_fwd, [('name_source', 'source_file')]),
         (inputnode, ds_tfm_inv, [(('t1w', fix_multi_T1w_source_name), 'source_file')]),
         (fsl2itk_fwd, ds_tfm_fwd, [('itk_transform', 'in_file')]),
         (fsl2itk_inv, ds_tfm_inv, [('itk_transform', 'in_file')]),
         (flt_bbr, ds_report, [('out_report', 'in_file')]),
-        (inputnode, ds_report, [('epi_name_source', 'source_file')])
+        (inputnode, ds_report, [(('name_source', _first), 'source_file')])
     ])
 
     return workflow
