@@ -112,7 +112,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     return workflow
 
 
-def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
+def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_registration',
                             settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
@@ -169,7 +169,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     )
     ds_tfm_inv = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='target-meanBOLD_affine'),
+                            suffix=inv_ds_suffix),
         name='DerivEPI_to_T1w_inv'
     )
 
