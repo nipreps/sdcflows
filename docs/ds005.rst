@@ -61,13 +61,13 @@ motion correction, and skullstripping.
 
     Brain extraction (nilearn).
 
-EPIMeanNormalization
+ref_epi_t1_registration
 ~~~~~~~~~~~~~~~~~~~~
 
-.. image:: EPIMeanNormalization.dot.png
+.. image:: ref_epi_t1_registration.dot.png
     :scale: 100%
 
-The EPIMeanNormalization sub-workflow uses FSL FLIRT with the BBR cost
+The ref_epi_t1_registration sub-workflow uses FSL FLIRT with the BBR cost
 function to find the transform that maps the EPI space into the T1-space.
 
 .. figure:: _static/EPIT1Normalization.svg
