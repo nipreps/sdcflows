@@ -121,8 +121,7 @@ def create_workflow(opts):
     # Set nipype config
     ncfg.update_config({
         'logging': {'log_directory': log_dir, 'log_to_file': True},
-        'execution': {'crashdump_dir': log_dir, 
-                      'remove_unnecessary_outputs': False}
+        'execution': {'remove_unnecessary_outputs': False}
     })
 
     # nipype plugin configuration
@@ -158,7 +157,10 @@ def create_workflow(opts):
     preproc_wf = base_workflow_enumerator(subject_list, task_id=opts.task_id,
                                           settings=settings)
     preproc_wf.base_dir = settings['work_dir']
-    preproc_wf.run(**plugin_settings)
+    try:
+        preproc_wf.run(**plugin_settings)
+    except RuntimeError:
+        pass
 
     if opts.write_graph:
         preproc_wf.write_graph(graph2use="colored", format='svg',
