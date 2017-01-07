@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import os.path as op
 import glob
+import sys
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
@@ -84,6 +85,8 @@ def create_workflow(opts):
     from fmriprep.utils import make_folder
     from fmriprep.viz.reports import run_reports
     from fmriprep.workflows.base import base_workflow_enumerator
+
+    errno = 0
 
     settings = {
         'bids_root': op.abspath(opts.bids_dir),
@@ -160,13 +163,15 @@ def create_workflow(opts):
     try:
         preproc_wf.run(**plugin_settings)
     except RuntimeError:
-        pass
+        errno = 1
 
     if opts.write_graph:
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
     run_reports(settings['output_dir'])
+
+    sys.exit(errno)
 
 if __name__ == '__main__':
     main()
