@@ -49,7 +49,6 @@ body {
     <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
 </noscript>
 
-{#
 {% for sub_report in sub_reports %}
     <div id="{{ sub_report.name }}">
     <h1 class="sub-report-title">{{ sub_report.name }}</h1>
@@ -87,7 +86,6 @@ body {
     {% endif %}
     </div>
 {% endfor %}
-#}
 
 <div id="errors">
     <h1 class="sub-report-title">Errors</h1>
