@@ -141,10 +141,10 @@ class Report(object):
             newest_dir = error_dir
         for root, directories, filenames in os.walk(newest_dir):
             for f in filenames:
-                try:
-                    crash_data = loadcrash(os.path.join(root, f))
-                except ValueError:
+                # Only deal with files that start with crash and end in pklz
+                if not (f[:5] == 'crash' and f[:-4] == 'pklz')
                     continue
+                crash_data = loadcrash(os.path.join(root, f))
                 error = {}
                 node = None
                 if 'node' in crash_data:
