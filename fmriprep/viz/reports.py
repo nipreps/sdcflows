@@ -142,7 +142,7 @@ class Report(object):
         for root, directories, filenames in os.walk(newest_dir):
             for f in filenames:
                 # Only deal with files that start with crash and end in pklz
-                if not (f[:5] == 'crash' and f[:-4] == 'pklz'):
+                if not (f[:5] == 'crash' and f[-4:] == 'pklz'):
                     continue
                 crash_data = loadcrash(os.path.join(root, f))
                 error = {}
@@ -160,7 +160,7 @@ class Report(object):
                         error['node_dir'] = node.output_dir()
                     else:
                         error['node_dir'] = "Node crashed before execution"
-                    error['inputs'] = sorted(node.inputs.traits().items())
+                    error['inputs'] = sorted(node.inputs.trait_get().items())
                 self.errors.append(error)
 
 
