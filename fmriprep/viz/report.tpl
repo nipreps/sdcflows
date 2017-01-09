@@ -49,6 +49,7 @@ body {
     <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
 </noscript>
 
+{#
 {% for sub_report in sub_reports %}
     <div id="{{ sub_report.name }}">
     <h1 class="sub-report-title">{{ sub_report.name }}</h1>
@@ -86,6 +87,7 @@ body {
     {% endif %}
     </div>
 {% endfor %}
+#}
 
 <div id="errors">
     <h1 class="sub-report-title">Errors</h1>
@@ -97,7 +99,12 @@ body {
             <div id="{{error.file|replace('.', '')}}_details_id" style="display:none">
             File: {{ error.file }}<br>
             Working Directory: {{ error.node_dir }}<br>
-            Inputs: {{ error.inputs }}<br>
+            Inputs: <br>
+            <ul>
+            {% for name, spec in error.inputs %}
+                <li>{{ name }}: {{ spec }}</li>
+            {% endfor %}
+            </ul>
             Traceback: <br>
             <ul>
             {% for elem in error.traceback %}

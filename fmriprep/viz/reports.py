@@ -125,7 +125,21 @@ class Report(object):
             self.index_error_dir(error_dir)
 
     def index_error_dir(self, error_dir):
-        for root, directories, filenames in os.walk(error_dir):
+        ''' Crawl subjects most recent crash directory and return text for 
+            .pklz crash file found. '''
+        # Crash directories for subject are named by a timestamp. Sort 
+        # listdir output to order it alphabetically, which for our timestamped 
+        # directories is also a chronological listing. Assumes no other
+        # directories will be created in subject crash dir.
+        try:
+            newest_dir = [x for x in os.listdir(error_dir)
+                          if os.path.isdir(os.path.join(error_dir, x))]
+            newest_dir.sort()
+            newest_dir = newest_dir[-1]
+            newest_dir = os.path.join(error_dir, newest_dir)
+        except IndexError:
+            newest_dir = error_dir
+        for root, directories, filenames in os.walk(newest_dir):
             for f in filenames:
                 try:
                     crash_data = loadcrash(os.path.join(root, f))
@@ -133,9 +147,6 @@ class Report(object):
                     continue
                 error = {}
                 node = None
-                node_str = ''
-                node_dir_str = ''
-                inputs_str = ''
                 if 'node' in crash_data:
                     node = crash_data['node']
                 error['traceback'] = []
@@ -149,7 +160,7 @@ class Report(object):
                         error['node_dir'] = node.output_dir()
                     else:
                         error['node_dir'] = "Node crashed before execution"
-                    error['inputs'] = node.inputs
+                    error['inputs'] = sorted(node.inputs.traits().items())
                 self.errors.append(error)
 
 
