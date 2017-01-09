@@ -121,8 +121,7 @@ def create_workflow(opts):
     # Set nipype config
     ncfg.update_config({
         'logging': {'log_directory': log_dir, 'log_to_file': True},
-        'execution': {'crashdump_dir': log_dir, 
-                      'remove_unnecessary_outputs': False}
+        'execution': {'crashdump_dir': log_dir}
     })
 
     # nipype plugin configuration
