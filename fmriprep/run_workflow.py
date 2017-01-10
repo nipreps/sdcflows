@@ -88,6 +88,8 @@ def create_workflow(opts):
     from fmriprep.viz.reports import run_reports
     from fmriprep.workflows.base import base_workflow_enumerator
 
+    errno = 0
+
     settings = {
         'bids_root': op.abspath(opts.bids_dir),
         'write_graph': opts.write_graph,
@@ -164,13 +166,18 @@ def create_workflow(opts):
     preproc_wf = base_workflow_enumerator(subject_list, task_id=opts.task_id,
                                           settings=settings)
     preproc_wf.base_dir = settings['work_dir']
-    preproc_wf.run(**plugin_settings)
+    try:
+        preproc_wf.run(**plugin_settings)
+    except RuntimeError:
+        errno = 1
 
     if opts.write_graph:
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
     run_reports(settings['output_dir'])
+
+    sys.exit(errno)
 
 if __name__ == '__main__':
     main()
