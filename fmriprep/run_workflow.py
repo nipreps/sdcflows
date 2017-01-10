@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import os.path as op
 import glob
+import sys
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
@@ -58,6 +59,8 @@ def main():
     g_input.add_argument('-t', '--workflow-type', default='auto', required=False,
                          action='store', choices=['auto', 'ds005', 'ds054'],
                          help='specify workflow type manually')
+    g_input.add_argument('--reports-only', action='store_true', default=False,
+                         help="only generate reports, don't run workflows")
     g_input.add_argument('--skip-native', action='store_true',
                          default=False,
                          help="don't output timeseries in native space")
@@ -117,6 +120,10 @@ def create_workflow(opts):
     make_folder(log_dir)
 
     logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))
+
+    if opts.reports_only:
+        run_reports(settings['output_dir'])
+        sys.exit()
 
     # Set nipype config
     ncfg.update_config({
