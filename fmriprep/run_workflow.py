@@ -60,7 +60,7 @@ def main():
                          action='store', choices=['auto', 'ds005', 'ds054'],
                          help='specify workflow type manually')
     g_input.add_argument('--reports-only', action='store_true', default=False,
-                         help="only generate reports, don't run workflows")
+                         help="only generate reports, don't run workflows. This will only rerun report aggregation, not reportlet generation for specific nodes.")
     g_input.add_argument('--skip-native', action='store_true',
                          default=False,
                          help="don't output timeseries in native space")
