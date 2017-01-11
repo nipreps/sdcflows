@@ -30,7 +30,7 @@ def main(cmd, *argv):
     parser.add_argument('ARGS', type=str, nargs='*')
     opts = parser.parse_args(argv)
 
-    command = ['docker', 'run', '--rm']
+    command = ['docker', 'run', '--rm', '-it']
 
     if opts.patch_fmriprep:
         command.extend(['-v', ':'.join((opts.fmriprep_path,
@@ -42,10 +42,11 @@ def main(cmd, *argv):
         command.extend(['-v', ':'.join((opts.nipype_path,
                                         '/root/src/nipype', 'ro'))])
 
-    command.extend(['-v', ':'.join((opts.out_path, '/out'))])
+    command.extend(['-v', ':'.join((opts.out_path, '/out')),
+                    '-v', ':'.join((opts.data_path, '/data', 'ro'))])
 
     if opts.shell:
-        command.extend(['-it', '--entrypoint=bash'])
+        command.append('--entrypoint=bash')
 
     command.append(opts.image)
     ret = subprocess.run(command + opts.ARGS)
