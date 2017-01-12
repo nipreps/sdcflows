@@ -57,7 +57,7 @@ REQUIRES = [
     'pybids>=0.0.1',
     'nitime',
     'niworkflows',
-    'nipype'
+    'nipype>=0.13.0rc1'
 ]
 
 LINKS_REQUIRES = []
