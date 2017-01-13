@@ -29,9 +29,9 @@ dependencies:
 test:
   override:
     - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
-    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant -t ds054 --debug -w /scratch:
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --debug -w /scratch:
         timeout: 4800
-    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out poldracklab/fmriprep:latest /data/ds005 /out/ participant -t ds005 --debug --no-skull-strip-ants -w /scratch:
+    - docker run -ti --rm -v /etc/localtime:/etc/localtime:ro -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out poldracklab/fmriprep:latest /data/ds005 /out/ participant --debug --no-skull-strip-ants -w /scratch:
         timeout: 4800
     - find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     - find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
