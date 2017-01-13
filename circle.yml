@@ -31,7 +31,7 @@ dependencies:
     - mkdir -p $HOME/docker; docker save poldracklab/fmriprep:latest > $HOME/docker/image.tar
 test:
   override:
-    - docker run -ti --rm --entrypoint="/usr/bin/run_unittests" poldracklab/fmriprep:latest
+    - docker run -ti --rm --entrypoint="python" poldracklab/fmriprep:latest -m unittest discover test
     - docker run -ti --rm -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --debug -w /scratch:
         timeout: 4800
     - docker run -ti --rm -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out poldracklab/fmriprep:latest /data/ds005 /out/ participant --debug --no-skull-strip-ants -w /scratch:
