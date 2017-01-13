@@ -6,10 +6,10 @@ Base module variables
 """
 from __future__ import unicode_literals
 
-__version__ = '0.1.2a3'
+__version__ = 'dev'
 __author__ = 'The CRN developers'
 __copyright__ = 'Copyright 2016, Center for Reproducible Neuroscience, Stanford University'
-__credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris F. Gorgolewski', 'Shoshana Berleant',
+__credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski', 'Shoshana Berleant',
                'Russell A. Poldrack']
 __license__ = '3-clause BSD'
 __maintainer__ = 'Ross Blair'
