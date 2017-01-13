@@ -53,7 +53,7 @@ deployment:
       - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag poldracklab/fmriprep poldracklab/fmriprep:dev$CIRCLE_BUILD_NUM-${CIRCLE_SHA1:0:6} && docker push poldracklab/fmriprep:dev$CIRCLE_BUILD_NUM-${CIRCLE_SHA1:0:6}; fi :
           timeout: 21600
   hub:
-    tag: /*/
+    tag: /.*/
     commands:
       - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push poldracklab/fmriprep:latest; fi :
           timeout: 21600
