@@ -77,9 +77,9 @@ EXTRA_REQUIRES = {
 EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
-    'Intended Audience :: MRI processing',
-    'Topic :: Scientific/Engineering :: Biomedical Imaging',
-    'License :: OSI Approved :: 3-clause BSD License',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Image Recognition',
+    'License :: OSI Approved :: BSD License',
     'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.5'
+    'Programming Language :: Python :: 3.5',
 ]
