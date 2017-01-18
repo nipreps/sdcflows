@@ -4,53 +4,58 @@ import os
 import argparse
 import subprocess
 
-code_base = '/data/chris/Projects/poldracklab'
-data_base = '/data/fmriprep/data'
-working = '/data/fmriprep/working'
-
 
 def main(cmd, *argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--patch_fmriprep', action='store_true')
-    parser.add_argument('-w', '--patch_niworkflows', action='store_true')
-    parser.add_argument('-n', '--patch_nipype', action='store_true')
-    parser.add_argument('--fmriprep_path', type=str,
-                        default=os.path.join(code_base, 'fmriprep'))
-    parser.add_argument('--niworkflows_path', type=str,
-                        default=os.path.join(code_base, 'niworkflows'))
-    parser.add_argument('--nipype_path', type=str,
-                        default=os.path.join(code_base, 'nipype'))
-    parser.add_argument('--data_path', type=str,
-                        default=os.path.join(data_base, 'ds005'))
-    parser.add_argument('--out_path', type=str,
-                        default=os.path.join(working, 'out'))
-    parser.add_argument('--shell', action='store_true')
+
+    # Standard FMRIPREP arguments
+    parser.add_argument('bids_dir', nargs='?', type=str, default=os.getcwd())
+    parser.add_argument('output_dir', nargs='?', type=str,
+                        default=os.path.join(os.getcwd(), 'out'))
+    parser.add_argument('analysis_level', nargs='?', choices=['participant'],
+                        default='participant')
+
+    # Allow alternative images (semi-developer)
     parser.add_argument('-i', '--image', type=str,
                         default='poldracklab/fmriprep:latest')
-    parser.add_argument('ARGS', type=str, nargs='*')
-    opts = parser.parse_args(argv)
+
+    # Developer patch/shell options
+    parser.add_argument('-f', '--patch-fmriprep', type=str)
+    parser.add_argument('-n', '--patch-niworkflows', type=str)
+    parser.add_argument('-p', '--patch-nipype', type=str)
+    parser.add_argument('--shell', action='store_true')
+
+    # Capture additional arguments to pass inside container
+    opts, unknown_args = parser.parse_known_args(argv)
 
     command = ['docker', 'run', '--rm', '-it']
 
-    if opts.patch_fmriprep:
-        command.extend(['-v', ':'.join((opts.fmriprep_path,
-                                        '/root/src/fmriprep', 'ro'))])
+    if opts.patch_fmriprep is not None:
+        command.extend(['-v', ':'.join((opts.patch_fmriprep,
+                                        '/root/src/fmriprep'))])
     if opts.patch_niworkflows:
-        command.extend(['-v', ':'.join((opts.niworfklows_path,
-                                        '/root/src/niworkflows', 'ro'))])
+        command.extend(['-v', ':'.join((opts.patch_niworfklows,
+                                        '/root/src/niworkflows'))])
     if opts.patch_nipype:
-        command.extend(['-v', ':'.join((opts.nipype_path,
-                                        '/root/src/nipype', 'ro'))])
+        command.extend(['-v', ':'.join((opts.patch_nipype,
+                                        '/root/src/nipype'))])
 
-    command.extend(['-v', ':'.join((opts.out_path, '/out')),
-                    '-v', ':'.join((opts.data_path, '/data', 'ro'))])
+    command.extend(['-v', ':'.join((opts.output_dir, '/out')),
+                    '-v', ':'.join((opts.bids_dir, '/data', 'ro'))])
 
     if opts.shell:
         command.append('--entrypoint=bash')
 
     command.append(opts.image)
-    ret = subprocess.run(command + opts.ARGS)
+
+    if not opts.shell:
+        command.extend(['/data', '/out', opts.analysis_level])
+        command.extend(unknown_args)
+
+    print("RUNNING: " + ' '.join(command))
+    ret = subprocess.run(command)
     return ret.returncode
+
 
 if __name__ == '__main__':
     sys.exit(main(*sys.argv))
