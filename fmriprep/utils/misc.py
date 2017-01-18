@@ -54,7 +54,7 @@ def collect_bids_data(dataset, subject, task=None, session=None, run=None):
     if subject.startswith('sub-'):
         subject = subject[4:]
 
-    layout = BIDSLayout(dataset)
+    layout = BIDSLayout(dataset, regex_match=True)
 
     if session:
         session_list = [session]
