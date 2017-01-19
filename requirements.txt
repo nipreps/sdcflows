@@ -1,1 +1,1 @@
--e git+https://github.com/poldracklab/niworkflows.git@511ea85ceb2c8860fba24c2ebb8d65f85df400f5#egg=niworkflows
+-e git+https://github.com/rwblair/niworkflows.git@0c1f4a4b65ab722e7cdb807827226fb72d3c7380#egg=niworkflows
