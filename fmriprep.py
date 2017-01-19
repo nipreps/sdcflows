@@ -6,7 +6,10 @@ import subprocess
 
 
 def main(cmd, *argv):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='fMRI Preprocessing workflow',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False)
 
     # Standard FMRIPREP arguments
     parser.add_argument('bids_dir', nargs='?', type=str, default=os.getcwd())
@@ -15,15 +18,28 @@ def main(cmd, *argv):
     parser.add_argument('analysis_level', nargs='?', choices=['participant'],
                         default='participant')
 
+    parser.add_argument('-h', '--help', action='store_true',
+                        help="show this help message and exit")
+    parser.add_argument('-v', '--version', action='store_true',
+                        help="show program's version number and exit")
+
     # Allow alternative images (semi-developer)
-    parser.add_argument('-i', '--image', type=str,
-                        default='poldracklab/fmriprep:latest')
+    parser.add_argument('-i', '--image', metavar='IMG', type=str,
+                        default='poldracklab/fmriprep:latest',
+                        help='image name')
 
     # Developer patch/shell options
-    parser.add_argument('-f', '--patch-fmriprep', type=str)
-    parser.add_argument('-n', '--patch-niworkflows', type=str)
-    parser.add_argument('-p', '--patch-nipype', type=str)
-    parser.add_argument('--shell', action='store_true')
+    g_dev = parser.add_argument_group(
+        'Developer options',
+        'Tools for testing and debugging FMRIPREP')
+    g_dev.add_argument('-f', '--patch-fmriprep', metavar='PATH', type=str,
+                       help='working fmriprep repository')
+    g_dev.add_argument('-n', '--patch-niworkflows', metavar='PATH', type=str,
+                       help='working niworkflows repository')
+    g_dev.add_argument('-p', '--patch-nipype', metavar='PATH', type=str,
+                       help='working nipype repository')
+    g_dev.add_argument('--shell', action='store_true',
+                       help='open shell in image instead of running FMRIPREP')
 
     # Capture additional arguments to pass inside container
     opts, unknown_args = parser.parse_known_args(argv)
@@ -40,13 +56,31 @@ def main(cmd, *argv):
         command.extend(['-v', ':'.join((opts.patch_nipype,
                                         '/root/src/nipype'))])
 
-    command.extend(['-v', ':'.join((opts.output_dir, '/out')),
-                    '-v', ':'.join((opts.bids_dir, '/data', 'ro'))])
+    command.extend(['-v', ':'.join((opts.bids_dir, '/data', 'ro')),
+                    '-v', ':'.join((opts.output_dir, '/out')),
+                    ])
 
     if opts.shell:
         command.append('--entrypoint=bash')
 
     command.append(opts.image)
+
+    # Override help and version to describe underlying program
+    # Respects '-i' flag, so will retrieve information from any image
+    if opts.help:
+        command.append('-h')
+        targethelp = subprocess.check_output(command).decode()
+
+        lines = parser.format_help().rstrip().split('\n')
+        targetlines = targethelp.rstrip().split('\n')
+        # print('\n'.join(lines))
+        print('\n'.join(targetlines))
+        return 0
+    elif opts.version:
+        # Get version to be run and exit
+        command.append('-v')
+        ret = subprocess.run(command)
+        return ret.returncode
 
     if not opts.shell:
         command.extend(['/data', '/out', opts.analysis_level])
