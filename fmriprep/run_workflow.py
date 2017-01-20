@@ -78,6 +78,11 @@ def main():
                         help="don't use ANTs-based skull-stripping (use  AFNI instead, fast)")
     g_ants.set_defaults(skull_strip_ants=True)
 
+    # FreeSurfer options
+    g_fs = parser.add_argument_group('settings for FreeSurfer preprocessing')
+    g_fs.add_argument('--no-freesurfer', action='store_false', dest='freesurfer',
+                      help='disable FreeSurfer preprocessing')
+
     opts = parser.parse_args()
     create_workflow(opts)
 
@@ -102,7 +107,8 @@ def create_workflow(opts):
         'output_dir': op.abspath(opts.output_dir),
         'work_dir': op.abspath(opts.work_dir),
         'ignore': opts.ignore,
-        'skip_native': opts.skip_native
+        'skip_native': opts.skip_native,
+        'freesurfer': opts.freesurfer,
     }
 
     # set up logger
