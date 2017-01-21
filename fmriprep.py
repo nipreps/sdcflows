@@ -32,11 +32,14 @@ def main(cmd, *argv):
     g_dev = parser.add_argument_group(
         'Developer options',
         'Tools for testing and debugging FMRIPREP')
-    g_dev.add_argument('-f', '--patch-fmriprep', metavar='PATH', type=str,
+    g_dev.add_argument('-f', '--patch-fmriprep', metavar='PATH',
+                       type=os.path.abspath,
                        help='working fmriprep repository')
-    g_dev.add_argument('-n', '--patch-niworkflows', metavar='PATH', type=str,
+    g_dev.add_argument('-n', '--patch-niworkflows', metavar='PATH',
+                       type=os.path.abspath,
                        help='working niworkflows repository')
-    g_dev.add_argument('-p', '--patch-nipype', metavar='PATH', type=str,
+    g_dev.add_argument('-p', '--patch-nipype', metavar='PATH',
+                       type=os.path.abspath,
                        help='working nipype repository')
     g_dev.add_argument('--shell', action='store_true',
                        help='open shell in image instead of running FMRIPREP')
