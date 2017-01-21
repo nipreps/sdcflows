@@ -5,6 +5,7 @@ import argparse
 import subprocess
 
 __version__ = 0.1
+__bugreports__ = 'https://github.com/poldracklab/fmriprep/issues'
 MISSING = """
 Image '{}' is missing
 Would you like to download? [Y/n] """
@@ -153,6 +154,8 @@ def main(cmd, *argv):
 
     print("RUNNING: " + ' '.join(command))
     ret = subprocess.run(command)
+    if ret.returncode:
+        print("fmriprep: Please report errors to {}".format(__bugreports__))
     return ret.returncode
 
 
