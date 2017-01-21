@@ -4,6 +4,38 @@ import os
 import argparse
 import subprocess
 
+__version__ = 0.1
+MISSING = """
+Image '{}' is missing
+Would you like to download? [Y/n] """
+
+
+def check_docker():
+    """Verify that docker is installed and the user has permission to
+    run docker images.
+
+    Returns
+    -------
+    -1  Docker can't be found
+     0  Docker found, but user can't connect to daemon
+     1  Test run OK
+     """
+    try:
+        ret = subprocess.run(['docker', 'version'], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+    except FileNotFoundError as e:
+        return -1
+    if ret.stderr.startswith(b"Cannot connect to the Docker daemon."):
+        return 0
+    return 1
+
+
+def check_image(image):
+    """Check whether image is present on local system"""
+    ret = subprocess.run(['docker', 'images', '-q', image],
+                         stdout=subprocess.PIPE)
+    return bool(ret.stdout)
+
 
 def main(cmd, *argv):
     parser = argparse.ArgumentParser(
@@ -46,6 +78,36 @@ def main(cmd, *argv):
 
     # Capture additional arguments to pass inside container
     opts, unknown_args = parser.parse_known_args(argv)
+
+    # Stop if no docker / docker fails to run
+    check = check_docker()
+    if check < 1:
+        if opts.version:
+            print('fmriprep wrapper {!s}'.format(__version__))
+        if opts.help:
+            parser.print_help()
+        print("fmriprep: ", end='')
+        if check == -1:
+            print("Could not find docker command... Is it installed?")
+        else:
+            print("Make sure you have permission to run 'docker'")
+        return 1
+
+    # For --help or --version, ask before downloading an image
+    if not check_image(opts.image):
+        resp = 'Y'
+        if opts.version:
+            print('fmriprep wrapper {!s}'.format(__version__))
+        if opts.help:
+            parser.print_help()
+        if opts.version or opts.help:
+            try:
+                resp = input(MISSING.format(opts.image))
+            except KeyboardInterrupt:
+                print()
+                return 1
+        if resp not in ('y', 'Y', ''):
+            return 0
 
     command = ['docker', 'run', '--rm', '-it']
 
