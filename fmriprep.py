@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
+import re
 import argparse
 import subprocess
 
@@ -36,6 +37,76 @@ def check_image(image):
     ret = subprocess.run(['docker', 'images', '-q', image],
                          stdout=subprocess.PIPE)
     return bool(ret.stdout)
+
+
+def merge_help(wrapper_help, target_help):
+    # Matches all flags with up to one nested square bracket
+    opt_re = re.compile(r'(\[--?[\w-]+(?:[^\[\]]+(?:\[[^\[\]]+\])?)?\])')
+    # Matches flag name only
+    flag_re = re.compile(r'\[--?([\w-]+)[ \]]')
+
+    # Normalize to Unix-style line breaks
+    w_help = wrapper_help.rstrip().replace('\r', '')
+    t_help = target_help.rstrip().replace('\r', '')
+
+    w_usage, *w_groups = w_help.split('\n\n')
+    t_usage, *t_groups = t_help.split('\n\n')
+
+    w_posargs = w_usage.split('\n')[-1].lstrip()
+    t_posargs = t_usage.split('\n')[-1].lstrip()
+
+    w_options = opt_re.findall(w_usage)
+    w_flags = sum(map(flag_re.findall, w_options), [])
+    t_options = opt_re.findall(t_usage)
+    t_flags = sum(map(flag_re.findall, t_options), [])
+
+    # The following code makes this assumption
+    assert w_flags[:2] == ['h', 'v']
+    assert w_posargs.replace(']', '').replace('[', '') == t_posargs
+
+    # Make sure we're not clobbering options we don't mean to
+    overlap = set(w_flags).intersection(t_flags)
+    assert overlap == set('hv'), "Clobbering options: {}".format(
+        ', '.join(overlap - set('hv')))
+
+    sections = []
+
+    # Construct usage
+    start = w_usage[:w_usage.index(' [')]
+    indent = ' ' * len(start)
+    new_options = sum((
+        w_options[:2],
+        [opt for opt, flag in zip(t_options, t_flags) if flag not in overlap],
+        w_options[2:]
+        ), [])
+    opt_line_length = 79 - len(start)
+    length = 0
+    opt_lines = [start]
+    for opt in new_options:
+        opt = ' ' + opt
+        olen = len(opt)
+        if length + olen <= opt_line_length:
+            opt_lines[-1] += opt
+            length += olen
+        else:
+            opt_lines.append(indent + opt)
+            length = olen
+    opt_lines.append(indent + ' ' + t_posargs)
+    sections.append('\n'.join(opt_lines))
+
+    # Use target description and positional args
+    sections.extend(t_groups[:2])
+
+    for line in t_groups[2].split('\n')[1:]:
+        content = line.lstrip().split(',', 1)[0]
+        if content[1:] not in overlap:
+            w_groups[2] += '\n' + line
+
+    sections.append(w_groups[2])
+
+    # All remaining sections, show target then wrapper
+    sections.extend(t_groups[3:] + w_groups[3:])
+    return '\n\n'.join(sections)
 
 
 def main(cmd, *argv):
@@ -136,11 +207,7 @@ def main(cmd, *argv):
     if opts.help:
         command.append('-h')
         targethelp = subprocess.check_output(command).decode()
-
-        lines = parser.format_help().rstrip().split('\n')
-        targetlines = targethelp.rstrip().split('\n')
-        # print('\n'.join(lines))
-        print('\n'.join(targetlines))
+        print(merge_help(parser.format_help(), targethelp))
         return 0
     elif opts.version:
         # Get version to be run and exit
