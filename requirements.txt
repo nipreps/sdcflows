@@ -1,1 +1,1 @@
--e git+https://github.com/rwblair/niworkflows.git@e0a485f4f41e26a3737f22547ecd4cf6dacfd609#egg=niworkflows
+-e git+https://github.com/rwblair/niworkflows.git@9635f0bc8d600f5433a1480d75c8b6f2de7dece6#egg=niworkflows
