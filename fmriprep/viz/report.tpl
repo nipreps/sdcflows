@@ -14,6 +14,9 @@
 .elem-title {}
 .elem-desc {}
 .elem-filename {}
+body { 
+    padding-top: 65px; 
+}
 </style>
 </head>
 <body>
@@ -32,6 +35,7 @@
                     {% for run_report in sub_report.run_reports %}
                         <li><a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a></li>
                     {% endfor %}
+                    <li><a class="dropdown-item" href="#errors">Errors</a></li>
                     </ul>
                 </li>
             {% else %}
@@ -41,6 +45,9 @@
     </ul>
 <div>
 </nav>
+<noscript>
+    <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
+</noscript>
 
 {% for sub_report in sub_reports %}
     <div id="{{ sub_report.name }}">
@@ -76,10 +83,48 @@
             {% endfor %}
             {% endif %}
         {% endfor %}
-
     {% endif %}
     </div>
 {% endfor %}
 
+<div id="errors">
+    <h1 class="sub-report-title">Errors</h1>
+    <ul>
+    {% for error in errors %}
+        <li>
+        <div class="nipype_error">
+            Node Name: <a href="#" onclick="toggle('{{error.file|replace('.', '')}}_details_id');">{{ error.node }}</a><br>
+            <div id="{{error.file|replace('.', '')}}_details_id" style="display:none">
+            File: {{ error.file }}<br>
+            Working Directory: {{ error.node_dir }}<br>
+            Inputs: <br>
+            <ul>
+            {% for name, spec in error.inputs %}
+                <li>{{ name }}: {{ spec }}</li>
+            {% endfor %}
+            </ul>
+            Traceback: <br>
+            <ul>
+            {% for elem in error.traceback %}
+                <li>{{ elem }}</li>
+            {% endfor %}
+            </ul>
+            </div>
+        </div>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+
+
+<script type="text/javascript">
+    function toggle(id) {
+        var element = document.getElementById(id);
+        if(element.style.display == 'block')
+            element.style.display = 'none';
+        else
+            element.style.display = 'block';
+    }
+</script>
 </body>
 </html>

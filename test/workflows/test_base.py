@@ -22,8 +22,8 @@ class TestBase(TestWorkflow):
 
         # check some key paths
         self.assert_circular(wf054, [
-            ('SBrefSpatialNormalization', 'BIDSDatasource',
-             [('outputnode.mat_sbr_to_t1', 'subject_data')]),
+            ('ref_epi_t1_registration', 'BIDSDatasource',
+             [('outputnode.mat_epi_to_t1', 'subject_data')]),
             ('EPIUnwarpWorkflow', 'BIDSDatasource', [('outputnode.epi_mean', 'subject_data')]),
             ('ConfoundDiscoverer', 'BIDSDatasource',
              [('outputnode.confounds_file', 'subject_data')]),
@@ -52,7 +52,7 @@ class TestBase(TestWorkflow):
             ('EPIMNITransformation', 'BIDSDatasource',
              [('DerivativesHMCMNI.out_file', 'subject_data')]),
             ('EPIMNITransformation', 'EPI_HMC', [('DerivativesHMCMNI.out_file', 'inputnode.epi')]),
-            ('EPIMeanNormalization', 'EPI_HMC', [('outputnode.mat_epi_to_t1', 'inputnode.epi')]),
+            ('ref_epi_t1_registration', 'EPI_HMC', [('outputnode.mat_epi_to_t1', 'inputnode.epi')]),
         ])
 
         self._assert_mandatory_inputs_set(wf005)
@@ -61,7 +61,7 @@ class TestBase(TestWorkflow):
         self.assert_inputs_set(workflow, {
             'BIDSDatasource': ['subject_data'],
             'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file',
-                                   'inputnode.t1_seg', 'inputnode.epi_mask',
+                                   'inputnode.t1_tpms', 'inputnode.epi_mask',
                                    'inputnode.reference_image',
                                    'inputnode.t1_transform', 'inputnode.t1_transform_flags']
         })

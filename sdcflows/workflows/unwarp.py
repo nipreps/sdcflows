@@ -209,7 +209,7 @@ def _gen_coeff(in_file, in_ref, in_movpar):
     get_first.inputs.in_file = to_coeff.run().outputs.out_file
 
     # 4. Set correct header
-    # see https://github.com/poldracklab/preprocessing-workflow/issues/92
+    # see https://github.com/poldracklab/fmriprep/issues/92
     img = nb.load(get_first.run().outputs.roi_file)
     hdr = img.get_header().copy()
     hdr['intent_p1'] = spacings[0]

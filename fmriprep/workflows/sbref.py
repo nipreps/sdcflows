@@ -17,13 +17,13 @@ from nipype.interfaces import io as nio
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl, c3
 from nipype.interfaces import ants
-from niworkflows.interfaces.masks import BETRPT
+from niworkflows.interfaces.masks import ComputeEPIMask
 from niworkflows.interfaces.registration import FLIRTRPT
 
 from fmriprep.utils.misc import _first, gen_list
 from fmriprep.interfaces.utils import reorient
 from fmriprep.interfaces import (ReadSidecarJSON, IntraModalMerge,
-                                 DerivativesDataSink, ImageDataSink)
+                                 DerivativesDataSink)
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.viz import stripped_brain_overlay
 
@@ -40,14 +40,14 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
     )
     outputnode = pe.Node(niu.IdentityInterface(fields=['sbref_unwarped', 'sbref_unwarped_mask']),
                          name='outputnode')
-
     # Unwarping
     unwarp = sdc_unwarp()
     unwarp.inputs.inputnode.hmc_movpar = ''
 
     mean = pe.Node(fsl.MeanImage(dimension='T'), name='SBRefMean')
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='SBRefBias')
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name='SBRefBET')
+    skullstripping = pe.Node(ComputeEPIMask(generate_report=True,
+                                            dilation=1), name='SBRefSkullstripping')
 
     ds_report = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -62,43 +62,12 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
         (inputnode, unwarp, [('sbref', 'inputnode.in_file')]),
         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
         (mean, inu, [('out_file', 'input_image')]),
-        (inu, bet, [('output_image', 'in_file')]),
-        (bet, ds_report, [('out_report', 'in_file')]),
+        (inu, skullstripping, [('output_image', 'in_file')]),
+        (skullstripping, ds_report, [('out_report', 'in_file')]),
         (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
-        (bet, outputnode, [('out_file', 'sbref_unwarped'),
-                           ('mask_file', 'sbref_unwarped_mask')])
+        (skullstripping, outputnode, [('mask_file', 'sbref_unwarped_mask')]),
+        (inu, outputnode, [('output_image', 'sbref_unwarped')])
     ])
-
-    # Plot result
-    sbref_corr = pe.Node(
-        niu.Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=stripped_brain_overlay
-        ),
-        name="SBRefCorr"
-    )
-    sbref_corr.inputs.out_file = "corrected_SBRef.svg"
-
-    sbref_corr_ds = pe.Node(
-        ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefCorrDS'
-    )
-
-    sbref_stripped_overlay = pe.Node(
-        niu.Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=stripped_brain_overlay
-        ),
-        name="SbrefStrippedOverlay"
-    )
-    sbref_stripped_overlay.inputs.out_file = "sbref_stripped_overlay.svg"
-
-    sbref_stripped_overlay_ds = pe.Node(
-        ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefStrippedOverlayDS'
-    )
 
     datasink = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
@@ -108,112 +77,8 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
 
     workflow.connect([
         (inputnode, datasink, [(('sbref', _first), 'source_file')]),
-        (bet, datasink, [('out_file', 'in_file')]),
-        (mean, sbref_corr, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_corr, [('fmap_mask', 'in_file')]),
-        (mean, sbref_corr_ds, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_corr_ds, [('fmap_mask', 'base_file'),
-                                    (('sbref', _first), 'origin_file')]),
-        (sbref_corr, sbref_corr_ds, [('out_file', 'in_file')]),
-        (mean, sbref_stripped_overlay, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay, [('mask_file', 'in_file')]),
-        (inputnode, sbref_stripped_overlay_ds, [(('sbref', _first), 'origin_file')]),
-        (mean, sbref_stripped_overlay_ds, [('out_file', 'overlay_file')]),
-        (bet, sbref_stripped_overlay_ds, [('mask_file', 'base_file')]),
-        (sbref_stripped_overlay, sbref_stripped_overlay_ds, [('out_file', 'in_file')])
-
+        (inu, datasink, [('output_image', 'in_file')])
     ])
-    return workflow
-
-
-def sbref_t1_registration(name='SBrefSpatialNormalization', settings=None):
-    """
-    Uses FSL FLIRT with the BBR cost function to find the transform that
-    maps the SBRef space into the T1-space
-    """
-    workflow = pe.Workflow(name=name)
-
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=['sbref', 'sbref_brain', 't1_brain', 't1_seg']),
-        name='inputnode'
-    )
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_sbr_to_t1', 'mat_t1_to_sbr']),
-        name='outputnode'
-    )
-
-    # Make sure sbref is in RAS coordinates
-    to_ras = pe.Node(niu.Function(input_names=['in_file'],
-                                  output_names=['out_file'],
-                                  function=reorient),
-                     name='SBRefReorient')
-
-    # Extract wm mask from segmentation
-    wm_mask = pe.Node(
-        niu.Function(input_names=['in_file'], output_names=['out_file'],
-                     function=_extract_wm),
-        name='WM_mask'
-    )
-
-    # BBR works better with initialization
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6, out_matrix_file='init.mat'),
-                           name='Flirt_BBR_init')
-    flt_bbr = pe.Node(FLIRTRPT(generate_report=True, dof=6, cost_func='bbr',
-                               out_file="bbr.nii.gz"), name="Flirt_BBR")
-    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
-                                      'etc/flirtsch/bbr.sch')
-
-    # make equivalent warp fields
-    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name="Flirt_BBR_Inv")
-
-
-    ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='sbref_t1_flt_bbr', out_path_base='reports'),
-        name='DS_Report'
-    )
-
-    workflow.connect([
-        (inputnode, to_ras, [('sbref_brain', 'in_file')]),
-        (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-        (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
-        (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-        (to_ras, flt_bbr_init, [('out_file', 'in_file')]),
-        (to_ras, flt_bbr, [('out_file', 'in_file')]),
-        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
-        (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
-        (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
-        (flt_bbr, outputnode, [('out_matrix_file', 'mat_sbr_to_t1')]),
-        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_sbr')]),
-        (inputnode, ds_report, [(('sbref', _first), 'source_file')]),
-        (flt_bbr, ds_report, [('out_report', 'in_file')])
-    ])
-
-    # Plots for report
-    sbref_t1 = pe.Node(
-        niu.Function(
-            input_names=["in_file", "overlay_file", "out_file"],
-            output_names=["out_file"],
-            function=stripped_brain_overlay
-        ),
-        name="PNG_sbref_t1"
-    )
-    sbref_t1.inputs.out_file = "sbref_to_t1.svg"
-
-    sbref_t1_ds = pe.Node(
-        ImageDataSink(base_directory=settings['output_dir']),
-        name='SBRefT1DS'
-    )
-
-    workflow.connect([
-        (flt_bbr, sbref_t1, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_t1, [('t1_seg', 'in_file')]),
-        (flt_bbr, sbref_t1_ds, [('out_file', 'overlay_file')]),
-        (inputnode, sbref_t1_ds, [('t1_seg', 'base_file'),
-                                  (('sbref', _first), 'origin_file')]),
-        (sbref_t1, sbref_t1_ds, [('out_file', 'in_file')])
-    ])
-
     return workflow
 
 
