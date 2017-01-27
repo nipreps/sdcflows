@@ -147,6 +147,8 @@ def main(cmd, *argv):
                        help='working nipype repository')
     g_dev.add_argument('--shell', action='store_true',
                        help='open shell in image instead of running FMRIPREP')
+    g_dev.add_argument('--scratch', metavar='PATH', type=os.path.abspath,
+                       help='use scratch directory')
 
     # Capture additional arguments to pass inside container
     opts, unknown_args = parser.parse_known_args(argv)
@@ -188,10 +190,14 @@ def main(cmd, *argv):
                                         '/root/src/fmriprep'))])
     if opts.patch_niworkflows:
         command.extend(['-v', ':'.join((opts.patch_niworfklows,
-                                        '/root/src/niworkflows'))])
+                                        '/src/niworkflows'))])
     if opts.patch_nipype:
         command.extend(['-v', ':'.join((opts.patch_nipype,
-                                        '/root/src/nipype'))])
+                                        '/src/nipype'))])
+    if opts.scratch:
+        command.extend(['-v', ':'.join((opts.scratch,
+                                        '/scratch'))])
+        unknown_args.extend(['-w', '/scratch'])
 
     command.extend(['-v', ':'.join((opts.bids_dir, '/data', 'ro')),
                     '-v', ':'.join((opts.output_dir, '/out')),
