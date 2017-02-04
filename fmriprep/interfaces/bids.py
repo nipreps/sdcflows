@@ -6,7 +6,7 @@
 # @Author: oesteban
 # @Date:   2016-06-03 09:35:13
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-10-05 15:03:25
+# @Last Modified time: 2016-12-02 17:31:40
 import os
 import os.path as op
 import pkg_resources as pkgr
@@ -16,7 +16,7 @@ from shutil import copy
 
 from nipype import logging
 from nipype.interfaces.base import (
-    traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec, 
+    traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath
 )
 
@@ -82,8 +82,9 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
         desc='Path to the base directory for storing data.')
     in_file = InputMultiPath(File(exists=True), mandatory=True,
                              desc='the object to be saved')
-    source_file = File(exists=True, mandatory=True, desc='the input func file')
+    source_file = File(exists=False, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
+    extra_values = traits.List(traits.Str)
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
@@ -91,10 +92,13 @@ class DerivativesDataSinkOutputSpec(TraitedSpec):
 class DerivativesDataSink(BaseInterface):
     input_spec = DerivativesDataSinkInputSpec
     output_spec = DerivativesDataSinkOutputSpec
+    out_path_base = "derivatives"
     _always_run = True
 
-    def __init__(self, **inputs):
+    def __init__(self, out_path_base=None, **inputs):
         self._results = {'out_file': []}
+        if out_path_base:
+            self.out_path_base = out_path_base
         super(DerivativesDataSink, self).__init__(**inputs)
 
     def _run_interface(self, runtime):
@@ -120,7 +124,7 @@ class DerivativesDataSink(BaseInterface):
         if isdefined(self.inputs.base_directory):
             base_directory = op.abspath(self.inputs.base_directory)
 
-        out_path = 'derivatives/{subject_id}'.format(**m.groupdict())
+        out_path = '{}/{subject_id}'.format(self.out_path_base, **m.groupdict())
         if m.groupdict().get('ses_id') is not None:
             out_path += '/{ses_id}'.format(**m.groupdict())
         out_path += '/{}'.format(mod)
@@ -132,7 +136,7 @@ class DerivativesDataSink(BaseInterface):
         base_fname = op.join(out_path, fname)
 
         formatstr = '{bname}_{suffix}{ext}'
-        if len(self.inputs.in_file) > 1:
+        if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
             formatstr = '{bname}_{suffix}{i:04d}{ext}'
 
 
@@ -142,6 +146,8 @@ class DerivativesDataSink(BaseInterface):
                 suffix=self.inputs.suffix,
                 i=i,
                 ext=ext)
+            if isdefined(self.inputs.extra_values):
+                out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
             copy(self.inputs.in_file[i], out_file)
 
@@ -155,16 +161,22 @@ class ReadSidecarJSONInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='the input nifti file')
     fields = traits.List(traits.Str, desc='get only certain fields')
 
-
 class ReadSidecarJSONOutputSpec(TraitedSpec):
+    subject_id = traits.Str()
+    session_id = traits.Str()
+    task_id = traits.Str()
+    acq_id = traits.Str()
+    rec_id = traits.Str()
+    run_id = traits.Str()
     out_dict = traits.Dict()
-
 
 class ReadSidecarJSON(BaseInterface):
     """
     An utility to find and read JSON sidecar files of a BIDS tree
     """
-
+    expr = re.compile('^sub-(?P<subject_id>[a-zA-Z0-9]+)(_ses-(?P<session_id>[a-zA-Z0-9]+))?'
+                      '(_task-(?P<task_id>[a-zA-Z0-9]+))?(_acq-(?P<acq_id>[a-zA-Z0-9]+))?'
+                      '(_rec-(?P<rec_id>[a-zA-Z0-9]+))?(_run-(?P<run_id>[a-zA-Z0-9]+))?')
     input_spec = ReadSidecarJSONInputSpec
     output_spec = ReadSidecarJSONOutputSpec
 
@@ -172,21 +184,27 @@ class ReadSidecarJSON(BaseInterface):
         self._results = {}
         super(ReadSidecarJSON, self).__init__(**inputs)
 
+    def _list_outputs(self):
+        return self._results
+
     def _run_interface(self, runtime):
         metadata = get_metadata_for_nifti(self.inputs.in_file)
+        output_keys = [key for key in list(self.output_spec().get().keys()) if key.endswith('_id')]
+        outputs = self.expr.search(op.basename(self.inputs.in_file)).groupdict()
+
+        for key in output_keys:
+            id_value = outputs.get(key)
+            if id_value is not None:
+                self._results[key] = outputs.get(key)
 
         if isdefined(self.inputs.fields) and self.inputs.fields:
             for fname in self.inputs.fields:
                 self._results[fname] = metadata[fname]
         else:
-            self._results = metadata
+            self._results['out_dict'] = metadata
 
         return runtime
 
-    def _list_outputs(self):
-        out = self.output_spec().get()
-        out['out_dict'] = self._results
-        return out
 
 def get_metadata_for_nifti(in_file):
     """Fetchs metadata for a given nifi file"""
@@ -198,7 +216,7 @@ def get_metadata_for_nifti(in_file):
         ext = ext2 + ext
 
     side_json = fname + '.json'
-    fname_comps = side_json.split('/')[-1].split("_")
+    fname_comps = op.basename(side_json).split("_")
 
     session_comp_list = []
     subject_comp_list = []
@@ -218,15 +236,19 @@ def get_metadata_for_nifti(in_file):
                 else:
                     top_comp_list.append(comp)
 
+    if any([comp.startswith('ses') for comp in fname_comps]):
+        bids_dir = '/'.join(op.dirname(in_file).split('/')[:-3])
+    else:
+        bids_dir = '/'.join(op.dirname(in_file).split('/')[:-2])
 
-    top_json = "/" + "_".join(top_comp_list)
+    top_json = op.join(bids_dir, "_".join(top_comp_list))
     potential_json = [top_json]
 
-    subject_json = "/" + sub + "/" + "_".join(subject_comp_list)
+    subject_json = op.join(bids_dir, sub, "_".join(subject_comp_list))
     potential_json.append(subject_json)
 
     if ses:
-        session_json = "/" + sub + "/" + ses + "/" + "_".join(session_comp_list)
+        session_json = op.join(bids_dir, sub, ses, "_".join(session_comp_list))
         potential_json.append(session_json)
 
     potential_json.append(side_json)

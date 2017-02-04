@@ -12,6 +12,9 @@ from bids.grabbids import BIDSLayout
 INPUTS_SPEC = {'fieldmaps': [], 'func': [], 't1': [], 'sbref': []}
 
 def _first(inlist):
+    if not isinstance(inlist, (list, tuple)):
+        inlist = [inlist]
+
     return sorted(inlist)[0]
 
 def make_folder(folder):
@@ -46,7 +49,7 @@ fieldmap_suffixes = {
 }
 
 
-def collect_bids_data(dataset, subject, session=None, run=None):
+def collect_bids_data(dataset, subject, task=None, session=None, run=None):
     subject = str(subject)
     if subject.startswith('sub-'):
         subject = subject[4:]
@@ -68,11 +71,14 @@ def collect_bids_data(dataset, subject, session=None, run=None):
             run_list = [None]
 
     queries = {
-        'fmap': {'modality': 'fmap', 'ext': 'nii'},
-        'epi': {'modality': 'func', 'type': 'bold', 'ext': 'nii'},
-        'sbref': {'modality': 'func', 'type': 'sbref', 'ext': 'nii'},
-        't1w': {'type': 'T1w', 'ext': 'nii'}
+        'fmap': {'modality': 'fmap', 'extensions': ['nii', 'nii.gz']},
+        'epi': {'modality': 'func', 'type': 'bold', 'extensions': ['nii', 'nii.gz']},
+        'sbref': {'modality': 'func', 'type': 'sbref', 'extensions': ['nii', 'nii.gz']},
+        't1w': {'type': 'T1w', 'extensions': ['nii', 'nii.gz']}
     }
+
+    if task:
+        queries['epi']['task'] = task
 
     #  Add a subject key pair to each query we make so that we only deal with
     #  files related to this workflows specific subject. Could be made opt...
@@ -113,6 +119,25 @@ def collect_bids_data(dataset, subject, session=None, run=None):
 
     return imaging_data
 
+
+def get_biggest_epi_file_size_gb(files):
+    max_size = 0
+    for file in files:
+        size = os.path.getsize(file)/(1024*1024*1024)
+        if size > max_size:
+            max_size = size
+    return max_size
+
+def fix_multi_T1w_source_name(in_files):
+    import os
+    # in case there are multiple T1s we make up a generic source name
+    if isinstance(in_files, list):
+        subject_label = in_files[0].split(os.sep)[-1].split("_")[0].split("-")[
+            -1]
+        base, _ = os.path.split(in_files[0])
+        return os.path.join(base, "sub-%s_T1w.nii.gz" % subject_label)
+    else:
+        return in_files
 
 if __name__ == '__main__':
     pass

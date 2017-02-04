@@ -1,4 +1,13 @@
-from __future__ import division
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+Fieldmap preprocessing workflow for fieldmap data structure
+8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
+
+"""
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import logging
 import os.path as op
@@ -15,9 +24,6 @@ from niworkflows.interfaces.masks import BETRPT
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.utils.misc import fieldmap_suffixes
 from fmriprep.viz import stripped_brain_overlay
-
-''' Fieldmap preprocessing workflow for fieldmap data structure
-8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image'''
 
 
 def _sort_fmaps(input_images):
@@ -56,7 +62,7 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
         return inlist[0]
 
     # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(fields=['EchoTime1', 'EchoTime2']), name='metadata')
+    meta = pe.Node(ReadSidecarJSON(), name='metadata')
     dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
                                function=_delta_te), name='ComputeDeltaTE')
 
@@ -199,14 +205,18 @@ def phdiff2fmap(in_file, delta_te, out_file=None):
     return out_file
 
 
-def _delta_te(in_values):
+def _delta_te(in_values, te1=None, te2=None):
     if isinstance(in_values, float):
         te2 = in_values
         te1 = 0.
 
     if isinstance(in_values, dict):
-        te1 = in_values['EchoTime1']
-        te2 = in_values['EchoTime2']
+        te1 = in_values.get('EchoTime1')
+        te2 = in_values.get('EchoTime2')
+
+        if not all((te1, te2)):
+            te2 = in_values.get('EchoTimeDifference')
+            te1 = 0
 
     if isinstance(in_values, list):
         te2, te1 = in_values
@@ -214,5 +224,9 @@ def _delta_te(in_values):
             te1 = te1[1]
         if isinstance(te2, list):
             te2 = te2[1]
+
+    if te1 is None or te2 is None:
+        raise RuntimeError(
+            'No echo time information found')
 
     return abs(float(te2)-float(te1))
