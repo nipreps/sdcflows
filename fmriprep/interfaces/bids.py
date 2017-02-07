@@ -26,6 +26,11 @@ from builtins import str, bytes
 from fmriprep.utils.misc import collect_bids_data, make_folder
 
 LOGGER = logging.getLogger('interface')
+BIDS_NAME = re.compile(
+    '^(.*\/)?(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
+    '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
+    '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?')
+
 
 class FileNotFoundError(IOError):
     pass
@@ -108,12 +113,7 @@ class DerivativesDataSink(BaseInterface):
         fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
 
-        m = re.search(
-            '^(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
-            '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
-            '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?',
-            fname
-        )
+        m = BIDS_NAME.search(fname)
 
         # TODO this quick and dirty modality detection needs to be implemented
         # correctly
