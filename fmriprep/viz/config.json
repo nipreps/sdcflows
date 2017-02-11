@@ -63,7 +63,7 @@
             {
                 "name": "epi/tcompcor",
                 "file_pattern": "func/.*_tcompcor",
-                "title": "tCompCor hich variance map",
+                "title": "tCompCor high variance map",
                 "description": "Top 5% most variable voxels within heavily eroded brain mask."
             },
             {
