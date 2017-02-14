@@ -203,7 +203,7 @@ class BIDSFreeSurferDirInputSpec(BaseInterfaceInputSpec):
                             desc='BIDS derivatives directory')
     freesurfer_home = Directory(exists=True, mandatory=True,
                                 desc='FreeSurfer installation directory')
-    subjects_dir = traits.Str('freesurfer',
+    subjects_dir = traits.Str('freesurfer', usedefault=True,
                               desc='Name of FreeSurfer subjects directory')
 
 
