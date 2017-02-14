@@ -17,7 +17,7 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
-from niworkflows.interfaces.registration import FLIRTRPT
+from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
@@ -93,7 +93,8 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
                                       'bias_corrected_t1', 't1_brain', 't1_mask',
-                                      't1_seg', 't1w', 'epi_split', 'hmc_xforms']),
+                                      't1_seg', 't1w', 'epi_split', 'hmc_xforms',
+                                      'subjects_dir']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -112,6 +113,15 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
+
+    bbregister = pe.Node(
+        BBRegisterRPT(
+            contrast_type='t2',
+            init='header',
+
+            generate_report=True),
+        name='bbregister'
+    )
     flt_bbr_init = pe.Node(
         FLIRTRPT(generate_report=True, dof=6),
         name='flt_bbr_init'
