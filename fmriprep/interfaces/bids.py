@@ -13,7 +13,7 @@ import os
 import os.path as op
 import re
 import simplejson as json
-from shutil import copy, copytree
+from shutil import copy, copytree, rmtree
 
 from nipype import logging
 from nipype.interfaces.base import (
@@ -205,6 +205,8 @@ class BIDSFreeSurferDirInputSpec(BaseInterfaceInputSpec):
                                 desc='FreeSurfer installation directory')
     subjects_dir = traits.Str('freesurfer', usedefault=True,
                               desc='Name of FreeSurfer subjects directory')
+    overwrite_fsaverage = traits.Bool(False, usedefault=True,
+                                      desc='Overwrite fsaverage, if present')
 
 
 class BIDSFreeSurferDirOutputSpec(TraitedSpec):
@@ -213,6 +215,12 @@ class BIDSFreeSurferDirOutputSpec(TraitedSpec):
 
 
 class BIDSFreeSurferDir(SimpleInterface):
+    """ Create a FreeSurfer subjects directory in a BIDS derivatives directory
+    and copy fsaverage from the local FreeSurfer distribution.
+
+    Output subjects_dir = ``{derivatives}/{subjects_dir}``, and may be passed to
+    ReconAll and other FreeSurfer interfaces.
+    """
     input_spec = BIDSFreeSurferDirInputSpec
     output_spec = BIDSFreeSurferDirOutputSpec
 
@@ -225,7 +233,11 @@ class BIDSFreeSurferDir(SimpleInterface):
         source = os.path.join(self.inputs.freesurfer_home, 'subjects',
                               'fsaverage')
         dest = os.path.join(subjects_dir, 'fsaverage')
-        copytree(source, dest)
+        # Finesse is overrated. Either leave it alone or completely clobber it.
+        if os.path.exists(dest) and self.inputs.overwrite_fsaverage:
+            rmtree(dest)
+        if not os.path.exists(dest):
+            copytree(source, dest)
 
         return runtime
 
