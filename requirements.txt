@@ -1,2 +1,2 @@
--e git+https://github.com/nipy/nipype.git@f5ed4d68fc922fa3eea6a43036b09f79bfa94acb#egg=nipype
+-e git+https://github.com/nipy/nipype.git@2896bd0f08d29d9689f5f4a84c4c342930fc929e#egg=nipype
 -e git+https://github.com/poldracklab/niworkflows.git@3d8b6de0bbd99ef4340535d565fb71c905b62ec5#egg=niworkflows
