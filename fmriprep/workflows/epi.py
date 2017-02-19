@@ -118,6 +118,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             BBRegisterRPT(
                 contrast_type='t2',
                 init='header',
+                registered_file=True,
                 out_fsl_file=True,
                 generate_report=True),
             name='bbregister'
