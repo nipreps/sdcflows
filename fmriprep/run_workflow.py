@@ -14,10 +14,11 @@ import os
 import os.path as op
 import glob
 import sys
+import uuid
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 from multiprocessing import cpu_count
-
+from time import strftime
 
 def main():
     """Entry point"""
@@ -169,20 +170,25 @@ def create_workflow(opts):
 
     logger.info('Subject list: %s', ', '.join(subject_list))
 
+    run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
     # Build main workflow and run
     preproc_wf = base_workflow_enumerator(subject_list, task_id=opts.task_id,
-                                          settings=settings)
+                                          settings=settings, run_uuid=run_uuid)
     preproc_wf.base_dir = settings['work_dir']
+
     try:
         preproc_wf.run(**plugin_settings)
-    except RuntimeError:
-        errno = 1
+    except RuntimeError as e:
+        if "Workflow did not execute cleanly" in str(e):
+            errno = 1
+        else:
+            raise(e)
 
     if opts.write_graph:
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
-    run_reports(settings['output_dir'])
+    run_reports(settings['output_dir'], run_uuid=run_uuid, errno=errno)
 
     sys.exit(errno)
 
