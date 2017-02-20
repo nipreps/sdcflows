@@ -91,6 +91,7 @@ def main():
 def create_workflow(opts):
     import logging
     from nipype import config as ncfg
+    from nipype import logging as nlog
     from fmriprep.utils import make_folder
     from fmriprep.viz.reports import run_reports
     from fmriprep.workflows.base import base_workflow_enumerator
@@ -119,7 +120,9 @@ def create_workflow(opts):
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
 
-    log_dir = op.join(settings['output_dir'], 'log')
+    run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
+
+    log_dir = op.join(settings['output_dir'], 'log', run_uuid)
     derivatives = op.join(settings['output_dir'], 'derivatives')
 
     # Check and create output and working directories
@@ -140,6 +143,7 @@ def create_workflow(opts):
         'logging': {'log_directory': log_dir, 'log_to_file': True},
         'execution': {'crashdump_dir': log_dir}
     })
+    nlog.update_logging(ncfg)
 
     # nipype plugin configuration
     plugin_settings = {'plugin': 'Linear'}
@@ -170,7 +174,6 @@ def create_workflow(opts):
 
     logger.info('Subject list: %s', ', '.join(subject_list))
 
-    run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
     # Build main workflow and run
     preproc_wf = base_workflow_enumerator(subject_list, task_id=opts.task_id,
                                           settings=settings, run_uuid=run_uuid)
