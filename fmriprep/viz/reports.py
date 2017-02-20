@@ -177,11 +177,10 @@ class Report(object):
         return report_render
 
 
-def run_reports(out_dir):
-    reportlet_path = os.path.join(out_dir, 'reports/')
+def run_reports(reportlets_dir, out_dir):
     config = pkgrf('fmriprep', 'viz/config.json')
 
-    for root, _, _ in os.walk(reportlet_path):
+    for root, _, _ in os.walk(reportlets_dir):
         #  relies on the fact that os.walk does not return a trailing /
         dir = root.split('/')[-1]
         try:

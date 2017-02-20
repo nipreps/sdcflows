@@ -109,6 +109,8 @@ def create_workflow(opts):
         'ignore': opts.ignore,
         'skip_native': opts.skip_native,
         'freesurfer': opts.freesurfer,
+        'reportlets_dir': op.join(op.abspath(opts.work_dir), 'reportlets')
+
     }
 
     # set up logger
@@ -182,7 +184,7 @@ def create_workflow(opts):
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
-    run_reports(settings['output_dir'])
+    run_reports(settings['reportlets_dir'], settings['output_dir'])
 
     sys.exit(errno)
 
