@@ -182,7 +182,8 @@ def create_workflow(opts):
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
-    run_reports(settings['output_dir'])
+    for subject_label in subject_list:
+        run_reports(settings['output_dir'], subject_label)
 
     sys.exit(errno)
 
