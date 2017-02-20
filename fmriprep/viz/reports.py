@@ -86,9 +86,10 @@ class Report(object):
         self.root = path
         self.sub_reports = []
         self.errors = []
-        self._load_config(config)
         self.out_dir = out_dir
         self.out_filename = out_filename
+
+        self._load_config(config)
 
     def _load_config(self, config):
         try:
@@ -120,7 +121,7 @@ class Report(object):
 
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        error_dir = os.path.join(self.root, '../../log', subject[4:])
+        error_dir = os.path.join(self.out_dir, subject, 'log')
         if os.path.isdir(error_dir):
             self.index_error_dir(error_dir)
 
@@ -185,8 +186,9 @@ def run_reports(reportlets_dir, out_dir):
         dir = root.split('/')[-1]
         try:
             subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group()
-            out_filename = '{}{}'.format(subject, '.html')
-            report = Report(root, config, out_dir, out_filename)
-            report.generate_report()
         except AttributeError:
             continue
+        out_filename = '{}{}'.format(subject, '.html')
+        report = Report(root, config, out_dir, out_filename)
+        report.generate_report()
+
