@@ -120,14 +120,12 @@ def create_workflow(opts):
         settings['ants_t1-mni_settings'] = 't1-mni_registration_test'
         logger.setLevel(logging.DEBUG)
 
-    log_dir = op.join(settings['output_dir'], 'log')
-    derivatives = op.join(settings['output_dir'], 'derivatives')
+    log_dir = op.join(settings['output_dir'], "fmriprep", 'log')
 
     # Check and create output and working directories
     # Using make_folder to prevent https://github.com/poldracklab/mriqc/issues/111
     make_folder(settings['output_dir'])
     make_folder(settings['work_dir'])
-    make_folder(derivatives)
     make_folder(log_dir)
 
     logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))

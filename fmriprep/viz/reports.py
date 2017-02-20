@@ -121,7 +121,7 @@ class Report(object):
 
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        error_dir = os.path.join(self.out_dir, subject, 'log')
+        error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log')
         if os.path.isdir(error_dir):
             self.index_error_dir(error_dir)
 
@@ -173,7 +173,7 @@ class Report(object):
         )
         report_tpl = env.get_template('viz/report.tpl')
         report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors)
-        with open(os.path.join(self.out_dir, self.out_filename), 'w') as fp:
+        with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return report_render
 
