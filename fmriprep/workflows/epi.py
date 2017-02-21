@@ -301,7 +301,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name='MergeTransforms')
     epi_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(), iterfield=['input_image', 'transforms'],
+        ants.ApplyTransforms(interpolation="LanczosWindowedSinc"), iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(niu.Function(input_names=["in_files"],
