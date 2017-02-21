@@ -123,13 +123,11 @@ def create_workflow(opts):
     run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
 
     log_dir = op.join(settings['output_dir'], 'log', run_uuid)
-    derivatives = op.join(settings['output_dir'], 'derivatives')
 
     # Check and create output and working directories
     # Using make_folder to prevent https://github.com/poldracklab/mriqc/issues/111
     make_folder(settings['output_dir'])
     make_folder(settings['work_dir'])
-    make_folder(derivatives)
     make_folder(log_dir)
 
     logger.addHandler(logging.FileHandler(op.join(log_dir, 'run_workflow')))
@@ -192,7 +190,8 @@ def create_workflow(opts):
                                simple_form=True)
 
     for subject_label in subject_list:
-        run_reports(settings['output_dir'], subject_label)
+        run_reports(settings['output_dir'], subject_label, run_uuid=run_uuid,
+                    errno=errno)
 
     sys.exit(errno)
 
