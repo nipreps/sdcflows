@@ -93,8 +93,6 @@ class Report(object):
 
         self._load_config(config)
 
-        self._load_config(config)
-
     def _load_config(self, config):
         try:
             config = json.load(open(config, 'r'))
