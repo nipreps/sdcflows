@@ -82,13 +82,16 @@ class SubReport(object):
 
 class Report(object):
 
-    def __init__(self, path, config, out_dir, out_filename='report.html'):
+    def __init__(self, path, config, out_dir, run_uuid, errno, out_filename='report.html'):
         self.root = path
         self.sub_reports = []
         self.errors = []
-        self._load_config(config)
         self.out_dir = out_dir
         self.out_filename = out_filename
+        self.run_uuid = run_uuid
+        self.errno = errno
+
+        self._load_config(config)
 
     def _load_config(self, config):
         try:
@@ -120,26 +123,15 @@ class Report(object):
 
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        error_dir = os.path.join(self.root, '../../log', subject[4:])
-        if os.path.isdir(error_dir):
+        error_dir = os.path.join(self.root, '../../log', subject[4:], self.run_uuid)
+        if self.errno == 1:
+            assert(os.path.isdir(error_dir))
             self.index_error_dir(error_dir)
 
     def index_error_dir(self, error_dir):
-        ''' Crawl subjects most recent crash directory and return text for 
+        ''' Crawl subjects crash directory for the corresponding run and return text for
             .pklz crash file found. '''
-        # Crash directories for subject are named by a timestamp. Sort 
-        # listdir output to order it alphabetically, which for our timestamped 
-        # directories is also a chronological listing. Assumes no other
-        # directories will be created in subject crash dir.
-        try:
-            newest_dir = [x for x in os.listdir(error_dir)
-                          if os.path.isdir(os.path.join(error_dir, x))]
-            newest_dir.sort()
-            newest_dir = newest_dir[-1]
-            newest_dir = os.path.join(error_dir, newest_dir)
-        except IndexError:
-            newest_dir = error_dir
-        for root, directories, filenames in os.walk(newest_dir):
+        for root, directories, filenames in os.walk(error_dir):
             for f in filenames:
                 # Only deal with files that start with crash and end in pklz
                 if not (f[:5] == 'crash' and f[-4:] == 'pklz'):
@@ -149,9 +141,7 @@ class Report(object):
                 node = None
                 if 'node' in crash_data:
                     node = crash_data['node']
-                error['traceback'] = []
-                for elem in crash_data['traceback']:
-                    error['traceback'].append("<br>".join(elem.split("\n")))
+                error['traceback'] = ''.join(crash_data['traceback']).replace("\\n", "<br \>")
                 error['file'] = f
 
                 if node:
@@ -177,11 +167,10 @@ class Report(object):
         return report_render
 
 
-def run_reports(out_dir, subject_label):
+      def run_reports(out_dir, subject_label):
     reportlet_path = os.path.join(out_dir, 'reports', "sub-" + subject_label)
     config = pkgrf('fmriprep', 'viz/config.json')
 
     out_filename = 'sub-{}{}'.format(subject_label, '.html')
     report = Report(reportlet_path, config, out_dir, out_filename)
     report.generate_report()
-
