@@ -167,10 +167,10 @@ class Report(object):
         return report_render
 
 
-    def run_reports(out_dir, subject_label, run_uuid, errno):
-        reportlet_path = os.path.join(out_dir, 'reports', "sub-" + subject_label)
-        config = pkgrf('fmriprep', 'viz/config.json')
+def run_reports(out_dir, subject_label, run_uuid, errno):
+    reportlet_path = os.path.join(out_dir, 'reports', "sub-" + subject_label)
+    config = pkgrf('fmriprep', 'viz/config.json')
 
-        out_filename = 'sub-{}{}'.format(subject_label, '.html')
-        report = Report(reportlet_path, config, out_dir, run_uuid, errno, out_filename)
-        report.generate_report()
+    out_filename = 'sub-{}{}'.format(subject_label, '.html')
+    report = Report(reportlet_path, config, out_dir, run_uuid, errno, out_filename)
+    report.generate_report()
