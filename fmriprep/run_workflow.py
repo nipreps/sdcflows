@@ -111,8 +111,7 @@ def create_workflow(opts):
         'ignore': opts.ignore,
         'skip_native': opts.skip_native,
         'freesurfer': opts.freesurfer,
-        'reportlets_dir': op.join(op.abspath(opts.work_dir), 'reportlets')
-
+        'reportlets_dir': op.join(op.abspath(opts.work_dir), 'reportlets'),
     }
 
     # set up logger

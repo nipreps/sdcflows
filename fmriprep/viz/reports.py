@@ -177,7 +177,7 @@ def run_reports(reportlets_dir, out_dir, run_uuid, errno):
             subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', dir).group()
         except AttributeError:
             continue
-        out_filename = '{}{}'.format(subject, '.html')
+        out_filename = '{}.html'.format(subject)
         report = Report(root, config, out_dir, run_uuid, errno, out_filename)
         report.generate_report()
 
