@@ -182,7 +182,9 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     merge_transforms = pe.MapNode(niu.Merge(2),
                                   iterfield=['in2'], name='MergeTransforms')
     epi_to_t1w_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc"), iterfield=['input_image', 'transforms'],
+        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                             float=True),
+        iterfield=['input_image', 'transforms'],
         name='EPIToT1wTransform')
     epi_to_t1w_transform.terminal_output = 'file'
     merge = pe.Node(niu.Function(input_names=["in_files"],
@@ -192,7 +194,8 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
                                               "biggest_epi_file_size_gb"] * 3
 
     mask_t1w_tfm = pe.Node(
-        ants.ApplyTransforms(interpolation='NearestNeighbor'),
+        ants.ApplyTransforms(interpolation='NearestNeighbor',
+                             float=True),
         name='MaskToT1w'
     )
 
@@ -325,7 +328,9 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name='MergeTransforms')
     epi_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc"), iterfield=['input_image', 'transforms'],
+        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                             float=True),
+        iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(niu.Function(input_names=["in_files"],
@@ -336,7 +341,8 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
 
     mask_merge_tfms = pe.Node(niu.Merge(2), name='MaskMergeTfms')
     mask_mni_tfm = pe.Node(
-        ants.ApplyTransforms(interpolation='NearestNeighbor'),
+        ants.ApplyTransforms(interpolation='NearestNeighbor',
+                             float=True),
         name='MaskToMNI'
     )
 
