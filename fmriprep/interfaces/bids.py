@@ -100,7 +100,7 @@ class DerivativesDataSinkOutputSpec(TraitedSpec):
 class DerivativesDataSink(SimpleInterface):
     input_spec = DerivativesDataSinkInputSpec
     output_spec = DerivativesDataSinkOutputSpec
-    out_path_base = "derivatives"
+    out_path_base = "fmriprep"
     _always_run = True
 
     def __init__(self, out_path_base=None, **inputs):
