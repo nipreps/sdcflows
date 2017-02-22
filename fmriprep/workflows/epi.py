@@ -175,7 +175,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
 
     gen_ref = pe.Node(niu.Function(
         input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
-        function=_gen_reference), name='GenNewMNIReference')
+        function=_gen_reference), name='GenNewT1wReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
                                          '1mm_T1.nii.gz')
 
