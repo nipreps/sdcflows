@@ -82,14 +82,13 @@ class SubReport(object):
 
 class Report(object):
 
-    def __init__(self, path, config, out_dir, run_uuid, errno, out_filename='report.html'):
+    def __init__(self, path, config, out_dir, run_uuid, out_filename='report.html'):
         self.root = path
         self.sub_reports = []
         self.errors = []
         self.out_dir = out_dir
         self.out_filename = out_filename
         self.run_uuid = run_uuid
-        self.errno = errno
 
         self._load_config(config)
 
@@ -124,8 +123,7 @@ class Report(object):
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
         error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log', self.run_uuid)
-        if self.errno == 1:
-            assert(os.path.isdir(error_dir))
+        if os.path.isdir(error_dir):
             self.index_error_dir(error_dir)
 
     def index_error_dir(self, error_dir):
@@ -164,16 +162,16 @@ class Report(object):
         report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors)
         with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
-        return report_render
+        return len(self.errors)
 
 
 
-def run_reports(reportlets_dir, out_dir, subject_label, run_uuid, errno):
+def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     reportlet_path = os.path.join(reportlets_dir, 'fmriprep', "sub-" + subject_label)
     config = pkgrf('fmriprep', 'viz/config.json')
 
     out_filename = 'sub-{}.html'.format(subject_label)
     report = Report(reportlet_path, config, out_dir, run_uuid, errno, out_filename)
-    report.generate_report()
+    return report.generate_report()
 
 

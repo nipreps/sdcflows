@@ -190,9 +190,13 @@ def create_workflow(opts):
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
+    report_errors = 0
     for subject_label in subject_list:
-        run_reports(settings['reportlets_dir'], settings['output_dir'], subject_label, run_uuid=run_uuid,
-                    errno=errno)
+        report_errors += run_reports(settings['reportlets_dir'],
+                                     settings['output_dir'],
+                                     subject_label, run_uuid=run_uuid)
+    if errno == 1:
+        assert(report_errors > 0)
 
     sys.exit(errno)
 
