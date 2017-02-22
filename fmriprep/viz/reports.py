@@ -171,7 +171,7 @@ def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     config = pkgrf('fmriprep', 'viz/config.json')
 
     out_filename = 'sub-{}.html'.format(subject_label)
-    report = Report(reportlet_path, config, out_dir, run_uuid, errno, out_filename)
+    report = Report(reportlet_path, config, out_dir, run_uuid, out_filename)
     return report.generate_report()
 
 
