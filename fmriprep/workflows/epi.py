@@ -83,8 +83,8 @@ def epi_hmc(name='EPI_HMC', settings=None):
     )
 
     ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='bet_hmc', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='bet_hmc'),
         name='DS_Report'
     )
 
@@ -172,8 +172,8 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     )
 
     ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix=reportlet_suffix, out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix=reportlet_suffix),
         name='ds_report'
     )
 
@@ -240,8 +240,8 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
                             suffix='preproc'), name='DerivHMC_SBRef')
 
     ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='epi_sbref', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='epi_sbref'),
         name="DS_Report")
 
     workflow.connect([
@@ -381,8 +381,8 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     )
 
     ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='epi_unwarp_bet', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='epi_unwarp_bet'),
         name="DS_Report")
 
     workflow.connect([
