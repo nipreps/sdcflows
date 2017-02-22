@@ -189,11 +189,11 @@ def main(cmd, *argv):
         command.extend(['-v', ':'.join((opts.patch_fmriprep,
                                         '/root/src/fmriprep'))])
     if opts.patch_niworkflows:
-        command.extend(['-v', ':'.join((opts.patch_niworfklows,
-                                        '/src/niworkflows'))])
+        command.extend(['-v', ':'.join((opts.patch_niworkflows,
+                                        '/root/src/niworkflows'))])
     if opts.patch_nipype:
         command.extend(['-v', ':'.join((opts.patch_nipype,
-                                        '/src/nipype'))])
+                                        '/root/src/nipype'))])
     if opts.scratch:
         command.extend(['-v', ':'.join((opts.scratch,
                                         '/scratch'))])
