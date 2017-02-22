@@ -27,7 +27,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_tpms',
                                                           'epi_mask',
-                                                          'reference_image',
                                                           'motion_confounds_file',
                                                           'source_file']),
                         name='inputnode')
