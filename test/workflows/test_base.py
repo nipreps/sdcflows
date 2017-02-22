@@ -10,7 +10,7 @@ class TestBase(TestWorkflow):
     def test_wf_ds054_type(self, _):
         # set up
         mock_subject_data = {'t1w': ['um'], 'sbref': ['um'], 'func': 'um'}
-        mock_settings = {'output_dir': '.', 'work_dir': '.',
+        mock_settings = {'output_dir': '.', 'work_dir': '.', 'reportlets_dir': '.',
                          'ants_nthreads': 1, 'biggest_epi_file_size_gb': 1,
                          'skip_native': False, 'freesurfer': False}
 
@@ -39,7 +39,7 @@ class TestBase(TestWorkflow):
     def test_wf_ds005_type(self, _):
         # set up
         mock_subject_data = {'func': ''}
-        mock_settings = {'output_dir': '.', 'ants_nthreads': 1,
+        mock_settings = {'output_dir': '.', 'ants_nthreads': 1, 'reportlets_dir': '.',
                          'biggest_epi_file_size_gb': 1,
                          'skip_native': False, 'freesurfer': False}
 

@@ -111,6 +111,7 @@ def create_workflow(opts):
         'ignore': opts.ignore,
         'skip_native': opts.skip_native,
         'freesurfer': opts.freesurfer,
+        'reportlets_dir': op.join(op.abspath(opts.work_dir), 'reportlets'),
     }
 
     # set up logger
@@ -122,7 +123,7 @@ def create_workflow(opts):
 
     run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
 
-    log_dir = op.join(settings['output_dir'], 'log', run_uuid)
+    log_dir = op.join(settings['output_dir'], 'fmriprep', 'log', run_uuid)
 
     # Check and create output and working directories
     # Using make_folder to prevent https://github.com/poldracklab/mriqc/issues/111
@@ -190,7 +191,7 @@ def create_workflow(opts):
                                simple_form=True)
 
     for subject_label in subject_list:
-        run_reports(settings['output_dir'], subject_label, run_uuid=run_uuid,
+        run_reports(settings['reportlets_dir'], settings['output_dir'], subject_label, run_uuid=run_uuid,
                     errno=errno)
 
     sys.exit(errno)

@@ -46,8 +46,8 @@ def sbref_preprocess(name='SBrefPreprocessing', settings=None):
                                             dilation=1), name='SBRefSkullstripping')
 
     ds_report = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='sbref_bet', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='sbref_bet'),
         name='DS_Report'
     )
 

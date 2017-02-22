@@ -139,14 +139,14 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                               "biggest_epi_file_size_gb"] * 3
 
     ds_report_a = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='acompcor', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='acompcor'),
         name='ds_report_a'
     )
 
     ds_report_t = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='tcompcor', out_path_base='reports'),
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='tcompcor'),
         name='ds_report_t'
     )
 

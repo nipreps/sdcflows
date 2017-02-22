@@ -123,7 +123,7 @@ class Report(object):
 
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        error_dir = os.path.join(self.root, '../../log', subject[4:], self.run_uuid)
+        error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log', self.run_uuid)
         if self.errno == 1:
             assert(os.path.isdir(error_dir))
             self.index_error_dir(error_dir)
@@ -162,15 +162,18 @@ class Report(object):
         )
         report_tpl = env.get_template('viz/report.tpl')
         report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors)
-        with open(os.path.join(self.out_dir, self.out_filename), 'w') as fp:
+        with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return report_render
 
 
-def run_reports(out_dir, subject_label, run_uuid, errno):
-    reportlet_path = os.path.join(out_dir, 'reports', "sub-" + subject_label)
+
+def run_reports(reportlets_dir, out_dir, subject_label, run_uuid, errno):
+    reportlet_path = os.path.join(reportlets_dir, 'fmriprep', "sub-" + subject_label)
     config = pkgrf('fmriprep', 'viz/config.json')
 
-    out_filename = 'sub-{}{}'.format(subject_label, '.html')
+    out_filename = 'sub-{}.html'.format(subject_label)
     report = Report(reportlet_path, config, out_dir, run_uuid, errno, out_filename)
     report.generate_report()
+
+
