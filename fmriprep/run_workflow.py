@@ -124,7 +124,6 @@ def create_workflow(opts):
     run_uuid = strftime('%Y%m%d-%H%M%S_') + str(uuid.uuid4())
 
     log_dir = op.join(settings['output_dir'], 'fmriprep', 'log', run_uuid)
-    derivatives = op.join(settings['output_dir'], 'derivatives')
 
     # Check and create output and working directories
     # Using make_folder to prevent https://github.com/poldracklab/mriqc/issues/111
@@ -191,7 +190,13 @@ def create_workflow(opts):
         preproc_wf.write_graph(graph2use="colored", format='svg',
                                simple_form=True)
 
-    run_reports(settings['reportlets_dir'], settings['output_dir'], run_uuid=run_uuid, errno=errno)
+    report_errors = 0
+    for subject_label in subject_list:
+        report_errors += run_reports(settings['reportlets_dir'],
+                                     settings['output_dir'],
+                                     subject_label, run_uuid=run_uuid)
+    if errno == 1:
+        assert(report_errors > 0)
 
     sys.exit(errno)
 
