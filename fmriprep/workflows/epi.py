@@ -60,11 +60,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
     split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
 
-    apply_mc_transforms = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc"), iterfield=['input_image', 'transforms'],
-        name='EPIToMNITransform')
-    apply_mc_transforms.terminal_output = 'file'
-
     workflow.connect([
         (inputnode, hmc, [('epi', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file'),
@@ -82,9 +77,6 @@ def epi_hmc(name='EPI_HMC', settings=None):
         (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
         (inputnode, split, [('epi', 'in_file')]),
-        (split, apply_mc_transforms, [('out_files', 'input_image')]),
-        (hcm2itk, apply_mc_transforms, [('itk_transform', 'transforms')]),
-        (hmc, apply_mc_transforms, [('mean_img', 'reference_image')]),
         (split, outputnode, [('out_files', 'epi_split')]),
     ])
 
