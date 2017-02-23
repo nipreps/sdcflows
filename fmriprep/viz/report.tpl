@@ -30,7 +30,7 @@ body {
         {% for sub_report in sub_reports %}
             {% if sub_report.run_reports %}
                 <li class="dropdown">
-                    <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
                         {{ sub_report.name }}
                         <span class="caret"></span>
                     </a>
