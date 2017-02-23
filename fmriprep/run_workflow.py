@@ -50,7 +50,7 @@ def main():
     g_input.add_argument('--nthreads', action='store', default=0,
                          type=int, help='number of threads')
     g_input.add_argument('--mem_mb', action='store', default=0,
-                         type=int, help='try to limit requested memory to this number')
+                         type=int, help='try to limit the total amount of requested memory for all workflows to this number')
     g_input.add_argument('--write-graph', action='store_true', default=False,
                          help='Write workflow graph.')
     g_input.add_argument('--use-plugin', action='store', default=None,
