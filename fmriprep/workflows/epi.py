@@ -94,7 +94,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
                                       'bias_corrected_t1', 't1_brain', 't1_mask',
                                       't1_seg', 't1w', 'epi_split', 'hmc_xforms',
-                                      'subjects_dir', 'subject_id']),
+                                      'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -123,6 +123,21 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
                 generate_report=True),
             name='bbregister'
             )
+
+        def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
+            import numpy as np
+            out_file = os.path.abspath('transform.mat')
+            fs_xfm = np.loadtxt(fs_2_t1_transform)
+            bbrxfm = np.loadtxt(bbreg_transform)
+            np.savetxt(out_file, bbrxfm.dot(fs_xfm))
+            return out_file
+
+        transformer = pe.Node(
+            niu.Function(
+                function=apply_fs_transform,
+                input_names=['fs_2_t1_transform', 'bbreg_transform'],
+                output_names=['out_file']),
+            name='BBRegTransform')
     else:
         flt_bbr_init = pe.Node(
             FLIRTRPT(generate_report=True, dof=6),
@@ -236,9 +251,11 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                      ('subject_id', 'subject_id')]),
             (explicit_mask_epi, bbregister, [('out_file', 'source_file')]),
-            (bbregister, invt_bbr, [('out_fsl_file', 'in_file')]),
-            (bbregister, outputnode, [('out_fsl_file', 'mat_epi_to_t1')]),
-            (bbregister, fsl2itk_fwd, [('out_fsl_file', 'transform_file')]),
+            (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
+            (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
+            (transformer, invt_bbr, [('out_file', 'in_file')]),
+            (transformer, outputnode, [('out_file', 'mat_epi_to_t1')]),
+            (transformer, fsl2itk_fwd, [('out_file', 'transform_file')]),
             (bbregister, ds_report, [('out_report', 'in_file')]),
         ])
     else:
