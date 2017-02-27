@@ -125,6 +125,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             )
 
         def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
+            import os
             import numpy as np
             out_file = os.path.abspath('transform.mat')
             fs_xfm = np.loadtxt(fs_2_t1_transform)
