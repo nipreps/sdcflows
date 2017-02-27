@@ -50,7 +50,7 @@ general:
     - "~/ds054/scratch"
     - "~/ds005/out"
     - "~/ds005/scratch"
-    - "~/_build_html
+    - "~/_build_html"
 
 deployment:
   production:
