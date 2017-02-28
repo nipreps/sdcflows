@@ -69,7 +69,7 @@ TESTS_REQUIRES = [
 ]
 
 EXTRA_REQUIRES = {
-    'doc': ['sphinx'],
+    'doc': ['sphinx', 'pydotplus', 'sphinx_rtd_theme'],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit']
 }
