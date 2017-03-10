@@ -179,7 +179,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         iterfield=['input_image', 'transforms'],
         name='EPIToT1wTransform')
     epi_to_t1w_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files"],
+    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
                                  output_names=["merged_file"],
                                  function=nii_concat), name='MergeEPI')
     merge.interface.estimated_memory_gb = settings[
@@ -200,6 +200,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         (merge_transforms, epi_to_t1w_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
         (epi_to_t1w_transform, merge, [('output_image', 'in_files')]),
+        (inputnode, merge, [('name_source', 'header_source')]),
         (fsl2itk_fwd, mask_t1w_tfm, [('itk_transform', 'transforms')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_t1w_tfm, [('ref_epi_mask', 'input_image')]),
@@ -252,7 +253,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.preprocess.ApplyXFM(), name='EPIapplyXFM',
                          iterfield=['in_file'])
-    epi_merge = pe.Node(niu.Function(input_names=["in_files"],
+    epi_merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
                                      output_names=["merged_file"],
                                      function=nii_concat), name='EPImergeback')
 
@@ -276,6 +277,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (epi_split, epi_xfm, [('out_files', 'in_file')]),
         (epi_sbref, epi_xfm, [('out_matrix_file', 'in_matrix_file')]),
         (epi_xfm, epi_merge, [('out_file', 'in_files')]),
+        (inputnode, epi_merge, [('epi_name_source', 'header_source')]),
         (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
         (epi_merge, outputnode, [('merged_file', 'epi_registered')]),
 
@@ -325,7 +327,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files"],
+    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
                                  output_names=["merged_file"],
                                  function=nii_concat), name='MergeEPI')
     merge.interface.estimated_memory_gb = settings[
@@ -363,6 +365,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
+        (inputnode, merge, [('name_source', 'header_source')]),
         (merge, ds_mni, [('merged_file', 'in_file')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
