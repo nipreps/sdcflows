@@ -125,16 +125,6 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             name='bbregister'
             )
 
-        bbr_coreg = pe.Node(
-            BBRegisterRPT(
-                contrast_type='t2',
-                init='coreg',
-                registered_file=True,
-                out_fsl_file=True,
-                generate_report=True),
-            name='bbr_coreg'
-            )
-
         def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
             import os
             import numpy as np
@@ -267,9 +257,6 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                      ('subject_id', 'subject_id')]),
             (explicit_mask_epi, bbregister, [('out_file', 'source_file')]),
-            (inputnode, bbr_coreg, [('subjects_dir', 'subjects_dir'),
-                                     ('subject_id', 'subject_id')]),
-            (explicit_mask_epi, bbr_coreg, [('out_file', 'source_file')]),
             (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
             (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
             (inputnode, tkreg, [('t1_brain', 'target_image')]),
