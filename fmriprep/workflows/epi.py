@@ -17,6 +17,8 @@ from nipype.interfaces import afni
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
+from nipype.interfaces.base import Undefined
+from nipype.interfaces import freesurfer as fs
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
@@ -483,6 +485,30 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     ])
 
     return workflow
+
+
+def epi_surf_sample(name='SurfaceSample', settings=None):
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=[
+            'source_file',
+            'reg_file',
+        ]), name='inputnode')
+
+    sampler = pe.Node(
+        # --projfrac 0.5
+        fs.SampleToSurface(sampling_method='point',
+                           sampling_range=0.5,
+                           sampling_units='frac'),
+        iterables=[('hemi', ['lh', 'rh']),
+                   ('target_subject', [Undefined, 'fsaverage'])],
+        name='native_vol2surf')
+
+    workflow.connect([
+        (inputnode, sampler, [('source_file', 'source_file'),
+                              ('reg_file', 'reg_file')]),
+        ])
+
 
 
 def epi_mni_transformation(name='EPIMNITransformation', settings=None):
