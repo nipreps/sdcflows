@@ -154,6 +154,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         )
         flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                           'etc/flirtsch/bbr.sch')
+        reportlet_suffix = reportlet_suffix.replace('bbr', 'flt_bbr')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='Flirt_BBR_Inv')
