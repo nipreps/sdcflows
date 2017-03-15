@@ -140,10 +140,6 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
                 input_names=['fs_2_t1_transform', 'bbreg_transform'],
                 output_names=['out_file']),
             name='BBRegTransform')
-
-        tkreg = pe.Node(
-            fs.utils.Tkregister2(fsl_out='epi2t1w.mat'),
-            name='tkreg2')
     else:
         flt_bbr_init = pe.Node(
             FLIRTRPT(generate_report=True, dof=6),
@@ -259,12 +255,9 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             (explicit_mask_epi, bbregister, [('out_file', 'source_file')]),
             (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
             (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
-            (inputnode, tkreg, [('t1_brain', 'target_image')]),
-            (explicit_mask_epi, tkreg, [('out_file', 'moving_image')]),
-            (bbregister, tkreg, [('out_reg_file', 'reg_file')]),
-            (tkreg, invt_bbr, [('fsl_file', 'in_file')]),
-            (tkreg, outputnode, [('fsl_file', 'mat_epi_to_t1')]),
-            (tkreg, fsl2itk_fwd, [('fsl_file', 'transform_file')]),
+            (transformer, invt_bbr, [('out_file', 'in_file')]),
+            (transformer, outputnode, [('out_file', 'mat_epi_to_t1')]),
+            (transformer, fsl2itk_fwd, [('out_file', 'transform_file')]),
             (bbregister, ds_report, [('out_report', 'in_file')]),
         ])
     else:
