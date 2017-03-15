@@ -131,7 +131,10 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             out_file = os.path.abspath('transform.mat')
             fs_xfm = np.loadtxt(fs_2_t1_transform)
             bbrxfm = np.loadtxt(bbreg_transform)
-            np.savetxt(out_file, fs_xfm.dot(bbrxfm))
+            out_xfm = fs_xfm.dot(bbrxfm)
+            assert np.allclose(out_xfm[3], [0, 0, 0, 1])
+            out_xfm[3] = [0, 0, 0, 1]
+            np.savetxt(out_file, out_xfm, fmt='%.12g')
             return out_file
 
         transformer = pe.Node(
