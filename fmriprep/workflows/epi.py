@@ -89,17 +89,23 @@ def bold_preprocessing(name, metadata, settings):
         (hmcwf, epi_mni_trans_wf, [('outputnode.xforms', 'inputnode.hmc_xforms'),
                                    ('outputnode.epi_mask', 'inputnode.epi_mask'),
                                    ('outputnode.epi_split', 'inputnode.epi_split')]),
-        (inputnode, epi_mni_trans_wf, [('epi', 'inputnode.name_source'),
-                                       ('bias_corrected_t1', 'inputnode.t1'),
-                                       ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')])
+        (inputnode, epi_mni_trans_wf,
+         [('epi', 'inputnode.name_source'),
+          ('bias_corrected_t1', 'inputnode.t1'),
+          ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')])
     ])
 
     if settings['freesurfer']:
+        epi_surf = epi_surf_sample(settings=settings)
         workflow.connect([
             (inputnode, epi_2_t1, [('subjects_dir', 'inputnode.subjects_dir'),
                                    ('subject_id', 'inputnode.subject_id'),
                                    ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
-                                   ])
+                                   ]),
+            (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                   ('epi', 'inputnode.name_source')]),
+            (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file'),
+                                  ('outputnode.fs_reg_file', 'inputnode.reg_file')]),
             ])
 
     return workflow
@@ -242,7 +248,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi',
                                       'itk_epi_to_t1', 'itk_t1_to_epi',
-                                      'epi_t1', 'epi_mask_t1']),
+                                      'epi_t1', 'epi_mask_t1', 'fs_reg_file']),
         name='outputnode'
     )
 
@@ -408,6 +414,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
             (transformer, outputnode, [('out_file', 'mat_epi_to_t1')]),
             (transformer, fsl2itk_fwd, [('out_file', 'transform_file')]),
             (bbregister, ds_report, [('out_report', 'in_file')]),
+            (bbregister, outputnode, [('out_reg_file', 'fs_reg_file')]),
         ])
     else:
         workflow.connect([
@@ -493,6 +500,8 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         niu.IdentityInterface(fields=[
             'source_file',
             'reg_file',
+            'subjects_dir',
+            'name_source',
         ]), name='inputnode')
 
     sampler = pe.Node(
@@ -505,10 +514,12 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         name='native_vol2surf')
 
     workflow.connect([
-        (inputnode, sampler, [('source_file', 'source_file'),
+        (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
+                              ('source_file', 'source_file'),
                               ('reg_file', 'reg_file')]),
         ])
 
+    return workflow
 
 
 def epi_mni_transformation(name='EPIMNITransformation', settings=None):
