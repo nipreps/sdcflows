@@ -510,8 +510,8 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
 
     sampler = pe.Node(
         # --projfrac 0.5
-        fs.SampleToSurface(sampling_method='point',
-                           sampling_range=0.5,
+        fs.SampleToSurface(sampling_method='average',
+                           sampling_range=(0, 1, 0.2),
                            sampling_units='frac'),
         iterables=[('hemi', ['lh', 'rh']),
                    ('target_subject', subjects)],
