@@ -504,13 +504,17 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
             'name_source',
         ]), name='inputnode')
 
+    subjects = ['fsaverage']
+    if not settings['skip_native']:
+        subjects.append(Undefined)
+
     sampler = pe.Node(
         # --projfrac 0.5
         fs.SampleToSurface(sampling_method='point',
                            sampling_range=0.5,
                            sampling_units='frac'),
         iterables=[('hemi', ['lh', 'rh']),
-                   ('target_subject', [Undefined, 'fsaverage'])],
+                   ('target_subject', subjects)],
         name='native_vol2surf')
 
     workflow.connect([
