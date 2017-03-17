@@ -17,7 +17,6 @@ from nipype.interfaces import afni
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
-from nipype.interfaces.base import Undefined
 from nipype.interfaces import freesurfer as fs
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
@@ -504,23 +503,45 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
             'name_source',
         ]), name='inputnode')
 
-    subjects = ['fsaverage']
-    if not settings['skip_native']:
-        subjects.append(Undefined)
+    def select_targets(reg_file, template, skip_native):
+        targets = [template]
+        spaces = [template]
+        if not skip_native:
+            with open(reg_file, 'r') as fobj:
+                targets.append(fobj.readline().rstrip())
+            spaces.append('fsnative')
+        return targets, spaces
 
-    sampler = pe.Node(
-        # --projfrac 0.5
+    targets = pe.Node(
+        niu.Function(function=select_targets,
+                     input_names=['reg_file', 'template', 'skip_native'],
+                     output_names=['targets', 'spaces']),
+        name='targets')
+    targets.inputs.template = 'fsaverage'
+    targets.inputs.skip_native = settings['skip_native']
+
+    rename_src = pe.MapNode(
+            niu.Rename(format_string='%(subject)s', keep_ext=True),
+            iterfield='subject',
+            name='RenameFunc')
+
+    sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average',
                            sampling_range=(0, 1, 0.2),
-                           sampling_units='frac'),
-        iterables=[('hemi', ['lh', 'rh']),
-                   ('target_subject', subjects)],
-        name='native_vol2surf')
+                           sampling_units='frac',
+                           out_type='gii'),
+        iterfield=['source_file', 'target_subject'],
+        iterables=[('hemi', ['lh', 'rh'])],
+        name='vol2surf')
 
     workflow.connect([
+        (inputnode, targets, [('reg_file', 'reg_file')]),
+        (inputnode, rename_src, [('source_file', 'in_file')]),
+        (targets, rename_src, [('spaces', 'subject')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
-                              ('source_file', 'source_file'),
                               ('reg_file', 'reg_file')]),
+        (rename_src, sampler, [('out_file', 'source_file')]),
+        (targets, sampler, [('targets', 'target_subject')]),
         ])
 
     return workflow
