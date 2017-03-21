@@ -40,46 +40,72 @@ def epi_hmc(name='EPI_HMC', settings=None):
         fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'epi_mean', 'movpar_file',
                 'motion_confounds_file']), name='outputnode')
 
-    # Head motion correction (hmc)
-    hmc = pe.Node(fsl.MCFLIRT(
-        save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
-    hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+    if slicetime:
+        # Head motion correction (hmc)
+        hmc = pe.Node(nipy.SpaceTimeRealigner(), name="spacetime_realign")
+        hmc.inputs.slice_times = metadata["SliceTiming"]
+        hmc.inputs.tr = metadata["RepetitionTime"]
+        hmc.inputs.slice_info = 2
+        hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
 
-    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                         iterfield=['transform_file'], name='hcm2itk')
+        mean = pe.Node(fsl.MeanImage(), name="EPImean")
+        inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
 
-    avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
-                         iterfield=['mat_file'])
-    avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
+        # Calculate EPI mask on the average after HMC
+        skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+                                 name='skullstrip_epi')
 
-    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+        workflow.connect([
+            (inputnode, hmc, [('epi', 'in_file')]),
+            (hmc, mean, [('out_file', 'in_file')]),
+            (mean, outputnode, [('out_file', 'epi_mean')]),
+            (mean, inu, [('out_file', 'input_image')]),
+            (inu, skullstrip_epi, [('output_image', 'in_file')]),
+            #(avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
+            (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
+        ])
 
-    # Calculate EPI mask on the average after HMC
-    skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
-                             name='skullstrip_epi')
+    else:
+        # Head motion correction (hmc)
+        hmc = pe.Node(fsl.MCFLIRT(
+            save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
+        hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
 
-    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
-    split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+        hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                             iterfield=['transform_file'], name='hcm2itk')
 
-    workflow.connect([
-        (inputnode, hmc, [('epi', 'in_file')]),
-        (hmc, hcm2itk, [('mat_file', 'transform_file'),
-                        ('mean_img', 'source_file'),
-                        ('mean_img', 'reference_file')]),
-        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('par_file', 'movpar_file'),
-                           ('mean_img', 'epi_mean')]),
-        (hmc, avscale, [('mat_file', 'mat_file')]),
-        (avscale, avs_format, [('translations', 'translations'),
-                               ('rot_angles', 'rot_angles')]),
-        (hmc, inu, [('mean_img', 'input_image')]),
-        (inu, skullstrip_epi, [('output_image', 'in_file')]),
-        (hmc, avscale, [('mean_img', 'ref_file')]),
-        (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
-        (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
-        (inputnode, split, [('epi', 'in_file')]),
-        (split, outputnode, [('out_files', 'epi_split')]),
-    ])
+        avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
+                             iterfield=['mat_file'])
+        avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
+
+        inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+
+        # Calculate EPI mask on the average after HMC
+        skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+                                 name='skullstrip_epi')
+
+        split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+        split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+
+        workflow.connect([
+            (inputnode, hmc, [('epi', 'in_file')]),
+            (hmc, hcm2itk, [('mat_file', 'transform_file'),
+                            ('mean_img', 'source_file'),
+                            ('mean_img', 'reference_file')]),
+            (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+            (hmc, outputnode, [('par_file', 'movpar_file'),
+                               ('mean_img', 'epi_mean')]),
+            (hmc, avscale, [('mat_file', 'mat_file')]),
+            (avscale, avs_format, [('translations', 'translations'),
+                                   ('rot_angles', 'rot_angles')]),
+            (hmc, inu, [('mean_img', 'input_image')]),
+            (inu, skullstrip_epi, [('output_image', 'in_file')]),
+            (hmc, avscale, [('mean_img', 'ref_file')]),
+            (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
+            (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
+            (inputnode, split, [('epi', 'in_file')]),
+            (split, outputnode, [('out_files', 'epi_split')]),
+        ])
 
     return workflow
 
