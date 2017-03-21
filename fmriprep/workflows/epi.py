@@ -29,7 +29,7 @@ from fmriprep.workflows.sbref import _extract_wm
 
 
 # pylint: disable=R0914
-def epi_hmc(name='EPI_HMC', settings=None):
+def epi_hmc(metadata, name='EPI_HMC', settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
@@ -40,7 +40,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
         fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'epi_mean', 'movpar_file',
                 'motion_confounds_file']), name='outputnode')
 
-    if slicetime:
+    if "SliceTiming" in metadata:
         # Head motion correction (hmc)
         hmc = pe.Node(nipy.SpaceTimeRealigner(), name="spacetime_realign")
         hmc.inputs.slice_times = metadata["SliceTiming"]
