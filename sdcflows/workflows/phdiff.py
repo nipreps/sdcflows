@@ -3,12 +3,22 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+
+Phase-difference B0 estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The field inhomogeneity inside the scanner (fieldmap) is proportional to the
+phase drift between two subsequent :abbr:`GRE (gradient recall echo)`
+sequence.
+
+
 Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
 
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import os
 import os.path as op
 
 from nipype.interfaces import ants
@@ -21,19 +31,18 @@ from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 
-
-def _sort_fmaps(input_images):
-    ''' just a little data massaging'''
-    return (sorted([fname for fname in input_images if 'magnitude' in fname]),
-            sorted([fname for fname in input_images if 'phasediff' in fname]))
-
-
-def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
+def phdiff_workflow(name='FMAP_phdiff', settings=None):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
     acquisitions. The `original code was taken from nipype
     <https://github.com/nipy/nipype/blob/master/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
+
+    .. workflow ::
+
+        from fmriprep.workflows.fieldmap.phdiff import phdiff_workflow
+        wf = phdiff_workflow()
+
 
     Outputs::
 
@@ -43,11 +52,14 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
 
 
     """
+    if settings is None:
+        settings = {}
+
     inputnode = pe.Node(niu.IdentityInterface(fields=['input_images']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmap_ref', 'fmap_mask', 'fmap']), name='outputnode')
+        fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
 
     sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
                                      input_names=['input_images'],
@@ -123,8 +135,8 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
     ])
 
     ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
-    ds_betrpt.inputs.base_directory = op.join(settings['output_dir'],
-                                              'reports')
+    ds_betrpt.inputs.base_directory = op.join(settings.get(
+        'output_dir', os.getcwd()), 'reports')
 
     workflow.connect([
         (bet, ds_betrpt, [('out_report', 'fmap_bet_rpt')])
@@ -137,27 +149,33 @@ def phase_diff_and_magnitudes(settings, name='phase_diff_and_magnitudes'):
 # Helper functions
 # ------------------------------------------------------
 
+def _sort_fmaps(input_images):
+    ''' just a little data massaging'''
+    return (sorted([fname for fname in input_images if 'magnitude' in fname]),
+            sorted([fname for fname in input_images if 'phasediff' in fname]))
+
 def phdiff2fmap(in_file, delta_te, out_file=None):
-    """
+    r"""
     Converts the input phase-difference map into a fieldmap in Hz,
     using the eq. (1) of [Hutton2002]_:
 
-      .. math:
+    .. math::
 
-          \Delta B_0 (\text{T}^{-1}) = \frac{\Delta \Theta}{2\pi\Gamma\,\Delta\text{TE}}
+        \Delta B_0 (\text{T}^{-1}) = \frac{\Delta \Theta}{2\pi\gamma \Delta\text{TE}}
+
 
     In this case, we do not take into account the gyromagnetic ratio of the
-    proton (:math:`\Gamma`), since it will be applied inside TOPUP:
+    proton (:math:`\gamma`), since it will be applied inside TOPUP:
 
-      .. math:
+    .. math::
 
-          \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi,\Delta\text{TE}}
+        \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi \Delta\text{TE}}
 
 
+    .. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
+                    Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
+                    <http://dx.doi.org/10.1006/nimg.2001.1054>`_.
 
-      .. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
-                      Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
-                      <http://dx.doi.org/10.1006/nimg.2001.1054>`_.
     """
     import numpy as np
     import nibabel as nb
