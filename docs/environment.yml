@@ -20,6 +20,7 @@ dependencies:
 - funcsigs
 - networkx
 - python-dateutil
+- pytdotplus
 
 - pip:
     - doctest-ignore-unicode
