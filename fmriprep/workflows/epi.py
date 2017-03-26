@@ -91,6 +91,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
     """
+    from fmriprep.interfaces.itk import MergeANTsTransforms
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
@@ -192,8 +193,10 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewT1wReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
-    merge_transforms = pe.MapNode(niu.Merge(2),
-                                  iterfield=['in2'], name='MergeTransforms')
+    merge_xforms = pe.MapNode(MergeANTsTransforms(
+        in_file_invert=False, invert_transform_flags=[False], position=0),
+                              iterfield=['transforms'], name='concat_hmc_sdc_xforms')
+
     epi_to_t1w_transform = pe.MapNode(
         ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
                              float=True),
@@ -213,10 +216,10 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     workflow.connect([
         (inputnode, gen_ref, [('ref_epi', 'moving_image'),
                               ('t1_brain', 'fixed_image')]),
-        (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
-        (inputnode, merge_transforms, [('hmc_xforms', 'in2')]),
+        (fsl2itk_fwd, merge_xforms, [('itk_transform', 'in_file')]),
+        (inputnode, merge_xforms, [('hmc_xforms', 'transforms')]),
         (inputnode, epi_to_t1w_transform, [('epi_split', 'input_image')]),
-        (merge_transforms, epi_to_t1w_transform, [('out', 'transforms')]),
+        (merge_xforms, epi_to_t1w_transform, [('transforms', 'transforms')]),
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
         (epi_to_t1w_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
