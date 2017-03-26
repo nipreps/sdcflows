@@ -38,7 +38,7 @@ REQUIRES = [
     'matplotlib',
     'nilearn',
     'sklearn',
-    'nibabel',
+    'nibabel>=2.1.0',
     'pandas',
     'grabbit',
     'pybids>=0.1.0',
