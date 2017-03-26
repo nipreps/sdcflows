@@ -20,8 +20,10 @@ dependencies:
 - funcsigs
 - networkx
 - python-dateutil
+- pydotplus
 
 - pip:
+    - sphinx-argparse
     - doctest-ignore-unicode
     - svgutils
     - nitime
