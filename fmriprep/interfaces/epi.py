@@ -14,6 +14,7 @@ from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterfac
                                     OutputMultiPath)
 from nilearn.image import mean_img
 from fmriprep.utils.misc import genfname
+from builtins import str, bytes
 
 
 class SelectReferenceInputSpec(BaseInterfaceInputSpec):
@@ -22,7 +23,7 @@ class SelectReferenceInputSpec(BaseInterfaceInputSpec):
     njobs = traits.Int(1, nohash=True, usedefault=True, desc='number of jobs')
 
 class SelectReferenceOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='reference image')
+    reference = File(exists=True, desc='reference image')
 
 class SelectReference(BaseInterface):
     """
@@ -46,9 +47,17 @@ class SelectReference(BaseInterface):
             self._results['reference'] = self.input.reference
             return runtime
 
+        in_files = self.inputs.in_files
+        if isinstance(in_files, (str, bytes)):
+            in_files = [in_files]
+
+        if len(in_files) == 1:
+            self._results['reference'] = in_files[0]
+            return runtime
+
         # or mean otherwise
-        self._results['reference'] = genfname(self.inputs.in_files[0], suffix='avg')
-        mean_img(self.inputs.in_files, njobs=self.inputs.njobs).to_filename(
+        self._results['reference'] = genfname(in_files[0], suffix='avg')
+        mean_img(in_files, njobs=self.inputs.njobs).to_filename(
             self._results['reference'])
         return runtime
 

@@ -6,6 +6,16 @@
 Apply susceptibility distortion correction (SDC)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+.. topic :: Abbreviations
+
+    fmap
+        fieldmap
+    VSM
+        voxel-shift map -- a 3D nifti where displacements are in pixels (not mm)
+    DFM
+        displacements field map -- a nifti warp file compatible with ANTs (mm)
+
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
@@ -19,6 +29,7 @@ from nipype.interfaces.ants import Registration, N4BiasFieldCorrection, ApplyTra
 # from nipype.interfaces.ants.preprocess import Matrix2FSLParams
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 from fmriprep.interfaces.epi import SelectReference
+from fmriprep.interfaces.nilearn import Mean
 
 def sdc_unwarp(name='SDC_unwarp', settings=None):
     """
@@ -29,6 +40,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
         from fmriprep.workflows.fieldmap.unwarp import sdc_unwarp
         wf = sdc_unwarp()
+
 
     Inputs
     ------
@@ -48,29 +60,42 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         fmap_mask
             a brain mask corresponding to ``fmap``
 
+    Outputs
+    -------
+
+        out_files
+            the ``in_split`` files after unwarping
+        out_reference
+            the ``in_reference`` or the mean ``in_split`` after unwarping
+        out_warp
+            the corresponding :abbr:`DFM (displacements field map)` compatible with
+            ANTs
+
     """
 
     if settings is None:
+        # Don't crash if workflow used outside fmriprep
         settings = {'ants_nthreads': 6}
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_split', 'in_reference', 'in_mask', 'in_meta',
+        fields=['in_split', 'in_reference', 'in_mask', 'xforms', 'name_source',
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_files', 'out_mean', 'out_hmcpar', 'out_confounds',
-                'out_warps']), name='outputnode')
+        fields=['out_files', 'out_reference', 'out_warps', 'out_mask']), name='outputnode')
 
-    refimg = pe.Node(SelectReference(), name='select_ref')
+    meta = pe.Node(ReadSidecarJSON(), name='metadata')
+
+    ref_img = pe.Node(SelectReference(), name='ref_select')
+    # Prepare target image for registration
+    ref_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_inu')
 
     # Prepare fieldmap reference image, creating a fake warping
     # to make the magnitude look like a distorted EPI
-    ref_wrp = pe.Node(WarpReference(), name='reference_warped')
+    mag_wrp = pe.Node(WarpReference(), name='mag_warped')
     # Mask reference image (the warped magnitude image)
-    ref_msk = pe.Node(ApplyMask(), name='reference_mask')
-
-    # Prepare target image for registration
-    inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='target_inu')
+    mag_msk = pe.Node(ApplyMask(), name='mag_mask')
+    mag_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='mag_inu')
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -78,15 +103,75 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     if settings.get('debug', False):
         ants_settings = pkgr.resource_filename(
             'fmriprep', 'data/fmap-any_registration_testing.json')
-    fmap2ref = pe.Node(Registration(
+    fmap2ref_reg = pe.Node(Registration(
         from_file=ants_settings, output_inverse_warped_image=True,
         output_warped_image=True, num_threads=settings['ants_nthreads']),
-                       name='fmap_ref2target_avg')
-    fmap2ref.interface.num_threads = settings['ants_nthreads']
+                       name='fmap2ref_registration')
+    fmap2ref_reg.interface.num_threads = settings['ants_nthreads']
 
+    # Fieldmap to rads and then to voxels (VSM - voxel shift map)
+    torads = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
+                                  function=_hz2rads), name='fmap_Hz2rads')
+    gen_vsm = pe.Node(FUGUE(save_unmasked_shift=True), name='VSM')
+
+    # Map the VSM into the EPI space
+    fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
+        generate_report=False, dimension=3, interpolation='BSpline', float=True),
+                             name='fmap2ref_apply')
+
+    # Convert the VSM into a DFM (displacements field map)
+    # or: FUGUE shift to ANTS warping.
+    vsm2dfm = pe.Node(itk.FUGUEvsm2ANTSwarp(), name='fmap2dfm')
+
+    unwarp = pe.MapNode(ANTSApplyTransformsRPT(
+        dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
+                        iterfield=['input_image'], name='epi_unwarp')
+    ref_avg = pe.Node(Mean(), name='epi_mean')
+
+    # Final correction with refined HMC parameters
+    tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
+        in_file_invert=False, invert_transform_flags=[False]),
+                            iterfield=['in_file'], name='inputs_xfms')
+
+    # ref_unwarp = pe.Node(ANTSApplyTransformsRPT(
+    #     dimension=3, generate_report=True, float=True, interpolation='LanczosWindowedSinc'),
+    #                      name='ref_unwarp')
     workflow.connect([
-        (inputnode, refimg, [('in_reference', 'reference'),
-                             ('in_split', 'in_files')])
+        (inputnode, meta, [('name_source', 'in_file')]),
+        (inputnode, torads, [('fmap', 'in_file')]),
+        (inputnode, ref_img, [('in_reference', 'reference'),
+                              ('in_split', 'in_files')]),
+        (inputnode, mag_wrp, [('fmap_ref', 'fmap_ref'),
+                              ('fmap_mask', 'in_mask')]),
+        (inputnode, tfm_concat, [('xforms', 'in_file')]),
+        (meta, mag_wrp, [(('out_dict', _get_ec), 'echospacing'),
+                         (('out_dict', _get_pedir), 'pe_dir')]),
+        (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
+                         (('out_dict', _get_pedir), 'unwarp_direction')]),
+        (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
+        (torads, mag_wrp, [('out_file', 'in_file')]),
+        (ref_img, ref_inu, [('reference', 'input_image')]),
+        (mag_wrp, mag_msk, [('out_warped', 'in_file'),
+                            ('out_mask', 'in_mask')]),
+        (mag_msk, mag_inu, [('out_file', 'input_image')]),
+        (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
+        (mag_inu, fmap2ref_reg, [('output_image', 'fixed_image')]),
+        (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
+        (fmap2ref_reg, fmap2ref_apply,
+            [('inverse_composite_transform', 'transforms')]),
+        (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
+        (vsm2dfm, unwarp, [('out_file', 'transforms')]),
+        (ref_img, unwarp, [('reference', 'reference_image')]),
+        (inputnode, unwarp, [('in_split', 'input_image')]),
+        (unwarp, ref_avg, [('output_image', 'in_files')]),
+        (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
+        (ref_avg, outputnode, [('out_file', 'out_reference')]),
+        (unwarp, outputnode, [('output_image', 'out_files')]),
+        (tfm_concat, outputnode, [('transforms', 'out_warp')]),
+        # (ref_img, ref_unwarp, [('reference', 'reference_image'),
+        #                        ('reference', 'input_image')]),
+        # (vsm2dfm, ref_unwarp, [('out_file', 'transforms')]),
+        # (ref_unwarp, outputnode, [('out')])
     ])
 
     return workflow
