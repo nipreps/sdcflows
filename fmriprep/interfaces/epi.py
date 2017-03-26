@@ -44,7 +44,7 @@ class SelectReference(BaseInterface):
     def _run_interface(self, runtime):
         # Return reference
         if isdefined(self.inputs.reference):
-            self._results['reference'] = self.input.reference
+            self._results['reference'] = self.inputs.reference
             return runtime
 
         in_files = self.inputs.in_files
@@ -57,7 +57,7 @@ class SelectReference(BaseInterface):
 
         # or mean otherwise
         self._results['reference'] = genfname(in_files[0], suffix='avg')
-        mean_img(in_files, njobs=self.inputs.njobs).to_filename(
+        mean_img(in_files, n_jobs=self.inputs.njobs).to_filename(
             self._results['reference'])
         return runtime
 

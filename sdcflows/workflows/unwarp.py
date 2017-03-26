@@ -28,8 +28,12 @@ from nipype.interfaces.fsl import FUGUE
 from nipype.interfaces.ants import Registration, N4BiasFieldCorrection, ApplyTransforms
 # from nipype.interfaces.ants.preprocess import Matrix2FSLParams
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
+
+from fmriprep.interfaces import itk
 from fmriprep.interfaces.epi import SelectReference
-from fmriprep.interfaces.nilearn import Mean
+from fmriprep.interfaces.nilearn import Mean, MaskEPI
+from fmriprep.interfaces import ReadSidecarJSON
+
 
 def sdc_unwarp(name='SDC_unwarp', settings=None):
     """
@@ -72,6 +76,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
             ANTs
 
     """
+    from fmriprep.interfaces.fmap import WarpReference
+    from fmriprep.interfaces.utils import ApplyMask
 
     if settings is None:
         # Don't crash if workflow used outside fmriprep
@@ -127,11 +133,12 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
                         iterfield=['input_image'], name='epi_unwarp')
     ref_avg = pe.Node(Mean(), name='epi_mean')
+    ref_msk = pe.Node(MaskEPI(), name='epi_mask')
 
     # Final correction with refined HMC parameters
     tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
         in_file_invert=False, invert_transform_flags=[False]),
-                            iterfield=['in_file'], name='inputs_xfms')
+                            iterfield=['in_file'], name='concat_hmc_sdc_xforms')
 
     # ref_unwarp = pe.Node(ANTSApplyTransformsRPT(
     #     dimension=3, generate_report=True, float=True, interpolation='LanczosWindowedSinc'),
@@ -149,6 +156,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
                          (('out_dict', _get_pedir), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
+        (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
         (torads, mag_wrp, [('out_file', 'in_file')]),
         (ref_img, ref_inu, [('reference', 'input_image')]),
         (mag_wrp, mag_msk, [('out_warped', 'in_file'),
@@ -157,6 +165,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
         (mag_inu, fmap2ref_reg, [('output_image', 'fixed_image')]),
         (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
+        (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply,
             [('inverse_composite_transform', 'transforms')]),
         (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
@@ -165,6 +174,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (inputnode, unwarp, [('in_split', 'input_image')]),
         (unwarp, ref_avg, [('output_image', 'in_files')]),
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
+        (ref_avg, ref_msk, [('out_file', 'in_files')]),
+        (ref_msk, outputnode, [('out_mask', 'out_mask')]),
         (ref_avg, outputnode, [('out_file', 'out_reference')]),
         (unwarp, outputnode, [('output_image', 'out_files')]),
         (tfm_concat, outputnode, [('transforms', 'out_warp')]),
@@ -212,10 +223,9 @@ def sdc_unwarp_precise(name='SDC_unwarp_precise', settings=None):
     """
     from fmriprep.interfaces.fmap import WarpReference, ApplyFieldmap
     from fmriprep.interfaces.images import FixAffine, SplitMerge
-    from fmriprep.interfaces.nilearn import Merge
-    from fmriprep.interfaces import itk
+    from fmriprep.interfaces.nilearn import Merge, Mean
     from fmriprep.interfaces.hmc import MotionCorrection, itk2moco
-    from fmriprep.interfaces.utils import MeanTimeseries, ApplyMask
+    from fmriprep.interfaces.utils import ApplyMask
 
     if settings is None:
         settings = {'ants_nthreads': 6}
@@ -311,7 +321,7 @@ def sdc_unwarp_precise(name='SDC_unwarp_precise', settings=None):
                           iterfield=['transforms', 'invert_transform_flags'],
                           name='generate_warpings')
 
-    mean = pe.Node(MeanTimeseries(), name='inputs_unwarped_mean')
+    mean = pe.Node(Mean(), name='inputs_unwarped_mean')
 
     workflow.connect([
         (inputnode, pre_tfms, [('in_hmcpar', 'in_file')]),

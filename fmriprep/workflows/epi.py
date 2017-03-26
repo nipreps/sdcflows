@@ -22,7 +22,8 @@ from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
-from fmriprep.interfaces.utils import nii_concat
+from fmriprep.interfaces.images import GenerateSamplingReference
+from fmriprep.interfaces.nilearn import Merge
 from fmriprep.utils.misc import fix_multi_T1w_source_name, _first
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.workflows.sbref import _extract_wm
@@ -188,11 +189,8 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         (inputnode, ds_report, [(('name_source', _first), 'source_file')])
     ])
 
-    gen_ref = pe.Node(niu.Function(
-        input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
-        function=_gen_reference), name='GenNewT1wReference')
-    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
-                                         '1mm_T1.nii.gz')
+    gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewT1wReference')
+    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
     merge_transforms = pe.MapNode(niu.Merge(2),
                                   iterfield=['in2'], name='MergeTransforms')
@@ -202,9 +200,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         iterfield=['input_image', 'transforms'],
         name='EPIToT1wTransform')
     epi_to_t1w_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                 output_names=["merged_file"],
-                                 function=nii_concat), name='MergeEPI')
+    merge = pe.Node(Merge(), name='MergeEPI')
     merge.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
@@ -215,7 +211,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     )
 
     workflow.connect([
-        (inputnode, gen_ref, [('ref_epi_mask', 'moving_image'),
+        (inputnode, gen_ref, [('ref_epi', 'moving_image'),
                               ('t1_brain', 'fixed_image')]),
         (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
         (inputnode, merge_transforms, [('hmc_xforms', 'in2')]),
@@ -227,7 +223,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
         (fsl2itk_fwd, mask_t1w_tfm, [('itk_transform', 'transforms')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_t1w_tfm, [('ref_epi_mask', 'input_image')]),
-        (merge, outputnode, [('merged_file', 'epi_t1')]),
+        (merge, outputnode, [('out_file', 'epi_t1')]),
         (mask_t1w_tfm, outputnode, [('output_image', 'epi_mask_t1')]),
     ])
 
@@ -248,7 +244,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             (inputnode, ds_t1w, [(('name_source', _first), 'source_file')]),
             (inputnode, ds_t1w_mask,
              [(('name_source', _first), 'source_file')]),
-            (merge, ds_t1w, [('merged_file', 'in_file')]),
+            (merge, ds_t1w, [('out_file', 'in_file')]),
             (mask_t1w_tfm, ds_t1w_mask, [('output_image', 'in_file')]),
             ])
 
@@ -302,10 +298,7 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     epi_split = pe.Node(fsl.Split(dimension='t'), name='EPIsplit')
     epi_xfm = pe.MapNode(fsl.preprocess.ApplyXFM(), name='EPIapplyXFM',
                          iterfield=['in_file'])
-    epi_merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                     output_names=["merged_file"],
-                                     function=nii_concat), name='EPImergeback')
-
+    epi_merge = pe.Node(Merge(), name='EPImergeback')
     ds_sbref = pe.Node(
         DerivativesDataSink(base_directory=settings['output_dir'],
                             suffix='preproc'), name='DerivHMC_SBRef')
@@ -328,12 +321,12 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (epi_xfm, epi_merge, [('out_file', 'in_files')]),
         (inputnode, epi_merge, [('epi_name_source', 'header_source')]),
         (epi_sbref, outputnode, [('out_matrix_file', 'out_mat')]),
-        (epi_merge, outputnode, [('merged_file', 'epi_registered')]),
+        (epi_merge, outputnode, [('out_file', 'epi_registered')]),
 
         (epi_sbref, sbref_epi, [('out_matrix_file', 'in_file')]),
         (sbref_epi, outputnode, [('out_file', 'out_mat_inv')]),
 
-        (epi_merge, ds_sbref, [('merged_file', 'in_file')]),
+        (epi_merge, ds_sbref, [('out_file', 'in_file')]),
         (inputnode, ds_sbref, [('epi_name_source', 'source_file')]),
         (inputnode, ds_report, [('epi_name_source', 'source_file')]),
         (epi_sbref, ds_report, [('out_report', 'in_file')])
@@ -362,11 +355,8 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
             return in_value
         return [in_value]
 
-    gen_ref = pe.Node(niu.Function(
-        input_names=['fixed_image', 'moving_image'], output_names=['out_file'],
-        function=_gen_reference), name='GenNewMNIReference')
-    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
-                                         '1mm_T1.nii.gz')
+    gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewMNIReference')
+    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
     merge_transforms = pe.MapNode(niu.Merge(3),
                                   iterfield=['in3'], name='MergeTransforms')
@@ -376,9 +366,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         iterfield=['input_image', 'transforms'],
         name='EPIToMNITransform')
     epi_to_mni_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                 output_names=["merged_file"],
-                                 function=nii_concat), name='MergeEPI')
+    merge = pe.Node(Merge(), name='MergeEPI')
     merge.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
@@ -404,7 +392,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     workflow.connect([
         (inputnode, ds_mni, [('name_source', 'source_file')]),
         (inputnode, ds_mni_mask, [('name_source', 'source_file')]),
-        (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
+        (inputnode, gen_ref, [(('epi_split', _first), 'moving_image')]),
         (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
                                        (('itk_epi_to_t1', _aslist), 'in2'),
                                        ('hmc_xforms', 'in3')]),
@@ -415,7 +403,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
-        (merge, ds_mni, [('merged_file', 'in_file')]),
+        (merge, ds_mni, [('out_file', 'in_file')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')]),
@@ -475,25 +463,3 @@ def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
     ])
 
     return workflow
-
-
-def _gen_reference(fixed_image, moving_image, out_file=None):
-    import os.path as op
-    import numpy
-    from nilearn.image import resample_img, load_img
-
-    if out_file is None:
-        fname, ext = op.splitext(op.basename(fixed_image))
-        if ext == '.gz':
-            fname, ext2 = op.splitext(fname)
-            ext = ext2 + ext
-        out_file = op.abspath('%s_wm%s' % (fname, ext))
-
-    new_zooms = load_img(moving_image).header.get_zooms()
-
-    new_ref_im = resample_img(fixed_image, target_affine=numpy.diag(new_zooms),
-                              interpolation='nearest')
-
-    new_ref_im.to_filename(out_file)
-
-    return out_file

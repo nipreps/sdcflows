@@ -86,7 +86,7 @@ def fmap_estimator(subject_data, settings=None):
 
     if estimator_wf is None:
         LOGGER.warn(
-            'Fielmap data found, but no estimation workflow could be built for it. '
+            'Fieldmap data found, but no estimation workflow could be built for it. '
             'Fieldmap data available = [%s]', ', '.join(subject_data['fmap']))
         return None
 
