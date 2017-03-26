@@ -3,7 +3,10 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-Apply susceptibility distortion correction (SDC)
+Apply susceptibility distortion correction (:abbr:`SDC (susceptibility-distortion correction)`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 
 """
 import pkg_resources as pkgr
@@ -16,10 +19,8 @@ from nipype.interfaces import utility as niu
 from fmriprep.interfaces.bids import ReadSidecarJSON
 from fmriprep.workflows.fieldmap.utils import create_encoding_file
 
-SDC_UNWARP_NAME = 'SDC_unwarp'
 
-
-def sdc_unwarp(name=SDC_UNWARP_NAME, ref_vol=None, method='jac'):
+def sdc_unwarp(name='SDC_unwarp', ref_vol=None, method='jac'):
     """
     This workflow takes an estimated fieldmap and a target image and applies TOPUP,
     an :abbr:`SDC (susceptibility-derived distortion correction)` method in FSL to
