@@ -1,0 +1,32 @@
+name: fmriprep_docs
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+- numpy>=1.11.0
+- scipy=0.18.1
+- scikit-learn=0.18.1
+- matplotlib=2.0.0
+- traits=4.6
+- jinja2=2.8
+- sphinx>=1.5.1
+- sphinx_rtd_theme
+- mock
+- future
+- nibabel
+- statsmodels
+- xvfbwrapper
+- configparser
+- funcsigs
+- networkx
+- python-dateutil
+- pydotplus
+
+- pip:
+    - sphinx-argparse
+    - doctest-ignore-unicode
+    - svgutils
+    - nitime
+    - nilearn
+    - git+https://github.com/nipy/nipype.git@d38748132cb02ca6bad3150826fc5b37e92ae3ad#egg=nipype
+    - git+https://github.com/poldracklab/niworkflows.git@f1778e7502a65f3dec4d4323a49170cac01feb7b#egg=niworkflows
