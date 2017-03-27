@@ -415,54 +415,93 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
 
     return workflow
 
+def epi_preproc_report(name='ReportPreproc', settings=None):
+    from nipype.interfaces import ants
+    from nipype.interfaces import utility as niu
+    from niworkflows.interfaces import SimpleBeforeAfter
 
-# pylint: disable=R0914
-def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
-    """ A workflow to correct EPI images """
+    if settings is None:
+        settings = {}
+
+    def _getwm(files):
+        return files[2]
+
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi', 'fmap', 'fmap_ref', 'fmap_mask',
-                                      't1_seg']),
-        name='inputnode'
-    )
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean', 'epi_mask']),
-        name='outputnode'
-    )
 
-    unwarp = sdc_unwarp()
-    unwarp.inputs.inputnode.hmc_movpar = ''
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['in_pre', 'in_post', 'in_tpms', 'in_xfm',
+                'name_source']), name='inputnode')
 
-    # Compute outputs
-    mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
-                  name='EPIBET')
+    map_seg = pe.Node(ants.ApplyTransforms(
+        dimension=3, float=True, interpolation='NearestNeighbor'),
+        name='MapROIwm')
 
-    ds_epi_unwarp = pe.Node(
-        DerivativesDataSink(base_directory=settings['output_dir'],
-                            suffix='epi_unwarp'),
-        name='DerivUnwarp_EPUnwarp_EPI'
-    )
-
-    ds_report = pe.Node(
+    epi_rpt = pe.Node(SimpleBeforeAfter(), name='EPIUnwarpReport')
+    epi_rpt_ds = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
-                            suffix='epi_unwarp_bet'),
-        name="DS_Report")
-
+                            suffix='variant-hmcsdc_preproc'), name='EPIUnwarpReport_ds'
+    )
     workflow.connect([
-        (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
-                             ('fmap_ref', 'inputnode.fmap_ref'),
-                             ('fmap_mask', 'inputnode.fmap_mask'),
-                             ('epi', 'inputnode.in_file')]),
-        (inputnode, ds_epi_unwarp, [('epi', 'source_file')]),
-        (unwarp, mean, [('outputnode.out_file', 'in_file')]),
-        (mean, bet, [('out_file', 'in_file')]),
-        (bet, outputnode, [('out_file', 'epi_mean'),
-                           ('mask_file', 'epi_mask')]),
-        (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
-        (unwarp, ds_epi_unwarp, [('outputnode.out_file', 'in_file')]),
-        (inputnode, ds_report, [('epi', 'source_file')]),
-        (bet, ds_report, [('out_report', 'in_file')])
+        (inputnode, epi_rpt, [('in_post', 'after'),
+                              ('in_pre', 'before')]),
+        (inputnode, epi_rpt_ds, [('name_source', 'source_file')]),
+        (epi_rpt, epi_rpt_ds, [('out_report', 'in_file')]),
+        (inputnode, map_seg, [('in_post', 'reference_image'),
+                              (('in_tpms', _getwm), 'input_image'),
+                              ('in_xfm', 'transforms')]),
+        (map_seg, epi_rpt, [('output_image', 'wm_seg')])
     ])
 
     return workflow
+
+
+# pylint: disable=R0914
+# def epi_unwarp(name='EPIUnwarpWorkflow', settings=None):
+#     """ A workflow to correct EPI images """
+#     workflow = pe.Workflow(name=name)
+#     inputnode = pe.Node(
+#         niu.IdentityInterface(fields=['epi', 'fmap', 'fmap_ref', 'fmap_mask',
+#                                       't1_seg']),
+#         name='inputnode'
+#     )
+#     outputnode = pe.Node(
+#         niu.IdentityInterface(fields=['epi_unwarp', 'epi_mean', 'epi_mask']),
+#         name='outputnode'
+#     )
+
+#     unwarp = sdc_unwarp()
+#     unwarp.inputs.inputnode.hmc_movpar = ''
+
+#     # Compute outputs
+#     mean = pe.Node(fsl.MeanImage(dimension='T'), name='EPImean')
+#     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
+#                   name='EPIBET')
+
+#     ds_epi_unwarp = pe.Node(
+#         DerivativesDataSink(base_directory=settings['output_dir'],
+#                             suffix='epi_unwarp'),
+#         name='DerivUnwarp_EPUnwarp_EPI'
+#     )
+
+#     ds_report = pe.Node(
+#         DerivativesDataSink(base_directory=settings['reportlets_dir'],
+#                             suffix='epi_unwarp_bet'),
+#         name="DS_Report")
+
+#     workflow.connect([
+#         (inputnode, unwarp, [('fmap', 'inputnode.fmap'),
+#                              ('fmap_ref', 'inputnode.fmap_ref'),
+#                              ('fmap_mask', 'inputnode.fmap_mask'),
+#                              ('epi', 'inputnode.in_file')]),
+#         (inputnode, ds_epi_unwarp, [('epi', 'source_file')]),
+#         (unwarp, mean, [('outputnode.out_file', 'in_file')]),
+#         (mean, bet, [('out_file', 'in_file')]),
+#         (bet, outputnode, [('out_file', 'epi_mean'),
+#                            ('mask_file', 'epi_mask')]),
+#         (unwarp, outputnode, [('outputnode.out_file', 'epi_unwarp')]),
+#         (unwarp, ds_epi_unwarp, [('outputnode.out_file', 'in_file')]),
+#         (inputnode, ds_report, [('epi', 'source_file')]),
+#         (bet, ds_report, [('out_report', 'in_file')])
+#     ])
+
+#     return workflow
