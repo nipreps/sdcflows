@@ -15,7 +15,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
-from nipype.interfaces import freesurfer as fs
+from nipype.interfaces import nipy
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
@@ -61,7 +61,6 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
             (mean, outputnode, [('out_file', 'epi_mean')]),
             (mean, inu, [('out_file', 'input_image')]),
             (inu, skullstrip_epi, [('output_image', 'in_file')]),
-            #(avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
             (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
         ])
 
