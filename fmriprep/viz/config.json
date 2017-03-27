@@ -101,7 +101,7 @@
                 "file_pattern": "func/.*bold_variant-hmcsdc_preproc\\.",
                 "title": "BOLD - susceptibility distortion correction",
                 "description": "results of performing susceptibility distortion correction (SDC) on the EPI"
-            },
+            }
         ]
     }
 ]
