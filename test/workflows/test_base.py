@@ -49,19 +49,9 @@ class TestBase(TestWorkflow):
         wfbasic = basic_wf(mock_subject_data, mock_settings)
         wfbasic.write_graph()
 
-        # assert
-        self.assert_circular(wfbasic, [
-            ('EPIMNITransformation', 'BIDSDatasource',
-             [('DerivativesHMCMNI.out_file', 'subject_data')]),
-            ('EPIMNITransformation', 'EPI_HMC', [('DerivativesHMCMNI.out_file', 'inputnode.epi')]),
-            ('ref_epi_t1_registration', 'EPI_HMC', [('outputnode.mat_epi_to_t1', 'inputnode.epi')]),
-        ])
-
         self._assert_mandatory_inputs_set(wfbasic)
 
     def _assert_mandatory_inputs_set(self, workflow):
         self.assert_inputs_set(workflow, {
-            'BIDSDatasource': ['subject_data'],
-            'ConfoundDiscoverer': ['inputnode.fmri_file', 'inputnode.movpar_file',
-                                   'inputnode.t1_tpms', 'inputnode.epi_mask']
+            'BIDSDatasource': ['subject_data']
         })
