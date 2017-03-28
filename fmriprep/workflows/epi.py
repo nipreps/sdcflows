@@ -28,6 +28,42 @@ from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.workflows.sbref import _extract_wm
 
 
+def normalize_motion_func(in_file, format):
+    import os
+    import numpy as np
+    def normalize_mc_params(params, source):
+        """
+        Normalize a single row of motion parameters to the SPM format.
+        SPM saves motion parameters as:
+            x   Right-Left          (mm)
+            y   Anterior-Posterior  (mm)
+            z   Superior-Inferior   (mm)
+            rx  Pitch               (rad)
+            ry  Yaw                 (rad)
+            rz  Roll                (rad)
+        """
+        if source.upper() == 'FSL':
+            params = params[[3, 4, 5, 0, 1, 2]]
+        elif source.upper() in ('AFNI', 'FSFAST'):
+            params = params[np.asarray([4, 5, 3, 1, 2, 0]) + (len(params) > 6)]
+            params[3:] = params[3:] * np.pi / 180.
+        elif source.upper() == 'NIPY':
+            from nipy.algorithms.registration import to_matrix44, aff2euler
+            matrix = to_matrix44(params)
+            params = np.zeros(6)
+            params[:3] = matrix[:3, 3]
+            params[-1:2:-1] = aff2euler(matrix)
+
+        return params
+
+    mpars = np.loadtxt(in_file)  # mpars is N_t x 6
+    mpars = np.apply_along_axis(func1d=normalize_mc_params,
+                                axis=1, arr=mpars,
+                                source=format)
+    np.savetxt(mpars, fname="motion_params.txt")
+    return os.path.abspath("motion_params.txt")
+
+
 # pylint: disable=R0914
 def epi_hmc(metadata, name='EPI_HMC', settings=None):
     """
@@ -37,8 +73,12 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['xforms', 'epi_hmc', 'out_epi', 'epi_mask', 'epi_mean', 'movpar_file',
-                'motion_confounds_file']), name='outputnode')
+        fields=['xforms', 'epi_hmc', 'out_epi', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
+
+    normalize_motion = pe.Node(niu.Function(function=normalize_motion_func,
+                                            input_names=["in_file", "format"],
+                                            output_names=["out_file"]),
+                               name="normalize_motion")
 
     if "SliceTiming" in metadata:
         realigned_output = True
@@ -63,6 +103,8 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
                                  name='skullstrip_epi')
 
+        normalize_motion.inputs.format = "NIPY"
+
         workflow.connect([
             (inputnode, hmc, [('epi', 'in_file')]),
             (hmc, mean, [('out_file', 'in_file')]),
@@ -70,7 +112,9 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
             (mean, inu, [('out_file', 'input_image')]),
             (inu, skullstrip_epi, [('output_image', 'in_file')]),
             (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
-            (hmc, outputnode, [('out_file', 'out_epi')])
+            (hmc, outputnode, [('out_file', 'out_epi')]),
+            (hmc, normalize_motion, [('par_file', 'in_file')]),
+            (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         ])
 
     else:
@@ -83,10 +127,6 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                              iterfield=['transform_file'], name='hcm2itk')
 
-        avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
-                             iterfield=['mat_file'])
-        avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
-
         inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
 
         # Calculate EPI mask on the average after HMC
@@ -96,21 +136,19 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
         split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
 
+        normalize_motion.inputs.format = "FSL"
+
         workflow.connect([
             (inputnode, hmc, [('epi', 'in_file')]),
             (hmc, hcm2itk, [('mat_file', 'transform_file'),
                             ('mean_img', 'source_file'),
                             ('mean_img', 'reference_file')]),
             (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-            (hmc, outputnode, [('par_file', 'movpar_file')]),
-            (hmc, avscale, [('mat_file', 'mat_file')]),
-            (avscale, avs_format, [('translations', 'translations'),
-                                   ('rot_angles', 'rot_angles')]),
+            (hmc, normalize_motion, [('par_file', 'in_file')]),
+            (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
             (hmc, inu, [('mean_img', 'input_image')]),
             (inu, skullstrip_epi, [('output_image', 'in_file')]),
             (inu, outputnode, [('output_image', 'epi_mean')]),
-            (hmc, avscale, [('mean_img', 'ref_file')]),
-            (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
             (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
             (inputnode, split, [('epi', 'in_file')]),
             (split, outputnode, [('out_files', 'out_epi')]),

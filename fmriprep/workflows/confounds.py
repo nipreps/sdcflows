@@ -27,7 +27,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_tpms',
                                                           'epi_mask',
-                                                          'motion_confounds_file',
                                                           'source_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
@@ -205,7 +204,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
-        (inputnode, concat, [('motion_confounds_file', 'motion')]),
+        (inputnode, concat, [('movpar_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
 
