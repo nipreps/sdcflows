@@ -247,7 +247,6 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     if realigned_input:
         epi_to_t1w_transform = pe.Node(
             ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                                 dimension=4,
                                  input_image_type=3,
                                  float=True),
             name='EPIToT1wTransform')
