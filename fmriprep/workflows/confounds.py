@@ -167,6 +167,23 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     def pick_wm(files):
         return files[2]
 
+    def add_header_func(in_file):
+        import numpy as np
+        import pandas as pd
+        import os
+
+        data = np.loadtxt(in_file)
+
+        df = pd.DataFrame(data, columns=["X", "Y", "Z", "RotX", "RotY", "RotZ"])
+        df.to_csv("motion.tsv", sep="\t", index=None)
+
+        return os.path.abspath("motion.tsv")
+
+    add_header = pe.Node(utility.Function(function=add_header_func,
+                                          input_names=["in_file"],
+                                          output_names=["out_file"]),
+                         name="add_header")
+
     workflow = pe.Workflow(name=name)
     workflow.connect([
         # connect inputnode to each non-anatomical confound node
@@ -204,7 +221,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
-        (inputnode, concat, [('movpar_file', 'motion')]),
+        (inputnode, add_header, [('movpar_file', 'in_file')]),
+        (add_header, concat, [('out_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
 
