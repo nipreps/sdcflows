@@ -396,14 +396,15 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
     return workflow
 
 
-def epi_mni_transformation(name='EPIMNITransformation', settings=None):
+def epi_mni_transformation(name='EPIMNITransformation', settings=None,
+                           realigned_input=False):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
             'itk_epi_to_t1',
             't1_2_mni_forward_transform',
             'name_source',
-            'epi_split',
+            'in_epi',
             'epi_mask',
             't1',
             'hmc_xforms'
@@ -421,20 +422,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         function=_gen_reference), name='GenNewMNIReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
                                          '1mm_T1.nii.gz')
-
-    merge_transforms = pe.MapNode(niu.Merge(3),
-                                  iterfield=['in3'], name='MergeTransforms')
-    epi_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='EPIToMNITransform')
-    epi_to_mni_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                 output_names=["merged_file"],
-                                 function=nii_concat), name='MergeEPI')
-    merge.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
 
     mask_merge_tfms = pe.Node(niu.Merge(2), name='MaskMergeTfms')
     mask_mni_tfm = pe.Node(
@@ -459,22 +446,60 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, ds_mni, [('name_source', 'source_file')]),
         (inputnode, ds_mni_mask, [('name_source', 'source_file')]),
         (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('itk_epi_to_t1', _aslist), 'in2'),
-                                       ('hmc_xforms', 'in3')]),
+
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
-        (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
-        (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
-        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
-        (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
-        (inputnode, merge, [('name_source', 'header_source')]),
-        (merge, ds_mni, [('merged_file', 'in_file')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')]),
         (mask_mni_tfm, ds_mni_mask, [('output_image', 'in_file')])
     ])
+
+    if realigned_input:
+        merge_transforms = pe.Node(niu.Merge(2), name='MergeTransforms')
+        epi_to_mni_transform = pe.Node(
+            ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                                 input_image_type=3,
+                                 float=True),
+            name='EPIToMNITransform')
+        epi_to_mni_transform.terminal_output = 'file'
+
+        workflow.connect([
+            (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+                                           (('itk_epi_to_t1', _aslist), 'in2')]),
+            (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
+            (inputnode, epi_to_mni_transform, [('in_epi', 'input_image')]),
+            (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+            (epi_to_mni_transform, ds_mni, [('output_image', 'in_file')]),
+        ])
+    else:
+        merge_transforms = pe.MapNode(niu.Merge(3),
+                                      iterfield=['in3'],
+                                      name='MergeTransforms')
+        merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
+                                     output_names=["merged_file"],
+                                     function=nii_concat), name='MergeEPI')
+        merge.interface.estimated_memory_gb = settings[
+                                                  "biggest_epi_file_size_gb"] * 3
+
+        epi_to_mni_transform = pe.MapNode(
+            ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                                 float=True),
+            iterfield=['input_image', 'transforms'],
+            name='EPIToMNITransform')
+        epi_to_mni_transform.terminal_output = 'file'
+
+        workflow.connect([
+            (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+                                           (('itk_epi_to_t1', _aslist), 'in2'),
+                                           ('hmc_xforms', 'in3')]),
+            (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
+            (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
+            (inputnode, merge, [('name_source', 'header_source')]),
+            (inputnode, epi_to_mni_transform, [('in_epi', 'input_image')]),
+            (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+            (merge, ds_mni, [('merged_file', 'in_file')]),
+        ])
 
     return workflow
 
