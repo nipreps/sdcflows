@@ -42,6 +42,7 @@ class TestBase(TestWorkflow):
         mock_subject_data = {'func': ''}
         mock_settings = {'output_dir': '.', 'ants_nthreads': 1, 'reportlets_dir': '.',
                          'biggest_epi_file_size_gb': 1,
+                         'bids_root': '.',
                          'skip_native': False, 'freesurfer': False}
 
         # run
