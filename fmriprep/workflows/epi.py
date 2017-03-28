@@ -60,7 +60,7 @@ def normalize_motion_func(in_file, format):
     mpars = np.apply_along_axis(func1d=normalize_mc_params,
                                 axis=1, arr=mpars,
                                 source=format)
-    np.savetxt(mpars, fname="motion_params.txt")
+    np.savetxt("motion_params.txt", mpars)
     return os.path.abspath("motion_params.txt")
 
 

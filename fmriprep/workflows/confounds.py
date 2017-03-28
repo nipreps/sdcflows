@@ -38,7 +38,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     dvars.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
     # Frame displacement
-    frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="FSL"),
+    frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="SPM"),
                              name="FramewiseDisplacement")
     frame_displace.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
