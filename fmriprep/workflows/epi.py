@@ -13,6 +13,7 @@ import os.path as op
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
+from nipype.interfaces import afni
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import nipy
@@ -64,6 +65,17 @@ def normalize_motion_func(in_file, format):
     return os.path.abspath("motion_params.txt")
 
 
+def create_custom_slice_timing_file_func(metadata):
+    import os
+    slice_timings = metadata["SliceTiming"]
+    slice_timings_ms = [str(t) for t in slice_timings]
+    out_file = "timings.1D"
+    with open("timings.1D", "w") as fp:
+        fp.write("\t".join(slice_timings_ms))
+
+    return os.path.abspath(out_file)
+
+
 # pylint: disable=R0914
 def epi_hmc(metadata, name='EPI_HMC', settings=None):
     """
@@ -80,78 +92,69 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
                                             output_names=["out_file"]),
                                name="normalize_motion")
 
+    # Head motion correction (hmc)
+    hmc = pe.Node(fsl.MCFLIRT(
+        save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
+    hmc.interface.estimated_memory_gb = settings[
+                                            "biggest_epi_file_size_gb"] * 3
+
+    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                         iterfield=['transform_file'], name='hcm2itk')
+
+    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+
+    # Calculate EPI mask on the average after HMC
+    skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+                             name='skullstrip_epi')
+
+    split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
+    split.interface.estimated_memory_gb = settings[
+                                              "biggest_epi_file_size_gb"] * 3
+
+    normalize_motion.inputs.format = "FSL"
+
+    workflow.connect([
+        (hmc, hcm2itk, [('mat_file', 'transform_file'),
+                        ('mean_img', 'source_file'),
+                        ('mean_img', 'reference_file')]),
+        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+        (hmc, normalize_motion, [('par_file', 'in_file')]),
+        (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
+        (hmc, inu, [('mean_img', 'input_image')]),
+        (inu, skullstrip_epi, [('output_image', 'in_file')]),
+        (inu, outputnode, [('output_image', 'epi_mean')]),
+        (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
+        (inputnode, split, [('epi', 'in_file')]),
+        (split, outputnode, [('out_files', 'out_epi')]),
+    ])
+
+    realigned_output = False
     if "SliceTiming" in metadata:
-        realigned_output = True
-        # Head motion correction (hmc)
-        hmc = pe.Node(nipy.SpaceTimeRealigner(), name="spacetime_realign")
-        hmc.inputs.slice_times = metadata["SliceTiming"]
-        hmc.inputs.tr = metadata["RepetitionTime"]
-        hmc.inputs.slice_info = 2
-        try:
-            import mkl
-        except ImportError:
-            pass
-        else:
-            mkl.set_num_threads(settings["nthreads"])
-            hmc.interface.num_threads = settings["nthreads"]
-        hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+        create_custom_slice_timing_file = pe.Node(niu.Function(function=create_custom_slice_timing_file_func,
+                                                               input_names=["metadata"],
+                                                               output_names=["out_file"]),
+                                                  name="create_custom_slice_timing_file")
+        create_custom_slice_timing_file.inputs.metadata = metadata
 
-        mean = pe.Node(fsl.MeanImage(), name="EPImean")
-        inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
+        # TODO: include -ignore ii
+        func_slice_timing_correction = pe.Node(interface=afni.TShift(),
+                                               name='func_slice_timing_correction')
+        func_slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
+        func_slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
 
-        # Calculate EPI mask on the average after HMC
-        skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
-                                 name='skullstrip_epi')
-
-        normalize_motion.inputs.format = "NIPY"
+        def prefix_at(x):
+            return "@" + x
 
         workflow.connect([
-            (inputnode, hmc, [('epi', 'in_file')]),
-            (hmc, mean, [('out_file', 'in_file')]),
-            (mean, outputnode, [('out_file', 'epi_mean')]),
-            (mean, inu, [('out_file', 'input_image')]),
-            (inu, skullstrip_epi, [('output_image', 'in_file')]),
-            (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
-            (hmc, outputnode, [('out_file', 'out_epi')]),
-            (hmc, normalize_motion, [('par_file', 'in_file')]),
-            (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
+            (inputnode, func_slice_timing_correction, [('epi', 'in_file')]),
+            (create_custom_slice_timing_file, func_slice_timing_correction, [(('out_file', prefix_at),
+                                                                               'tpattern')]),
+            (func_slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
     else:
-        realigned_output = False
-        # Head motion correction (hmc)
-        hmc = pe.Node(fsl.MCFLIRT(
-            save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
-        hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
-
-        hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                             iterfield=['transform_file'], name='hcm2itk')
-
-        inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
-
-        # Calculate EPI mask on the average after HMC
-        skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
-                                 name='skullstrip_epi')
-
-        split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
-        split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
-
-        normalize_motion.inputs.format = "FSL"
-
         workflow.connect([
-            (inputnode, hmc, [('epi', 'in_file')]),
-            (hmc, hcm2itk, [('mat_file', 'transform_file'),
-                            ('mean_img', 'source_file'),
-                            ('mean_img', 'reference_file')]),
-            (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-            (hmc, normalize_motion, [('par_file', 'in_file')]),
-            (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
-            (hmc, inu, [('mean_img', 'input_image')]),
-            (inu, skullstrip_epi, [('output_image', 'in_file')]),
-            (inu, outputnode, [('output_image', 'epi_mean')]),
-            (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
-            (inputnode, split, [('epi', 'in_file')]),
-            (split, outputnode, [('out_files', 'out_epi')]),
+            (inputnode, hmc, [('epi', 'in_file')])
         ])
 
     return workflow, realigned_output
