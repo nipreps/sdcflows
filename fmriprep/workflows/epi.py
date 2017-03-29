@@ -137,19 +137,19 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         # TODO: include -ignore ii
-        func_slice_timing_correction = pe.Node(interface=afni.TShift(),
-                                               name='func_slice_timing_correction')
-        func_slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
-        func_slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
+        slice_timing_correction = pe.Node(interface=afni.TShift(),
+                                               name='slice_timing_correction')
+        slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
+        slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
 
         def prefix_at(x):
             return "@" + x
 
         workflow.connect([
-            (inputnode, func_slice_timing_correction, [('epi', 'in_file')]),
-            (create_custom_slice_timing_file, func_slice_timing_correction, [(('out_file', prefix_at),
-                                                                               'tpattern')]),
-            (func_slice_timing_correction, hmc, [('out_file', 'in_file')])
+            (inputnode, slice_timing_correction, [('epi', 'in_file')]),
+            (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
+                                                                          'tpattern')]),
+            (slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
     else:
