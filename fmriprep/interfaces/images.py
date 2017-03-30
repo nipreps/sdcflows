@@ -41,7 +41,8 @@ class GenerateSamplingReferenceOutputSpec(TraitedSpec):
 
 class GenerateSamplingReference(BaseInterface):
     """
-    Generates a
+    Generates a reference grid for resampling one image keeping original resolution,
+    but moving data to a different space (e.g. MNI)
     """
 
     input_spec = GenerateSamplingReferenceInputSpec
@@ -59,38 +60,6 @@ class GenerateSamplingReference(BaseInterface):
                                                    self.inputs.moving_image)
         return runtime
 
-
-class SplitMergeInputSpec(BaseInterfaceInputSpec):
-    in_files = InputMultiPath(File(exists=True), mandatory=True, desc='the input file')
-
-class SplitMergeOutputSpec(TraitedSpec):
-    out_merged = File(exists=True, desc='one file with all inputs flattened')
-    out_split = OutputMultiPath(File(exists=True, desc='one list with all volumes split'))
-
-class SplitMerge(BaseInterface):
-    """
-    This interface takes the input in_files and generates two outputs, one
-    merged and another split, regardless the inputs were split.
-
-    For example, this interface would generate a flattened list of 5 filenames
-    and a 4D nifti with 5 volumes inside if we pass a list with two filenames,
-    where the first is a 3D nifti and the second a 4D nifti with 4 volumes.
-    """
-
-    input_spec = SplitMergeInputSpec
-    output_spec = SplitMergeOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(SplitMerge, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
-
-    def _run_interface(self, runtime):
-        results = _flatten_split_merge(self.inputs.in_files)
-        self._results.update({'out_merged': results[0], 'out_split': results[1]})
-        return runtime
 
 class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
     in_files = InputMultiPath(File(exists=True), mandatory=True,
@@ -172,82 +141,6 @@ class IntraModalMerge(BaseInterface):
         return runtime
 
 
-class ImageDataSinkInputSpec(BaseInterfaceInputSpec):
-    base_directory = traits.Directory(
-        desc='Path to the base directory for storing data.')
-    in_file = traits.Str(desc='the image to be saved')
-    base_file = traits.Str(desc='the input func file')
-    overlay_file = traits.Str(desc='the input func file')
-    origin_file = traits.Str(desc='File from the dataset that image is primarily derived from')
-
-class ImageDataSinkOutputSpec(TraitedSpec):
-    out_file = OutputMultiPath(File(exists=True, desc='written file path'))
-
-class ImageDataSink(BaseInterface):
-    input_spec = ImageDataSinkInputSpec
-    output_spec = ImageDataSinkOutputSpec
-    _always_run = True
-
-    def __init__(self, **inputs):
-        self._results = {'out_file': []}
-        super(ImageDataSink, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
-
-    def _run_interface(self, runtime):
-        origin_fname, _ = _splitext(self.inputs.origin_file)
-
-        image_inputs = {}
-        if isdefined(self.inputs.base_file):
-            image_inputs['base_file'] = self.inputs.base_file
-        if isdefined(self.inputs.overlay_file):
-            image_inputs['overlay_file'] = self.inputs.overlay_file
-        if isdefined(self.inputs.origin_file):
-            image_inputs['origin_file'] = self.inputs.overlay_file
-
-        m = re.search(
-            '^(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
-            '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
-            '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?',
-            origin_fname
-        )
-
-        base_directory = os.getcwd()
-        if isdefined(self.inputs.base_directory):
-            base_directory = op.abspath(self.inputs.base_directory)
-
-        out_path = 'images/{subject_id}'.format(**m.groupdict())
-
-        out_path = op.join(base_directory, out_path)
-
-        make_folder(out_path)
-
-        _, out_filename = op.split(self.inputs.in_file)
-
-        #  test incoming origin file for these identifiers, if they exist
-        #  we want to fold them into out filename
-        group_keys = ['ses_id', 'task_id', 'acq_id', 'rec_id', 'run_id']
-        if [x for x in group_keys if m.groupdict().get(x)]:
-            out_filename, ext = _splitext(out_filename)
-            out_filename = '{}_{}.{}'.format(out_filename, origin_fname, ext)
-
-        out_file = op.join(out_path, out_filename)
-
-
-        self._results['out_file'].append(out_file)
-        copy(self.inputs.in_file, out_file)
-        json_fname, _ = _splitext(out_filename)
-
-        json_out_filename = '{}.{}'.format(json_fname, 'json')
-        json_out_file = op.join(out_path, json_out_filename)
-        with open(json_out_file, 'w') as fp:
-            json.dump(image_inputs, fp)
-
-        return runtime
-
-
-
 class CopyHeaderInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='the file we get the data from')
     hdr_file = File(exists=True, mandatory=True, desc='the file we get the header from')
@@ -280,65 +173,6 @@ class CopyHeader(BaseInterface):
         out_name = op.abspath('{}_fixhdr{}'.format(fname, ext))
         nb.Nifti1Image(data, aff, hdr).to_filename(out_name)
         self._results['out_file'] = out_name
-        return runtime
-
-
-class RASReorientInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='the input file')
-
-class RASReorientOutputSpec(TraitedSpec):
-    out_file = OutputMultiPath(File(exists=True, desc='written file path'))
-
-class RASReorient(BaseInterface):
-    input_spec = RASReorientInputSpec
-    output_spec = RASReorientOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(RASReorient, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
-
-    def _run_interface(self, runtime):
-        self._results['out_file'] = reorient(self.inputs.in_file)
-        return runtime
-
-class FixAffineInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='the file we get the data from')
-
-class FixAffineOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='written file path')
-    out_hdr = File(exists=True, desc='the file we get the header from')
-
-class FixAffine(BaseInterface):
-    input_spec = FixAffineInputSpec
-    output_spec = FixAffineOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(FixAffine, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
-
-    def _run_interface(self, runtime):
-        in_file = self.inputs.in_file
-        img = nb.as_closest_canonical(nb.load(in_file))
-        newaff = np.eye(4)
-        newaff[:3, :3] = np.eye(3) * img.header.get_zooms()[:3]
-        newaff[:3, 3] -= 0.5 * newaff[:3, :3].dot(img.shape[:3])
-
-        out_file = genfname(in_file, suffix='nosform')
-        nb.Nifti1Image(img.get_data(), newaff, None).to_filename(
-            out_file)
-
-        out_hdr = genfname(in_file, suffix='hdr', ext='pklz')
-        with open(out_hdr, 'wb') as fheader:
-            img.header.write_to(fheader)
-
-        self._results['out_file'] = out_file
-        self._results['out_hdr'] = out_hdr
         return runtime
 
 

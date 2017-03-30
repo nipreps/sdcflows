@@ -4,7 +4,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 Base fieldmap estimation
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 * Subject can have no data for fieldmap estimation - unwarping should not modify
   the images.
@@ -37,15 +37,14 @@ def fmap_estimator(subject_data, settings=None):
       * PEPolar fieldmaps.
 
 
-    Outputs
-    -------
+    .. topic:: Outputs
 
-      fmap
-        The estimated fieldmap itself IN UNITS OF Hz.
-      fmap_ref
-        the anatomical reference for the fieldmap (magnitude image, corrected SEm, etc.)
-      fmap_mask
-        a brain mask for the fieldmap
+        fmap
+          The estimated fieldmap itself IN UNITS OF Hz.
+        fmap_ref
+          the anatomical reference for the fieldmap (magnitude image, corrected SEm, etc.)
+        fmap_mask
+          a brain mask for the fieldmap
 
 
     """

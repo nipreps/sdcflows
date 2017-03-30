@@ -111,18 +111,18 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     fmap2ref_reg = pe.Node(Registration(
         from_file=ants_settings, output_inverse_warped_image=True,
         output_warped_image=True, num_threads=settings['ants_nthreads']),
-                       name='fmap2ref_registration')
+                       name='fmapref2ref')
     fmap2ref_reg.interface.num_threads = settings['ants_nthreads']
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
     torads = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
-                                  function=_hz2rads), name='fmap_Hz2rads')
-    gen_vsm = pe.Node(FUGUE(save_unmasked_shift=True), name='VSM')
+                                  function=_hz2rads), name='fmap_hz2rads')
+    gen_vsm = pe.Node(FUGUE(save_unmasked_shift=True), name='fmap_shiftmap')
 
     # Map the VSM into the EPI space
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
         generate_report=False, dimension=3, interpolation='BSpline', float=True),
-                             name='fmap2ref_apply')
+                             name='fmap2ref')
 
     # Convert the VSM into a DFM (displacements field map)
     # or: FUGUE shift to ANTS warping.
@@ -130,18 +130,15 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     unwarp = pe.MapNode(ANTSApplyTransformsRPT(
         dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
-                        iterfield=['input_image'], name='epi_unwarp')
-    ref_avg = pe.Node(Mean(), name='epi_mean')
-    ref_msk = pe.Node(MaskEPI(), name='epi_mask')
+                        iterfield=['input_image'], name='unwarp_all')
+    ref_avg = pe.Node(Mean(), name='mean')
+    ref_msk = pe.Node(MaskEPI(), name='mask')
 
     # Final correction with refined HMC parameters
     tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
         in_file_invert=False, invert_transform_flags=[False]),
                             iterfield=['in_file'], name='concat_hmc_sdc_xforms')
 
-    # ref_unwarp = pe.Node(ANTSApplyTransformsRPT(
-    #     dimension=3, generate_report=True, float=True, interpolation='LanczosWindowedSinc'),
-    #                      name='ref_unwarp')
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
         (inputnode, torads, [('fmap', 'in_file')]),
