@@ -39,7 +39,6 @@ REQUIRES = [
     'nitime',
     'niworkflows',
     'nipype',
-    'nipy'
 ]
 
 LINKS_REQUIRES = []
