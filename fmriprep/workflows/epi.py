@@ -150,7 +150,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
     split.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
-    if "SliceTiming" in metadata:
+    if "SliceTiming" in metadata and 'slicetiming' not in settings['ignore']:
         def create_custom_slice_timing_file_func(metadata):
             import os
             slice_timings = metadata["SliceTiming"]
