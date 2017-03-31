@@ -67,6 +67,8 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     fmapenh = pe.Node(FieldEnhance(
         # despike_threshold=1.0, mask_erode=1),
         despike=False, njobs=settings.get('ants_nthreads', 4)), name='FieldmapMassage')
+    fmapenh.interface.num_threads = settings.get('ants_nthreads', 4))
+    fmapenh.interface.estimated_memory_gb = 4
 
     workflow.connect([
         (inputnode, sortfmaps, [('input_images', 'input_images')]),
