@@ -52,4 +52,3 @@ from .base import fmap_estimator
 from .unwarp import sdc_unwarp
 from .utils import create_encoding_file, mcflirt2topup
 
-PEPOLAR_MODALITIES = ['epi', 'sbref']

@@ -75,14 +75,6 @@ def fmap_estimator(subject_data, settings=None):
         phwf.inputs.inputnode.input_images = subject_data['fmap']
         estimator_wf = phwf
 
-    elif any(['epi' in fname for fname in subject_data['fmap']]):
-        from .pepolar import pepolar_workflow
-        LOGGER.info('Fieldmap estimation: phase-encoding images found')
-        pewf = pepolar_workflow(settings=settings)
-        # set inputs
-        pewf.inputs.inputnode.input_images = subject_data['fmap'] + subject_data['sbref']
-        estimator_wf = pewf
-
     if estimator_wf is None:
         LOGGER.warn(
             'Fieldmap data found, but no estimation workflow could be built for it. '

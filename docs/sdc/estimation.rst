@@ -13,8 +13,3 @@ Fieldmap estimation
     :members:
     :undoc-members:
     :show-inheritance:
-
-.. automodule:: fmriprep.workflows.fieldmap.pepolar
-    :members:
-    :undoc-members:
-    :show-inheritance:
