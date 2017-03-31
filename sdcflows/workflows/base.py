@@ -37,7 +37,7 @@ def fmap_estimator(subject_data, settings=None):
       * PEPolar fieldmaps.
 
 
-    .. topic:: Outputs
+    Outputs:
 
         fmap
           The estimated fieldmap itself IN UNITS OF Hz.

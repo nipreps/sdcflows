@@ -46,7 +46,6 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
 
     Inputs
-    ------
 
         in_split
             the input image to be corrected split in 3D files
@@ -63,8 +62,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         fmap_mask
             a brain mask corresponding to ``fmap``
 
+
     Outputs
-    -------
 
         out_files
             the ``in_split`` files after unwarping
