@@ -158,7 +158,7 @@ def epi_hmc(metadata, name='EPI_HMC', ref_image='auto', settings=None):
 
     workflow.connect([
         (inputnode, gen_ref, [('epi', 'in_file')]),
-        (gen_ref, inu, [('ref_image', 'in_file')]),
+        (gen_ref, inu, [('ref_image', 'input_image')]),
         (inu, hmc, [('output_image', 'ref_file')]),
         (inu, skullstrip_epi, [('output_image', 'in_file')]),
         (inu, outputnode, [('output_image', 'ref_image')]),
