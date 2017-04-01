@@ -52,7 +52,7 @@ class EstimateReferenceImage(SimpleInterface):
                 nb.Nifti1Image(slice, in_nii.affine,
                                in_nii.header).to_filename(slice_fname)
             else:
-                slice_fname = in_file
+                slice_fname = self.inputs.in_file
 
             res = Volreg(in_file=slice_fname, args='-Fourier -twopass', zpad=4,
                          outputtype='NIFTI_GZ').run()
