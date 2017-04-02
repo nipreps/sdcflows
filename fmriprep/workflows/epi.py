@@ -257,7 +257,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
         bbregister = pe.Node(
             BBRegisterRPT(
                 contrast_type='t2',
-                init='fsl',
+                init='coreg',
                 registered_file=True,
                 out_fsl_file=True,
                 generate_report=True),
