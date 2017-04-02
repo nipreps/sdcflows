@@ -13,23 +13,98 @@ import os.path as op
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
+from nipype.interfaces import afni
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
-from nipype.interfaces import freesurfer as fs
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
-from fmriprep.interfaces import DerivativesDataSink, FormatHMCParam
+from fmriprep.interfaces import DerivativesDataSink
 from fmriprep.interfaces.utils import nii_concat
-from fmriprep.utils.misc import fix_multi_T1w_source_name, _first
+from fmriprep.utils.misc import _first
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.workflows.sbref import _extract_wm
+from fmriprep.workflows import confounds
+
+
+def bold_preprocessing(name, metadata, settings):
+
+    if settings is None:
+        settings = {}
+
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(niu.IdentityInterface(fields=['epi',
+                                                      'bias_corrected_t1',
+                                                      't1_brain',
+                                                      't1_mask',
+                                                      't1_seg',
+                                                      't1_tpms',
+                                                      't1_2_mni_forward_transform',
+                                                      'subjects_dir',
+                                                      'subject_id',
+                                                      'fs_2_t1_transform',
+                                                      't1w']),
+                        name='inputnode')
+
+    # HMC on the EPI
+    hmcwf = epi_hmc(metadata=metadata, settings=settings)
+
+    # mean EPI registration to T1w
+    epi_2_t1 = ref_epi_t1_registration(reportlet_suffix='bbr',
+                                       settings=settings)
+
+    # get confounds
+    confounds_wf = confounds.discover_wf(settings)
+    confounds_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
+
+    # Apply transforms in 1 shot
+    epi_mni_trans_wf = epi_mni_transformation(settings=settings)
+
+    workflow.connect([
+        (inputnode, hmcwf, [('epi', 'inputnode.epi')]),
+        (inputnode, epi_2_t1, [('t1w', 'inputnode.t1w')]),
+        (hmcwf, epi_2_t1, [('outputnode.epi_mean', 'inputnode.ref_epi'),
+                           ('outputnode.xforms', 'inputnode.hmc_xforms'),
+                           ('outputnode.epi_mask', 'inputnode.ref_epi_mask'),
+                           ('outputnode.epi_split', 'inputnode.epi_split')]),
+        (inputnode, epi_2_t1, [('epi', 'inputnode.name_source'),
+                               ('bias_corrected_t1', 'inputnode.bias_corrected_t1'),
+                               ('t1_brain', 'inputnode.t1_brain'),
+                               ('t1_mask', 'inputnode.t1_mask'),
+                               ('t1_seg', 'inputnode.t1_seg')]),
+
+        (inputnode, confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
+                                   ('epi', 'inputnode.source_file')]),
+        (hmcwf, confounds_wf, [
+            ('outputnode.movpar_file', 'inputnode.movpar_file')]),
+        (epi_2_t1, confounds_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
+                                  ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+
+        (epi_2_t1, epi_mni_trans_wf, [('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
+        (hmcwf, epi_mni_trans_wf, [('outputnode.xforms', 'inputnode.hmc_xforms'),
+                                   ('outputnode.epi_mask', 'inputnode.epi_mask'),
+                                   ('outputnode.epi_split', 'inputnode.epi_split')]),
+        (inputnode, epi_mni_trans_wf, [('epi', 'inputnode.name_source'),
+                                       ('bias_corrected_t1', 'inputnode.t1'),
+                                       ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')])
+    ])
+
+    if settings['freesurfer']:
+        workflow.connect([
+            (inputnode, epi_2_t1, [('subjects_dir', 'inputnode.subjects_dir'),
+                                   ('subject_id', 'inputnode.subject_id'),
+                                   ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
+                                   ])
+            ])
+
+    return workflow
 
 
 # pylint: disable=R0914
-def epi_hmc(name='EPI_HMC', settings=None):
+def epi_hmc(metadata, name='EPI_HMC', settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
@@ -37,20 +112,33 @@ def epi_hmc(name='EPI_HMC', settings=None):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'epi_mean', 'movpar_file',
-                'motion_confounds_file']), name='outputnode')
+        fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
+
+    def normalize_motion_func(in_file, format):
+        import os
+        import numpy as np
+        from nipype.utils.misc import normalize_mc_params
+        mpars = np.loadtxt(in_file)  # mpars is N_t x 6
+        mpars = np.apply_along_axis(func1d=normalize_mc_params,
+                                    axis=1, arr=mpars,
+                                    source=format)
+        np.savetxt("motion_params.txt", mpars)
+        return os.path.abspath("motion_params.txt")
+
+    normalize_motion = pe.Node(niu.Function(function=normalize_motion_func,
+                                            input_names=["in_file", "format"],
+                                            output_names=["out_file"]),
+                               name="normalize_motion")
+    normalize_motion.inputs.format = "FSL"
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
         save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
-    hmc.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+    hmc.interface.estimated_memory_gb = settings[
+                                            "biggest_epi_file_size_gb"] * 3
 
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
-
-    avscale = pe.MapNode(fsl.utils.AvScale(all_param=True), name='AvScale',
-                         iterfield=['mat_file'])
-    avs_format = pe.Node(FormatHMCParam(), name='AVScale_Format')
 
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='EPImeanBias')
 
@@ -59,23 +147,57 @@ def epi_hmc(name='EPI_HMC', settings=None):
                              name='skullstrip_epi')
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
-    split.interface.estimated_memory_gb = settings["biggest_epi_file_size_gb"] * 3
+    split.interface.estimated_memory_gb = settings[
+                                              "biggest_epi_file_size_gb"] * 3
+
+    if "SliceTiming" in metadata and 'slicetiming' not in settings['ignore']:
+        def create_custom_slice_timing_file_func(metadata):
+            import os
+            slice_timings = metadata["SliceTiming"]
+            slice_timings_ms = [str(t) for t in slice_timings]
+            out_file = "timings.1D"
+            with open("timings.1D", "w") as fp:
+                fp.write("\t".join(slice_timings_ms))
+
+            return os.path.abspath(out_file)
+
+        create_custom_slice_timing_file = pe.Node(niu.Function(function=create_custom_slice_timing_file_func,
+                                                               input_names=["metadata"],
+                                                               output_names=["out_file"]),
+                                                  name="create_custom_slice_timing_file")
+        create_custom_slice_timing_file.inputs.metadata = metadata
+
+        # TODO: include -ignore ii
+        slice_timing_correction = pe.Node(interface=afni.TShift(),
+                                               name='slice_timing_correction')
+        slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
+        slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
+
+        def prefix_at(x):
+            return "@" + x
+
+        workflow.connect([
+            (inputnode, slice_timing_correction, [('epi', 'in_file')]),
+            (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
+                                                                          'tpattern')]),
+            (slice_timing_correction, hmc, [('out_file', 'in_file')])
+        ])
+
+    else:
+        workflow.connect([
+            (inputnode, hmc, [('epi', 'in_file')])
+        ])
 
     workflow.connect([
-        (inputnode, hmc, [('epi', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file'),
                         ('mean_img', 'source_file'),
                         ('mean_img', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
-        (hmc, outputnode, [('par_file', 'movpar_file')]),
-        (hmc, avscale, [('mat_file', 'mat_file')]),
-        (avscale, avs_format, [('translations', 'translations'),
-                               ('rot_angles', 'rot_angles')]),
+        (hmc, normalize_motion, [('par_file', 'in_file')]),
+        (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (hmc, inu, [('mean_img', 'input_image')]),
         (inu, skullstrip_epi, [('output_image', 'in_file')]),
         (inu, outputnode, [('output_image', 'epi_mean')]),
-        (hmc, avscale, [('mean_img', 'ref_file')]),
-        (avs_format, outputnode, [('out_file', 'motion_confounds_file')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, outputnode, [('out_files', 'epi_split')]),
@@ -84,7 +206,7 @@ def epi_hmc(name='EPI_HMC', settings=None):
     return workflow
 
 
-def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_registration',
+def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
                             settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
@@ -194,20 +316,6 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
                                          '1mm_T1.nii.gz')
 
-    merge_transforms = pe.MapNode(niu.Merge(2),
-                                  iterfield=['in2'], name='MergeTransforms')
-    epi_to_t1w_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='EPIToT1wTransform')
-    epi_to_t1w_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                 output_names=["merged_file"],
-                                 function=nii_concat), name='MergeEPI')
-    merge.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
-
     mask_t1w_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
                              float=True),
@@ -217,18 +325,36 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
     workflow.connect([
         (inputnode, gen_ref, [('ref_epi_mask', 'moving_image'),
                               ('t1_brain', 'fixed_image')]),
-        (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
-        (inputnode, merge_transforms, [('hmc_xforms', 'in2')]),
-        (inputnode, epi_to_t1w_transform, [('epi_split', 'input_image')]),
-        (merge_transforms, epi_to_t1w_transform, [('out', 'transforms')]),
-        (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
-        (epi_to_t1w_transform, merge, [('output_image', 'in_files')]),
-        (inputnode, merge, [('name_source', 'header_source')]),
         (fsl2itk_fwd, mask_t1w_tfm, [('itk_transform', 'transforms')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_t1w_tfm, [('ref_epi_mask', 'input_image')]),
-        (merge, outputnode, [('merged_file', 'epi_t1')]),
         (mask_t1w_tfm, outputnode, [('output_image', 'epi_mask_t1')]),
+    ])
+
+    merge_transforms = pe.MapNode(niu.Merge(2), iterfield=['in2'],
+                                  name='MergeTransforms')
+    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
+                                 output_names=["merged_file"],
+                                 function=nii_concat), name='MergeEPI')
+    merge.interface.estimated_memory_gb = settings[
+                                              "biggest_epi_file_size_gb"] * 3
+
+    epi_to_t1w_transform = pe.MapNode(
+        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                             float=True),
+        iterfield=['input_image', 'transforms'],
+        name='EPIToT1wTransform')
+    epi_to_t1w_transform.terminal_output = 'file'
+
+    workflow.connect([
+        (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
+        (inputnode, merge_transforms, [('hmc_xforms', 'in2')]),
+        (merge_transforms, epi_to_t1w_transform, [('out', 'transforms')]),
+        (epi_to_t1w_transform, merge, [('output_image', 'in_files')]),
+        (inputnode, merge, [('name_source', 'header_source')]),
+        (merge, outputnode, [('merged_file', 'epi_t1')]),
+        (inputnode, epi_to_t1w_transform, [('epi_split', 'input_image')]),
+        (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
     ])
 
     if not settings["skip_native"]:
@@ -248,7 +374,7 @@ def ref_epi_t1_registration(reportlet_suffix, inv_ds_suffix, name='ref_epi_t1_re
             (inputnode, ds_t1w, [(('name_source', _first), 'source_file')]),
             (inputnode, ds_t1w_mask,
              [(('name_source', _first), 'source_file')]),
-            (merge, ds_t1w, [('merged_file', 'in_file')]),
+            (outputnode, ds_t1w, [('epi_t1', 'in_file')]),
             (mask_t1w_tfm, ds_t1w_mask, [('output_image', 'in_file')]),
             ])
 
@@ -368,20 +494,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(),
                                          '1mm_T1.nii.gz')
 
-    merge_transforms = pe.MapNode(niu.Merge(3),
-                                  iterfield=['in3'], name='MergeTransforms')
-    epi_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='EPIToMNITransform')
-    epi_to_mni_transform.terminal_output = 'file'
-    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
-                                 output_names=["merged_file"],
-                                 function=nii_concat), name='MergeEPI')
-    merge.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
-
     mask_merge_tfms = pe.Node(niu.Merge(2), name='MaskMergeTfms')
     mask_mni_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
@@ -405,21 +517,41 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, ds_mni, [('name_source', 'source_file')]),
         (inputnode, ds_mni_mask, [('name_source', 'source_file')]),
         (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('itk_epi_to_t1', _aslist), 'in2'),
-                                       ('hmc_xforms', 'in3')]),
+
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
-        (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
-        (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
-        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
-        (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
-        (inputnode, merge, [('name_source', 'header_source')]),
-        (merge, ds_mni, [('merged_file', 'in_file')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')]),
         (mask_mni_tfm, ds_mni_mask, [('output_image', 'in_file')])
+    ])
+
+    merge_transforms = pe.MapNode(niu.Merge(3),
+                                  iterfield=['in3'],
+                                  name='MergeTransforms')
+    merge = pe.Node(niu.Function(input_names=["in_files", "header_source"],
+                                 output_names=["merged_file"],
+                                 function=nii_concat), name='MergeEPI')
+    merge.interface.estimated_memory_gb = settings[
+                                              "biggest_epi_file_size_gb"] * 3
+
+    epi_to_mni_transform = pe.MapNode(
+        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
+                             float=True),
+        iterfield=['input_image', 'transforms'],
+        name='EPIToMNITransform')
+    epi_to_mni_transform.terminal_output = 'file'
+
+    workflow.connect([
+        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+                                       (('itk_epi_to_t1', _aslist), 'in2'),
+                                       ('hmc_xforms', 'in3')]),
+        (merge_transforms, epi_to_mni_transform, [('out', 'transforms')]),
+        (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
+        (inputnode, merge, [('name_source', 'header_source')]),
+        (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
+        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+        (merge, ds_mni, [('merged_file', 'in_file')]),
     ])
 
     return workflow
