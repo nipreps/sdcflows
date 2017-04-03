@@ -124,7 +124,7 @@ def bold_preprocessing(bold_file, layout, settings):
         ])
 
     else:
-        LOGGER.info('Fieldmap estimation: type "%s" found', fmap['type'])
+        LOGGER.info('Fieldmap estimation: type "%s" found', fmaps['type'])
         # Import specific workflows here, so we don't brake everything with one
         # unused workflow.
         from fmriprep.workflows.fieldmap import fmap_estimator, sdc_unwarp
