@@ -22,7 +22,7 @@ from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink
-from fmriprep.interfaces.utils import nii_concat
+from fmriprep.interfaces.utils import nii_concat, EstimateReferenceImage
 from fmriprep.utils.misc import _first
 from fmriprep.workflows.fieldmap import sdc_unwarp
 from fmriprep.workflows.sbref import _extract_wm
@@ -66,7 +66,7 @@ def bold_preprocessing(name, metadata, settings):
     workflow.connect([
         (inputnode, hmcwf, [('epi', 'inputnode.epi')]),
         (inputnode, epi_2_t1, [('t1w', 'inputnode.t1w')]),
-        (hmcwf, epi_2_t1, [('outputnode.epi_mean', 'inputnode.ref_epi'),
+        (hmcwf, epi_2_t1, [('outputnode.ref_image', 'inputnode.ref_epi'),
                            ('outputnode.xforms', 'inputnode.hmc_xforms'),
                            ('outputnode.epi_mask', 'inputnode.ref_epi_mask'),
                            ('outputnode.epi_split', 'inputnode.epi_split')]),
@@ -110,9 +110,11 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
     :abbr:`EPI (echo-planar imaging)` image.
     """
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['epi']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(fields=['epi']),
+                        name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'epi_mean', 'movpar_file']), name='outputnode')
+        fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'ref_image',
+                'movpar_file', 'n_volumes_to_discard']), name='outputnode')
 
     def normalize_motion_func(in_file, format):
         import os
@@ -133,7 +135,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
-        save_mats=True, save_plots=True, mean_vol=True), name='EPI_hmc')
+        save_mats=True, save_plots=True), name='EPI_hmc')
     hmc.interface.estimated_memory_gb = settings[
                                             "biggest_epi_file_size_gb"] * 3
 
@@ -145,6 +147,22 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
     # Calculate EPI mask on the average after HMC
     skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
                              name='skullstrip_epi')
+
+    ds_epi_mask = pe.Node(
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='epi_mask'),
+        name='ds_epi_mask'
+    )
+
+    gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref")
+
+    workflow.connect([
+        (inputnode, gen_ref, [('epi', 'in_file')]),
+        (gen_ref, inu, [('ref_image', 'input_image')]),
+        (inu, hmc, [('output_image', 'ref_file')]),
+        (inu, skullstrip_epi, [('output_image', 'in_file')]),
+        (inu, outputnode, [('output_image', 'ref_image')]),
+    ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='SplitEPI')
     split.interface.estimated_memory_gb = settings[
@@ -167,7 +185,6 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
                                                   name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
-        # TODO: include -ignore ii
         slice_timing_correction = pe.Node(interface=afni.TShift(),
                                                name='slice_timing_correction')
         slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
@@ -178,6 +195,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
 
         workflow.connect([
             (inputnode, slice_timing_correction, [('epi', 'in_file')]),
+            (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
                                                                           'tpattern')]),
             (slice_timing_correction, hmc, [('out_file', 'in_file')])
@@ -189,16 +207,15 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         ])
 
     workflow.connect([
-        (hmc, hcm2itk, [('mat_file', 'transform_file'),
-                        ('mean_img', 'source_file'),
-                        ('mean_img', 'reference_file')]),
+        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
+        (gen_ref, hcm2itk, [('ref_image', 'source_file'),
+                            ('ref_image', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
-        (hmc, inu, [('mean_img', 'input_image')]),
-        (inu, skullstrip_epi, [('output_image', 'in_file')]),
-        (inu, outputnode, [('output_image', 'epi_mean')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
+        (skullstrip_epi, ds_epi_mask, [('out_report', 'in_file')]),
+        (inputnode, ds_epi_mask, [('epi', 'source_file')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, outputnode, [('out_files', 'epi_split')]),
     ])
