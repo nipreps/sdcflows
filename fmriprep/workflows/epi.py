@@ -533,7 +533,38 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
                            out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
-        name='vol2surf')
+        name='sampler')
+
+    merger = pe.JoinNode(
+        niu.Merge(),
+        joinfield=['in_lists'],
+        joinsource='sampler',
+        name='merger',
+        )
+
+    def normalize_giftis(in_file):
+        import os
+        import re
+        in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
+        name = os.path.basename(in_file)
+        info = in_format.match(name).groupdict()
+        info['LR'] = info['LR'].upper()
+        return 'space-{space}.{LR}.func'.format(**info)
+
+    normalize = pe.MapNode(
+        niu.Function(
+            function=normalize_giftis,
+            input_names=['in_file'],
+            output_names=['normalized']),
+        iterfield='in_file',
+        name='normalize'
+        )
+
+    bold_surfaces = pe.MapNode(
+         DerivativesDataSink(base_directory=settings['output_dir']),
+         iterfield=['in_file', 'suffix'],
+         name='BOLDSurfaces'
+     )
 
     workflow.connect([
         (inputnode, targets, [('reg_file', 'reg_file')]),
@@ -543,6 +574,12 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
                               ('reg_file', 'reg_file')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (targets, sampler, [('targets', 'target_subject')]),
+        (sampler, merger, [('out_file', 'in_lists')]),
+        (merger, normalize, [('out', 'in_file')]),
+        (inputnode, bold_surfaces,
+         [(('name_source', _first), 'source_file')]),
+        (merger, bold_surfaces, [('out', 'in_file')]),
+        (normalize, bold_surfaces, [('normalized', 'suffix')]),
         ])
 
     return workflow
