@@ -495,16 +495,30 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
 
 
 def epi_surf_sample(name='SurfaceSample', settings=None):
+    """ Sample functional images to FreeSurfer surfaces
+
+    For each vertex, the cortical ribbon is sampled at six points (spaced 20% of thickness apart)
+    and averaged.
+
+    Outputs are in GIFTI format.
+
+    Settings used:
+        skip_native : sample only to fsaverage space, skipping subject native surface
+        output_dir : directory to save derivatives to
+    """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=[
-            'source_file',
-            'reg_file',
-            'subjects_dir',
-            'name_source',
-        ]), name='inputnode')
+        niu.IdentityInterface(fields=['source_file', 'reg_file', 'subjects_dir', 'name_source']),
+        name='inputnode')
 
     def select_targets(reg_file, template, skip_native):
+        """ Select targets based on a provided template and whether to generate outputs in
+        native space.
+
+        Source target is defined from registration file to preclude mismatches
+
+        Returns targets (FreeSurfer subject names) and spaces (FMRIPREP output space names)
+        """
         targets = [template]
         spaces = [template]
         if not skip_native:
@@ -518,53 +532,41 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
                      input_names=['reg_file', 'template', 'skip_native'],
                      output_names=['targets', 'spaces']),
         name='targets')
+    # When study-specific templates are created, update this:
     targets.inputs.template = 'fsaverage'
     targets.inputs.skip_native = settings['skip_native']
 
-    rename_src = pe.MapNode(
-        niu.Rename(format_string='%(subject)s', keep_ext=True),
-        iterfield='subject',
-        name='RenameFunc')
+    # Rename the source file to the output space to simplify naming later
+    rename_src = pe.MapNode(niu.Rename(format_string='%(subject)s', keep_ext=True),
+                            iterfield='subject', name='RenameFunc')
 
     sampler = pe.MapNode(
-        fs.SampleToSurface(sampling_method='average',
-                           sampling_range=(0, 1, 0.2),
-                           sampling_units='frac',
-                           out_type='gii'),
+        fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
+                           sampling_units='frac', out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
 
-    merger = pe.JoinNode(
-        niu.Merge(),
-        joinfield=['in_lists'],
-        joinsource='sampler',
-        name='merger',
-        )
+    merger = pe.JoinNode(niu.Merge(), name='merger', joinsource='sampler', joinfield=['in_lists'])
 
     def normalize_giftis(in_file):
         import os
         import re
         in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
-        name = os.path.basename(in_file)
-        info = in_format.match(name).groupdict()
+        info = in_format.match(os.path.basename(in_file)).groupdict()
         info['LR'] = info['LR'].upper()
         return 'space-{space}.{LR}.func'.format(**info)
 
     normalize = pe.MapNode(
-        niu.Function(
-            function=normalize_giftis,
-            input_names=['in_file'],
-            output_names=['normalized']),
+        niu.Function(function=normalize_giftis, input_names=['in_file'],
+                     output_names=['normalized']),
         iterfield='in_file',
-        name='normalize'
-        )
+        name='normalize')
 
     bold_surfaces = pe.MapNode(
          DerivativesDataSink(base_directory=settings['output_dir']),
          iterfield=['in_file', 'suffix'],
-         name='BOLDSurfaces'
-     )
+         name='BOLDSurfaces')
 
     workflow.connect([
         (inputnode, targets, [('reg_file', 'reg_file')]),
@@ -572,8 +574,8 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         (targets, rename_src, [('spaces', 'subject')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
                               ('reg_file', 'reg_file')]),
-        (rename_src, sampler, [('out_file', 'source_file')]),
         (targets, sampler, [('targets', 'target_subject')]),
+        (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in_lists')]),
         (merger, normalize, [('out', 'in_file')]),
         (inputnode, bold_surfaces,
