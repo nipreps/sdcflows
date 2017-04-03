@@ -186,14 +186,15 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
 
             return os.path.abspath(out_file)
 
-        create_custom_slice_timing_file = pe.Node(niu.Function(function=create_custom_slice_timing_file_func,
-                                                               input_names=["metadata"],
-                                                               output_names=["out_file"]),
-                                                  name="create_custom_slice_timing_file")
+        create_custom_slice_timing_file = pe.Node(
+            niu.Function(function=create_custom_slice_timing_file_func,
+                         input_names=["metadata"],
+                         output_names=["out_file"]),
+            name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         slice_timing_correction = pe.Node(interface=afni.TShift(),
-                                               name='slice_timing_correction')
+                                          name='slice_timing_correction')
         slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
         slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
 
@@ -204,7 +205,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
             (inputnode, slice_timing_correction, [('epi', 'in_file')]),
             (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
-                                                                          'tpattern')]),
+                                                                         'tpattern')]),
             (slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
@@ -521,9 +522,9 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
     targets.inputs.skip_native = settings['skip_native']
 
     rename_src = pe.MapNode(
-            niu.Rename(format_string='%(subject)s', keep_ext=True),
-            iterfield='subject',
-            name='RenameFunc')
+        niu.Rename(format_string='%(subject)s', keep_ext=True),
+        iterfield='subject',
+        name='RenameFunc')
 
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average',
@@ -531,7 +532,7 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
                            sampling_units='frac',
                            out_type='gii'),
         iterfield=['source_file', 'target_subject'],
-        iterables=[('hemi', ['lh', 'rh'])],
+        iterables=('hemi', ['lh', 'rh']),
         name='vol2surf')
 
     workflow.connect([
