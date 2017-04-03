@@ -33,6 +33,12 @@ class EstimateReferenceImageOutputSpec(TraitedSpec):
 
 
 class EstimateReferenceImage(SimpleInterface):
+    """
+    Given an 4D EPI file estimate an optimal reference image that could be later
+    used for motion estimation and coregistration purposes. If detected uses
+    T1 saturated volumes (non-steady state) otherwise a median of
+    of a subset of motion corrected volumes is used.
+    """
     input_spec = EstimateReferenceImageInputSpec
     output_spec = EstimateReferenceImageOutputSpec
 

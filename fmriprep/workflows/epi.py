@@ -104,7 +104,7 @@ def bold_preprocessing(name, metadata, settings):
 
 
 # pylint: disable=R0914
-def epi_hmc(metadata, name='EPI_HMC', ref_image='auto', settings=None):
+def epi_hmc(metadata, name='EPI_HMC', settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
