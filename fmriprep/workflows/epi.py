@@ -112,7 +112,7 @@ def bold_preprocessing(bold_file, layout, settings):
 
     if not fmaps:
         workflow.connect([
-            (hmcwf, epi_2_t1, [('outputnode.epi_mean', 'inputnode.ref_epi'),
+            (hmcwf, epi_2_t1, [('outputnode.ref_image', 'inputnode.ref_epi'),
                                ('outputnode.xforms', 'inputnode.hmc_xforms'),
                                ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
             (hmcwf, epi_mni_trans_wf, [('outputnode.xforms', 'inputnode.hmc_xforms'),
@@ -128,7 +128,7 @@ def bold_preprocessing(bold_file, layout, settings):
         workflow.connect([
             (inputnode, unwarp, [('epi', 'inputnode.name_source')]),
             (hmcwf, unwarp, [('outputnode.epi_split', 'inputnode.in_split'),
-                             ('outputnode.epi_mean', 'inputnode.in_reference'),
+                             ('outputnode.ref_image', 'inputnode.in_reference'),
                              ('outputnode.xforms', 'inputnode.xforms')]),
             (fmap_est, unwarp, [('outputnode.fmap', 'inputnode.fmap'),
                                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
@@ -146,7 +146,7 @@ def bold_preprocessing(bold_file, layout, settings):
             (inputnode, epireport, [('t1_seg', 'inputnode.in_tpms'),
                                     ('epi', 'inputnode.name_source')]),
             (hmcwf, epireport, [
-                ('outputnode.epi_mean', 'inputnode.in_pre')]),
+                ('outputnode.ref_image', 'inputnode.in_pre')]),
             (unwarp, epireport, [
                 ('outputnode.out_reference', 'inputnode.in_post')]),
             (epi_2_t1, epireport, [
@@ -430,7 +430,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
         (merge_transforms, epi_to_t1w_transform, [('out', 'transforms')]),
         (epi_to_t1w_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
-        (merge, outputnode, [('merged_file', 'epi_t1')]),
+        (merge, outputnode, [('out_file', 'epi_t1')]),
         (inputnode, epi_to_t1w_transform, [('epi_split', 'input_image')]),
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
     ])
@@ -589,7 +589,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, ds_mni, [('name_source', 'source_file')]),
         (inputnode, ds_mni_mask, [('name_source', 'source_file')]),
         (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
-
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
@@ -620,7 +619,7 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None):
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
-        (merge, ds_mni, [('merged_file', 'in_file')]),
+        (merge, ds_mni, [('out_file', 'in_file')]),
     ])
 
     return workflow
