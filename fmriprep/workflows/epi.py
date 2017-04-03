@@ -7,6 +7,7 @@ EPI MRI -processing workflows.
 
 Originally coded by Craig Moodie. Refactored by the CRN Developers.
 """
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
@@ -46,11 +47,19 @@ def bold_preprocessing(bold_file, layout, settings):
     if bold_file == 'sub-testing_task-testing_acq-testing_bold.nii.gz':
         metadata = {"RepetitionTime": 2.0,
                     "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}
+        fmaps = {}
     else:
         metadata = layout.get_metadata(bold_file)
 
+        # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
+        fmaps = layout.get_fieldmap(bold_file) if 'fieldmap' not in settings.get(
+            'ignore', []) else {}
 
+    # TODO: To be removed (supported fieldmaps):
+    if not fmaps.get('type') in ['phasediff', 'fieldmap']:
+        fmaps = {}
 
+    # Build workflow
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi',
                                                       'bias_corrected_t1',
@@ -79,14 +88,6 @@ def bold_preprocessing(bold_file, layout, settings):
 
     # Apply transforms in 1 shot
     epi_mni_trans_wf = epi_mni_transformation(settings=settings)
-
-    # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
-    fmaps = layout.get_fieldmap(bold_file) if 'fieldmap' not in settings.get(
-        'ignore', []) else {}
-
-    # To be removed (supported fieldmaps):
-    if not fmaps.get('type') in ['phasediff', 'fieldmap']:
-        fmaps = {}
 
     workflow.connect([
         (inputnode, hmcwf, [('epi', 'inputnode.epi')]),

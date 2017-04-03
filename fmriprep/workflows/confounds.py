@@ -1,8 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 '''
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from nipype.interfaces import utility, nilearn, fsl
+from __future__ import print_function, division, absolute_import, unicode_literals
+
+from nipype.interfaces import utility
 from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
@@ -72,6 +78,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         import os
         import nibabel as nb
         from nilearn.image import resample_to_img
+        from nipype.interfaces.nilearn import SignalExtraction
 
         WM_nii = nb.load(in_WM)
         mask_nii = nb.load(in_mask)
@@ -96,8 +103,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                           name='concat_rois')
 
     # Global and segment regressors
-    signals = pe.Node(nilearn.SignalExtraction(detrend=True,
-                                               class_labels=["WhiteMatter", "GlobalSignal"]),
+    signals = pe.Node(SignalExtraction(detrend=True,
+                                       class_labels=["WhiteMatter", "GlobalSignal"]),
                       name="SignalExtraction")
     signals.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3

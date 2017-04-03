@@ -5,18 +5,20 @@
 """
 Convenience tools for handling :abbr:`EPI (echo planar imaging)` images
 """
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
 
 import nibabel as nb
 import numpy as np
-from nilearn.image import mean_img
 
 from nipype.interfaces.base import (traits, isdefined, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File, InputMultiPath,
                                     OutputMultiPath)
 from nipype.algorithms.confounds import is_outlier
+
+from nilearn.image import mean_img
 
 from nipype.interfaces.afni import Volreg
 from fmriprep.interfaces.bids import SimpleInterface
