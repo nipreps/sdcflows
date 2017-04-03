@@ -27,7 +27,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_tpms',
                                                           'epi_mask',
-                                                          'motion_confounds_file',
                                                           'source_file']),
                         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
@@ -39,7 +38,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     dvars.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
     # Frame displacement
-    frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="FSL"),
+    frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="SPM"),
                              name="FramewiseDisplacement")
     frame_displace.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
@@ -168,6 +167,23 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     def pick_wm(files):
         return files[2]
 
+    def add_header_func(in_file):
+        import numpy as np
+        import pandas as pd
+        import os
+
+        data = np.loadtxt(in_file)
+
+        df = pd.DataFrame(data, columns=["X", "Y", "Z", "RotX", "RotY", "RotZ"])
+        df.to_csv("motion.tsv", sep="\t", index=None)
+
+        return os.path.abspath("motion.tsv")
+
+    add_header = pe.Node(utility.Function(function=add_header_func,
+                                          input_names=["in_file"],
+                                          output_names=["out_file"]),
+                         name="add_header")
+
     workflow = pe.Workflow(name=name)
     workflow.connect([
         # connect inputnode to each non-anatomical confound node
@@ -205,7 +221,8 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
-        (inputnode, concat, [('motion_confounds_file', 'motion')]),
+        (inputnode, add_header, [('movpar_file', 'in_file')]),
+        (add_header, concat, [('out_file', 'motion')]),
 
         (concat, outputnode, [('combined_out', 'confounds_file')]),
 

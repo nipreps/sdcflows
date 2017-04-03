@@ -44,14 +44,10 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
         settings = {}
 
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['input_images']), name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['magnitude', 'fieldmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['fmap', 'fmap_ref', 'fmap_mask']),
                          name='outputnode')
-
-    sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
-                                     input_names=['input_images'],
-                                     output_names=['magnitude', 'fieldmap']),
-                        name='SortFmaps')
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='MagnitudeFuse')
@@ -71,13 +67,12 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     fmapenh.interface.estimated_memory_gb = 4
 
     workflow.connect([
-        (inputnode, sortfmaps, [('input_images', 'input_images')]),
-        (sortfmaps, magmrg, [('magnitude', 'in_files')]),
+        (inputnode, magmrg, [('magnitude', 'in_files')]),
         (magmrg, n4, [('out_file', 'input_image')]),
         (n4, cphdr, [('output_image', 'in_file')]),
         (magmrg, cphdr, [('out_file', 'hdr_file')]),
         (cphdr, bet, [('out_file', 'in_file')]),
-        (sortfmaps, fmapmrg, [('fieldmap', 'in_files')]),
+        (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
         (bet, fmapenh, [('out_file', 'in_mask')]),
         (fmapmrg, fmapenh, [('out_file', 'in_file')]),
         (fmapenh, outputnode, [('out_file', 'fmap')]),
@@ -85,8 +80,3 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
                            ('out_file', 'fmap_ref')])
     ])
     return workflow
-
-def _sort_fmaps(input_images):
-    ''' just a little data massaging'''
-    return (sorted([fname for fname in input_images if 'magnitude' in fname]),
-            sorted([fname for fname in input_images if 'fieldmap' in fname]))

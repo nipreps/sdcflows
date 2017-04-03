@@ -18,14 +18,11 @@ Base fieldmap estimation
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.interfaces import utility as niu
-from nipype.pipeline import engine as pe
 from nipype import logging
-
 LOGGER = logging.getLogger('workflow')
 
 
-def fmap_estimator(subject_data, settings=None):
+def fmap_estimator(fmap_bids, settings=None):
     """
     This workflow selects the fieldmap estimation data available for the subject and
     returns the estimated fieldmap in mm, along with a corresponding reference image.
@@ -48,44 +45,28 @@ def fmap_estimator(subject_data, settings=None):
 
 
     """
-    if not subject_data.get('fmap', []):
-        LOGGER.info('Fieldmap: no data found for estimation')
-        # When there is no data for fieldmap estimation, just return None
-        return None
 
-    # Otherwise, build the appropriate workflow(s)
-    workflow = pe.Workflow(name='FieldmapEstimation')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
-
-    estimator_wf = None
-    if any(['fieldmap' in fname for fname in subject_data['fmap']]):
+    # pybids type options: (phase1|phase2|phasediff|epi|fieldmap)
+    # https://github.com/INCF/pybids/blob/213c425d8ee820f4b7a7ae96e447a4193da2f359/bids/grabbids/bids_layout.py#L63
+    LOGGER.info('Fieldmap estimation: %s images found', fmap_bids['type'])
+    if fmap_bids['type'] == 'fieldmap':
         from .fmap import fmap_workflow
-        LOGGER.info('Fieldmap estimation: fieldmap images found')
         fmapwf = fmap_workflow(settings=settings)
         # set inputs
-        fmapwf.inputs.inputnode.input_images = subject_data['fmap']
-        estimator_wf = fmapwf
+        fmapwf.inputs.inputnode.fieldmap = fmap_bids['fieldmap']
+        fmapwf.inputs.inputnode.magnitude = fmap_bids['magnitude']
+        return fmapwf
 
-    elif any(['phase' in fname for fname in subject_data['fmap']]):
+    if fmap_bids['type'] == 'phasediff':
         from .phdiff import phdiff_workflow
-        LOGGER.info('Fieldmap estimation: phase-difference images found')
         phwf = phdiff_workflow(settings=settings)
         # set inputs
-        phwf.inputs.inputnode.input_images = subject_data['fmap']
-        estimator_wf = phwf
+        phwf.inputs.inputnode.phasediff = fmap_bids['phasediff']
+        phwf.inputs.inputnode.magnitude = [
+            fmap_bids['magnitude1'],
+            fmap_bids['magnitude2']
+        ]
+        return phwf
 
-    if estimator_wf is None:
-        LOGGER.warn(
-            'Fieldmap data found, but no estimation workflow could be built for it. '
-            'Fieldmap data available = [%s]', ', '.join(subject_data['fmap']))
-        return None
-
-    workflow.connect([
-        (estimator_wf, outputnode, [
-            ('outputnode.fmap', 'fmap'),
-            ('outputnode.fmap_ref', 'fmap_ref'),
-            ('outputnode.fmap_mask', 'fmap_mask')])
-    ])
-
-    return workflow
+    if fmap_bids['type'] in ['phase1', 'phase2', 'epi']:
+        raise NotImplementedError

@@ -56,7 +56,7 @@ TESTS_REQUIRES = [
 ]
 
 EXTRA_REQUIRES = {
-    'doc': ['sphinx', 'pydotplus', 'sphinx_rtd_theme', 'sphinx-argparse'],
+    'doc': ['sphinx>=1.5.3', 'pydotplus', 'sphinx_rtd_theme', 'sphinx-argparse'],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit']
 }

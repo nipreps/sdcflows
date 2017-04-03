@@ -55,16 +55,12 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
     if settings is None:
         settings = {}
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=['input_images']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
 
-    sortfmaps = pe.Node(niu.Function(function=_sort_fmaps,
-                                     input_names=['input_images'],
-                                     output_names=['magnitude', 'phasediff']),
-                        name='SortFmaps')
 
     def _pick1st(inlist):
         return inlist[0]
@@ -113,14 +109,13 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
 
     workflow = pe.Workflow(name=name)
     workflow.connect([
-        (inputnode, sortfmaps, [('input_images', 'input_images')]),
-        (sortfmaps, meta, [(('phasediff', _pick1st), 'in_file')]),
-        (sortfmaps, magmrg, [('magnitude', 'in_files')]),
+        (inputnode, meta, [('phasediff', 'in_file')]),
+        (inputnode, magmrg, [('magnitude', 'in_files')]),
         (magmrg, n4, [('out_avg', 'input_image')]),
         (n4, prelude, [('output_image', 'magnitude_file')]),
         (n4, bet, [('output_image', 'in_file')]),
         (bet, prelude, [('mask_file', 'mask_file')]),
-        (sortfmaps, pha2rads, [(('phasediff', _pick1st), 'in_file')]),
+        (inputnode, pha2rads, [('phasediff', 'in_file')]),
         (pha2rads, prelude, [('out_file', 'phase_file')]),
         (meta, dte, [('out_dict', 'in_values')]),
         (dte, compfmap, [('delta_te', 'delta_te')]),
@@ -148,11 +143,6 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
 # ------------------------------------------------------
 # Helper functions
 # ------------------------------------------------------
-
-def _sort_fmaps(input_images):
-    ''' just a little data massaging'''
-    return (sorted([fname for fname in input_images if 'magnitude' in fname]),
-            sorted([fname for fname in input_images if 'phasediff' in fname]))
 
 def phdiff2fmap(in_file, delta_te, out_file=None):
     r"""
