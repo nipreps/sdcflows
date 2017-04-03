@@ -11,6 +11,7 @@ Originally coded by Craig Moodie. Refactored by the CRN Developers.
 import os
 import os.path as op
 
+from nipype import logging
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants
 from nipype.interfaces import afni
@@ -30,6 +31,7 @@ from fmriprep.utils.misc import _first
 from fmriprep.workflows.sbref import _extract_wm
 from fmriprep.workflows import confounds
 
+LOGGER = logging.getLogger('workflow')
 
 def bold_preprocessing(bold_file, layout, settings):
 
@@ -37,6 +39,7 @@ def bold_preprocessing(bold_file, layout, settings):
         settings = {}
 
 
+    LOGGER.info('Creating bold processing workflow for "%s".', bold_file)
     name = os.path.split(bold_file)[-1].replace(".", "_").replace(" ", "").replace("-", "_")
 
     # For doc building purposes
@@ -111,6 +114,7 @@ def bold_preprocessing(bold_file, layout, settings):
 
 
     if not fmaps:
+        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow.')
         workflow.connect([
             (hmcwf, epi_2_t1, [('outputnode.ref_image', 'inputnode.ref_epi'),
                                ('outputnode.xforms', 'inputnode.hmc_xforms'),
@@ -120,6 +124,7 @@ def bold_preprocessing(bold_file, layout, settings):
         ])
 
     else:
+        LOGGER.info('Fieldmap estimation: type "%s" found', fmap['type'])
         # Import specific workflows here, so we don't brake everything with one
         # unused workflow.
         from fmriprep.workflows.fieldmap import fmap_estimator, sdc_unwarp
@@ -155,6 +160,7 @@ def bold_preprocessing(bold_file, layout, settings):
 
 
     if settings.get('freesurfer', False):
+        LOGGER.info('Creating FreeSurfer processing flow.')
         workflow.connect([
             (inputnode, epi_2_t1, [('subjects_dir', 'inputnode.subjects_dir'),
                                    ('subject_id', 'inputnode.subject_id'),

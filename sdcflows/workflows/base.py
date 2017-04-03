@@ -18,10 +18,6 @@ Base fieldmap estimation
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype import logging
-LOGGER = logging.getLogger('workflow')
-
-
 def fmap_estimator(fmap_bids, settings=None):
     """
     This workflow selects the fieldmap estimation data available for the subject and
@@ -48,7 +44,6 @@ def fmap_estimator(fmap_bids, settings=None):
 
     # pybids type options: (phase1|phase2|phasediff|epi|fieldmap)
     # https://github.com/INCF/pybids/blob/213c425d8ee820f4b7a7ae96e447a4193da2f359/bids/grabbids/bids_layout.py#L63
-    LOGGER.info('Fieldmap estimation: %s images found', fmap_bids['type'])
     if fmap_bids['type'] == 'fieldmap':
         from .fmap import fmap_workflow
         fmapwf = fmap_workflow(settings=settings)
