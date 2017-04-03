@@ -11,10 +11,10 @@ from nipype.interfaces.base import (traits, TraitedSpec, BaseInterface,
                                     BaseInterfaceInputSpec, File, InputMultiPath)
 from fmriprep.utils.misc import genfname
 
+
 class ApplyMaskInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input file')
     in_mask = File(exists=True, mandatory=True, desc='input mask')
-
 
 class ApplyMaskOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='output average file')
@@ -39,52 +39,6 @@ class ApplyMask(BaseInterface):
     def _list_outputs(self):
         return self._results
 
-
-class FormatHMCParamInputSpec(BaseInterfaceInputSpec):
-    translations = traits.List(traits.Tuple(traits.Float, traits.Float, traits.Float),
-                               mandatory=True, desc='three translations in mm')
-    rot_angles = traits.List(traits.Tuple(traits.Float, traits.Float, traits.Float),
-                             mandatory=True, desc='three rotations in rad')
-    fmt = traits.Enum('confounds', 'movpar_file', usedefault=True,
-                      desc='type of resulting file')
-
-
-class FormatHMCParamOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='written file path')
-
-class FormatHMCParam(BaseInterface):
-    input_spec = FormatHMCParamInputSpec
-    output_spec = FormatHMCParamOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(FormatHMCParam, self).__init__(**inputs)
-
-    def _run_interface(self, runtime):
-        self._results['out_file'] = _tsv_format(
-            self.inputs.translations, self.inputs.rot_angles,
-            fmt=self.inputs.fmt)
-        return runtime
-
-    def _list_outputs(self):
-        return self._results
-
-
-def _tsv_format(translations, rot_angles, fmt='confounds'):
-    parameters = np.hstack((translations, rot_angles)).astype(np.float32)
-
-    if fmt == 'movpar_file':
-        out_file = op.abspath('movpar.txt')
-        np.savetxt(out_file, parameters)
-    elif fmt == 'confounds':
-        out_file = op.abspath('movpar.tsv')
-        np.savetxt(out_file, parameters,
-                   header='X\tY\tZ\tRotX\tRotY\tRotZ',
-                   delimiter='\t')
-    else:
-        raise NotImplementedError
-
-    return out_file
 
 def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0,
                                 erosion_mm=0):

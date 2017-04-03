@@ -38,9 +38,9 @@
         [
             {
                 "name": "epi_hmc/bet_hmc",
-                "file_pattern": "func/.*bet_hmc",
+                "file_pattern": "func/.*epi_mask",
                 "title" : "Skull Stripped EPI",
-                "description": "Skull stripped and head motion corrected epi pre registration"
+                "description": "Skull stripped EPI"
             },
             {
                 "name": "sbref_preprocess/bet",
