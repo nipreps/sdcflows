@@ -14,6 +14,8 @@ from nipype.pipeline import engine as pe
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 
 from fmriprep import interfaces
+
+from nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
@@ -78,7 +80,6 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         import os
         import nibabel as nb
         from nilearn.image import resample_to_img
-        from nipype.interfaces.nilearn import SignalExtraction
 
         WM_nii = nb.load(in_WM)
         mask_nii = nb.load(in_mask)
