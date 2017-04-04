@@ -34,7 +34,7 @@ from fmriprep.workflows import confounds
 
 LOGGER = logging.getLogger('workflow')
 
-def bold_preprocessing(bold_file, layout, settings):
+def bold_preprocessing(bold_file, settings, layout=None):
 
     if settings is None:
         settings = {}
@@ -44,13 +44,14 @@ def bold_preprocessing(bold_file, layout, settings):
     name = os.path.split(bold_file)[-1].replace(".", "_").replace(" ", "").replace("-", "_")
 
     # For doc building purposes
-    if bold_file == 'sub-testing_task-testing_acq-testing_bold.nii.gz':
+    if layout is None:
+
+        LOGGER.warning('No valid layout: building empty workflow.')
         metadata = {"RepetitionTime": 2.0,
                     "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}
         fmaps = {}
     else:
         metadata = layout.get_metadata(bold_file)
-
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
         fmaps = layout.get_fieldmap(bold_file) if 'fieldmap' not in settings.get(
             'ignore', []) else {}
