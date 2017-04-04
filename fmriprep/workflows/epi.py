@@ -149,7 +149,7 @@ def bold_preprocessing(bold_file, layout, settings):
         # Report on EPI correction
         epireport = epi_preproc_report(settings=settings)
         workflow.connect([
-            (inputnode, epireport, [('t1_seg', 'inputnode.in_tpms'),
+            (inputnode, epireport, [('t1_seg', 'inputnode.in_seg'),
                                     ('epi', 'inputnode.name_source')]),
             (hmcwf, epireport, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
@@ -238,6 +238,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
                                               "biggest_epi_file_size_gb"] * 3
 
     if "SliceTiming" in metadata and 'slicetiming' not in settings['ignore']:
+        LOGGER.info('Slice-timing correction will be included.')
         def create_custom_slice_timing_file_func(metadata):
             import os
             slice_timings = metadata["SliceTiming"]
@@ -639,18 +640,31 @@ def epi_preproc_report(name='ReportPreproc', settings=None):
     if settings is None:
         settings = {}
 
-    def _getwm(files):
-        return files[2]
+    def _getwm(in_seg, wm_label=3):
+        import os.path as op
+        import nibabel as nb
+        import numpy as np
+
+        nii = nb.load(in_seg)
+        data = np.zeros(nii.shape, dtype=np.uint8)
+        data[nii.get_data() == wm_label] = 1
+        hdr = nii.header.copy()
+        hdr.set_data_dtype(np.uint8)
+        nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
+        return op.abspath('wm.nii.gz')
 
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_pre', 'in_post', 'in_tpms', 'in_xfm',
+        fields=['in_pre', 'in_post', 'in_seg', 'in_xfm',
                 'name_source']), name='inputnode')
 
     map_seg = pe.Node(ants.ApplyTransforms(
         dimension=3, float=True, interpolation='NearestNeighbor'),
         name='MapROIwm')
+
+    sel_wm = pe.Node(niu.Function(input_names=['in_seg'], output_names=['out_file'],
+                                  function=_getwm), name='SelectWM')
 
     epi_rpt = pe.Node(SimpleBeforeAfter(), name='EPIUnwarpReport')
     epi_rpt_ds = pe.Node(
@@ -663,9 +677,10 @@ def epi_preproc_report(name='ReportPreproc', settings=None):
         (inputnode, epi_rpt_ds, [('name_source', 'source_file')]),
         (epi_rpt, epi_rpt_ds, [('out_report', 'in_file')]),
         (inputnode, map_seg, [('in_post', 'reference_image'),
-                              (('in_tpms', _getwm), 'input_image'),
+                              ('in_seg', 'input_image'),
                               ('in_xfm', 'transforms')]),
-        (map_seg, epi_rpt, [('output_image', 'wm_seg')])
+        (map_seg, sel_wm, [('output_image', 'in_seg')]),
+        (sel_wm, epi_rpt, [('out_file', 'wm_seg')]),
     ])
 
     return workflow
