@@ -24,8 +24,9 @@ from nipype.interfaces import ants
 
 from nipype.interfaces import fsl
 from niworkflows.interfaces.masks import BETRPT
+from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from fmriprep.interfaces import IntraModalMerge, CopyHeader
-from fmriprep.interfaces.fmap import FieldEnhance
+# from fmriprep.interfaces.fmap import FieldEnhance
 
 def fmap_workflow(name='FMAP_fmap', settings=None):
     """
@@ -60,23 +61,35 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     cphdr = pe.Node(CopyHeader(), name='FixHDR')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='MagnitudeBET')
-    fmapenh = pe.Node(FieldEnhance(
-        # despike_threshold=1.0, mask_erode=1),
-        despike=False, njobs=settings.get('ants_nthreads', 4)), name='FieldmapMassage')
-    fmapenh.interface.num_threads = settings.get('ants_nthreads', 4)
-    fmapenh.interface.estimated_memory_gb = 4
+
+    denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
+                                        kernel_size=3), name='PhaseDenoise')
+    demean = pe.Node(niu.Function(
+        input_names=['in_file', 'in_mask'], output_names=['out_file'],
+        function=demean_image), name='DemeanFmap')
+    cleanup = cleanup_edge_pipeline()
+    # fmapenh = pe.Node(FieldEnhance(
+    #     # despike_threshold=1.0, mask_erode=1),
+    #     despike=False, njobs=settings.get('ants_nthreads', 4)), name='FieldmapMassage')
+    # fmapenh.interface.num_threads = settings.get('ants_nthreads', 4)
+    # fmapenh.interface.estimated_memory_gb = 4
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
+        (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
         (magmrg, n4, [('out_file', 'input_image')]),
         (n4, cphdr, [('output_image', 'in_file')]),
         (magmrg, cphdr, [('out_file', 'hdr_file')]),
         (cphdr, bet, [('out_file', 'in_file')]),
-        (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
-        (bet, fmapenh, [('out_file', 'in_mask')]),
-        (fmapmrg, fmapenh, [('out_file', 'in_file')]),
-        (fmapenh, outputnode, [('out_file', 'fmap')]),
+        (fmapmrg, denoise, [('out_file', 'in_file')]),
+        (denoise, demean, [('out_file', 'in_file')]),
+        (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+        (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
-                           ('out_file', 'fmap_ref')])
+                           ('out_file', 'fmap_ref')]),
+        (cleanup, outputnode, [('outputnode.out_file', 'fmap')]),
+        # (bet, fmapenh, [('out_file', 'in_mask')]),
+        # (fmapmrg, fmapenh, [('out_file', 'in_file')]),
+        # (fmapenh, outputnode, [('out_file', 'fmap')]),
     ])
     return workflow
