@@ -10,6 +10,7 @@ __bugreports__ = 'https://github.com/poldracklab/fmriprep/issues'
 MISSING = """
 Image '{}' is missing
 Would you like to download? [Y/n] """
+PKG_PATH = '/usr/local/miniconda/lib/python3.6/site-packages'
 
 
 def check_docker():
@@ -185,15 +186,13 @@ def main(cmd, *argv):
 
     command = ['docker', 'run', '--rm', '-it']
 
-    if opts.patch_fmriprep is not None:
-        command.extend(['-v', ':'.join((opts.patch_fmriprep,
-                                        '/root/src/fmriprep'))])
-    if opts.patch_niworkflows:
-        command.extend(['-v', ':'.join((opts.patch_niworkflows,
-                                        '/root/src/niworkflows'))])
-    if opts.patch_nipype:
-        command.extend(['-v', ':'.join((opts.patch_nipype,
-                                        '/root/src/nipype'))])
+    # Patch working repositories into installed package directories
+    for pkg in ('fmriprep', 'niworkflows', 'nipype'):
+        repo_path = getattr(opts, 'patch_' + pkg)
+        pkg_path = os.path.join(PKG_PATH, pkg)
+        if repo_path is not None:
+            command.extend(['-v', '{}:{}:ro'.format(repo_path, pkg_path)])
+
     if opts.scratch:
         command.extend(['-v', ':'.join((opts.scratch,
                                         '/scratch'))])
