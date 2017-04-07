@@ -542,6 +542,7 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
                            sampling_units='frac', reg_header=True,
+                           interp_method='trilinear', cortex_mask=True,
                            out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
