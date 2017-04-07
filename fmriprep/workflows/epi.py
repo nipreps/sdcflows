@@ -102,9 +102,9 @@ def bold_preprocessing(name, metadata, settings):
                                    ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                    ]),
             (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                   ('subject_id', 'inputnode.subject_id'),
                                    ('epi', 'inputnode.name_source')]),
-            (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file'),
-                                  ('outputnode.fs_reg_file', 'inputnode.reg_file')]),
+            (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
             ])
 
     return workflow
@@ -508,10 +508,10 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['source_file', 'reg_file', 'subjects_dir', 'name_source']),
+        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir', 'name_source']),
         name='inputnode')
 
-    def select_targets(reg_file, template, skip_native):
+    def select_targets(subject_id, template, skip_native):
         """ Select targets based on a provided template and whether to generate outputs in
         native space.
 
@@ -522,14 +522,13 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         targets = [template]
         spaces = [template]
         if not skip_native:
-            with open(reg_file, 'r') as fobj:
-                targets.append(fobj.readline().rstrip())
+            targets.append(subject_id)
             spaces.append('fsnative')
         return targets, spaces
 
     targets = pe.Node(
         niu.Function(function=select_targets,
-                     input_names=['reg_file', 'template', 'skip_native'],
+                     input_names=['subject_id', 'template', 'skip_native'],
                      output_names=['targets', 'spaces']),
         name='targets')
     # When study-specific templates are created, update this:
@@ -542,7 +541,8 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
 
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
-                           sampling_units='frac', out_type='gii'),
+                           sampling_units='frac', reg_header=True,
+                           out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
@@ -569,11 +569,11 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
          name='BOLDSurfaces')
 
     workflow.connect([
-        (inputnode, targets, [('reg_file', 'reg_file')]),
+        (inputnode, targets, [('subject_id', 'subject_id')]),
         (inputnode, rename_src, [('source_file', 'in_file')]),
         (targets, rename_src, [('spaces', 'subject')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
-                              ('reg_file', 'reg_file')]),
+                              ('subject_id', 'subject_id')]),
         (targets, sampler, [('targets', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in_lists')]),
