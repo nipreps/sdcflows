@@ -14,7 +14,7 @@ import numpy as np
 import nibabel as nb
 from nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterface, BaseInterfaceInputSpec, File,
-    InputMultiPath, OutputMultiPath, isdefined
+    InputMultiPath, OutputMultiPath, isdefined, CommandLine, CommandLineInputSpec
 )
 
 from io import open
@@ -148,3 +148,41 @@ class FUGUEvsm2ANTSwarp(BaseInterface):
                 self._results['out_file'])
 
         return runtime
+
+
+class AffineInitializerInputSpec(CommandLineInputSpec):
+    dimension = traits.Enum(3, 2, usedefault=True, position=0, argstr='%s',
+                            desc='dimension')
+    fixed_image = File(exists=True, mandatory=True, position=1, argstr='%s',
+                       desc='reference image')
+    moving_image = File(exists=True, mandatory=True, position=2, argstr='%s',
+                        desc='moving image')
+    out_file = File('transform.mat', usedefault=True, position=3, argstr='%s',
+                    desc='output transform file')
+    # Defaults in antsBrainExtraction.sh -> 15 0.1 0 10
+    search_factor = traits.Float(15.0, usedefault=True, position=4, argstr='%f',
+                                 desc='increments (degrees) for affine search')
+    radian_fraction = traits.Range(0.0, 1.0, value=0.1, usedefault=True, position=5,
+                                   argstr='%f', desc='search this arc +/- principal axes')
+    principal_axes = traits.Bool(
+        False, usedefault=True, position=6, argstr='%d',
+        desc='whether the rotation is searched around an initial principal axis alignment.')
+    local_search = traits.Int(
+        10, usedefault=True, position=7, argstr='%d',
+        desc=' determines if a local optimization is run at each search point for the set '
+             'number of iterations')
+
+class AffineInitializerOutputSpec(TraitedSpec):
+    out_file = File(desc='output transform file')
+
+
+class AffineInitializer(CommandLine):
+    """
+    Initialize an affine transform (from antsBrainExtraction.sh)
+    """
+    _cmd = 'antsAffineInitializer'
+    input_spec = AffineInitializerInputSpec
+    output_spec = AffineInitializerOutputSpec
+
+    def _list_outputs(self):
+        return {'out_file': op.abspath(self.inputs.out_file)}

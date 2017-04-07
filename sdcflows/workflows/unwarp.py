@@ -101,6 +101,9 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     mag_msk = pe.Node(ApplyMask(), name='mag_mask')
     mag_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='mag_inu')
 
+
+    ants_init = pe.Node(itk.AffineInitializer(), name='ants_init')
+
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
     ants_settings = pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json')
@@ -132,6 +135,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
                         iterfield=['input_image'], name='unwarp_all')
     ref_avg = pe.Node(Mean(), name='mean')
     ref_msk = pe.Node(MaskEPI(), name='mask')
+    ref_avg_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_avg_inu')
 
     # Final correction with refined HMC parameters
     tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
@@ -157,6 +161,9 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (mag_wrp, mag_msk, [('out_warped', 'in_file'),
                             ('out_mask', 'in_mask')]),
         (mag_msk, mag_inu, [('out_file', 'input_image')]),
+        (ref_inu, ants_init, [('output_image', 'moving_image')]),
+        (mag_inu, ants_init, [('output_image', 'fixed_image')]),
+        (ants_init, fmap2ref_reg, [('out_file', 'initial_moving_transform')]),
         (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
         (mag_inu, fmap2ref_reg, [('output_image', 'fixed_image')]),
         (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
@@ -171,7 +178,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
         (ref_avg, ref_msk, [('out_file', 'in_files')]),
         (ref_msk, outputnode, [('out_mask', 'out_mask')]),
-        (ref_avg, outputnode, [('out_file', 'out_reference')]),
+        (ref_avg, ref_avg_inu, [('out_file', 'input_image')]),
+        (ref_avg_inu, outputnode, [('output_image', 'out_reference')]),
         (unwarp, outputnode, [('output_image', 'out_files')]),
         (tfm_concat, outputnode, [('transforms', 'out_warps')]),
     ])
