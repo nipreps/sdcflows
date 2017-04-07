@@ -20,7 +20,7 @@ from nipype.interfaces import fsl
 from niworkflows.interfaces.registration import FUGUERPT
 from fmriprep.utils.misc import genfname
 
-LOGGER = logging.getLogger('interfaces')
+LOGGER = logging.getLogger('interface')
 
 
 class WarpReferenceInputSpec(BaseInterfaceInputSpec):
@@ -63,10 +63,13 @@ class WarpReference(BaseInterface):
             unwarp_direction=ped, shift_out_file=vsm_file)
         gen_vsm.run()
 
-        fugue = fsl.FUGUE(
+        magwarpcmd = fsl.FUGUE(
             in_file=self.inputs.fmap_ref, shift_in_file=vsm_file, nokspace=True,
             forward_warping=True, unwarp_direction=ped, icorr=False,
-            warped_file=genfname(self.inputs.fmap_ref, 'warped%s' % ped)).run()
+            warped_file=genfname(self.inputs.fmap_ref, 'warped%s' % ped))
+
+        LOGGER.info('Running FUGUE: %s', magwarpcmd.cmdline)
+        fugue = magwarpcmd.run()
 
         fuguemask = fsl.FUGUE(
             in_file=self.inputs.in_mask, shift_in_file=vsm_file, nokspace=True,
@@ -90,15 +93,19 @@ class WarpReference(BaseInterface):
 class FieldEnhanceInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     in_mask = File(exists=True, desc='brain mask')
+    in_magnitude = File(exists=True, desc='input magnitude')
+    unwrap = traits.Bool(False, usedefault=True, desc='run phase unwrap')
     despike = traits.Bool(True, usedefault=True, desc='run despike filter')
     bspline_smooth = traits.Bool(True, usedefault=True, desc='run 3D bspline smoother')
     mask_erode = traits.Int(1, usedefault=True, desc='mask erosion iterations')
     despike_threshold = traits.Float(0.2, usedefault=True, desc='mask erosion iterations')
     njobs = traits.Int(1, usedefault=True, nohash=True, desc='number of jobs')
 
+
 class FieldEnhanceOutputSpec(TraitedSpec):
     out_file = File(desc='the output fieldmap')
-    out_coeff = File(desc='write bspline coefficients')
+    out_unwrapped = File(desc='unwrapped fieldmap')
+
 
 class FieldEnhance(BaseInterface):
     """
@@ -138,30 +145,43 @@ class FieldEnhance(BaseInterface):
                     iterations=self.inputs.mask_erode).astype(np.uint8)  # pylint: disable=no-member
 
         self._results['out_file'] = genfname(self.inputs.in_file, suffix='enh')
-        self._results['out_coeff'] = genfname(self.inputs.in_file, suffix='coeff')
-
         datanii = nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header)
-        # data interpolation
-        datanii.to_filename(self._results['out_file'])
 
-        if self.inputs.bspline_smooth:
+        if self.inputs.unwrap:
+            data = _unwrap(data, self.inputs.in_magnitude, mask)
+            self._results['out_unwrapped'] = genfname(self.inputs.in_file, suffix='unwrap')
+            nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header).to_filename(
+                self._results['out_unwrapped'])
+
+        if not self.inputs.bspline_smooth:
+            datanii.to_filename(self._results['out_file'])
+            return runtime
+        else:
             from fmriprep.utils import bspline as fbsp
             from statsmodels.robust.scale import mad
 
             # Fit BSplines (coarse)
-            bspobj = fbsp.BSplineFieldmap(datanii, weights=mask, njobs=self.inputs.njobs)
+            bspobj = fbsp.BSplineFieldmap(datanii, weights=mask, padding=0,
+                                          njobs=self.inputs.njobs)
             bspobj.fit()
             smoothed1 = bspobj.get_smoothed()
 
             # Manipulate the difference map
             diffmap = data - smoothed1.get_data()
             sderror = mad(diffmap[mask > 0])
+            LOGGER.info('SD of error after B-Spline fitting is %f', sderror)
             errormask = np.zeros_like(diffmap)
             errormask[np.abs(diffmap) > (10 * sderror)] = 1
             errormask *= mask
-            errorslice = np.squeeze(np.argwhere(errormask.sum(0).sum(0) > 0))
 
-            if (errorslice[-1] - errorslice[0]) > 1:
+            nslices = 0
+            try:
+                errorslice = np.squeeze(np.argwhere(errormask.sum(0).sum(0) > 0))
+                nslices = errorslice[-1] - errorslice[0]
+            except IndexError:  # mask is empty, do not refine
+                pass
+
+            if nslices > 1:
                 diffmapmsk = mask[..., errorslice[0]:errorslice[-1]]
                 diffmapnii = nb.Nifti1Image(
                     diffmap[..., errorslice[0]:errorslice[-1]] * diffmapmsk,
@@ -176,7 +196,7 @@ class FieldEnhance(BaseInterface):
                 final = smoothed1.get_data().copy()
                 final[..., errorslice[0]:errorslice[-1]] += smoothed2
             else:
-                final = smoothed1
+                final = smoothed1.get_data()
 
             nb.Nifti1Image(final, datanii.affine, datanii.header).to_filename(
                 self._results['out_file'])
@@ -214,3 +234,27 @@ def _despike2d(data, thres, neigh=None):
                         (abs(thisval - patch_med) / patch_range) > thres):
                     data[i, j, k] = patch_med
     return data
+
+
+def _unwrap(fmap_data, mag_file, mask=None):
+    from math import pi
+    from nipype.interfaces.fsl import PRELUDE
+    magnii = nb.load(mag_file)
+
+    if mask is None:
+        mask = np.ones_like(fmap_data, dtype=np.uint8)
+
+    fmapmax = max(abs(fmap_data[mask > 0].min()), fmap_data[mask > 0].max())
+    fmap_data *= pi/fmapmax
+
+    nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
+    nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
+    nb.Nifti1Image(magnii.get_data(), magnii.affine).to_filename('fmap_mag.nii.gz')
+
+    # Run prelude
+    res = PRELUDE(phase_file='fmap_rad.nii.gz',
+                  magnitude_file='fmap_mag.nii.gz',
+                  mask_file='fmap_mask.nii.gz').run()
+
+    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax/pi)
+    return unwrapped
