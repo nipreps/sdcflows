@@ -547,7 +547,8 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
 
-    merger = pe.JoinNode(niu.Merge(), name='merger', joinsource='sampler', joinfield=['in_lists'])
+    merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
+                         joinsource='sampler', joinfield=['in1'])
 
     def normalize_giftis(in_file):
         import os
@@ -576,7 +577,7 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
                               ('subject_id', 'subject_id')]),
         (targets, sampler, [('targets', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
-        (sampler, merger, [('out_file', 'in_lists')]),
+        (sampler, merger, [('out_file', 'in1')]),
         (merger, normalize, [('out', 'in_file')]),
         (inputnode, bold_surfaces,
          [(('name_source', _first), 'source_file')]),
