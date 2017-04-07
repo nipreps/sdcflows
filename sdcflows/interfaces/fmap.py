@@ -161,7 +161,7 @@ class FieldEnhance(BaseInterface):
             from statsmodels.robust.scale import mad
 
             # Fit BSplines (coarse)
-            bspobj = fbsp.BSplineFieldmap(datanii, weights=mask, padding=0,
+            bspobj = fbsp.BSplineFieldmap(datanii, weights=mask,
                                           njobs=self.inputs.njobs)
             bspobj.fit()
             smoothed1 = bspobj.get_smoothed()

@@ -91,6 +91,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     meta = pe.Node(ReadSidecarJSON(), name='metadata')
 
     ref_img = pe.Node(SelectReference(), name='ref_select')
+
     # Prepare target image for registration
     ref_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_inu')
 
@@ -125,7 +126,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
                         iterfield=['input_image'], name='unwarp_all')
     ref_avg = pe.Node(Mean(), name='mean')
-    ref_msk = pe.Node(MaskEPI(), name='mask')
+    ref_msk_post = pe.Node(MaskEPI(), name='mask_post')
     ref_avg_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_avg_inu')
 
     # Final correction with refined HMC parameters
@@ -153,19 +154,38 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
             ('inverse_composite_transform', 'transforms')]),
-        (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
         (vsm2dfm, unwarp, [('out_file', 'transforms')]),
         (ref_img, unwarp, [('reference', 'reference_image')]),
         (inputnode, unwarp, [('in_split', 'input_image')]),
         (unwarp, ref_avg, [('output_image', 'in_files')]),
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
-        (ref_avg, ref_msk, [('out_file', 'in_files')]),
-        (ref_msk, outputnode, [('out_mask', 'out_mask')]),
+        (ref_avg, ref_msk_post, [('out_file', 'in_files')]),
+        (ref_msk_post, outputnode, [('out_mask', 'out_mask')]),
         (ref_avg, ref_avg_inu, [('out_file', 'input_image')]),
         (ref_avg_inu, outputnode, [('output_image', 'out_reference')]),
         (unwarp, outputnode, [('output_image', 'out_files')]),
         (tfm_concat, outputnode, [('transforms', 'out_warps')]),
     ])
+
+    if settings.get('fmap-demean', True):
+        ref_msk_pre = pe.Node(MaskEPI(), name='mask_pre')
+        # Combine masks
+        # Demean within mask
+        demean = pe.Node(niu.Function(
+            input_names=['in_file', 'in_mask'], output_names=['out_file'],
+            function=_demean), name='fmap_demean')
+
+        workflow.connect([
+            (ref_inu, ref_msk_pre, [('output_image', 'in_files')]),
+            (fmap2ref_apply, demean, [('output_image', 'in_file')]),
+            (ref_msk_pre, demean, [('out_mask', 'in_mask')]),
+            (demean, vsm2dfm, [('out_file', 'in_file')]),
+        ])
+
+    else:
+        workflow.connect([
+            (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
+        ])
 
     return workflow
 
@@ -187,6 +207,21 @@ def _hz2rads(in_file, out_file=None):
         out_file = genfname(in_file, 'rads')
     nii = nb.load(in_file)
     data = nii.get_data() * 2.0 * pi
+    nb.Nifti1Image(data, nii.get_affine(),
+                   nii.get_header()).to_filename(out_file)
+    return out_file
+
+def _demean(in_file, in_mask, out_file=None):
+    import numpy as np
+    import nibabel as nb
+    from fmriprep.utils.misc import genfname
+
+    if out_file is None:
+        out_file = genfname(in_file, 'demeaned')
+    nii = nb.load(in_file)
+    msk = nb.load(in_mask).get_data()
+    data = nii.get_data()
+    data -= np.median(data[msk > 0])
     nb.Nifti1Image(data, nii.get_affine(),
                    nii.get_header()).to_filename(out_file)
     return out_file

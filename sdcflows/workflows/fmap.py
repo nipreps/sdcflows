@@ -76,7 +76,7 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     if settings.get('fmap_bspline', False):
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
-            unwrap=True, despike=False, njobs=settings.get('ants_nthreads', 4)),
+            unwrap=False, despike=False, njobs=settings.get('ants_nthreads', 4)),
             name='FieldmapMassage')
         fmapenh.interface.num_threads = settings.get('ants_nthreads', 4)
         fmapenh.interface.estimated_memory_gb = 4
