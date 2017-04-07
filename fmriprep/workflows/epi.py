@@ -360,7 +360,8 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
             name='flt_bbr_init'
         )
         flt_bbr = pe.Node(
-            FLIRTRPT(generate_report=True, dof=6, cost_func='bbr'),
+            FLIRTRPT(generate_report=True, cost_func='bbr',
+                     dof=settings.get('epi2t1_dof', 6)),
             name='flt_bbr'
         )
         flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
