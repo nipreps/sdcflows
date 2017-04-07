@@ -87,7 +87,7 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
         function=siemens2rads), name='PreparePhase')
 
     # FSL PRELUDE will perform phase-unwrapping
-    prelude = pe.Node(fsl.PRELUDE(process3d=True), name='PhaseUnwrap')
+    prelude = pe.Node(fsl.PRELUDE(), name='PhaseUnwrap')
 
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                         kernel_size=3), name='PhaseDenoise')
