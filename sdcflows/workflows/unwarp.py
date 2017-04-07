@@ -94,16 +94,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     # Prepare target image for registration
     ref_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_inu')
 
-    # Prepare fieldmap reference image, creating a fake warping
-    # to make the magnitude look like a distorted EPI
-    mag_wrp = pe.Node(WarpReference(), name='mag_warped')
-    # Mask reference image (the warped magnitude image)
-    mag_msk = pe.Node(ApplyMask(), name='mag_mask')
-    mag_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='mag_inu')
-
-
     ants_init = pe.Node(itk.AffineInitializer(), name='ants_init')
-
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
     ants_settings = pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json')
@@ -113,7 +104,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     fmap2ref_reg = pe.Node(Registration(
         from_file=ants_settings, output_inverse_warped_image=True,
         output_warped_image=True, num_threads=settings['ants_nthreads']),
-                       name='fmapref2ref')
+                       name='fmapref2ref0')
     fmap2ref_reg.interface.num_threads = settings['ants_nthreads']
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
@@ -147,29 +138,21 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (inputnode, torads, [('fmap', 'in_file')]),
         (inputnode, ref_img, [('in_reference', 'reference'),
                               ('in_split', 'in_files')]),
-        (inputnode, mag_wrp, [('fmap_ref', 'fmap_ref'),
-                              ('fmap_mask', 'in_mask')]),
         (inputnode, tfm_concat, [('xforms', 'in_file')]),
-        (meta, mag_wrp, [(('out_dict', _get_ec), 'echospacing'),
-                         (('out_dict', _get_pedir), 'pe_dir')]),
+        (inputnode, fmap2ref_reg, [('fmap_ref', 'fixed_image')]),
+        (inputnode, ants_init, [('fmap_ref', 'fixed_image')]),
         (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
                          (('out_dict', _get_pedir), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
         (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
-        (torads, mag_wrp, [('out_file', 'in_file')]),
         (ref_img, ref_inu, [('reference', 'input_image')]),
-        (mag_wrp, mag_msk, [('out_warped', 'in_file'),
-                            ('out_mask', 'in_mask')]),
-        (mag_msk, mag_inu, [('out_file', 'input_image')]),
         (ref_inu, ants_init, [('output_image', 'moving_image')]),
-        (mag_inu, ants_init, [('output_image', 'fixed_image')]),
         (ants_init, fmap2ref_reg, [('out_file', 'initial_moving_transform')]),
         (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
-        (mag_inu, fmap2ref_reg, [('output_image', 'fixed_image')]),
         (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
         (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
-        (fmap2ref_reg, fmap2ref_apply,
-            [('inverse_composite_transform', 'transforms')]),
+        (fmap2ref_reg, fmap2ref_apply, [
+            ('inverse_composite_transform', 'transforms')]),
         (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
         (vsm2dfm, unwarp, [('out_file', 'transforms')]),
         (ref_img, unwarp, [('reference', 'reference_image')]),
