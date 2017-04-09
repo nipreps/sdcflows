@@ -44,7 +44,8 @@ class EstimateReferenceImage(SimpleInterface):
 
     def _run_interface(self, runtime):
         in_nii = nb.load(self.inputs.in_file)
-        global_signal = in_nii.get_data()[:, :, :, :50].mean(axis=0).mean(
+        data_slice = in_nii.dataobj[:, :, :, :50]
+        global_signal = data_slice.mean(axis=0).mean(
             axis=0).mean(axis=0)
 
         n_volumes_to_discard = is_outlier(global_signal)
@@ -53,7 +54,7 @@ class EstimateReferenceImage(SimpleInterface):
 
         if n_volumes_to_discard == 0:
             if in_nii.shape[-1] > 40:
-                slice = in_nii.get_data()[:, :, :, 20:40]
+                slice = data_slice[:, :, :, 20:40]
                 slice_fname = os.path.abspath("slice.nii.gz")
                 nb.Nifti1Image(slice, in_nii.affine,
                                in_nii.header).to_filename(slice_fname)
@@ -70,7 +71,7 @@ class EstimateReferenceImage(SimpleInterface):
                            mc_slice_nii.header).to_filename(out_ref_fname)
         else:
             median_image_data = np.median(
-                in_nii.get_data()[:, :, :, :n_volumes_to_discard], axis=3)
+                data_slice[:, :, :, :n_volumes_to_discard], axis=3)
             nb.Nifti1Image(median_image_data, in_nii.affine,
                            in_nii.header).to_filename(out_ref_fname)
 
