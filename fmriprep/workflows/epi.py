@@ -20,14 +20,14 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
-from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
+from niworkflows.interfaces.registration import (
+    FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
-from fmriprep.interfaces.epi import EstimateReferenceImage
 from fmriprep.utils.misc import _first
 from fmriprep.workflows.sbref import _extract_wm
 from fmriprep.workflows import confounds

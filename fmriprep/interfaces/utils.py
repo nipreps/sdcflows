@@ -4,11 +4,9 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import os.path as op
-import numpy as np
 import nibabel as nb
-from nipype.interfaces.base import (traits, TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File, InputMultiPath)
+from nipype.interfaces.base import (TraitedSpec, BaseInterface,
+                                    BaseInterfaceInputSpec, File)
 from fmriprep.utils.misc import genfname
 
 
