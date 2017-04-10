@@ -140,7 +140,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
                             iterfield=['in_file'], name='concat_hmc_sdc_xforms')
 
     msk_combine = pe.Node(niu.Function(
-        input_names=['ref_msk', 'corrected_msk'], output_nodes=['out_file'],
+        input_names=['ref_msk', 'corrected_msk'], output_names=['out_file'],
         function=_mskcomb), name='mask_combine')
 
     workflow.connect([
