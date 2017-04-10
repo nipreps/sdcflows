@@ -118,6 +118,11 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         generate_report=False, dimension=3, interpolation='BSpline', float=True),
                              name='fmap2ref')
 
+    # Map the mask
+    fmapmask2ref = pe.Node(ANTSApplyTransformsRPT(
+        generate_report=False, dimension=3, interpolation='NearestNeighbor', float=True),
+                             name='fmap_mask2ref')
+
     # Convert the VSM into a DFM (displacements field map)
     # or: FUGUE shift to ANTS warping.
     vsm2dfm = pe.Node(itk.FUGUEvsm2ANTSwarp(), name='fmap2dfm')
@@ -133,6 +138,10 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
         in_file_invert=False, invert_transform_flags=[False]),
                             iterfield=['in_file'], name='concat_hmc_sdc_xforms')
+
+    msk_combine = pe.Node(niu.Function(
+        input_names=['ref_msk', 'corrected_msk'], output_nodes=['out_file'],
+        function=_mskcomb), name='mask_combine')
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
@@ -154,17 +163,23 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
             ('inverse_composite_transform', 'transforms')]),
+        (inputnode, fmapmask2ref, [('fmap_mask', 'input_image')]),
+        (ref_img, fmapmask2ref, [('reference', 'reference_image')]),
+        (fmap2ref_reg, fmapmask2ref, [
+            ('inverse_composite_transform', 'transforms')]),
         (vsm2dfm, unwarp, [('out_file', 'transforms')]),
         (ref_img, unwarp, [('reference', 'reference_image')]),
         (inputnode, unwarp, [('in_split', 'input_image')]),
         (unwarp, ref_avg, [('output_image', 'in_files')]),
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
         (ref_avg, ref_msk_post, [('out_file', 'in_files')]),
-        (ref_msk_post, outputnode, [('out_mask', 'out_mask')]),
         (ref_avg, ref_avg_inu, [('out_file', 'input_image')]),
         (ref_avg_inu, outputnode, [('output_image', 'out_reference')]),
         (unwarp, outputnode, [('output_image', 'out_files')]),
         (tfm_concat, outputnode, [('transforms', 'out_warps')]),
+        (ref_msk_post, msk_combine, [('out_mask', 'corrected_msk')]),
+        (fmapmask2ref, msk_combine, [('output_image', 'ref_msk')]),
+        (msk_combine, outputnode, [('out_file', 'out_mask')]),
     ])
 
     if settings.get('fmap-demean', True):
@@ -222,6 +237,21 @@ def _demean(in_file, in_mask, out_file=None):
     msk = nb.load(in_mask).get_data()
     data = nii.get_data()
     data -= np.median(data[msk > 0])
-    nb.Nifti1Image(data, nii.get_affine(),
-                   nii.get_header()).to_filename(out_file)
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(
+        out_file)
+    return out_file
+
+def _mskcomb(ref_msk, corrected_msk, out_file=None):
+    import nibabel as nb
+    from fmriprep.utils.misc import genfname
+
+    if out_file is None:
+        out_file = genfname(corrected_msk, 'mask')
+
+    nii = nb.load(corrected_msk)
+    data = nii.get_data()
+    data += nb.load(ref_msk).get_data()
+    data[data > 0] = 1
+    nb.Nifti1Image(data.astype(np.uint8), nii.affine,
+                   nii.header).to_filename(out_file)
     return out_file
