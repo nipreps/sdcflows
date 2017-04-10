@@ -116,7 +116,8 @@ def bold_preprocessing(bold_file, settings, layout=None):
 
 
     if not fmaps:
-        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow.')
+        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
+                    'for dataset %s.', bold_file)
         workflow.connect([
             (hmcwf, epi_2_t1, [('outputnode.ref_image', 'inputnode.ref_epi'),
                                ('outputnode.xforms', 'inputnode.hmc_xforms'),
