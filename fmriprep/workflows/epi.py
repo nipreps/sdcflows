@@ -329,6 +329,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     if settings['freesurfer']:
         bbregister = pe.Node(
             BBRegisterRPT(
+                # dof=settings.get('epi2t1_dof', 6),  # Not sure if this can be used
                 contrast_type='t2',
                 init='coreg',
                 registered_file=True,
