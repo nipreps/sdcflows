@@ -179,11 +179,13 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
         import numpy as np
         import pandas as pd
         import os
+        from sys import version_info
+        PY3 = version_info[0] > 2
 
         data = np.loadtxt(in_file)
 
         df = pd.DataFrame(data, columns=["X", "Y", "Z", "RotX", "RotY", "RotZ"])
-        df.to_csv("motion.tsv", sep="\t", index=None)
+        df.to_csv("motion.tsv", sep="\t" if PY3 else '\t'.encode(), index=None)
 
         return os.path.abspath("motion.tsv")
 
