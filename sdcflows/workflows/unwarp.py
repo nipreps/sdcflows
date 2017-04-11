@@ -24,7 +24,8 @@ import pkg_resources as pkgr
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces.fsl import FUGUE
-from nipype.interfaces.ants import Registration, N4BiasFieldCorrection
+from nipype.interfaces.ants import (Registration, N4BiasFieldCorrection,
+                                    CreateJacobianDeterminantImage)
 # from nipype.interfaces.ants.preprocess import Matrix2FSLParams
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 
@@ -72,6 +73,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         out_warp
             the corresponding :abbr:`DFM (displacements field map)` compatible with
             ANTs
+        out_jacobian
+            the jacobian of the field (for drop-out alleviation)
 
     """
     from fmriprep.interfaces.fmap import WarpReference
@@ -86,7 +89,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         fields=['in_split', 'in_reference', 'in_mask', 'xforms', 'name_source',
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_files', 'out_reference', 'out_warps', 'out_mask']), name='outputnode')
+        fields=['out_files', 'out_reference', 'out_warps', 'out_mask',
+                'out_jacobian']), name='outputnode')
 
     meta = pe.Node(ReadSidecarJSON(), name='metadata')
 
@@ -108,11 +112,6 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
                        name='fmapref2ref0')
     fmap2ref_reg.interface.num_threads = settings['ants_nthreads']
 
-    # Fieldmap to rads and then to voxels (VSM - voxel shift map)
-    torads = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
-                                  function=_hz2rads), name='fmap_hz2rads')
-    gen_vsm = pe.Node(FUGUE(save_unmasked_shift=True), name='fmap_shiftmap')
-
     # Map the VSM into the EPI space
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
         generate_report=False, dimension=3, interpolation='BSpline', float=True),
@@ -123,9 +122,19 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         generate_report=False, dimension=3, interpolation='NearestNeighbor', float=True),
                              name='fmap_mask2ref')
 
+
+    # Fieldmap to rads and then to voxels (VSM - voxel shift map)
+    torads = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
+                                  function=_hz2rads), name='fmap_hz2rads')
+
+
+
+    gen_vsm = pe.Node(FUGUE(save_unmasked_shift=True), name='fmap_shiftmap')
     # Convert the VSM into a DFM (displacements field map)
     # or: FUGUE shift to ANTS warping.
     vsm2dfm = pe.Node(itk.FUGUEvsm2ANTSwarp(), name='fmap2dfm')
+    jac_dfm = pe.Node(CreateJacobianDeterminantImage(
+        imageDimension=3, outputImage='jacobian.nii.gz'), name='jacobian_det')
 
     unwarp = pe.MapNode(ANTSApplyTransformsRPT(
         dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
@@ -145,33 +154,34 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
-        (inputnode, torads, [('fmap', 'in_file')]),
         (inputnode, ref_img, [('in_reference', 'reference'),
                               ('in_split', 'in_files')]),
         (inputnode, tfm_concat, [('xforms', 'in_file')]),
         (inputnode, fmap2ref_reg, [('fmap_ref', 'fixed_image')]),
         (inputnode, ants_init, [('fmap_ref', 'fixed_image')]),
-        (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
-                         (('out_dict', _get_pedir), 'unwarp_direction')]),
-        (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
-        (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
+        (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
+        (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
+        (fmap2ref_reg, fmap2ref_apply, [
+            ('inverse_composite_transform', 'transforms')]),
         (ref_img, ref_inu, [('reference', 'input_image')]),
         (ref_inu, ants_init, [('output_image', 'moving_image')]),
         (ants_init, fmap2ref_reg, [('out_file', 'initial_moving_transform')]),
         (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
-        (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
-        (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
-        (fmap2ref_reg, fmap2ref_apply, [
-            ('inverse_composite_transform', 'transforms')]),
         (inputnode, fmapmask2ref, [('fmap_mask', 'input_image')]),
         (ref_img, fmapmask2ref, [('reference', 'reference_image')]),
         (fmap2ref_reg, fmapmask2ref, [
             ('inverse_composite_transform', 'transforms')]),
+        (fmap2ref_apply, torads, [('output_image', 'in_file')]),
+        (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
+                         (('out_dict', _get_pedir), 'unwarp_direction')]),
+        (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
+        (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
         (vsm2dfm, unwarp, [('out_file', 'transforms')]),
         (ref_img, unwarp, [('reference', 'reference_image')]),
         (inputnode, unwarp, [('in_split', 'input_image')]),
         (unwarp, ref_avg, [('output_image', 'in_files')]),
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
+        (vsm2dfm, jac_dfm, [('out_file', 'deformationField')]),
         (ref_avg, ref_msk_post, [('out_file', 'in_files')]),
         (ref_avg, ref_avg_inu, [('out_file', 'input_image')]),
         (ref_avg_inu, outputnode, [('output_image', 'out_reference')]),
@@ -180,26 +190,29 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (ref_msk_post, msk_combine, [('out_mask', 'corrected_msk')]),
         (fmapmask2ref, msk_combine, [('output_image', 'ref_msk')]),
         (msk_combine, outputnode, [('out_file', 'out_mask')]),
+        (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
     ])
 
+    if not settings.get('fmap_bspline', False):
+        workflow.connect([
+            (fmapmask2ref, gen_vsm, [('output_image', 'mask_file')])
+        ])
+
     if settings.get('fmap-demean', True):
-        ref_msk_pre = pe.Node(MaskEPI(), name='mask_pre')
-        # Combine masks
         # Demean within mask
         demean = pe.Node(niu.Function(
             input_names=['in_file', 'in_mask'], output_names=['out_file'],
             function=_demean), name='fmap_demean')
 
         workflow.connect([
-            (ref_inu, ref_msk_pre, [('output_image', 'in_files')]),
-            (fmap2ref_apply, demean, [('output_image', 'in_file')]),
-            (ref_msk_pre, demean, [('out_mask', 'in_mask')]),
+            (gen_vsm, demean, [('shift_out_file', 'in_file')]),
+            (fmapmask2ref, demean, [('output_image', 'in_mask')]),
             (demean, vsm2dfm, [('out_file', 'in_file')]),
         ])
 
     else:
         workflow.connect([
-            (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
+            (gen_vsm, vsm2dfm, [('shift_out_file', 'in_file')]),
         ])
 
     return workflow
@@ -243,15 +256,18 @@ def _demean(in_file, in_mask, out_file=None):
 
 def _mskcomb(ref_msk, corrected_msk, out_file=None):
     import nibabel as nb
+    import numpy as np
     from fmriprep.utils.misc import genfname
 
     if out_file is None:
         out_file = genfname(corrected_msk, 'mask')
 
     nii = nb.load(corrected_msk)
-    data = nii.get_data()
-    data += nb.load(ref_msk).get_data()
+    data = nii.get_data().astype(np.uint8)
+    data += nb.load(ref_msk).get_data().astype(np.uint8)
     data[data > 0] = 1
-    nb.Nifti1Image(data.astype(np.uint8), nii.affine,
-                   nii.header).to_filename(out_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype(np.uint8)
+    nb.Nifti1Image(data.astype(np.uint8), nii.affine, hdr).to_filename(
+        out_file)
     return out_file

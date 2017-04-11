@@ -27,6 +27,7 @@ from niworkflows.interfaces.masks import BETRPT
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from fmriprep.interfaces import IntraModalMerge, CopyHeader
 from fmriprep.interfaces.fmap import FieldEnhance
+from fmriprep.interfaces.utils import ApplyMask
 
 def fmap_workflow(name='FMAP_fmap', settings=None):
     """
@@ -104,6 +105,8 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
             function=demean_image), name='DemeanFmap')
         cleanup = cleanup_edge_pipeline()
 
+        applymsk = pe.Node(ApplyMask(), name='PhaseMask')
+
         workflow.connect([
             (bet, prelude, [('mask_file', 'mask_file'),
                             ('out_file', 'magnitude_file')]),
@@ -115,7 +118,9 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
             (denoise, demean, [('out_file', 'in_file')]),
             (demean, cleanup, [('out_file', 'inputnode.in_file')]),
             (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
-            (cleanup, outputnode, [('outputnode.out_file', 'fmap')]),
+            (cleanup, applymsk, [('outputnode.out_file', 'in_file')]),
+            (bet, applymsk, [('mask_file', 'in_mask')]),
+            (applymsk, outputnode, [('out_file', 'fmap')]),
         ])
 
     return workflow
