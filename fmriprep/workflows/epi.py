@@ -110,12 +110,6 @@ def bold_preprocessing(bold_file, settings, layout=None):
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
 
         (epi_2_t1, epi_mni_trans_wf, [('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
-        (hmcwf, epi_mni_trans_wf, [('outputnode.xforms', 'inputnode.hmc_xforms'),
-                                   ('outputnode.epi_mask', 'inputnode.epi_mask'),
-                                   ('outputnode.epi_split', 'inputnode.epi_split')]),
-        (inputnode, epi_mni_trans_wf, [('epi', 'inputnode.name_source'),
-                                       ('bias_corrected_t1', 'inputnode.t1'),
-                                       ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')])
     ])
 
     if not fmaps:
