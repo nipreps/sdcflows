@@ -565,6 +565,30 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         iterfield='in_file',
         name='normalize')
 
+    def update_gifti_metadata(in_file):
+        import os
+        import nibabel as nib
+        img = nib.load(in_file)
+        fname = os.path.basename(in_file)
+        if fname[:3] in ('lh.', 'rh.'):
+            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+        else:
+            raise ValueError(
+                "AnatomicalStructurePrimary cannot be derived from filename")
+        primary = nib.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
+        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
+            img.meta.data.insert(0, primary)
+        img.to_filename(fname)
+        return os.path.abspath(fname)
+
+    update_metadata = pe.MapNode(
+        niu.Function(
+            function=update_gifti_metadata,
+            input_names=['in_file'],
+            output_names=['out_file']),
+        iterfield='in_file',
+        name='UpdateMetadata')
+
     bold_surfaces = pe.MapNode(
          DerivativesDataSink(base_directory=settings['output_dir']),
          iterfield=['in_file', 'suffix'],
@@ -580,9 +604,10 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
         (merger, normalize, [('out', 'in_file')]),
+        (merger, update_metadata, [('out', 'in_file')]),
         (inputnode, bold_surfaces,
          [(('name_source', _first), 'source_file')]),
-        (merger, bold_surfaces, [('out', 'in_file')]),
+        (update_metadata, bold_surfaces, [('out_file', 'in_file')]),
         (normalize, bold_surfaces, [('normalized', 'suffix')]),
         ])
 
