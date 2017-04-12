@@ -8,9 +8,9 @@ from __future__ import unicode_literals
 
 __version__ = '99.99.99'
 __author__ = 'The CRN developers'
-__copyright__ = 'Copyright 2016, Center for Reproducible Neuroscience, Stanford University'
+__copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski', 'Shoshana Berleant',
-               'Russell A. Poldrack']
+               'Christopher J. Markiewicz', 'Russell A. Poldrack']
 __license__ = '3-clause BSD'
 __maintainer__ = 'Ross Blair'
 __email__ = 'crn.poldracklab@gmail.com'
@@ -74,4 +74,5 @@ CLASSIFIERS = [
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
 ]
