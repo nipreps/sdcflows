@@ -19,6 +19,7 @@ from nipype.interfaces import afni
 from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
+from nipype.interfaces import freesurfer as fs
 from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import (
     FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
@@ -109,11 +110,13 @@ def bold_preprocessing(bold_file, settings, layout=None):
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
 
         (epi_2_t1, epi_mni_trans_wf, [('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
-        (hmcwf, epi_mni_trans_wf, [('outputnode.epi_split', 'inputnode.epi_split')]),
-        (epi_2_t1, confounds_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
-                                  ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+        (hmcwf, epi_mni_trans_wf, [('outputnode.xforms', 'inputnode.hmc_xforms'),
+                                   ('outputnode.epi_mask', 'inputnode.epi_mask'),
+                                   ('outputnode.epi_split', 'inputnode.epi_split')]),
+        (inputnode, epi_mni_trans_wf, [('epi', 'inputnode.name_source'),
+                                       ('bias_corrected_t1', 'inputnode.t1'),
+                                       ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')])
     ])
-
 
     if not fmaps:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
@@ -161,14 +164,18 @@ def bold_preprocessing(bold_file, settings, layout=None):
                 ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
-
     if settings.get('freesurfer', False):
         LOGGER.info('Creating FreeSurfer processing flow.')
+        epi_surf = epi_surf_sample(settings=settings)
         workflow.connect([
             (inputnode, epi_2_t1, [('subjects_dir', 'inputnode.subjects_dir'),
                                    ('subject_id', 'inputnode.subject_id'),
                                    ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
-                                   ])
+                                   ]),
+            (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                   ('subject_id', 'inputnode.subject_id'),
+                                   ('epi', 'inputnode.name_source')]),
+            (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
             ])
 
     return workflow
@@ -251,14 +258,15 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
 
             return os.path.abspath(out_file)
 
-        create_custom_slice_timing_file = pe.Node(niu.Function(function=create_custom_slice_timing_file_func,
-                                                               input_names=["metadata"],
-                                                               output_names=["out_file"]),
-                                                  name="create_custom_slice_timing_file")
+        create_custom_slice_timing_file = pe.Node(
+            niu.Function(function=create_custom_slice_timing_file_func,
+                         input_names=["metadata"],
+                         output_names=["out_file"]),
+            name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         slice_timing_correction = pe.Node(interface=afni.TShift(),
-                                               name='slice_timing_correction')
+                                          name='slice_timing_correction')
         slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
         slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
 
@@ -269,7 +277,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
             (inputnode, slice_timing_correction, [('epi', 'in_file')]),
             (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
-                                                                          'tpattern')]),
+                                                                         'tpattern')]),
             (slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
@@ -313,7 +321,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi',
                                       'itk_epi_to_t1', 'itk_t1_to_epi',
-                                      'epi_t1', 'epi_mask_t1']),
+                                      'epi_t1', 'epi_mask_t1', 'fs_reg_file']),
         name='outputnode'
     )
 
@@ -479,6 +487,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
             (transformer, outputnode, [('out_file', 'mat_epi_to_t1')]),
             (transformer, fsl2itk_fwd, [('out_file', 'transform_file')]),
             (bbregister, ds_report, [('out_report', 'in_file')]),
+            (bbregister, outputnode, [('out_reg_file', 'fs_reg_file')]),
         ])
     else:
         workflow.connect([
@@ -551,6 +560,126 @@ def epi_sbref_registration(settings, name='EPI_SBrefRegistration'):
         (inputnode, ds_report, [('epi_name_source', 'source_file')]),
         (epi_sbref, ds_report, [('out_report', 'in_file')])
     ])
+
+    return workflow
+
+
+def epi_surf_sample(name='SurfaceSample', settings=None):
+    """ Sample functional images to FreeSurfer surfaces
+
+    For each vertex, the cortical ribbon is sampled at six points (spaced 20% of thickness apart)
+    and averaged.
+
+    Outputs are in GIFTI format.
+
+    Settings used:
+        skip_native : sample only to fsaverage space, skipping subject native surface
+        output_dir : directory to save derivatives to
+    """
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir', 'name_source']),
+        name='inputnode')
+
+    def select_targets(subject_id, template, skip_native):
+        """ Select targets based on a provided template and whether to generate outputs in
+        native space.
+
+        Source target is defined from registration file to preclude mismatches
+
+        Returns targets (FreeSurfer subject names) and spaces (FMRIPREP output space names)
+        """
+        targets = [template]
+        spaces = [template]
+        if not skip_native:
+            targets.append(subject_id)
+            spaces.append('fsnative')
+        return targets, spaces
+
+    targets = pe.Node(
+        niu.Function(function=select_targets,
+                     input_names=['subject_id', 'template', 'skip_native'],
+                     output_names=['targets', 'spaces']),
+        name='targets')
+    # When study-specific templates are created, update this:
+    targets.inputs.template = 'fsaverage'
+    targets.inputs.skip_native = settings['skip_native']
+
+    # Rename the source file to the output space to simplify naming later
+    rename_src = pe.MapNode(niu.Rename(format_string='%(subject)s', keep_ext=True),
+                            iterfield='subject', name='RenameFunc')
+
+    sampler = pe.MapNode(
+        fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
+                           sampling_units='frac', reg_header=True,
+                           interp_method='trilinear', cortex_mask=True,
+                           out_type='gii'),
+        iterfield=['source_file', 'target_subject'],
+        iterables=('hemi', ['lh', 'rh']),
+        name='sampler')
+
+    merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
+                         joinsource='sampler', joinfield=['in1'])
+
+    def normalize_giftis(in_file):
+        import os
+        import re
+        in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
+        info = in_format.match(os.path.basename(in_file)).groupdict()
+        info['LR'] = info['LR'].upper()
+        return 'space-{space}.{LR}.func'.format(**info)
+
+    normalize = pe.MapNode(
+        niu.Function(function=normalize_giftis, input_names=['in_file'],
+                     output_names=['normalized']),
+        iterfield='in_file',
+        name='normalize')
+
+    def update_gifti_metadata(in_file):
+        import os
+        import nibabel as nib
+        img = nib.load(in_file)
+        fname = os.path.basename(in_file)
+        if fname[:3] in ('lh.', 'rh.'):
+            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+        else:
+            raise ValueError(
+                "AnatomicalStructurePrimary cannot be derived from filename")
+        primary = nib.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
+        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
+            img.meta.data.insert(0, primary)
+        img.to_filename(fname)
+        return os.path.abspath(fname)
+
+    update_metadata = pe.MapNode(
+        niu.Function(
+            function=update_gifti_metadata,
+            input_names=['in_file'],
+            output_names=['out_file']),
+        iterfield='in_file',
+        name='UpdateMetadata')
+
+    bold_surfaces = pe.MapNode(
+         DerivativesDataSink(base_directory=settings['output_dir']),
+         iterfield=['in_file', 'suffix'],
+         name='BOLDSurfaces')
+
+    workflow.connect([
+        (inputnode, targets, [('subject_id', 'subject_id')]),
+        (inputnode, rename_src, [('source_file', 'in_file')]),
+        (targets, rename_src, [('spaces', 'subject')]),
+        (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
+                              ('subject_id', 'subject_id')]),
+        (targets, sampler, [('targets', 'target_subject')]),
+        (rename_src, sampler, [('out_file', 'source_file')]),
+        (sampler, merger, [('out_file', 'in1')]),
+        (merger, normalize, [('out', 'in_file')]),
+        (merger, update_metadata, [('out', 'in_file')]),
+        (inputnode, bold_surfaces,
+         [(('name_source', _first), 'source_file')]),
+        (update_metadata, bold_surfaces, [('out_file', 'in_file')]),
+        (normalize, bold_surfaces, [('normalized', 'suffix')]),
+        ])
 
     return workflow
 
