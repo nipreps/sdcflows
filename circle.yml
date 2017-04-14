@@ -62,3 +62,4 @@ deployment:
           timeout: 21600
       - printf "[distutils]\nindex-servers =\n    pypi\n\n[pypi]\nusername:$PYPI_USER\npassword:$PYPI_PASS\n" > ~/.pypirc
       - python setup.py sdist upload -r pypi
+      - cd wrapper && python setup.py sdist upload -r pypi
