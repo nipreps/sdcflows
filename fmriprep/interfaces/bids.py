@@ -179,6 +179,7 @@ class ReadSidecarJSON(SimpleInterface):
                       '(_rec-(?P<rec_id>[a-zA-Z0-9]+))?(_run-(?P<run_id>[a-zA-Z0-9]+))?')
     input_spec = ReadSidecarJSONInputSpec
     output_spec = ReadSidecarJSONOutputSpec
+    _always_run = True
 
     def _run_interface(self, runtime):
         metadata = get_metadata_for_nifti(self.inputs.in_file)

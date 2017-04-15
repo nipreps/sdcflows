@@ -30,7 +30,6 @@ from nipype.interfaces.ants import (Registration, N4BiasFieldCorrection,
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 
 from fmriprep.interfaces import itk
-from fmriprep.interfaces.epi import SelectReference
 from fmriprep.interfaces.nilearn import Mean, MaskEPI
 from fmriprep.interfaces import ReadSidecarJSON
 
@@ -48,8 +47,6 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     Inputs
 
-        in_split
-            the input image to be corrected split in 3D files
         in_reference
             the reference image (generally, the average of ``in_split``)
         in_mask
@@ -66,8 +63,6 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     Outputs
 
-        out_files
-            the ``in_split`` files after unwarping
         out_reference
             the ``in_reference`` or the mean ``in_split`` after unwarping
         out_warp
@@ -77,7 +72,6 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
             the jacobian of the field (for drop-out alleviation)
 
     """
-    from fmriprep.interfaces.fmap import WarpReference
     from fmriprep.interfaces.utils import ApplyMask
 
     if settings is None:
@@ -86,18 +80,13 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_split', 'in_reference', 'in_mask', 'xforms', 'name_source',
+        fields=['in_reference', 'in_mask', 'xforms', 'name_source',
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_files', 'out_reference', 'out_warps', 'out_mask',
+        fields=['out_reference', 'out_warps', 'out_mask',
                 'out_jacobian']), name='outputnode')
 
     meta = pe.Node(ReadSidecarJSON(), name='metadata')
-
-    ref_img = pe.Node(SelectReference(), name='ref_select')
-
-    # Prepare target image for registration
-    ref_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_inu')
 
     ants_init = pe.Node(itk.AffineInitializer(), name='ants_init')
     # Register the reference of the fieldmap to the reference
@@ -136,12 +125,12 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     jac_dfm = pe.Node(CreateJacobianDeterminantImage(
         imageDimension=3, outputImage='jacobian.nii.gz'), name='jacobian_det')
 
-    unwarp = pe.MapNode(ANTSApplyTransformsRPT(
-        dimension=3, generate_report=False, float=True, interpolation='LanczosWindowedSinc'),
-                        iterfield=['input_image'], name='unwarp_all')
-    ref_avg = pe.Node(Mean(), name='mean')
+    unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
+                                                      generate_report=False,
+                                                      float=True,
+                                                      interpolation='LanczosWindowedSinc'),
+                               name='unwarp_reference')
     ref_msk_post = pe.Node(MaskEPI(), name='mask_post')
-    ref_avg_inu = pe.Node(N4BiasFieldCorrection(dimension=3), name='ref_avg_inu')
 
     # Final correction with refined HMC parameters
     tfm_concat = pe.MapNode(itk.MergeANTsTransforms(
@@ -154,38 +143,32 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
-        (inputnode, ref_img, [('in_reference', 'reference'),
-                              ('in_split', 'in_files')]),
         (inputnode, tfm_concat, [('xforms', 'in_file')]),
         (inputnode, fmap2ref_reg, [('fmap_ref', 'fixed_image')]),
         (inputnode, ants_init, [('fmap_ref', 'fixed_image')]),
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
-        (ref_img, fmap2ref_apply, [('reference', 'reference_image')]),
+        (inputnode, fmap2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
             ('inverse_composite_transform', 'transforms')]),
-        (ref_img, ref_inu, [('reference', 'input_image')]),
-        (ref_inu, ants_init, [('output_image', 'moving_image')]),
+        (inputnode, ants_init, [('in_reference', 'moving_image')]),
         (ants_init, fmap2ref_reg, [('out_file', 'initial_moving_transform')]),
-        (ref_inu, fmap2ref_reg, [('output_image', 'moving_image')]),
+        (inputnode, fmap2ref_reg, [('in_reference', 'moving_image')]),
         (inputnode, fmapmask2ref, [('fmap_mask', 'input_image')]),
-        (ref_img, fmapmask2ref, [('reference', 'reference_image')]),
+        (inputnode, fmapmask2ref, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmapmask2ref, [
             ('inverse_composite_transform', 'transforms')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
         (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
-                         (('out_dict', _get_pedir), 'unwarp_direction')]),
-        (meta, vsm2dfm, [(('out_dict', _get_pedir), 'pe_dir')]),
+                         (('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
+        (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
         (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
-        (vsm2dfm, unwarp, [('out_file', 'transforms')]),
-        (ref_img, unwarp, [('reference', 'reference_image')]),
-        (inputnode, unwarp, [('in_split', 'input_image')]),
-        (unwarp, ref_avg, [('output_image', 'in_files')]),
+        (vsm2dfm, unwarp_reference, [('out_file', 'transforms')]),
+        (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
+        (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
         (vsm2dfm, tfm_concat, [('out_file', 'transforms')]),
         (vsm2dfm, jac_dfm, [('out_file', 'deformationField')]),
-        (ref_avg, ref_msk_post, [('out_file', 'in_files')]),
-        (ref_avg, ref_avg_inu, [('out_file', 'input_image')]),
-        (ref_avg_inu, outputnode, [('output_image', 'out_reference')]),
-        (unwarp, outputnode, [('output_image', 'out_files')]),
+        (unwarp_reference, ref_msk_post, [('output_image', 'in_files')]),
+        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
         (tfm_concat, outputnode, [('transforms', 'out_warps')]),
         (ref_msk_post, msk_combine, [('out_mask', 'corrected_msk')]),
         (fmapmask2ref, msk_combine, [('output_image', 'ref_msk')]),
@@ -223,8 +206,11 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 def _get_ec(in_dict):
     return float(in_dict['EffectiveEchoSpacing'])
 
-def _get_pedir(in_dict):
-    return in_dict['PhaseEncodingDirection'].replace('j', 'y').replace('i', 'x')
+def _get_pedir_bids(in_dict):
+    return in_dict['PhaseEncodingDirection']
+
+def _get_pedir_fugue(in_dict):
+    return in_dict['PhaseEncodingDirection'].replace('i', 'x').replace('j', 'y').replace('k', 'z')
 
 def _hz2rads(in_file, out_file=None):
     """Transform a fieldmap in Hz into rad/s"""

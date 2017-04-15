@@ -50,7 +50,12 @@ def bold_preprocessing(bold_file, settings, layout=None):
         LOGGER.warning('No valid layout: building empty workflow.')
         metadata = {"RepetitionTime": 2.0,
                     "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}
-        fmaps = {}
+        fmaps = {
+                  'type': 'phasediff',
+                  'phasediff': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_phasediff.nii.gz',
+                  'magnitude1': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude1.nii.gz',
+                  'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz'
+                }
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
@@ -110,6 +115,9 @@ def bold_preprocessing(bold_file, settings, layout=None):
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
 
         (epi_2_t1, epi_mni_trans_wf, [('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
+        (hmcwf, epi_mni_trans_wf, [('outputnode.epi_split', 'inputnode.epi_split')]),
+        (epi_2_t1, confounds_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
+                                  ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
     ])
 
     if not fmaps:
@@ -132,8 +140,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
         unwarp = sdc_unwarp(settings=settings)
         workflow.connect([
             (inputnode, unwarp, [('epi', 'inputnode.name_source')]),
-            (hmcwf, unwarp, [('outputnode.epi_split', 'inputnode.in_split'),
-                             ('outputnode.ref_image', 'inputnode.in_reference'),
+            (hmcwf, unwarp, [('outputnode.ref_image', 'inputnode.in_reference'),
                              ('outputnode.xforms', 'inputnode.xforms')]),
             (fmap_est, unwarp, [('outputnode.fmap', 'inputnode.fmap'),
                                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
@@ -303,7 +310,6 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
     """
-    from fmriprep.interfaces.itk import MergeANTsTransforms
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
@@ -331,7 +337,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     if settings['freesurfer']:
         bbregister = pe.Node(
             BBRegisterRPT(
-                # dof=settings.get('epi2t1_dof', 6),  # Not sure if this can be used
+                dof=settings.get('epi2t1_dof', 6),  # Not sure if this can be used
                 contrast_type='t2',
                 init='coreg',
                 registered_file=True,
@@ -407,9 +413,6 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewT1wReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
-    merge_xforms = pe.MapNode(MergeANTsTransforms(
-        in_file_invert=False, invert_transform_flags=[False], position=0),
-                              iterfield=['transforms'], name='concat_hmc_sdc_xforms')
     mask_t1w_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
                              float=True),
