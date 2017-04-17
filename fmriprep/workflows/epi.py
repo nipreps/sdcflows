@@ -137,7 +137,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
         workflow.connect([
-            (hmcwf, ds_epi_mask, [('outputnode.ref_epi_mask_report', 'in_file')])
+            (hmcwf, ds_epi_mask, [('outputnode.epi_mask_report', 'in_file')])
         ])
 
     else:
@@ -202,7 +202,8 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['xforms', 'epi_hmc', 'epi_split', 'epi_mask', 'ref_image',
-                'movpar_file', 'n_volumes_to_discard']), name='outputnode')
+                'movpar_file', 'n_volumes_to_discard',
+                'epi_mask_report']), name='outputnode')
 
     def normalize_motion_func(in_file, format):
         import os
@@ -298,6 +299,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
         (hmc, normalize_motion, [('par_file', 'in_file')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
+        (skullstrip_epi, outputnode, [('out_report', 'epi_mask_report')]),
         (inputnode, split, [('epi', 'in_file')]),
         (split, outputnode, [('out_files', 'epi_split')]),
     ])
