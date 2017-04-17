@@ -112,6 +112,12 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
         generate_report=True, dimension=3, interpolation='BSpline', float=True),
                              name='fmap2ref_apply')
+
+    fmap_mask2ref_apply = pe.Node(ANTSApplyTransformsRPT(
+        generate_report=False, dimension=3, interpolation='NearestNeighbor',
+        float=True),
+        name='fmap_mask2ref_apply')
+
     ds_reg_vsm = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
                             suffix='fmap_reg_vsm'), name='ds_reg_vsm')
@@ -143,12 +149,17 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (inputnode, fmap2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
             ('composite_transform', 'transforms')]),
+        (inputnode, fmap_mask2ref_apply, [('in_reference', 'reference_image')]),
+        (fmap2ref_reg, fmap_mask2ref_apply, [
+            ('composite_transform', 'transforms')]),
         (inputnode, ds_reg_vsm, [('name_source', 'source_file')]),
         (fmap2ref_apply, ds_reg_vsm, [('out_report', 'in_file')]),
         (explicit_mask_epi, fmap2ref_reg, [('out_file', 'fixed_image')]),
         (inputnode, ds_reg, [('name_source', 'source_file')]),
         (fmap2ref_reg, ds_reg, [('out_report', 'in_file')]),
-        (inputnode, torads, [('fmap', 'in_file')]),
+        (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
+        (inputnode, fmap_mask2ref_apply, [('fmap_mask', 'input_image')]),
+        (fmap2ref_apply, torads, [('output_image', 'in_file')]),
         (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
                          (('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
@@ -163,12 +174,11 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
         (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
-        (fmap2ref_apply, vsm2dfm, [('output_image', 'in_file')]),
     ])
 
     if not settings.get('fmap_bspline', False):
         workflow.connect([
-            (inputnode, gen_vsm, [('fmap_mask', 'mask_file')])
+            (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')])
         ])
 
     if settings.get('fmap-demean', True):
@@ -179,13 +189,13 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
         workflow.connect([
             (gen_vsm, demean, [('shift_out_file', 'in_file')]),
-            (inputnode, demean, [('fmap_mask', 'in_mask')]),
-            (demean, fmap2ref_apply, [('out_file', 'input_image')]),
+            (fmap_mask2ref_apply, demean, [('output_image', 'in_mask')]),
+            (demean, vsm2dfm, [('out_file', 'in_file')]),
         ])
 
     else:
         workflow.connect([
-            (gen_vsm, fmap2ref_apply, [('shift_out_file', 'input_image')]),
+            (gen_vsm, vsm2dfm, [('shift_out_file', 'in_file')]),
         ])
 
     return workflow
