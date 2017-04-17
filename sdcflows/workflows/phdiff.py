@@ -30,6 +30,8 @@ from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, cleanup_
 from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
+from fmriprep.interfaces.bids import DerivativesDataSink
+
 
 def phdiff_workflow(name='FMAP_phdiff', settings=None):
     """
@@ -77,6 +79,9 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
     n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='MagnitudeBET')
+    ds_fmap_mask = pe.Node(
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='fmap_mask'),name='ds_fmap_mask')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -126,15 +131,9 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
         (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
-                           ('out_file', 'fmap_ref')])
-    ])
-
-    ds_betrpt = pe.Node(nio.DataSink(), name="BETRPTDS")
-    ds_betrpt.inputs.base_directory = op.join(settings.get(
-        'output_dir', os.getcwd()), 'reports')
-
-    workflow.connect([
-        (bet, ds_betrpt, [('out_report', 'fmap_bet_rpt')])
+                           ('out_file', 'fmap_ref')]),
+        (inputnode, ds_fmap_mask, [('fieldmap', 'source_file')]),
+        (bet, ds_fmap_mask, [('out_report', 'in_file')]),
     ])
 
     return workflow

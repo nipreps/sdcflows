@@ -26,6 +26,7 @@ from nipype.interfaces import fsl
 from niworkflows.interfaces.masks import BETRPT
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from fmriprep.interfaces import IntraModalMerge, CopyHeader
+from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
@@ -62,6 +63,9 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     cphdr = pe.Node(CopyHeader(), name='FixHDR')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='MagnitudeBET')
+    ds_fmap_mask = pe.Node(
+        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+                            suffix='fmap_mask'), name='ds_fmap_mask')
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
@@ -72,6 +76,8 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
         (cphdr, bet, [('out_file', 'in_file')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
+        (inputnode, ds_fmap_mask, [('fieldmap', 'source_file')]),
+        (bet, ds_fmap_mask, [('out_report', 'in_file')]),
     ])
 
     if settings.get('fmap_bspline', False):

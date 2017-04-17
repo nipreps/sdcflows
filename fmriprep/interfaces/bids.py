@@ -123,6 +123,8 @@ class DerivativesDataSink(SimpleInterface):
             mod = 'anat'
         elif 'dwi' in op.dirname(self.inputs.source_file):
             mod = 'dwi'
+        elif 'fmap' in op.dirname(self.inputs.source_file):
+            mod = 'fmap'
 
         base_directory = os.getcwd()
         if isdefined(self.inputs.base_directory):
