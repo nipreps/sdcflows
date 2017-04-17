@@ -475,7 +475,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
     ])
 
-    if not settings["skip_native"]:
+    if 'T1w' in settings["output_spaces"]:
         # Write corrected file in the designated output dir
         ds_t1w = pe.Node(
             DerivativesDataSink(base_directory=settings['output_dir'],
@@ -535,7 +535,7 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
     Outputs are in GIFTI format.
 
     Settings used:
-        skip_native : sample only to fsaverage space, skipping subject native surface
+        output_spaces : set of structural spaces to sample functional series to
         output_dir : directory to save derivatives to
     """
     workflow = pe.Workflow(name=name)
@@ -543,7 +543,9 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
         niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir', 'name_source']),
         name='inputnode')
 
-    def select_targets(subject_id, template, skip_native):
+    spaces = [space for space in settings['output_spaces'] if space.startswith('fs')]
+
+    def select_target(subject_id, space):
         """ Select targets based on a provided template and whether to generate outputs in
         native space.
 
@@ -551,25 +553,20 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
 
         Returns targets (FreeSurfer subject names) and spaces (FMRIPREP output space names)
         """
-        targets = [template]
-        spaces = [template]
-        if not skip_native:
-            targets.append(subject_id)
-            spaces.append('fsnative')
-        return targets, spaces
+        return subject_id if space == 'fsnative' else space
 
-    targets = pe.Node(
-        niu.Function(function=select_targets,
-                     input_names=['subject_id', 'template', 'skip_native'],
-                     output_names=['targets', 'spaces']),
+    targets = pe.MapNode(
+        niu.Function(function=select_target,
+                     input_names=['subject_id', 'space'],
+                     output_names='target'),
+        iterfield=['space'],
         name='targets')
-    # When study-specific templates are created, update this:
-    targets.inputs.template = 'fsaverage'
-    targets.inputs.skip_native = settings['skip_native']
+    targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
     rename_src = pe.MapNode(niu.Rename(format_string='%(subject)s', keep_ext=True),
                             iterfield='subject', name='RenameFunc')
+    rename_src.inputs.subject = spaces
 
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
@@ -629,10 +626,9 @@ def epi_surf_sample(name='SurfaceSample', settings=None):
     workflow.connect([
         (inputnode, targets, [('subject_id', 'subject_id')]),
         (inputnode, rename_src, [('source_file', 'in_file')]),
-        (targets, rename_src, [('spaces', 'subject')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
                               ('subject_id', 'subject_id')]),
-        (targets, sampler, [('targets', 'target_subject')]),
+        (targets, sampler, [('target', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
         (merger, normalize, [('out', 'in_file')]),
