@@ -17,7 +17,6 @@ dependencies:
 - nibabel
 - statsmodels
 - xvfbwrapper
-- configparser
 - funcsigs
 - networkx
 - python-dateutil
