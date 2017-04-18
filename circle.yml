@@ -31,6 +31,7 @@ dependencies:
     - e=1 && for i in {1..5}; do docker build --rm=false -t poldracklab/fmriprep:latest --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` --build-arg VCS_REF=`git rev-parse --short HEAD` --build-arg VERSION=$CIRCLE_TAG . && e=0 && break || sleep 15; done && [ "$e" -eq "0" ] :
         timeout: 21600
     - mkdir -p $HOME/docker; docker save poldracklab/fmriprep:latest > $HOME/docker/image.tar
+    - pip install future && pip install --upgrade wrapper/
 test:
   override:
     - docker run -ti --rm=false --entrypoint="python" poldracklab/fmriprep:latest -m unittest discover test
@@ -39,8 +40,8 @@ test:
     - cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
     - docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --no-freesurfer --debug -w /scratch:
         timeout: 4800
-    - docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds005/scratch:/scratch -v $HOME/ds005/out:/out poldracklab/fmriprep:latest /data/ds005 /out/ participant --no-freesurfer --debug -w /scratch:
-       timeout: 4800
+    - fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --no-freesurfer --debug:
+        timeout: 4800
     - find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     - find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
 
