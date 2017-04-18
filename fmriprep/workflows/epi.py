@@ -34,11 +34,11 @@ from fmriprep.workflows import confounds
 
 LOGGER = logging.getLogger('workflow')
 
+
 def bold_preprocessing(bold_file, settings, layout=None):
 
     if settings is None:
         settings = {}
-
 
     LOGGER.info('Creating bold processing workflow for "%s".', bold_file)
     name = os.path.split(bold_file)[-1].replace(".", "_").replace(" ", "").replace("-", "_")
@@ -93,10 +93,6 @@ def bold_preprocessing(bold_file, settings, layout=None):
     confounds_wf = confounds.discover_wf(settings)
     confounds_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
-    # Apply transforms in 1 shot
-    epi_mni_trans_wf = epi_mni_transformation(settings=settings,
-                                              use_fieldwarp=(fmaps is not None))
-
     ds_epi_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
                             suffix='epi_mask'),
@@ -113,21 +109,12 @@ def bold_preprocessing(bold_file, settings, layout=None):
                                ('t1_seg', 'inputnode.t1_seg')]),
         (inputnode, confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
                                    ('epi', 'inputnode.source_file')]),
-        (inputnode, epi_mni_trans_wf, [
-            ('epi', 'inputnode.name_source'),
-            ('bias_corrected_t1', 'inputnode.t1'),
-            ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')]),
         (hmcwf, epi_2_t1, [('outputnode.epi_split', 'inputnode.epi_split'),
                            ('outputnode.xforms', 'inputnode.hmc_xforms'),
                            ('outputnode.ref_image', 'inputnode.ref_epi'),
                            ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
         (hmcwf, confounds_wf, [
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
-
-        (epi_2_t1, epi_mni_trans_wf, [('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
-        (hmcwf, epi_mni_trans_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
-                                   ('outputnode.xforms', 'inputnode.hmc_xforms'),
-                                   ('outputnode.epi_mask', 'inputnode.epi_mask')]),
         (epi_2_t1, confounds_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
                                   ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
         (inputnode, ds_epi_mask, [('epi', 'source_file')]),
@@ -157,9 +144,6 @@ def bold_preprocessing(bold_file, settings, layout=None):
             (unwarp, epi_2_t1, [('outputnode.out_warp', 'inputnode.fieldwarp'),
                                 ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
                                 ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (unwarp, epi_mni_trans_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
-                                        ('outputnode.out_mask', 'inputnode.unwarped_epi_mask')
-                                        ]),
             (unwarp, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
         ])
 
@@ -167,7 +151,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
         fmapreport = fieldmap_unwarping_report(settings=settings)
         workflow.connect([
             (inputnode, fmapreport, [('t1_seg', 'inputnode.in_seg'),
-                                    ('epi', 'inputnode.name_source')]),
+                                     ('epi', 'inputnode.name_source')]),
             (hmcwf, fmapreport, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
             (unwarp, fmapreport, [
@@ -175,6 +159,28 @@ def bold_preprocessing(bold_file, settings, layout=None):
             (epi_2_t1, fmapreport, [
                 ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
+
+    if 'MNI152NLin2009cAsym' in settings['output_spaces']:
+        # Apply transforms in 1 shot
+        epi_mni_trans_wf = epi_mni_transformation(settings=settings)
+        workflow.connect([
+            (inputnode, epi_mni_trans_wf, [
+                ('epi', 'inputnode.name_source'),
+                ('bias_corrected_t1', 'inputnode.t1'),
+                ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')]),
+            (hmcwf, epi_mni_trans_wf, [
+                ('outputnode.epi_split', 'inputnode.epi_split'),
+                ('outputnode.xforms', 'inputnode.hmc_xforms'),
+                ('outputnode.epi_mask', 'inputnode.epi_mask')]),
+            (epi_2_t1, epi_mni_trans_wf, [
+                ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
+        ])
+        if fmaps:
+            workflow.connect([
+                (unwarp, epi_mni_trans_wf, [
+                    ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                    ('outputnode.out_mask', 'inputnode.unwarped_epi_mask')]),
+            ])
 
     if settings.get('freesurfer', False):
         LOGGER.info('Creating FreeSurfer processing flow.')
@@ -188,7 +194,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
                                    ('subject_id', 'inputnode.subject_id'),
                                    ('epi', 'inputnode.name_source')]),
             (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
-            ])
+        ])
 
     return workflow
 
@@ -255,6 +261,7 @@ def epi_hmc(metadata, name='EPI_HMC', settings=None):
 
     if "SliceTiming" in metadata and 'slicetiming' not in settings['ignore']:
         LOGGER.info('Slice-timing correction will be included.')
+
         def create_custom_slice_timing_file_func(metadata):
             import os
             slice_timings = metadata["SliceTiming"]
@@ -668,7 +675,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None,
     gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewMNIReference')
     gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
-
     mask_mni_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
                              float=True),
@@ -705,8 +711,6 @@ def epi_mni_transformation(name='EPIMNITransformation', settings=None,
         workflow.connect([
             (inputnode, merge_transforms, [('hmc_xforms', 'in3')]),
             (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')])])
-
-
 
     workflow.connect([
         (inputnode, ds_mni, [('name_source', 'source_file')]),
