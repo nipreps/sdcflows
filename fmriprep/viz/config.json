@@ -57,13 +57,13 @@
             {
                 "name": "epi/fmpa_reg",
                 "file_pattern": "func/.*fmap_reg_vsm\\.",
-                "title": "Warp field derived from the fieldmap",
+                "title": "Fieldmap",
                 "description": "Overlaid on the reference EPI image"
             },
             {
                 "name": "epi/unwarp",
                 "file_pattern": "func/.*bold_variant-hmcsdc_preproc\\.",
-                "title": "BOLD - susceptibility distortion correction",
+                "title": "Susceptibility distortion correction",
                 "description": "Results of performing susceptibility distortion correction (SDC) on the EPI"
             },
             {

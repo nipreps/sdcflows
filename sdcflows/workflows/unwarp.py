@@ -138,6 +138,19 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
                                                       float=True,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
+
+    fieldmap_fov_mask = pe.Node(niu.Function(function=_fill_with_ones,
+                                             input_names=['in_file'],
+                                             output_names=['out_file']),
+                                name='fieldmap_fov_mask')
+
+    fmap_fov2ref_apply = pe.Node(ANTSApplyTransformsRPT(
+        generate_report=False, dimension=3, interpolation='NearestNeighbor',
+        float=True),
+        name='fmap_fov2ref_apply')
+
+    apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
+
     ref_msk_post = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
                            name='ref_msk_post')
 
@@ -169,8 +182,14 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
         (vsm2dfm, outputnode, [('out_file', 'out_warp')]),
         (vsm2dfm, jac_dfm, [('out_file', 'deformationField')]),
-        (unwarp_reference, ref_msk_post, [('output_image', 'in_file')]),
-        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
+        (inputnode, fieldmap_fov_mask, [('fmap_ref', 'in_file')]),
+        (fieldmap_fov_mask, fmap_fov2ref_apply, [('out_file', 'input_image')]),
+        (inputnode, fmap_fov2ref_apply, [('in_reference', 'reference_image')]),
+        (fmap2ref_reg, fmap_fov2ref_apply, [('composite_transform', 'transforms')]),
+        (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
+        (unwarp_reference, apply_fov_mask, [('output_image', 'in_file')]),
+        (apply_fov_mask, ref_msk_post, [('out_file', 'in_file')]),
+        (apply_fov_mask, outputnode, [('out_file', 'out_reference')]),
         (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
         (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
@@ -245,3 +264,16 @@ def _demean(in_file, in_mask, out_file=None):
         out_file)
     return out_file
 
+
+def _fill_with_ones(in_file):
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    nii = nb.load(in_file)
+    data = np.ones(nii.shape)
+
+    out_name = os.path.abspath("out.nii.gz")
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_name)
+
+    return out_name
