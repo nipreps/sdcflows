@@ -37,6 +37,9 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
+    
+    It also calculates a new mask for the input dataset that takes into account the distortions.
+    The mask is restricted to the field of view of the fieldmap since outside of it corrections could not be performed.
 
     .. workflow ::
 
