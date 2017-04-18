@@ -101,12 +101,17 @@ def bold_preprocessing(bold_file, settings, layout=None):
 
     workflow.connect([
         (inputnode, hmcwf, [('epi', 'inputnode.epi')]),
-        (inputnode, epi_2_t1, [('t1w', 'inputnode.t1w')]),
-        (inputnode, epi_2_t1, [('epi', 'inputnode.name_source'),
+        (inputnode, epi_2_t1, [('t1w', 'inputnode.t1w'),
+                               ('epi', 'inputnode.name_source'),
                                ('bias_corrected_t1', 'inputnode.bias_corrected_t1'),
                                ('t1_brain', 'inputnode.t1_brain'),
                                ('t1_mask', 'inputnode.t1_mask'),
-                               ('t1_seg', 'inputnode.t1_seg')]),
+                               ('t1_seg', 'inputnode.t1_seg'),
+                               # Undefined if --no-freesurfer, but this is safe
+                               ('subjects_dir', 'inputnode.subjects_dir'),
+                               ('subject_id', 'inputnode.subject_id'),
+                               ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
+                               ]),
         (inputnode, confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
                                    ('epi', 'inputnode.source_file')]),
         (hmcwf, epi_2_t1, [('outputnode.epi_split', 'inputnode.epi_split'),
@@ -187,10 +192,6 @@ def bold_preprocessing(bold_file, settings, layout=None):
         LOGGER.info('Creating FreeSurfer processing flow.')
         epi_surf = epi_surf_sample(settings=settings)
         workflow.connect([
-            (inputnode, epi_2_t1, [('subjects_dir', 'inputnode.subjects_dir'),
-                                   ('subject_id', 'inputnode.subject_id'),
-                                   ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
-                                   ]),
             (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
                                    ('subject_id', 'inputnode.subject_id'),
                                    ('epi', 'inputnode.name_source')]),
