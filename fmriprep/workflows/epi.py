@@ -182,7 +182,8 @@ def bold_preprocessing(bold_file, settings, layout=None):
                     ('outputnode.out_mask', 'inputnode.unwarped_epi_mask')]),
             ])
 
-    if settings.get('freesurfer', False):
+    if settings.get('freesurfer', False) and any(space.startswith('fs')
+                                                 for space in settings['output_spaces']):
         LOGGER.info('Creating FreeSurfer processing flow.')
         epi_surf = epi_surf_sample(settings=settings)
         workflow.connect([
