@@ -1,9 +1,8 @@
 name: fmriprep_docs
 channels:
-  - defaults
   - conda-forge
 dependencies:
-- python=3.4
+- python==3.5
 - numpy>=1.11.0
 - scipy=0.18.1
 - scikit-learn=0.18.1
