@@ -6,14 +6,8 @@
 Base fieldmap estimation
 ------------------------
 
-* Subject can have no data for fieldmap estimation - unwarping should not modify
-  the images.
 * Subject can have phase-difference data.
 * Subject can have a fieldmap acquisition.
-* Subject can have :abbr:`pepolar (Phase-Encoding POLArity)` image series for a
-  phase-encoding based estimation.
-* Subject can have two or three of the above - return average.
-
 
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
@@ -27,8 +21,6 @@ def fmap_estimator(fmap_bids, settings=None):
 
       * "Natural" fieldmaps
       * Phase-difference fieldmaps
-      * PEPolar fieldmaps.
-
 
     Outputs:
 

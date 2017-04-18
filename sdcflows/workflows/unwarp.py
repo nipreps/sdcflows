@@ -41,7 +41,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.unwarp import sdc_unwarp
-        wf = sdc_unwarp()
+        wf = sdc_unwarp(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
 
 
     Inputs
@@ -50,8 +50,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
             the reference image
         in_mask
             a brain mask corresponding to ``in_reference``
-        in_meta
-            a dictionary of metadata corresponding to ``in_reference``
+        name_source
+            path to the original _bold file being unwarped
         fmap
             the fieldmap in Hz
         fmap_ref

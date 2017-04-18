@@ -3,6 +3,12 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+
+.. figure:: _static/unwarping.svg
+    :scale: 100%
+
+    Applying field correction warp using ANTs.
+    
 One of the major problems that affects :abbr:`EPI (echo planar imaging)` data
 is the spatial distortion caused by the inhomogeneity of the field inside
 the scanner.
@@ -18,31 +24,20 @@ The are four broad families of methodologies for mapping the field:
     :abbr:`pepolar (Phase Encoding POLARity)`: techniques acquire at least two images
     distorted due to the inhomogeneity of the field, but varying in
     :abbr:`PE (phase-encoding)` direction.
-    Corresponds to 8.9.4 of BIDS.
-  * **Point-spread function acquisition**: not supported by FMRIPREP.
+    Corresponds to 8.9.4 of BIDS. Not yet supported by FMRIPREP. Coming soon.
+  * **Point-spread function acquisition**: Not supported by FMRIPREP.
 
 
 Once the field-map is estimated, the distortion can be accounted for.
 Fieldmap processing in FMRIPREP is structured as follows:
 
-  1. :ref:`sdc-base`: the BIDS structure is queried to find the available field-mapping
+  1. :ref:`sdc-base`: the input BIDS dataset is queried to find the available field-mapping
      techniques and the appropriate processing workflows are set-up.
 
   2. :ref:`sdc-estimation`: all the estimation workflows produce a displacement field
      ready to be used in the correction step.
 
   3. :ref:`sdc-unwarp`: the correction step is applied.
-
-
-Contents
---------
-
-.. toctree::
-    :maxdepth: 2
-
-    sdc/base
-    sdc/estimation
-    sdc/unwarping
 
 
 """

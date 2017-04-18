@@ -39,7 +39,7 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.fmap import fmap_workflow
-        wf = fmap_workflow()
+        wf = fmap_workflow(settings={'reportlets_dir': '.'})
 
     """
 

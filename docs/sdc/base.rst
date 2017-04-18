@@ -1,3 +1,5 @@
+:orphan:
+
 .. _sdc-base:
 
 Identifying field-mapping resources

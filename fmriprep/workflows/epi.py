@@ -44,7 +44,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
     name = os.path.split(bold_file)[-1].replace(".", "_").replace(" ", "").replace("-", "_")
 
     # For doc building purposes
-    if layout is None:
+    if layout is None or bold_file == 'bold_preprocesing':
 
         LOGGER.warning('No valid layout: building empty workflow.')
         metadata = {"RepetitionTime": 2.0,
@@ -58,8 +58,8 @@ def bold_preprocessing(bold_file, settings, layout=None):
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
-        fmaps = layout.get_fieldmap(bold_file) if 'fieldmap' not in settings.get(
-            'ignore', []) else {}
+        fmaps = layout.get_fieldmap(bold_file) if 'fieldmaps' not in settings.get(
+            'ignore') else {}
 
     # TODO: To be removed (supported fieldmaps):
     if not fmaps.get('type') in ['phasediff', 'fieldmap']:
@@ -344,7 +344,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
     if settings['freesurfer']:
         bbregister = pe.Node(
             BBRegisterRPT(
-                dof=settings.get('epi2t1_dof', 6),  # Not sure if this can be used
+                dof=settings.get('bold2t1w_dof'),
                 contrast_type='t2',
                 init='coreg',
                 registered_file=True,
@@ -378,7 +378,7 @@ def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
         )
         flt_bbr = pe.Node(
             FLIRTRPT(generate_report=True, cost_func='bbr',
-                     dof=settings.get('epi2t1_dof', 6)),
+                     dof=settings.get('bold2t1w_dof')),
             name='flt_bbr'
         )
         flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),

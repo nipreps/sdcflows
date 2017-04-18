@@ -43,7 +43,7 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.phdiff import phdiff_workflow
-        wf = phdiff_workflow()
+        wf = phdiff_workflow(settings={'reportlets_dir': '.'})
 
 
     Outputs::
@@ -132,7 +132,7 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
-        (inputnode, ds_fmap_mask, [('fieldmap', 'source_file')]),
+        (inputnode, ds_fmap_mask, [('phasediff', 'source_file')]),
         (bet, ds_fmap_mask, [('out_report', 'in_file')]),
     ])
 
