@@ -20,7 +20,7 @@ dependencies:
 - networkx
 - python-dateutil
 - pydotplus
-- gcc
+- cython
 
 - pip:
     - sphinx-argparse
