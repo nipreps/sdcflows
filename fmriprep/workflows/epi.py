@@ -35,7 +35,7 @@ from fmriprep.workflows import confounds
 LOGGER = logging.getLogger('workflow')
 
 
-def bold_preprocessing(bold_file, settings, layout=None):
+def init_func_preproc_wf(bold_file, settings, layout=None):
 
     if settings is None:
         settings = {}
