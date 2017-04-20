@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def sdc_unwarp(name='sdc_unwarp', settings=None):
+def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
@@ -43,8 +43,8 @@ def sdc_unwarp(name='sdc_unwarp', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.unwarp import sdc_unwarp
-        wf = sdc_unwarp(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
+        from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
+        wf = init_sdc_unwarp_wf(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
 
 
     Inputs

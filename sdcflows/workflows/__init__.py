@@ -44,4 +44,4 @@ Fieldmap processing in FMRIPREP is structured as follows:
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from .base import fmap_estimator
-from .unwarp import sdc_unwarp
+from .unwarp import init_sdc_unwarp_wf

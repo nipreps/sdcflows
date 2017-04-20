@@ -137,20 +137,20 @@ def bold_preprocessing(bold_file, settings, layout=None):
         LOGGER.info('Fieldmap estimation: type "%s" found', fmaps['type'])
         # Import specific workflows here, so we don't brake everything with one
         # unused workflow.
-        from fmriprep.workflows.fieldmap import fmap_estimator, sdc_unwarp
+        from fmriprep.workflows.fieldmap import fmap_estimator, init_sdc_unwarp_wf
         fmap_est = fmap_estimator(fmaps, settings=settings)
-        unwarp = sdc_unwarp(name='unwarp', settings=settings)
+        sdc_unwarp_wf = init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=settings)
         workflow.connect([
-            (inputnode, unwarp, [('epi', 'inputnode.name_source')]),
-            (hmcwf, unwarp, [('outputnode.ref_image', 'inputnode.in_reference'),
-                             ('outputnode.epi_mask', 'inputnode.in_mask')]),
-            (fmap_est, unwarp, [('outputnode.fmap', 'inputnode.fmap'),
-                                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
-            (unwarp, epi_2_t1, [('outputnode.out_warp', 'inputnode.fieldwarp'),
-                                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
-                                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (unwarp, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
+            (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
+            (hmcwf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
+                                    ('outputnode.epi_mask', 'inputnode.in_mask')]),
+            (fmap_est, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
+                                       ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                                       ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+            (sdc_unwarp_wf, epi_2_t1, [('outputnode.out_warp', 'inputnode.fieldwarp'),
+                                       ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
+                                       ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
+            (sdc_unwarp_wf, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
         ])
 
         # Report on EPI correction
@@ -161,7 +161,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
                                      ('epi', 'inputnode.name_source')]),
             (hmcwf, fmapreport, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
-            (unwarp, fmapreport, [
+            (sdc_unwarp_wf, fmapreport, [
                 ('outputnode.out_reference', 'inputnode.in_post')]),
             (epi_2_t1, fmapreport, [
                 ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
@@ -185,7 +185,7 @@ def bold_preprocessing(bold_file, settings, layout=None):
         ])
         if fmaps:
             workflow.connect([
-                (unwarp, epi_mni_trans_wf, [
+                (sdc_unwarp_wf, epi_mni_trans_wf, [
                     ('outputnode.out_warp', 'inputnode.fieldwarp'),
                     ('outputnode.out_mask', 'inputnode.unwarped_epi_mask')]),
             ])
