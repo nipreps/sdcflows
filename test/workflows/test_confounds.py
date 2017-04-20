@@ -27,15 +27,15 @@ class TestConfounds(TestWorkflow):
         # check some key paths
         self.assert_circular(workflow, [
             ('outputnode', 'inputnode', [('confounds_file', 'fmri_file')]),
-            ('DerivConfounds', 'inputnode', [('out_file', 'fmri_file')])
+            ('ds_confounds', 'inputnode', [('out_file', 'fmri_file')])
         ])
 
         # Make sure mandatory inputs are set
         self.assert_inputs_set(workflow, {'outputnode': ['confounds_file'],
-                                          'ConcatConfounds': ['signals', 'dvars', 'frame_displace',
+                                          'concat': ['signals', 'dvars', 'frame_displace',
                                                               #'acompcor', See confounds.py
                                                               'tcompcor'],
-                                          'tCompCor': ['components_file']})
+                                          'tcompcor': ['components_file']})
                                           # 'aCompCor': ['components_file', 'mask_file'], }) see ^^
 
     @mock.patch('pandas.read_csv')

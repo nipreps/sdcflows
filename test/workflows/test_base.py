@@ -23,5 +23,5 @@ class TestBase(TestWorkflow):
 
     def _assert_mandatory_inputs_set(self, workflow):
         self.assert_inputs_set(workflow, {
-            'BIDSDatasource': ['subject_data']
+            'bidssrc': ['subject_data']
         })
