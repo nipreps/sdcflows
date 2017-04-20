@@ -170,8 +170,8 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
 
     if 'MNI152NLin2009cAsym' in settings['output_spaces']:
         # Apply transforms in 1 shot
-        epi_mni_trans_wf = epi_mni_transformation(name='epi_mni_trans_wf',
-                                                  settings=settings)
+        epi_mni_trans_wf = init_epi_mni_trans_wf(name='epi_mni_trans_wf',
+                                                 settings=settings)
         workflow.connect([
             (inputnode, epi_mni_trans_wf, [
                 ('epi', 'inputnode.name_source'),
@@ -655,8 +655,8 @@ def init_epi_surf_wf(name='epi_surf_wf', settings=None):
     return workflow
 
 
-def epi_mni_transformation(name='epi_mni_transformation', settings=None,
-                           use_fieldwarp=False):
+def init_epi_mni_trans_wf(name='epi_mni_trans_wf', settings=None,
+                          use_fieldwarp=False):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
