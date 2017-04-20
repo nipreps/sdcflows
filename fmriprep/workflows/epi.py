@@ -194,12 +194,12 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
     if settings.get('freesurfer', False) and any(space.startswith('fs')
                                                  for space in settings['output_spaces']):
         LOGGER.info('Creating FreeSurfer processing flow.')
-        epi_surf = epi_surf_sample(name='epi_surf', settings=settings)
+        epi_surf_wf = init_epi_surf_wf(name='epi_surf_wf', settings=settings)
         workflow.connect([
-            (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
-                                   ('subject_id', 'inputnode.subject_id'),
-                                   ('epi', 'inputnode.name_source')]),
-            (epi_reg_wf, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
+            (inputnode, epi_surf_wf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                      ('subject_id', 'inputnode.subject_id'),
+                                      ('epi', 'inputnode.name_source')]),
+            (epi_reg_wf, epi_surf_wf, [('outputnode.epi_t1', 'inputnode.source_file')]),
         ])
 
     return workflow
@@ -539,7 +539,7 @@ def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
     return workflow
 
 
-def epi_surf_sample(name='epi_surf_sample', settings=None):
+def init_epi_surf_wf(name='epi_surf_wf', settings=None):
     """ Sample functional images to FreeSurfer surfaces
 
     For each vertex, the cortical ribbon is sampled at six points (spaced 20% of thickness apart)
