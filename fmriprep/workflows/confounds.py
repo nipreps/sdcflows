@@ -20,7 +20,7 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def discover_wf(settings, name="ConfoundDiscoverer"):
+def discover_wf(settings, name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -42,19 +42,19 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
-                    name="ComputeDVARS")
+                    name="dvars")
     dvars.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
     # Frame displacement
     frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="SPM"),
-                             name="FramewiseDisplacement")
+                             name="frame_displace")
     frame_displace.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
     # CompCor
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
                                    percentile_threshold=.05),
-                       name="tCompCor")
+                       name="tcompcor")
     tcompcor.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
@@ -106,7 +106,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
     # Global and segment regressors
     signals = pe.Node(SignalExtraction(detrend=True,
                                        class_labels=["WhiteMatter", "GlobalSignal"]),
-                      name="SignalExtraction")
+                      name="signals")
     signals.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
@@ -141,7 +141,7 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
 
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
                                    generate_report=True),
-                       name="aCompCor")
+                       name="acompcor")
     acompcor.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
@@ -164,10 +164,10 @@ def discover_wf(settings, name="ConfoundDiscoverer"):
                                                                                'acompcor',
                                                                                'motion'],
                                       output_names=['combined_out']),
-                     name="ConcatConfounds")
+                     name="concat")
     ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
                                                           suffix='confounds'),
-                           name="DerivConfounds")
+                           name="ds_confounds")
 
     def pick_csf(files):
         return files[0]
