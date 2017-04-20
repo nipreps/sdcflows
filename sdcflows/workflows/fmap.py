@@ -30,7 +30,8 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
-def fmap_workflow(name='fmap_workflow', settings=None):
+
+def init_fmap_wf(name='fmap_wf', settings=None):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
@@ -38,8 +39,8 @@ def fmap_workflow(name='fmap_workflow', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.fmap import fmap_workflow
-        wf = fmap_workflow(settings={'reportlets_dir': '.'})
+        from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
+        wf = init_fmap_wf(settings={'reportlets_dir': '.'})
 
     """
 
@@ -148,6 +149,7 @@ def _torads(in_file, out_file=None):
     nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header).to_filename(
         out_file)
     return out_file, cutoff
+
 
 def _tohz(in_file, cutoff_hz, out_file=None):
     from math import pi

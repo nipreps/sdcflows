@@ -38,12 +38,12 @@ def fmap_estimator(fmap_bids, settings=None):
     # pybids type options: (phase1|phase2|phasediff|epi|fieldmap)
     # https://github.com/INCF/pybids/blob/213c425d8ee820f4b7a7ae96e447a4193da2f359/bids/grabbids/bids_layout.py#L63
     if fmap_bids['type'] == 'fieldmap':
-        from .fmap import fmap_workflow
-        fmapwf = fmap_workflow(settings=settings)
+        from .fmap import init_fmap_wf
+        fmap_wf = init_fmap_wf(settings=settings)
         # set inputs
-        fmapwf.inputs.inputnode.fieldmap = fmap_bids['fieldmap']
-        fmapwf.inputs.inputnode.magnitude = fmap_bids['magnitude']
-        return fmapwf
+        fmap_wf.inputs.inputnode.fieldmap = fmap_bids['fieldmap']
+        fmap_wf.inputs.inputnode.magnitude = fmap_bids['magnitude']
+        return fmap_wf
 
     if fmap_bids['type'] == 'phasediff':
         from .phdiff import init_phdiff_wf
