@@ -12,6 +12,7 @@ Base fieldmap estimation
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+
 def fmap_estimator(fmap_bids, settings=None):
     """
     This workflow selects the fieldmap estimation data available for the subject and
@@ -45,15 +46,15 @@ def fmap_estimator(fmap_bids, settings=None):
         return fmapwf
 
     if fmap_bids['type'] == 'phasediff':
-        from .phdiff import phdiff_workflow
-        phwf = phdiff_workflow(settings=settings)
+        from .phdiff import init_phdiff_wf
+        phdiff_wf = init_phdiff_wf(settings=settings)
         # set inputs
-        phwf.inputs.inputnode.phasediff = fmap_bids['phasediff']
-        phwf.inputs.inputnode.magnitude = [
+        phdiff_wf.inputs.inputnode.phasediff = fmap_bids['phasediff']
+        phdiff_wf.inputs.inputnode.magnitude = [
             fmap_bids['magnitude1'],
             fmap_bids['magnitude2']
         ]
-        return phwf
+        return phdiff_wf
 
     if fmap_bids['type'] in ['phase1', 'phase2', 'epi']:
         raise NotImplementedError
