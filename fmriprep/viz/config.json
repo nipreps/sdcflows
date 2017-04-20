@@ -12,19 +12,19 @@
                 "description": "Stripped T1 placed over an image of the unstripped T1"
             },
             {
-                "name": "t1w_preprocessing/t1_seg",
+                "name": "anat_preproc/t1_seg",
                 "file_pattern": "anat/.*t1_seg",
                 "title": "T1 segmentation",
                 "description": " "
             },
             {
-                "name": "t1w_preprocessing/t1_2_mni",
+                "name": "anat_preproc/t1_2_mni",
                 "file_pattern": "anat/.*t1_2_mni",
                 "title": "T1 to MNI registration",
                 "description": "Corrected anatomical T1 image registered into MNI space"
             },
             {
-                "name": "t1w_preprocessing/reconall",
+                "name": "anat_preproc/reconall",
                 "file_pattern": "anat/.*reconall",
                 "title": "Surface reconstruction",
                 "description": "White and pial surfaces overlaid on T1 image"
