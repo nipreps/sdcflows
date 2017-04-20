@@ -13,7 +13,7 @@ Base fieldmap estimation
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 
-def fmap_estimator(fmap_bids, settings=None):
+def init_fmap_estimator_wf(fmap_bids, settings=None):
     """
     This workflow selects the fieldmap estimation data available for the subject and
     returns the estimated fieldmap in mm, along with a corresponding reference image.

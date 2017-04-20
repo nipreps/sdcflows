@@ -137,16 +137,16 @@ def bold_preprocessing(bold_file, settings, layout=None):
         LOGGER.info('Fieldmap estimation: type "%s" found', fmaps['type'])
         # Import specific workflows here, so we don't brake everything with one
         # unused workflow.
-        from fmriprep.workflows.fieldmap import fmap_estimator, init_sdc_unwarp_wf
-        fmap_est = fmap_estimator(fmaps, settings=settings)
+        from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
+        fmap_estimator_wf = init_fmap_estimator_wf(fmaps, settings=settings)
         sdc_unwarp_wf = init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=settings)
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
             (hmcwf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
                                     ('outputnode.epi_mask', 'inputnode.in_mask')]),
-            (fmap_est, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
-                                       ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                                       ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+            (fmap_estimator_wf, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
+                                                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                                                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
             (sdc_unwarp_wf, epi_2_t1, [('outputnode.out_warp', 'inputnode.fieldwarp'),
                                        ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
                                        ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
