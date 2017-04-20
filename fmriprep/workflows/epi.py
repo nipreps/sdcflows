@@ -91,9 +91,8 @@ def bold_preprocessing(bold_file, settings, layout=None):
                                        use_fieldwarp=(fmaps is not None))
 
     # get confounds
-    confounds_wf = confounds.discover_wf(name='confounds_wf',
-                                         settings=settings)
-    confounds_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
+    discover_wf = confounds.init_discover_wf(name='discover_wf', settings=settings)
+    discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     ds_epi_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
@@ -114,16 +113,16 @@ def bold_preprocessing(bold_file, settings, layout=None):
                                ('subject_id', 'inputnode.subject_id'),
                                ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                ]),
-        (inputnode, confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
-                                   ('epi', 'inputnode.source_file')]),
+        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
+                                  ('epi', 'inputnode.source_file')]),
         (hmcwf, epi_2_t1, [('outputnode.epi_split', 'inputnode.epi_split'),
                            ('outputnode.xforms', 'inputnode.hmc_xforms'),
                            ('outputnode.ref_image', 'inputnode.ref_epi'),
                            ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
-        (hmcwf, confounds_wf, [
+        (hmcwf, discover_wf, [
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
-        (epi_2_t1, confounds_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
-                                  ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+        (epi_2_t1, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
+                                 ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
         (inputnode, ds_epi_mask, [('epi', 'source_file')]),
     ])
 
