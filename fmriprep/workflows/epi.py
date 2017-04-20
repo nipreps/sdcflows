@@ -82,13 +82,13 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
     inputnode.inputs.epi = bold_file
 
     # HMC on the EPI
-    hmcwf = epi_hmc(name='hmcwf', metadata=metadata, settings=settings)
+    epi_hmc_wf = init_epi_hmc_wf(name='epi_hmc_wf', metadata=metadata, settings=settings)
 
     # mean EPI registration to T1w
-    epi_2_t1 = ref_epi_t1_registration(name='epi_2_t1',
-                                       reportlet_suffix='bbr',
-                                       settings=settings,
-                                       use_fieldwarp=(fmaps is not None))
+    epi_reg_wf = init_epi_reg_wf(name='epi_reg_wf',
+                                 reportlet_suffix='bbr',
+                                 settings=settings,
+                                 use_fieldwarp=(fmaps is not None))
 
     # get confounds
     discover_wf = confounds.init_discover_wf(name='discover_wf', settings=settings)
@@ -101,28 +101,28 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
     )
 
     workflow.connect([
-        (inputnode, hmcwf, [('epi', 'inputnode.epi')]),
-        (inputnode, epi_2_t1, [('t1w', 'inputnode.t1w'),
-                               ('epi', 'inputnode.name_source'),
-                               ('bias_corrected_t1', 'inputnode.bias_corrected_t1'),
-                               ('t1_brain', 'inputnode.t1_brain'),
-                               ('t1_mask', 'inputnode.t1_mask'),
-                               ('t1_seg', 'inputnode.t1_seg'),
-                               # Undefined if --no-freesurfer, but this is safe
-                               ('subjects_dir', 'inputnode.subjects_dir'),
-                               ('subject_id', 'inputnode.subject_id'),
-                               ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
-                               ]),
+        (inputnode, epi_hmc_wf, [('epi', 'inputnode.epi')]),
+        (inputnode, epi_reg_wf, [('t1w', 'inputnode.t1w'),
+                                 ('epi', 'inputnode.name_source'),
+                                 ('bias_corrected_t1', 'inputnode.bias_corrected_t1'),
+                                 ('t1_brain', 'inputnode.t1_brain'),
+                                 ('t1_mask', 'inputnode.t1_mask'),
+                                 ('t1_seg', 'inputnode.t1_seg'),
+                                 # Undefined if --no-freesurfer, but this is safe
+                                 ('subjects_dir', 'inputnode.subjects_dir'),
+                                 ('subject_id', 'inputnode.subject_id'),
+                                 ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
+                                 ]),
         (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
                                   ('epi', 'inputnode.source_file')]),
-        (hmcwf, epi_2_t1, [('outputnode.epi_split', 'inputnode.epi_split'),
-                           ('outputnode.xforms', 'inputnode.hmc_xforms'),
-                           ('outputnode.ref_image', 'inputnode.ref_epi'),
-                           ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
-        (hmcwf, discover_wf, [
+        (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
+                                  ('outputnode.xforms', 'inputnode.hmc_xforms'),
+                                  ('outputnode.ref_image', 'inputnode.ref_epi'),
+                                  ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
+        (epi_hmc_wf, discover_wf, [
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
-        (epi_2_t1, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
-                                 ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+        (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
+                                   ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
         (inputnode, ds_epi_mask, [('epi', 'source_file')]),
     ])
 
@@ -130,7 +130,7 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
         workflow.connect([
-            (hmcwf, ds_epi_mask, [('outputnode.epi_mask_report', 'in_file')])
+            (epi_hmc_wf, ds_epi_mask, [('outputnode.epi_mask_report', 'in_file')])
         ])
 
     else:
@@ -142,14 +142,15 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
         sdc_unwarp_wf = init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=settings)
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
-            (hmcwf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
-                                    ('outputnode.epi_mask', 'inputnode.in_mask')]),
+            (epi_hmc_wf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
+                                         ('outputnode.epi_mask', 'inputnode.in_mask')]),
             (fmap_estimator_wf, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
                                                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
                                                 ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
-            (sdc_unwarp_wf, epi_2_t1, [('outputnode.out_warp', 'inputnode.fieldwarp'),
-                                       ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
-                                       ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
+            (sdc_unwarp_wf, epi_reg_wf, [
+                ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
+                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
             (sdc_unwarp_wf, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
         ])
 
@@ -159,11 +160,11 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
         workflow.connect([
             (inputnode, fmapreport, [('t1_seg', 'inputnode.in_seg'),
                                      ('epi', 'inputnode.name_source')]),
-            (hmcwf, fmapreport, [
+            (epi_hmc_wf, fmapreport, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
             (sdc_unwarp_wf, fmapreport, [
                 ('outputnode.out_reference', 'inputnode.in_post')]),
-            (epi_2_t1, fmapreport, [
+            (epi_reg_wf, fmapreport, [
                 ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
@@ -176,11 +177,11 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
                 ('epi', 'inputnode.name_source'),
                 ('bias_corrected_t1', 'inputnode.t1'),
                 ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')]),
-            (hmcwf, epi_mni_trans_wf, [
+            (epi_hmc_wf, epi_mni_trans_wf, [
                 ('outputnode.epi_split', 'inputnode.epi_split'),
                 ('outputnode.xforms', 'inputnode.hmc_xforms'),
                 ('outputnode.epi_mask', 'inputnode.epi_mask')]),
-            (epi_2_t1, epi_mni_trans_wf, [
+            (epi_reg_wf, epi_mni_trans_wf, [
                 ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
         ])
         if fmaps:
@@ -198,14 +199,14 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
             (inputnode, epi_surf, [('subjects_dir', 'inputnode.subjects_dir'),
                                    ('subject_id', 'inputnode.subject_id'),
                                    ('epi', 'inputnode.name_source')]),
-            (epi_2_t1, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
+            (epi_reg_wf, epi_surf, [('outputnode.epi_t1', 'inputnode.source_file')]),
         ])
 
     return workflow
 
 
 # pylint: disable=R0914
-def epi_hmc(metadata, name='epi_hmc', settings=None):
+def init_epi_hmc_wf(metadata, name='epi_hmc_wf', settings=None):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`EPI (echo-planar imaging)` image.
@@ -321,8 +322,8 @@ def epi_hmc(metadata, name='epi_hmc', settings=None):
     return workflow
 
 
-def ref_epi_t1_registration(reportlet_suffix, name='ref_epi_t1_registration',
-                            use_fieldwarp=False, settings=None):
+def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
+                    use_fieldwarp=False, settings=None):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the EPI space into the T1-space
