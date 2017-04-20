@@ -155,16 +155,16 @@ def init_func_preproc_wf(bold_file, settings, layout=None):
         ])
 
         # Report on EPI correction
-        fmapreport = fieldmap_unwarping_report(name='fmapreport',
-                                               settings=settings)
+        fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf',
+                                                           settings=settings)
         workflow.connect([
-            (inputnode, fmapreport, [('t1_seg', 'inputnode.in_seg'),
-                                     ('epi', 'inputnode.name_source')]),
-            (epi_hmc_wf, fmapreport, [
+            (inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
+                                                ('epi', 'inputnode.name_source')]),
+            (epi_hmc_wf, fmap_unwarp_report_wf, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
-            (sdc_unwarp_wf, fmapreport, [
+            (sdc_unwarp_wf, fmap_unwarp_report_wf, [
                 ('outputnode.out_reference', 'inputnode.in_post')]),
-            (epi_reg_wf, fmapreport, [
+            (epi_reg_wf, fmap_unwarp_report_wf, [
                 ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
@@ -753,7 +753,7 @@ def init_epi_mni_trans_wf(name='epi_mni_trans_wf', settings=None,
     return workflow
 
 
-def fieldmap_unwarping_report(name='fieldmap_unwarping_report', settings=None):
+def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', settings=None):
     from nipype.interfaces import ants
     from nipype.interfaces import utility as niu
     from niworkflows.interfaces import SimpleBeforeAfter
