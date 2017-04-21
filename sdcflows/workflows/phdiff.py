@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def phdiff_workflow(name='FMAP_phdiff', settings=None):
+def init_phdiff_wf(name='phdiff_wf', settings=None):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
@@ -42,8 +42,8 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.phdiff import phdiff_workflow
-        wf = phdiff_workflow(settings={'reportlets_dir': '.'})
+        from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
+        wf = init_phdiff_wf(settings={'reportlets_dir': '.'})
 
 
     Outputs::
@@ -68,17 +68,17 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
         return inlist[0]
 
     # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(), name='metadata')
+    meta = pe.Node(ReadSidecarJSON(), name='meta')
     dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
-                               function=_delta_te), name='ComputeDeltaTE')
+                               function=_delta_te), name='dte')
 
     # Merge input magnitude images
-    magmrg = pe.Node(IntraModalMerge(), name='MagnitudeFuse')
+    magmrg = pe.Node(IntraModalMerge(), name='magmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
-    n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
+    n4 = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='n4')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
-                  name='MagnitudeBET')
+                  name='bet')
     ds_fmap_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
                             suffix='fmap_mask'),name='ds_fmap_mask')
@@ -89,23 +89,23 @@ def phdiff_workflow(name='FMAP_phdiff', settings=None):
     # phase diff -> radians
     pha2rads = pe.Node(niu.Function(
         input_names=['in_file'], output_names=['out_file'],
-        function=siemens2rads), name='PreparePhase')
+        function=siemens2rads), name='pha2rads')
 
     # FSL PRELUDE will perform phase-unwrapping
-    prelude = pe.Node(fsl.PRELUDE(), name='PhaseUnwrap')
+    prelude = pe.Node(fsl.PRELUDE(), name='prelude')
 
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
-                                        kernel_size=3), name='PhaseDenoise')
+                                        kernel_size=3), name='denoise')
 
     demean = pe.Node(niu.Function(
         input_names=['in_file', 'in_mask'], output_names=['out_file'],
-        function=demean_image), name='DemeanFmap')
+        function=demean_image), name='demean')
 
-    cleanup = cleanup_edge_pipeline()
+    cleanup = cleanup_edge_pipeline(name="cleanup")
 
     compfmap = pe.Node(niu.Function(
         input_names=['in_file', 'delta_te'], output_names=['out_file'],
-        function=phdiff2fmap), name='ComputeFieldmap')
+        function=phdiff2fmap), name='compfmap')
 
     # The phdiff2fmap interface is equivalent to:
     # rad2rsec (using rads2radsec from nipype.workflows.dmri.fsl.utils)

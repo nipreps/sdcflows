@@ -30,7 +30,8 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
-def fmap_workflow(name='FMAP_fmap', settings=None):
+
+def init_fmap_wf(name='fmap_wf', settings=None):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
@@ -38,8 +39,8 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.fmap import fmap_workflow
-        wf = fmap_workflow(settings={'reportlets_dir': '.'})
+        from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
+        wf = init_fmap_wf(settings={'reportlets_dir': '.'})
 
     """
 
@@ -53,16 +54,16 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
                          name='outputnode')
 
     # Merge input magnitude images
-    magmrg = pe.Node(IntraModalMerge(), name='MagnitudeFuse')
+    magmrg = pe.Node(IntraModalMerge(), name='magmrg')
     # Merge input fieldmap images
     fmapmrg = pe.Node(IntraModalMerge(zero_based_avg=False, hmc=False),
-                      name='FieldmapFuse')
+                      name='fmapmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
-    mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='MagnitudeBias')
-    cphdr = pe.Node(CopyHeader(), name='FixHDR')
+    mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='mag_inu')
+    cphdr = pe.Node(CopyHeader(), name='cphdr')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
-                  name='MagnitudeBET')
+                  name='bet')
     ds_fmap_mask = pe.Node(
         DerivativesDataSink(base_directory=settings['reportlets_dir'],
                             suffix='fmap_mask'), name='ds_fmap_mask')
@@ -84,7 +85,7 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
             unwrap=False, despike=False, njobs=settings.get('ants_nthreads', 4)),
-            name='FieldmapMassage')
+            name='fmapenh')
         fmapenh.interface.num_threads = settings.get('ants_nthreads', 4)
         fmapenh.interface.estimated_memory_gb = 4
 
@@ -98,20 +99,20 @@ def fmap_workflow(name='FMAP_fmap', settings=None):
     else:
         torads = pe.Node(niu.Function(
             input_names=['in_file'], output_names=['out_file', 'cutoff_hz'],
-            function=_torads), name='PreUnwrap')
-        prelude = pe.Node(fsl.PRELUDE(), name='PhaseUnwrap')
+            function=_torads), name='torads')
+        prelude = pe.Node(fsl.PRELUDE(), name='prelude')
         tohz = pe.Node(niu.Function(
             input_names=['in_file', 'cutoff_hz'], output_names=['out_file'],
-            function=_tohz), name='PostUnwrap')
+            function=_tohz), name='tohz')
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
-                                            kernel_size=3), name='PhaseDenoise')
+                                            kernel_size=3), name='denoise')
         demean = pe.Node(niu.Function(
             input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=demean_image), name='DemeanFmap')
-        cleanup = cleanup_edge_pipeline()
+            function=demean_image), name='demean')
+        cleanup = cleanup_edge_pipeline(name='cleanup')
 
-        applymsk = pe.Node(ApplyMask(), name='PhaseMask')
+        applymsk = pe.Node(ApplyMask(), name='applymsk')
 
         workflow.connect([
             (bet, prelude, [('mask_file', 'mask_file'),
@@ -148,6 +149,7 @@ def _torads(in_file, out_file=None):
     nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header).to_filename(
         out_file)
     return out_file, cutoff
+
 
 def _tohz(in_file, cutoff_hz, out_file=None):
     from math import pi

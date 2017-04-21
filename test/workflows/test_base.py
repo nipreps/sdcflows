@@ -1,7 +1,7 @@
 ''' Testing module for fmriprep.workflows.base '''
 import mock
 
-from fmriprep.workflows.base import basic_wf
+from fmriprep.workflows.base import init_basic_wf
 from test.workflows.utilities import TestWorkflow
 
 @mock.patch('fmriprep.interfaces.BIDSDataGrabber') # no actual BIDS dir necessary
@@ -16,12 +16,12 @@ class TestBase(TestWorkflow):
                          'skip_native': False, 'freesurfer': False}
 
         # run
-        wfbasic = basic_wf(mock_subject_data, mock_settings)
+        wfbasic = init_basic_wf(mock_subject_data, mock_settings)
         wfbasic.write_graph()
 
         self._assert_mandatory_inputs_set(wfbasic)
 
     def _assert_mandatory_inputs_set(self, workflow):
         self.assert_inputs_set(workflow, {
-            'BIDSDatasource': ['subject_data']
+            'bidssrc': ['subject_data']
         })

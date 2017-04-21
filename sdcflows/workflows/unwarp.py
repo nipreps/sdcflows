@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def sdc_unwarp(name='SDC_unwarp', settings=None):
+def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
@@ -43,8 +43,8 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.unwarp import sdc_unwarp
-        wf = sdc_unwarp(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
+        from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
+        wf = init_sdc_unwarp_wf(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
 
 
     Inputs
@@ -91,7 +91,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         fields=['out_reference', 'out_warp', 'out_mask',
                 'out_jacobian', 'out_mask_report']), name='outputnode')
 
-    meta = pe.Node(ReadSidecarJSON(), name='metadata')
+    meta = pe.Node(ReadSidecarJSON(), name='meta')
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
@@ -207,7 +207,7 @@ def sdc_unwarp(name='SDC_unwarp', settings=None):
         # Demean within mask
         demean = pe.Node(niu.Function(
             input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=_demean), name='fmap_demean')
+            function=_demean), name='demean')
 
         workflow.connect([
             (gen_vsm, demean, [('shift_out_file', 'in_file')]),
