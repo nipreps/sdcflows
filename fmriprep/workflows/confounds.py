@@ -20,7 +20,7 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def discover_wf(settings, name="discover_wf"):
+def init_discover_wf(settings, name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor

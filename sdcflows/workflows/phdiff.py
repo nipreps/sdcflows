@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def phdiff_workflow(name='phdiff_workflow', settings=None):
+def init_phdiff_wf(name='phdiff_wf', settings=None):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
@@ -42,8 +42,8 @@ def phdiff_workflow(name='phdiff_workflow', settings=None):
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.phdiff import phdiff_workflow
-        wf = phdiff_workflow(settings={'reportlets_dir': '.'})
+        from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
+        wf = init_phdiff_wf(settings={'reportlets_dir': '.'})
 
 
     Outputs::
