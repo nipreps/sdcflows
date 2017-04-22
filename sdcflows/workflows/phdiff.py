@@ -69,8 +69,7 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(), name='meta')
-    dte = pe.Node(niu.Function(input_names=['in_values'], output_names=['delta_te'],
-                               function=_delta_te), name='dte')
+    dte = pe.Node(niu.Function(function=_delta_te), name='dte')
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -87,9 +86,7 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
 
     # phase diff -> radians
-    pha2rads = pe.Node(niu.Function(
-        input_names=['in_file'], output_names=['out_file'],
-        function=siemens2rads), name='pha2rads')
+    pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
 
     # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.Node(fsl.PRELUDE(), name='prelude')
@@ -97,15 +94,11 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                         kernel_size=3), name='denoise')
 
-    demean = pe.Node(niu.Function(
-        input_names=['in_file', 'in_mask'], output_names=['out_file'],
-        function=demean_image), name='demean')
+    demean = pe.Node(niu.Function(function=demean_image), name='demean')
 
     cleanup = cleanup_edge_pipeline(name="cleanup")
 
-    compfmap = pe.Node(niu.Function(
-        input_names=['in_file', 'delta_te'], output_names=['out_file'],
-        function=phdiff2fmap), name='compfmap')
+    compfmap = pe.Node(niu.Function(function=phdiff2fmap), name='compfmap')
 
     # The phdiff2fmap interface is equivalent to:
     # rad2rsec (using rads2radsec from nipype.workflows.dmri.fsl.utils)
@@ -121,15 +114,15 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
         (n4, bet, [('output_image', 'in_file')]),
         (bet, prelude, [('mask_file', 'mask_file')]),
         (inputnode, pha2rads, [('phasediff', 'in_file')]),
-        (pha2rads, prelude, [('out_file', 'phase_file')]),
+        (pha2rads, prelude, [('out', 'phase_file')]),
         (meta, dte, [('out_dict', 'in_values')]),
-        (dte, compfmap, [('delta_te', 'delta_te')]),
+        (dte, compfmap, [('out', 'delta_te')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
-        (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+        (demean, cleanup, [('out', 'inputnode.in_file')]),
         (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
         (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
-        (compfmap, outputnode, [('out_file', 'fmap')]),
+        (compfmap, outputnode, [('out', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
         (inputnode, ds_fmap_mask, [('phasediff', 'source_file')]),

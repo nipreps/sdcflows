@@ -58,20 +58,14 @@ def init_discover_wf(settings, name="discover_wf"):
     tcompcor.interface.estimated_memory_gb = settings[
                                               "biggest_epi_file_size_gb"] * 3
 
-    CSF_roi = pe.Node(utility.Function(input_names=['in_file', 'epi_mask',
-                                                    'erosion_mm',
-                                                    'epi_mask_erosion_mm'],
-                                       output_names=['roi_file', 'eroded_mask'],
-                                       function=prepare_roi_from_probtissue),
+    CSF_roi = pe.Node(utility.Function(function=prepare_roi_from_probtissue,
+                                       output_names=['roi_file', 'eroded_mask']),
                       name='CSF_roi')
     CSF_roi.inputs.erosion_mm = 0
     CSF_roi.inputs.epi_mask_erosion_mm = 30
 
-    WM_roi = pe.Node(utility.Function(input_names=['in_file', 'epi_mask',
-                                                   'erosion_mm',
-                                                   'epi_mask_erosion_mm'],
-                                      output_names=['roi_file', 'eroded_mask'],
-                                      function=prepare_roi_from_probtissue),
+    WM_roi = pe.Node(utility.Function(function=prepare_roi_from_probtissue,
+                                      output_names=['roi_file', 'eroded_mask']),
                      name='WM_roi')
     WM_roi.inputs.erosion_mm = 6
     WM_roi.inputs.epi_mask_erosion_mm = 10
@@ -97,11 +91,7 @@ def init_discover_wf(settings, name="discover_wf"):
         concat_nii.to_filename("concat.nii.gz")
         return os.path.abspath("concat.nii.gz")
 
-    concat_rois = pe.Node(utility.Function(input_names=['in_WM', 'in_mask',
-                                                        'ref_header'],
-                                           output_names=['concat_file'],
-                                           function=concat_rois_func),
-                          name='concat_rois')
+    concat_rois = pe.Node(utility.Function(function=concat_rois_func), name='concat_rois')
 
     # Global and segment regressors
     signals = pe.Node(SignalExtraction(detrend=True,
@@ -133,11 +123,7 @@ def init_discover_wf(settings, name="discover_wf"):
         new_nii.to_filename("logical_or.nii.gz")
         return os.path.abspath("logical_or.nii.gz")
 
-    combine_rois = pe.Node(utility.Function(input_names=['in_CSF', 'in_WM',
-                                                         'ref_header'],
-                                            output_names=['logical_and_file'],
-                                            function=combine_rois),
-                           name='combine_rois')
+    combine_rois = pe.Node(utility.Function(function=combine_rois), name='combine_rois')
 
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
                                    generate_report=True),
@@ -158,13 +144,7 @@ def init_discover_wf(settings, name="discover_wf"):
     )
 
     # misc utilities
-    concat = pe.Node(utility.Function(function=_gather_confounds, input_names=['signals', 'dvars',
-                                                                               'frame_displace',
-                                                                               'tcompcor',
-                                                                               'acompcor',
-                                                                               'motion'],
-                                      output_names=['combined_out']),
-                     name="concat")
+    concat = pe.Node(utility.Function(function=_gather_confounds), name="concat")
     ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
                                                           suffix='confounds'),
                            name="ds_confounds")
@@ -189,10 +169,7 @@ def init_discover_wf(settings, name="discover_wf"):
 
         return os.path.abspath("motion.tsv")
 
-    add_header = pe.Node(utility.Function(function=add_header_func,
-                                          input_names=["in_file"],
-                                          output_names=["out_file"]),
-                         name="add_header")
+    add_header = pe.Node(utility.Function(function=add_header_func), name="add_header")
 
     workflow = pe.Workflow(name=name)
     workflow.connect([
@@ -215,14 +192,14 @@ def init_discover_wf(settings, name="discover_wf"):
 
         # anatomical confound: aCompCor.
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
-        (combine_rois, acompcor, [('logical_and_file', 'mask_file')]),
+        (combine_rois, acompcor, [('out', 'mask_file')]),
 
         (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
         (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
         (inputnode, concat_rois, [('fmri_file', 'ref_header')]),
 
         # anatomical confound: signal extraction
-        (concat_rois, signals, [('concat_file', 'label_files')]),
+        (concat_rois, signals, [('out', 'label_files')]),
         (inputnode, signals, [('fmri_file', 'in_file')]),
 
         # connect the confound nodes to the concatenate node
@@ -232,12 +209,12 @@ def init_discover_wf(settings, name="discover_wf"):
         (tcompcor, concat, [('components_file', 'tcompcor')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
         (inputnode, add_header, [('movpar_file', 'in_file')]),
-        (add_header, concat, [('out_file', 'motion')]),
+        (add_header, concat, [('out', 'motion')]),
 
-        (concat, outputnode, [('combined_out', 'confounds_file')]),
+        (concat, outputnode, [('out', 'confounds_file')]),
 
         # print stuff in derivatives
-        (concat, ds_confounds, [('combined_out', 'in_file')]),
+        (concat, ds_confounds, [('out', 'in_file')]),
         (inputnode, ds_confounds, [('source_file', 'source_file')]),
 
         (acompcor, ds_report_a, [('out_report', 'in_file')]),

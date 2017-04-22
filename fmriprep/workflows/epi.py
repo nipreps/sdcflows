@@ -230,9 +230,7 @@ def init_epi_hmc_wf(metadata, name='epi_hmc_wf', settings=None):
         np.savetxt("motion_params.txt", mpars)
         return os.path.abspath("motion_params.txt")
 
-    normalize_motion = pe.Node(niu.Function(function=normalize_motion_func,
-                                            input_names=["in_file", "format"],
-                                            output_names=["out_file"]),
+    normalize_motion = pe.Node(niu.Function(function=normalize_motion_func),
                                name="normalize_motion")
     normalize_motion.inputs.format = "FSL"
 
@@ -279,9 +277,7 @@ def init_epi_hmc_wf(metadata, name='epi_hmc_wf', settings=None):
             return os.path.abspath(out_file)
 
         create_custom_slice_timing_file = pe.Node(
-            niu.Function(function=create_custom_slice_timing_file_func,
-                         input_names=["metadata"],
-                         output_names=["out_file"]),
+            niu.Function(function=create_custom_slice_timing_file_func),
             name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
@@ -296,8 +292,8 @@ def init_epi_hmc_wf(metadata, name='epi_hmc_wf', settings=None):
         workflow.connect([
             (inputnode, slice_timing_correction, [('epi', 'in_file')]),
             (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
-            (create_custom_slice_timing_file, slice_timing_correction, [(('out_file', prefix_at),
-                                                                         'tpattern')]),
+            (create_custom_slice_timing_file, slice_timing_correction, [
+                (('out', prefix_at), 'tpattern')]),
             (slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
@@ -312,7 +308,7 @@ def init_epi_hmc_wf(metadata, name='epi_hmc_wf', settings=None):
                             ('ref_image', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
-        (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
+        (normalize_motion, outputnode, [('out', 'movpar_file')]),
         (skullstrip_epi, outputnode, [('mask_file', 'epi_mask')]),
         (skullstrip_epi, outputnode, [('out_report', 'epi_mask_report')]),
         (inputnode, split, [('epi', 'in_file')]),
@@ -346,11 +342,7 @@ def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
     )
 
     # Extract wm mask from segmentation
-    wm_mask = pe.Node(
-        niu.Function(input_names=['in_file'], output_names=['out_file'],
-                     function=_extract_wm),
-        name='wm_mask'
-    )
+    wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
@@ -378,12 +370,7 @@ def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
             np.savetxt(out_file, out_xfm, fmt='%.12g')
             return out_file
 
-        transformer = pe.Node(
-            niu.Function(
-                function=apply_fs_transform,
-                input_names=['fs_2_t1_transform', 'bbreg_transform'],
-                output_names=['out_file']),
-            name='transformer')
+        transformer = pe.Node(niu.Function(function=apply_fs_transform), name='transformer')
     else:
         flt_bbr_init = pe.Node(
             FLIRTRPT(generate_report=True, dof=6),
@@ -516,9 +503,9 @@ def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
             (explicit_mask_epi, bbregister, [('out_file', 'source_file')]),
             (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
             (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
-            (transformer, invt_bbr, [('out_file', 'in_file')]),
-            (transformer, outputnode, [('out_file', 'mat_epi_to_t1')]),
-            (transformer, fsl2itk_fwd, [('out_file', 'transform_file')]),
+            (transformer, invt_bbr, [('out', 'in_file')]),
+            (transformer, outputnode, [('out', 'mat_epi_to_t1')]),
+            (transformer, fsl2itk_fwd, [('out', 'transform_file')]),
             (bbregister, ds_report, [('out_report', 'in_file')]),
             (bbregister, outputnode, [('out_reg_file', 'fs_reg_file')]),
         ])
@@ -529,7 +516,7 @@ def init_epi_reg_wf(reportlet_suffix, name='epi_reg_wf',
             (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
             (inputnode, flt_bbr, [('t1_brain', 'reference')]),
             (explicit_mask_epi, flt_bbr, [('out_file', 'in_file')]),
-            (wm_mask, flt_bbr, [('out_file', 'wm_seg')]),
+            (wm_mask, flt_bbr, [('out', 'wm_seg')]),
             (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
             (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
             (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
@@ -568,12 +555,8 @@ def init_epi_surf_wf(name='epi_surf_wf', settings=None):
         """
         return subject_id if space == 'fsnative' else space
 
-    targets = pe.MapNode(
-        niu.Function(function=select_target,
-                     input_names=['subject_id', 'space'],
-                     output_names='target'),
-        iterfield=['space'],
-        name='targets')
+    targets = pe.MapNode(niu.Function(function=select_target),
+                         iterfield=['space'], name='targets')
     targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
@@ -601,11 +584,8 @@ def init_epi_surf_wf(name='epi_surf_wf', settings=None):
         info['LR'] = info['LR'].upper()
         return 'space-{space}.{LR}.func'.format(**info)
 
-    normalize = pe.MapNode(
-        niu.Function(function=normalize_giftis, input_names=['in_file'],
-                     output_names=['normalized']),
-        iterfield='in_file',
-        name='normalize')
+    normalize = pe.MapNode(niu.Function(function=normalize_giftis),
+                           iterfield='in_file', name='normalize')
 
     def update_gifti_metadata(in_file):
         import os
@@ -623,13 +603,8 @@ def init_epi_surf_wf(name='epi_surf_wf', settings=None):
         img.to_filename(fname)
         return os.path.abspath(fname)
 
-    update_metadata = pe.MapNode(
-        niu.Function(
-            function=update_gifti_metadata,
-            input_names=['in_file'],
-            output_names=['out_file']),
-        iterfield='in_file',
-        name='update_metadata')
+    update_metadata = pe.MapNode(niu.Function(function=update_gifti_metadata),
+                                 iterfield='in_file', name='update_metadata')
 
     bold_surfaces = pe.MapNode(
          DerivativesDataSink(base_directory=settings['output_dir']),
@@ -641,15 +616,15 @@ def init_epi_surf_wf(name='epi_surf_wf', settings=None):
         (inputnode, rename_src, [('source_file', 'in_file')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
                               ('subject_id', 'subject_id')]),
-        (targets, sampler, [('target', 'target_subject')]),
+        (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
         (merger, normalize, [('out', 'in_file')]),
         (merger, update_metadata, [('out', 'in_file')]),
         (inputnode, bold_surfaces,
          [(('name_source', _first), 'source_file')]),
-        (update_metadata, bold_surfaces, [('out_file', 'in_file')]),
-        (normalize, bold_surfaces, [('normalized', 'suffix')]),
+        (update_metadata, bold_surfaces, [('out', 'in_file')]),
+        (normalize, bold_surfaces, [('out', 'suffix')]),
         ])
 
     return workflow
@@ -784,8 +759,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', settings=None):
         dimension=3, float=True, interpolation='NearestNeighbor'),
         name='map_seg')
 
-    sel_wm = pe.Node(niu.Function(input_names=['in_seg'], output_names=['out_file'],
-                                  function=_getwm), name='sel_wm')
+    sel_wm = pe.Node(niu.Function(function=_getwm), name='sel_wm')
 
     epi_rpt = pe.Node(SimpleBeforeAfter(), name='epi_rpt')
     epi_rpt_ds = pe.Node(
@@ -801,7 +775,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', settings=None):
                               ('in_seg', 'input_image'),
                               ('in_xfm', 'transforms')]),
         (map_seg, sel_wm, [('output_image', 'in_seg')]),
-        (sel_wm, epi_rpt, [('out_file', 'wm_seg')]),
+        (sel_wm, epi_rpt, [('out', 'wm_seg')]),
     ])
 
     return workflow
