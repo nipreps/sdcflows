@@ -97,19 +97,14 @@ def init_fmap_wf(name='fmap_wf', settings=None):
         ])
 
     else:
-        torads = pe.Node(niu.Function(
-            input_names=['in_file'], output_names=['out_file', 'cutoff_hz'],
-            function=_torads), name='torads')
+        torads = pe.Node(niu.Function(output_names=['out_file', 'cutoff_hz'],
+                                      function=_torads), name='torads')
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(niu.Function(
-            input_names=['in_file', 'cutoff_hz'], output_names=['out_file'],
-            function=_tohz), name='tohz')
+        tohz = pe.Node(niu.Function(function=_tohz), name='tohz')
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
-        demean = pe.Node(niu.Function(
-            input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=demean_image), name='demean')
+        demean = pe.Node(niu.Function(function=demean_image), name='demean')
         cleanup = cleanup_edge_pipeline(name='cleanup')
 
         applymsk = pe.Node(ApplyMask(), name='applymsk')
@@ -121,9 +116,9 @@ def init_fmap_wf(name='fmap_wf', settings=None):
             (torads, tohz, [('cutoff_hz', 'cutoff_hz')]),
             (torads, prelude, [('out_file', 'phase_file')]),
             (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
-            (tohz, denoise, [('out_file', 'in_file')]),
+            (tohz, denoise, [('out', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
-            (demean, cleanup, [('out_file', 'inputnode.in_file')]),
+            (demean, cleanup, [('out', 'inputnode.in_file')]),
             (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
             (cleanup, applymsk, [('outputnode.out_file', 'in_file')]),
             (bet, applymsk, [('mask_file', 'in_mask')]),

@@ -126,8 +126,7 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
                             suffix='fmap_reg_vsm'), name='ds_reg_vsm')
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
-    torads = pe.Node(niu.Function(input_names=['in_file'], output_names=['out_file'],
-                                  function=_hz2rads), name='torads')
+    torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
 
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
     # Convert the VSM into a DFM (displacements field map)
@@ -142,10 +141,7 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    fieldmap_fov_mask = pe.Node(niu.Function(function=_fill_with_ones,
-                                             input_names=['in_file'],
-                                             output_names=['out_file']),
-                                name='fieldmap_fov_mask')
+    fieldmap_fov_mask = pe.Node(niu.Function(function=_fill_with_ones), name='fieldmap_fov_mask')
 
     fmap_fov2ref_apply = pe.Node(ANTSApplyTransformsRPT(
         generate_report=False, dimension=3, interpolation='NearestNeighbor',
@@ -179,14 +175,14 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
         (meta, gen_vsm, [(('out_dict', _get_ec), 'dwell_time'),
                          (('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
-        (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
+        (torads, gen_vsm, [('out', 'fmap_in_file')]),
         (vsm2dfm, unwarp_reference, [('out_file', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
         (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
         (vsm2dfm, outputnode, [('out_file', 'out_warp')]),
         (vsm2dfm, jac_dfm, [('out_file', 'deformationField')]),
         (inputnode, fieldmap_fov_mask, [('fmap_ref', 'in_file')]),
-        (fieldmap_fov_mask, fmap_fov2ref_apply, [('out_file', 'input_image')]),
+        (fieldmap_fov_mask, fmap_fov2ref_apply, [('out', 'input_image')]),
         (inputnode, fmap_fov2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap_fov2ref_apply, [('composite_transform', 'transforms')]),
         (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
@@ -205,14 +201,12 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
 
     if settings.get('fmap-demean', True):
         # Demean within mask
-        demean = pe.Node(niu.Function(
-            input_names=['in_file', 'in_mask'], output_names=['out_file'],
-            function=_demean), name='demean')
+        demean = pe.Node(niu.Function(function=_demean), name='demean')
 
         workflow.connect([
             (gen_vsm, demean, [('shift_out_file', 'in_file')]),
             (fmap_mask2ref_apply, demean, [('output_image', 'in_mask')]),
-            (demean, vsm2dfm, [('out_file', 'in_file')]),
+            (demean, vsm2dfm, [('out', 'in_file')]),
         ])
 
     else:
