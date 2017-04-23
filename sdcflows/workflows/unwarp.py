@@ -33,7 +33,8 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
+def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
+                       fmap_demean, debug, name='sdc_unwarp_wf'):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
@@ -44,7 +45,7 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
-        wf = init_sdc_unwarp_wf(settings={'reportlets_dir': '.', 'ants_nthreads': 8})
+        wf = init_sdc_unwarp_wf(reportlets_dir='.', ants_nthreads=8)
 
 
     Inputs
@@ -79,10 +80,6 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
 
     """
 
-    if settings is None:
-        # Don't crash if workflow used outside fmriprep
-        settings = {'ants_nthreads': 6}
-
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['in_reference', 'in_mask', 'name_source',
@@ -98,17 +95,17 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
     ants_settings = pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json')
-    if settings.get('debug', False):
+    if debug:
         ants_settings = pkgr.resource_filename(
             'fmriprep', 'data/fmap-any_registration_testing.json')
     fmap2ref_reg = pe.Node(ANTSRegistrationRPT(generate_report=True,
         from_file=ants_settings, output_inverse_warped_image=True,
-        output_warped_image=True, num_threads=settings['ants_nthreads']),
+        output_warped_image=True, num_threads=ants_nthreads),
                        name='fmap2ref_reg')
-    fmap2ref_reg.interface.num_threads = settings['ants_nthreads']
+    fmap2ref_reg.interface.num_threads = ants_nthreads
 
     ds_reg = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='fmap_reg'), name='ds_reg')
 
     # Map the VSM into the EPI space
@@ -122,7 +119,7 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
         name='fmap_mask2ref_apply')
 
     ds_reg_vsm = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='fmap_reg_vsm'), name='ds_reg_vsm')
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
@@ -194,12 +191,12 @@ def init_sdc_unwarp_wf(name='sdc_unwarp_wf', settings=None):
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
     ])
 
-    if not settings.get('fmap_bspline', False):
+    if not fmap_bspline:
         workflow.connect([
             (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')])
         ])
 
-    if settings.get('fmap-demean', True):
+    if fmap_demean:
         # Demean within mask
         demean = pe.Node(niu.Function(function=_demean), name='demean')
 

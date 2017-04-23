@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def init_phdiff_wf(name='phdiff_wf', settings=None):
+def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
@@ -43,7 +43,7 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
-        wf = init_phdiff_wf(settings={'reportlets_dir': '.'})
+        wf = init_phdiff_wf(reportlets_dir='.')
 
 
     Outputs::
@@ -54,8 +54,6 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
 
 
     """
-    if settings is None:
-        settings = {}
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
                         name='inputnode')
@@ -79,7 +77,7 @@ def init_phdiff_wf(name='phdiff_wf', settings=None):
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
     ds_fmap_mask = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='fmap_mask'),name='ds_fmap_mask')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(

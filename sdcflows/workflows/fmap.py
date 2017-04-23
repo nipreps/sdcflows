@@ -31,7 +31,7 @@ from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
 
-def init_fmap_wf(name='fmap_wf', settings=None):
+def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
@@ -40,12 +40,9 @@ def init_fmap_wf(name='fmap_wf', settings=None):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
-        wf = init_fmap_wf(settings={'reportlets_dir': '.'})
+        wf = init_fmap_wf(reportlets_dir='.', ants_nthreads=6)
 
     """
-
-    if settings is None:
-        settings = {}
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
@@ -65,7 +62,7 @@ def init_fmap_wf(name='fmap_wf', settings=None):
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
     ds_fmap_mask = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='fmap_mask'), name='ds_fmap_mask')
 
     workflow.connect([
@@ -81,12 +78,12 @@ def init_fmap_wf(name='fmap_wf', settings=None):
         (bet, ds_fmap_mask, [('out_report', 'in_file')]),
     ])
 
-    if settings.get('fmap_bspline', False):
+    if fmap_bspline:
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
-            unwrap=False, despike=False, njobs=settings.get('ants_nthreads', 4)),
+            unwrap=False, despike=False, njobs=ants_nthreads),
             name='fmapenh')
-        fmapenh.interface.num_threads = settings.get('ants_nthreads', 4)
+        fmapenh.interface.num_threads = ants_nthreads
         fmapenh.interface.estimated_memory_gb = 4
 
         workflow.connect([

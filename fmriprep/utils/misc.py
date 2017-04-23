@@ -129,14 +129,6 @@ def collect_bids_data(dataset, subject, task=None, session=None, run=None):
     return imaging_data
 
 
-def get_biggest_epi_file_size_gb(files):
-    max_size = 0
-    for file in files:
-        size = os.path.getsize(file)/(1024*1024*1024)
-        if size > max_size:
-            max_size = size
-    return max_size
-
 def fix_multi_T1w_source_name(in_files):
     import os
     # in case there are multiple T1s we make up a generic source name
