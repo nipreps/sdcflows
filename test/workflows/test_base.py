@@ -8,8 +8,6 @@ from test.workflows.utilities import TestWorkflow
 class TestBase(TestWorkflow):
 
     def test_single_subject_wf(self, _):
-        # set up
-        mock_subject_data = {'func': ''}
 
         # run
         wfbasic = init_single_subject_wf(subject_id='test',

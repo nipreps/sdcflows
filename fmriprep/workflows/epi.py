@@ -40,7 +40,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, output_dir, ants_nthreads,
                          fmap_bspline, fmap_demean, debug, layout=None):
-    if bold_file == 'test_file':
+    if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
         bold_file_size_gb = os.path.getsize(bold_file)/(1024*1024*1024)
