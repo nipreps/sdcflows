@@ -22,9 +22,9 @@ from io import open
 
 from nipype import logging
 from nipype.interfaces.base import (
-    traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec,
-    File, InputMultiPath, OutputMultiPath, traits
-)
+    traits, TraitedSpec, BaseInterfaceInputSpec,
+    File, InputMultiPath, OutputMultiPath)
+from niworkflows.interfaces.base import SimpleInterface
 
 from fmriprep.interfaces.bids import _splitext
 from fmriprep.utils.misc import make_folder, genfname
@@ -39,7 +39,7 @@ class GenerateSamplingReferenceInputSpec(BaseInterfaceInputSpec):
 class GenerateSamplingReferenceOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='one file with all inputs flattened')
 
-class GenerateSamplingReference(BaseInterface):
+class GenerateSamplingReference(SimpleInterface):
     """
     Generates a reference grid for resampling one image keeping original resolution,
     but moving data to a different space (e.g. MNI)
@@ -47,13 +47,6 @@ class GenerateSamplingReference(BaseInterface):
 
     input_spec = GenerateSamplingReferenceInputSpec
     output_spec = GenerateSamplingReferenceOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(GenerateSamplingReference, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
 
     def _run_interface(self, runtime):
         self._results['out_file'] = _gen_reference(self.inputs.fixed_image,
@@ -75,16 +68,9 @@ class IntraModalMergeOutputSpec(TraitedSpec):
     out_mats = OutputMultiPath(exists=True, desc='output matrices')
     out_movpar = OutputMultiPath(exists=True, desc='output movement parameters')
 
-class IntraModalMerge(BaseInterface):
+class IntraModalMerge(SimpleInterface):
     input_spec = IntraModalMergeInputSpec
     output_spec = IntraModalMergeOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(IntraModalMerge, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
 
     def _run_interface(self, runtime):
         from nipype.interfaces import fsl
@@ -148,16 +134,9 @@ class CopyHeaderInputSpec(BaseInterfaceInputSpec):
 class CopyHeaderOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
 
-class CopyHeader(BaseInterface):
+class CopyHeader(SimpleInterface):
     input_spec = CopyHeaderInputSpec
     output_spec = CopyHeaderOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(CopyHeader, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
 
     def _run_interface(self, runtime):
 
