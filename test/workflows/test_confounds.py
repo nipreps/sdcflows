@@ -8,7 +8,6 @@ import pandas as pd
 from fmriprep.workflows.confounds import init_discover_wf, _gather_confounds
 
 from test.workflows.utilities import TestWorkflow
-from test.workflows import stub
 
 logging.disable(logging.INFO) # don't print unnecessary msgs
 
@@ -17,9 +16,9 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = init_discover_wf(stub.settings({'biggest_epi_file_size_gb': 1,
-                                                   'skip_native': False,
-                                                   'reportlets_dir': '.'}))
+        workflow = init_discover_wf(bold_file_size_gb=1,
+                                    reportlets_dir='.',
+                                    output_dir='.')
         workflow.write_hierarchical_dotfile()
 
         # assert

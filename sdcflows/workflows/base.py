@@ -13,7 +13,8 @@ Base fieldmap estimation
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 
-def init_fmap_estimator_wf(fmap_bids, settings=None):
+def init_fmap_estimator_wf(fmap_bids, reportlets_dir, ants_nthreads,
+                           fmap_bspline):
     """
     This workflow selects the fieldmap estimation data available for the subject and
     returns the estimated fieldmap in mm, along with a corresponding reference image.
@@ -39,7 +40,9 @@ def init_fmap_estimator_wf(fmap_bids, settings=None):
     # https://github.com/INCF/pybids/blob/213c425d8ee820f4b7a7ae96e447a4193da2f359/bids/grabbids/bids_layout.py#L63
     if fmap_bids['type'] == 'fieldmap':
         from .fmap import init_fmap_wf
-        fmap_wf = init_fmap_wf(settings=settings)
+        fmap_wf = init_fmap_wf(reportlets_dir=reportlets_dir,
+                               ants_nthreads=ants_nthreads,
+                               fmap_bspline=fmap_bspline)
         # set inputs
         fmap_wf.inputs.inputnode.fieldmap = fmap_bids['fieldmap']
         fmap_wf.inputs.inputnode.magnitude = fmap_bids['magnitude']
@@ -47,7 +50,7 @@ def init_fmap_estimator_wf(fmap_bids, settings=None):
 
     if fmap_bids['type'] == 'phasediff':
         from .phdiff import init_phdiff_wf
-        phdiff_wf = init_phdiff_wf(settings=settings)
+        phdiff_wf = init_phdiff_wf(reportlets_dir=reportlets_dir)
         # set inputs
         phdiff_wf.inputs.inputnode.phasediff = fmap_bids['phasediff']
         phdiff_wf.inputs.inputnode.magnitude = [

@@ -20,7 +20,8 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(settings, name="discover_wf"):
+def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
+                     name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -43,20 +44,17 @@ def init_discover_wf(settings, name="discover_wf"):
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
                     name="dvars")
-    dvars.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
+    dvars.interface.estimated_memory_gb = bold_file_size_gb * 3
     # Frame displacement
     frame_displace = pe.Node(confounds.FramewiseDisplacement(parameter_source="SPM"),
                              name="frame_displace")
-    frame_displace.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
+    frame_displace.interface.estimated_memory_gb = bold_file_size_gb * 3
     # CompCor
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
                                    percentile_threshold=.05),
                        name="tcompcor")
-    tcompcor.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
+    tcompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
 
     CSF_roi = pe.Node(utility.Function(function=prepare_roi_from_probtissue,
                                        output_names=['roi_file', 'eroded_mask']),
@@ -97,8 +95,7 @@ def init_discover_wf(settings, name="discover_wf"):
     signals = pe.Node(SignalExtraction(detrend=True,
                                        class_labels=["WhiteMatter", "GlobalSignal"]),
                       name="signals")
-    signals.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
+    signals.interface.estimated_memory_gb = bold_file_size_gb * 3
 
     def combine_rois(in_CSF, in_WM, ref_header):
         import os
@@ -128,24 +125,23 @@ def init_discover_wf(settings, name="discover_wf"):
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
                                    generate_report=True),
                        name="acompcor")
-    acompcor.interface.estimated_memory_gb = settings[
-                                              "biggest_epi_file_size_gb"] * 3
+    acompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
 
     ds_report_a = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='acompcor'),
         name='ds_report_a'
     )
 
     ds_report_t = pe.Node(
-        DerivativesDataSink(base_directory=settings['reportlets_dir'],
+        DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='tcompcor'),
         name='ds_report_t'
     )
 
     # misc utilities
     concat = pe.Node(utility.Function(function=_gather_confounds), name="concat")
-    ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=settings['output_dir'],
+    ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=output_dir,
                                                           suffix='confounds'),
                            name="ds_confounds")
 
