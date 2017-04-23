@@ -48,7 +48,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     LOGGER.info('Creating bold processing workflow for "%s".', bold_file)
     fname = split_filename(bold_file)[1]
     fname_nosub = '_'.join(fname.split("_")[1:])
-    name = fname_nosub.replace(".", "_").replace(" ", "").replace("-", "_").replace("_bold", "_func_preproc") + "_wf"
+    name = "func_preproc_" + fname_nosub.replace(".", "_").replace(" ", "").replace("-", "_").replace("_bold", "_wf")
 
     # For doc building purposes
     if layout is None or bold_file == 'bold_preprocesing':
