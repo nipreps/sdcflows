@@ -8,7 +8,6 @@ import pandas as pd
 from fmriprep.workflows.confounds import init_discover_wf, _gather_confounds
 
 from test.workflows.utilities import TestWorkflow
-from test.workflows import stub
 
 logging.disable(logging.INFO) # don't print unnecessary msgs
 

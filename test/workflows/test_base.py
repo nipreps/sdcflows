@@ -12,8 +12,8 @@ class TestBase(TestWorkflow):
         mock_subject_data = {'func': ''}
 
         # run
-        wfbasic = init_single_subject_wf(mock_subject_data,
-                                         name='test',
+        wfbasic = init_single_subject_wf(subject_id='test',
+                                         name='single_subject_wf',
                                          task_id='',
                                          ignore=[],
                                          debug=False,
