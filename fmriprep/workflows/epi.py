@@ -40,8 +40,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, output_dir, ants_nthreads,
                          fmap_bspline, fmap_demean, debug, layout=None):
-
-    bold_file_size_gb = os.path.getsize(bold_file)/(1024*1024*1024)
+    if bold_file == 'test_file':
+        bold_file_size_gb = 1
+    else:
+        bold_file_size_gb = os.path.getsize(bold_file)/(1024*1024*1024)
 
     LOGGER.info('Creating bold processing workflow for "%s".', bold_file)
     fname = split_filename(bold_file)[1]

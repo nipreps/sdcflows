@@ -45,7 +45,9 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
-        wf = init_sdc_unwarp_wf(reportlets_dir='.', ants_nthreads=8)
+        wf = init_sdc_unwarp_wf(reportlets_dir='.', ants_nthreads=8,
+                                fmap_bspline=False, fmap_demean=True,
+                                debug=False)
 
 
     Inputs

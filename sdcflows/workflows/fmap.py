@@ -40,7 +40,8 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
-        wf = init_fmap_wf(reportlets_dir='.', ants_nthreads=6)
+        wf = init_fmap_wf(reportlets_dir='.', ants_nthreads=6, 
+                          fmap_bspline=False)
 
     """
 
