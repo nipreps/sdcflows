@@ -37,16 +37,9 @@ dependencies:
     - pip install --upgrade wrapper/
 test:
   override:
-    - docker run -ti --rm=false --entrypoint="python" poldracklab/fmriprep:latest -m unittest discover test
-    - set -o pipefail && docker run -ti --rm=false -v $HOME/docs:/_build_html --entrypoint=sphinx-build poldracklab/fmriprep:latest -T -E -b html -d _build/doctrees-readthedocs -W -D language=en docs/ /_build_html 2>&1 | tee $HOME/docs/builddocs.log :
+    - bash .circle/tests.sh :
         timeout: 4800
-    - cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
-    - fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --output-space fsaverage5 --debug:
-        timeout: 4800
-    - docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --no-freesurfer --debug -w /scratch:
-        timeout: 4800
-    - find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
-    - find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
+        parallel: true
 
 general:
   artifacts:
