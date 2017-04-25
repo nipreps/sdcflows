@@ -82,8 +82,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                       't1_2_mni_forward_transform',
                                                       'subjects_dir',
                                                       'subject_id',
-                                                      'fs_2_t1_transform',
-                                                      't1w']),
+                                                      'fs_2_t1_transform']),
                         name='inputnode')
     inputnode.inputs.epi = bold_file
 
@@ -118,8 +117,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     workflow.connect([
         (inputnode, epi_hmc_wf, [('epi', 'inputnode.epi')]),
-        (inputnode, epi_reg_wf, [('t1w', 'inputnode.t1w'),
-                                 ('epi', 'inputnode.name_source'),
+        (inputnode, epi_reg_wf, [('epi', 'inputnode.name_source'),
                                  ('t1_preproc', 'inputnode.t1_preproc'),
                                  ('t1_brain', 'inputnode.t1_brain'),
                                  ('t1_mask', 'inputnode.t1_mask'),
@@ -355,7 +353,7 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
                                       'unwarped_ref_epi', 'unwarped_ref_mask',
                                       't1_preproc', 't1_brain', 't1_mask',
-                                      't1_seg', 't1w', 'epi_split', 'hmc_xforms',
+                                      't1_seg', 'epi_split', 'hmc_xforms',
                                       'subjects_dir', 'subject_id', 'fs_2_t1_transform',
                                       'fieldwarp']),
         name='inputnode'
