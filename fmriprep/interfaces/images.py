@@ -25,6 +25,7 @@ from nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath, traits
 )
+from nipype.interfaces import freesurfer as fs
 
 from fmriprep.interfaces.bids import _splitext
 from fmriprep.utils.misc import make_folder, genfname
@@ -59,6 +60,26 @@ class GenerateSamplingReference(BaseInterface):
         self._results['out_file'] = _gen_reference(self.inputs.fixed_image,
                                                    self.inputs.moving_image)
         return runtime
+
+
+class StructuralReference(fs.RobustTemplate):
+    """ Variation on RobustTemplate that simply copies the source if a single
+    volume is provided. """
+    @property
+    def cmdline(self):
+        import nibabel as nb
+        from nipype.utils.filemanip import copyfile
+        cmd = super(StructuralReference, self).cmdline
+        if len(self.inputs.in_files) > 1:
+            return cmd
+
+        img = nb.load(self.inputs.in_files[0])
+        if len(img.shape) > 3 and img.shape[3] > 1:
+            return cmd
+
+        out_file = self._list_outputs()['out_file']
+        copyfile(self.inputs.in_files[0], out_file)
+        return "echo Only one time point!"
 
 
 class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
