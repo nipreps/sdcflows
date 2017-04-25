@@ -41,7 +41,7 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, layout=None):
+                         fmap_bspline, fmap_demean, debug, mni_ref, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
@@ -223,6 +223,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         epi_mni_trans_wf = init_epi_mni_trans_wf(output_dir=output_dir,
                                                  template=template,
                                                  bold_file_size_gb=bold_file_size_gb,
+                                                 mni_ref=mni_ref,
                                                  name='epi_mni_trans_wf')
         workflow.connect([
             (inputnode, epi_mni_trans_wf, [
@@ -625,6 +626,7 @@ def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
 
 def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
                           name='epi_mni_trans_wf',
+                          mni_ref=None,
                           use_fieldwarp=False):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
@@ -683,7 +685,6 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
-        (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (mask_mni_tfm, outputnode, [('output_image', 'epi_mask_mni')])
     ])
 
@@ -703,10 +704,17 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
-        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (merge, outputnode, [('out_file', 'epi_mni')]),
     ])
 
+    if mni_ref is None:
+        workflow.connect([
+            (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
+            (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+        ])
+    else:
+        mask_mni_tfm.inputs.reference_image = mni_ref
+        epi_to_mni_transform.inputs.reference_image = mni_ref
     return workflow
 
 
