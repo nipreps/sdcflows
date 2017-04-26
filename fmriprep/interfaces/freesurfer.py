@@ -9,6 +9,7 @@ FreeSurfer tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+from nipype.interfaces.base import isdefined, File
 from nipype.interfaces import freesurfer as fs
 
 
@@ -30,3 +31,22 @@ class StructuralReference(fs.RobustTemplate):
         out_file = self._list_outputs()['out_file']
         copyfile(self.inputs.in_files[0], out_file)
         return "echo Only one time point!"
+
+
+class MakeMidthicknessInputSpec(fs.utils.MRIsExpandInputSpec):
+    graymid = File(desc='Existing graymid/midthickness file')
+
+
+class MakeMidthickness(fs.MRIsExpand):
+    """ Variation on RobustTemplate that simply copies the source if a single
+    volume is provided. """
+    input_spec = MakeMidthicknessInputSpec
+
+    @property
+    def cmdline(self):
+        cmd = super(MakeMidthickness, self).cmdline
+        if not isdefined(self.inputs.graymid):
+            return cmd
+
+        return "cp {} {}".format(self.inputs.graymid,
+                                 self._list_outputs()['out_file'])
