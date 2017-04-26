@@ -32,6 +32,8 @@ from fmriprep.interfaces import itk
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
+from nipype.interfaces import ants
+from fmriprep.interfaces import CopyHeader
 
 def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
                        fmap_demean, debug, name='sdc_unwarp_wf'):
@@ -215,8 +217,157 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
 
     return workflow
 
+
+def init_pepolar_unwarp_report_wf(fmaps, bids_dir, name="pepolar_unwarp_wf"):
+
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['in_reference', 'in_mask', 'name_source']), name='inputnode')
+
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['out_reference', 'out_warp', 'out_mask',
+                'out_jacobian', 'out_mask_report']), name='outputnode')
+
+    mag_inu = pe.MapNode(ants.N4BiasFieldCorrection(dimension=3),
+                         iterfield='input_image',
+                         name='mag_inu')
+    mag_inu.inputs.input_image = [fmap['epi'] for fmap in fmaps]
+    cphdr = pe.MapNode(CopyHeader(), iterfield=['hdr_file', 'in_file'],
+                       name='cphdr')
+    cphdr.inputs.hdr_file = [fmap['epi'] for fmap in fmaps]
+
+    skullstrip = pe.MapNode(ComputeEPIMask(dilation=1), iterfield='in_file',
+                            name='skullstrip')
+
+    apply_skullstrip = pe.MapNode(fsl.ApplyMask(),
+                                  iterfield=['mask_file', 'in_file'],
+                                  name="apply_skullstrip")
+    apply_skullstrip.inputs.in_file = [fmap['epi'] for fmap in fmaps]
+
+    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
+
+    merge_list = pe.Node(niu.Merge(2), name='merge_list')
+
+    merge = pe.Node(fsl.Merge(dimension='t'), name="merge")
+
+    generate_idata = pe.Node(niu.Function(function=_generate_idata),
+                             name='generate_idata')
+    generate_idata.inputs.bids_dir = bids_dir
+    generate_idata.inputs.fmaps = fmaps
+
+    topup = pe.Node(fsl.TOPUP(), name='topup')
+
+    to_ants = pe.Node(niu.Function(function=_add_dimension), name='to_ants')
+
+    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp')
+
+    unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
+                                                      generate_report=False,
+                                                      float=True,
+                                                      interpolation='LanczosWindowedSinc'),
+                               name='unwarp_reference')
+
+    apply_jacobian = pe.Node(fsl.BinaryMaths(operation="mul"),
+                             name='apply_jacobian')
+
+    ref_msk_post = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+                           name='ref_msk_post')
+
+    workflow.connect([
+        (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
+                                        ('in_mask', 'mask_file')]),
+        #(explicit_mask_epi, merge_list, [('out_file', 'in1')]),
+        (inputnode, merge_list, [('in_reference', 'in1')]),
+        (mag_inu, cphdr, [('output_image', 'in_file')]),
+        (cphdr, skullstrip, [('out_file', 'in_file')]),
+        (skullstrip, apply_skullstrip, [('mask_file', 'mask_file')]),
+        #(apply_skullstrip, merge_list, [('out_file', 'in2')]),
+        (cphdr, merge_list, [('out_file', 'in2')]),
+        (merge_list, merge, [('out', 'in_files')]),
+        (inputnode, generate_idata, [('name_source', 'name_source')]),
+        (generate_idata, topup, [('out', 'encoding_file')]),
+        (merge, topup, [('merged_file', 'in_file')]),
+        (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
+        (topup, cphdr_warp, [(('out_warps', _pick_first), 'in_file')]),
+        (cphdr_warp, to_ants, [('out_file', 'in_file')]),
+        (to_ants, unwarp_reference, [('out', 'transforms')]),
+        (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
+        (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
+        (unwarp_reference, apply_jacobian, [('output_image', 'in_file')]),
+        (topup, apply_jacobian, [(('out_jacs', _pick_first), 'operand_file')]),
+        (apply_jacobian, ref_msk_post, [('out_file', 'in_file')]),
+        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
+        (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
+        (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
+        (to_ants, outputnode, [('out', 'out_warp')]),
+        (topup, outputnode, [(('out_jacs', _pick_first), 'out_jacobian')]),
+        ])
+
+    return workflow
+
+
 # Helper functions
 # ------------------------------------------------------------
+
+def _pick_first(l):
+    return l[0]
+
+def _add_dimension(in_file):
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype(np.dtype('<f4'))
+    hdr.set_intent('vector', (), '')
+
+    field = nii.get_data()
+    field = field[:, :, :, np.newaxis, :]
+
+    out_file = os.path.abspath("warpfield.nii.gz")
+
+    nb.Nifti1Image(field.astype(np.dtype('<f4')), nii.affine, hdr).to_filename(out_file)
+
+    return out_file
+
+
+def _generate_idata(name_source, fmaps, bids_dir):
+    import os
+    from bids.grabbids import BIDSLayout
+    out_file = os.path.abspath("idata.txt")
+
+    layout = BIDSLayout(bids_dir)
+
+    def _gen_line(in_file, oneline=False):
+        import nibabel as nb
+        lines = ''
+        shape = nb.load(in_file).shape
+
+        if len(shape) == 3 or oneline:
+            vols = 1
+        else:
+            vols = nb.load(in_file).shape[3]
+        vols = 1
+        for i in range(vols):
+            line_arr = ['0', '0', '0', '0']
+            meta = layout.get_metadata(in_file)
+            line_arr[3] = str(meta["TotalReadoutTime"])
+            if meta["PhaseEncodingDirection"].endswith('-'):
+                dir = '-1'
+            else:
+                dir = '1'
+            line_arr[{'i':0, 'j':1, 'k':2}[meta["PhaseEncodingDirection"][0:1]]] = dir
+
+            lines += ' '.join(line_arr) + '\n'
+        return lines
+
+    with open(out_file, 'w') as fp:
+        fp.write(_gen_line(name_source, True))
+        for fmap in fmaps:
+            fp.write(_gen_line(fmap['epi']))
+
+    return out_file
 
 
 def _get_ec(in_dict):
