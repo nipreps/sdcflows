@@ -162,6 +162,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             epi_fmaps = [fmap for fmap in fmaps if fmap['type']=='epi']
             sdc_unwarp_wf = init_pepolar_unwarp_report_wf(fmaps=epi_fmaps,
                                                           bids_dir=bids_dir,
+                                                          ants_nthreads=ants_nthreads,
                                                           name='pepolar_unwarp_wf')
         else:
             # Import specific workflows here, so we don't brake everything with one

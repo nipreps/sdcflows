@@ -219,7 +219,7 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
     return workflow
 
 
-def init_pepolar_unwarp_report_wf(fmaps, bids_dir, name="pepolar_unwarp_wf"):
+def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_unwarp_wf"):
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
@@ -247,7 +247,10 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, name="pepolar_unwarp_wf"):
                                noweight=True,
                                minpatch=9,
                                nopadWARP=True,
-                               environ={'OMP_NUM_THREADS':'8'}), name='qwarp')
+                               environ={'OMP_NUM_THREADS': str(ants_nthreads)}),
+                    name='qwarp')
+    qwarp.interface.num_threads = ants_nthreads
+
 
     to_ants = pe.Node(niu.Function(function=_add_dimension), name='to_ants')
 
