@@ -67,7 +67,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
-        fmaps = layout.get_fieldmap(bold_file) if 'fieldmaps' not in ignore else []
+        fmaps = layout.get_fieldmaps(bold_file) if 'fieldmaps' not in ignore else []
 
     # TODO: To be removed (supported fieldmaps):
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):

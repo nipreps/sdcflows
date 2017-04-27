@@ -24,6 +24,7 @@ import pkg_resources as pkgr
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+from nipype.interfaces import afni
 from nipype.interfaces.ants import CreateJacobianDeterminantImage
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 from niworkflows.interfaces.masks import ComputeEPIMask
@@ -228,34 +229,25 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, name="pepolar_unwarp_wf"):
         fields=['out_reference', 'out_warp', 'out_mask',
                 'out_jacobian', 'out_mask_report']), name='outputnode')
 
-    mag_inu = pe.MapNode(ants.N4BiasFieldCorrection(dimension=3),
-                         iterfield='input_image',
-                         name='mag_inu')
-    mag_inu.inputs.input_image = [fmap['epi'] for fmap in fmaps]
-    cphdr = pe.MapNode(CopyHeader(), iterfield=['hdr_file', 'in_file'],
-                       name='cphdr')
-    cphdr.inputs.hdr_file = [fmap['epi'] for fmap in fmaps]
+    mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='mag_inu')
+    mag_inu.inputs.input_image = [fmap['epi'] for fmap in fmaps][0]
 
-    skullstrip = pe.MapNode(ComputeEPIMask(dilation=1), iterfield='in_file',
-                            name='skullstrip')
+    cphdr = pe.Node(CopyHeader(), name='cphdr')
+    cphdr.inputs.hdr_file = [fmap['epi'] for fmap in fmaps][0]
 
-    apply_skullstrip = pe.MapNode(fsl.ApplyMask(),
-                                  iterfield=['mask_file', 'in_file'],
-                                  name="apply_skullstrip")
-    apply_skullstrip.inputs.in_file = [fmap['epi'] for fmap in fmaps]
+    skullstrip = pe.Node(ComputeEPIMask(dilation=1), name='skullstrip')
+
+    apply_skullstrip = pe.Node(fsl.ApplyMask(), name="apply_skullstrip")
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
-    merge_list = pe.Node(niu.Merge(2), name='merge_list')
-
-    merge = pe.Node(fsl.Merge(dimension='t'), name="merge")
-
-    generate_idata = pe.Node(niu.Function(function=_generate_idata),
-                             name='generate_idata')
-    generate_idata.inputs.bids_dir = bids_dir
-    generate_idata.inputs.fmaps = fmaps
-
-    topup = pe.Node(fsl.TOPUP(), name='topup')
+    qwarp = pe.Node(afni.Qwarp(plusminus=True,
+                               pblur=[0.05, 0.05],
+                               blur=[-1, -1],
+                               noweight=True,
+                               minpatch=9,
+                               nopadWARP=True,
+                               environ={'OMP_NUM_THREADS':'8'}), name='qwarp')
 
     to_ants = pe.Node(niu.Function(function=_add_dimension), name='to_ants')
 
@@ -267,40 +259,29 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, name="pepolar_unwarp_wf"):
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    apply_jacobian = pe.Node(fsl.BinaryMaths(operation="mul"),
-                             name='apply_jacobian')
-
     ref_msk_post = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
                            name='ref_msk_post')
 
     workflow.connect([
         (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
                                         ('in_mask', 'mask_file')]),
-        #(explicit_mask_epi, merge_list, [('out_file', 'in1')]),
-        (inputnode, merge_list, [('in_reference', 'in1')]),
         (mag_inu, cphdr, [('output_image', 'in_file')]),
         (cphdr, skullstrip, [('out_file', 'in_file')]),
         (skullstrip, apply_skullstrip, [('mask_file', 'mask_file')]),
-        #(apply_skullstrip, merge_list, [('out_file', 'in2')]),
-        (cphdr, merge_list, [('out_file', 'in2')]),
-        (merge_list, merge, [('out', 'in_files')]),
-        (inputnode, generate_idata, [('name_source', 'name_source')]),
-        (generate_idata, topup, [('out', 'encoding_file')]),
-        (merge, topup, [('merged_file', 'in_file')]),
+        (cphdr, apply_skullstrip, [('out_file', 'in_file')]),
+        (explicit_mask_epi, qwarp, [('out_file', 'source_file')]),
+        (apply_skullstrip, qwarp, [('out_file', 'base_file')]),
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
-        (topup, cphdr_warp, [(('out_warps', _pick_first), 'in_file')]),
+        (qwarp, cphdr_warp, [('source_warp', 'in_file')]),
         (cphdr_warp, to_ants, [('out_file', 'in_file')]),
         (to_ants, unwarp_reference, [('out', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
         (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
-        (unwarp_reference, apply_jacobian, [('output_image', 'in_file')]),
-        (topup, apply_jacobian, [(('out_jacs', _pick_first), 'operand_file')]),
-        (apply_jacobian, ref_msk_post, [('out_file', 'in_file')]),
+        (unwarp_reference, ref_msk_post, [('output_image', 'in_file')]),
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
         (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
         (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
         (to_ants, outputnode, [('out', 'out_warp')]),
-        (topup, outputnode, [(('out_jacs', _pick_first), 'out_jacobian')]),
         ])
 
     return workflow
@@ -322,12 +303,9 @@ def _add_dimension(in_file):
     hdr.set_data_dtype(np.dtype('<f4'))
     hdr.set_intent('vector', (), '')
 
-    field = nii.get_data()
-    field = field[:, :, :, np.newaxis, :]
-
     out_file = os.path.abspath("warpfield.nii.gz")
 
-    nb.Nifti1Image(field.astype(np.dtype('<f4')), nii.affine, hdr).to_filename(out_file)
+    nb.Nifti1Image(nii.get_data().astype(np.dtype('<f4')), nii.affine, hdr).to_filename(out_file)
 
     return out_file
 
