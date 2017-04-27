@@ -24,11 +24,11 @@ case ${CIRCLE_NODE_INDEX} in
         -T -E -b html -d _build/doctrees-readthedocs -W -D language=en docs/ /_build_html 2>&1 \
         | tee $HOME/docs/builddocs.log
     cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
-    docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --no-freesurfer --debug -w /scratch:
+    docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --no-freesurfer --debug --write-graph -w /scratch:
     find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
   1)
-    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --output-space fsaverage5 --debug
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --output-space fsaverage5 --debug --write-graph
     find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
 esac
