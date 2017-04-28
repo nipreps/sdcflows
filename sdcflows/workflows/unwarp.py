@@ -306,7 +306,8 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
     workflow.connect([
         (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
                                         ('in_mask', 'mask_file')]),
-        (inputnode, prepare_opposite_dir, [('name_source', 'name_source')]),
+        (inputnode, prepare_opposite_dir, [('in_reference', 'ref_image'),
+                                           ('name_source', 'name_source')]),
         (prepare_opposite_dir, mag_inu, [('out', 'input_image')]),
         (prepare_opposite_dir, cphdr, [('out', 'hdr_file')]),
         (mag_inu, cphdr, [('output_image', 'in_file')]),
@@ -354,10 +355,10 @@ def _fix_hdr(in_file):
     return out_file
 
 
-def _prepare_opposite_dir(name_source, fmaps, bids_dir):
+def _prepare_opposite_dir(name_source, fmaps, bids_dir, ref_image):
     import os
     from bids.grabbids import BIDSLayout
-    from nilearn.image import concat_imgs
+    from nilearn.image import concat_imgs, iter_img
     import nibabel as nb
     import numpy as np
     from nipype.interfaces import afni
@@ -371,20 +372,26 @@ def _prepare_opposite_dir(name_source, fmaps, bids_dir):
     for fmap in fmaps:
         fmap_pe = layout.get_metadata(fmap['epi'])["PhaseEncodingDirection"]
         if fmap_pe[0] == target_pe[0] and len(fmap_pe) != len(target_pe):
-            usable_fieldmaps.append(fmap['epi'])
+            nii = nb.load(fmap['epi'])
+            if len(nii.shape) == 4:
+                for img in iter_img(nii):
+                    usable_fieldmaps.append(img)
+            else:
+                usable_fieldmaps.append(nii)
 
     if len(usable_fieldmaps) == 0:
         raise Exception("None of the discovered fieldmaps has the right "
                         "phase encoding direction.")
 
-    all_fmaps_nii = concat_imgs(usable_fieldmaps)
+    all_fmaps_nii = concat_imgs([nb.load(ref_image)] + usable_fieldmaps,
+                                auto_resample=True)
     all_fmaps_nii.to_filename("concat.nii.gz")
     res = afni.Volreg(in_file="concat.nii.gz", args='-Fourier -twopass',
                       zpad=4, outputtype='NIFTI_GZ').run()
 
     mc_nii = nb.load(res.outputs.out_file)
 
-    median_image_data = np.median(mc_nii.get_data(), axis=3)
+    median_image_data = np.median(mc_nii.get_data()[:, :, :, 1:], axis=3)
     nb.Nifti1Image(median_image_data, mc_nii.affine,
                    mc_nii.header).to_filename("opposite_dir.nii.gz")
 
