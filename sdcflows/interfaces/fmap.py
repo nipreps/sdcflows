@@ -14,9 +14,10 @@ from builtins import range
 import numpy as np
 import nibabel as nb
 from nipype import logging
-from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec, TraitedSpec,
+from nipype.interfaces.base import (BaseInterfaceInputSpec, TraitedSpec,
                                     File, isdefined, traits, InputMultiPath, Str)
 from nipype.interfaces import fsl
+from niworkflows.interfaces.base import SimpleInterface
 from niworkflows.interfaces.registration import FUGUERPT
 from fmriprep.utils.misc import genfname
 
@@ -39,20 +40,13 @@ class FieldEnhanceOutputSpec(TraitedSpec):
     out_unwrapped = File(desc='unwrapped fieldmap')
 
 
-class FieldEnhance(BaseInterface):
+class FieldEnhance(SimpleInterface):
     """
     The FieldEnhance interface wraps a workflow to massage the input fieldmap
     and return it masked, despiked, etc.
     """
     input_spec = FieldEnhanceInputSpec
     output_spec = FieldEnhanceOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(FieldEnhance, self).__init__(**inputs)
-
-    def _list_outputs(self):
-        return self._results
 
     def _run_interface(self, runtime):
         from scipy import ndimage as sim
