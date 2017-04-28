@@ -24,7 +24,7 @@ The are four broad families of methodologies for mapping the field:
     :abbr:`pepolar (Phase Encoding POLARity)`: techniques acquire at least two images
     distorted due to the inhomogeneity of the field, but varying in
     :abbr:`PE (phase-encoding)` direction.
-    Corresponds to 8.9.4 of BIDS. Not yet supported by FMRIPREP. Coming soon.
+    Corresponds to 8.9.4 of BIDS.
   * **Point-spread function acquisition**: Not supported by FMRIPREP.
 
 

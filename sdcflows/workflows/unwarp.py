@@ -220,6 +220,43 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
 
 
 def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_unwarp_wf"):
+    """
+    This workflow takes in a set of EPI files with opposite phase encoding 
+    direction than the target file and calculates a displacements field 
+    (in other words, an ANTs-compatible warp file).
+
+    It also calculates a new mask for the input dataset that takes into 
+    account the distortions.
+
+    .. workflow ::
+
+        from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_report_wf
+        wf = init_sdc_unwarp_wf(bids_dir='.', ants_nthreads=8,
+                                fmaps=[{'epi':'/path/to/file.nii.gz'}])
+
+
+    Inputs
+
+        in_reference
+            the reference image
+        in_mask
+            a brain mask corresponding to ``in_reference``
+        name_source
+            path to the original _bold file being unwarped
+
+    Outputs
+
+        out_reference
+            the ``in_reference`` after unwarping
+        out_warp
+            the corresponding :abbr:`DFM (displacements field map)` compatible with
+            ANTs
+        out_mask
+            mask of the unwarped input file
+        out_mask_report
+            reportled for the skullstripping
+
+    """
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
@@ -227,13 +264,16 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_warp', 'out_mask',
-                'out_jacobian', 'out_mask_report']), name='outputnode')
+                'out_mask_report']), name='outputnode')
+
+    prepare_opposite_dir = pe.Node(niu.Function(function=_prepare_opposite_dir),
+                                   name="prepare_opposite_dir")
+    prepare_opposite_dir.inputs.fmaps = fmaps
+    prepare_opposite_dir.inputs.bids_dir = bids_dir
 
     mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='mag_inu')
-    mag_inu.inputs.input_image = [fmap['epi'] for fmap in fmaps][0]
 
     cphdr = pe.Node(CopyHeader(), name='cphdr')
-    cphdr.inputs.hdr_file = [fmap['epi'] for fmap in fmaps][0]
 
     skullstrip = pe.Node(ComputeEPIMask(dilation=1), name='skullstrip')
 
@@ -241,8 +281,7 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
-    qwarp = pe.Node(afni.Qwarp(plusminus=True,
-                               pblur=[0.05, 0.05],
+    qwarp = pe.Node(afni.QwarpPlusMinus(pblur=[0.05, 0.05],
                                blur=[-1, -1],
                                noweight=True,
                                minpatch=9,
@@ -251,8 +290,7 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
                     name='qwarp')
     qwarp.interface.num_threads = ants_nthreads
 
-
-    to_ants = pe.Node(niu.Function(function=_add_dimension), name='to_ants')
+    to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants')
 
     cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp')
 
@@ -268,6 +306,9 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
     workflow.connect([
         (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
                                         ('in_mask', 'mask_file')]),
+        (inputnode, prepare_opposite_dir, [('name_source', 'name_source')]),
+        (prepare_opposite_dir, mag_inu, [('out', 'input_image')]),
+        (prepare_opposite_dir, cphdr, [('out', 'hdr_file')]),
         (mag_inu, cphdr, [('output_image', 'in_file')]),
         (cphdr, skullstrip, [('out_file', 'in_file')]),
         (skullstrip, apply_skullstrip, [('mask_file', 'mask_file')]),
@@ -296,7 +337,7 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
 def _pick_first(l):
     return l[0]
 
-def _add_dimension(in_file):
+def _fix_hdr(in_file):
     import nibabel as nb
     import numpy as np
     import os
@@ -313,42 +354,41 @@ def _add_dimension(in_file):
     return out_file
 
 
-def _generate_idata(name_source, fmaps, bids_dir):
+def _prepare_opposite_dir(name_source, fmaps, bids_dir):
     import os
     from bids.grabbids import BIDSLayout
-    out_file = os.path.abspath("idata.txt")
+    from nilearn.image import concat_imgs
+    import nibabel as nb
+    import numpy as np
+    from nipype.interfaces import afni
 
     layout = BIDSLayout(bids_dir)
 
-    def _gen_line(in_file, oneline=False):
-        import nibabel as nb
-        lines = ''
-        shape = nb.load(in_file).shape
+    target_pe = layout.get_metadata(name_source)["PhaseEncodingDirection"]
 
-        if len(shape) == 3 or oneline:
-            vols = 1
-        else:
-            vols = nb.load(in_file).shape[3]
-        vols = 1
-        for i in range(vols):
-            line_arr = ['0', '0', '0', '0']
-            meta = layout.get_metadata(in_file)
-            line_arr[3] = str(meta["TotalReadoutTime"])
-            if meta["PhaseEncodingDirection"].endswith('-'):
-                dir = '-1'
-            else:
-                dir = '1'
-            line_arr[{'i':0, 'j':1, 'k':2}[meta["PhaseEncodingDirection"][0:1]]] = dir
+    usable_fieldmaps = []
 
-            lines += ' '.join(line_arr) + '\n'
-        return lines
+    for fmap in fmaps:
+        fmap_pe = layout.get_metadata(fmap['epi'])["PhaseEncodingDirection"]
+        if fmap_pe[0] == target_pe[0] and len(fmap_pe) != len(target_pe):
+            usable_fieldmaps.append(fmap['epi'])
 
-    with open(out_file, 'w') as fp:
-        fp.write(_gen_line(name_source, True))
-        for fmap in fmaps:
-            fp.write(_gen_line(fmap['epi']))
+    if len(usable_fieldmaps) == 0:
+        raise Exception("None of the discovered fieldmaps has the right "
+                        "phase encoding direction.")
 
-    return out_file
+    all_fmaps_nii = concat_imgs(usable_fieldmaps)
+    all_fmaps_nii.to_filename("concat.nii.gz")
+    res = afni.Volreg(in_file="concat.nii.gz", args='-Fourier -twopass',
+                      zpad=4, outputtype='NIFTI_GZ').run()
+
+    mc_nii = nb.load(res.outputs.out_file)
+
+    median_image_data = np.median(mc_nii.get_data(), axis=3)
+    nb.Nifti1Image(median_image_data, mc_nii.affine,
+                   mc_nii.header).to_filename("opposite_dir.nii.gz")
+
+    return os.path.abspath("opposite_dir.nii.gz")
 
 
 def _get_ec(in_dict):
