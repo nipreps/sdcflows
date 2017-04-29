@@ -219,7 +219,7 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
     return workflow
 
 
-def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_unwarp_wf"):
+def init_pepolar_unwarp_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_unwarp_wf"):
     """
     This workflow takes in a set of EPI files with opposite phase encoding 
     direction than the target file and calculates a displacements field 
@@ -230,9 +230,9 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
 
     .. workflow ::
 
-        from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_report_wf
-        wf = init_sdc_unwarp_wf(bids_dir='.', ants_nthreads=8,
-                                fmaps=[{'epi':'/path/to/file.nii.gz'}])
+        from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
+        wf = init_pepolar_unwarp_wf(bids_dir='.', ants_nthreads=8,
+                                    fmaps=[{'epi':'/path/to/file.nii.gz'}])
 
 
     Inputs
@@ -315,6 +315,8 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
         (cphdr, skullstrip, [('out_file', 'in_file')]),
         (skullstrip, apply_skullstrip, [('mask_file', 'mask_file')]),
         (cphdr, apply_skullstrip, [('out_file', 'in_file')]),
+        # TODO: refactor the QwarpPlusMinus Interface to take dimension
+        # constraints instead of suing 'args'
         (prepare_opposite_dir, qwarp, [('args', 'args')]),
         (explicit_mask_epi, qwarp, [('out_file', 'source_file')]),
         (apply_skullstrip, qwarp, [('out_file', 'base_file')]),

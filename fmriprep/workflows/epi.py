@@ -32,8 +32,7 @@ from fmriprep.interfaces.nilearn import Merge
 from fmriprep.utils.misc import _first, _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
-
-from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_report_wf
+from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
 
 LOGGER = logging.getLogger('workflow')
 
@@ -160,10 +159,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
         if fmap['type'] == 'epi':
             epi_fmaps = [fmap for fmap in fmaps if fmap['type']=='epi']
-            sdc_unwarp_wf = init_pepolar_unwarp_report_wf(fmaps=epi_fmaps,
-                                                          bids_dir=bids_dir,
-                                                          ants_nthreads=ants_nthreads,
-                                                          name='pepolar_unwarp_wf')
+            sdc_unwarp_wf = init_pepolar_unwarp_wf(fmaps=epi_fmaps,
+                                                   bids_dir=bids_dir,
+                                                   ants_nthreads=ants_nthreads,
+                                                   name='pepolar_unwarp_wf')
         else:
             # Import specific workflows here, so we don't brake everything with one
             # unused workflow.
@@ -183,6 +182,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                     ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
                                                     ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
             ])
+
+        # Connections and workflows common for all types of fieldmaps
 
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
