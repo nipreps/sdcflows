@@ -196,9 +196,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         ])
 
         # Report on EPI correction
-        fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(
-            reportlets_dir=reportlets_dir,
-            name='fmap_unwarp_report_wf')
+        fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(reportlets_dir=reportlets_dir,
+                                                           name='fmap_unwarp_report_wf')
         workflow.connect([(inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
                                                               ('epi', 'inputnode.name_source')]),
                           (epi_hmc_wf, fmap_unwarp_report_wf, [('outputnode.ref_image', 'inputnode.in_pre')]),
