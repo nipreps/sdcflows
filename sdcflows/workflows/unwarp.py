@@ -224,6 +224,14 @@ def init_pepolar_unwarp_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_unwarp_
     This workflow takes in a set of EPI files with opposite phase encoding 
     direction than the target file and calculates a displacements field 
     (in other words, an ANTs-compatible warp file).
+    
+    All volumes from all `_epi` files with the appropriate phase encoding 
+    direction (opposite to the target file) are coregistered to the target 
+    file and reduced to a single volume using a median operation.
+    
+    The warp field correcting for the distortions is estimated using AFNI's 
+    3dQwarp with displacement estimation limited to the target file phase
+    encoding direction.
 
     It also calculates a new mask for the input dataset that takes into 
     account the distortions.
