@@ -266,7 +266,8 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
         fields=['out_reference', 'out_warp', 'out_mask',
                 'out_mask_report']), name='outputnode')
 
-    prepare_opposite_dir = pe.Node(niu.Function(function=_prepare_opposite_dir),
+    prepare_opposite_dir = pe.Node(niu.Function(function=_prepare_opposite_dir,
+                                                output_names=['out', 'args']),
                                    name="prepare_opposite_dir")
     prepare_opposite_dir.inputs.fmaps = fmaps
     prepare_opposite_dir.inputs.bids_dir = bids_dir
@@ -282,11 +283,11 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
     qwarp = pe.Node(afni.QwarpPlusMinus(pblur=[0.05, 0.05],
-                               blur=[-1, -1],
-                               noweight=True,
-                               minpatch=9,
-                               nopadWARP=True,
-                               environ={'OMP_NUM_THREADS': str(ants_nthreads)}),
+                                        blur=[-1, -1],
+                                        noweight=True,
+                                        minpatch=9,
+                                        nopadWARP=True,
+                                        environ={'OMP_NUM_THREADS': str(ants_nthreads)}),
                     name='qwarp')
     qwarp.interface.num_threads = ants_nthreads
 
@@ -314,6 +315,7 @@ def init_pepolar_unwarp_report_wf(fmaps, bids_dir, ants_nthreads, name="pepolar_
         (cphdr, skullstrip, [('out_file', 'in_file')]),
         (skullstrip, apply_skullstrip, [('mask_file', 'mask_file')]),
         (cphdr, apply_skullstrip, [('out_file', 'in_file')]),
+        (prepare_opposite_dir, qwarp, [('args', 'args')]),
         (explicit_mask_epi, qwarp, [('out_file', 'source_file')]),
         (apply_skullstrip, qwarp, [('out_file', 'base_file')]),
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
@@ -363,6 +365,8 @@ def _prepare_opposite_dir(name_source, fmaps, bids_dir, ref_image):
     import numpy as np
     from nipype.interfaces import afni
 
+    args = '-noXdis -noYdis -noZdis'
+
     layout = BIDSLayout(bids_dir)
 
     target_pe = layout.get_metadata(name_source)["PhaseEncodingDirection"]
@@ -395,7 +399,12 @@ def _prepare_opposite_dir(name_source, fmaps, bids_dir, ref_image):
     nb.Nifti1Image(median_image_data, mc_nii.affine,
                    mc_nii.header).to_filename("opposite_dir.nii.gz")
 
-    return os.path.abspath("opposite_dir.nii.gz")
+    rm_arg = {'i': '-noXdis',
+              'j': '-noYdis',
+              'k': '-noZdis'}[target_pe[0]]
+    args = args.replace(rm_arg, '')
+
+    return os.path.abspath("opposite_dir.nii.gz"), args
 
 
 def _get_ec(in_dict):
