@@ -187,31 +187,23 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
-            (epi_hmc_wf, sdc_unwarp_wf,
-             [('outputnode.ref_image', 'inputnode.in_reference'),
-              ('outputnode.epi_mask', 'inputnode.in_mask')]),
-            (sdc_unwarp_wf, epi_reg_wf, [
-                ('outputnode.out_warp', 'inputnode.fieldwarp'),
-                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
-                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (sdc_unwarp_wf, ds_epi_mask,
-             [('outputnode.out_mask_report', 'in_file')])
+            (epi_hmc_wf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
+                                         ('outputnode.epi_mask', 'inputnode.in_mask')]),
+            (sdc_unwarp_wf, epi_reg_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
+                                         ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
+                                         ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
+            (sdc_unwarp_wf, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
         ])
 
         # Report on EPI correction
         fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(
             reportlets_dir=reportlets_dir,
             name='fmap_unwarp_report_wf')
-        workflow.connect([
-            (inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
-                                                ('epi',
-                                                 'inputnode.name_source')]),
-            (epi_hmc_wf, fmap_unwarp_report_wf, [
-                ('outputnode.ref_image', 'inputnode.in_pre')]),
-            (sdc_unwarp_wf, fmap_unwarp_report_wf, [
-                ('outputnode.out_reference', 'inputnode.in_post')]),
-            (epi_reg_wf, fmap_unwarp_report_wf, [
-                ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
+        workflow.connect([(inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
+                                                              ('epi', 'inputnode.name_source')]),
+                          (epi_hmc_wf, fmap_unwarp_report_wf, [('outputnode.ref_image', 'inputnode.in_pre')]),
+                          (sdc_unwarp_wf, fmap_unwarp_report_wf, [('outputnode.out_reference', 'inputnode.in_post')]),
+                          (epi_reg_wf, fmap_unwarp_report_wf, [('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
     if 'MNI152NLin2009cAsym' in output_spaces:
