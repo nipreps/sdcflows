@@ -9,7 +9,7 @@ FreeSurfer tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.interfaces.base import isdefined, File
+from nipype.interfaces.base import isdefined, InputMultiPath
 from nipype.interfaces import freesurfer as fs
 
 
@@ -34,7 +34,7 @@ class StructuralReference(fs.RobustTemplate):
 
 
 class MakeMidthicknessInputSpec(fs.utils.MRIsExpandInputSpec):
-    graymid = File(desc='Existing graymid/midthickness file')
+    graymid = InputMultiPath(desc='Existing graymid/midthickness file')
 
 
 class MakeMidthickness(fs.MRIsExpand):
@@ -44,9 +44,27 @@ class MakeMidthickness(fs.MRIsExpand):
 
     @property
     def cmdline(self):
+        import os.path as op
         cmd = super(MakeMidthickness, self).cmdline
-        if not isdefined(self.inputs.graymid):
+        if not isdefined(self.inputs.graymid) or len(self.inputs.graymid) < 1:
             return cmd
 
-        return "cp {} {}".format(self.inputs.graymid,
-                                 self._list_outputs()['out_file'])
+        # Possible graymid values inclue {l,r}h.{graymid,midthickness}
+        # Prefer midthickness to graymid, require to be of the same hemisphere
+        # as input
+        source = None
+        in_base = op.basename(self.inputs.in_file)
+        mt = self._associated_file(in_base, 'midthickness')
+        gm = self._associated_file(in_base, 'graymid')
+
+        for surf in self.inputs.graymid:
+            if op.basename(surf) == mt:
+                source = surf
+                break
+            if op.basename(surf) == gm:
+                source = surf
+
+        if source is None:
+            return cmd
+
+        return "cp {} {}".format(source, self._list_outputs()['out_file'])

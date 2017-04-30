@@ -177,7 +177,7 @@ def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
 
         (inputnode, CSF_roi, [(('t1_tpms', pick_csf), 'in_file')]),
         (inputnode, CSF_roi, [('epi_mask',  'epi_mask')]),
-        (CSF_roi, tcompcor, [('eroded_mask', 'mask_file')]),
+        (CSF_roi, tcompcor, [('eroded_mask', 'mask_files')]),
 
         (inputnode, WM_roi, [(('t1_tpms', pick_wm), 'in_file')]),
         (inputnode, WM_roi, [('epi_mask', 'epi_mask')]),
@@ -188,7 +188,7 @@ def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
 
         # anatomical confound: aCompCor.
         (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
-        (combine_rois, acompcor, [('out', 'mask_file')]),
+        (combine_rois, acompcor, [('out', 'mask_files')]),
 
         (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
         (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
