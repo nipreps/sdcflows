@@ -20,7 +20,7 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.masks import ComputeEPIMask
+from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
 from niworkflows.interfaces.registration import (
     FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
@@ -160,7 +160,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         if fmap['type'] == 'epi':
             epi_fmaps = [fmap for fmap in fmaps if fmap['type']=='epi']
             sdc_unwarp_wf = init_pepolar_unwarp_wf(fmaps=epi_fmaps,
-                                                   bids_dir=bids_dir,
+                                                   layout=layout,
+                                                   bold_file=bold_file,
                                                    ants_nthreads=ants_nthreads,
                                                    name='pepolar_unwarp_wf')
         else:
@@ -285,7 +286,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='inu')
 
     # Calculate EPI mask on the average after HMC
-    skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+    skullstrip_epi = pe.Node(BETRPT(generate_report=True, frac=0.55),
                              name='skullstrip_epi')
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref")
