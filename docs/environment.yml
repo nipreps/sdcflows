@@ -28,5 +28,5 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - git+https://github.com/nipy/nipype.git@dc68922bf9ac1dd910c3ca9b5b8c0dbb093f4691#egg=nipype
-    - git+https://github.com/poldracklab/niworkflows.git@76952e5f2b2822200683981e92df5f1128ad2c69#egg=niworkflows
+    - git+https://github.com/nipy/nipype.git@f66a5a6f13a151517cd47b43d998c1fee840c55c#egg=nipype
+    - git+https://github.com/chrisfilo/niworkflows.git@ea97649bebe608ba7b423b8e441712138d83bc6e#egg=niworkflows
