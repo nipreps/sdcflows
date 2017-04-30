@@ -320,8 +320,8 @@ def init_pepolar_unwarp_wf(fmaps, layout, bold_file, ants_nthreads, name="pepola
     qwarp.interface.num_threads = ants_nthreads
 
     workflow.connect([
-        #(explicit_mask_epi, prepare_opposite_epi_wf, [('out_file', 'inputnode.ref_brain')]),
-        (inputnode, prepare_opposite_epi_wf, [('in_reference', 'inputnode.ref_brain')]),
+        (explicit_mask_epi, prepare_opposite_epi_wf, [('out_file', 'inputnode.ref_brain')]),
+        #(inputnode, prepare_opposite_epi_wf, [('in_reference', 'inputnode.ref_brain')]),
 
         (prepare_opposite_epi_wf, qwarp, [('outputnode.out_file', 'base_file')]),
     ])
@@ -332,8 +332,8 @@ def init_pepolar_unwarp_wf(fmaps, layout, bold_file, ants_nthreads, name="pepola
         prepare_same_epi_wf.inputs.inputnode.fmaps = usable_fieldmaps_same
 
         workflow.connect([
-            #(explicit_mask_epi, prepare_same_epi_wf, [('out_file', 'inputnode.ref_brain')]),
-            (inputnode, prepare_same_epi_wf, [('in_reference', 'inputnode.ref_brain')]),
+            (explicit_mask_epi, prepare_same_epi_wf, [('out_file', 'inputnode.ref_brain')]),
+            #(inputnode, prepare_same_epi_wf, [('in_reference', 'inputnode.ref_brain')]),
 
             (prepare_same_epi_wf, qwarp, [('outputnode.out_file', 'source_file')]),
         ])
@@ -418,9 +418,9 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
         (inputnode, split, [('fmaps', 'in_file')]),
         (split, merge, [(('out_files', _flatten), 'in_files')]),
         (merge, convert, [('out_file', 'in_file')]),
-        #(convert, skullstrip, [('out_file', 'in_file')]),
-        #(skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
-        (convert, fmap2ref_reg, [('out_file', 'moving_image')]),
+        (convert, skullstrip, [('out_file', 'in_file')]),
+        (skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
+        #(convert, fmap2ref_reg, [('out_file', 'moving_image')]),
 
         (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
         (fmap2ref_reg, outputnode, [('warped_image', 'out_file')]),
