@@ -2,6 +2,7 @@ machine:
   environment:
     OSF_PROJECT: "https://files.osf.io/v1/resources/fvuh8/providers/osfstorage"
     DS005_URL: "${OSF_PROJECT}/57f32a429ad5a101f977eb75"
+    DS005_FS_URL: "${OSF_PROJECT}/58fe59eb594d900250960180"
     DS054_URL: "${OSF_PROJECT}/57f32c22594d9001ef91bf9e"
   services:
     - docker
@@ -12,12 +13,14 @@ dependencies:
 
   pre:
     - mkdir -p $HOME/data
-    - mkdir -p $HOME/ds005 && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds005 && sudo setfacl -m group:ubuntu:rwx $HOME/ds005
+    - mkdir -p $HOME/ds005/out && sudo setfacl -R -d -m group:ubuntu:rwx $HOME/ds005 && sudo setfacl -R -m group:ubuntu:rwx $HOME/ds005
     - mkdir -p $HOME/ds054 && sudo setfacl -d -m group:ubuntu:rwx $HOME/ds054 && sudo setfacl -m group:ubuntu:rwx $HOME/ds054
     - mkdir -p $HOME/docs && sudo setfacl -d -m group:ubuntu:rwx $HOME/docs && sudo setfacl -m group:ubuntu:rwx $HOME/docs
     # Download test data
     - if [[ ! -d $HOME/data/ds005 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_downsampled.tar.gz "${DS005_URL}" && tar xzf ds005_downsampled.tar.gz -C $HOME/data/; fi
     - if [[ ! -d $HOME/data/ds054 ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds054_downsampled.tar.gz "${DS054_URL}" && tar xzf ds054_downsampled.tar.gz -C $HOME/data/; fi
+    - if [[ ! -d $HOME/data/freesurfer ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds005_derivatives_freesurfer.tar.gz "${DS005_FS_URL}" && tar xzf ds005_derivatives_freesurfer.tar.gz -C $HOME/data/; fi
+    - cp -al $HOME/data/freesurfer $HOME/ds005/out/freesurfer
     - printf "[execution]\nstop_on_first_crash = true\nremove_unnecessary_outputs = false" > $HOME/nipype.cfg
     # Setup dependencies
     - pip install future numpy
@@ -34,16 +37,9 @@ dependencies:
     - pip install --upgrade wrapper/
 test:
   override:
-    - docker run -ti --rm=false --entrypoint="python" poldracklab/fmriprep:latest -m unittest discover test
-    - set -o pipefail && docker run -ti --rm=false -v $HOME/docs:/_build_html --entrypoint=sphinx-build poldracklab/fmriprep:latest -T -E -b html -d _build/doctrees-readthedocs -W -D language=en docs/ /_build_html 2>&1 | tee $HOME/docs/builddocs.log :
+    - bash .circle/tests.sh :
         timeout: 4800
-    - cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
-    - docker run -ti --rm=false -v $HOME/nipype.cfg:/root/.nipype/nipype.cfg:ro -v $HOME/data:/data:ro -v $HOME/ds054/scratch:/scratch -v $HOME/ds054/out:/out poldracklab/fmriprep:latest /data/ds054 /out/ participant --no-freesurfer --debug -w /scratch:
-        timeout: 4800
-    - fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --no-freesurfer --debug:
-        timeout: 4800
-    - find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
-    - find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
+        parallel: true
 
 general:
   artifacts:

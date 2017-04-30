@@ -17,11 +17,12 @@ from shutil import copy, copytree, rmtree
 
 from nipype import logging
 from nipype.interfaces.base import (
-    traits, isdefined, TraitedSpec, BaseInterface, BaseInterfaceInputSpec,
+    traits, isdefined, TraitedSpec, BaseInterfaceInputSpec,
     File, Directory, InputMultiPath, OutputMultiPath, Str
 )
 from builtins import str, bytes
 
+from niworkflows.interfaces.base import SimpleInterface
 from fmriprep.utils.misc import make_folder
 
 LOGGER = logging.getLogger('interface')
@@ -33,15 +34,6 @@ BIDS_NAME = re.compile(
 
 class FileNotFoundError(IOError):
     pass
-
-
-class SimpleInterface(BaseInterface):
-    def __init__(self, **inputs):
-        super(SimpleInterface, self).__init__(**inputs)
-        self._results = {}
-
-    def _list_outputs(self):
-        return self._results
 
 
 class BIDSDataGrabberInputSpec(BaseInterfaceInputSpec):
