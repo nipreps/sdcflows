@@ -32,12 +32,25 @@ Once the field-map is estimated, the distortion can be accounted for.
 Fieldmap processing in FMRIPREP is structured as follows:
 
   1. :ref:`sdc-base`: the input BIDS dataset is queried to find the available field-mapping
-     techniques and the appropriate processing workflows are set-up.
+     techniques and the appropriate processing workflows are set-up (applies to phase-difference
+     and direct field-mapping techniques).
 
   2. :ref:`sdc-estimation`: all the estimation workflows produce a displacement field
-     ready to be used in the correction step.
+     ready to be used in the correction step (applies to phase-difference
+     and direct field-mapping techniques).
 
-  3. :ref:`sdc-unwarp`: the correction step is applied.
+  3. :ref:`sdc-unwarp`: the correction step is applied (for phase encoding polarity
+     this step also involves distortion correction displacement field estimation).
+     
+If the dataset metadata indicate tha more than one field map acquisition is 
+``IntendedFor`` (see BIDS Specification section 8.9) the following priority will 
+be used:
+
+  1. Blip-up/blip-down
+  
+  2. Direct field-mapping
+  
+  3. Phase-difference techniques
 
 
 """

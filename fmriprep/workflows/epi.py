@@ -158,7 +158,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         LOGGER.info('Fieldmap estimation: type "%s" found', fmap['type'])
 
         if fmap['type'] == 'epi':
-            epi_fmaps = [fmap for fmap in fmaps if fmap['type']=='epi']
+            epi_fmaps = [fmap['epi'] for fmap in fmaps if fmap['type']=='epi']
             sdc_unwarp_wf = init_pepolar_unwarp_wf(fmaps=epi_fmaps,
                                                    layout=layout,
                                                    bold_file=bold_file,
