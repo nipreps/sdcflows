@@ -29,7 +29,7 @@ from fmriprep.interfaces import DerivativesDataSink
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
-from fmriprep.utils.misc import _first, _extract_wm
+from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
@@ -74,19 +74,33 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     # Build workflow
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['epi',
-                                                      't1_preproc',
-                                                      't1_brain',
-                                                      't1_mask',
-                                                      't1_seg',
-                                                      't1_tpms',
-                                                      't1_2_mni_forward_transform',
-                                                      'subjects_dir',
-                                                      'subject_id',
-                                                      'fs_2_t1_transform',
-                                                      't1w']),
-                        name='inputnode')
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
+                't1_2_mni_forward_transform', 'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
+        name='inputnode')
     inputnode.inputs.epi = bold_file
+
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces']),
+        name='outputnode')
+
+    func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
+                                           freesurfer=freesurfer)
+
+    func_derivatives_wf = init_func_derivatives_wf(output_dir=output_dir,
+                                                   output_spaces=output_spaces,
+                                                   freesurfer=freesurfer)
+
+    workflow.connect([
+        (inputnode, func_reports_wf, [('epi', 'inputnode.source_file')]),
+        (inputnode, func_derivatives_wf, [('epi', 'inputnode.source_file')]),
+        (outputnode, func_derivatives_wf, [('epi_t1', 'inputnode.epi_t1'),
+                                           ('epi_mask_t1', 'inputnode.epi_mask_t1'),
+                                           ('epi_mni', 'inputnode.epi_mni'),
+                                           ('epi_mask_mni', 'inputnode.epi_mask_mni'),
+                                           ('confounds', 'inputnode.confounds'),
+                                           ('surfaces', 'inputnode.surfaces')]),
+        ])
 
     # HMC on the EPI
     epi_hmc_wf = init_epi_hmc_wf(name='epi_hmc_wf', metadata=metadata,
@@ -95,10 +109,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     # mean EPI registration to T1w
     epi_reg_wf = init_epi_reg_wf(name='epi_reg_wf',
-                                 reportlet_suffix='bbr',
                                  freesurfer=freesurfer,
                                  bold2t1w_dof=bold2t1w_dof,
-                                 reportlets_dir=reportlets_dir,
                                  bold_file_size_gb=bold_file_size_gb,
                                  output_spaces=output_spaces,
                                  output_dir=output_dir,
@@ -106,21 +118,12 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     # get confounds
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
-                                             reportlets_dir=reportlets_dir,
-                                             output_dir=output_dir,
                                              name='discover_wf')
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
-    ds_epi_mask = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='epi_mask'),
-        name='ds_epi_mask'
-    )
-
     workflow.connect([
         (inputnode, epi_hmc_wf, [('epi', 'inputnode.epi')]),
-        (inputnode, epi_reg_wf, [('t1w', 'inputnode.t1w'),
-                                 ('epi', 'inputnode.name_source'),
+        (inputnode, epi_reg_wf, [('epi', 'inputnode.name_source'),
                                  ('t1_preproc', 'inputnode.t1_preproc'),
                                  ('t1_brain', 'inputnode.t1_brain'),
                                  ('t1_mask', 'inputnode.t1_mask'),
@@ -130,8 +133,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  ('subject_id', 'inputnode.subject_id'),
                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                  ]),
-        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
-                                  ('epi', 'inputnode.source_file')]),
+        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
         (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
                                   ('outputnode.xforms', 'inputnode.hmc_xforms'),
                                   ('outputnode.ref_image', 'inputnode.ref_epi'),
@@ -140,14 +142,23 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.movpar_file', 'inputnode.movpar_file')]),
         (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
                                    ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
-        (inputnode, ds_epi_mask, [('epi', 'source_file')]),
+        (epi_reg_wf, func_reports_wf, [
+            ('outputnode.out_report', 'inputnode.epi_reg_report'),
+            ]),
+        (discover_wf, outputnode, [('outputnode.confounds_file', 'confounds')]),
+        (epi_reg_wf, outputnode, [('outputnode.epi_t1', 'epi_t1'),
+                                  ('outputnode.epi_mask_t1', 'epi_mask_t1')]),
+        (discover_wf, func_reports_wf, [
+            ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
+            ('outputnode.tcompcor_report', 'inputnode.tcompcor_report')]),
     ])
 
     if not fmaps:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
         workflow.connect([
-            (epi_hmc_wf, ds_epi_mask, [('outputnode.epi_mask_report', 'in_file')])
+            (epi_hmc_wf, func_reports_wf, [
+                ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')])
         ])
 
     else:
@@ -193,7 +204,12 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             (sdc_unwarp_wf, epi_reg_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
                                          ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
                                          ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (sdc_unwarp_wf, ds_epi_mask, [('outputnode.out_mask_report', 'in_file')])
+            (sdc_unwarp_wf, epi_reg_wf, [
+                ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
+                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
+            (sdc_unwarp_wf, func_reports_wf, [
+                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
         ])
 
         # Report on EPI correction
@@ -214,7 +230,6 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         workflow.connect([
             (inputnode, epi_mni_trans_wf, [
                 ('epi', 'inputnode.name_source'),
-                ('t1_preproc', 'inputnode.t1'),
                 ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')]),
             (epi_hmc_wf, epi_mni_trans_wf, [
                 ('outputnode.epi_split', 'inputnode.epi_split'),
@@ -222,6 +237,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('outputnode.epi_mask', 'inputnode.epi_mask')]),
             (epi_reg_wf, epi_mni_trans_wf, [
                 ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
+            (epi_mni_trans_wf, outputnode, [('outputnode.epi_mni', 'epi_mni'),
+                                            ('outputnode.epi_mask_mni', 'epi_mask_mni')]),
         ])
         if fmaps:
             workflow.connect([
@@ -233,13 +250,12 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     if freesurfer and any(space.startswith('fs') for space in output_spaces):
         LOGGER.info('Creating FreeSurfer processing flow.')
         epi_surf_wf = init_epi_surf_wf(output_spaces=output_spaces,
-                                       output_dir=output_dir,
                                        name='epi_surf_wf')
         workflow.connect([
             (inputnode, epi_surf_wf, [('subjects_dir', 'inputnode.subjects_dir'),
-                                      ('subject_id', 'inputnode.subject_id'),
-                                      ('epi', 'inputnode.name_source')]),
+                                      ('subject_id', 'inputnode.subject_id')]),
             (epi_reg_wf, epi_surf_wf, [('outputnode.epi_t1', 'inputnode.source_file')]),
+            (epi_surf_wf, outputnode, [('outputnode.surfaces', 'surfaces')]),
         ])
 
     return workflow
@@ -357,7 +373,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     return workflow
 
 
-def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
+def init_epi_reg_wf(freesurfer, bold2t1w_dof,
                     bold_file_size_gb, output_spaces, output_dir,
                     name='epi_reg_wf', use_fieldwarp=False):
     """
@@ -369,7 +385,7 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
         niu.IdentityInterface(fields=['name_source', 'ref_epi', 'ref_epi_mask',
                                       'unwarped_ref_epi', 'unwarped_ref_mask',
                                       't1_preproc', 't1_brain', 't1_mask',
-                                      't1_seg', 't1w', 'epi_split', 'hmc_xforms',
+                                      't1_seg', 'epi_split', 'hmc_xforms',
                                       'subjects_dir', 'subject_id', 'fs_2_t1_transform',
                                       'fieldwarp']),
         name='inputnode'
@@ -377,13 +393,12 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_epi_to_t1', 'mat_t1_to_epi',
                                       'itk_epi_to_t1', 'itk_t1_to_epi',
-                                      'epi_t1', 'epi_mask_t1', 'fs_reg_file']),
+                                      'epi_t1', 'epi_mask_t1', 'fs_reg_file',
+                                      'out_report']),
         name='outputnode'
     )
 
     # Extract wm mask from segmentation
-    wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
-
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
     if freesurfer:
@@ -412,18 +427,14 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
 
         transformer = pe.Node(niu.Function(function=apply_fs_transform), name='transformer')
     else:
-        flt_bbr_init = pe.Node(
-            FLIRTRPT(generate_report=True, dof=6),
-            name='flt_bbr_init'
-        )
+        wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
+        flt_bbr_init = pe.Node(FLIRTRPT(generate_report=True, dof=6), name='flt_bbr_init')
         flt_bbr = pe.Node(
             FLIRTRPT(generate_report=True, cost_func='bbr',
                      dof=bold2t1w_dof),
-            name='flt_bbr'
-        )
+            name='flt_bbr')
         flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                           'etc/flirtsch/bbr.sch')
-        reportlet_suffix = reportlet_suffix.replace('bbr', 'flt_bbr')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr')
@@ -435,14 +446,7 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv')
 
-    ds_report = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix=reportlet_suffix),
-        name='ds_report'
-    )
-
     workflow.connect([
-        (inputnode, wm_mask, [('t1_seg', 'in_file')]),
         (inputnode, fsl2itk_fwd, [('t1_preproc', 'reference_file'),
                                   ('ref_epi', 'source_file')]),
         (inputnode, fsl2itk_inv, [('ref_epi', 'reference_file'),
@@ -451,7 +455,6 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
-        (inputnode, ds_report, [(('name_source', _first), 'source_file')])
     ])
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref')
@@ -514,27 +517,6 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
     ])
 
-    if 'T1w' in output_spaces:
-        # Write corrected file in the designated output dir
-        ds_t1w = pe.Node(
-            DerivativesDataSink(base_directory=output_dir,
-                                suffix='space-T1w_preproc'),
-            name='ds_t1w'
-        )
-        ds_t1w_mask = pe.Node(
-            DerivativesDataSink(base_directory=output_dir,
-                                suffix='space-T1w_brainmask'),
-            name='ds_t1w_mask'
-        )
-
-        workflow.connect([
-            (inputnode, ds_t1w, [(('name_source', _first), 'source_file')]),
-            (inputnode, ds_t1w_mask,
-             [(('name_source', _first), 'source_file')]),
-            (merge, ds_t1w, [('out_file', 'in_file')]),
-            (mask_t1w_tfm, ds_t1w_mask, [('output_image', 'in_file')]),
-            ])
-
     if freesurfer:
         workflow.connect([
             (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
@@ -543,13 +525,14 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
             (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
             (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
             (transformer, invt_bbr, [('out', 'in_file')]),
-            (transformer, outputnode, [('out', 'mat_epi_to_t1')]),
             (transformer, fsl2itk_fwd, [('out', 'transform_file')]),
-            (bbregister, ds_report, [('out_report', 'in_file')]),
-            (bbregister, outputnode, [('out_reg_file', 'fs_reg_file')]),
+            (transformer, outputnode, [('out', 'mat_epi_to_t1')]),
+            (bbregister, outputnode, [('out_reg_file', 'fs_reg_file'),
+                                      ('out_report', 'out_report')]),
         ])
     else:
         workflow.connect([
+            (inputnode, wm_mask, [('t1_seg', 'in_file')]),
             (explicit_mask_epi, flt_bbr_init, [('out_file', 'in_file')]),
             (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
             (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
@@ -557,15 +540,15 @@ def init_epi_reg_wf(reportlet_suffix, freesurfer, bold2t1w_dof, reportlets_dir,
             (explicit_mask_epi, flt_bbr, [('out_file', 'in_file')]),
             (wm_mask, flt_bbr, [('out', 'wm_seg')]),
             (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
-            (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1')]),
             (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
-            (flt_bbr, ds_report, [('out_report', 'in_file')]),
+            (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1'),
+                                   ('out_report', 'out_report')]),
         ])
 
     return workflow
 
 
-def init_epi_surf_wf(output_spaces, output_dir, name='epi_surf_wf'):
+def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
     """ Sample functional images to FreeSurfer surfaces
 
     For each vertex, the cortical ribbon is sampled at six points (spaced 20% of thickness apart)
@@ -574,23 +557,18 @@ def init_epi_surf_wf(output_spaces, output_dir, name='epi_surf_wf'):
     Outputs are in GIFTI format.
 
     output_spaces : set of structural spaces to sample functional series to
-    output_dir : directory to save derivatives to
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir', 'name_source']),
+        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir']),
         name='inputnode')
+
+    outputnode = pe.Node(niu.IdentityInterface(fields=['surfaces']), name='outputnode')
 
     spaces = [space for space in output_spaces if space.startswith('fs')]
 
     def select_target(subject_id, space):
-        """ Select targets based on a provided template and whether to generate outputs in
-        native space.
-
-        Source target is defined from registration file to preclude mismatches
-
-        Returns targets (FreeSurfer subject names) and spaces (FMRIPREP output space names)
-        """
+        """ Given a source subject ID and a target space, get the target subject ID """
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
@@ -614,17 +592,6 @@ def init_epi_surf_wf(output_spaces, output_dir, name='epi_surf_wf'):
     merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
                          joinsource='sampler', joinfield=['in1'])
 
-    def normalize_giftis(in_file):
-        import os
-        import re
-        in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
-        info = in_format.match(os.path.basename(in_file)).groupdict()
-        info['LR'] = info['LR'].upper()
-        return 'space-{space}.{LR}.func'.format(**info)
-
-    normalize = pe.MapNode(niu.Function(function=normalize_giftis),
-                           iterfield='in_file', name='normalize')
-
     def update_gifti_metadata(in_file):
         import os
         import nibabel as nib
@@ -644,11 +611,6 @@ def init_epi_surf_wf(output_spaces, output_dir, name='epi_surf_wf'):
     update_metadata = pe.MapNode(niu.Function(function=update_gifti_metadata),
                                  iterfield='in_file', name='update_metadata')
 
-    bold_surfaces = pe.MapNode(
-         DerivativesDataSink(base_directory=output_dir),
-         iterfield=['in_file', 'suffix'],
-         name='bold_surfaces')
-
     workflow.connect([
         (inputnode, targets, [('subject_id', 'subject_id')]),
         (inputnode, rename_src, [('source_file', 'in_file')]),
@@ -657,12 +619,8 @@ def init_epi_surf_wf(output_spaces, output_dir, name='epi_surf_wf'):
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
-        (merger, normalize, [('out', 'in_file')]),
         (merger, update_metadata, [('out', 'in_file')]),
-        (inputnode, bold_surfaces,
-         [(('name_source', _first), 'source_file')]),
-        (update_metadata, bold_surfaces, [('out', 'in_file')]),
-        (normalize, bold_surfaces, [('out', 'suffix')]),
+        (update_metadata, outputnode, [('out', 'surfaces')]),
         ])
 
     return workflow
@@ -680,12 +638,15 @@ def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
             'epi_split',
             'epi_mask',
             'unwarped_epi_mask',
-            't1',
             'hmc_xforms',
             'fieldwarp'
         ]),
         name='inputnode'
     )
+
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['epi_mni', 'epi_mask_mni']),
+        name='outputnode')
 
     def _aslist(in_value):
         if isinstance(in_value, list):
@@ -702,17 +663,6 @@ def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
     )
 
     # Write corrected file in the designated output dir
-    ds_mni = pe.Node(
-        DerivativesDataSink(base_directory=output_dir,
-                            suffix='space-MNI152NLin2009cAsym_preproc'),
-        name='ds_mni'
-    )
-    ds_mni_mask = pe.Node(
-        DerivativesDataSink(base_directory=output_dir,
-                            suffix='space-MNI152NLin2009cAsym_brainmask'),
-        name='ds_mni_mask'
-    )
-
     mask_merge_tfms = pe.Node(niu.Merge(2), name='mask_merge_tfms')
 
     if use_fieldwarp:
@@ -733,14 +683,12 @@ def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
             (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')])])
 
     workflow.connect([
-        (inputnode, ds_mni, [('name_source', 'source_file')]),
-        (inputnode, ds_mni_mask, [('name_source', 'source_file')]),
         (inputnode, gen_ref, [('epi_mask', 'moving_image')]),
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
         (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
-        (mask_mni_tfm, ds_mni_mask, [('output_image', 'in_file')])
+        (mask_mni_tfm, outputnode, [('output_image', 'epi_mask_mni')])
     ])
 
     merge = pe.Node(Merge(), name='merge')
@@ -760,7 +708,7 @@ def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
         (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
-        (merge, ds_mni, [('out_file', 'in_file')]),
+        (merge, outputnode, [('out_file', 'epi_mni')]),
     ])
 
     return workflow
@@ -812,5 +760,125 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
         (map_seg, sel_wm, [('output_image', 'in_seg')]),
         (sel_wm, epi_rpt, [('out', 'wm_seg')]),
     ])
+
+    return workflow
+
+
+def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=['source_file', 'epi_mask_report', 'epi_reg_report', 'epi_reg_suffix',
+                    'acompcor_report', 'tcompcor_report']
+            ),
+        name='inputnode')
+
+    ds_epi_mask_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='epi_mask'),
+        name='ds_epi_mask_report'
+    )
+
+    ds_epi_reg_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='bbr' if freesurfer else 'flt_bbr'),
+        name='ds_epi_reg_report'
+    )
+
+    ds_acompcor_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='acompcor'),
+        name='ds_acompcor_report'
+    )
+
+    ds_tcompcor_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='tcompcor'),
+        name='ds_tcompcor_report'
+    )
+
+    workflow.connect([
+        (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
+                                         ('epi_mask_report', 'in_file')]),
+        (inputnode, ds_epi_reg_report, [('source_file', 'source_file'),
+                                        ('epi_reg_report', 'in_file')]),
+        (inputnode, ds_acompcor_report, [('source_file', 'source_file'),
+                                         ('acompcor_report', 'in_file')]),
+        (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),
+                                         ('tcompcor_report', 'in_file')]),
+        ])
+
+    return workflow
+
+
+def init_func_derivatives_wf(output_dir, output_spaces, freesurfer,
+                             name='func_derivatives_wf'):
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=['source_file', 'epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni',
+                    'confounds', 'surfaces']
+            ),
+        name='inputnode')
+
+    ds_epi_t1 = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='space-T1w_preproc'),
+                        name='ds_epi_t1')
+
+    ds_epi_mask_t1 = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                                 suffix='space-T1w_brainmask'),
+                             name='ds_epi_mask_t1')
+
+    ds_epi_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                             suffix='space-MNI152NLin2009cAsym_preproc'),
+                         name='ds_epi_mni')
+    ds_epi_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                                  suffix='space-MNI152NLin2009cAsym_brainmask'),
+                              name='ds_epi_mask_mni')
+
+    ds_confounds = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='confounds'),
+                           name="ds_confounds")
+
+    def get_gifti_name(in_file):
+        import os
+        import re
+        in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
+        info = in_format.match(os.path.basename(in_file)).groupdict()
+        info['LR'] = info['LR'].upper()
+        return 'space-{space}.{LR}.func'.format(**info)
+
+    name_surfs = pe.MapNode(niu.Function(function=get_gifti_name),
+                            iterfield='in_file', name='name_surfs')
+
+    ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
+                               iterfield=['in_file', 'suffix'], name='ds_bold_surfs')
+
+    workflow.connect([
+        (inputnode, ds_confounds, [('source_file', 'source_file'),
+                                   ('confounds', 'in_file')]),
+        ])
+
+    if 'T1w' in output_spaces:
+        workflow.connect([
+            (inputnode, ds_epi_t1, [('source_file', 'source_file'),
+                                    ('epi_t1', 'in_file')]),
+            (inputnode, ds_epi_mask_t1, [('source_file', 'source_file'),
+                                         ('epi_mask_t1', 'in_file')]),
+            ])
+    if 'MNI152NLin2009cAsym' in output_spaces:
+        workflow.connect([
+            (inputnode, ds_epi_mni, [('source_file', 'source_file'),
+                                     ('epi_mni', 'in_file')]),
+            (inputnode, ds_epi_mask_mni, [('source_file', 'source_file'),
+                                          ('epi_mask_mni', 'in_file')]),
+            ])
+    if freesurfer and any(space.startswith('fs') for space in output_spaces):
+        workflow.connect([
+            (inputnode, name_surfs, [('surfaces', 'in_file')]),
+            (inputnode, ds_bold_surfs, [('source_file', 'source_file'),
+                                        ('surfaces', 'in_file')]),
+            (name_surfs, ds_bold_surfs, [('out', 'suffix')]),
+            ])
 
     return workflow
