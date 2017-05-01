@@ -29,7 +29,7 @@ from fmriprep.interfaces import DerivativesDataSink
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
-from fmriprep.utils.misc import _first, _extract_wm
+from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
 
@@ -91,8 +91,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                    freesurfer=freesurfer)
 
     workflow.connect([
-        (inputnode, func_reports_wf, [(('epi', _first), 'inputnode.source_file')]),
-        (inputnode, func_derivatives_wf, [(('epi', _first), 'inputnode.source_file')]),
+        (inputnode, func_reports_wf, [('epi', 'inputnode.source_file')]),
+        (inputnode, func_derivatives_wf, [('epi', 'inputnode.source_file')]),
         (outputnode, func_derivatives_wf, [('epi_t1', 'inputnode.epi_t1'),
                                            ('epi_mask_t1', 'inputnode.epi_mask_t1'),
                                            ('epi_mni', 'inputnode.epi_mni'),
