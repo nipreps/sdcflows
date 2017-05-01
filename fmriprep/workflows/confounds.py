@@ -13,15 +13,11 @@ from nipype.algorithms import confounds
 from nipype.pipeline import engine as pe
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 
-from fmriprep import interfaces
-
 from nipype.interfaces.nilearn import SignalExtraction
-from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
-                     name="discover_wf"):
+def init_discover_wf(bold_file_size_gb, name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -34,12 +30,12 @@ def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
 
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
-    inputnode = pe.Node(utility.IdentityInterface(fields=['fmri_file', 'movpar_file', 't1_tpms',
-                                                          'epi_mask',
-                                                          'source_file']),
-                        name='inputnode')
-    outputnode = pe.Node(utility.IdentityInterface(fields=['confounds_file']),
-                         name='outputnode')
+    inputnode = pe.Node(utility.IdentityInterface(
+        fields=['fmri_file', 'movpar_file', 't1_tpms', 'epi_mask']),
+        name='inputnode')
+    outputnode = pe.Node(utility.IdentityInterface(
+        fields=['confounds_file', 'acompcor_report', 'tcompcor_report']),
+        name='outputnode')
 
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
@@ -127,23 +123,8 @@ def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
                        name="acompcor")
     acompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
 
-    ds_report_a = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='acompcor'),
-        name='ds_report_a'
-    )
-
-    ds_report_t = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='tcompcor'),
-        name='ds_report_t'
-    )
-
     # misc utilities
     concat = pe.Node(utility.Function(function=_gather_confounds), name="concat")
-    ds_confounds = pe.Node(interfaces.DerivativesDataSink(base_directory=output_dir,
-                                                          suffix='confounds'),
-                           name="ds_confounds")
 
     def pick_csf(files):
         return files[0]
@@ -208,15 +189,8 @@ def init_discover_wf(bold_file_size_gb, reportlets_dir, output_dir,
         (add_header, concat, [('out', 'motion')]),
 
         (concat, outputnode, [('out', 'confounds_file')]),
-
-        # print stuff in derivatives
-        (concat, ds_confounds, [('out', 'in_file')]),
-        (inputnode, ds_confounds, [('source_file', 'source_file')]),
-
-        (acompcor, ds_report_a, [('out_report', 'in_file')]),
-        (inputnode, ds_report_a, [('source_file', 'source_file')]),
-        (tcompcor, ds_report_t, [('out_report', 'in_file')]),
-        (inputnode, ds_report_t, [('source_file', 'source_file')])
+        (acompcor, outputnode, [('out_report', 'acompcor_report')]),
+        (tcompcor, outputnode, [('out_report', 'tcompcor_report')]),
     ])
 
     return workflow
