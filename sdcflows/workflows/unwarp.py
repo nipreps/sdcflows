@@ -28,7 +28,7 @@ from nipype.interfaces import afni
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.ants import CreateJacobianDeterminantImage
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
-from niworkflows.interfaces.masks import ComputeEPIMask, BETRPT
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import itk
 from fmriprep.interfaces import ReadSidecarJSON
@@ -468,8 +468,6 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
 # Helper functions
 # ------------------------------------------------------------
 
-def _pick_first(l):
-    return l[0]
 
 def _fix_hdr(in_file):
     import nibabel as nb
