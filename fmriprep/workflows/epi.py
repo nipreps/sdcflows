@@ -23,7 +23,7 @@ from nipype.interfaces import freesurfer as fs
 from niworkflows.interfaces.masks import BETRPT
 from niworkflows.interfaces.registration import (
     FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
-from niworkflows.data import get_mni_icbm152_nlin_asym_09c
+import niworkflows.data as nid
 
 from fmriprep.interfaces import DerivativesDataSink
 
@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('workflow')
 
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
-                         output_spaces, output_dir, omp_nthreads,
+                         output_spaces, template, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, debug, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
@@ -90,6 +90,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     func_derivatives_wf = init_func_derivatives_wf(output_dir=output_dir,
                                                    output_spaces=output_spaces,
+                                                   template=template,
                                                    freesurfer=freesurfer)
 
     workflow.connect([
@@ -217,9 +218,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                           (epi_reg_wf, fmap_unwarp_report_wf, [('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
-    if 'MNI152NLin2009cAsym' in output_spaces:
+    if 'template' in output_spaces:
         # Apply transforms in 1 shot
         epi_mni_trans_wf = init_epi_mni_trans_wf(output_dir=output_dir,
+                                                 template=template,
                                                  bold_file_size_gb=bold_file_size_gb,
                                                  name='epi_mni_trans_wf')
         workflow.connect([
@@ -454,7 +456,6 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
     ])
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref')
-    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
 
     mask_t1w_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
@@ -622,7 +623,7 @@ def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
     return workflow
 
 
-def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
+def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
                           name='epi_mni_trans_wf',
                           use_fieldwarp=False):
     workflow = pe.Workflow(name=name)
@@ -650,7 +651,9 @@ def init_epi_mni_trans_wf(output_dir, bold_file_size_gb,
         return [in_value]
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewMNIReference')
-    gen_ref.inputs.fixed_image = op.join(get_mni_icbm152_nlin_asym_09c(), '1mm_T1.nii.gz')
+    template_str = {'MNI152NLin2009cAsym': 'mni_icbm152_nlin_asym_09c'}[template]
+    template_getter = getattr(nid, 'get_{}'.format(template_str))
+    gen_ref.inputs.fixed_image = op.join(template_getter(), '1mm_T1.nii.gz')
 
     mask_mni_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
@@ -802,7 +805,7 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
     return workflow
 
 
-def init_func_derivatives_wf(output_dir, output_spaces, freesurfer,
+def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                              name='func_derivatives_wf'):
     workflow = pe.Workflow(name=name)
 
@@ -820,11 +823,12 @@ def init_func_derivatives_wf(output_dir, output_spaces, freesurfer,
                                                  suffix='space-T1w_brainmask'),
                              name='ds_epi_mask_t1', run_without_submitting=True)
 
+    suffix_fmt = 'space-{}_{}'.format
     ds_epi_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
-                                             suffix='space-MNI152NLin2009cAsym_preproc'),
+                                             suffix=suffix_fmt(template, 'preproc')),
                          name='ds_epi_mni', run_without_submitting=True)
     ds_epi_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
-                                                  suffix='space-MNI152NLin2009cAsym_brainmask'),
+                                                  suffix=suffix_fmt(template, 'brainmask')),
                               name='ds_epi_mask_mni', run_without_submitting=True)
 
     ds_confounds = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='confounds'),
@@ -857,7 +861,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, freesurfer,
             (inputnode, ds_epi_mask_t1, [('source_file', 'source_file'),
                                          ('epi_mask_t1', 'in_file')]),
             ])
-    if 'MNI152NLin2009cAsym' in output_spaces:
+    if 'template' in output_spaces:
         workflow.connect([
             (inputnode, ds_epi_mni, [('source_file', 'source_file'),
                                      ('epi_mni', 'in_file')]),
