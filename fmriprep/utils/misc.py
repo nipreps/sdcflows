@@ -133,12 +133,18 @@ def fix_multi_T1w_source_name(in_files):
     import os
     # in case there are multiple T1s we make up a generic source name
     if isinstance(in_files, list):
-        subject_label = in_files[0].split(os.sep)[-1].split("_")[0].split("-")[
-            -1]
+        subject_label = in_files[0].split(os.sep)[-1].split("_")[0].split("-")[-1]
         base, _ = os.path.split(in_files[0])
         return os.path.join(base, "sub-%s_T1w.nii.gz" % subject_label)
     else:
         return in_files
+
+
+def add_suffix(in_files, suffix):
+    import os.path as op
+    from nipype.utils.filemanip import fname_presuffix, filename_to_list
+    return op.basename(fname_presuffix(filename_to_list(in_files)[0],
+                                       suffix=suffix))
 
 
 def _extract_wm(in_file):

@@ -5,8 +5,9 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import nibabel as nb
-from nipype.interfaces.base import (TraitedSpec, BaseInterface,
-                                    BaseInterfaceInputSpec, File)
+from nipype.interfaces.base import (TraitedSpec, BaseInterfaceInputSpec, File)
+from niworkflows.interfaces.base import SimpleInterface
+
 from fmriprep.utils.misc import genfname
 
 
@@ -17,13 +18,9 @@ class ApplyMaskInputSpec(BaseInterfaceInputSpec):
 class ApplyMaskOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='output average file')
 
-class ApplyMask(BaseInterface):
+class ApplyMask(SimpleInterface):
     input_spec = ApplyMaskInputSpec
     output_spec = ApplyMaskOutputSpec
-
-    def __init__(self, **inputs):
-        self._results = {}
-        super(ApplyMask, self).__init__(**inputs)
 
     def _run_interface(self, runtime):
         out_file = genfname(self.inputs.in_file, 'brainmask')
@@ -33,9 +30,6 @@ class ApplyMask(BaseInterface):
         nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
         self._results['out_file'] = out_file
         return runtime
-
-    def _list_outputs(self):
-        return self._results
 
 
 def prepare_roi_from_probtissue(in_file, epi_mask, epi_mask_erosion_mm=0,
