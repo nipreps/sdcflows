@@ -33,7 +33,7 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 
-def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
+def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
                        fmap_demean, debug, name='sdc_unwarp_wf'):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
@@ -45,7 +45,7 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
-        wf = init_sdc_unwarp_wf(reportlets_dir='.', ants_nthreads=8,
+        wf = init_sdc_unwarp_wf(reportlets_dir='.', omp_nthreads=8,
                                 fmap_bspline=False, fmap_demean=True,
                                 debug=False)
 
@@ -102,9 +102,9 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
             'fmriprep', 'data/fmap-any_registration_testing.json')
     fmap2ref_reg = pe.Node(ANTSRegistrationRPT(generate_report=True,
         from_file=ants_settings, output_inverse_warped_image=True,
-        output_warped_image=True, num_threads=ants_nthreads),
+        output_warped_image=True, num_threads=omp_nthreads),
                        name='fmap2ref_reg')
-    fmap2ref_reg.interface.num_threads = ants_nthreads
+    fmap2ref_reg.interface.num_threads = omp_nthreads
 
     ds_reg = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
