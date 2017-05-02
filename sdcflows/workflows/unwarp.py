@@ -368,12 +368,12 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
         (qwarp, cphdr_warp, [('source_warp', 'in_file')]),
         (cphdr_warp, to_ants, [('out_file', 'in_file')]),
         (to_ants, unwarp_reference, [('out', 'transforms')]),
-        (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
-        (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
+        (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
+                                       ('in_reference', 'input_image')]),
         (unwarp_reference, ref_msk_post, [('output_image', 'in_file')]),
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
-        (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
+        (ref_msk_post, outputnode, [('mask_file', 'out_mask'),
+                                    ('out_report', 'out_mask_report')]),
         (to_ants, outputnode, [('out', 'out_warp')]),
     ])
 
@@ -425,10 +425,9 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
                             intensity_scaling=True,
                             # 7-DOF (rigid + intensity)
                             no_iteration=True,
-                            subsample_threshold=200),
+                            subsample_threshold=200,
+                            out_file='template.nii.gz'),
         name='merge')
-
-    convert = pe.Node(fs.MRIConvert(out_type='niigz'), name="convert")
 
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='inu')
 
@@ -452,10 +451,9 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     workflow.connect([
         (inputnode, split, [('fmaps', 'in_file')]),
         (split, merge, [(('out_files', _flatten), 'in_files')]),
-        (merge, convert, [('out_file', 'in_file')]),
-        (convert, inu, [('out_file', 'input_image')]),
+        (merge, inu, [('out_file', 'input_image')]),
         (inu, cphdr, [('output_image', 'in_file')]),
-        (convert, cphdr, [('out_file', 'hdr_file')]),
+        (merge, cphdr, [('out_file', 'hdr_file')]),
         (cphdr, skullstrip, [('out_file', 'in_file')]),
         (skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
         (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
@@ -476,12 +474,12 @@ def _fix_hdr(in_file):
 
     nii = nb.load(in_file)
     hdr = nii.header.copy()
-    hdr.set_data_dtype(np.dtype('<f4'))
+    hdr.set_data_dtype('<f4')
     hdr.set_intent('vector', (), '')
 
     out_file = os.path.abspath("warpfield.nii.gz")
 
-    nb.Nifti1Image(nii.get_data().astype(np.dtype('<f4')), nii.affine, hdr).to_filename(out_file)
+    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(out_file)
 
     return out_file
 
