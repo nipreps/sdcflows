@@ -27,7 +27,7 @@ from niworkflows.data import get_mni_icbm152_nlin_asym_09c
 
 from fmriprep.interfaces import DerivativesDataSink
 
-from fmriprep.interfaces.images import GenerateSamplingReference
+from fmriprep.interfaces.images import GenerateSamplingReference, CopyHeader
 from fmriprep.interfaces.nilearn import Merge
 from fmriprep.utils.misc import _first, _extract_wm
 from fmriprep.workflows import confounds
@@ -277,12 +277,16 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref")
 
+    cphdr = pe.Node(CopyHeader(), name='cphdr')
+
     workflow.connect([
         (inputnode, gen_ref, [('epi', 'in_file')]),
         (gen_ref, inu, [('ref_image', 'input_image')]),
-        (inu, hmc, [('output_image', 'ref_file')]),
-        (inu, skullstrip_epi, [('output_image', 'in_file')]),
-        (inu, outputnode, [('output_image', 'ref_image')]),
+        (inu, cphdr, [('output_image', 'in_file')]),
+        (inputnode, cphdr, [('epi', 'hdr_file')]),
+        (cphdr, hmc, [('out_file', 'ref_file')]),
+        (cphdr, skullstrip_epi, [('out_file', 'in_file')]),
+        (cphdr, outputnode, [('out_file', 'ref_image')]),
     ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='split')
