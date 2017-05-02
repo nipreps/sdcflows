@@ -25,7 +25,6 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces import afni
-from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.ants import CreateJacobianDeterminantImage
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 from niworkflows.interfaces.masks import BETRPT
@@ -35,8 +34,7 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 from nipype.interfaces import ants
-from fmriprep.interfaces import CopyHeader
-from fmriprep.interfaces.freesurfer import StructuralReference
+from fmriprep.interfaces import CopyHeader, StructuralReference
 
 
 def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
@@ -232,15 +230,15 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
     
     This procedure works if there is only one '_epi' file is present
     (as long as it has the opposite phase encoding direction to the target 
-    file). The target file will be used to estimate the field distorton.
+    file). The target file will be used to estimate the field distortion.
     However, if there is another '_epi' file present with a matching
     phase encoding direction to the target it will be used instead.
     
-    Currently different phase encoding dimension between target file and the 
+    Currently, different phase encoding dimension in the target file and the 
     '_epi' file(s) (for example 'i' and 'j') is not supported.
     
     The warp field correcting for the distortions is estimated using AFNI's 
-    3dQwarp with displacement estimation limited to the target file phase
+    3dQwarp, with displacement estimation limited to the target file phase
     encoding direction.
 
     It also calculates a new mask for the input dataset that takes into 
@@ -275,7 +273,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
         out_mask
             mask of the unwarped input file
         out_mask_report
-            reportled for the skullstripping
+            reportlet for the skullstripping
 
     """
     if not bold_file_pe:
@@ -303,8 +301,8 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
 
     if len(usable_fieldmaps_opposite_pe) == 0:
         raise Exception("None of the discovered fieldmaps has the right "
-                        "phase encoding direction. Possibly a problem with"
-                        "metadata. If not rerun with '--ignore fieldmaps' to"
+                        "phase encoding direction. Possibly a problem with "
+                        "metadata. If not, rerun with '--ignore fieldmaps' to "
                         "skip distortion correction step.")
 
     workflow = pe.Workflow(name=name)
