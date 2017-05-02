@@ -651,9 +651,8 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         return [in_value]
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewMNIReference')
-    template_str = {'MNI152NLin2009cAsym': 'mni_icbm152_nlin_asym_09c'}[template]
-    template_getter = getattr(nid, 'get_{}'.format(template_str))
-    gen_ref.inputs.fixed_image = op.join(template_getter(), '1mm_T1.nii.gz')
+    template_str = nid.TEMPLATE_MAP[template]
+    gen_ref.inputs.fixed_image = op.join(nid.get_dataset(template_str), '1mm_T1.nii.gz')
 
     mask_mni_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
