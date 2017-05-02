@@ -204,12 +204,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             (sdc_unwarp_wf, epi_reg_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
                                          ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
                                          ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (sdc_unwarp_wf, epi_reg_wf, [
-                ('outputnode.out_warp', 'inputnode.fieldwarp'),
-                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
-                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (sdc_unwarp_wf, func_reports_wf, [
-                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
+            (sdc_unwarp_wf, func_reports_wf, [('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
         ])
 
         # Report on EPI correction
