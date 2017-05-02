@@ -38,7 +38,7 @@ LOGGER = logging.getLogger('workflow')
 
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
-                         output_spaces, output_dir, ants_nthreads,
+                         output_spaces, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, debug, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
@@ -167,10 +167,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
         fmap_estimator_wf = init_fmap_estimator_wf(fmap_bids=fmaps,
                                                    reportlets_dir=reportlets_dir,
-                                                   ants_nthreads=ants_nthreads,
+                                                   omp_nthreads=omp_nthreads,
                                                    fmap_bspline=fmap_bspline)
         sdc_unwarp_wf = init_sdc_unwarp_wf(reportlets_dir=reportlets_dir,
-                                           ants_nthreads=ants_nthreads,
+                                           omp_nthreads=omp_nthreads,
                                            fmap_bspline=fmap_bspline,
                                            fmap_demean=fmap_demean,
                                            debug=debug,

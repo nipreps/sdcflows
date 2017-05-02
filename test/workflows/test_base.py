@@ -16,7 +16,7 @@ class TestBase(TestWorkflow):
                                          ignore=[],
                                          debug=False,
                                          nthreads=1,
-                                         ants_nthreads=1,
+                                         omp_nthreads=1,
                                          skull_strip_ants=False,
                                          reportlets_dir='.',
                                          output_dir='.',
