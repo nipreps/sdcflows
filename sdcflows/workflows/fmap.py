@@ -31,7 +31,7 @@ from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
 
-def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
+def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
@@ -40,7 +40,7 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     .. workflow ::
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
-        wf = init_fmap_wf(reportlets_dir='.', ants_nthreads=6, 
+        wf = init_fmap_wf(reportlets_dir='.', omp_nthreads=6,
                           fmap_bspline=False)
 
     """
@@ -82,9 +82,9 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     if fmap_bspline:
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
-            unwrap=False, despike=False, njobs=ants_nthreads),
+            unwrap=False, despike=False, njobs=omp_nthreads),
             name='fmapenh')
-        fmapenh.interface.num_threads = ants_nthreads
+        fmapenh.interface.num_threads = omp_nthreads
         fmapenh.interface.estimated_memory_gb = 4
 
         workflow.connect([
