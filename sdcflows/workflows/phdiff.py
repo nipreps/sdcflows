@@ -94,7 +94,7 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
 
     demean = pe.Node(niu.Function(function=demean_image), name='demean')
 
-    cleanup = cleanup_edge_pipeline(name="cleanup")
+    cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
 
     compfmap = pe.Node(niu.Function(function=phdiff2fmap), name='compfmap')
 
@@ -117,9 +117,9 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
         (dte, compfmap, [('out', 'delta_te')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
-        (demean, cleanup, [('out', 'inputnode.in_file')]),
-        (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
-        (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
+        (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
+        (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+        (cleanup_wf, compfmap, [('outputnode.out_file', 'in_file')]),
         (compfmap, outputnode, [('out', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),

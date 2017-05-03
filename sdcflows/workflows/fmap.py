@@ -103,7 +103,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
         demean = pe.Node(niu.Function(function=demean_image), name='demean')
-        cleanup = cleanup_edge_pipeline(name='cleanup')
+        cleanup_wf = cleanup_edge_pipeline(name='cleanup_wf')
 
         applymsk = pe.Node(ApplyMask(), name='applymsk')
 
@@ -116,9 +116,9 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
             (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
             (tohz, denoise, [('out', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
-            (demean, cleanup, [('out', 'inputnode.in_file')]),
-            (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
-            (cleanup, applymsk, [('outputnode.out_file', 'in_file')]),
+            (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
+            (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+            (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
             (bet, applymsk, [('mask_file', 'in_mask')]),
             (applymsk, outputnode, [('out_file', 'fmap')]),
         ])
