@@ -20,7 +20,7 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.masks import ComputeEPIMask
+from niworkflows.interfaces.masks import BETRPT
 from niworkflows.interfaces.registration import (
     FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
 from niworkflows.data import get_mni_icbm152_nlin_asym_09c
@@ -32,6 +32,7 @@ from fmriprep.interfaces.nilearn import Merge
 from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
+from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
 
 LOGGER = logging.getLogger('workflow')
 
@@ -56,19 +57,19 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         LOGGER.warning('No valid layout: building empty workflow.')
         metadata = {"RepetitionTime": 2.0,
                     "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}
-        fmaps = {
+        fmaps = [{
                   'type': 'phasediff',
                   'phasediff': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_phasediff.nii.gz',
                   'magnitude1': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude1.nii.gz',
                   'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz'
-                }
+                }]
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
-        fmaps = layout.get_fieldmap(bold_file) if 'fieldmaps' not in ignore else {}
+        fmaps = layout.get_fieldmap(bold_file, return_list=True) if 'fieldmaps' not in ignore else []
 
     # TODO: To be removed (supported fieldmaps):
-    if not fmaps.get('type') in ['phasediff', 'fieldmap']:
+    if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
         fmaps = None
 
     # Build workflow
@@ -161,47 +162,58 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         ])
 
     else:
-        LOGGER.info('Fieldmap estimation: type "%s" found', fmaps['type'])
-        # Import specific workflows here, so we don't brake everything with one
-        # unused workflow.
-        from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
-        fmap_estimator_wf = init_fmap_estimator_wf(fmap_bids=fmaps,
-                                                   reportlets_dir=reportlets_dir,
+        # In case there are multiple fieldmaps prefer EPI
+        fmaps.sort(key=lambda fmap: {'epi': 0, 'fieldmap': 1, 'phasediff': 2}[fmap['type']])
+        fmap = fmaps[0]
+
+        LOGGER.info('Fieldmap estimation: type "%s" found', fmap['type'])
+
+        if fmap['type'] == 'epi':
+            epi_fmaps = [fmap['epi'] for fmap in fmaps if fmap['type'] == 'epi']
+            sdc_unwarp_wf = init_pepolar_unwarp_wf(fmaps=epi_fmaps,
+                                                   layout=layout,
+                                                   bold_file=bold_file,
                                                    omp_nthreads=omp_nthreads,
-                                                   fmap_bspline=fmap_bspline)
-        sdc_unwarp_wf = init_sdc_unwarp_wf(reportlets_dir=reportlets_dir,
-                                           omp_nthreads=omp_nthreads,
-                                           fmap_bspline=fmap_bspline,
-                                           fmap_demean=fmap_demean,
-                                           debug=debug,
-                                           name='sdc_unwarp_wf')
+                                                   name='pepolar_unwarp_wf')
+        else:
+            # Import specific workflows here, so we don't brake everything with one
+            # unused workflow.
+            from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
+            fmap_estimator_wf = init_fmap_estimator_wf(fmap_bids=fmap,
+                                                       reportlets_dir=reportlets_dir,
+                                                       omp_nthreads=omp_nthreads,
+                                                       fmap_bspline=fmap_bspline)
+            sdc_unwarp_wf = init_sdc_unwarp_wf(reportlets_dir=reportlets_dir,
+                                               omp_nthreads=omp_nthreads,
+                                               fmap_bspline=fmap_bspline,
+                                               fmap_demean=fmap_demean,
+                                               debug=debug,
+                                               name='sdc_unwarp_wf')
+            workflow.connect([
+                (fmap_estimator_wf, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
+                                                    ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                                                    ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+            ])
+
+        # Connections and workflows common for all types of fieldmaps
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
             (epi_hmc_wf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
                                          ('outputnode.epi_mask', 'inputnode.in_mask')]),
-            (fmap_estimator_wf, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
-                                                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                                                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
-            (sdc_unwarp_wf, epi_reg_wf, [
-                ('outputnode.out_warp', 'inputnode.fieldwarp'),
-                ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
-                ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
-            (sdc_unwarp_wf, func_reports_wf, [
-                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
+            (sdc_unwarp_wf, epi_reg_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
+                                         ('outputnode.out_reference', 'inputnode.unwarped_ref_epi'),
+                                         ('outputnode.out_mask', 'inputnode.unwarped_ref_mask')]),
+            (sdc_unwarp_wf, func_reports_wf, [('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
         ])
 
         # Report on EPI correction
         fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(reportlets_dir=reportlets_dir,
                                                            name='fmap_unwarp_report_wf')
-        workflow.connect([
-            (inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
-                                                ('epi', 'inputnode.name_source')]),
-            (epi_hmc_wf, fmap_unwarp_report_wf, [
-                ('outputnode.ref_image', 'inputnode.in_pre')]),
-            (sdc_unwarp_wf, fmap_unwarp_report_wf, [
-                ('outputnode.out_reference', 'inputnode.in_post')]),
-            (epi_reg_wf, fmap_unwarp_report_wf, [
-                ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
+        workflow.connect([(inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
+                                                              ('epi', 'inputnode.name_source')]),
+                          (epi_hmc_wf, fmap_unwarp_report_wf, [('outputnode.ref_image', 'inputnode.in_pre')]),
+                          (sdc_unwarp_wf, fmap_unwarp_report_wf, [('outputnode.out_reference', 'inputnode.in_post')]),
+                          (epi_reg_wf, fmap_unwarp_report_wf, [('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
         ])
 
     if 'MNI152NLin2009cAsym' in output_spaces:
@@ -284,7 +296,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='inu')
 
     # Calculate EPI mask on the average after HMC
-    skullstrip_epi = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+    skullstrip_epi = pe.Node(BETRPT(generate_report=True, frac=0.55),
                              name='skullstrip_epi')
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref")
