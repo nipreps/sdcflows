@@ -220,7 +220,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     return workflow
 
 
-def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
+def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                            fmaps_pes=None, bold_file_pe=None,
                            name="pepolar_unwarp_wf"):
     """
@@ -251,7 +251,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
                                     fmaps_pes=['j-'],
                                     bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
                                     bold_file_pe='j',
-                                    ants_nthreads=8)
+                                    omp_nthreads=8)
 
 
     Inputs
@@ -315,7 +315,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
 
     explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
-    prepare_epi_opposite_wf = init_prepare_epi_wf(ants_nthreads=ants_nthreads,
+    prepare_epi_opposite_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
                                                   name="prepare_epi_opposite_wf")
     prepare_epi_opposite_wf.inputs.inputnode.fmaps = usable_fieldmaps_opposite_pe
 
@@ -324,10 +324,10 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, ants_nthreads, layout=None,
                                         noweight=True,
                                         minpatch=9,
                                         nopadWARP=True,
-                                        environ={'OMP_NUM_THREADS': str(ants_nthreads)},
+                                        environ={'OMP_NUM_THREADS': str(omp_nthreads)},
                                         args=args),
                     name='qwarp')
-    qwarp.interface.num_threads = ants_nthreads
+    qwarp.interface.num_threads = omp_nthreads
 
     workflow.connect([
         (explicit_mask_epi, prepare_epi_opposite_wf, [('out_file', 'inputnode.ref_brain')]),
