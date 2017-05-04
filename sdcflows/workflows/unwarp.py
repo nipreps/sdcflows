@@ -47,6 +47,8 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     The mask is restricted to the field of view of the fieldmap since outside of it corrections could not be performed.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(reportlets_dir='.', omp_nthreads=8,
@@ -245,6 +247,8 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     account the distortions.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
         wf = init_pepolar_unwarp_wf(fmaps=['/dataset/sub-01/fmap/sub-01_epi.nii.gz'],
@@ -389,6 +393,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     and skullstripping using FSL BET.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_prepare_epi_wf
         wf = init_prepare_epi_wf(ants_nthreads=8)
