@@ -41,6 +41,8 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
     <https://github.com/nipy/nipype/blob/master/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
         wf = init_phdiff_wf(reportlets_dir='.')

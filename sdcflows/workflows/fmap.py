@@ -38,6 +38,8 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
     noise in the surrounding air region, and ensure that units are Hz.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
         wf = init_fmap_wf(reportlets_dir='.', omp_nthreads=6,
