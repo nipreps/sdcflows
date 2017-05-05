@@ -35,6 +35,7 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 
 from nipype.interfaces import ants
 from fmriprep.interfaces import CopyHeader, StructuralReference
+from fmriprep.workflows.util import init_n4bias_wf
 
 
 def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
@@ -433,9 +434,7 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
                             out_file='template.nii.gz'),
         name='merge')
 
-    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='inu')
-
-    cphdr = pe.Node(CopyHeader(), name='cphdr')
+    n4bias_wf = init_n4bias_wf()
 
     skullstrip = pe.Node(fsl.BET(frac=0.55), name='skullstrip')
 
@@ -455,10 +454,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     workflow.connect([
         (inputnode, split, [('fmaps', 'in_file')]),
         (split, merge, [(('out_files', _flatten), 'in_files')]),
-        (merge, inu, [('out_file', 'input_image')]),
-        (inu, cphdr, [('output_image', 'in_file')]),
-        (merge, cphdr, [('out_file', 'hdr_file')]),
-        (cphdr, skullstrip, [('out_file', 'in_file')]),
+        (merge, n4bias_wf, [('out_file', 'inputnode.in_file')]),
+        (n4bias_wf, skullstrip, [('outputnode.out_file', 'in_file')]),
         (skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
         (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
         (fmap2ref_reg, outputnode, [('warped_image', 'out_file')]),
