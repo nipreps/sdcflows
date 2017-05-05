@@ -12,6 +12,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import os.path as op
 
+import pkg_resources as pkgr
+
 from niworkflows.nipype import logging
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import ants, afni, c3, fsl
@@ -21,7 +23,7 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 import niworkflows.data as nid
 
 from niworkflows.interfaces import SimpleBeforeAfter
-from fmriprep.interfaces import DerivativesDataSink
+from fmriprep.interfaces import DerivativesDataSink, InvertT1w
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
@@ -80,7 +82,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     inputnode.inputs.epi = bold_file
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces']),
+        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'syn_file', 'confounds',
+                'surfaces']),
         name='outputnode')
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
@@ -223,6 +226,14 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                           (epi_reg_wf, fmap_unwarp_report_wf, [
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
+
+    nonlinear_sdc_wf = init_nonlinear_sdc_wf(omp_nthreads=omp_nthreads)
+
+    workflow.connect([
+        (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1w')]),
+        (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi')]),
+        (nonlinear_sdc_wf, outputnode, [('outputnode.warped_file', 'syn_file')]),
+        ])
 
     if 'template' in output_spaces:
         # Apply transforms in 1 shot
@@ -660,6 +671,43 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
     else:
         mask_mni_tfm.inputs.reference_image = output_grid_ref
         epi_to_mni_transform.inputs.reference_image = output_grid_ref
+    return workflow
+
+
+def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(fields=['t1w', 'epi']),
+                        name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['warped_file']), name='outputnode')
+
+    affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
+    syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
+
+    invert_t1w = pe.Node(InvertT1w(), name='invert_t1w')
+
+    ref_2_t1 = pe.Node(ants.Registration(from_file=affine_transform, num_threads=omp_nthreads),
+                       name='ref_2_t1', n_procs=omp_nthreads)
+    t1_2_ref = pe.Node(ants.ApplyTransforms(invert_transform_flags=[True],
+                                            num_threads=omp_nthreads),
+                       name='t1_2_ref', n_procs=omp_nthreads)
+
+    syn = pe.Node(ants.Registration(from_file=syn_transform, num_threads=omp_nthreads),
+                  name='syn', n_procs=omp_nthreads)
+
+    workflow.connect([
+        (inputnode, invert_t1w, [('t1w', 'in_file'),
+                                 ('epi', 'epi_ref')]),
+        (inputnode, ref_2_t1, [('epi', 'moving_image')]),
+        (invert_t1w, ref_2_t1, [('out_file', 'fixed_image')]),
+        (inputnode, t1_2_ref, [('epi', 'reference_image')]),
+        (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
+        (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
+        (inputnode, syn, [('epi', 'moving_image')]),
+        (t1_2_ref, syn, [('warped_image', 'fixed_image')]),
+        (syn, outputnode, [('warped_image', 'warped_file')]),
+        ])
+
     return workflow
 
 
