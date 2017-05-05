@@ -20,12 +20,12 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces import ants
 
 from nipype.interfaces import fsl
 from niworkflows.interfaces.masks import BETRPT
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
-from fmriprep.interfaces import IntraModalMerge, CopyHeader
+from fmriprep.workflows.util import init_n4bias_wf
+from fmriprep.interfaces import IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
@@ -60,8 +60,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
                       name='fmapmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
-    mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='mag_inu')
-    cphdr = pe.Node(CopyHeader(), name='cphdr')
+    n4bias_wf = init_n4bias_wf()
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
     ds_fmap_mask = pe.Node(
@@ -71,10 +70,8 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
         (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
-        (magmrg, mag_inu, [('out_file', 'input_image')]),
-        (mag_inu, cphdr, [('output_image', 'in_file')]),
-        (magmrg, cphdr, [('out_file', 'hdr_file')]),
-        (cphdr, bet, [('out_file', 'in_file')]),
+        (magmrg, n4bias_wf, [('out_file', 'inputnode.in_file')]),
+        (n4bias_wf, bet, [('outputnode.out_file', 'in_file')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
         (inputnode, ds_fmap_mask, [('fieldmap', 'source_file')]),
