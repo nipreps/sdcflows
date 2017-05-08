@@ -302,11 +302,9 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref")
 
-    cphdr = pe.Node(CopyHeader(), name='cphdr')
-
     workflow.connect([
         (inputnode, gen_ref, [('epi', 'in_file')]),
-        (gen_ref, n4bias_wf, [('ref_image', 'outputnode.in_file')]),
+        (gen_ref, n4bias_wf, [('ref_image', 'inputnode.in_file')]),
         (gen_ref, hmc, [('ref_image', 'ref_file')]),
         (n4bias_wf, skullstrip_epi, [('outputnode.out_file', 'in_file')]),
         (n4bias_wf, outputnode, [('outputnode.out_file', 'ref_image')]),
