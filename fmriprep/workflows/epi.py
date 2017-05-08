@@ -33,6 +33,7 @@ from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
+from fmriprep.workflows.util import init_n4bias_wf
 
 LOGGER = logging.getLogger('workflow')
 
@@ -293,7 +294,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk')
 
-    inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='inu')
+    n4bias_wf = init_n4bias_wf()
 
     # Calculate EPI mask on the average after HMC
     skullstrip_epi = pe.Node(BETRPT(generate_report=True, frac=0.55),
@@ -305,12 +306,10 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     workflow.connect([
         (inputnode, gen_ref, [('epi', 'in_file')]),
-        (gen_ref, inu, [('ref_image', 'input_image')]),
-        (inu, cphdr, [('output_image', 'in_file')]),
-        (gen_ref, cphdr, [('ref_image', 'hdr_file')]),
+        (gen_ref, n4bias_wf, [('ref_image', 'outputnode.in_file')]),
         (gen_ref, hmc, [('ref_image', 'ref_file')]),
-        (cphdr, skullstrip_epi, [('out_file', 'in_file')]),
-        (cphdr, outputnode, [('out_file', 'ref_image')]),
+        (n4bias_wf, skullstrip_epi, [('outputnode.out_file', 'in_file')]),
+        (n4bias_wf, outputnode, [('outputnode.out_file', 'ref_image')]),
     ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='split')
