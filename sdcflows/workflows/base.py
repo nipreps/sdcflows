@@ -13,7 +13,7 @@ Base fieldmap estimation
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 
-def init_fmap_estimator_wf(fmap_bids, reportlets_dir, ants_nthreads,
+def init_fmap_estimator_wf(fmap_bids, reportlets_dir, omp_nthreads,
                            fmap_bspline):
     """
     This workflow selects the fieldmap estimation data available for the subject and
@@ -41,7 +41,7 @@ def init_fmap_estimator_wf(fmap_bids, reportlets_dir, ants_nthreads,
     if fmap_bids['type'] == 'fieldmap':
         from .fmap import init_fmap_wf
         fmap_wf = init_fmap_wf(reportlets_dir=reportlets_dir,
-                               ants_nthreads=ants_nthreads,
+                               omp_nthreads=omp_nthreads,
                                fmap_bspline=fmap_bspline)
         # set inputs
         fmap_wf.inputs.inputnode.fieldmap = fmap_bids['fieldmap']

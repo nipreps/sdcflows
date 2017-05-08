@@ -41,6 +41,8 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
     <https://github.com/nipy/nipype/blob/master/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
         wf = init_phdiff_wf(reportlets_dir='.')
@@ -67,7 +69,7 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(), name='meta')
-    dte = pe.Node(niu.Function(function=_delta_te), name='dte')
+    dte = pe.Node(niu.Function(function=_delta_te), name='dte', run_without_submitting=True)
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -94,7 +96,7 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
 
     demean = pe.Node(niu.Function(function=demean_image), name='demean')
 
-    cleanup = cleanup_edge_pipeline(name="cleanup")
+    cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
 
     compfmap = pe.Node(niu.Function(function=phdiff2fmap), name='compfmap')
 
@@ -117,9 +119,9 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
         (dte, compfmap, [('out', 'delta_te')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
-        (demean, cleanup, [('out', 'inputnode.in_file')]),
-        (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
-        (cleanup, compfmap, [('outputnode.out_file', 'in_file')]),
+        (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
+        (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+        (cleanup_wf, compfmap, [('outputnode.out_file', 'in_file')]),
         (compfmap, outputnode, [('out', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),

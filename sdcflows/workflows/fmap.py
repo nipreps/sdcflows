@@ -20,27 +20,29 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces import ants
 
 from nipype.interfaces import fsl
 from niworkflows.interfaces.masks import BETRPT
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
-from fmriprep.interfaces import IntraModalMerge, CopyHeader
+from fmriprep.workflows.util import init_n4bias_wf
+from fmriprep.interfaces import IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance
 from fmriprep.interfaces.utils import ApplyMask
 
 
-def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
+def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
     noise in the surrounding air region, and ensure that units are Hz.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
-        wf = init_fmap_wf(reportlets_dir='.', ants_nthreads=6, 
+        wf = init_fmap_wf(reportlets_dir='.', omp_nthreads=6,
                           fmap_bspline=False)
 
     """
@@ -58,8 +60,7 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
                       name='fmapmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
-    mag_inu = pe.Node(ants.N4BiasFieldCorrection(dimension=3), name='mag_inu')
-    cphdr = pe.Node(CopyHeader(), name='cphdr')
+    n4bias_wf = init_n4bias_wf()
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
     ds_fmap_mask = pe.Node(
@@ -69,10 +70,8 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
         (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
-        (magmrg, mag_inu, [('out_file', 'input_image')]),
-        (mag_inu, cphdr, [('output_image', 'in_file')]),
-        (magmrg, cphdr, [('out_file', 'hdr_file')]),
-        (cphdr, bet, [('out_file', 'in_file')]),
+        (magmrg, n4bias_wf, [('out_file', 'inputnode.in_file')]),
+        (n4bias_wf, bet, [('outputnode.out_file', 'in_file')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
         (inputnode, ds_fmap_mask, [('fieldmap', 'source_file')]),
@@ -82,9 +81,9 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
     if fmap_bspline:
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
-            unwrap=False, despike=False, njobs=ants_nthreads),
+            unwrap=False, despike=False, njobs=omp_nthreads),
             name='fmapenh')
-        fmapenh.interface.num_threads = ants_nthreads
+        fmapenh.interface.num_threads = omp_nthreads
         fmapenh.interface.estimated_memory_gb = 4
 
         workflow.connect([
@@ -103,7 +102,7 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
         demean = pe.Node(niu.Function(function=demean_image), name='demean')
-        cleanup = cleanup_edge_pipeline(name='cleanup')
+        cleanup_wf = cleanup_edge_pipeline(name='cleanup_wf')
 
         applymsk = pe.Node(ApplyMask(), name='applymsk')
 
@@ -116,9 +115,9 @@ def init_fmap_wf(reportlets_dir, ants_nthreads, fmap_bspline, name='fmap_wf'):
             (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
             (tohz, denoise, [('out', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
-            (demean, cleanup, [('out', 'inputnode.in_file')]),
-            (bet, cleanup, [('mask_file', 'inputnode.in_mask')]),
-            (cleanup, applymsk, [('outputnode.out_file', 'in_file')]),
+            (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
+            (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+            (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
             (bet, applymsk, [('mask_file', 'in_mask')]),
             (applymsk, outputnode, [('out_file', 'fmap')]),
         ])

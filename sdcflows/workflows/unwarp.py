@@ -24,16 +24,21 @@ import pkg_resources as pkgr
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
+from nipype.interfaces import afni
 from nipype.interfaces.ants import CreateJacobianDeterminantImage
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
-from niworkflows.interfaces.masks import ComputeEPIMask
+from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import itk
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
+from nipype.interfaces import ants
+from fmriprep.interfaces import CopyHeader, StructuralReference
+from fmriprep.workflows.util import init_n4bias_wf
 
-def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
+
+def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
                        fmap_demean, debug, name='sdc_unwarp_wf'):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
@@ -43,9 +48,11 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
     The mask is restricted to the field of view of the fieldmap since outside of it corrections could not be performed.
 
     .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
-        wf = init_sdc_unwarp_wf(reportlets_dir='.', ants_nthreads=8,
+        wf = init_sdc_unwarp_wf(reportlets_dir='.', omp_nthreads=8,
                                 fmap_bspline=False, fmap_demean=True,
                                 debug=False)
 
@@ -102,9 +109,9 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
             'fmriprep', 'data/fmap-any_registration_testing.json')
     fmap2ref_reg = pe.Node(ANTSRegistrationRPT(generate_report=True,
         from_file=ants_settings, output_inverse_warped_image=True,
-        output_warped_image=True, num_threads=ants_nthreads),
+        output_warped_image=True, num_threads=omp_nthreads),
                        name='fmap2ref_reg')
-    fmap2ref_reg.interface.num_threads = ants_nthreads
+    fmap2ref_reg.interface.num_threads = omp_nthreads
 
     ds_reg = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
@@ -149,7 +156,7 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
 
     apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
 
-    ref_msk_post = pe.Node(ComputeEPIMask(generate_report=True, dilation=1),
+    ref_msk_post = pe.Node(BETRPT(generate_report=True, frac=0.55),
                            name='ref_msk_post')
 
     workflow.connect([
@@ -215,9 +222,267 @@ def init_sdc_unwarp_wf(reportlets_dir, ants_nthreads, fmap_bspline,
 
     return workflow
 
+
+def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
+                           fmaps_pes=None, bold_file_pe=None,
+                           name="pepolar_unwarp_wf"):
+    """
+    This workflow takes in a set of EPI files with opposite phase encoding 
+    direction than the target file and calculates a displacements field 
+    (in other words, an ANTs-compatible warp file).
+    
+    This procedure works if there is only one '_epi' file is present
+    (as long as it has the opposite phase encoding direction to the target 
+    file). The target file will be used to estimate the field distortion.
+    However, if there is another '_epi' file present with a matching
+    phase encoding direction to the target it will be used instead.
+    
+    Currently, different phase encoding dimension in the target file and the 
+    '_epi' file(s) (for example 'i' and 'j') is not supported.
+    
+    The warp field correcting for the distortions is estimated using AFNI's 
+    3dQwarp, with displacement estimation limited to the target file phase
+    encoding direction.
+
+    It also calculates a new mask for the input dataset that takes into 
+    account the distortions.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
+        wf = init_pepolar_unwarp_wf(fmaps=['/dataset/sub-01/fmap/sub-01_epi.nii.gz'],
+                                    fmaps_pes=['j-'],
+                                    bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
+                                    bold_file_pe='j',
+                                    omp_nthreads=8)
+
+
+    Inputs
+
+        in_reference
+            the reference image
+        in_mask
+            a brain mask corresponding to ``in_reference``
+        name_source
+            not used, kept for signature compatibility with ``init_sdc_unwarp_wf``
+
+    Outputs
+
+        out_reference
+            the ``in_reference`` after unwarping
+        out_warp
+            the corresponding :abbr:`DFM (displacements field map)` compatible with
+            ANTs
+        out_mask
+            mask of the unwarped input file
+        out_mask_report
+            reportlet for the skullstripping
+
+    """
+    if not bold_file_pe:
+        bold_file_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+
+    usable_fieldmaps_matching_pe = []
+    usable_fieldmaps_opposite_pe = []
+    args = '-noXdis -noYdis -noZdis'
+    rm_arg = {'i': '-noXdis',
+              'j': '-noYdis',
+              'k': '-noZdis'}[bold_file_pe[0]]
+    args = args.replace(rm_arg, '')
+
+    for i, fmap in enumerate(fmaps):
+        if fmaps_pes:
+            fmap_pe = fmaps_pes[i]
+        else:
+            fmap_pe = layout.get_metadata(fmap)["PhaseEncodingDirection"]
+        if fmap_pe[0] == bold_file_pe[0]:
+            if len(fmap_pe) != len(bold_file_pe):
+                add_list = usable_fieldmaps_opposite_pe
+            else:
+                add_list = usable_fieldmaps_matching_pe
+            add_list.append(fmap)
+
+    if len(usable_fieldmaps_opposite_pe) == 0:
+        raise Exception("None of the discovered fieldmaps has the right "
+                        "phase encoding direction. Possibly a problem with "
+                        "metadata. If not, rerun with '--ignore fieldmaps' to "
+                        "skip distortion correction step.")
+
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(
+        fields=['in_reference', 'in_mask', 'name_source']), name='inputnode')
+
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['out_reference', 'out_warp', 'out_mask', 'out_mask_report']),
+        name='outputnode')
+
+    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
+
+    prepare_epi_opposite_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
+                                                  name="prepare_epi_opposite_wf")
+    prepare_epi_opposite_wf.inputs.inputnode.fmaps = usable_fieldmaps_opposite_pe
+
+    qwarp = pe.Node(afni.QwarpPlusMinus(pblur=[0.05, 0.05],
+                                        blur=[-1, -1],
+                                        noweight=True,
+                                        minpatch=9,
+                                        nopadWARP=True,
+                                        environ={'OMP_NUM_THREADS': str(omp_nthreads)},
+                                        args=args),
+                    name='qwarp')
+    qwarp.interface.num_threads = omp_nthreads
+
+    workflow.connect([
+        (explicit_mask_epi, prepare_epi_opposite_wf, [('out_file', 'inputnode.ref_brain')]),
+        (prepare_epi_opposite_wf, qwarp, [('outputnode.out_file', 'base_file')]),
+    ])
+
+    if usable_fieldmaps_matching_pe:
+        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=ants_nthreads,
+                                                      name="prepare_epi_matching_wf")
+        prepare_epi_matching_wf.inputs.inputnode.fmaps = usable_fieldmaps_matching_pe
+
+        workflow.connect([
+            (explicit_mask_epi, prepare_epi_matching_wf, [('out_file', 'inputnode.ref_brain')]),
+            (prepare_epi_matching_wf, qwarp, [('outputnode.out_file', 'source_file')]),
+        ])
+    else:
+        workflow.connect([(explicit_mask_epi, qwarp, [('out_file', 'source_file')])])
+
+    to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants')
+
+    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp')
+
+    unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
+                                                      generate_report=False,
+                                                      float=True,
+                                                      interpolation='LanczosWindowedSinc'),
+                               name='unwarp_reference')
+
+    ref_msk_post = pe.Node(BETRPT(generate_report=True, frac=0.55),
+                           name='ref_msk_post')
+
+    workflow.connect([
+        (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
+                                        ('in_mask', 'mask_file')]),
+        (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
+        (qwarp, cphdr_warp, [('source_warp', 'in_file')]),
+        (cphdr_warp, to_ants, [('out_file', 'in_file')]),
+        (to_ants, unwarp_reference, [('out', 'transforms')]),
+        (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
+                                       ('in_reference', 'input_image')]),
+        (unwarp_reference, ref_msk_post, [('output_image', 'in_file')]),
+        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
+        (ref_msk_post, outputnode, [('mask_file', 'out_mask'),
+                                    ('out_report', 'out_mask_report')]),
+        (to_ants, outputnode, [('out', 'out_warp')]),
+    ])
+
+    return workflow
+
+
+def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
+    """
+    This workflow takes in a set of EPI files with with the same phase 
+    encoding direction and returns a single 3D volume ready to be used in
+    field distortion estimation.
+
+    The procedure involves: estimating a robust template using FreeSurfer's
+    'mri_robust_template', bias field correction using ANTs N4BiasFieldCorrection,
+    and skullstripping using FSL BET.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.fieldmap.unwarp import init_prepare_epi_wf
+        wf = init_prepare_epi_wf(ants_nthreads=8)
+
+
+    Inputs
+
+        fmaps
+            list of 3D or 4D NIfTI images
+        ref_brain
+            coregistration reference (skullstripped and bias field corrected)
+
+    Outputs
+
+        out_file
+            single 3D NIfTI file
+
+    """
+    inputnode = pe.Node(niu.IdentityInterface(fields=['fmaps', 'ref_brain']),
+                        name='inputnode')
+
+    outputnode = pe.Node(niu.IdentityInterface(fields=['out_file']),
+                         name='outputnode')
+
+    split = pe.MapNode(fsl.Split(dimension='t'), iterfield='in_file',
+                       name='split')
+
+    merge = pe.Node(
+        StructuralReference(auto_detect_sensitivity=True,
+                            initial_timepoint=1,
+                            fixed_timepoint=True,  # Align to first image
+                            intensity_scaling=True,
+                            # 7-DOF (rigid + intensity)
+                            no_iteration=True,
+                            subsample_threshold=200,
+                            out_file='template.nii.gz'),
+        name='merge')
+
+    n4bias_wf = init_n4bias_wf()
+
+    skullstrip = pe.Node(fsl.BET(frac=0.55), name='skullstrip')
+
+    ants_settings = pkgr.resource_filename('fmriprep',
+                                           'data/translation_rigid.json')
+    fmap2ref_reg = pe.Node(ants.Registration(from_file=ants_settings,
+                                             output_warped_image=True,
+                                             num_threads=ants_nthreads),
+                           name='fmap2ref_reg')
+    fmap2ref_reg.interface.num_threads = ants_nthreads
+
+    workflow = pe.Workflow(name=name)
+
+    def _flatten(l):
+        return [item for sublist in l for item in sublist]
+
+    workflow.connect([
+        (inputnode, split, [('fmaps', 'in_file')]),
+        (split, merge, [(('out_files', _flatten), 'in_files')]),
+        (merge, n4bias_wf, [('out_file', 'inputnode.in_file')]),
+        (n4bias_wf, skullstrip, [('outputnode.out_file', 'in_file')]),
+        (skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
+        (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
+        (fmap2ref_reg, outputnode, [('warped_image', 'out_file')]),
+    ])
+
+    return workflow
+
+
 # Helper functions
 # ------------------------------------------------------------
 
+
+def _fix_hdr(in_file):
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype('<f4')
+    hdr.set_intent('vector', (), '')
+
+    out_file = os.path.abspath("warpfield.nii.gz")
+
+    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(out_file)
+
+    return out_file
 
 def _get_ec(in_dict):
     return float(in_dict['EffectiveEchoSpacing'])
