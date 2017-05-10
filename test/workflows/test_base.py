@@ -22,6 +22,7 @@ class TestBase(TestWorkflow):
                                          bids_dir='.',
                                          freesurfer=False,
                                          output_spaces=['T1w'],
+                                         template='MNI152NLin2009cAsym',
                                          hires=False,
                                          bold2t1w_dof=9,
                                          fmap_bspline=True,
