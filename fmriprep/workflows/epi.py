@@ -650,7 +650,7 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
             return in_value
         return [in_value]
 
-    gen_ref = pe.Node(GenerateSamplingReference(), name='GenNewMNIReference')
+    gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref')
     template_str = nid.TEMPLATE_MAP[template]
     gen_ref.inputs.fixed_image = op.join(nid.get_dataset(template_str), '1mm_T1.nii.gz')
 
