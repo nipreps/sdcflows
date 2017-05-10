@@ -213,13 +213,15 @@ def _flatten_split_merge(in_files):
 
 
 def _gen_reference(fixed_image, moving_image, out_file=None):
-    import os.path as op
     import numpy
     from nilearn.image import resample_img, load_img
 
     if out_file is None:
         out_file = genfname(fixed_image, suffix='reference')
-    new_zooms = load_img(moving_image).header.get_zooms()
-    resample_img(fixed_image, target_affine=numpy.diag(new_zooms),
+    new_zooms = load_img(moving_image).header.get_zooms()[:3]
+    # Avoid small differences in reported resolution to cause changes to
+    # FOV. See https://github.com/poldracklab/fmriprep/issues/512
+    new_zooms_round = numpy.round(new_zooms, 3)
+    resample_img(fixed_image, target_affine=numpy.diag(new_zooms_round),
                  interpolation='nearest').to_filename(out_file)
     return out_file
