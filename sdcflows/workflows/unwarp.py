@@ -389,8 +389,9 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     field distortion estimation.
 
     The procedure involves: estimating a robust template using FreeSurfer's
-    'mri_robust_template', bias field correction using ANTs N4BiasFieldCorrection,
-    and skullstripping using FSL BET.
+    'mri_robust_template', bias field correction using ANTs N4BiasFieldCorrection
+    and AFNI 3dUnifize, skullstripping using FSL BET and AFNI 3dAutomask, 
+    and rigid coregistration to the reference using ANTs.
 
     .. workflow ::
         :graph2use: orig
