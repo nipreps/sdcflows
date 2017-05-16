@@ -9,7 +9,6 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from nipype import logging
 
-LOGGER = logging.getLogger('workflow')
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
@@ -19,6 +18,7 @@ import nipype.interfaces.afni as afni
 from fmriprep.interfaces import CopyHeader
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
+
 def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
@@ -26,12 +26,9 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     outputnode = pe.Node(niu.IdentityInterface(fields=['mask_file',
                                                        'skull_stripped_file',
                                                        'bias_corrected_file',
-                                                       'reportlet']),
+                                                       'out_report']),
                          name='outputnode')
-
-    n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3),
-                         name='n4_correct')
-    orig_hdr = pe.Node(CopyHeader(), name='orig_hdr')
+    n4bias_wf = init_n4bias_wf()
     skullstrip_first_pass = pe.Node(fsl.BET(frac=0.2, mask=True),
                                     name='skullstrip_first_pass')
     unifize = pe.Node(afni.Unifize(t2=True, outputtype='NIFTI_GZ',
@@ -47,25 +44,24 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     mask_reportlet = pe.Node(SimpleShowMaskRPT(), name='mask_reportlet')
 
     workflow.connect([
-        (inputnode, n4_correct, [('in_file', 'input_image')]),
-        (inputnode, orig_hdr, [('in_file', 'hdr_file')]),
-        (n4_correct, orig_hdr, [('output_image', 'in_file')]),
-        (orig_hdr, skullstrip_first_pass, [('out_file', 'in_file')]),
+        (inputnode, n4bias_wf, [('in_file', 'inputnode.in_file')]),
+        (n4bias_wf, skullstrip_first_pass, [('outputnode.out_file', 'in_file')]),
         (skullstrip_first_pass, unifize, [('out_file', 'in_file')]),
         (unifize, skullstrip_second_pass, [('out_file', 'in_file')]),
         (skullstrip_first_pass, combine_masks, [('mask_file', 'in_file')]),
         (skullstrip_second_pass, combine_masks, [('out_file', 'operand_file')]),
         (unifize, apply_mask, [('out_file', 'in_file')]),
         (combine_masks, apply_mask, [('out_file', 'mask_file')]),
-        (orig_hdr, mask_reportlet, [('out_file', 'background_file')]),
+        (n4bias_wf, mask_reportlet, [('outputnode.out_file', 'background_file')]),
         (combine_masks, mask_reportlet, [('out_file', 'mask_file')]),
         (combine_masks, outputnode, [('out_file', 'mask_file')]),
-        (mask_reportlet, outputnode, [('out_report', 'reportlet')]),
+        (mask_reportlet, outputnode, [('out_report', 'out_report')]),
         (apply_mask, outputnode, [('out_file', 'skull_stripped_file')]),
-        (orig_hdr, outputnode, [('out_file', 'bias_corrected_file')]),
+        (n4bias_wf, outputnode, [('outputnode.out_file', 'bias_corrected_file')]),
         ])
 
     return workflow
+
 
 def init_n4bias_wf(name='n4bias_wf'):
     workflow = pe.Workflow(name=name)

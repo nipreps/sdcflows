@@ -310,7 +310,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
         (gen_ref, hmc, [('ref_image', 'ref_file')]),
         (enhance_and_skullstrip_epi_wf, outputnode, [('outputnode.bias_corrected_file', 'ref_image'),
                                                      ('outputnode.mask_file', 'epi_mask'),
-                                                     ('outputnode.reportlet', 'epi_mask_report'),
+                                                     ('outputnode.out_report', 'epi_mask_report'),
                                                      ('outputnode.skull_stripped_file', 'ref_image_brain')]),
     ])
 
@@ -464,8 +464,8 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
                               ('t1_brain', 'fixed_image')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (fsl2itk_fwd, mask_t1w_tfm, [('itk_transform', 'transforms')]),
-        (mask_t1w_tfm, outputnode, [('output_image', 'epi_mask_t1')]),
-        (inputnode, mask_t1w_tfm, [('ref_epi_mask', 'input_image')])
+        (inputnode, mask_t1w_tfm, [('ref_epi_mask', 'input_image')]),
+        (mask_t1w_tfm, outputnode, [('output_image', 'epi_mask_t1')])
     ])
 
     if use_fieldwarp:
