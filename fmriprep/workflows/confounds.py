@@ -216,6 +216,14 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         for column_name in new.columns:
             new.rename(columns={column_name: less_breakable(column_name)},
                        inplace=True)
+
+        # This forces missing values to appear at the beggining of the DataFrame
+        # instead of the end
+        index_diff = len(confounds_data.index) - len(new.index)
+        if index_diff > 0:
+            new.index = range(index_diff, len(new.index) + index_diff)
+        elif index_diff < 0:
+            confounds_data.index = range(-index_diff, len(confounds_data.index) - index_diff)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
