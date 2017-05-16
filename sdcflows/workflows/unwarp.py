@@ -35,7 +35,8 @@ from fmriprep.interfaces.bids import DerivativesDataSink
 
 from nipype.interfaces import ants
 from fmriprep.interfaces import CopyHeader, StructuralReference
-from fmriprep.workflows.util import init_n4bias_wf
+from fmriprep.workflows.util import init_n4bias_wf, \
+    init_enhance_and_skullstrip_epi_wf
 
 
 def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
@@ -77,6 +78,8 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
         out_reference
             the ``in_reference`` after unwarping
+        pit_reference_brain
+            the ``in_reference`` after unwarping and skullstripping
         out_warp
             the corresponding :abbr:`DFM (displacements field map)` compatible with
             ANTs
@@ -91,15 +94,13 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_reference', 'in_mask', 'name_source',
+        fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source',
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_reference', 'out_warp', 'out_mask',
+        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask',
                 'out_jacobian', 'out_mask_report']), name='outputnode')
 
     meta = pe.Node(ReadSidecarJSON(), name='meta')
-
-    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -156,13 +157,10 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
     apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
 
-    ref_msk_post = pe.Node(BETRPT(generate_report=True, frac=0.55),
-                           name='ref_msk_post')
+    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
-        (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
-                                        ('in_mask', 'mask_file')]),
         (inputnode, fmap2ref_reg, [('fmap_ref', 'moving_image')]),
         (inputnode, fmap2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
@@ -172,7 +170,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
             ('composite_transform', 'transforms')]),
         (inputnode, ds_reg_vsm, [('name_source', 'source_file')]),
         (fmap2ref_apply, ds_reg_vsm, [('out_report', 'in_file')]),
-        (explicit_mask_epi, fmap2ref_reg, [('out_file', 'fixed_image')]),
+        (inputnode, fmap2ref_reg, [('in_reference_brain', 'fixed_image')]),
         (inputnode, ds_reg, [('name_source', 'source_file')]),
         (fmap2ref_reg, ds_reg, [('out_report', 'in_file')]),
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
@@ -193,10 +191,11 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (fmap2ref_reg, fmap_fov2ref_apply, [('composite_transform', 'transforms')]),
         (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
         (unwarp_reference, apply_fov_mask, [('output_image', 'in_file')]),
-        (apply_fov_mask, ref_msk_post, [('out_file', 'in_file')]),
+        (apply_fov_mask, enhance_and_skullstrip_epi_wf, [('out_file', 'inputnode.in_file')]),
         (apply_fov_mask, outputnode, [('out_file', 'out_reference')]),
-        (ref_msk_post, outputnode, [('mask_file', 'out_mask')]),
-        (ref_msk_post, outputnode, [('out_report', 'out_mask_report')]),
+        (enhance_and_skullstrip_epi_wf, outputnode, [('outputnode.mask_file', 'out_mask'),
+                                                     ('outputnode.reportlet', 'out_mask_report'),
+                                                     ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
     ])
 
@@ -263,6 +262,8 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
 
         in_reference
             the reference image
+        in_reference_brain
+            the reference image skullstripped
         in_mask
             a brain mask corresponding to ``in_reference``
         name_source
@@ -272,6 +273,8 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
 
         out_reference
             the ``in_reference`` after unwarping
+        out_reference_brain
+            the ``in_reference`` after unwarping and skullstripping
         out_warp
             the corresponding :abbr:`DFM (displacements field map)` compatible with
             ANTs
@@ -312,13 +315,11 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_reference', 'in_mask', 'name_source']), name='inputnode')
+        fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source']), name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_reference', 'out_warp', 'out_mask', 'out_mask_report']),
+        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask', 'out_mask_report']),
         name='outputnode')
-
-    explicit_mask_epi = pe.Node(fsl.ApplyMask(), name="explicit_mask_epi")
 
     prepare_epi_opposite_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
                                                   name="prepare_epi_opposite_wf")
@@ -335,21 +336,21 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     qwarp.interface.num_threads = omp_nthreads
 
     workflow.connect([
-        (explicit_mask_epi, prepare_epi_opposite_wf, [('out_file', 'inputnode.ref_brain')]),
+        (inputnode, prepare_epi_opposite_wf, [('in_reference_brain', 'inputnode.ref_brain')]),
         (prepare_epi_opposite_wf, qwarp, [('outputnode.out_file', 'base_file')]),
     ])
 
     if usable_fieldmaps_matching_pe:
-        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=ants_nthreads,
+        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
                                                       name="prepare_epi_matching_wf")
         prepare_epi_matching_wf.inputs.inputnode.fmaps = usable_fieldmaps_matching_pe
 
         workflow.connect([
-            (explicit_mask_epi, prepare_epi_matching_wf, [('out_file', 'inputnode.ref_brain')]),
+            (inputnode, prepare_epi_matching_wf, [('in_reference_brain', 'inputnode.ref_brain')]),
             (prepare_epi_matching_wf, qwarp, [('outputnode.out_file', 'source_file')]),
         ])
     else:
-        workflow.connect([(explicit_mask_epi, qwarp, [('out_file', 'source_file')])])
+        workflow.connect([(inputnode, qwarp, [('in_reference_brain', 'source_file')])])
 
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants')
 
@@ -361,22 +362,20 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    ref_msk_post = pe.Node(BETRPT(generate_report=True, frac=0.55),
-                           name='ref_msk_post')
+    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
 
     workflow.connect([
-        (inputnode, explicit_mask_epi, [('in_reference', 'in_file'),
-                                        ('in_mask', 'mask_file')]),
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
         (qwarp, cphdr_warp, [('source_warp', 'in_file')]),
         (cphdr_warp, to_ants, [('out_file', 'in_file')]),
         (to_ants, unwarp_reference, [('out', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
                                        ('in_reference', 'input_image')]),
-        (unwarp_reference, ref_msk_post, [('output_image', 'in_file')]),
+        (unwarp_reference, enhance_and_skullstrip_epi_wf, [('output_image', 'inputnode.in_file')]),
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (ref_msk_post, outputnode, [('mask_file', 'out_mask'),
-                                    ('out_report', 'out_mask_report')]),
+        (enhance_and_skullstrip_epi_wf, outputnode, [('outputnode.mask_file', 'out_mask'),
+                                                     ('outputnode.reportlet', 'out_report'),
+                                                     ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (to_ants, outputnode, [('out', 'out_warp')]),
     ])
 
@@ -434,9 +433,7 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
                             out_file='template.nii.gz'),
         name='merge')
 
-    n4bias_wf = init_n4bias_wf()
-
-    skullstrip = pe.Node(fsl.BET(frac=0.55), name='skullstrip')
+    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
 
     ants_settings = pkgr.resource_filename('fmriprep',
                                            'data/translation_rigid.json')
@@ -454,9 +451,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     workflow.connect([
         (inputnode, split, [('fmaps', 'in_file')]),
         (split, merge, [(('out_files', _flatten), 'in_files')]),
-        (merge, n4bias_wf, [('out_file', 'inputnode.in_file')]),
-        (n4bias_wf, skullstrip, [('outputnode.out_file', 'in_file')]),
-        (skullstrip, fmap2ref_reg, [('out_file', 'moving_image')]),
+        (merge, enhance_and_skullstrip_epi_wf, [('out_file', 'inputnode.in_file')]),
+        (enhance_and_skullstrip_epi_wf, fmap2ref_reg, [('outputnode.skull_stripped_file', 'moving_image')]),
         (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
         (fmap2ref_reg, outputnode, [('warped_image', 'out_file')]),
     ])
