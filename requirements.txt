@@ -1,3 +1,3 @@
-git+https://github.com/nipy/nipype.git@d82a18f80126b4bc99d0b4f6d14ff3b6e075f297#egg=nipype
+git+https://github.com/nipy/nipype.git@552e605b89af3e08a83654169e07433bc4adf2e2#egg=nipype
 git+https://github.com/chrisfilo/niworkflows.git@022ff8d5cc162ed0ac8225ff1ae1499536d17dad#egg=niworkflows
 git+https://github.com/INCF/pybids.git@7205ae01fbdca8e8bfd26ac773b1134b84c8af0c#egg=pybids
