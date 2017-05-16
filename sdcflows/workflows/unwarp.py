@@ -78,7 +78,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
         out_reference
             the ``in_reference`` after unwarping
-        pit_reference_brain
+        out_reference_brain
             the ``in_reference`` after unwarping and skullstripping
         out_warp
             the corresponding :abbr:`DFM (displacements field map)` compatible with

@@ -20,21 +20,19 @@ from nipype.interfaces import c3
 from nipype.interfaces import fsl
 from nipype.interfaces import utility as niu
 from nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.masks import BETRPT
 from niworkflows.interfaces.registration import (
     FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
 import niworkflows.data as nid
 
 from fmriprep.interfaces import DerivativesDataSink
 
-from fmriprep.interfaces.images import GenerateSamplingReference, CopyHeader
+from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
 from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
 from nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
-from fmriprep.workflows.util import init_n4bias_wf, \
-    init_enhance_and_skullstrip_epi_wf
+from fmriprep.workflows.util import init_enhance_and_skullstrip_epi_wf
 
 LOGGER = logging.getLogger('workflow')
 
