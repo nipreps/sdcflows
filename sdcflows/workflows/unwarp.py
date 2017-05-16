@@ -340,7 +340,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     ])
 
     if usable_fieldmaps_matching_pe:
-        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=ants_nthreads,
+        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
                                                       name="prepare_epi_matching_wf")
         prepare_epi_matching_wf.inputs.inputnode.fmaps = usable_fieldmaps_matching_pe
 
