@@ -206,6 +206,17 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
         return ''.join(a_string.split()).strip('#')
 
+    def _adjust_indices(left_df, right_df):
+        # This forces missing values to appear at the beggining of the DataFrame
+        # instead of the end
+        index_diff = len(left_df.index) - len(right_df.index)
+        if index_diff > 0:
+            right_df.index = range(index_diff,
+                                   len(right_df.index) + index_diff)
+        elif index_diff < 0:
+            left_df.index = range(-index_diff,
+                                  len(left_df.index) - index_diff)
+
     all_files = [confound for confound in [signals, dvars, frame_displace,
                                            tcompcor, acompcor, motion]
                  if confound is not None]
@@ -217,13 +228,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
             new.rename(columns={column_name: less_breakable(column_name)},
                        inplace=True)
 
-        # This forces missing values to appear at the beggining of the DataFrame
-        # instead of the end
-        index_diff = len(confounds_data.index) - len(new.index)
-        if index_diff > 0:
-            new.index = range(index_diff, len(new.index) + index_diff)
-        elif index_diff < 0:
-            confounds_data.index = range(-index_diff, len(confounds_data.index) - index_diff)
+        _adjust_indices(confounds_data, new)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
     combined_out = op.abspath('confounds.tsv')
