@@ -7,8 +7,6 @@ Utility workflows
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype import logging
-
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces import ants
