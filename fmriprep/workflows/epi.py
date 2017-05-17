@@ -54,7 +54,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     # For doc building purposes
     if layout is None or bold_file == 'bold_preprocesing':
 
-        LOGGER.warning('No valid layout: building empty workflow.')
+        LOGGER.info('No valid layout: building empty workflow.')
         metadata = {"RepetitionTime": 2.0,
                     "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]}
         fmaps = [{
