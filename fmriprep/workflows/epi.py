@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, layout=None):
+                         fmap_bspline, fmap_demean, debug, output_grid_ref, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
@@ -223,6 +223,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         epi_mni_trans_wf = init_epi_mni_trans_wf(output_dir=output_dir,
                                                  template=template,
                                                  bold_file_size_gb=bold_file_size_gb,
+                                                 output_grid_ref=output_grid_ref,
                                                  name='epi_mni_trans_wf')
         workflow.connect([
             (inputnode, epi_mni_trans_wf, [
@@ -613,6 +614,7 @@ def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
 
 def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
                           name='epi_mni_trans_wf',
+                          output_grid_ref=None,
                           use_fieldwarp=False):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
@@ -689,10 +691,17 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (epi_to_mni_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
-        (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
         (merge, outputnode, [('out_file', 'epi_mni')]),
     ])
 
+    if output_grid_ref is None:
+        workflow.connect([
+            (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
+            (gen_ref, epi_to_mni_transform, [('out_file', 'reference_image')]),
+        ])
+    else:
+        mask_mni_tfm.inputs.reference_image = output_grid_ref
+        epi_to_mni_transform.inputs.reference_image = output_grid_ref
     return workflow
 
 
