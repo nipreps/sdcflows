@@ -670,7 +670,6 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, mask_merge_tfms, [('t1_2_mni_forward_transform', 'in1'),
                                       (('itk_epi_to_t1', _aslist), 'in2')]),
         (mask_merge_tfms, mask_mni_tfm, [('out', 'transforms')]),
-        (gen_ref, mask_mni_tfm, [('out_file', 'reference_image')]),
         (mask_mni_tfm, outputnode, [('output_image', 'epi_mask_mni')]),
         (inputnode, mask_mni_tfm, [('epi_mask', 'input_image')])
     ])
