@@ -3,7 +3,9 @@ machine:
     OSF_PROJECT: "https://files.osf.io/v1/resources/fvuh8/providers/osfstorage"
     DS005_URL: "${OSF_PROJECT}/57f32a429ad5a101f977eb75"
     DS005_FS_URL: "${OSF_PROJECT}/58fe59eb594d900250960180"
-    DS054_URL: "${OSF_PROJECT}/57f32c22594d9001ef91bf9e"
+    DS054_URL: "${OSF_PROJECT}/57f32c22594d9001ef91bf9e"machine:
+  pre:
+    - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   services:
     - docker
 
