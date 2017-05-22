@@ -42,6 +42,7 @@ case ${CIRCLE_NODE_INDEX} in
     find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
   1)
+    fmriprep-docker -i poldracklab/fmriprep:latest --help
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --output-space fsaverage5 --debug --write-graph
     find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
