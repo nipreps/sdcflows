@@ -227,7 +227,12 @@ class BIDSFreeSurferDir(SimpleInterface):
         make_folder(subjects_dir)
         self._results['subjects_dir'] = subjects_dir
 
-        for space in self.inputs.spaces:
+        spaces = list(self.inputs.spaces)
+        # Always copy fsaverage, for proper recon-all functionality
+        if 'fsaverage' not in spaces:
+            spaces.append('fsaverage')
+
+        for space in spaces:
             # Skip non-freesurfer spaces and fsnative
             if not space.startswith('fsaverage'):
                 continue
