@@ -26,6 +26,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces import fsl
 from nipype.interfaces import afni
 from nipype.interfaces.ants import CreateJacobianDeterminantImage
+from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 from niworkflows.interfaces.masks import BETRPT
 
@@ -34,7 +35,7 @@ from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
 from nipype.interfaces import ants
-from fmriprep.interfaces import CopyHeader, StructuralReference
+from fmriprep.interfaces import StructuralReference
 from fmriprep.workflows.util import init_n4bias_wf, \
     init_enhance_and_skullstrip_epi_wf
 
