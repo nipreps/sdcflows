@@ -13,7 +13,7 @@ from nipype.interfaces import ants
 
 import nipype.interfaces.fsl as fsl
 import nipype.interfaces.afni as afni
-from fmriprep.interfaces import CopyHeader
+from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
 

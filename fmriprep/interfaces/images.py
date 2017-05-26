@@ -10,15 +10,8 @@ Image tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import json
-import re
-import os
-import os.path as op
-from shutil import copy
 import numpy as np
 import nibabel as nb
-
-from io import open
 
 from nipype import logging
 from nipype.interfaces.base import (
@@ -26,8 +19,7 @@ from nipype.interfaces.base import (
     File, InputMultiPath, OutputMultiPath)
 from niworkflows.interfaces.base import SimpleInterface
 
-from fmriprep.interfaces.bids import _splitext
-from fmriprep.utils.misc import make_folder, genfname
+from fmriprep.utils.misc import genfname
 
 LOGGER = logging.getLogger('interface')
 
@@ -36,8 +28,10 @@ class GenerateSamplingReferenceInputSpec(BaseInterfaceInputSpec):
     fixed_image = File(exists=True, mandatory=True, desc='the reference file')
     moving_image = File(exists=True, mandatory=True, desc='the pixel size reference')
 
+
 class GenerateSamplingReferenceOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='one file with all inputs flattened')
+
 
 class GenerateSamplingReference(SimpleInterface):
     """
@@ -67,6 +61,7 @@ class IntraModalMergeOutputSpec(TraitedSpec):
     out_avg = File(exists=True, desc='average image')
     out_mats = OutputMultiPath(exists=True, desc='output matrices')
     out_movpar = OutputMultiPath(exists=True, desc='output movement parameters')
+
 
 class IntraModalMerge(SimpleInterface):
     input_spec = IntraModalMergeInputSpec
@@ -127,34 +122,6 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
-class CopyHeaderInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='the file we get the data from')
-    hdr_file = File(exists=True, mandatory=True, desc='the file we get the header from')
-
-class CopyHeaderOutputSpec(TraitedSpec):
-    out_file = OutputMultiPath(File(exists=True, desc='written file path'))
-
-class CopyHeader(SimpleInterface):
-    input_spec = CopyHeaderInputSpec
-    output_spec = CopyHeaderOutputSpec
-
-    def _run_interface(self, runtime):
-
-        hdr = nb.load(self.inputs.hdr_file).get_header().copy()
-        aff = nb.load(self.inputs.hdr_file).get_affine()
-        data = nb.load(self.inputs.in_file).get_data()
-
-        fname, ext = op.splitext(op.basename(self.inputs.in_file))
-        if ext == '.gz':
-            fname, ext2 = op.splitext(fname)
-            ext = ext2 + ext
-
-        out_name = op.abspath('{}_fixhdr{}'.format(fname, ext))
-        nb.Nifti1Image(data, aff, hdr).to_filename(out_name)
-        self._results['out_file'] = out_name
-        return runtime
-
-
 def reorient(in_file, out_file=None):
     import nibabel as nb
     from fmriprep.utils.misc import genfname
@@ -186,7 +153,6 @@ def _flatten_split_merge(in_files):
             all_nii += nb.four_to_three(nii)
         else:
             all_nii.append(nii)
-
 
     if len(all_nii) == 1:
         LOGGER.warn('File %s cannot be split', all_nii[0])
