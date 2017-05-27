@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, output_grid_ref, layout=None):
+                         fmap_bspline, fmap_demean, debug, output_grid_ref, layout=None,use_aroma,denoise_strategy):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
@@ -134,11 +134,15 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  ('subject_id', 'inputnode.subject_id'),
                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                  ]),
-        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
+        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
+                                  ('t1_preproc', 't1_head'),
+                                  ('t1_brain', 't1_brain'),
+                                 ]),
         (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
                                   ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (epi_hmc_wf, discover_wf, [
-            ('outputnode.movpar_file', 'inputnode.movpar_file')]),
+            ('outputnode.movpar_file', 'inputnode.movpar_file'),
+            ('outputnode.ref_image_brain','inputnode.epi_ref')]),
         (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
                                    ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
         (epi_reg_wf, func_reports_wf, [

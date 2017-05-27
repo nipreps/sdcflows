@@ -31,11 +31,15 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf"):
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(
-        fields=['fmri_file', 'movpar_file', 't1_tpms', 'epi_mask']),
+        fields=['fmri_file', 'movpar_file', 't1_tpms', 'epi_mask', 'epi_ref', 't1_head', 't1_brain']),
         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(
         fields=['confounds_file', 'acompcor_report', 'tcompcor_report']),
         name='outputnode')
+
+    #AROMA
+    if use_AROMA:
+        ica_aroma_wf = init_ica_aroma_wf(denoise_strategy=denoise_strategy)
 
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
@@ -192,12 +196,24 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf"):
         (acompcor, outputnode, [('out_report', 'acompcor_report')]),
         (tcompcor, outputnode, [('out_report', 'tcompcor_report')]),
     ])
+    if use_AROMA:
+        workflow.connect([
+            (inputnode,ica_aroma_wf,
+                [('t1_brain', 't1_brain'),
+                 ('t1_head', 't1_head'),
+                 ('epi_ref', 'epi_ref'),
+                 ('fmri_file', 'fmri_file'),
+                 ('movpar_file', 'movpar_file'),
+                 ('epi_mask', 'epi_mask')]),
+            (ica_aroma_wf,concat,
+                [('motion_ICs','aroma')])
 
+            ])
     return workflow
 
 
 def _gather_confounds(signals=None, dvars=None, frame_displace=None,
-                      tcompcor=None, acompcor=None, motion=None):
+                      tcompcor=None, acompcor=None, motion=None, aroma=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
     import os.path as op
@@ -243,3 +259,139 @@ def reverse_order(inlist):
     if isinstance(inlist, list):
         inlist.reverse()
     return inlist
+
+def init_ica_aroma_wf(name='ica_aroma_wf',denoise_strategy='nonaggr'):
+    #standard image for ICA-AROMA
+    mni_image = fsl.Info.standard_image('MNI152_T1_2mm.nii.gz')
+
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(util.IdentityInterface(
+        fields=['t1_brain','t1_head','epi_ref',
+                'fmri_file','movpar_file','epi_mask']),
+                        name='inputnode')
+
+    outputnode = pe.Node(util.IdentityInterface(
+        fields=['motion_ICs']), name='outputnode')
+
+    #flirt node t1 to mni
+    aroma_t1tomni_flirt = pe.Node(fsl.preprocess.FLIRT(
+            reference=mni_image),name='aroma_t1tomni_flirt')
+    
+    #fnirt node t1 to mni
+    aroma_t1tomni_fnirt = pe.Node(fsl.preprocess.FNIRT(
+            ref_file=mni_image,
+            field_file=True),
+            name='aroma_t1tomni_fnirt')
+
+    #flirt node epi to t1
+    aroma_epitot1_flirt = pe.Node(fsl.preprocess.FLIRT(),
+            name='aroma_epitot1_flirt')
+
+    #smoothing node
+
+    #functions to help set SUSAN 
+    def getbtthresh(medianval):
+        return 0.75 * medianval
+
+    def getusans_func(image,thresh):
+        return [tuple([image,thresh])]
+    median_val = pe.Node(fsl.ImageStats(op_string='-k %s -p 50'),
+                              name='median_val')
+    
+    getusans = pe.Node(Function(input_names=['image','thresh'],
+                                     output_names=['usans'],
+                                     function=getusans_func),
+                            name='getusans')
+
+    brightness_threshold = pe.Node(Function(input_names=['medianval'],
+                                     output_names=['thresh'],
+                                     function=getbtthresh),
+                                        name='brightness_threshold')
+
+    smooth = pe.Node(fsl.SUSAN(fwhm=2.5),
+                          name='smooth')
+    
+    #ica_aroma node
+    ica_aroma = pe.Node(fsl.ICA_AROMA.ICA_AROMA(denoise_type=denoise_strategy),
+                             name='ica_aroma')
+    
+    #set the output directory manually (until pull request #2056 is merged.)
+    ica_out_dir = ica_aroma.output_dir()
+    ica_aroma.set_input('out_dir',ica_out_dir)
+
+    #extract the confound ICs from the results
+    def get_ica_confounds(ica_out_dir):
+        import os
+        import numpy as np
+
+        melodic_mix = os.path.join(ica_out_dir,'melodic.ica/melodic_mix')
+        motion_ICs = os.path.join(ica_out_dir,'classified_motion_ICs.txt')
+
+        #-1 since lists start at index 0
+        motion_ic_indices = np.loadtxt(motion_ICs,dtype=int,delimiter=',')-1
+        melodic_mix_arr = np.loadtxt(melodic_mix,ndmin=2)
+
+        #transpose melodic_mix_arr so indices refer to the correct dimension
+        motion_ic_arr = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
+
+        confound_txt = 'confound_ics.txt'
+
+        #transpose result back so the number of lines in the file 
+        #is equal to the length of the fmri run.
+        np.savetxt(confound_txt,motion_ic_arr.T,fmt='%.10f')
+
+        return confound_txt
+
+    ica_confound = pe.Node(Function(input_names=['ica_out_dir'],
+                                    output_names=['confound_txt'],
+                                    function=get_ica_confounds),
+                            name='ic_confound')
+
+    #connect the nodes
+    workflow.connect([
+        #Connect nodes to complete smoothing
+        (inputnode,median_val,
+            [('epi_mask','mask_file'),
+            ('fmri_file','in_file')]),
+        (median_val, brightness_threshold,
+            [('out_stat','medianval')]),       
+        (inputnode, getusans,
+            [('epi_ref','image')]),
+        (median_val, getusans,
+            [('out_stat','thresh')]),
+        (inputnode,smooth,
+            [('fmri_file','in_file')]),
+        (getusans,smooth,
+            [('usans', 'usans')]),
+        (brightness_threshold, smooth,
+            [('thresh','brightness_threshold')]),
+        #connect nodes to ICA-AROMA
+        (smooth, ica_aroma,
+            [('smoothed_file','in_file')]),
+        (inputnode, ica_aroma,
+            [('movpar_file','motion_parameters'),
+             ('epi_mask','mask')]),
+        #generate transforms for ICA-AROMA
+        (inputnode, aroma_t1tomni_flirt, 
+            [('t1_brain', 'in_file')]),
+        (inputnode, aroma_t1tomni_fnirt,
+            [('t1_head', 'in_file')]),
+        (aroma_t1tomni_flirt, aroma_t1tomni_fnirt,
+            [('out_matrix_file','affine_file')]),
+        (inputnode, aroma_epitot1_flirt,
+            [('epi_ref','in_file'),
+             ('t1_brain','reference')]),
+        #Connect transforms to ICA-AROMA
+        (aroma_t1tomni_fnirt, ica_aroma,
+            [('field_file','fnirt_warp_file')]),
+        (aroma_epitot1_flirt, ica_aroma,
+            [('out_matrix_file','mat_file')]),
+        #output for processing
+        (ica_aroma,ica_confound,
+            [('out_dir','ica_out_dir')]),
+        (ica_confound,outputnode,
+            [('confound_txt','motion_ICs')])
+        ])
+
+    return workflow
