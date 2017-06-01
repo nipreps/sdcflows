@@ -28,6 +28,6 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - git+https://github.com/nipy/nipype.git@c13f967506aa426c63ad4131cf29b655f742649c#egg=nipype
-    - git+https://github.com/poldracklab/niworkflows.git@0.0.7#egg=niworkflows
+    - git+https://github.com/nipy/nipype.git@603f424a379767abffa055283b799d69b840a58d#egg=nipype
+    - git+https://github.com/poldracklab/niworkflows.git@70a85b98e6161620af1763c050212e348cd20388#egg=niworkflows
     - git+https://github.com/INCF/pybids.git@7205ae01fbdca8e8bfd26ac773b1134b84c8af0c#egg=pybids
