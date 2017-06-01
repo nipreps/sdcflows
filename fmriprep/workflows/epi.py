@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, output_grid_ref, layout=None,use_aroma,denoise_strategy):
+                         fmap_bspline, fmap_demean, debug, output_grid_ref, use_aroma, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
@@ -119,7 +119,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     # get confounds
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
-                                             name='discover_wf')
+                                             name='discover_wf',use_aroma=use_aroma)
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     workflow.connect([
@@ -135,16 +135,11 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                  ]),
         (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
-                                  ('t1_preproc', 't1_head'),
-                                  ('t1_brain', 't1_brain'),
                                  ]),
         (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
                                   ('outputnode.xforms', 'inputnode.hmc_xforms')]),
-        (epi_hmc_wf, discover_wf, [
-            ('outputnode.movpar_file', 'inputnode.movpar_file'),
-            ('outputnode.ref_image_brain','inputnode.epi_ref')]),
-        (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
-                                   ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+        (epi_hmc_wf, discover_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
+        (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file')]),
         (epi_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.epi_reg_report'),
             ]),
@@ -153,7 +148,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   ('outputnode.epi_mask_t1', 'epi_mask_t1')]),
         (discover_wf, func_reports_wf, [
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
-            ('outputnode.tcompcor_report', 'inputnode.tcompcor_report')]),
+            ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
+            ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
     ])
 
     if not fmaps:
@@ -240,6 +236,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
             (epi_mni_trans_wf, outputnode, [('outputnode.epi_mni', 'epi_mni'),
                                             ('outputnode.epi_mask_mni', 'epi_mask_mni')]),
+            (epi_mni_trans_wf, discover_wf, [('outputnode.epi_mni', 'inputnode.epi_mni'),
+                                             ('outputnode.epi_mask_mni', 'inputnode.epi_mask_mni')]),
         ])
         if not fmaps:
             workflow.connect([
@@ -764,7 +762,7 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=['source_file', 'epi_mask_report', 'epi_reg_report', 'epi_reg_suffix',
-                    'acompcor_report', 'tcompcor_report']
+                    'acompcor_report', 'tcompcor_report', 'ica_aroma_report']
             ),
         name='inputnode')
 
@@ -787,6 +785,10 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='tcompcor'),
         name='ds_tcompcor_report', run_without_submitting=True)
+    ds_ica_aroma_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='ica_aroma'),
+        name='ds_ica_aroma_report', run_without_submitting=True)
 
     workflow.connect([
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
@@ -797,6 +799,8 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
                                          ('acompcor_report', 'in_file')]),
         (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),
                                          ('tcompcor_report', 'in_file')]),
+        (inputnode, ds_ica_aroma_report, [('source_file', 'source_file'),
+                                         ('ica_aroma_report', 'in_file')]),
         ])
 
     return workflow
