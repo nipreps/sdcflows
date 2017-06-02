@@ -708,7 +708,7 @@ def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (inputnode, syn, [('epi', 'moving_image')]),
-        (t1_2_ref, syn, [('warped_image', 'fixed_image')]),
+        (t1_2_ref, syn, [('output_image', 'fixed_image')]),
         (syn, outputnode, [('warped_image', 'warped_file'),
                            ('out_report', 'out_report')]),
         ])
