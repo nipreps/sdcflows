@@ -227,7 +227,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
 
-    nonlinear_sdc_wf = init_nonlinear_sdc_wf(omp_nthreads=omp_nthreads)
+    nonlinear_sdc_wf = init_nonlinear_sdc_wf(bold_file=bold_file, layout=layout,
+                                             omp_nthreads=omp_nthreads)
 
     workflow.connect([
         (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1w')]),
@@ -676,7 +677,7 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
     return workflow
 
 
-def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
+def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['t1w', 'epi']),
                         name='inputnode')
@@ -698,6 +699,10 @@ def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
         ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
                             generate_report=True),
         name='syn', n_procs=omp_nthreads)
+
+    pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+    syn.inputs.restrict_deformation = [
+        [int(pe[0] == 'i'), int(pe[0] == 'j'), int(pe[0] == 'k')]] * 2
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1w', 'in_file'),
