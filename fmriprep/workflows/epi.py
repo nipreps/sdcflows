@@ -19,7 +19,7 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import ants, afni, c3, fsl
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.registration import EstimateReferenceImage
+from niworkflows.interfaces.registration import EstimateReferenceImage, ANTSRegistrationRPT
 import niworkflows.data as nid
 
 from niworkflows.interfaces import SimpleBeforeAfter
@@ -233,6 +233,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1w')]),
         (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi')]),
         (nonlinear_sdc_wf, outputnode, [('outputnode.warped_file', 'syn_file')]),
+        (nonlinear_sdc_wf, func_reports_wf, [
+            ('outputnode.out_report', 'inputnode.syn_sdc_report')])
         ])
 
     if 'template' in output_spaces:
@@ -679,7 +681,7 @@ def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
     inputnode = pe.Node(niu.IdentityInterface(fields=['t1w', 'epi']),
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['warped_file']), name='outputnode')
+        fields=['warped_file', 'out_report']), name='outputnode')
 
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
@@ -692,8 +694,10 @@ def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
                                             num_threads=omp_nthreads),
                        name='t1_2_ref', n_procs=omp_nthreads)
 
-    syn = pe.Node(ants.Registration(from_file=syn_transform, num_threads=omp_nthreads),
-                  name='syn', n_procs=omp_nthreads)
+    syn = pe.Node(
+        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
+                            generate_report=True),
+        name='syn', n_procs=omp_nthreads)
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1w', 'in_file'),
@@ -705,7 +709,8 @@ def init_nonlinear_sdc_wf(omp_nthreads, name='nonlinear_sdc_wf'):
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (inputnode, syn, [('epi', 'moving_image')]),
         (t1_2_ref, syn, [('warped_image', 'fixed_image')]),
-        (syn, outputnode, [('warped_image', 'warped_file')]),
+        (syn, outputnode, [('warped_image', 'warped_file'),
+                           ('out_report', 'out_report')]),
         ])
 
     return workflow
@@ -762,7 +767,7 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
 
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_file', 'epi_mask_report', 'epi_reg_report', 'epi_reg_suffix',
+            fields=['source_file', 'epi_mask_report', 'syn_sdc_report', 'epi_reg_report',
                     'acompcor_report', 'tcompcor_report']
             ),
         name='inputnode')
@@ -771,6 +776,11 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='epi_mask'),
         name='ds_epi_mask_report', run_without_submitting=True)
+
+    ds_syn_sdc_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='syn_sdc'),
+        name='ds_syn_sdc_report', run_without_submitting=True)
 
     ds_epi_reg_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
@@ -790,6 +800,8 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
     workflow.connect([
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
                                          ('epi_mask_report', 'in_file')]),
+        (inputnode, ds_syn_sdc_report, [('source_file', 'source_file'),
+                                        ('syn_sdc_report', 'in_file')]),
         (inputnode, ds_epi_reg_report, [('source_file', 'source_file'),
                                         ('epi_reg_report', 'in_file')]),
         (inputnode, ds_acompcor_report, [('source_file', 'source_file'),
