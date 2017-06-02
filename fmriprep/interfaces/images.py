@@ -122,6 +122,59 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
+class ConformSeriesInputSpec(BaseInterfaceInputSpec):
+    t1w_list = InputMultiPath(File(exists=True), mandatory=True,
+                              desc='input T1w images')
+
+
+class ConformSeriesOutputSpec(TraitedSpec):
+    t1w_list = OutputMultiPath(exists=True, desc='output T1w images')
+
+
+class ConformSeries(SimpleInterface):
+    input_spec = ConformSeriesInputSpec
+    output_spec = ConformSeriesOutputSpec
+
+    def _run_interface(self, runtime):
+        import nibabel as nb
+        import nilearn.image as nli
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        in_names = self.inputs.t1w_list
+        orig_imgs = [nb.load(fname) for fname in in_names]
+        reoriented = [nb.as_closest_canonical(img) for img in orig_imgs]
+        target_shape = np.max([img.shape for img in reoriented], axis=0)
+        target_zooms = np.min([img.header.get_zooms()[:3] + (1,)
+                               for img in reoriented], axis=0)
+
+        resampled_imgs = []
+        for img in reoriented:
+            zooms = np.array(img.header.get_zooms()[:3] + (1,))
+            shape = img.shape
+            if not (np.allclose(zooms, target_zooms) and shape == tuple(target_shape)):
+                scale_factor = target_zooms / zooms
+                shape_factor = target_shape.astype(float) / np.array(shape)
+                target_affine = np.diag(scale_factor).dot(img.affine)
+                target_affine[:3, 3] = img.affine[:3, 3] * shape_factor
+                img = nli.resample_img(img, target_affine, target_shape)
+
+            resampled_imgs.append(img)
+
+        out_names = [fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
+                     for fname in in_names]
+
+        for orig, final, in_name, out_name in zip(orig_imgs, resampled_imgs,
+                                                  in_names, out_names):
+            if final is orig:
+                copyfile(in_name, out_name, use_hardlink=True)
+            else:
+                final.to_filename(out_name)
+
+        self._results['t1w_list'] = out_names
+
+        return runtime
+
+
 def reorient(in_file, out_file=None):
     import nibabel as nb
     from fmriprep.utils.misc import genfname
