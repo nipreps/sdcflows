@@ -700,9 +700,9 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
                             generate_report=True),
         name='syn', n_procs=omp_nthreads)
 
-    pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+    bold_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
     syn.inputs.restrict_deformation = [
-        [int(pe[0] == 'i'), int(pe[0] == 'j'), int(pe[0] == 'k')]] * 2
+        [int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), int(bold_pe[0] == 'k')]] * 2
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1w', 'in_file'),
