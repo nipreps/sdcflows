@@ -9,8 +9,11 @@ FreeSurfer tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.interfaces.base import isdefined, InputMultiPath
-from nipype.interfaces import freesurfer as fs
+import os.path as op
+import nibabel as nb
+from niworkflows.nipype.interfaces.base import isdefined, InputMultiPath
+from niworkflows.nipype.interfaces import freesurfer as fs
+from niworkflows.nipype.utils.filemanip import copyfile
 
 
 class StructuralReference(fs.RobustTemplate):
@@ -18,8 +21,6 @@ class StructuralReference(fs.RobustTemplate):
     volume is provided. """
     @property
     def cmdline(self):
-        import nibabel as nb
-        from nipype.utils.filemanip import copyfile
         cmd = super(StructuralReference, self).cmdline
         if len(self.inputs.in_files) > 1:
             return cmd
@@ -44,7 +45,6 @@ class MakeMidthickness(fs.MRIsExpand):
 
     @property
     def cmdline(self):
-        import os.path as op
         cmd = super(MakeMidthickness, self).cmdline
         if not isdefined(self.inputs.graymid) or len(self.inputs.graymid) < 1:
             return cmd

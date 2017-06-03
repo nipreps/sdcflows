@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from nipype.pipeline import engine as pe
+from niworkflows.nipype.pipeline import engine as pe
 
 from fmriprep.interfaces.bids import DerivativesDataSink
 import fmriprep.utils.misc as misc

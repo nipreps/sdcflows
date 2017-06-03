@@ -12,23 +12,21 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import os.path as op
 
-from nipype import logging
-from nipype.pipeline import engine as pe
-from nipype.interfaces import ants
-from nipype.interfaces import afni
-from nipype.interfaces import c3
-from nipype.interfaces import fsl
-from nipype.interfaces import utility as niu
-from nipype.interfaces import freesurfer as fs
+from niworkflows.nipype import logging
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import ants, afni, c3, fsl
+from niworkflows.nipype.interfaces import utility as niu
+from niworkflows.nipype.interfaces import freesurfer as fs
 from niworkflows.interfaces.registration import EstimateReferenceImage
 import niworkflows.data as nid
 
+from niworkflows.interfaces import SimpleBeforeAfter
 from fmriprep.interfaces import DerivativesDataSink
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
 from fmriprep.workflows import confounds
-from nipype.utils.filemanip import split_filename
+from niworkflows.nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
 from fmriprep.workflows.util import (
     init_enhance_and_skullstrip_epi_wf, init_bbreg_wf, init_fsl_bbr_wf)
@@ -280,7 +278,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     def normalize_motion_func(in_file, format):
         import os
         import numpy as np
-        from nipype.utils.misc import normalize_mc_params
+        from niworkflows.nipype.utils.misc import normalize_mc_params
         mpars = np.loadtxt(in_file)  # mpars is N_t x 6
         mpars = np.apply_along_axis(func1d=normalize_mc_params,
                                     axis=1, arr=mpars,
@@ -656,10 +654,6 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
 
 
 def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
-    from nipype.interfaces import ants
-    from nipype.interfaces import utility as niu
-    from niworkflows.interfaces import SimpleBeforeAfter
-
     def _getwm(in_seg, wm_label=3):
         import os.path as op
         import nibabel as nb

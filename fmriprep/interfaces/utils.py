@@ -5,7 +5,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import nibabel as nb
-from nipype.interfaces.base import (TraitedSpec, BaseInterfaceInputSpec, File)
+from niworkflows.nipype.interfaces.base import TraitedSpec, BaseInterfaceInputSpec, File
 from niworkflows.interfaces.base import SimpleInterface
 
 from fmriprep.utils.misc import genfname
