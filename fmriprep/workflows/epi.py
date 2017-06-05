@@ -416,7 +416,7 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
             out_xfm = fs_xfm.dot(bbrxfm)
             assert np.allclose(out_xfm[3], [0, 0, 0, 1])
             out_xfm[3] = [0, 0, 0, 1]
-            np.savetxt(out_file, out_xfm, fmt='%.12g')
+            np.savetxt(out_file, out_xfm, fmt=str('%.12g'))
             return out_file
 
         transformer = pe.Node(niu.Function(function=apply_fs_transform),
