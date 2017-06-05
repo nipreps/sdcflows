@@ -700,7 +700,11 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
                             generate_report=True),
         name='syn', n_procs=omp_nthreads)
 
-    bold_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+    if layout is None:
+        bold_pe = 'Workflow graph generation only -- do not run'
+    else:
+        bold_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+
     syn.inputs.restrict_deformation = [
         [int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), int(bold_pe[0] == 'k')]] * 2
 
