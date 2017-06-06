@@ -21,11 +21,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import pkg_resources as pkgr
 
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import fsl
-from nipype.interfaces import afni
-from nipype.interfaces.ants import CreateJacobianDeterminantImage
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import afni, ants, fsl, utility as niu
 from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
@@ -33,7 +30,6 @@ from fmriprep.interfaces import itk
 from fmriprep.interfaces import ReadSidecarJSON
 from fmriprep.interfaces.bids import DerivativesDataSink
 
-from nipype.interfaces import ants
 from fmriprep.interfaces import StructuralReference
 from fmriprep.workflows.util import init_enhance_and_skullstrip_epi_wf
 
@@ -140,7 +136,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     # Convert the VSM into a DFM (displacements field map)
     # or: FUGUE shift to ANTS warping.
     vsm2dfm = pe.Node(itk.FUGUEvsm2ANTSwarp(), name='vsm2dfm')
-    jac_dfm = pe.Node(CreateJacobianDeterminantImage(
+    jac_dfm = pe.Node(ants.CreateJacobianDeterminantImage(
         imageDimension=3, outputImage='jacobian.nii.gz'), name='jac_dfm')
 
     unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,

@@ -5,7 +5,7 @@ import re
 import os
 
 import jinja2
-from nipype.utils.filemanip import loadcrash
+from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
 
 class Element(object):

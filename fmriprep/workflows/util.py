@@ -10,10 +10,9 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import os.path as op
 
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import ants, fsl, afni, freesurfer as fs
-
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import utility as niu
+from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 

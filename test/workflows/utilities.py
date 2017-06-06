@@ -5,8 +5,8 @@ import logging
 from networkx.exception import NetworkXUnfeasible
 from traits.trait_base import _Undefined as trait_undefined
 
-from nipype.pipeline import engine
-from nipype.interfaces import utility
+from niworkflows.nipype.pipeline import engine
+from niworkflows.nipype.interfaces import utility
 
 logging.disable(logging.INFO)
 

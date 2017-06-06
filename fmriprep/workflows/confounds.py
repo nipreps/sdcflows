@@ -8,12 +8,12 @@ Calculates frame displacement, segment regressors, global regressor, dvars, aCom
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.interfaces import utility
-from nipype.algorithms import confounds
-from nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import utility
+from niworkflows.nipype.algorithms import confounds
+from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 
-from nipype.interfaces.nilearn import SignalExtraction
+from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 

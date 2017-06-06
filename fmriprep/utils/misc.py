@@ -5,13 +5,8 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import copy
-from glob import glob
-import itertools
-import json
 import os
-from os import path as op
 from errno import EEXIST
-import re
 
 from bids.grabbids import BIDSLayout
 
@@ -142,7 +137,7 @@ def fix_multi_T1w_source_name(in_files):
 
 def add_suffix(in_files, suffix):
     import os.path as op
-    from nipype.utils.filemanip import fname_presuffix, filename_to_list
+    from niworkflows.nipype.utils.filemanip import fname_presuffix, filename_to_list
     return op.basename(fname_presuffix(filename_to_list(in_files)[0],
                                        suffix=suffix))
 
