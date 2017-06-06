@@ -695,18 +695,26 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
                                             num_threads=omp_nthreads),
                        name='t1_2_ref', n_procs=omp_nthreads)
 
-    syn = pe.Node(
-        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
-                            generate_report=True),
-        name='syn', n_procs=omp_nthreads)
-
     if layout is None:
         bold_pe = 'Workflow graph generation only -- do not run'
     else:
-        bold_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+        bold_pe = layout.get_metadata(bold_file).get("PhaseEncodingDirection")
 
-    syn.inputs.restrict_deformation = [
-        [int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), int(bold_pe[0] == 'k')]] * 2
+    syn = pe.MapNode(
+        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
+                            generate_report=True),
+        iterfield='restrict_deformation',
+        name='syn', n_procs=omp_nthreads)
+
+    restrict_i = [[1, 0, 0], [1, 0, 0]]
+    restrict_j = [[0, 1, 0], [0, 1, 0]]
+
+    if bold_pe is None:
+        syn.inputs.restrict_deformation = [restrict_i, restrict_j]
+    elif bold_pe[0] == 'i':
+        syn.inputs.restrict_deformation = [restrict_i]
+    elif bold_pe[0] == 'j':
+        syn.inputs.restrict_deformation = [restrict_j]
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1w', 'in_file'),
