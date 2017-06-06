@@ -233,7 +233,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     workflow.connect([
         (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1w')]),
         (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi')]),
-        (nonlinear_sdc_wf, outputnode, [('outputnode.warped_file', 'syn_file')]),
+        (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
         (nonlinear_sdc_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.syn_sdc_report')])
         ])
@@ -682,7 +682,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
     inputnode = pe.Node(niu.IdentityInterface(fields=['t1w', 'epi']),
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['warped_file', 'out_report']), name='outputnode')
+        fields=['warped_image', 'out_report']), name='outputnode')
 
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
@@ -726,7 +726,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (inputnode, syn, [('epi', 'moving_image')]),
         (t1_2_ref, syn, [('output_image', 'fixed_image')]),
-        (syn, outputnode, [('warped_image', 'warped_file'),
+        (syn, outputnode, [('warped_image', 'warped_image'),
                            ('out_report', 'out_report')]),
         ])
 
