@@ -73,7 +73,7 @@ def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
                                't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report']),
+        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report', 'final_cost']),
         name='outputnode')
 
     _BBRegister = BBRegisterRPT if report else fs.BBRegister
@@ -97,14 +97,23 @@ def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
     transformer = pe.Node(niu.Function(function=apply_fs_transform),
                           name='transformer')
 
+    def get_final_cost(in_file):
+        import numpy as np
+        return np.loadtxt(in_file, use_cols=[0])
+
+    get_cost = pe.Node(niu.Function(function=get_final_cost),
+                       name='get_cost', run_without_submitting=True)
+
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
         (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
         (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
+        (bbregister, get_cost, [('min_cost_file', 'in_file')]),
         (transformer, outputnode, [('out', 'out_matrix_file')]),
         (bbregister, outputnode, [('out_reg_file', 'out_reg_file')]),
+        (get_cost, outputnode, [('out', 'final_cost')]),
         ])
 
     if report:
@@ -123,15 +132,29 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                                't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report']),
+        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report', 'final_cost']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
     _FLIRT = FLIRTRPT if report else fsl.FLIRT
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6), name='flt_bbr_init')
-    flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof), name='flt_bbr')
+    flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof, save_log=True), name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
+
+    def get_final_cost(in_file):
+        from niworkflows.nipype import logging
+        with open(in_file, 'r') as fobj:
+            for line in fobj:
+                if line.startswith('>> print U:1'):
+                    costs = next(fobj).split()
+                    return float(costs[0])
+        logger = logging.getLogger('interface')
+        logger.error('No cost report found in log file. Please report this '
+                     'issue, with contents of {}'.format(in_file))
+
+    get_cost = pe.Node(niu.Function(function=get_final_cost),
+                       name='get_cost', run_without_submitting=True)
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_file')]),
@@ -142,6 +165,8 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                               ('t1_brain', 'reference')]),
         (wm_mask, flt_bbr, [('out', 'wm_seg')]),
         (flt_bbr, outputnode, [('out_matrix_file', 'out_matrix_file')]),
+        (flt_bbr, get_cost, [('out_log', 'in_file')]),
+        (get_cost, outputnode, [('out', 'final_cost')]),
         ])
 
     if report:
