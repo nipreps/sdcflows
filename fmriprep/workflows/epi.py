@@ -704,7 +704,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                        name='t1_2_ref', n_procs=omp_nthreads)
 
     if layout is None:
-        bold_pe = 'Workflow graph generation only -- do not run'
+        bold_pe = None
     else:
         bold_pe = layout.get_metadata(bold_file).get("PhaseEncodingDirection")
 
