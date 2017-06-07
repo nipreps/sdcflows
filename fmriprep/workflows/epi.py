@@ -227,12 +227,16 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
 
-    nonlinear_sdc_wf = init_nonlinear_sdc_wf(bold_file=bold_file, layout=layout,
-                                             omp_nthreads=omp_nthreads)
+    nonlinear_sdc_wf = init_nonlinear_sdc_wf(
+        bold_file=bold_file, layout=layout, freesurfer=freesurfer,
+        bold2t1w_dof=bold2t1w_dof, omp_nthreads=omp_nthreads)
 
     workflow.connect([
-        (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1w')]),
-        (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi')]),
+        (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1_brain'),
+                                       ('t1_seg', 'inputnode.t1_seg'),
+                                       ('subjects_dir', 'inputnode.subjects_dir'),
+                                       ('subject_id', 'inputnode.subject_id')]),
+        (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
         (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
         (nonlinear_sdc_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.syn_sdc_report')])
@@ -677,12 +681,16 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
     return workflow
 
 
-def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_wf'):
+def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
+                          omp_nthreads, name='nonlinear_sdc_wf'):
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['t1w', 'epi']),
-                        name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['warped_image', 'out_report']), name='outputnode')
+    inputnode = pe.Node(
+        niu.IdentityInterface(['t1_brain', 'epi_ref',
+                               'subjects_dir', 'subject_id', 't1_seg']),  # BBR requirements
+        name='inputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(['warped_image', 'warp', 'out_report']),
+        name='outputnode')
 
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
@@ -700,35 +708,87 @@ def init_nonlinear_sdc_wf(bold_file, layout, omp_nthreads, name='nonlinear_sdc_w
     else:
         bold_pe = layout.get_metadata(bold_file).get("PhaseEncodingDirection")
 
-    syn = pe.MapNode(
-        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
-                            generate_report=True),
-        iterfield='restrict_deformation',
-        name='syn', n_procs=omp_nthreads)
-
     restrict_i = [[1, 0, 0], [1, 0, 0]]
     restrict_j = [[0, 1, 0], [0, 1, 0]]
 
-    if bold_pe is None:
-        syn.inputs.restrict_deformation = [restrict_i, restrict_j]
-    elif bold_pe[0] == 'i':
-        syn.inputs.restrict_deformation = [restrict_i]
-    elif bold_pe[0] == 'j':
-        syn.inputs.restrict_deformation = [restrict_j]
+    syn_i = pe.Node(
+        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
+                            restrict_deformation=restrict_i, generate_report=True),
+        name='syn_i', n_procs=omp_nthreads)
+    syn_j = pe.Node(
+        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
+                            restrict_deformation=restrict_j, generate_report=True),
+        name='syn_j', n_procs=omp_nthreads)
 
     workflow.connect([
-        (inputnode, invert_t1w, [('t1w', 'in_file'),
-                                 ('epi', 'epi_ref')]),
-        (inputnode, ref_2_t1, [('epi', 'moving_image')]),
+        (inputnode, invert_t1w, [('t1_brain', 'in_file'),
+                                 ('epi_ref', 'epi_ref')]),
+        (inputnode, ref_2_t1, [('epi_ref', 'moving_image')]),
         (invert_t1w, ref_2_t1, [('out_file', 'fixed_image')]),
-        (inputnode, t1_2_ref, [('epi', 'reference_image')]),
+        (inputnode, t1_2_ref, [('epi_ref', 'reference_image')]),
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
-        (inputnode, syn, [('epi', 'moving_image')]),
-        (t1_2_ref, syn, [('output_image', 'fixed_image')]),
-        (syn, outputnode, [('warped_image', 'warped_image'),
-                           ('out_report', 'out_report')]),
         ])
+
+    if bold_pe is None:
+        if freesurfer:
+            bbr_i_wf = init_bbreg_wf(bold2t1w_dof, report=False, reregister=False, name='bbr_i_wf')
+            bbr_j_wf = init_bbreg_wf(bold2t1w_dof, report=False, reregister=False, name='bbr_j_wf')
+        else:
+            bbr_i_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_i_wf')
+            bbr_j_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_j_wf')
+
+        def select_outputs(cost_i, warped_image_i, forward_transforms_i, out_report_i,
+                           cost_j, warped_image_j, forward_transforms_j, out_report_j):
+            if cost_i < cost_j:
+                return warped_image_i, forward_transforms_i, out_report_i
+            else:
+                return warped_image_j, forward_transforms_j, out_report_j
+
+        pe_chooser = pe.Node(
+            niu.Function(function=select_outputs,
+                         out_names=['warped_image', 'forward_transforms',
+                                    'out_report']),
+            name='pe_chooser')
+
+        workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
+                          (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
+                          (inputnode, syn_j, [('epi_ref', 'moving_image')]),
+                          (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
+                          (inputnode, bbr_i_wf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                                 ('subject_id', 'inputnode.subject_id'),
+                                                 ('t1_seg', 'inputnode.t1_seg'),
+                                                 ('t1_brain', 'inputnode.t1_brain')]),
+                          (inputnode, bbr_j_wf, [('subjects_dir', 'inputnode.subjects_dir'),
+                                                 ('subject_id', 'inputnode.subject_id'),
+                                                 ('t1_seg', 'inputnode.t1_seg'),
+                                                 ('t1_brain', 'inputnode.t1_brain')]),
+                          (syn_i, bbr_i_wf, [('warped_image', 'inputnode.in_file')]),
+                          (syn_j, bbr_j_wf, [('warped_image', 'inputnode.in_file')]),
+                          (bbr_i_wf, pe_chooser, [('outputnode.final_cost', 'cost_i')]),
+                          (bbr_j_wf, pe_chooser, [('outputnode.final_cost', 'cost_j')]),
+                          (syn_i, pe_chooser, [('warped_image', 'warped_image_i'),
+                                               ('forward_transforms', 'forward_transforms_i'),
+                                               ('out_report', 'out_report_i')]),
+                          (syn_j, pe_chooser, [('warped_image', 'warped_image_j'),
+                                               ('forward_transforms', 'forward_transforms_j'),
+                                               ('out_report', 'out_report_j')]),
+                          ])
+        syn_out = pe_chooser
+    elif bold_pe[0] == 'i':
+        workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
+                          (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
+                          ])
+        syn_out = syn_i
+    elif bold_pe[0] == 'j':
+        workflow.connect([(inputnode, syn_j, [('epi_ref', 'moving_image')]),
+                          (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
+                          ])
+        syn_out = syn_j
+
+    workflow.connect([(syn_out, outputnode, [('warped_image', 'warped_image'),
+                                             ('forward_transforms', 'warp'),
+                                             ('out_report', 'out_report')])])
 
     return workflow
 
