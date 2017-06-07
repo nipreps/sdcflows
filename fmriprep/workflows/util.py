@@ -64,7 +64,7 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     return workflow
 
 
-def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
+def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
@@ -108,13 +108,21 @@ def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
-        (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
-        (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
         (bbregister, get_cost, [('min_cost_file', 'in_file')]),
-        (transformer, outputnode, [('out', 'out_matrix_file')]),
         (bbregister, outputnode, [('out_reg_file', 'out_reg_file')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
         ])
+
+    if reregister:
+        workflow.connect([
+            (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
+            (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
+            (transformer, outputnode, [('out', 'out_matrix_file')]),
+            ])
+    else:
+        workflow.connect([
+            (bbregister, outputnode, [('out_fsl_file', 'out_matrix_file')]),
+            ])
 
     if report:
         bbregister.inputs.generate_report = True
