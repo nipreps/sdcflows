@@ -77,7 +77,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
-                't1_2_mni_forward_transform', 'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
+                't1_2_mni_forward_transform', 't1_2_mni_reverse_transform',
+                'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
         name='inputnode')
     inputnode.inputs.epi = bold_file
 
@@ -228,14 +229,16 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                           ])
 
     nonlinear_sdc_wf = init_nonlinear_sdc_wf(
-        bold_file=bold_file, layout=layout, freesurfer=freesurfer,
-        bold2t1w_dof=bold2t1w_dof, omp_nthreads=omp_nthreads)
+        bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
+        template=template, omp_nthreads=omp_nthreads)
 
     workflow.connect([
-        (inputnode, nonlinear_sdc_wf, [('t1_brain', 'inputnode.t1_brain'),
-                                       ('t1_seg', 'inputnode.t1_seg'),
-                                       ('subjects_dir', 'inputnode.subjects_dir'),
-                                       ('subject_id', 'inputnode.subject_id')]),
+        (inputnode, nonlinear_sdc_wf, [
+            ('t1_brain', 'inputnode.t1_brain'),
+            ('t1_seg', 'inputnode.t1_seg'),
+            ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
+            ('subjects_dir', 'inputnode.subjects_dir'),
+            ('subject_id', 'inputnode.subject_id')]),
         (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
         (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
         (nonlinear_sdc_wf, func_reports_wf, [
@@ -682,16 +685,23 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
 
 
 def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
-                          omp_nthreads, name='nonlinear_sdc_wf'):
+                          template, omp_nthreads,
+                          atlas_threshold=3, name='nonlinear_sdc_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(['t1_brain', 'epi_ref',
+        niu.IdentityInterface(['t1_brain', 'epi_ref', 't1_2_mni_reverse_transform',
                                'subjects_dir', 'subject_id', 't1_seg']),  # BBR requirements
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['warped_image', 'warp', 'out_report']),
         name='outputnode')
 
+    # Collect predefined data
+    # Atlas image and registration affine
+    atlas_img = pkgr.resource_filename('fmriprep', 'data/fmap_atlas.nii.gz')
+    atlas_2_template_affine = pkgr.resource_filename(
+        'fmriprep', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
+    # Registration specifications
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
 
@@ -702,6 +712,21 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     t1_2_ref = pe.Node(ants.ApplyTransforms(invert_transform_flags=[True],
                                             num_threads=omp_nthreads),
                        name='t1_2_ref', n_procs=omp_nthreads)
+
+    # 1) EPI -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
+    transform_list = pe.Node(niu.Merge(3), name='transform_list')
+    transform_list.inputs.in3 = atlas_2_template_affine
+
+    # Inverting (1), then applying in reverse order:
+    #
+    # ATLAS -> MNI -> T1 -> EPI
+    atlas_2_ref = pe.Node(
+        ants.ApplyTransforms(invert_transform_flags=[True, False, False],
+                             num_threads=omp_nthreads),
+        name='atlas_2_ref', n_procs=omp_nthreads)
+    atlas_2_ref.inputs.input_image = atlas_img
+
+    threshold_atlas = pe.Node(fsl.Threshold(thresh=atlas_threshold), name='threshold_atlas')
 
     if layout is None:
         bold_pe = None
@@ -728,6 +753,11 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         (inputnode, t1_2_ref, [('epi_ref', 'reference_image')]),
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
+        (ref_2_t1, transform_list, [('forward_transforms', 'in1')]),
+        (inputnode, transform_list, [('t1_2_mni_reverse_transform', 'in2')]),
+        (inputnode, atlas_2_ref, [('epi_ref', 'reference_image')]),
+        (transform_list, atlas_2_ref, [('out', 'transforms')]),
+        (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
         ])
 
     if bold_pe is None:
