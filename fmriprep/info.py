@@ -44,7 +44,7 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.2.1',
     'nitime',
-    'niworkflows',
+    'niworkflows>=0.1.2',
     'statsmodels',
     'nipype',
 ]
