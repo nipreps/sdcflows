@@ -19,7 +19,7 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import ants, afni, c3, fsl
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.registration import EstimateReferenceImage, ANTSRegistrationRPT
+from niworkflows.interfaces.registration import EstimateReferenceImage
 import niworkflows.data as nid
 
 from niworkflows.interfaces import SimpleBeforeAfter
@@ -737,13 +737,15 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     restrict_j = [[0, 1, 0], [0, 1, 0]]
 
     syn_i = pe.Node(
-        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
-                            restrict_deformation=restrict_i, generate_report=True),
+        ants.Registration(from_file=syn_transform, num_threads=omp_nthreads,
+                          restrict_deformation=restrict_i),
         name='syn_i', n_procs=omp_nthreads)
     syn_j = pe.Node(
-        ANTSRegistrationRPT(from_file=syn_transform, num_threads=omp_nthreads,
-                            restrict_deformation=restrict_j, generate_report=True),
+        ants.Registration(from_file=syn_transform, num_threads=omp_nthreads,
+                          restrict_deformation=restrict_j),
         name='syn_j', n_procs=omp_nthreads)
+
+    syn_rpt = pe.Node(SimpleBeforeAfter(), name='syn_rpt')
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1_brain', 'in_file'),
@@ -758,6 +760,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         (inputnode, atlas_2_ref, [('epi_ref', 'reference_image')]),
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
+        (inputnode, syn_rpt, [('epi_ref', 'before')]),
         ])
 
     if bold_pe is None:
@@ -800,11 +803,9 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                           (bbr_i_wf, pe_chooser, [('outputnode.final_cost', 'cost_i')]),
                           (bbr_j_wf, pe_chooser, [('outputnode.final_cost', 'cost_j')]),
                           (syn_i, pe_chooser, [('warped_image', 'warped_image_i'),
-                                               ('forward_transforms', 'forward_transforms_i'),
-                                               ('out_report', 'out_report_i')]),
+                                               ('forward_transforms', 'forward_transforms_i')]),
                           (syn_j, pe_chooser, [('warped_image', 'warped_image_j'),
-                                               ('forward_transforms', 'forward_transforms_j'),
-                                               ('out_report', 'out_report_j')]),
+                                               ('forward_transforms', 'forward_transforms_j')]),
                           ])
         syn_out = pe_chooser
     elif bold_pe[0] == 'i':
@@ -819,8 +820,9 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         syn_out = syn_j
 
     workflow.connect([(syn_out, outputnode, [('warped_image', 'warped_image'),
-                                             ('forward_transforms', 'warp'),
-                                             ('out_report', 'out_report')])])
+                                             ('forward_transforms', 'warp')]),
+                      (syn_out, syn_rpt, [('warped_image', 'after')]),
+                      (syn_rpt, outputnode, [('out_report', 'out_report')])])
 
     return workflow
 
