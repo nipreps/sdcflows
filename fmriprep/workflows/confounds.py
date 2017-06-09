@@ -7,17 +7,15 @@ Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
-
-from nipype.interfaces import fsl
-from nipype.interfaces import utility
-from nipype.algorithms import confounds
-from nipype.pipeline import engine as pe
-from nipype.interfaces.fsl import ICA_AROMA as aroma
+from niworkflows.nipype.interfaces import utility
+from niworkflows.nipype.algorithms import confounds
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces.fsl import ICA_AROMA as aroma
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 from niworkflows.interfaces import segmentation as nws
 
 
-from nipype.interfaces.nilearn import SignalExtraction
+from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 

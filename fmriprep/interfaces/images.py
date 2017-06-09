@@ -13,10 +13,11 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import numpy as np
 import nibabel as nb
 
-from nipype import logging
-from nipype.interfaces.base import (
+from niworkflows.nipype import logging
+from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
+from niworkflows.nipype.interfaces import fsl
 from niworkflows.interfaces.base import SimpleInterface
 
 from fmriprep.utils.misc import genfname
@@ -68,7 +69,6 @@ class IntraModalMerge(SimpleInterface):
     output_spec = IntraModalMergeOutputSpec
 
     def _run_interface(self, runtime):
-        from nipype.interfaces import fsl
         in_files = self.inputs.in_files
         if not isinstance(in_files, list):
             in_files = [self.inputs.in_files]

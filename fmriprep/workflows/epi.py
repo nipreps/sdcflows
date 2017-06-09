@@ -12,27 +12,24 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import os.path as op
 
-from nipype import logging
-from nipype.pipeline import engine as pe
-from nipype.interfaces import ants
-from nipype.interfaces import afni
-from nipype.interfaces import c3
-from nipype.interfaces import fsl
-from nipype.interfaces import utility as niu
-from nipype.interfaces import freesurfer as fs
-from niworkflows.interfaces.registration import (
-    FLIRTRPT, BBRegisterRPT, EstimateReferenceImage)
+from niworkflows.nipype import logging
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import ants, afni, c3, fsl
+from niworkflows.nipype.interfaces import utility as niu
+from niworkflows.nipype.interfaces import freesurfer as fs
+from niworkflows.interfaces.registration import EstimateReferenceImage
 import niworkflows.data as nid
 
+from niworkflows.interfaces import SimpleBeforeAfter
 from fmriprep.interfaces import DerivativesDataSink
 
 from fmriprep.interfaces.images import GenerateSamplingReference
 from fmriprep.interfaces.nilearn import Merge
-from fmriprep.utils.misc import _extract_wm
 from fmriprep.workflows import confounds
-from nipype.utils.filemanip import split_filename
+from niworkflows.nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
-from fmriprep.workflows.util import init_enhance_and_skullstrip_epi_wf
+from fmriprep.workflows.util import (
+    init_enhance_and_skullstrip_epi_wf, init_bbreg_wf, init_fsl_bbr_wf)
 
 LOGGER = logging.getLogger('workflow')
 
@@ -283,7 +280,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
     def normalize_motion_func(in_file, format):
         import os
         import numpy as np
-        from nipype.utils.misc import normalize_mc_params
+        from niworkflows.nipype.utils.misc import normalize_mc_params
         mpars = np.loadtxt(in_file)  # mpars is N_t x 6
         mpars = np.apply_along_axis(func1d=normalize_mc_params,
                                     axis=1, arr=mpars,
@@ -398,40 +395,9 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
     )
 
     if freesurfer:
-        bbregister = pe.Node(
-            BBRegisterRPT(
-                dof=bold2t1w_dof,
-                contrast_type='t2',
-                init='coreg',
-                registered_file=True,
-                out_fsl_file=True,
-                generate_report=True),
-            name='bbregister'
-            )
-
-        def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
-            import os
-            import numpy as np
-            out_file = os.path.abspath('transform.mat')
-            fs_xfm = np.loadtxt(fs_2_t1_transform)
-            bbrxfm = np.loadtxt(bbreg_transform)
-            out_xfm = fs_xfm.dot(bbrxfm)
-            assert np.allclose(out_xfm[3], [0, 0, 0, 1])
-            out_xfm[3] = [0, 0, 0, 1]
-            np.savetxt(out_file, out_xfm, fmt='%.12g')
-            return out_file
-
-        transformer = pe.Node(niu.Function(function=apply_fs_transform),
-                              name='transformer', run_without_submitting=True)
+        bbr_wf = init_bbreg_wf(bold2t1w_dof, report=True)
     else:
-        wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
-        flt_bbr_init = pe.Node(FLIRTRPT(generate_report=True, dof=6), name='flt_bbr_init')
-        flt_bbr = pe.Node(
-            FLIRTRPT(generate_report=True, cost_func='bbr',
-                     dof=bold2t1w_dof),
-            name='flt_bbr')
-        flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
-                                          'etc/flirtsch/bbr.sch')
+        bbr_wf = init_fsl_bbr_wf(bold2t1w_dof, report=True)
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr')
@@ -444,12 +410,23 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
                           name='fsl2itk_inv')
 
     workflow.connect([
+        (inputnode, bbr_wf, [('ref_epi_brain', 'inputnode.in_file'),
+                             ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform'),
+                             ('subjects_dir', 'inputnode.subjects_dir'),
+                             ('subject_id', 'inputnode.subject_id'),
+                             ('t1_seg', 'inputnode.t1_seg'),
+                             ('t1_brain', 'inputnode.t1_brain')]),
         (inputnode, fsl2itk_fwd, [('t1_preproc', 'reference_file'),
                                   ('ref_epi_brain', 'source_file')]),
         (inputnode, fsl2itk_inv, [('ref_epi_brain', 'reference_file'),
                                   ('t1_preproc', 'source_file')]),
-        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
+        (bbr_wf, invt_bbr, [('outputnode.out_matrix_file', 'in_file')]),
+        (bbr_wf, fsl2itk_fwd, [('outputnode.out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
+        (bbr_wf, outputnode, [('outputnode.out_matrix_file', 'mat_epi_to_t1'),
+                              ('outputnode.out_reg_file', 'fs_reg_file'),
+                              ('outputnode.out_report', 'out_report')]),
+        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_epi')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_epi_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_epi')]),
     ])
@@ -504,34 +481,6 @@ def init_epi_reg_wf(freesurfer, bold2t1w_dof,
         (inputnode, epi_to_t1w_transform, [('epi_split', 'input_image')]),
         (gen_ref, epi_to_t1w_transform, [('out_file', 'reference_image')]),
     ])
-
-    if freesurfer:
-        workflow.connect([
-            (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
-                                     ('subject_id', 'subject_id')]),
-            (inputnode, bbregister, [('ref_epi_brain', 'source_file')]),
-            (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
-            (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
-            (transformer, invt_bbr, [('out', 'in_file')]),
-            (transformer, fsl2itk_fwd, [('out', 'transform_file')]),
-            (transformer, outputnode, [('out', 'mat_epi_to_t1')]),
-            (bbregister, outputnode, [('out_reg_file', 'fs_reg_file'),
-                                      ('out_report', 'out_report')]),
-        ])
-    else:
-        workflow.connect([
-            (inputnode, wm_mask, [('t1_seg', 'in_file')]),
-            (inputnode, flt_bbr_init, [('ref_epi_brain', 'in_file')]),
-            (inputnode, flt_bbr_init, [('t1_brain', 'reference')]),
-            (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
-            (inputnode, flt_bbr, [('t1_brain', 'reference')]),
-            (inputnode, flt_bbr, [('ref_epi_brain', 'in_file')]),
-            (wm_mask, flt_bbr, [('out', 'wm_seg')]),
-            (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
-            (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
-            (flt_bbr, outputnode, [('out_matrix_file', 'mat_epi_to_t1'),
-                                   ('out_report', 'out_report')]),
-        ])
 
     return workflow
 
@@ -707,10 +656,6 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
 
 
 def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
-    from nipype.interfaces import ants
-    from nipype.interfaces import utility as niu
-    from niworkflows.interfaces import SimpleBeforeAfter
-
     def _getwm(in_seg, wm_label=3):
         import os.path as op
         import nibabel as nb

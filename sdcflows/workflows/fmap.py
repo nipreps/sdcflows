@@ -18,12 +18,13 @@ of the BIDS specification.
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import utility as niu
 
-from nipype.interfaces import fsl, ants
+from niworkflows.nipype.interfaces import fsl, ants
 from niworkflows.interfaces.masks import BETRPT
-from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+# Note that deman_image imports from nipype
+from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from fmriprep.interfaces import IntraModalMerge
 from fmriprep.interfaces.bids import DerivativesDataSink
 from fmriprep.interfaces.fmap import FieldEnhance

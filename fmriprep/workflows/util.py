@@ -7,13 +7,16 @@ Utility workflows
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces import ants
+import os
+import os.path as op
 
-import nipype.interfaces.fsl as fsl
-import nipype.interfaces.afni as afni
+from niworkflows.nipype.pipeline import engine as pe
+from niworkflows.nipype.interfaces import utility as niu
+from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
+from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
+
+from fmriprep.utils.misc import _extract_wm
 
 
 def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
@@ -57,5 +60,92 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
         (apply_mask, outputnode, [('out_file', 'skull_stripped_file')]),
         (n4_correct, outputnode, [('output_image', 'bias_corrected_file')]),
         ])
+
+    return workflow
+
+
+def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(['in_file',
+                               'fs_2_t1_transform', 'subjects_dir', 'subject_id',  # BBRegister
+                               't1_seg', 't1_brain']),  # FLIRT BBR
+        name='inputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report']),
+        name='outputnode')
+
+    _BBRegister = BBRegisterRPT if report else fs.BBRegister
+    bbregister = pe.Node(
+        _BBRegister(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
+                    registered_file=True, out_fsl_file=True),
+        name='bbregister')
+
+    def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
+        import os
+        import numpy as np
+        out_file = os.path.abspath('transform.mat')
+        fs_xfm = np.loadtxt(fs_2_t1_transform)
+        bbrxfm = np.loadtxt(bbreg_transform)
+        out_xfm = fs_xfm.dot(bbrxfm)
+        assert np.allclose(out_xfm[3], [0, 0, 0, 1])
+        out_xfm[3] = [0, 0, 0, 1]
+        np.savetxt(out_file, out_xfm, fmt=str('%.12g'))
+        return out_file
+
+    transformer = pe.Node(niu.Function(function=apply_fs_transform),
+                          name='transformer', run_without_submitting=True)
+
+    workflow.connect([
+        (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
+                                 ('subject_id', 'subject_id'),
+                                 ('in_file', 'source_file')]),
+        (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
+        (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
+        (transformer, outputnode, [('out', 'out_matrix_file')]),
+        (bbregister, outputnode, [('out_reg_file', 'out_reg_file')]),
+        ])
+
+    if report:
+        bbregister.inputs.generate_report = True
+        workflow.connect([(bbregister, outputnode, [('out_report', 'out_report')])])
+
+    return workflow
+
+
+def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(['in_file',
+                               'fs_2_t1_transform', 'subjects_dir', 'subject_id',  # BBRegister
+                               't1_seg', 't1_brain']),  # FLIRT BBR
+        name='inputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report']),
+        name='outputnode')
+
+    wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
+    _FLIRT = FLIRTRPT if report else fsl.FLIRT
+    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6), name='flt_bbr_init')
+    flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof), name='flt_bbr')
+    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
+                                      'etc/flirtsch/bbr.sch')
+
+    workflow.connect([
+        (inputnode, wm_mask, [('t1_seg', 'in_file')]),
+        (inputnode, flt_bbr_init, [('in_file', 'in_file'),
+                                   ('t1_brain', 'reference')]),
+        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
+        (inputnode, flt_bbr, [('in_file', 'in_file'),
+                              ('t1_brain', 'reference')]),
+        (wm_mask, flt_bbr, [('out', 'wm_seg')]),
+        (flt_bbr, outputnode, [('out_matrix_file', 'out_matrix_file')]),
+        ])
+
+    if report:
+        flt_bbr.inputs.generate_report = True
+        workflow.connect([(flt_bbr, outputnode, [('out_report', 'out_report')])])
 
     return workflow

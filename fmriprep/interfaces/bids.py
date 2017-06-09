@@ -15,8 +15,8 @@ import re
 import simplejson as json
 from shutil import copy, copytree, rmtree
 
-from nipype import logging
-from nipype.interfaces.base import (
+from niworkflows.nipype import logging
+from niworkflows.nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterfaceInputSpec,
     File, Directory, InputMultiPath, OutputMultiPath, Str
 )
