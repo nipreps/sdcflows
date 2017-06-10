@@ -8,6 +8,7 @@ Calculates frame displacement, segment regressors, global regressor, dvars, aCom
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
 from niworkflows.nipype.interfaces import utility
+from niworkflows.nipype.interfaces import fsl
 from niworkflows.nipype.algorithms import confounds
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces.fsl import ICA_AROMA as aroma
