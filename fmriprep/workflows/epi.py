@@ -234,9 +234,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
             (epi_mni_trans_wf, outputnode, [('outputnode.epi_mni', 'epi_mni'),
                                             ('outputnode.epi_mask_mni', 'epi_mask_mni')]),
-            (epi_mni_trans_wf, discover_wf, [('outputnode.epi_mni', 'inputnode.epi_mni'),
-                                             ('outputnode.epi_mask_mni', 'inputnode.epi_mask_mni')]),
-        ])
+            (epi_mni_trans_wf, discover_wf, [('outputnode.epi_mask_mni', 'inputnode.epi_mask_mni')])
+                        ])
         if not fmaps:
             workflow.connect([
                 (epi_hmc_wf, epi_mni_trans_wf, [
@@ -643,6 +642,9 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
         (merge, outputnode, [('out_file', 'epi_mni')]),
+        (merge, discover_wf, [('out_file', 'inputnode.epi_mni')]),
+        ])
+        #JK pass this epi_mni?
     ])
 
     if output_grid_ref is None:
