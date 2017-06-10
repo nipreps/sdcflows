@@ -142,7 +142,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ]),
         (discover_wf, outputnode, [('outputnode.confounds_file', 'confounds')]),
         (epi_reg_wf, outputnode, [('outputnode.epi_t1', 'epi_t1'),
-                                  ('outputnode.epi_mask_t1', 'epi_mask_t1')]),
+                                  ('outputnode.epi_mask_t1', 'epi_mask')]),
         (discover_wf, func_reports_wf, [
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
