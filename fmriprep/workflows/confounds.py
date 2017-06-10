@@ -206,10 +206,10 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
                   ('epi_mask_mni', 'inputnode.epi_mask_mni'),
                   ('movpar_file', 'inputnode.movpar_file')]),
             (ica_aroma_wf,concat,
-                [('outputnode.motion_ICs','aroma')])
-            ])
+                [('outputnode.motion_ICs','aroma')]),
             (ica_aroma_wf,outputnode,
                 [('outputnode.out_report', 'ica_aroma_report')])
+                ])
     return workflow
 
 
