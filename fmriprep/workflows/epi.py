@@ -287,7 +287,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
         return os.path.abspath("motion_params.txt")
 
     normalize_motion = pe.Node(niu.Function(function=normalize_motion_func),
-                               name="normalize_motion", run_without_submitting=True)
+                               name="normalize_motion")
     normalize_motion.inputs.format = "FSL"
 
     # Head motion correction (hmc)
@@ -507,7 +507,7 @@ def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
-                         iterfield=['space'], name='targets', run_without_submitting=True)
+                         iterfield=['space'], name='targets')
     targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
@@ -781,7 +781,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
         return 'space-{space}.{LR}.func'.format(**info)
 
     name_surfs = pe.MapNode(niu.Function(function=get_gifti_name),
-                            iterfield='in_file', name='name_surfs', run_without_submitting=True)
+                            iterfield='in_file', name='name_surfs')
 
     ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
                                iterfield=['in_file', 'suffix'], name='ds_bold_surfs',
