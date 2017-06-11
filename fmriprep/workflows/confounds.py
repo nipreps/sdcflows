@@ -41,7 +41,6 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
         name='outputnode')
 
     #AROMA
-
     if use_aroma:
         ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf')
 
@@ -207,7 +206,7 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
                   ('epi_mask_mni', 'inputnode.epi_mask_mni'),
                   ('movpar_file', 'inputnode.movpar_file')]),
             (ica_aroma_wf,concat,
-                [('outputnode.motion_ICs','aroma')]),
+                [('outputnode.aroma_confounds','aroma')]),
             (ica_aroma_wf,outputnode,
                 [('outputnode.out_report', 'ica_aroma_report')])
                 ])
@@ -234,6 +233,9 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         elif index_diff < 0:
             left_df.index = range(-index_diff,
                                   len(left_df.index) - index_diff)
+    #hacky way to make sure aroma is none if not used in workflow
+    if aroma is None:
+        aroma = [None,None]
 
     all_files = [confound for confound in [signals, dvars, frame_displace,
                                            tcompcor, acompcor, motion, aroma[0], aroma[1]]
@@ -273,13 +275,12 @@ def get_ica_confounds(ica_out_dir):
         from sys import version_info
         PY3 = version_info[0] > 2
 
-
         df = pd.DataFrame(np_arr, columns=[str(col_base)+str(index) for index,value in enumerate(np_arr[0])])
         df.to_csv(str(col_base)+"ica_confounds.tsv", sep="\t" if PY3 else '\t'.encode(), index=None)
 
         return os.path.abspath(str(col_base)+"ica_confounds.tsv")
-    #partial regression (currently inaccurate)
-    #TODO fix partial regression
+
+    #partial regression (close to, but not identical to fsl_regfilt)
     def calc_residuals(x,y):
         X = np.column_stack(x+[[0]*len(x[0])])
         beta_hat = np.linalg.lstsq(X,y)[0]
@@ -288,48 +289,44 @@ def get_ica_confounds(ica_out_dir):
 
         return residuals
 
-    melodic_mix = os.path.join(ica_out_dir,'melodic.ica/melodic_mix')
-    motion_ICs = os.path.join(ica_out_dir,'classified_motion_ICs.txt')
-
-    #-1 since lists start at index 0
+    #-1 since python lists start at index 0
     motion_ic_indices = np.loadtxt(motion_ICs,dtype=int,delimiter=',')-1
     melodic_mix_arr = np.loadtxt(melodic_mix,ndmin=2)
+
+    #return dummy list of ones if no noise compnents were found
     if motion_ic_indices.size == 0:
         print('WARNING: No noise components were classified')
         no_noise_arr=np.ones((melodic_mix_arr.shape[0],1))
         aggr_tsv = add_header_func(no_noise_arr,'no_noise_aggr_')
         nonaggr_tsv = add_header_func(no_noise_arr,'no_noise_nonaggr_')
-        ic_confounds = (aggr_tsv, nonaggr_tsv)
-        return ic_confounds
-    #transpose melodic_mix_arr so indices refer to the correct dimension
-    aggr_confounds = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
+        aroma_confounds = (aggr_tsv, nonaggr_tsv)
+        return aroma_confounds
 
+    #transpose melodic_mix_arr so x refers to the correct dimension
+    aggr_confounds = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
 
     #the "good" ics, (e.g. not motion related)
     good_ic_arr = np.delete(melodic_mix_arr, motion_ic_indices, 1).T
+
+    #return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
         print('WARNING: No signal components were classified')
         no_signal_arr=np.zeros((melodic_mix_arr.shape[0],1))
         aggr_tsv = add_header_func(no_signal_arr,'no_signal_aggr_')
         nonaggr_tsv = add_header_func(no_signal_arr,'no_signal_nonaggr_')
-        ic_confounds = (aggr_tsv, nonaggr_tsv)
-        return ic_confounds
+        aroma_confounds = (aggr_tsv, nonaggr_tsv)
+        return aroma_confounds
+
     #nonaggr denoising confounds
     nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr,y) for y in aggr_confounds ])
 
     aggr_tsv = add_header_func(aggr_confounds.T,'aggr_')
-    nonaggr_tsv = add_header_func(aggr_confounds.T,'nonaggr_')
-    #save the outputs as txt files
-    #np.savetxt(aggr_confounds_txt,aggr_confounds.T,fmt=str('%.10f'),delimiter=str('\t'))
-    #np.savetxt(nonaggr_confounds_txt,nonaggr_confounds.T,fmt=str('%.10f'),delimiter=str('\t'))
-    ic_confounds = (aggr_tsv, nonaggr_tsv)
+    nonaggr_tsv = add_header_func(nonaggr_confounds.T,'nonaggr_')
+    aroma_confounds = (aggr_tsv, nonaggr_tsv)
 
-    return ic_confounds
+    return aroma_confounds
 
 def init_ica_aroma_wf(name='ica_aroma_wf'):
-    #standard mask (assuming epi is in mni space)
-    #mni_mask = fsl.Info.standard_image('MNI152_T1_2mm_brain_mask.nii.gz')
-
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(utility.IdentityInterface(
@@ -337,10 +334,9 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
                         name='inputnode')
 
     outputnode = pe.Node(utility.IdentityInterface(
-        fields=['motion_ICs','out_report']), name='outputnode')
+        fields=['aroma_confounds','out_report']), name='outputnode')
 
     #smoothing node (SUSAN)
-
     #functions to help set SUSAN
     def getbtthresh(medianval):
         return 0.75 * medianval
@@ -357,26 +353,25 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
     brightness_threshold = pe.Node(utility.Function(input_names=['medianval'],
                                             output_names=['thresh'],
                                             function=getbtthresh),
-                                        name='brightness_threshold')
+                                   name='brightness_threshold')
 
     getusans = pe.Node(utility.Function(input_names=['image','thresh'],
                                      output_names=['usans'],
                                      function=getusans_func),
-                            name='getusans')
+                       name='getusans')
 
     smooth = pe.Node(fsl.SUSAN(fwhm=6.0),
-                          name='smooth')
+                     name='smooth')
 
     #melodic node
     melodic = pe.Node(nws.MELODICRPT(no_bet=True,
-                                        no_mask=True,
-                                        no_mm=True,
-                                        generate_report=True), name="melodic")
+                                     no_mask=True,
+                                     no_mm=True,
+                                     generate_report=True),
+                      name="melodic")
 
     #ica_aroma node
-    #TODO change to none once there is agreement between my partial regression
-    #and the partial regression completed by fsl_regfilt
-    ica_aroma = pe.Node(aroma.ICA_AROMA(denoise_type='both'),
+    ica_aroma = pe.Node(aroma.ICA_AROMA(denoise_type='no'),
                              name='ica_aroma')
 
     #set the output directory manually (until pull request #2056 is merged.)
@@ -386,9 +381,6 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
 
 
     #extract the confound ICs from the results
-
-
-
     ica_confound = pe.Node(utility.Function(input_names=['ica_out_dir'],
                                     output_names=['ic_confounds'],
                                     function=get_ica_confounds),
@@ -429,49 +421,10 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
             [('out_dir','ica_out_dir')]),
         #output for processing and reporting
         (ica_confound, outputnode,
-            [('ic_confounds','motion_ICs')]),
+            [('aroma_confounds','aroma_confounds')]),
             #TODO change melodic report to reflect noise and non-noise components
         (melodic, outputnode,
             [('out_report','ica_aroma_report')]),
         ])
 
     return workflow
-
-
-# 170531-23:47:46,227 workflow INFO:
-# 	 Creating FreeSurfer processing flow.
-# 170531-23:47:51,527 workflow INFO:
-# 	 Workflow fmriprep_wf settings: ['check', 'execution', 'logging']
-# 170531-23:47:51,718 workflow INFO:
-# 	 Running in parallel.
-# 170531-23:47:51,727 workflow INFO:
-# 	 Executing: split ID: 1
-# 170531-23:47:51,729 workflow INFO:
-# 	 Executing: ds_ica_aroma_report ID: 0
-# 170531-23:47:51,732 workflow INFO:
-# 	 Executing node ds_ica_aroma_report in dir: /root/src/fmriprep/work/fmriprep_wf/single_subject_controlGE140_wf/func_preproc_task_flanker_wf/func_reports_wf/ds_ica_aroma_report
-# 170531-23:47:51,734 workflow INFO:
-# 	 Executing node split in dir: /root/src/fmriprep/work/fmriprep_wf/single_subject_controlGE140_wf/func_preproc_task_flanker_wf/epi_hmc_wf/split
-# 170531-23:47:51,742 workflow ERROR:
-# 	 ['Node ds_ica_aroma_report failed to run on host 42516ca31d70.']
-# 170531-23:47:51,747 workflow INFO:
-# 	 Running: fslsplit /data/sub-controlGE140/ses-pre/func/sub-controlGE140_task-flanker_bold.nii.gz -t
-# 170531-23:47:51,763 workflow INFO:
-# 	 Saving crash info to /out/fmriprep/sub-controlGE140/log/20170531-234742_ccd14b1b-23d1-40a7-a7d8-970b6ccd0cba/crash-20170531-234751-root-ds_ica_aroma_report-398d89bc-43c0-49ae-84df-e64276b75d17.pklz
-# 170531-23:47:51,764 workflow INFO:
-# 	 Traceback (most recent call last):
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/pipeline/plugins/multiproc.py", line 322, in _send_procs_to_workers
-#     self.procs[jobid].run()
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 372, in run
-#     self._run_interface()
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 482, in _run_interface
-#     self._result = self._run_command(execute)
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/pipeline/engine/nodes.py", line 613, in _run_command
-#     result = self._interface.run()
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/interfaces/base.py", line 1066, in run
-#     self._check_mandatory_inputs()
-#   File "/usr/local/miniconda/lib/python3.6/site-packages/nipype/interfaces/base.py", line 971, in _check_mandatory_inputs
-#     raise ValueError(msg)
-# ValueError: DerivativesDataSink requires a value for input 'in_file'. For a list of required inputs, see DerivativesDataSink.help()
-#
-# 170531-23:47:51,776 workflow INFO:
