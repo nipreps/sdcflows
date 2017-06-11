@@ -24,7 +24,7 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
-        from motion-corrected fMRI ('inputnode.fmri_file').
+    from motion-corrected fMRI ('inputnode.fmri_file').
     Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.epi_mask')
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
     Calculates segment regressors and aCompCor
@@ -274,15 +274,14 @@ def get_ica_confounds(ica_out_dir):
         PY3 = version_info[0] > 2
 
 
-        df = pd.DataFrame(np_arr, columns=[str(col_base)+str(x) for index in enumerate(np_arr[0])])
+        df = pd.DataFrame(np_arr, columns=[str(col_base)+str(index) for index,value in enumerate(np_arr[0])])
         df.to_csv(str(col_base)+"ica_confounds.tsv", sep="\t" if PY3 else '\t'.encode(), index=None)
 
         return os.path.abspath(str(col_base)+"ica_confounds.tsv")
     #partial regression (currently inaccurate)
     #TODO fix partial regression
     def calc_residuals(x,y):
-        X = np.column_stack(x+[[1]*len(x[0])])
-        print(str(y))
+        X = np.column_stack(x+[[0]*len(x[0])])
         beta_hat = np.linalg.lstsq(X,y)[0]
         y_hat = np.dot(X,beta_hat)
         residuals = y - y_hat
@@ -295,14 +294,26 @@ def get_ica_confounds(ica_out_dir):
     #-1 since lists start at index 0
     motion_ic_indices = np.loadtxt(motion_ICs,dtype=int,delimiter=',')-1
     melodic_mix_arr = np.loadtxt(melodic_mix,ndmin=2)
-
+    if motion_ic_indices.size == 0:
+        print('WARNING: No noise components were classified')
+        no_noise_arr=np.ones((melodic_mix_arr.shape[0],1))
+        aggr_tsv = add_header_func(no_noise_arr,'no_noise_aggr_')
+        nonaggr_tsv = add_header_func(no_noise_arr,'no_noise_nonaggr_')
+        ic_confounds = (aggr_tsv, nonaggr_tsv)
+        return ic_confounds
     #transpose melodic_mix_arr so indices refer to the correct dimension
     aggr_confounds = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
 
 
     #the "good" ics, (e.g. not motion related)
-    good_ic_arr = np.delete(melodic_mix_arr, aggr_confounds, 1).T
-
+    good_ic_arr = np.delete(melodic_mix_arr, motion_ic_indices, 1).T
+    if good_ic_arr.size == 0:
+        print('WARNING: No signal components were classified')
+        no_signal_arr=np.zeros((melodic_mix_arr.shape[0],1))
+        aggr_tsv = add_header_func(no_signal_arr,'no_signal_aggr_')
+        nonaggr_tsv = add_header_func(no_signal_arr,'no_signal_nonaggr_')
+        ic_confounds = (aggr_tsv, nonaggr_tsv)
+        return ic_confounds
     #nonaggr denoising confounds
     nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr,y) for y in aggr_confounds ])
 
@@ -326,7 +337,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
                         name='inputnode')
 
     outputnode = pe.Node(utility.IdentityInterface(
-        fields=['motion_ICs','melodic_report']), name='outputnode')
+        fields=['motion_ICs','out_report']), name='outputnode')
 
     #smoothing node (SUSAN)
 

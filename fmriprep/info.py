@@ -47,6 +47,7 @@ REQUIRES = [
     'niworkflows',
     'statsmodels',
     'nipype',
+    'seaborn',
 ]
 
 LINKS_REQUIRES = []
