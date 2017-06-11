@@ -330,7 +330,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
 
         create_custom_slice_timing_file = pe.Node(
             niu.Function(function=create_custom_slice_timing_file_func),
-            name="create_custom_slice_timing_file", run_without_submitting=True)
+            name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         slice_timing_correction = pe.Node(interface=afni.TShift(),
