@@ -1,2 +1,1 @@
-git+https://github.com/poldracklab/niworkflows.git@7594df0f4a7bb054e51e2d1f31586017c3cade81#egg=niworkflows
-git+https://github.com/INCF/pybids.git@7205ae01fbdca8e8bfd26ac773b1134b84c8af0c#egg=pybids
+niworkflows>=0.1.2
