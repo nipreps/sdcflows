@@ -308,3 +308,17 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
     resample_img(fixed_image, target_affine=numpy.diag(new_zooms_round),
                  interpolation='nearest').to_filename(out_file)
     return out_file
+
+
+def extract_wm(in_seg, wm_label=3):
+    import os.path as op
+    import nibabel as nb
+    import numpy as np
+
+    nii = nb.load(in_seg)
+    data = np.zeros(nii.shape, dtype=np.uint8)
+    data[nii.get_data() == wm_label] = 1
+    hdr = nii.header.copy()
+    hdr.set_data_dtype(np.uint8)
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
+    return op.abspath('wm.nii.gz')

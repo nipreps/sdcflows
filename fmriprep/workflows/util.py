@@ -16,7 +16,7 @@ from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
-from fmriprep.utils.misc import _extract_wm
+from fmriprep.interfaces.images import extract_wm
 
 
 def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
@@ -143,7 +143,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report', 'final_cost']),
         name='outputnode')
 
-    wm_mask = pe.Node(niu.Function(function=_extract_wm), name='wm_mask')
+    wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
     _FLIRT = FLIRTRPT if report else fsl.FLIRT
     flt_bbr_init = pe.Node(fsl.FLIRT(dof=6), name='flt_bbr_init')
     flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof, save_log=True), name='flt_bbr')
@@ -165,7 +165,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                        name='get_cost', run_without_submitting=True)
 
     workflow.connect([
-        (inputnode, wm_mask, [('t1_seg', 'in_file')]),
+        (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
         (inputnode, flt_bbr_init, [('in_file', 'in_file'),
                                    ('t1_brain', 'reference')]),
         (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),

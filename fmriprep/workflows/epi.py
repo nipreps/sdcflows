@@ -25,7 +25,7 @@ import niworkflows.data as nid
 from niworkflows.interfaces import SimpleBeforeAfter
 from fmriprep.interfaces import DerivativesDataSink, InvertT1w
 
-from fmriprep.interfaces.images import GenerateSamplingReference
+from fmriprep.interfaces.images import GenerateSamplingReference, extract_wm
 from fmriprep.interfaces.nilearn import Merge
 from fmriprep.workflows import confounds
 from niworkflows.nipype.utils.filemanip import split_filename
@@ -828,19 +828,6 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
 
 def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
-    def _getwm(in_seg, wm_label=3):
-        import os.path as op
-        import nibabel as nb
-        import numpy as np
-
-        nii = nb.load(in_seg)
-        data = np.zeros(nii.shape, dtype=np.uint8)
-        data[nii.get_data() == wm_label] = 1
-        hdr = nii.header.copy()
-        hdr.set_data_dtype(np.uint8)
-        nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
-        return op.abspath('wm.nii.gz')
-
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(niu.IdentityInterface(
@@ -851,7 +838,7 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
         dimension=3, float=True, interpolation='NearestNeighbor'),
         name='map_seg')
 
-    sel_wm = pe.Node(niu.Function(function=_getwm), name='sel_wm')
+    sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm')
 
     epi_rpt = pe.Node(SimpleBeforeAfter(), name='epi_rpt')
     epi_rpt_ds = pe.Node(
