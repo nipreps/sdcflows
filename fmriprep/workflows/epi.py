@@ -118,7 +118,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     # get confounds
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
-                                             name='discover_wf',use_aroma=use_aroma)
+                                             use_aroma=use_aroma, name='discover_wf')
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     workflow.connect([

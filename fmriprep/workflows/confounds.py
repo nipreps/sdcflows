@@ -15,12 +15,12 @@ from niworkflows.nipype.interfaces.fsl import ICA_AROMA as aroma
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 from niworkflows.interfaces import segmentation as nws
 
-
 from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
+
+def init_discover_wf(bold_file_size_gb, use_aroma, name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -30,7 +30,8 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transform to the images. Transforms should be fsl-formatted.
-
+    Optional:
+        Calculates motion related components from ICA_AROMA
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(
@@ -40,7 +41,7 @@ def init_discover_wf(bold_file_size_gb, name="discover_wf",use_aroma=False):
         fields=['confounds_file', 'acompcor_report', 'tcompcor_report', 'ica_aroma_report']),
         name='outputnode')
 
-    #AROMA
+    # AROMA
     if use_aroma:
         ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf')
 
@@ -268,14 +269,19 @@ def reverse_order(inlist):
 def get_ica_confounds(ica_out_dir):
     import os
     import numpy as np
+    from niworkflows.nipype import logging
+
+    #to catch edge cases when there are either no noise or signal components
+    LOGGER = logging.getLogger('workflow')
 
     #pass in numpy array and column base name to generate headers
-    def add_header_func(np_arr,col_base):
+    #modified from add_header_func
+    def aroma_add_header_func(np_arr,col_base,comp_nums):
         import pandas as pd
         from sys import version_info
         PY3 = version_info[0] > 2
 
-        df = pd.DataFrame(np_arr, columns=[str(col_base)+str(index) for index,value in enumerate(np_arr[0])])
+        df = pd.DataFrame(np_arr, columns=[str(col_base)+str(index) for index in comp_nums])
         df.to_csv(str(col_base)+"ica_confounds.tsv", sep="\t" if PY3 else '\t'.encode(), index=None)
 
         return os.path.abspath(str(col_base)+"ica_confounds.tsv")
@@ -299,12 +305,13 @@ def get_ica_confounds(ica_out_dir):
 
     #return dummy list of ones if no noise compnents were found
     if motion_ic_indices.size == 0:
-        print('WARNING: No noise components were classified')
-        no_noise_arr=np.ones((melodic_mix_arr.shape[0],1))
-        aggr_tsv = add_header_func(no_noise_arr,'no_noise_aggr_')
-        nonaggr_tsv = add_header_func(no_noise_arr,'no_noise_nonaggr_')
+        LOGGER.warn('WARNING: No noise components were classified')
+        no_noise_arr=np.ones((melodic_mix_arr.shape['0'],1))
+        aggr_tsv = aroma_add_header_func(no_noise_arr,'no_noise_aggr_',['00'])
+        nonaggr_tsv = aroma_add_header_func(no_noise_arr,'no_noise_nonaggr_',['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
+
 
     #transpose melodic_mix_arr so x refers to the correct dimension
     aggr_confounds = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
@@ -314,23 +321,39 @@ def get_ica_confounds(ica_out_dir):
 
     #return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
-        print('WARNING: No signal components were classified')
+        LOGGER.warn('WARNING: No signal components were classified')
         no_signal_arr=np.zeros((melodic_mix_arr.shape[0],1))
-        aggr_tsv = add_header_func(no_signal_arr,'no_signal_aggr_')
-        nonaggr_tsv = add_header_func(no_signal_arr,'no_signal_nonaggr_')
+        aggr_tsv = aroma_add_header_func(no_signal_arr,'no_signal_aggr_',['00'])
+        nonaggr_tsv = aroma_add_header_func(no_signal_arr,'no_signal_nonaggr_',['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
 
     #nonaggr denoising confounds
     nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr,y) for y in aggr_confounds ])
 
-    aggr_tsv = add_header_func(aggr_confounds.T,'aggr_')
-    nonaggr_tsv = add_header_func(nonaggr_confounds.T,'nonaggr_')
+    #add one to motion_ic_indices to match melodic report.
+    aggr_tsv = aroma_add_header_func(aggr_confounds.T,'aggr_comp_',[ str(x).zfill(2) for x in motion_ic_indices+1 ])
+    nonaggr_tsv = aroma_add_header_func(nonaggr_confounds.T,'nonaggr_comp_',[ str(x).zfill(2) for x in motion_ic_indices+1 ])
     aroma_confounds = (aggr_tsv, nonaggr_tsv)
 
     return aroma_confounds
 
 def init_ica_aroma_wf(name='ica_aroma_wf'):
+    '''
+    From: https://github.com/rhr-pruim/ICA-AROMA
+    Description: 
+    ICA-AROMA (i.e. ‘ICA-based Automatic Removal Of Motion Artifacts’) concerns a data-driven method to 
+    identify and remove motion-related independent components from fMRI data.
+
+    Preconditions/Assumptions:
+    The input fmri bold file is in standard space (for ease of interfacing with the original ICA-AROMA code)
+
+    Steps:
+    1) smooth data using SUSAN
+    2) run melodic outside of ICA_AROMA to generate the report
+    3) run ICA_AROMA
+    4) print identified motion components (full and partial) to tsv
+    '''
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(utility.IdentityInterface(
@@ -428,7 +451,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
             [('aroma_confounds','aroma_confounds')]),
             #TODO change melodic report to reflect noise and non-noise components
         (melodic, outputnode,
-            [('out_report','ica_aroma_report')]),
+            [('out_report','out_report')]),
         ])
 
     return workflow
