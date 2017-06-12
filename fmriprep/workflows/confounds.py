@@ -289,8 +289,12 @@ def get_ica_confounds(ica_out_dir):
 
         return residuals
 
+    #load the txt files from ICA_AROMA
+    melodic_mix = os.path.join(ica_out_dir,'melodic.ica/melodic_mix')
+    motion_ics = os.path.join(ica_out_dir,'classified_motion_ICs.txt')
+
     #-1 since python lists start at index 0
-    motion_ic_indices = np.loadtxt(motion_ICs,dtype=int,delimiter=',')-1
+    motion_ic_indices = np.loadtxt(motion_ics,dtype=int,delimiter=',')-1
     melodic_mix_arr = np.loadtxt(melodic_mix,ndmin=2)
 
     #return dummy list of ones if no noise compnents were found
@@ -381,10 +385,10 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
 
 
     #extract the confound ICs from the results
-    ica_confound = pe.Node(utility.Function(input_names=['ica_out_dir'],
-                                    output_names=['ic_confounds'],
+    ica_aroma_confound_node = pe.Node(utility.Function(input_names=['ica_out_dir'],
+                                    output_names=['aroma_confounds'],
                                     function=get_ica_confounds),
-                            name='ic_confounds')
+                            name='ica_aroma_confound_node')
 
     #connect the nodes
     workflow.connect([
@@ -417,10 +421,10 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
         (melodic, ica_aroma,
             [('out_dir','melodic_dir')]),
         #geneerate tsvs from ICA_AROMA
-        (ica_aroma, ica_confound,
+        (ica_aroma, ica_aroma_confound_node,
             [('out_dir','ica_out_dir')]),
         #output for processing and reporting
-        (ica_confound, outputnode,
+        (ica_aroma_confound_node, outputnode,
             [('aroma_confounds','aroma_confounds')]),
             #TODO change melodic report to reflect noise and non-noise components
         (melodic, outputnode,
