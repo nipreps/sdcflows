@@ -745,6 +745,11 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                           restrict_deformation=restrict_j),
         name='syn_j', n_procs=omp_nthreads)
 
+    seg_2_ref = pe.Node(
+        ants.ApplyTransforms(interpolation='NearestNeighbor', float=True,
+                             invert_transform_flags=[True], num_threads=omp_nthreads),
+        name='seg_2_ref', n_procs=omp_nthreads)
+    sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm')
     syn_rpt = pe.Node(SimpleBeforeAfter(), name='syn_rpt')
 
     workflow.connect([
@@ -760,7 +765,6 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         (inputnode, atlas_2_ref, [('epi_ref', 'reference_image')]),
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
-        (inputnode, syn_rpt, [('epi_ref', 'before')]),
         ])
 
     if bold_pe is None:
@@ -819,9 +823,15 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                           ])
         syn_out = syn_j
 
-    workflow.connect([(syn_out, outputnode, [('warped_image', 'warped_image'),
-                                             ('forward_transforms', 'warp')]),
+    workflow.connect([(inputnode, seg_2_ref, [('t1_seg', 'input_image')]),
+                      (ref_2_t1, seg_2_ref, [('forward_transforms', 'transforms')]),
+                      (syn_out, seg_2_ref, [('warped_image', 'reference_image')]),
+                      (seg_2_ref, sel_wm, [('output_image', 'in_seg')]),
+                      (inputnode, syn_rpt, [('epi_ref', 'before')]),
                       (syn_out, syn_rpt, [('warped_image', 'after')]),
+                      (sel_wm, syn_rpt, [('out', 'wm_seg')]),
+                      (syn_out, outputnode, [('warped_image', 'warped_image'),
+                                             ('forward_transforms', 'warp')]),
                       (syn_rpt, outputnode, [('out_report', 'out_report')])])
 
     return workflow
