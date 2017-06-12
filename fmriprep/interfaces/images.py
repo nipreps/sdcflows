@@ -144,17 +144,24 @@ class ConformSeries(SimpleInterface):
         orig_imgs = [nb.load(fname) for fname in in_names]
         reoriented = [nb.as_closest_canonical(img) for img in orig_imgs]
         target_shape = np.max([img.shape for img in reoriented], axis=0)
-        target_zooms = np.min([img.header.get_zooms()[:3] + (1,)
+        target_zooms = np.min([img.header.get_zooms()[:3]
                                for img in reoriented], axis=0)
 
         resampled_imgs = []
         for img in reoriented:
-            zooms = np.array(img.header.get_zooms()[:3] + (1,))
-            shape = img.shape
-            if not (np.allclose(zooms, target_zooms) and shape == tuple(target_shape)):
+            zooms = np.array(img.header.get_zooms()[:3])
+            shape = np.array(img.shape)
+            if not (np.allclose(zooms, target_zooms) and np.all(shape == target_shape)):
+                target_affine = np.eye(4)
                 scale_factor = target_zooms / zooms
-                shape_factor = target_shape.astype(float) / np.array(shape)
-                target_affine = np.diag(scale_factor).dot(img.affine)
+                target_affine[:3, :3] = np.diag(scale_factor).dot(img.affine[:3, :3])
+
+                # The shift is applied after scaling.
+                # Keeping the same results in same [0, 0, 0] corner
+                # Scaling by number of voxels results in same [i_max, j_max, k_max] corner
+                # We thus shift the intercept by *half* the proportionate change in number of
+                # voxels in each dimension, to keep the padding consistent in each direction
+                shape_factor = (target_shape.astype(float) + shape) / (2 * shape)
                 target_affine[:3, 3] = img.affine[:3, 3] * shape_factor
                 img = nli.resample_img(img, target_affine, target_shape)
 
