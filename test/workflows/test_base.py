@@ -27,7 +27,8 @@ class TestBase(TestWorkflow):
                                          bold2t1w_dof=9,
                                          fmap_bspline=True,
                                          fmap_demean=True,
-                                         output_grid_ref=None)
+                                         output_grid_ref=None,
+                                         use_aroma=False)
         wfbasic.write_graph()
 
         self._assert_mandatory_inputs_set(wfbasic)
