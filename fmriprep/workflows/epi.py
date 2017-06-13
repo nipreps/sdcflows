@@ -147,13 +147,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   ('outputnode.epi_mask_t1', 'epi_mask_t1')]),
         (discover_wf, func_reports_wf, [
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
-            ('outputnode.tcompcor_report', 'inputnode.tcompcor_report')]),
-    ])
-    if use_aroma:
-        workflow.connect([
-            (discover_wf, func_reports_wf, [
-                ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
+            ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
+            ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
         ])
+
     if not fmaps:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
@@ -238,12 +235,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('outputnode.itk_epi_to_t1', 'inputnode.itk_epi_to_t1')]),
             (epi_mni_trans_wf, outputnode, [('outputnode.epi_mni', 'epi_mni'),
                                             ('outputnode.epi_mask_mni', 'epi_mask_mni')]),
-                        ])
-        if use_aroma:
-            workflow.connect([
-                (epi_mni_trans_wf, discover_wf, [('outputnode.epi_mask_mni', 'inputnode.epi_mask_mni'),
-                                                 ('outputnode.epi_mni', 'inputnode.epi_mni')])
-                            ])
+            (epi_mni_trans_wf, discover_wf, [('outputnode.epi_mask_mni', 'inputnode.epi_mask_mni'),
+                                             ('outputnode.epi_mni', 'inputnode.epi_mni')])
+        ])
+
         if not fmaps:
             workflow.connect([
                 (epi_hmc_wf, epi_mni_trans_wf, [
@@ -738,11 +733,11 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, name='func_repor
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='tcompcor'),
         name='ds_tcompcor_report', run_without_submitting=True)
-    if use_aroma:
-        ds_ica_aroma_report = pe.Node(
-            DerivativesDataSink(base_directory=reportlets_dir,
-                                suffix='ica_aroma'),
-            name='ds_ica_aroma_report', run_without_submitting=True)
+
+    ds_ica_aroma_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='ica_aroma'),
+        name='ds_ica_aroma_report', run_without_submitting=True)
 
     workflow.connect([
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
