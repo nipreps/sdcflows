@@ -154,7 +154,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         workflow.connect([
             (discover_wf, func_reports_wf, [
                 ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
-                ])
+        ])
     if not fmaps:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
@@ -651,8 +651,7 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
         (merge, outputnode, [('out_file', 'epi_mni')]),
-        ])
-        #JK pass this epi_mni?
+    ])
 
     if output_grid_ref is None:
         workflow.connect([
