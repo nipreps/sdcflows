@@ -64,7 +64,7 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(), name='meta')
-    dte = pe.Node(niu.Function(function=_delta_te), name='dte', run_without_submitting=True)
+    dte = pe.Node(niu.Function(function=_delta_te), name='dte')
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')

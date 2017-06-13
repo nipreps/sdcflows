@@ -95,7 +95,7 @@ def init_bbreg_wf(bold2t1w_dof, report, name='bbreg_wf'):
         return out_file
 
     transformer = pe.Node(niu.Function(function=apply_fs_transform),
-                          name='transformer', run_without_submitting=True)
+                          name='transformer')
 
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),

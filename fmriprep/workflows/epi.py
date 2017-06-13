@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
@@ -154,7 +153,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         workflow.connect([
             (discover_wf, func_reports_wf, [
                 ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
-                ])
+        ])
     if not fmaps:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
@@ -298,7 +297,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
         return os.path.abspath("motion_params.txt")
 
     normalize_motion = pe.Node(niu.Function(function=normalize_motion_func),
-                               name="normalize_motion", run_without_submitting=True)
+                               name="normalize_motion")
     normalize_motion.inputs.format = "FSL"
 
     # Head motion correction (hmc)
@@ -341,7 +340,7 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
 
         create_custom_slice_timing_file = pe.Node(
             niu.Function(function=create_custom_slice_timing_file_func),
-            name="create_custom_slice_timing_file", run_without_submitting=True)
+            name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         slice_timing_correction = pe.Node(interface=afni.TShift(),
@@ -518,7 +517,7 @@ def init_epi_surf_wf(output_spaces, name='epi_surf_wf'):
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
-                         iterfield=['space'], name='targets', run_without_submitting=True)
+                         iterfield=['space'], name='targets')
     targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
@@ -651,8 +650,7 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, epi_to_mni_transform, [('epi_split', 'input_image')]),
         (merge, outputnode, [('out_file', 'epi_mni')]),
-        ])
-        #JK pass this epi_mni?
+    ])
 
     if output_grid_ref is None:
         workflow.connect([
@@ -803,7 +801,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
         return 'space-{space}.{LR}.func'.format(**info)
 
     name_surfs = pe.MapNode(niu.Function(function=get_gifti_name),
-                            iterfield='in_file', name='name_surfs', run_without_submitting=True)
+                            iterfield='in_file', name='name_surfs')
 
     ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
                                iterfield=['in_file', 'suffix'], name='ds_bold_surfs',
