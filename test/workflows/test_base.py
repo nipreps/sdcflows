@@ -29,6 +29,7 @@ class TestBase(TestWorkflow):
                                          bold2t1w_dof=9,
                                          fmap_bspline=True,
                                          fmap_demean=True,
+                                         use_syn=True,
                                          output_grid_ref=None)
         wfbasic.write_graph()
 

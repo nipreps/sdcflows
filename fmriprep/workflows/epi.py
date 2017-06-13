@@ -39,7 +39,8 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, output_grid_ref, layout=None):
+                         fmap_bspline, fmap_demean, use_syn,
+                         debug, output_grid_ref, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
     else:
@@ -228,22 +229,24 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
 
-    nonlinear_sdc_wf = init_nonlinear_sdc_wf(
-        bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
-        template=template, omp_nthreads=omp_nthreads)
+    # XXX: When done testing SyN SDC in parallel with fieldmaps, move to ``if not fmaps:``
+    if use_syn:
+        nonlinear_sdc_wf = init_nonlinear_sdc_wf(
+            bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
+            template=template, omp_nthreads=omp_nthreads)
 
-    workflow.connect([
-        (inputnode, nonlinear_sdc_wf, [
-            ('t1_brain', 'inputnode.t1_brain'),
-            ('t1_seg', 'inputnode.t1_seg'),
-            ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
-            ('subjects_dir', 'inputnode.subjects_dir'),
-            ('subject_id', 'inputnode.subject_id')]),
-        (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
-        (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
-        (nonlinear_sdc_wf, func_reports_wf, [
-            ('outputnode.out_report', 'inputnode.syn_sdc_report')])
-        ])
+        workflow.connect([
+            (inputnode, nonlinear_sdc_wf, [
+                ('t1_brain', 'inputnode.t1_brain'),
+                ('t1_seg', 'inputnode.t1_seg'),
+                ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
+                ('subjects_dir', 'inputnode.subjects_dir'),
+                ('subject_id', 'inputnode.subject_id')]),
+            (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
+            (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
+            (nonlinear_sdc_wf, func_reports_wf, [
+                ('outputnode.out_report', 'inputnode.syn_sdc_report')])
+            ])
 
     if 'template' in output_spaces:
         # Apply transforms in 1 shot
