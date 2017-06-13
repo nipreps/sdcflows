@@ -100,7 +100,7 @@
               "name": "epi/ica_aroma",
               "file_pattern": "func/.*_ica_aroma",
               "title": "ICA_AROMA melodic report",
-              "description": "Melodic Components used as input for ICA_AROMA"
+              "description": "Melodic components used as input for ICA_AROMA"
             }
         ]
     }
