@@ -276,7 +276,7 @@ def get_ica_confounds(ica_out_dir):
 
     #pass in numpy array and column base name to generate headers
     #modified from add_header_func
-    def aroma_add_header_func(np_arr,col_base,comp_nums):
+    def aroma_add_header_func(np_arr, col_base, comp_nums):
         import pandas as pd
         from sys import version_info
         PY3 = version_info[0] > 2
@@ -287,28 +287,28 @@ def get_ica_confounds(ica_out_dir):
         return os.path.abspath(str(col_base)+"ica_confounds.tsv")
 
     #partial regression (close to, but not identical to fsl_regfilt)
-    def calc_residuals(x,y):
+    def calc_residuals(x, y):
         X = np.column_stack(x+[[0]*len(x[0])])
-        beta_hat = np.linalg.lstsq(X,y)[0]
-        y_hat = np.dot(X,beta_hat)
+        beta_hat = np.linalg.lstsq(X, y)[0]
+        y_hat = np.dot(X, beta_hat)
         residuals = y - y_hat
 
         return residuals
 
     #load the txt files from ICA_AROMA
-    melodic_mix = os.path.join(ica_out_dir,'melodic.ica/melodic_mix')
-    motion_ics = os.path.join(ica_out_dir,'classified_motion_ICs.txt')
+    melodic_mix = os.path.join(ica_out_dir, 'melodic.ica/melodic_mix')
+    motion_ics = os.path.join(ica_out_dir, 'classified_motion_ICs.txt')
 
     #-1 since python lists start at index 0
-    motion_ic_indices = np.loadtxt(motion_ics,dtype=int,delimiter=',')-1
-    melodic_mix_arr = np.loadtxt(melodic_mix,ndmin=2)
+    motion_ic_indices = np.loadtxt(motion_ics, dtype=int, delimiter=',')-1
+    melodic_mix_arr = np.loadtxt(melodic_mix, ndmin=2)
 
     #return dummy list of ones if no noise compnents were found
     if motion_ic_indices.size == 0:
         LOGGER.warn('WARNING: No noise components were classified')
-        no_noise_arr=np.ones((melodic_mix_arr.shape['0'],1))
-        aggr_tsv = aroma_add_header_func(no_noise_arr,'no_noise_aggr_',['00'])
-        nonaggr_tsv = aroma_add_header_func(no_noise_arr,'no_noise_nonaggr_',['00'])
+        no_noise_arr = np.ones((melodic_mix_arr.shape['0'], 1))
+        aggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_aggr_', ['00'])
+        nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_nonaggr_', ['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
 
@@ -322,17 +322,17 @@ def get_ica_confounds(ica_out_dir):
     #return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
         LOGGER.warn('WARNING: No signal components were classified')
-        no_signal_arr=np.zeros((melodic_mix_arr.shape[0],1))
-        aggr_tsv = aroma_add_header_func(no_signal_arr,'no_signal_aggr_',['00'])
-        nonaggr_tsv = aroma_add_header_func(no_signal_arr,'no_signal_nonaggr_',['00'])
+        no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
+        aggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_aggr_', ['00'])
+        nonaggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_nonaggr_', ['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
 
     #nonaggr denoising confounds
-    nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr,y) for y in aggr_confounds ])
+    nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr, y) for y in aggr_confounds ])
 
     #add one to motion_ic_indices to match melodic report.
-    aggr_tsv = aroma_add_header_func(aggr_confounds.T,'aggr_comp_',[ str(x).zfill(2) for x in motion_ic_indices+1 ])
+    aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'aggr_comp_',[ str(x).zfill(2) for x in motion_ic_indices+1 ])
     nonaggr_tsv = aroma_add_header_func(nonaggr_confounds.T,'nonaggr_comp_',[ str(x).zfill(2) for x in motion_ic_indices+1 ])
     aroma_confounds = (aggr_tsv, nonaggr_tsv)
 
@@ -361,7 +361,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
                         name='inputnode')
 
     outputnode = pe.Node(utility.IdentityInterface(
-        fields=['aroma_confounds','out_report']), name='outputnode')
+        fields=['aroma_confounds', 'out_report']), name='outputnode')
 
     #smoothing node (SUSAN)
     #functions to help set SUSAN
@@ -420,38 +420,40 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
             [('epi_mni','in_file'),
              ('epi_mask_mni', 'mask_file')]),
         (calc_median_val, brightness_threshold,
-            [('out_stat','medianval')]),
+            [('out_stat', 'medianval')]),
         (inputnode, calc_epi_mean,
-            [('epi_mni','in_file')]),
+            [('epi_mni', 'in_file')]),
         (calc_epi_mean, getusans,
-            [('out_file','image')]),
+            [('out_file', 'image')]),
         (calc_median_val, getusans,
-            [('out_stat','thresh')]),
+            [('out_stat', 'thresh')]),
         (inputnode, smooth,
-            [('epi_mni','in_file')]),
+            [('epi_mni', 'in_file')]),
         (getusans, smooth,
             [('usans', 'usans')]),
         (brightness_threshold, smooth,
-            [('thresh','brightness_threshold')]),
-        #connect smooth to melodic
+            [('thresh', 'brightness_threshold')]),
+        #connect smoothed fmri file to melodic
         (smooth, melodic,
-            [('smoothed_file','in_files')]),
+            [('smoothed_file', 'in_files')]),
+        (inputnode, melodic,
+            [('epi_mask_mni', 'report_mask')]),
         #connect nodes to ICA-AROMA
         (smooth, ica_aroma,
             [('smoothed_file', 'in_file')]),
         (inputnode, ica_aroma,
-            [('movpar_file','motion_parameters')]),
+            [('movpar_file', 'motion_parameters')]),
         (melodic, ica_aroma,
-            [('out_dir','melodic_dir')]),
+            [('out_dir', 'melodic_dir')]),
         #geneerate tsvs from ICA_AROMA
         (ica_aroma, ica_aroma_confound_node,
-            [('out_dir','ica_out_dir')]),
+            [('out_dir', 'ica_out_dir')]),
         #output for processing and reporting
         (ica_aroma_confound_node, outputnode,
-            [('aroma_confounds','aroma_confounds')]),
+            [('aroma_confounds', 'aroma_confounds')]),
             #TODO change melodic report to reflect noise and non-noise components
         (melodic, outputnode,
-            [('out_report','out_report')]),
+            [('out_report', 'out_report')]),
         ])
 
     return workflow
