@@ -31,7 +31,8 @@ from fmriprep.workflows import confounds
 from niworkflows.nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
 from fmriprep.workflows.util import (
-    init_enhance_and_skullstrip_epi_wf, init_bbreg_wf, init_fsl_bbr_wf)
+    init_enhance_and_skullstrip_epi_wf, init_skullstrip_epi_wf,
+    init_bbreg_wf, init_fsl_bbr_wf)
 
 LOGGER = logging.getLogger('workflow')
 
@@ -243,9 +244,9 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('subjects_dir', 'inputnode.subjects_dir'),
                 ('subject_id', 'inputnode.subject_id')]),
             (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
-            (nonlinear_sdc_wf, outputnode, [('outputnode.warped_image', 'syn_file')]),
+            (nonlinear_sdc_wf, outputnode, [('outputnode.out_reference_brain', 'syn_file')]),
             (nonlinear_sdc_wf, func_reports_wf, [
-                ('outputnode.out_report', 'inputnode.syn_sdc_report')])
+                ('outputnode.out_warp_report', 'inputnode.syn_sdc_report')]),
             ])
 
     if 'template' in output_spaces:
@@ -696,7 +697,8 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                                'subjects_dir', 'subject_id', 't1_seg']),  # BBR requirements
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['warped_image', 'warp', 'out_report']),
+        niu.IdentityInterface(['out_reference_brain', 'out_mask', 'out_warp',
+                               'out_warp_report', 'out_mask_report']),
         name='outputnode')
 
     # Collect predefined data
@@ -754,6 +756,8 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         name='seg_2_ref', n_procs=omp_nthreads)
     sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm')
     syn_rpt = pe.Node(SimpleBeforeAfter(), name='syn_rpt')
+
+    skullstrip_epi_wf = init_skullstrip_epi_wf()
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1_brain', 'in_file'),
@@ -833,9 +837,13 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                       (inputnode, syn_rpt, [('epi_ref', 'before')]),
                       (syn_out, syn_rpt, [('warped_image', 'after')]),
                       (sel_wm, syn_rpt, [('out', 'wm_seg')]),
-                      (syn_out, outputnode, [('warped_image', 'warped_image'),
-                                             ('forward_transforms', 'warp')]),
-                      (syn_rpt, outputnode, [('out_report', 'out_report')])])
+                      (syn_out, skullstrip_epi_wf, [('warped_image', 'inputnode.in_file')]),
+                      (syn_out, outputnode, [('forward_transforms', 'out_warp')]),
+                      (skullstrip_epi_wf, outputnode, [
+                          ('outputnode.skull_stripped_file', 'out_reference_brain'),
+                          ('outputnode.mask_file', 'out_mask'),
+                          ('outputnode.out_report', 'out_mask_report')]),
+                      (syn_rpt, outputnode, [('out_report', 'out_warp_report')])])
 
     return workflow
 
