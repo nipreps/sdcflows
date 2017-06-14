@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, use_syn,
+                         fmap_bspline, fmap_demean, use_syn, force_syn,
                          debug, output_grid_ref, layout=None):
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
@@ -75,6 +75,9 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
         fmaps = None
 
+    # Run SyN if forced or in the absence of fieldmap correction
+    use_syn = force_syn or (use_syn and not fmaps)
+
     # Build workflow
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
@@ -85,8 +88,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     inputnode.inputs.epi = bold_file
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'syn_file', 'confounds',
-                'surfaces']),
+        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces']),
         name='outputnode')
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
@@ -120,7 +122,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  bold_file_size_gb=bold_file_size_gb,
                                  output_spaces=output_spaces,
                                  output_dir=output_dir,
-                                 use_fieldwarp=(fmaps is not None))
+                                 use_fieldwarp=(fmaps is not None or use_syn))
 
     # get confounds
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
@@ -157,17 +159,16 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report')]),
     ])
 
-    if not fmaps:
-        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
-                    'for dataset %s.', bold_file)
-        workflow.connect([
-            (epi_hmc_wf, func_reports_wf, [
-                ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
-            (epi_hmc_wf, epi_reg_wf, [('outputnode.ref_image_brain', 'inputnode.ref_epi_brain'),
-                                      ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
-        ])
+    # Cases:
+    # fmaps | use_syn | force_syn  |  ACTION
+    # ----------------------------------------------
+    #   T   |    *    |     T      | Fieldmaps + SyN
+    #   T   |    *    |     F      | Fieldmaps
+    #   F   |    *    |     T      | SyN
+    #   F   |    T    |     F      | SyN
+    #   F   |    F    |     F      | HMC only
 
-    else:
+    if fmaps:
         # In case there are multiple fieldmaps prefer EPI
         fmaps.sort(key=lambda fmap: {'epi': 0, 'fieldmap': 1, 'phasediff': 2}[fmap['type']])
         fmap = fmaps[0]
@@ -229,24 +230,44 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                           (epi_reg_wf, fmap_unwarp_report_wf, [
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
-
-    # XXX: When done testing SyN SDC in parallel with fieldmaps, move to ``if not fmaps:``
-    if use_syn:
+    elif use_syn:
+        # XXX: When done testing SyN SDC in parallel with fieldmaps, add output hookups
         nonlinear_sdc_wf = init_nonlinear_sdc_wf(
             bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
             template=template, omp_nthreads=omp_nthreads)
 
         workflow.connect([
             (inputnode, nonlinear_sdc_wf, [
-                ('t1_brain', 'inputnode.t1_brain'),
-                ('t1_seg', 'inputnode.t1_seg'),
-                ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
-                ('subjects_dir', 'inputnode.subjects_dir'),
-                ('subject_id', 'inputnode.subject_id')]),
+                 ('t1_brain', 'inputnode.t1_brain'),
+                 ('t1_seg', 'inputnode.t1_seg'),
+                 ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
+                 ('subjects_dir', 'inputnode.subjects_dir'),
+                 ('subject_id', 'inputnode.subject_id')]),
             (epi_hmc_wf, nonlinear_sdc_wf, [('outputnode.ref_image_brain', 'inputnode.epi_ref')]),
-            (nonlinear_sdc_wf, outputnode, [('outputnode.out_reference_brain', 'syn_file')]),
             (nonlinear_sdc_wf, func_reports_wf, [
                 ('outputnode.out_warp_report', 'inputnode.syn_sdc_report')]),
+            ])
+    else:
+        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
+                    'for dataset %s.', bold_file)
+        workflow.connect([
+            (epi_hmc_wf, func_reports_wf, [
+                ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
+            (epi_hmc_wf, epi_reg_wf, [('outputnode.ref_image_brain', 'inputnode.ref_epi_brain'),
+                                      ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
+        ])
+
+    # XXX Combine with above use_syn condition when forcing isn't an option
+    if use_syn and not fmaps:
+        LOGGER.warn('No fieldmaps found or they were ignored. Using EXPERIMENTAL '
+                    'nonlinear susceptibility correction for dataset %s.', bold_file)
+        workflow.connect([
+            (nonlinear_sdc_wf, func_reports_wf, [
+                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')]),
+            (epi_hmc_wf, epi_reg_wf, [
+                ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                ('outputnode.out_reference_brain', 'inputnode.ref_epi_brain'),
+                ('outputnode.out_mask', 'inputnode.ref_epi_mask')]),
             ])
 
     if 'template' in output_spaces:
