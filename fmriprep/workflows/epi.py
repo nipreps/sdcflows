@@ -290,16 +290,22 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             (epi_mni_trans_wf, outputnode, [('outputnode.epi_mni', 'epi_mni'),
                                             ('outputnode.epi_mask_mni', 'epi_mask_mni')]),
         ])
-        if not fmaps:
-            workflow.connect([
-                (epi_hmc_wf, epi_mni_trans_wf, [
-                    ('outputnode.epi_mask', 'inputnode.epi_mask')]),
-            ])
-        else:
+        if fmaps:
             workflow.connect([
                 (sdc_unwarp_wf, epi_mni_trans_wf, [
                     ('outputnode.out_warp', 'inputnode.fieldwarp'),
                     ('outputnode.out_mask', 'inputnode.epi_mask')]),
+            ])
+        elif use_syn:
+            workflow.connect([
+                (nonlinear_sdc_wf, epi_mni_trans_wf, [
+                    ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                    ('outputnode.out_mask', 'inputnode.epi_mask')]),
+            ])
+        else:
+            workflow.connect([
+                (epi_hmc_wf, epi_mni_trans_wf, [
+                    ('outputnode.epi_mask', 'inputnode.epi_mask')]),
             ])
 
     if freesurfer and any(space.startswith('fs') for space in output_spaces):
