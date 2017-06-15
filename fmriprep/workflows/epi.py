@@ -850,11 +850,13 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     elif bold_pe[0] == 'i':
         workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
+                          (threshold_atlas, syn_i, [('out_file', 'fixed_image_mask')]),
                           ])
         syn_out = syn_i
     elif bold_pe[0] == 'j':
         workflow.connect([(inputnode, syn_j, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
+                          (threshold_atlas, syn_j, [('out_file', 'fixed_image_mask')]),
                           ])
         syn_out = syn_j
 
