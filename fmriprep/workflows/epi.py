@@ -231,8 +231,17 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                           (epi_reg_wf, fmap_unwarp_report_wf, [
                               ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
                           ])
-    elif use_syn:
-        # XXX: When done testing SyN SDC in parallel with fieldmaps, add output hookups
+    elif not use_syn:
+        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
+                    'for dataset %s.', bold_file)
+        workflow.connect([
+            (epi_hmc_wf, func_reports_wf, [
+                ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
+            (epi_hmc_wf, epi_reg_wf, [('outputnode.ref_image_brain', 'inputnode.ref_epi_brain'),
+                                      ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
+        ])
+
+    if use_syn:
         nonlinear_sdc_wf = init_nonlinear_sdc_wf(
             bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
             template=template, omp_nthreads=omp_nthreads)
@@ -248,27 +257,18 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             (nonlinear_sdc_wf, func_reports_wf, [
                 ('outputnode.out_warp_report', 'inputnode.syn_sdc_report')]),
             ])
-    else:
-        LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
-                    'for dataset %s.', bold_file)
-        workflow.connect([
-            (epi_hmc_wf, func_reports_wf, [
-                ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
-            (epi_hmc_wf, epi_reg_wf, [('outputnode.ref_image_brain', 'inputnode.ref_epi_brain'),
-                                      ('outputnode.epi_mask', 'inputnode.ref_epi_mask')]),
-        ])
 
-    # XXX Combine with above use_syn condition when forcing isn't an option
-    if use_syn and not fmaps:
-        LOGGER.warn('No fieldmaps found or they were ignored. Using EXPERIMENTAL '
-                    'nonlinear susceptibility correction for dataset %s.', bold_file)
-        workflow.connect([
-            (nonlinear_sdc_wf, func_reports_wf, [
-                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')]),
-            (epi_hmc_wf, epi_reg_wf, [
-                ('outputnode.out_warp', 'inputnode.fieldwarp'),
-                ('outputnode.out_reference_brain', 'inputnode.ref_epi_brain'),
-                ('outputnode.out_mask', 'inputnode.ref_epi_mask')]),
+        # XXX Eliminate branch when forcing isn't an option
+        if not fmaps:
+            LOGGER.warn('No fieldmaps found or they were ignored. Using EXPERIMENTAL '
+                        'nonlinear susceptibility correction for dataset %s.', bold_file)
+            workflow.connect([
+                (nonlinear_sdc_wf, func_reports_wf, [
+                    ('outputnode.out_mask_report', 'inputnode.epi_mask_report')]),
+                (nonlinear_sdc_wf, epi_reg_wf, [
+                    ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                    ('outputnode.out_reference_brain', 'inputnode.ref_epi_brain'),
+                    ('outputnode.out_mask', 'inputnode.ref_epi_mask')]),
             ])
 
     if 'template' in output_spaces:
