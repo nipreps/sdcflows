@@ -92,7 +92,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         name='outputnode')
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
-                                           freesurfer=freesurfer)
+                                           freesurfer=freesurfer,
+                                           use_syn=use_syn)
 
     func_derivatives_wf = init_func_derivatives_wf(output_dir=output_dir,
                                                    output_spaces=output_spaces,
@@ -902,7 +903,7 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
     return workflow
 
 
-def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
+def init_func_reports_wf(reportlets_dir, freesurfer, use_syn, name='func_reports_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
@@ -940,8 +941,6 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
     workflow.connect([
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
                                          ('epi_mask_report', 'in_file')]),
-        (inputnode, ds_syn_sdc_report, [('source_file', 'source_file'),
-                                        ('syn_sdc_report', 'in_file')]),
         (inputnode, ds_epi_reg_report, [('source_file', 'source_file'),
                                         ('epi_reg_report', 'in_file')]),
         (inputnode, ds_acompcor_report, [('source_file', 'source_file'),
@@ -949,6 +948,12 @@ def init_func_reports_wf(reportlets_dir, freesurfer, name='func_reports_wf'):
         (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),
                                          ('tcompcor_report', 'in_file')]),
         ])
+
+    if use_syn:
+        workflow.connect([
+            (inputnode, ds_syn_sdc_report, [('source_file', 'source_file'),
+                                            ('syn_sdc_report', 'in_file')]),
+            ])
 
     return workflow
 
