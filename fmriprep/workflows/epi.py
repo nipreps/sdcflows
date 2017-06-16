@@ -759,7 +759,10 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         name='atlas_2_ref', n_procs=omp_nthreads)
     atlas_2_ref.inputs.input_image = atlas_img
 
-    threshold_atlas = pe.Node(fsl.Threshold(thresh=atlas_threshold), name='threshold_atlas')
+    threshold_atlas = pe.Node(
+        fsl.maths.MathsCommand(args='-thr {:.8g} -bin'.format(atlas_threshold),
+                               output_datatype='char'),
+        name='threshold_atlas')
 
     if layout is None:
         bold_pe = None
