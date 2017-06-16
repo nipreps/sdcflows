@@ -163,7 +163,8 @@ class ConformSeries(SimpleInterface):
                 # voxels in each dimension, to keep the padding consistent in each direction
                 shape_factor = (target_shape.astype(float) + shape) / (2 * shape)
                 target_affine[:3, 3] = img.affine[:3, 3] * shape_factor
-                img = nli.resample_img(img, target_affine, target_shape)
+                data = nli.resample_img(img, target_affine, target_shape).get_data()
+                img = img.__class__(data, target_affine, img.header)
 
             resampled_imgs.append(img)
 
@@ -173,7 +174,7 @@ class ConformSeries(SimpleInterface):
         for orig, final, in_name, out_name in zip(orig_imgs, resampled_imgs,
                                                   in_names, out_names):
             if final is orig:
-                copyfile(in_name, out_name, use_hardlink=True)
+                copyfile(in_name, out_name, copy=True, use_hardlink=True)
             else:
                 final.to_filename(out_name)
 
