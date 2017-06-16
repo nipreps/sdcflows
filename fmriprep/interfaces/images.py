@@ -173,12 +173,11 @@ class ConformSeries(SimpleInterface):
 
                 if resize:
                     # The shift is applied after scaling.
-                    # Apply a shift of half of the new voxels in each direction, to keep the
-                    # origin in the same position relative to the center of the dataset
+                    # Use a proportional shift to maintain relative position in dataset
+                    size_factor = (target_shape.astype(float) + shape) / (2 * shape)
                     # Use integer shifts to avoid unnecessary interpolation
-                    shift = (target_shape - shape) // 2
-                    sign = np.sign(img.affine[:3, 3])
-                    target_affine[:3, 3] = img.affine[:3, 3] + (shift * sign)
+                    offset = (img.affine[:3, 3] * size_factor - img.affine[:3, 3]).astype(int)
+                    target_affine[:3, 3] = img.affine[:3, 3] + offset
                 else:
                     target_affine[:3, 3] = img.affine[:3, 3]
 
