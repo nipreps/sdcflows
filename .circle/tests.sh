@@ -43,7 +43,7 @@ case ${CIRCLE_NODE_INDEX} in
     ;;
   1)
     fmriprep-docker -i poldracklab/fmriprep:latest --help
-    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --template --debug --write-graph --use_aroma
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use_aroma
     find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
 esac
