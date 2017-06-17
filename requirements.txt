@@ -1,1 +1,1 @@
-niworkflows>=0.1.2
+git+git://github.com/poldracklab/niworkflows@a2dc98c
