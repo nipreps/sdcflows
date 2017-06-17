@@ -406,10 +406,6 @@ def init_ica_aroma_wf(name='ica_aroma_wf'):
     ica_aroma = pe.Node(aroma.ICA_AROMA(denoise_type='no'),
                         name='ica_aroma')
 
-    # set the output directory manually (until pull request #2056 is merged.)
-    ica_out_dir = ica_aroma.output_dir()
-    ica_aroma.set_input('out_dir', ica_out_dir)
-
     # extract the confound ICs from the results
     ica_aroma_confound_node = pe.Node(utility.Function(input_names=['ica_out_dir'],
                                                        output_names=['aroma_confounds'],
