@@ -138,9 +138,10 @@ def _torads(in_file, out_file=None):
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
     cutoff = max(abs(fmapdata.min()), fmapdata.max())
-    fmapdata = fmapdata * (pi / cutoff)
-    nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header).to_filename(
-        out_file)
+    fmapdata *= (pi / cutoff)
+    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+    out_img.set_data_dtype('float32')
+    out_img.to_filename(out_file)
     return out_file, cutoff
 
 
@@ -153,7 +154,8 @@ def _tohz(in_file, cutoff_hz, out_file=None):
 
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
-    fmapdata = fmapdata * (cutoff_hz / pi)
-    nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header).to_filename(
-        out_file)
+    fmapdata *= (cutoff_hz / pi)
+    nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+    out_img.set_data_dtype('float32')
+    out_img.to_filename(out_file)
     return out_file
