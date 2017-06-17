@@ -307,8 +307,8 @@ def get_ica_confounds(ica_out_dir):
     if motion_ic_indices.size == 0:
         LOGGER.warn('WARNING: No noise components were classified')
         no_noise_arr = np.ones((melodic_mix_arr.shape['0'], 1))
-        aggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_aggr_', ['00'])
-        nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_nonaggr_', ['00'])
+        aggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseAggr', ['00'])
+        nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseNonAggr', ['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
 
@@ -322,8 +322,8 @@ def get_ica_confounds(ica_out_dir):
     if good_ic_arr.size == 0:
         LOGGER.warn('WARNING: No signal components were classified')
         no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
-        aggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_aggr_', ['00'])
-        nonaggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_nonaggr_', ['00'])
+        aggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalAggr', ['00'])
+        nonaggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalNonAggr', ['00'])
         aroma_confounds = (aggr_tsv, nonaggr_tsv)
         return aroma_confounds
 
@@ -331,9 +331,9 @@ def get_ica_confounds(ica_out_dir):
     nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr, y) for y in aggr_confounds])
 
     # add one to motion_ic_indices to match melodic report.
-    aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'aggr_comp_',
+    aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'AROMAAggrComp',
                                      [str(x).zfill(2) for x in motion_ic_indices + 1])
-    nonaggr_tsv = aroma_add_header_func(nonaggr_confounds.T, 'nonaggr_comp_',
+    nonaggr_tsv = aroma_add_header_func(nonaggr_confounds.T, 'AROMANonAggrComp',
                                         [str(x).zfill(2) for x in motion_ic_indices + 1])
     aroma_confounds = (aggr_tsv, nonaggr_tsv)
 
