@@ -151,19 +151,38 @@ class ConformSeries(SimpleInterface):
         for img in reoriented:
             zooms = np.array(img.header.get_zooms()[:3])
             shape = np.array(img.shape)
-            if not (np.allclose(zooms, target_zooms) and np.all(shape == target_shape)):
-                target_affine = np.eye(4)
-                scale_factor = target_zooms / zooms
-                target_affine[:3, :3] = np.diag(scale_factor).dot(img.affine[:3, :3])
 
-                # The shift is applied after scaling.
-                # Keeping the same results in same [0, 0, 0] corner
-                # Scaling by number of voxels results in same [i_max, j_max, k_max] corner
-                # We thus shift the intercept by *half* the proportionate change in number of
-                # voxels in each dimension, to keep the padding consistent in each direction
-                shape_factor = (target_shape.astype(float) + shape) / (2 * shape)
-                target_affine[:3, 3] = img.affine[:3, 3] * shape_factor
-                img = nli.resample_img(img, target_affine, target_shape)
+            xyz_unit = img.header.get_xyzt_units()[0]
+            if xyz_unit == 'unknown':
+                # Common assumption; if we're wrong, unlikely to be the only thing that breaks
+                xyz_unit = 'mm'
+            # Set a 0.05mm threshold to performing rescaling
+            atol = {'meter': 5e-5, 'mm': 0.05, 'micron': 50}[xyz_unit]
+
+            # Rescale => change zooms
+            # Resize => update image dimensions
+            rescale = not np.allclose(zooms, target_zooms, atol=atol)
+            resize = not np.all(shape == target_shape)
+            if rescale or resize:
+                target_affine = np.eye(4, dtype=img.affine.dtype)
+                if rescale:
+                    scale_factor = target_zooms / zooms
+                    target_affine[:3, :3] = np.diag(scale_factor).dot(img.affine[:3, :3])
+                else:
+                    target_affine[:3, :3] = img.affine[:3, :3]
+
+                if resize:
+                    # The shift is applied after scaling.
+                    # Use a proportional shift to maintain relative position in dataset
+                    size_factor = (target_shape.astype(float) + shape) / (2 * shape)
+                    # Use integer shifts to avoid unnecessary interpolation
+                    offset = (img.affine[:3, 3] * size_factor - img.affine[:3, 3]).astype(int)
+                    target_affine[:3, 3] = img.affine[:3, 3] + offset
+                else:
+                    target_affine[:3, 3] = img.affine[:3, 3]
+
+                data = nli.resample_img(img, target_affine, target_shape).get_data()
+                img = img.__class__(data, target_affine, img.header)
 
             resampled_imgs.append(img)
 
@@ -173,7 +192,7 @@ class ConformSeries(SimpleInterface):
         for orig, final, in_name, out_name in zip(orig_imgs, resampled_imgs,
                                                   in_names, out_names):
             if final is orig:
-                copyfile(in_name, out_name, use_hardlink=True)
+                copyfile(in_name, out_name, copy=True, use_hardlink=True)
             else:
                 final.to_filename(out_name)
 
