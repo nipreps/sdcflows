@@ -53,6 +53,13 @@ class BIDSDataGrabberOutputSpec(TraitedSpec):
 class BIDSDataGrabber(SimpleInterface):
     input_spec = BIDSDataGrabberInputSpec
     output_spec = BIDSDataGrabberOutputSpec
+    _require_funcs = True
+
+    def __init__(self, *args, **kwargs):
+        anat_only = kwargs.pop('anat_only')
+        super(BIDSDataGrabber, self).__init__(*args, **kwargs)
+        if anat_only is not None:
+            self._require_funcs = not anat_only
 
     def _run_interface(self, runtime):
         bids_dict = self.inputs.subject_data
@@ -65,11 +72,11 @@ class BIDSDataGrabber(SimpleInterface):
                 self.inputs.subject_id))
 
         self._results['func'] = bids_dict['func']
-        if not bids_dict['func']:
+        if self._require_funcs and not bids_dict['func']:
             raise FileNotFoundError('No functional images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
-        for imtype in ['t2w', 'fmap', 'sbref']:
+        for imtype in ['func', 't2w', 'fmap', 'sbref']:
             self._results[imtype] = bids_dict[imtype]
             if not bids_dict[imtype]:
                 LOGGER.warn('No \'{}\' images found for sub-{}'.format(
