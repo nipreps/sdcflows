@@ -9,7 +9,7 @@ from future.standard_library import install_aliases
 import fmriprep.utils.misc as misc
 
 install_aliases()
-from urllib.request import urlopen
+from urllib.request import urlopen  # noqa: E402
 
 
 class TestCollectBids(unittest.TestCase):
