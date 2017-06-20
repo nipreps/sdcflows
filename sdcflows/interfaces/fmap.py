@@ -65,7 +65,8 @@ class FieldEnhance(SimpleInterface):
                 struc = sim.iterate_structure(sim.generate_binary_structure(3, 2), 1)
                 mask = sim.binary_erosion(
                     mask, struc,
-                    iterations=self.inputs.mask_erode).astype(np.uint8)  # pylint: disable=no-member
+                    iterations=self.inputs.mask_erode
+                    ).astype(np.uint8)  # pylint: disable=no-member
 
         self._results['out_file'] = genfname(self.inputs.in_file, suffix='enh')
         datanii = nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header)
@@ -109,7 +110,6 @@ class FieldEnhance(SimpleInterface):
                 diffmapnii = nb.Nifti1Image(
                     diffmap[..., errorslice[0]:errorslice[-1]] * diffmapmsk,
                     datanii.affine, datanii.header)
-
 
                 bspobj2 = fbsp.BSplineFieldmap(diffmapnii, knots_zooms=[24., 24., 4.],
                                                njobs=self.inputs.njobs)

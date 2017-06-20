@@ -4,7 +4,8 @@ import mock
 from fmriprep.workflows.base import init_single_subject_wf
 from test.workflows.utilities import TestWorkflow
 
-@mock.patch('fmriprep.interfaces.BIDSDataGrabber') # no actual BIDS dir necessary
+
+@mock.patch('fmriprep.interfaces.BIDSDataGrabber')  # no actual BIDS dir necessary
 class TestBase(TestWorkflow):
 
     def test_single_subject_wf(self, _):

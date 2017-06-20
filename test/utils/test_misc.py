@@ -4,14 +4,12 @@ import unittest
 from io import BytesIO
 from zipfile import ZipFile
 
-import pkg_resources as pkgr
 from future.standard_library import install_aliases
 
 import fmriprep.utils.misc as misc
 
 install_aliases()
-from urllib.request import urlopen
-
+from urllib.request import urlopen  # noqa: E402
 
 
 class TestCollectBids(unittest.TestCase):
@@ -41,7 +39,8 @@ class TestCollectBids(unittest.TestCase):
         self.assertNotEqual(0, len(next(iter(self.imaging_data.values()))))
 
     def test_epi(self):
-        epi_template = self.fake_ds_location + "/{subject}/func/{subject}_task-machinegame_run-06_bold.nii.gz"
+        epi_template = os.path.join(self.fake_ds_location, '{subject}', 'func',
+                                    '{subject}_task-machinegame_run-06_bold.nii.gz')
         self.assert_key_exists(epi_template, 'func')
 
     def test_sbref(self):
@@ -56,7 +55,7 @@ class TestCollectBids(unittest.TestCase):
     def test_fieldmaps(self):
         fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz"
         self.assert_fieldmap_files_exist(fieldmap_pattern, 'fieldmaps')
-    
+
     # HELPER ASSERTIONS
 
     def assert_fieldmap_files_exist(self, pattern, key):
@@ -70,4 +69,3 @@ class TestCollectBids(unittest.TestCase):
         for subject in self.imaging_data:
             self.assertIn(template.format(subject=subject),
                           '\n'.join(self.imaging_data[subject][key]))
-

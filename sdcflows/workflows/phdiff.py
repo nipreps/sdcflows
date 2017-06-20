@@ -21,7 +21,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 from niworkflows.nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.nipype.pipeline import engine as pe
 # Note that demean_image imports from nipype
-from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, cleanup_edge_pipeline
+from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
+    cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
 from fmriprep.interfaces import ReadSidecarJSON, IntraModalMerge
@@ -58,7 +59,6 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
 
-
     def _pick1st(inlist):
         return inlist[0]
 
@@ -75,7 +75,7 @@ def init_phdiff_wf(reportlets_dir, name='phdiff_wf'):
                   name='bet')
     ds_fmap_mask = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='fmap_mask'),name='ds_fmap_mask')
+                            suffix='fmap_mask'), name='ds_fmap_mask')
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
