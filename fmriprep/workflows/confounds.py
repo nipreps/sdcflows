@@ -281,10 +281,10 @@ def get_ica_confounds(ica_out_dir):
         PY3 = version_info[0] > 2
 
         df = pd.DataFrame(np_arr, columns=[str(col_base) + str(index) for index in comp_nums])
-        df.to_csv(str(col_base) + "ica_confounds.tsv",
+        df.to_csv(str(col_base) + "ICAConfounds.tsv",
                   sep="\t" if PY3 else '\t'.encode(), index=None)
 
-        return os.path.abspath(str(col_base) + "ica_confounds.tsv")
+        return os.path.abspath(str(col_base) + "ICAConfounds.tsv")
 
     # Partial regression (close to, but not identical to fsl_regfilt)
     def calc_residuals(x, y):
@@ -305,12 +305,7 @@ def get_ica_confounds(ica_out_dir):
 
     # Return dummy list of ones if no noise compnents were found
     if motion_ic_indices.size == 0:
-        LOGGER.warn('WARNING: No noise components were classified')
-        no_noise_arr = np.ones((melodic_mix_arr.shape['0'], 1))
-        aggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseAggr', ['00'])
-        nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseNonAggr', ['00'])
-        aroma_confounds = (aggr_tsv, nonaggr_tsv)
-        return aroma_confounds
+        raise RuntimeError('ERROR: ICA-AROMA found no noise components!')
 
     # transpose melodic_mix_arr so x refers to the correct dimension
     aggr_confounds = np.asarray([melodic_mix_arr.T[x] for x in motion_ic_indices])
@@ -320,10 +315,10 @@ def get_ica_confounds(ica_out_dir):
 
     # return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
-        raise RuntimeError('ERROR: ICA-AROMA found no signal components')
-    
+        raise RuntimeError('ERROR: ICA-AROMA found no signal components!')
+
     # nonaggr denoising confounds
-    nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr, y) for y in aggr_confounds])
+    nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr.T, y) for y in aggr_confounds])
 
     # add one to motion_ic_indices to match melodic report.
     aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'AROMAAggrComp',
