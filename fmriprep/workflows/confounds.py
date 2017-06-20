@@ -288,7 +288,7 @@ def get_ica_confounds(ica_out_dir):
 
     # Partial regression (close to, but not identical to fsl_regfilt)
     def calc_residuals(x, y):
-        X = np.column_stack(x + [[0] * len(x[0])])
+        X = np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
         beta_hat = np.linalg.lstsq(X, y)[0]
         y_hat = np.dot(X, beta_hat)
         residuals = y - y_hat
