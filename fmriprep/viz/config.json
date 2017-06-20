@@ -95,12 +95,6 @@
                 "file_pattern": "func/.*_tcompcor",
                 "title": "tCompCor high variance map",
                 "description": "Top 5% most variable voxels within heavily eroded brain mask."
-            },
-            {
-              "name": "epi/ica_aroma",
-              "file_pattern": "func/.*_ica_aroma",
-              "title": "ICA_AROMA melodic report",
-              "description": "Melodic components used as input for ICA_AROMA"
             }
         ]
     }

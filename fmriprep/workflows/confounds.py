@@ -320,13 +320,8 @@ def get_ica_confounds(ica_out_dir):
 
     # return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
-        LOGGER.warn('WARNING: No signal components were classified')
-        no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
-        aggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalAggr', ['00'])
-        nonaggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalNonAggr', ['00'])
-        aroma_confounds = (aggr_tsv, nonaggr_tsv)
-        return aroma_confounds
-
+        raise RuntimeError('ERROR: ICA-AROMA found no signal components')
+    
     # nonaggr denoising confounds
     nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr, y) for y in aggr_confounds])
 
