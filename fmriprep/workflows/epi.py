@@ -828,10 +828,10 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
         workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
-                          (threshold_atlas, syn_i, [('out_file', 'fixed_image_mask')]),
+                          (threshold_atlas, syn_i, [('out_file', 'fixed_image_masks')]),
                           (inputnode, syn_j, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
-                          (threshold_atlas, syn_j, [('out_file', 'fixed_image_mask')]),
+                          (threshold_atlas, syn_j, [('out_file', 'fixed_image_masks')]),
                           (inputnode, bbr_i_wf, [('subjects_dir', 'inputnode.subjects_dir'),
                                                  ('subject_id', 'inputnode.subject_id'),
                                                  ('t1_seg', 'inputnode.t1_seg'),
@@ -853,13 +853,13 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     elif bold_pe[0] == 'i':
         workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
-                          (threshold_atlas, syn_i, [('out_file', 'fixed_image_mask')]),
+                          (threshold_atlas, syn_i, [('out_file', 'fixed_image_masks')]),
                           ])
         syn_out = syn_i
     elif bold_pe[0] == 'j':
         workflow.connect([(inputnode, syn_j, [('epi_ref', 'moving_image')]),
                           (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
-                          (threshold_atlas, syn_j, [('out_file', 'fixed_image_mask')]),
+                          (threshold_atlas, syn_j, [('out_file', 'fixed_image_masks')]),
                           ])
         syn_out = syn_j
 
