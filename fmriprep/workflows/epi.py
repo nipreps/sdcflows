@@ -46,7 +46,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     LOGGER.info('Creating bold processing workflow for "%s".', bold_file)
     fname = split_filename(bold_file)[1]
     fname_nosub = '_'.join(fname.split("_")[1:])
-    name = "func_preproc_" + fname_nosub.replace(".", "_").replace(" ", "").replace("-", "_").replace("_bold", "_wf")
+    name = "func_preproc_" + fname_nosub.replace(
+        ".", "_").replace(" ", "").replace("-", "_").replace("_bold", "_wf")
 
     # For doc building purposes
     if layout is None or bold_file == 'bold_preprocesing':
@@ -63,7 +64,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
-        fmaps = layout.get_fieldmap(bold_file, return_list=True) if 'fieldmaps' not in ignore else []
+        fmaps = layout.get_fieldmap(bold_file, return_list=True) \
+            if 'fieldmaps' not in ignore else []
 
     # TODO: To be removed (supported fieldmaps):
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
@@ -188,21 +190,25 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                debug=debug,
                                                name='sdc_unwarp_wf')
             workflow.connect([
-                (fmap_estimator_wf, sdc_unwarp_wf, [('outputnode.fmap', 'inputnode.fmap'),
-                                                    ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                                                    ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+                (fmap_estimator_wf, sdc_unwarp_wf, [
+                    ('outputnode.fmap', 'inputnode.fmap'),
+                    ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                    ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
             ])
 
         # Connections and workflows common for all types of fieldmaps
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('epi', 'inputnode.name_source')]),
-            (epi_hmc_wf, sdc_unwarp_wf, [('outputnode.ref_image', 'inputnode.in_reference'),
-                                         ('outputnode.ref_image_brain', 'inputnode.in_reference_brain'),
-                                         ('outputnode.epi_mask', 'inputnode.in_mask')]),
-            (sdc_unwarp_wf, epi_reg_wf, [('outputnode.out_warp', 'inputnode.fieldwarp'),
-                                         ('outputnode.out_reference_brain', 'inputnode.ref_epi_brain'),
-                                         ('outputnode.out_mask', 'inputnode.ref_epi_mask')]),
-            (sdc_unwarp_wf, func_reports_wf, [('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
+            (epi_hmc_wf, sdc_unwarp_wf, [
+                ('outputnode.ref_image', 'inputnode.in_reference'),
+                ('outputnode.ref_image_brain', 'inputnode.in_reference_brain'),
+                ('outputnode.epi_mask', 'inputnode.in_mask')]),
+            (sdc_unwarp_wf, epi_reg_wf, [
+                ('outputnode.out_warp', 'inputnode.fieldwarp'),
+                ('outputnode.out_reference_brain', 'inputnode.ref_epi_brain'),
+                ('outputnode.out_mask', 'inputnode.ref_epi_mask')]),
+            (sdc_unwarp_wf, func_reports_wf, [
+                ('outputnode.out_mask_report', 'inputnode.epi_mask_report')])
         ])
 
         # Report on EPI correction
@@ -210,10 +216,13 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                            name='fmap_unwarp_report_wf')
         workflow.connect([(inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
                                                               ('epi', 'inputnode.name_source')]),
-                          (epi_hmc_wf, fmap_unwarp_report_wf, [('outputnode.ref_image', 'inputnode.in_pre')]),
-                          (sdc_unwarp_wf, fmap_unwarp_report_wf, [('outputnode.out_reference', 'inputnode.in_post')]),
-                          (epi_reg_wf, fmap_unwarp_report_wf, [('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
-        ])
+                          (epi_hmc_wf, fmap_unwarp_report_wf, [
+                              ('outputnode.ref_image', 'inputnode.in_pre')]),
+                          (sdc_unwarp_wf, fmap_unwarp_report_wf, [
+                              ('outputnode.out_reference', 'inputnode.in_post')]),
+                          (epi_reg_wf, fmap_unwarp_report_wf, [
+                              ('outputnode.itk_t1_to_epi', 'inputnode.in_xfm')]),
+                          ])
 
     if 'template' in output_spaces:
         # Apply transforms in 1 shot
@@ -306,11 +315,12 @@ def init_epi_hmc_wf(metadata, bold_file_size_gb, ignore,
         (inputnode, gen_ref, [('epi', 'in_file')]),
         (gen_ref, enhance_and_skullstrip_epi_wf, [('ref_image', 'inputnode.in_file')]),
         (gen_ref, hmc, [('ref_image', 'ref_file')]),
-        (enhance_and_skullstrip_epi_wf, outputnode, [('outputnode.bias_corrected_file', 'ref_image'),
-                                                     ('outputnode.mask_file', 'epi_mask'),
-                                                     ('outputnode.out_report', 'epi_mask_report'),
-                                                     ('outputnode.skull_stripped_file', 'ref_image_brain')]),
-    ])
+        (enhance_and_skullstrip_epi_wf, outputnode, [
+            ('outputnode.bias_corrected_file', 'ref_image'),
+            ('outputnode.mask_file', 'epi_mask'),
+            ('outputnode.out_report', 'epi_mask_report'),
+            ('outputnode.skull_stripped_file', 'ref_image_brain')]),
+        ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='split')
     split.interface.estimated_memory_gb = bold_file_size_gb * 3

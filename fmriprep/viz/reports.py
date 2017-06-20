@@ -8,8 +8,8 @@ import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
 
-class Element(object):
 
+class Element(object):
     def __init__(self, name, file_pattern, title, description):
         self.name = name
         self.file_pattern = re.compile(file_pattern)
@@ -17,8 +17,8 @@ class Element(object):
         self.description = description
         self.files_contents = []
 
-class SubReport(object):
 
+class SubReport(object):
     def __init__(self, name, elements, title=''):
         self.name = name
         self.title = title
@@ -146,7 +146,6 @@ class Report(object):
                     error['inputs'] = sorted(node.inputs.trait_get().items())
                 self.errors.append(error)
 
-
     def generate_report(self):
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
@@ -160,7 +159,6 @@ class Report(object):
         return len(self.errors)
 
 
-
 def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     reportlet_path = os.path.join(reportlets_dir, 'fmriprep', "sub-" + subject_label)
     config = pkgrf('fmriprep', 'viz/config.json')
@@ -168,5 +166,3 @@ def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     out_filename = 'sub-{}.html'.format(subject_label)
     report = Report(reportlet_path, config, out_dir, run_uuid, out_filename)
     return report.generate_report()
-
-

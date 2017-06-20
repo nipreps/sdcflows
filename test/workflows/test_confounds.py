@@ -9,7 +9,8 @@ from fmriprep.workflows.confounds import init_discover_wf, _gather_confounds
 
 from test.workflows.utilities import TestWorkflow
 
-logging.disable(logging.INFO) # don't print unnecessary msgs
+logging.disable(logging.INFO)  # don't print unnecessary msgs
+
 
 class TestConfounds(TestWorkflow):
     ''' Testing class for fmriprep.workflows.confounds '''
@@ -29,10 +30,10 @@ class TestConfounds(TestWorkflow):
         # Make sure mandatory inputs are set
         self.assert_inputs_set(workflow, {'outputnode': ['confounds_file'],
                                           'concat': ['signals', 'dvars', 'frame_displace',
-                                                              #'acompcor', See confounds.py
-                                                              'tcompcor'],
-                                          'tcompcor': ['components_file']})
+                                                     # 'acompcor', See confounds.py
+                                                     'tcompcor'],
                                           # 'aCompCor': ['components_file', 'mask_file'], }) see ^^
+                                          'tcompcor': ['components_file']})
 
     @mock.patch('pandas.read_csv')
     @mock.patch.object(pd.DataFrame, 'to_csv', autospec=True)

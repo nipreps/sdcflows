@@ -129,7 +129,6 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 def _torads(in_file, out_file=None):
     from math import pi
     import nibabel as nb
-    import numpy as np
     from fmriprep.utils.misc import genfname
 
     if out_file is None:

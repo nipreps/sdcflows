@@ -94,8 +94,10 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
 
+
 class DerivativesDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
+
 
 class DerivativesDataSink(SimpleInterface):
     input_spec = DerivativesDataSinkInputSpec
@@ -162,6 +164,7 @@ class ReadSidecarJSONInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='the input nifti file')
     fields = traits.List(traits.Str, desc='get only certain fields')
 
+
 class ReadSidecarJSONOutputSpec(TraitedSpec):
     subject_id = traits.Str()
     session_id = traits.Str()
@@ -170,6 +173,7 @@ class ReadSidecarJSONOutputSpec(TraitedSpec):
     rec_id = traits.Str()
     run_id = traits.Str()
     out_dict = traits.Dict()
+
 
 class ReadSidecarJSON(SimpleInterface):
     """
@@ -309,6 +313,7 @@ def get_metadata_for_nifti(in_file):
                 merged_param_dict.update(param_dict)
 
     return merged_param_dict
+
 
 def _splitext(fname):
     fname, ext = op.splitext(op.basename(fname))
