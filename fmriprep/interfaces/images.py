@@ -14,6 +14,7 @@ import numpy as np
 import nibabel as nb
 
 from niworkflows.nipype import logging
+from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
@@ -201,6 +202,43 @@ class ConformSeries(SimpleInterface):
         return runtime
 
 
+class InvertT1wInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='Skull-stripped T1w structural image')
+    epi_ref = File(exists=True, mandatory=True,
+                   desc='Skull-stripped EPI reference image')
+
+
+class InvertT1wOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='Inverted T1w structural image')
+
+
+class InvertT1w(SimpleInterface):
+    input_spec = InvertT1wInputSpec
+    output_spec = InvertT1wOutputSpec
+
+    def _run_interface(self, runtime):
+        from nilearn import image as nli
+
+        t1_img = nli.load_img(self.inputs.in_file)
+        t1_data = t1_img.get_data()
+        epi_data = nli.load_img(self.inputs.epi_ref).get_data()
+
+        # We assume the image is already masked
+        mask = t1_data > 0
+
+        t1_min, t1_max = np.unique(t1_data)[[1, -1]]
+        epi_min, epi_max = np.unique(epi_data)[[1, -1]]
+        scale_factor = (epi_max - epi_min) / (t1_max - t1_min)
+
+        inv_data = mask * ((t1_max - t1_data) * scale_factor + epi_min)
+
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_inv', newpath=runtime.cwd)
+        nli.new_img_like(t1_img, inv_data, copy_header=True).to_filename(out_file)
+        self._results['out_file'] = out_file
+        return runtime
+
+
 def reorient(in_file, out_file=None):
     import nibabel as nb
     from fmriprep.utils.misc import genfname
@@ -270,3 +308,17 @@ def _gen_reference(fixed_image, moving_image, out_file=None):
     resample_img(fixed_image, target_affine=numpy.diag(new_zooms_round),
                  interpolation='nearest').to_filename(out_file)
     return out_file
+
+
+def extract_wm(in_seg, wm_label=3):
+    import os.path as op
+    import nibabel as nb
+    import numpy as np
+
+    nii = nb.load(in_seg)
+    data = np.zeros(nii.shape, dtype=np.uint8)
+    data[nii.get_data() == wm_label] = 1
+    hdr = nii.header.copy()
+    hdr.set_data_dtype(np.uint8)
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
+    return op.abspath('wm.nii.gz')
