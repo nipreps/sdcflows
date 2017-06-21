@@ -53,6 +53,10 @@ be used:
   3. Phase-difference techniques
 
 
+Additionally, FMRIPREP now experimentally supports displacement field estimation
+in the absence of fieldmaps. See :ref:`fieldmapless_estimation` for
+further details.
+
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
