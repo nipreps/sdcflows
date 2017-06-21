@@ -719,6 +719,78 @@ def init_epi_mni_trans_wf(output_dir, template, bold_file_size_gb,
 def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                           template, omp_nthreads,
                           atlas_threshold=3, name='nonlinear_sdc_wf'):
+    """
+    This workflow takes a skull-stripped T1w image and reference EPI image and
+    estimates a susceptibility distortion correction warp, using ANTs symmetric
+    normalization (SyN) and the average fieldmap atlas described in
+    [Treiber2016]_.
+
+    If the phase-encoding (PE) direction is known, the SyN deformation is
+    restricted to that direction; otherwise, deformation fields are calculated
+    for both the right-left and anterior-posterior directions, and selected
+    based on the unwarped file that can be aligned to the T1w image with the
+    lowest boundary-based registration (BBR) cost.
+
+    SyN deformation is also restricted to regions that are expected to have a
+    >3mm (approximately 1 voxel) warp, based on the fieldmap atlas.
+
+    This technique is a variation on those developed in [Huntenburg2014]_ and
+    [Wang2017]_.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.epi import init_nonlinear_sdc_wf
+        wf = init_nonlinear_sdc_wf(
+            bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
+            layout=None,
+            freesurfer=True,
+            bold2t1w_dof=9,
+            template='MNI152NLin2009cAsym',
+            omp_nthreads=8)
+
+    Inputs
+
+        t1_brain
+            skull-stripped, bias-corrected structural image
+        epi_ref
+            skull-stripped reference image
+        t1_seg
+            FAST segmentation white and gray matter, in native T1w space
+        t1_2_mni_reverse_transform
+            inverse registration transform of T1w image to MNI template
+        subjects_dir
+            FreeSurfer subjects directory (if applicable)
+        subject_id
+            FreeSurfer subject_id (if applicable)
+
+    Outputs
+
+        out_reference_brain
+            the ``epi_ref`` image after unwarping
+        out_warp
+            the corresponding :abbr:`DFM (displacements field map)` compatible with
+            ANTs
+        out_mask
+            mask of the unwarped input file
+        out_mask_report
+            reportlet for the skullstripping
+
+    .. [Huntenburg2014] Huntenburg, J. M. (2014) Evaluating Nonlinear
+                        Coregistration of BOLD EPI and T1w Images. Berlin: Master
+                        Thesis, Freie Universität. `PDF
+                        <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`_.
+    .. [Treiber2016] Treiber, J. M. et al. (2016) Characterization and Correction
+                     of Geometric Distortions in 814 Diffusion Weighted Images,
+                     PLoS ONE 11(3): e0152472. doi:`10.1371/journal.pone.0152472
+                     <https://doi.org/10.1371/journal.pone.0152472>`_.
+    .. [Wang2017] Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
+                  Registration Methods for Correction of Susceptibility Artifacts
+                  in Diffusion MRI. Front. Neuroinform. 11:17.
+                  doi:`10.3389/fninf.2017.00017
+                  <https://doi.org/10.3389/fninf.2017.00017>`_.
+    """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(['t1_brain', 'epi_ref', 't1_2_mni_reverse_transform',
