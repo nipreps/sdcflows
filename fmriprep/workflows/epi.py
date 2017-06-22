@@ -149,7 +149,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                  ]),
         (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
-                                 ]),
+                                  ]),
         (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
                                   ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (epi_hmc_wf, discover_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),

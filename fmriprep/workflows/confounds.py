@@ -43,7 +43,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
 
     # AROMA
     if use_aroma:
-        ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_denoising_errors=ignore_aroma_denoising_errors)
+        ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf',
+                                         ignore_aroma_denoising_errors=ignore_aroma_denoising_errors)
 
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
@@ -273,7 +274,6 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_denoising_errors):
     # To catch edge cases when there are either no noise or signal components
     LOGGER = logging.getLogger('workflow')
 
-
     # Pass in numpy array and column base name to generate headers
     # modified from add_header_func
     def aroma_add_header_func(np_arr, col_base, comp_nums):
@@ -413,11 +413,11 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_denoising_errors=False):
                         name='ica_aroma')
 
     # extract the confound ICs from the results
-    ica_aroma_confound_extraction = pe.Node(utility.Function(input_names=['ica_out_dir','ignore_aroma_denoising_errors'],
-                                                       output_names=['aroma_confounds'],
-                                                       function=get_ica_confounds),
+    ica_aroma_confound_extraction = pe.Node(utility.Function(input_names=['ica_out_dir',
+                                                             'ignore_aroma_denoising_errors'],
+                                                             output_names=['aroma_confounds'],
+                                                             function=get_ica_confounds),
                                             name='ica_aroma_confound_extraction')
-                                            #ignore_aroma_denoising_errors=ignore_aroma_denoising_errors)
 
     ica_aroma_confound_extraction.inputs.ignore_aroma_denoising_errors = ignore_aroma_denoising_errors
     # connect the nodes
