@@ -20,7 +20,7 @@ from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
 def init_discover_wf(bold_file_size_gb, use_aroma,
-                     ignore_aroma_denoising_errors, name="discover_wf"):
+                     ignore_aroma_err, name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -44,7 +44,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     # AROMA
     if use_aroma:
         ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf',
-                                         ignore_aroma_denoising_errors=ignore_aroma_denoising_errors)
+                                         ignore_aroma_err=ignore_aroma_err)
 
     # DVARS
     dvars = pe.Node(confounds.ComputeDVARS(save_all=True, remove_zerovariance=True),
@@ -266,7 +266,7 @@ def reverse_order(inlist):
     return inlist
 
 
-def get_ica_confounds(ica_out_dir, ignore_aroma_denoising_errors):
+def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     import os
     import numpy as np
     from niworkflows.nipype import logging
@@ -306,7 +306,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_denoising_errors):
 
     # Return dummy list of ones if no noise compnents were found
     if motion_ic_indices.size == 0:
-        if ignore_aroma_denoising_errors:
+        if ignore_aroma_err:
             LOGGER.warn('WARNING: No noise components were classified')
             no_noise_arr = np.ones((melodic_mix_arr.shape['0'], 1))
             aggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_aggr_', ['00'])
@@ -324,7 +324,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_denoising_errors):
 
     # return dummy lists of zeros if no signal components were found
     if good_ic_arr.size == 0:
-        if ignore_aroma_denoising_errors:
+        if ignore_aroma_err:
             LOGGER.warn('WARNING: No signal components were classified')
             no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
             aggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_aggr_', ['00'])
@@ -347,7 +347,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_denoising_errors):
     return aroma_confounds
 
 
-def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_denoising_errors=False):
+def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     '''
     From: https://github.com/rhr-pruim/ICA-AROMA
     Description:
@@ -414,12 +414,12 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_denoising_errors=False):
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(utility.Function(input_names=['ica_out_dir',
-                                                             'ignore_aroma_denoising_errors'],
+                                                             'ignore_aroma_err'],
                                                              output_names=['aroma_confounds'],
                                                              function=get_ica_confounds),
                                             name='ica_aroma_confound_extraction')
 
-    ica_aroma_confound_extraction.inputs.ignore_aroma_denoising_errors = ignore_aroma_denoising_errors
+    ica_aroma_confound_extraction.inputs.ignore_aroma_err = ignore_aroma_err
     # connect the nodes
     workflow.connect([
         # Connect input nodes to complete smoothing

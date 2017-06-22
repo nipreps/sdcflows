@@ -19,7 +19,7 @@ class TestConfounds(TestWorkflow):
         # run
         workflow = init_discover_wf(bold_file_size_gb=1,
                                     use_aroma=False,
-                                    ignore_aroma_denoising_errors=False)
+                                    ignore_aroma_err=False)
         workflow.write_hierarchical_dotfile()
 
         # assert

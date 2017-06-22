@@ -41,7 +41,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, debug, output_grid_ref,
-                         use_aroma, ignore_aroma_denoising_errors,
+                         use_aroma, ignore_aroma_err,
                          use_syn, force_syn, layout=None):
 
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
@@ -131,7 +131,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     # get confounds
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
                                              use_aroma=use_aroma,
-                                             ignore_aroma_denoising_errors=ignore_aroma_denoising_errors,
+                                             ignore_aroma_err=ignore_aroma_err,
                                              name='discover_wf')
 
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]

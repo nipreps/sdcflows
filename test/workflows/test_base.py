@@ -30,7 +30,7 @@ class TestBase(TestWorkflow):
                                          fmap_bspline=True,
                                          fmap_demean=True,
                                          use_aroma=False,
-                                         ignore_aroma_denoising_errors=False,
+                                         ignore_aroma_err=False,
                                          use_syn=True,
                                          force_syn=True,
                                          output_grid_ref=None)                                 
