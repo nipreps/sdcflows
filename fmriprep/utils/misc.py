@@ -36,11 +36,13 @@ def genfname(in_file, suffix=None, path=None, ext=None):
 
     return op.join(path, '{}_{}{}'.format(fname, suffix, ext))
 
+
 def _first(inlist):
     if not isinstance(inlist, (list, tuple)):
         inlist = [inlist]
 
     return sorted(inlist)[0]
+
 
 def make_folder(folder):
     try:
@@ -49,6 +51,7 @@ def make_folder(folder):
         if exc.errno == EEXIST:
             pass
     return folder
+
 
 def collect_bids_data(dataset, subject, task=None, session=None, run=None):
     subject = str(subject)
@@ -141,21 +144,6 @@ def add_suffix(in_files, suffix):
     return op.basename(fname_presuffix(filename_to_list(in_files)[0],
                                        suffix=suffix))
 
-
-def _extract_wm(in_file):
-    import os.path as op
-    import nibabel as nb
-    import numpy as np
-
-    image = nb.load(in_file)
-    data = image.get_data().astype(np.uint8)
-    data[data != 3] = 0
-    data[data > 0] = 1
-
-    out_file = op.abspath('wm_mask.nii.gz')
-    nb.Nifti1Image(data, image.get_affine(),
-                   image.get_header()).to_filename(out_file)
-    return out_file
 
 if __name__ == '__main__':
     pass

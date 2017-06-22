@@ -8,7 +8,7 @@
     :scale: 100%
 
     Applying field correction warp using ANTs.
-    
+
 One of the major problems that affects :abbr:`EPI (echo planar imaging)` data
 is the spatial distortion caused by the inhomogeneity of the field inside
 the scanner.
@@ -41,17 +41,21 @@ Fieldmap processing in FMRIPREP is structured as follows:
 
   3. :ref:`sdc-unwarp`: the correction step is applied (for phase encoding polarity
      this step also involves distortion correction displacement field estimation).
-     
-If the dataset metadata indicate tha more than one field map acquisition is 
-``IntendedFor`` (see BIDS Specification section 8.9) the following priority will 
+
+If the dataset metadata indicate tha more than one field map acquisition is
+``IntendedFor`` (see BIDS Specification section 8.9) the following priority will
 be used:
 
   1. Blip-up/blip-down
-  
+
   2. Direct field-mapping
-  
+
   3. Phase-difference techniques
 
+
+Additionally, FMRIPREP now experimentally supports displacement field estimation
+in the absence of fieldmaps. See :ref:`fieldmapless_estimation` for
+further details.
 
 """
 from __future__ import print_function, division, absolute_import, unicode_literals

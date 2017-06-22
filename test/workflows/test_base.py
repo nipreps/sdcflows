@@ -4,7 +4,8 @@ import mock
 from fmriprep.workflows.base import init_single_subject_wf
 from test.workflows.utilities import TestWorkflow
 
-@mock.patch('fmriprep.interfaces.BIDSDataGrabber') # no actual BIDS dir necessary
+
+@mock.patch('fmriprep.interfaces.BIDSDataGrabber')  # no actual BIDS dir necessary
 class TestBase(TestWorkflow):
 
     def test_single_subject_wf(self, _):
@@ -28,9 +29,12 @@ class TestBase(TestWorkflow):
                                          bold2t1w_dof=9,
                                          fmap_bspline=True,
                                          fmap_demean=True,
-                                         output_grid_ref=None,
                                          use_aroma=False,
-                                         ignore_aroma_denoising_errors=False)
+                                         ignore_aroma_denoising_errors=False,
+                                         use_syn=True,
+                                         force_syn=True,
+                                         output_grid_ref=None)
+                                         
         wfbasic.write_graph()
 
         self._assert_mandatory_inputs_set(wfbasic)
