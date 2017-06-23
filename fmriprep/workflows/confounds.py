@@ -38,7 +38,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
         fields=['fmri_file', 'movpar_file', 't1_tpms', 'epi_mask', 'epi_mni', 'epi_mask_mni']),
         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(
-        fields=['confounds_file', 'acompcor_report', 'tcompcor_report', 'ica_aroma_report']),
+        fields=['confounds_file', 'acompcor_report', 'tcompcor_report', 'ica_aroma_report',
+                'aroma_noise_ics', 'melodic_mix']),
         name='outputnode')
 
     # AROMA
@@ -209,7 +210,9 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
             (ica_aroma_wf, concat,
                 [('outputnode.aroma_confounds', 'aroma')]),
             (ica_aroma_wf, outputnode,
-                [('outputnode.out_report', 'ica_aroma_report')])
+                [('outputnode.out_report', 'ica_aroma_report'),
+                 ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
+                 ('outputnode.melodic_mix', 'melodic_mix')])
         ])
     return workflow
 
@@ -234,12 +237,9 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         elif index_diff < 0:
             left_df.index = range(-index_diff,
                                   len(left_df.index) - index_diff)
-    # hacky way to make sure aroma is none if not used in workflow
-    if aroma is None:
-        aroma = [None, None]
 
     all_files = [confound for confound in [signals, dvars, frame_displace,
-                                           tcompcor, acompcor, motion, aroma[0], aroma[1]]
+                                           tcompcor, acompcor, motion, aroma]
                  if confound is not None]
 
     confounds_data = pd.DataFrame()
@@ -268,6 +268,7 @@ def reverse_order(inlist):
 
 def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     import os
+    import shutil
     import numpy as np
     from niworkflows.nipype import logging
 
@@ -282,19 +283,10 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
         PY3 = version_info[0] > 2
 
         df = pd.DataFrame(np_arr, columns=[str(col_base) + str(index) for index in comp_nums])
-        df.to_csv(str(col_base) + "ICAConfounds.tsv",
+        df.to_csv(str(col_base) + "AROMAConfounds.tsv",
                   sep="\t" if PY3 else '\t'.encode(), index=None)
 
-        return os.path.abspath(str(col_base) + "ICAConfounds.tsv")
-
-    # Partial regression (close to, but not identical to fsl_regfilt)
-    def calc_residuals(x, y):
-        X = np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
-        beta_hat = np.linalg.lstsq(X, y)[0]
-        y_hat = np.dot(X, beta_hat)
-        residuals = y - y_hat
-
-        return residuals
+        return os.path.abspath(str(col_base) + "AROMAConfounds.tsv")
 
     # load the txt files from ICA_AROMA
     melodic_mix = os.path.join(ica_out_dir, 'melodic.ica/melodic_mix')
@@ -309,9 +301,8 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
         if ignore_aroma_err:
             LOGGER.warn('WARNING: No noise components were classified')
             no_noise_arr = np.ones((melodic_mix_arr.shape[0], 1))
-            aggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_aggr_', ['00'])
-            nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_nonaggr_', ['00'])
-            aroma_confounds = (aggr_tsv, nonaggr_tsv)
+            aggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseAggr', ['00'])
+            aroma_confounds = aggr_tsv
             return aroma_confounds
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no noise components!')
@@ -327,24 +318,32 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
         if ignore_aroma_err:
             LOGGER.warn('WARNING: No signal components were classified')
             no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
-            aggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_aggr_', ['00'])
-            nonaggr_tsv = aroma_add_header_func(no_signal_arr, 'no_signal_nonaggr_', ['00'])
-            aroma_confounds = (aggr_tsv, nonaggr_tsv)
+            aggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalAggr', ['00'])
+            aroma_confounds = aggr_tsv
             return aroma_confounds
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no signal components!')
 
-    # nonaggr denoising confounds
-    nonaggr_confounds = np.asarray([calc_residuals(good_ic_arr.T, y) for y in aggr_confounds])
-
     # add one to motion_ic_indices to match melodic report.
     aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'AROMAAggrComp',
                                      [str(x).zfill(2) for x in motion_ic_indices + 1])
-    nonaggr_tsv = aroma_add_header_func(nonaggr_confounds.T, 'AROMANonAggrComp',
-                                        [str(x).zfill(2) for x in motion_ic_indices + 1])
-    aroma_confounds = (aggr_tsv, nonaggr_tsv)
+    aroma_confounds = aggr_tsv
 
-    return aroma_confounds
+    # Change names of motion_ics and melodic_mix for output
+    melodic_mix_out = os.path.join(ica_out_dir, 'MELODICmix.tsv')
+    motion_ics_out = os.path.join(ica_out_dir, 'AROMAnoiseICs.csv')
+
+    # melodic_mix replace spaces with tabs
+    with open(melodic_mix, 'r') as melodic_file:
+        melodic_mix_out_char = melodic_file.read().replace('  ', '\t')
+    # write to output file
+    with open(melodic_mix_out, 'w+') as melodic_file_out:
+        melodic_file_out.write(melodic_mix_out_char)
+
+    # copy metion_ics file to derivatives name
+    shutil.copyfile(motion_ics, motion_ics_out)
+
+    return aroma_confounds, motion_ics_out, melodic_mix_out
 
 
 def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
@@ -363,7 +362,8 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     1) smooth data using SUSAN
     2) run melodic outside of ICA_AROMA to generate the report
     3) run ICA_AROMA
-    4) print identified motion components (full and partial) to tsv
+    4) print identified motion components (aggressive) to tsv
+    5) pass classified_motion_ICs and melodic_mix for user to complete nonaggr denoising
     '''
     workflow = pe.Workflow(name=name)
 
@@ -373,8 +373,10 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
                         name='inputnode')
 
     outputnode = pe.Node(utility.IdentityInterface(
-        fields=['aroma_confounds', 'out_report']), name='outputnode')
+        fields=['aroma_confounds', 'out_report',
+                'aroma_noise_ics', 'melodic_mix']), name='outputnode')
 
+    # helper function to get
     # smoothing node (SUSAN)
     # functions to help set SUSAN
     def getbtthresh(medianval):
@@ -415,11 +417,13 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(utility.Function(input_names=['ica_out_dir',
                                                              'ignore_aroma_err'],
-                                                             output_names=['aroma_confounds'],
+                                                             output_names=['aroma_confounds',
+                                                                           'aroma_noise_ics',
+                                                                           'melodic_mix'],
                                                              function=get_ica_confounds),
                                             name='ica_aroma_confound_extraction')
-
     ica_aroma_confound_extraction.inputs.ignore_aroma_err = ignore_aroma_err
+
     # connect the nodes
     workflow.connect([
         # Connect input nodes to complete smoothing
@@ -459,7 +463,9 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
             [('out_dir', 'ica_out_dir')]),
         # output for processing and reporting
         (ica_aroma_confound_extraction, outputnode,
-            [('aroma_confounds', 'aroma_confounds')]),
+            [('aroma_confounds', 'aroma_confounds'),
+             ('aroma_noise_ics', 'aroma_noise_ics'),
+             ('melodic_mix', 'melodic_mix')]),
         # TODO change melodic report to reflect noise and non-noise components
         (melodic, outputnode,
             [('out_report', 'out_report')]),

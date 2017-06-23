@@ -101,7 +101,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     func_derivatives_wf = init_func_derivatives_wf(output_dir=output_dir,
                                                    output_spaces=output_spaces,
                                                    template=template,
-                                                   freesurfer=freesurfer)
+                                                   freesurfer=freesurfer,
+                                                   use_aroma=use_aroma)
 
     workflow.connect([
         (inputnode, func_reports_wf, [('epi', 'inputnode.source_file')]),
@@ -111,7 +112,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                            ('epi_mni', 'inputnode.epi_mni'),
                                            ('epi_mask_mni', 'inputnode.epi_mask_mni'),
                                            ('confounds', 'inputnode.confounds'),
-                                           ('surfaces', 'inputnode.surfaces')]),
+                                           ('surfaces', 'inputnode.surfaces'),
+                                           ]),
         ])
 
     # HMC on the EPI
@@ -165,6 +167,9 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
+        (discover_wf, func_derivatives_wf, [
+             ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
+             ('melodic_mix', 'inputnode.melodic_mix')]),
         ])
 
     # Cases:
@@ -1066,13 +1071,13 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
 
 
 def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
-                             name='func_derivatives_wf'):
+                             use_aroma, name='func_derivatives_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=['source_file', 'epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni',
-                    'confounds', 'surfaces']
+                    'confounds', 'surfaces', 'aroma_noise_ics', 'melodic_mix']
             ),
         name='inputnode')
 
@@ -1093,6 +1098,21 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
 
     ds_confounds = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='confounds'),
                            name="ds_confounds", run_without_submitting=True)
+
+    ds_aroma_noise_ics = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                                     suffix='AROMAnoiseICs'),
+                                 name="ds_aroma_noise_ics", run_without_submitting=True)
+
+    ds_melodic_mix = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='MELODICmix'),
+                             name="ds_melodic_mix", run_without_submitting=True)
+
+    if use_aroma:
+        workflow.connect([
+            (inputnode, ds_aroma_noise_ics, [('source_file', 'source_file'),
+                                             ('aroma_noise_ics', 'in_file')]),
+            (inputnode, ds_melodic_mix, [('source_file', 'source_file'),
+                                         ('melodic_mix', 'in_file')]),
+            ])
 
     def get_gifti_name(in_file):
         import os
