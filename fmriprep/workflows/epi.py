@@ -168,8 +168,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
         (discover_wf, func_derivatives_wf, [
-             ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
-             ('melodic_mix', 'inputnode.melodic_mix')]),
+             ('outputnode.aroma_noise_ics', 'inputnode.aroma_noise_ics'),
+             ('outputnode.melodic_mix', 'inputnode.melodic_mix')]),
         ])
 
     # Cases:
