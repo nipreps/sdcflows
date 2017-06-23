@@ -308,7 +308,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     if motion_ic_indices.size == 0:
         if ignore_aroma_err:
             LOGGER.warn('WARNING: No noise components were classified')
-            no_noise_arr = np.ones((melodic_mix_arr.shape['0'], 1))
+            no_noise_arr = np.ones((melodic_mix_arr.shape[0], 1))
             aggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_aggr_', ['00'])
             nonaggr_tsv = aroma_add_header_func(no_noise_arr, 'no_noise_nonaggr_', ['00'])
             aroma_confounds = (aggr_tsv, nonaggr_tsv)
