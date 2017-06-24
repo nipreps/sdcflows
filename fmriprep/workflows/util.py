@@ -134,7 +134,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
     def get_final_cost(in_file):
         import numpy as np
-        return np.loadtxt(in_file, use_cols=[0])
+        return np.loadtxt(in_file, usecols=[0])
 
     get_cost = pe.Node(niu.Function(function=get_final_cost),
                        name='get_cost', run_without_submitting=True)
