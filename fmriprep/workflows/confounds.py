@@ -292,6 +292,17 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     melodic_mix = os.path.join(ica_out_dir, 'melodic.ica/melodic_mix')
     motion_ics = os.path.join(ica_out_dir, 'classified_motion_ICs.txt')
 
+    # Change names of motion_ics and melodic_mix for output
+    melodic_mix_out = os.path.join(ica_out_dir, 'MELODICmix.tsv')
+    motion_ics_out = os.path.join(ica_out_dir, 'AROMAnoiseICs.csv')
+
+    # melodic_mix replace spaces with tabs
+    with open(melodic_mix, 'r') as melodic_file:
+        melodic_mix_out_char = melodic_file.read().replace('  ', '\t')
+    # write to output file
+    with open(melodic_mix_out, 'w+') as melodic_file_out:
+        melodic_file_out.write(melodic_mix_out_char)
+
     # -1 since python lists start at index 0
     motion_ic_indices = np.loadtxt(motion_ics, dtype=int, delimiter=',') - 1
     melodic_mix_arr = np.loadtxt(melodic_mix, ndmin=2)
@@ -303,7 +314,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
             no_noise_arr = np.ones((melodic_mix_arr.shape[0], 1))
             aggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseAggr', ['00'])
             aroma_confounds = aggr_tsv
-            return aroma_confounds
+            return aroma_confounds, motion_ics_out, melodic_mix_out
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no noise components!')
 
@@ -320,7 +331,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
             no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
             aggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalAggr', ['00'])
             aroma_confounds = aggr_tsv
-            return aroma_confounds
+            return aroma_confounds, motion_ics_out, melodic_mix_out
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no signal components!')
 
@@ -328,17 +339,6 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'AROMAAggrComp',
                                      [str(x).zfill(2) for x in motion_ic_indices + 1])
     aroma_confounds = aggr_tsv
-
-    # Change names of motion_ics and melodic_mix for output
-    melodic_mix_out = os.path.join(ica_out_dir, 'MELODICmix.tsv')
-    motion_ics_out = os.path.join(ica_out_dir, 'AROMAnoiseICs.csv')
-
-    # melodic_mix replace spaces with tabs
-    with open(melodic_mix, 'r') as melodic_file:
-        melodic_mix_out_char = melodic_file.read().replace('  ', '\t')
-    # write to output file
-    with open(melodic_mix_out, 'w+') as melodic_file_out:
-        melodic_file_out.write(melodic_mix_out_char)
 
     # copy metion_ics file to derivatives name
     shutil.copyfile(motion_ics, motion_ics_out)
