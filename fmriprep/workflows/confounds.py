@@ -303,6 +303,9 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     with open(melodic_mix_out, 'w+') as melodic_file_out:
         melodic_file_out.write(melodic_mix_out_char)
 
+    # copy metion_ics file to derivatives name
+    shutil.copyfile(motion_ics, motion_ics_out)
+
     # -1 since python lists start at index 0
     motion_ic_indices = np.loadtxt(motion_ics, dtype=int, delimiter=',') - 1
     melodic_mix_arr = np.loadtxt(melodic_mix, ndmin=2)
@@ -339,9 +342,6 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     aggr_tsv = aroma_add_header_func(aggr_confounds.T, 'AROMAAggrComp',
                                      [str(x).zfill(2) for x in motion_ic_indices + 1])
     aroma_confounds = aggr_tsv
-
-    # copy metion_ics file to derivatives name
-    shutil.copyfile(motion_ics, motion_ics_out)
 
     return aroma_confounds, motion_ics_out, melodic_mix_out
 
