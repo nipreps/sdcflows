@@ -17,7 +17,9 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = init_discover_wf(bold_file_size_gb=1)
+        workflow = init_discover_wf(bold_file_size_gb=1,
+                                    use_aroma=False,
+                                    ignore_aroma_err=False)
         workflow.write_hierarchical_dotfile()
 
         # assert
