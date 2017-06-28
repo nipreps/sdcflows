@@ -40,9 +40,9 @@ LOGGER = logging.getLogger('workflow')
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
-                         fmap_bspline, fmap_demean, debug, output_grid_ref,
+                         fmap_bspline, fmap_demean, use_syn, force_syn,
                          use_aroma, ignore_aroma_err,
-                         use_syn, force_syn, layout=None):
+                         debug, output_grid_ref, layout=None):
 
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
@@ -90,7 +90,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     inputnode.inputs.epi = bold_file
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces']),
+        fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces',
+                'aroma_noise_ics', 'melodic_mix']),
         name='outputnode')
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
@@ -113,6 +114,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                            ('epi_mask_mni', 'inputnode.epi_mask_mni'),
                                            ('confounds', 'inputnode.confounds'),
                                            ('surfaces', 'inputnode.surfaces'),
+                                           ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
+                                           ('melodic_mix', 'inputnode.melodic_mix')
                                            ]),
         ])
 
@@ -150,8 +153,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                  ('subject_id', 'inputnode.subject_id'),
                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                  ]),
-        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms'),
-                                  ]),
+        (inputnode, discover_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
         (epi_hmc_wf, epi_reg_wf, [('outputnode.epi_split', 'inputnode.epi_split'),
                                   ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (epi_hmc_wf, discover_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
@@ -160,16 +162,15 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (epi_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.epi_reg_report'),
             ]),
-        (discover_wf, outputnode, [('outputnode.confounds_file', 'confounds')]),
+        (discover_wf, outputnode, [('outputnode.confounds_file', 'confounds'),
+                                   ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
+                                   ('outputnode.melodic_mix', 'melodic_mix')]),
         (epi_reg_wf, outputnode, [('outputnode.epi_t1', 'epi_t1'),
                                   ('outputnode.epi_mask_t1', 'epi_mask_t1')]),
         (discover_wf, func_reports_wf, [
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
-        (discover_wf, func_derivatives_wf, [
-             ('outputnode.aroma_noise_ics', 'inputnode.aroma_noise_ics'),
-             ('outputnode.melodic_mix', 'inputnode.melodic_mix')]),
         ])
 
     # Cases:
@@ -1054,12 +1055,13 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
                                          ('acompcor_report', 'in_file')]),
         (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),
                                          ('tcompcor_report', 'in_file')]),
-                    ])
+        ])
+        
     if use_aroma:
         workflow.connect([
             (inputnode, ds_ica_aroma_report, [('source_file', 'source_file'),
                                               ('ica_aroma_report', 'in_file')]),
-                        ])
+            ])
 
     if use_syn:
         workflow.connect([

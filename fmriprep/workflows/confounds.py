@@ -24,14 +24,13 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
-    from motion-corrected fMRI ('inputnode.fmri_file').
+        from motion-corrected fMRI ('inputnode.fmri_file').
     Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.epi_mask')
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transform to the images. Transforms should be fsl-formatted.
-    Optional:
-        Calculates motion related components from ICA_AROMA
+    Calculates noise components identified from ICA_AROMA (if ``use_aroma=True``)
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(
@@ -42,7 +41,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
                 'aroma_noise_ics', 'melodic_mix']),
         name='outputnode')
 
-    # AROMA
+    # ICA-AROMA
     if use_aroma:
         ica_aroma_wf = init_ica_aroma_wf(name='ica_aroma_wf',
                                          ignore_aroma_err=ignore_aroma_err)
@@ -314,9 +313,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     if motion_ic_indices.size == 0:
         if ignore_aroma_err:
             LOGGER.warn('WARNING: No noise components were classified')
-            no_noise_arr = np.ones((melodic_mix_arr.shape[0], 1))
-            aggr_tsv = aroma_add_header_func(no_noise_arr, 'AROMANoNoiseAggr', ['00'])
-            aroma_confounds = aggr_tsv
+            aroma_confounds = None
             return aroma_confounds, motion_ics_out, melodic_mix_out
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no noise components!')
@@ -331,9 +328,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     if good_ic_arr.size == 0:
         if ignore_aroma_err:
             LOGGER.warn('WARNING: No signal components were classified')
-            no_signal_arr = np.zeros((melodic_mix_arr.shape[0], 1))
-            aggr_tsv = aroma_add_header_func(no_signal_arr, 'AROMANoSignalAggr', ['00'])
-            aroma_confounds = aggr_tsv
+            aroma_confounds = None
             return aroma_confounds, motion_ics_out, melodic_mix_out
         else:
             raise RuntimeError('ERROR: ICA-AROMA found no signal components!')
@@ -391,84 +386,68 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     calc_epi_mean = pe.Node(fsl.MeanImage(),
                             name='calc_epi_mean')
 
-    brightness_threshold = pe.Node(utility.Function(input_names=['medianval'],
-                                                    output_names=['thresh'],
-                                                    function=getbtthresh),
-                                   name='brightness_threshold')
+    brightness_threshold = pe.Node(
+        utility.Function(function=getbtthresh,
+                         input_names=['medianval'],
+                         output_names=['thresh']),
+        name='brightness_threshold')
 
-    getusans = pe.Node(utility.Function(input_names=['image', 'thresh'],
-                                        output_names=['usans'],
-                                        function=getusans_func),
-                       name='getusans')
+    getusans = pe.Node(
+        utility.Function(function=getusans_func,
+                         input_names=['image', 'thresh'],
+                         output_names=['usans']),
+        name='getusans')
 
     smooth = pe.Node(fsl.SUSAN(fwhm=6.0),
                      name='smooth')
 
     # melodic node
-    melodic = pe.Node(nws.MELODICRPT(no_bet=True,
-                                     no_mm=True,
-                                     generate_report=True),
-                      name="melodic")
+    melodic = pe.Node(
+        nws.MELODICRPT(no_bet=True,
+                       no_mm=True,
+                       generate_report=True),
+        name="melodic")
 
     # ica_aroma node
     ica_aroma = pe.Node(aroma.ICA_AROMA(denoise_type='no'),
                         name='ica_aroma')
 
     # extract the confound ICs from the results
-    ica_aroma_confound_extraction = pe.Node(utility.Function(input_names=['ica_out_dir',
-                                                             'ignore_aroma_err'],
-                                                             output_names=['aroma_confounds',
-                                                                           'aroma_noise_ics',
-                                                                           'melodic_mix'],
-                                                             function=get_ica_confounds),
-                                            name='ica_aroma_confound_extraction')
+    ica_aroma_confound_extraction = pe.Node(
+        utility.Function(function=get_ica_confounds,
+                         input_names=['ica_out_dir', 'ignore_aroma_err'],
+                         output_names=['aroma_confounds', 'aroma_noise_ics', 'melodic_mix']),
+        name='ica_aroma_confound_extraction')
     ica_aroma_confound_extraction.inputs.ignore_aroma_err = ignore_aroma_err
 
     # connect the nodes
     workflow.connect([
         # Connect input nodes to complete smoothing
-        (inputnode, calc_median_val,
-            [('epi_mni', 'in_file'),
-             ('epi_mask_mni', 'mask_file')]),
-        (calc_median_val, brightness_threshold,
-            [('out_stat', 'medianval')]),
-        (inputnode, calc_epi_mean,
-            [('epi_mni', 'in_file')]),
-        (calc_epi_mean, getusans,
-            [('out_file', 'image')]),
-        (calc_median_val, getusans,
-            [('out_stat', 'thresh')]),
-        (inputnode, smooth,
-            [('epi_mni', 'in_file')]),
-        (getusans, smooth,
-            [('usans', 'usans')]),
-        (brightness_threshold, smooth,
-            [('thresh', 'brightness_threshold')]),
+        (inputnode, calc_median_val, [('epi_mni', 'in_file'),
+                                      ('epi_mask_mni', 'mask_file')]),
+        (calc_median_val, brightness_threshold, [('out_stat', 'medianval')]),
+        (inputnode, calc_epi_mean, [('epi_mni', 'in_file')]),
+        (calc_epi_mean, getusans, [('out_file', 'image')]),
+        (calc_median_val, getusans, [('out_stat', 'thresh')]),
+        (inputnode, smooth, [('epi_mni', 'in_file')]),
+        (getusans, smooth, [('usans', 'usans')]),
+        (brightness_threshold, smooth, [('thresh', 'brightness_threshold')]),
         # connect smooth to melodic
-        (smooth, melodic,
-            [('smoothed_file', 'in_files')]),
-        (inputnode, melodic,
-            [('epi_mask_mni', 'report_mask')]),
-        (inputnode, melodic,
-            [('epi_mask_mni', 'mask')]),
+        (smooth, melodic, [('smoothed_file', 'in_files')]),
+        (inputnode, melodic, [('epi_mask_mni', 'report_mask'),
+                              ('epi_mask_mni', 'mask')]),
         # connect nodes to ICA-AROMA
-        (smooth, ica_aroma,
-            [('smoothed_file', 'in_file')]),
-        (inputnode, ica_aroma,
-            [('movpar_file', 'motion_parameters')]),
-        (melodic, ica_aroma,
-            [('out_dir', 'melodic_dir')]),
+        (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
+        (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
+        (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
         # geneerate tsvs from ICA_AROMA
-        (ica_aroma, ica_aroma_confound_extraction,
-            [('out_dir', 'ica_out_dir')]),
+        (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'ica_out_dir')]),
         # output for processing and reporting
-        (ica_aroma_confound_extraction, outputnode,
-            [('aroma_confounds', 'aroma_confounds'),
-             ('aroma_noise_ics', 'aroma_noise_ics'),
-             ('melodic_mix', 'melodic_mix')]),
+        (ica_aroma_confound_extraction, outputnode, [('aroma_confounds', 'aroma_confounds'),
+                                                     ('aroma_noise_ics', 'aroma_noise_ics'),
+                                                     ('melodic_mix', 'melodic_mix')]),
         # TODO change melodic report to reflect noise and non-noise components
-        (melodic, outputnode,
-            [('out_report', 'out_report')]),
+        (melodic, outputnode, [('out_report', 'out_report')]),
     ])
 
     return workflow
