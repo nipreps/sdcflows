@@ -1056,7 +1056,7 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
         (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),
                                          ('tcompcor_report', 'in_file')]),
         ])
-        
+
     if use_aroma:
         workflow.connect([
             (inputnode, ds_ica_aroma_report, [('source_file', 'source_file'),
