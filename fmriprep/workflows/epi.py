@@ -139,6 +139,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     discover_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
                                              use_aroma=use_aroma,
                                              ignore_aroma_err=ignore_aroma_err,
+                                             metadata=metadata,
                                              name='discover_wf')
 
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]

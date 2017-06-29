@@ -19,8 +19,8 @@ from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(bold_file_size_gb, use_aroma,
-                     ignore_aroma_err, name="discover_wf"):
+def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
+                     name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -57,9 +57,14 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     # CompCor
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
+                                   use_regress_poly=False,
+                                   high_pass_filter=True,
+                                   save_hpf_basis=True,
                                    percentile_threshold=.05),
                        name="tcompcor")
     tcompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
+    if 'RepetitionTime' in metadata:
+        tcompcor.inputs.repetition_time = metadata['RepetitionTime']
 
     CSF_roi = pe.Node(utility.Function(function=prepare_roi_from_probtissue,
                                        output_names=['roi_file', 'eroded_mask']),
@@ -128,9 +133,14 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     combine_rois = pe.Node(utility.Function(function=combine_rois), name='combine_rois')
 
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
+                                   use_regress_poly=False,
+                                   high_pass_filter=True,
+                                   save_hpf_basis=True,
                                    generate_report=True),
                        name="acompcor")
     acompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
+    if 'RepetitionTime' in metadata:
+        acompcor.inputs.repetition_time = metadata['RepetitionTime']
 
     # misc utilities
     concat = pe.Node(utility.Function(function=_gather_confounds), name="concat")
