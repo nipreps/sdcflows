@@ -17,9 +17,10 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = init_discover_wf(bold_file_size_gb=1,
-                                    use_aroma=False,
-                                    ignore_aroma_err=False)
+        workflow = init_discover_wf(
+            bold_file_size_gb=1, use_aroma=False, ignore_aroma_err=False,
+            metadata={"RepetitionTime": 2.0,
+                      "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]})
         workflow.write_hierarchical_dotfile()
 
         # assert
