@@ -905,17 +905,16 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
             bbr_i_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_i_wf')
             bbr_j_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_j_wf')
 
-        def select_outputs(cost_i, warped_image_i, forward_transforms_i, out_report_i,
-                           cost_j, warped_image_j, forward_transforms_j, out_report_j):
+        def select_outputs(cost_i, warped_image_i, forward_transforms_i,
+                           cost_j, warped_image_j, forward_transforms_j):
             if cost_i < cost_j:
-                return warped_image_i, forward_transforms_i, out_report_i
+                return warped_image_i, forward_transforms_i
             else:
-                return warped_image_j, forward_transforms_j, out_report_j
+                return warped_image_j, forward_transforms_j
 
         pe_chooser = pe.Node(
             niu.Function(function=select_outputs,
-                         out_names=['warped_image', 'forward_transforms',
-                                    'out_report']),
+                         out_names=['warped_image', 'forward_transforms']),
             name='pe_chooser')
 
         workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
