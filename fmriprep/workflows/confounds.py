@@ -202,7 +202,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
-        (tcompcor, concat, [('components_file', 'tcompcor')]),
+        (tcompcor, concat, [('components_file', 'tcompcor'),
+                            ('hpf_basis_file', 'cosine_basis')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
         (inputnode, add_header, [('movpar_file', 'in_file')]),
         (add_header, concat, [('out', 'motion')]),
@@ -227,7 +228,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
 
 def _gather_confounds(signals=None, dvars=None, frame_displace=None,
-                      tcompcor=None, acompcor=None, motion=None, aroma=None):
+                      tcompcor=None, acompcor=None, cosine_basis=None,
+                      motion=None, aroma=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
     import pandas as pd
     import os.path as op
@@ -248,7 +250,8 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
                                   len(left_df.index) - index_diff)
 
     all_files = [confound for confound in [signals, dvars, frame_displace,
-                                           tcompcor, acompcor, motion, aroma]
+                                           tcompcor, acompcor, cosine_basis,
+                                           motion, aroma]
                  if confound is not None]
 
     confounds_data = pd.DataFrame()
