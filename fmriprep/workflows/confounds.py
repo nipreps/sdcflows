@@ -231,8 +231,8 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
                       tcompcor=None, acompcor=None, cosine_basis=None,
                       motion=None, aroma=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
+    import os
     import pandas as pd
-    import os.path as op
 
     def less_breakable(a_string):
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
@@ -252,7 +252,8 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
     all_files = [confound for confound in [signals, dvars, frame_displace,
                                            tcompcor, acompcor, cosine_basis,
                                            motion, aroma]
-                 if confound is not None]
+                 if confound is not None and os.path.exists(confound) and
+                 os.stat(confound).st_size > 0]
 
     confounds_data = pd.DataFrame()
     for file_name in all_files:  # assumes they all have headings already
@@ -264,7 +265,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         _adjust_indices(confounds_data, new)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
-    combined_out = op.abspath('confounds.tsv')
+    combined_out = os.path.abspath('confounds.tsv')
     confounds_data.to_csv(combined_out, sep=str("\t"), index=False,
                           na_rep="n/a")
 
