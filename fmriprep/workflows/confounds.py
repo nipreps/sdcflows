@@ -57,9 +57,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     # CompCor
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
-                                   use_regress_poly=False,
-                                   high_pass_filter=True,
-                                   save_hpf_basis=True,
+                                   pre_filter='cosine',
+                                   save_pre_filter=True,
                                    percentile_threshold=.05),
                        name="tcompcor")
     tcompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
@@ -133,9 +132,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     combine_rois = pe.Node(utility.Function(function=combine_rois), name='combine_rois')
 
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
-                                   use_regress_poly=False,
-                                   high_pass_filter=True,
-                                   save_hpf_basis=True,
+                                   pre_filter='cosine',
+                                   save_pre_filter=True,
                                    generate_report=True),
                        name="acompcor")
     acompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
@@ -203,7 +201,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
         (tcompcor, concat, [('components_file', 'tcompcor'),
-                            ('hpf_basis_file', 'cosine_basis')]),
+                            ('pre_filter_file', 'cosine_basis')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
         (inputnode, add_header, [('movpar_file', 'in_file')]),
         (add_header, concat, [('out', 'motion')]),
