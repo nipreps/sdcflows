@@ -6,6 +6,11 @@
         "elements":
         [
             {
+                "name": "anat/summary",
+                "file_pattern": "anat/.*_summary",
+                "raw": true
+            },
+            {
                 "name": "skullstrip_ants/t1_skull_strip",
                 "file_pattern": "anat/.*skull_strip",
                 "title": "Skull stripped T1",
@@ -48,6 +53,11 @@
         "name": "Functional",
         "elements":
         [
+            {
+                "name": "epi/summary",
+                "file_pattern": "func/.*_summary",
+                "raw": true
+            },
             {
                 "name": "epi/validation",
                 "file_pattern": "func/.*_validation\\.",
