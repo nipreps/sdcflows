@@ -10,6 +10,7 @@ Image tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import os
 import numpy as np
 import nibabel as nb
 
@@ -199,6 +200,56 @@ class ConformSeries(SimpleInterface):
 
         self._results['t1w_list'] = out_names
 
+        return runtime
+
+
+class ValidateImageInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input image')
+
+
+class ValidateImageOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='validated image')
+    out_report = File(exists=True, desc='HTML segment containing warning')
+
+
+class ValidateImage(SimpleInterface):
+    input_spec = ValidateImageInputSpec
+    output_spec = ValidateImageOutputSpec
+
+    def _run_interface(self, runtime):
+        img = nb.load(self.inputs.in_file)
+        out_report = os.path.abspath('report.html')
+
+        qform_code = img.header._structarr['qform_code']
+        sform_code = img.header._structarr['sform_code']
+
+        # Valid affine information
+        if (qform_code, sform_code) != (0, 0):
+            self._results['out_file'] = self.inputs.in_file
+            open(out_report, 'w').close()
+            self._results['out_report'] = out_report
+            return runtime
+
+        out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid', newpath=runtime.cwd)
+
+        # Nibabel derives a default LAS affine from the shape and zooms
+        # Use scanner xform code to indicate no alignment has been done
+        img.set_sform(img.affine, nb.nifti1.xform_codes['scanner'])
+
+        img.to_filename(out_fname)
+        self._results['out_file'] = out_fname
+
+        snippet = (r'<h3 class="elem-title">WARNING - Invalid header</h3>',
+                   r'<p class="elem-desc">Input file does not have valid qform or sform matrix.',
+                   r'A default, LAS-oriented affine has been constructed.',
+                   r'A left-right flip may have occurred.',
+                   r'Analyses of this dataset MAY BE INVALID.</p>')
+
+        with open(out_report, 'w') as fobj:
+            fobj.write('\n'.join('\t' * 3 + line for line in snippet))
+            fobj.write('\n')
+
+        self._results['out_report'] = out_report
         return runtime
 
 

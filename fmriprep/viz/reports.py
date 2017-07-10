@@ -10,23 +10,21 @@ from pkg_resources import resource_filename as pkgrf
 
 
 class Element(object):
-    def __init__(self, name, file_pattern, title, description):
+    def __init__(self, name, file_pattern, title=None, description=None, raw=False):
         self.name = name
         self.file_pattern = re.compile(file_pattern)
         self.title = title
         self.description = description
         self.files_contents = []
+        self.raw = raw
 
 
 class SubReport(object):
     def __init__(self, name, elements, title=''):
         self.name = name
         self.title = title
-        self.elements = []
         self.run_reports = []
-        for e in elements:
-            element = Element(**e)
-            self.elements.append(element)
+        self.elements = [Element(**e) for e in elements]
 
     def order_by_run(self):
         run_reps = {}
@@ -38,7 +36,8 @@ class SubReport(object):
                 if not name:
                     continue
                 new_elem = {'name': element.name, 'file_pattern': element.file_pattern,
-                            'title': element.title, 'description': element.description}
+                            'title': element.title, 'description': element.description,
+                            'raw': element.raw}
                 try:
                     new_element = Element(**new_elem)
                     run_reps[name].elements.append(new_element)
@@ -110,7 +109,8 @@ class Report(object):
                         if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
                             with open(f) as fp:
                                 content = fp.read()
-                                content = '\n'.join(content.split('\n')[1:])
+                                if not element.raw:
+                                    content = content.split('\n', 1)[1]
                                 element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()

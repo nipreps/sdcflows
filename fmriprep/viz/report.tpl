@@ -61,14 +61,15 @@ body {
                 <h2 class="run-title">Reports for {{ run_report.title }}</h2>
                 {% for elem in run_report.elements %}
                     {% if elem.files_contents %}
-                        <h3 class="elem-title">{{ elem.title }}</h3>
-                        <p class="elem-desc">{{ elem.description }}<p>
-                        <br>
+                        {% if elem.title %}<h3 class="elem-title">{{ elem.title }}</h3>{% endif %}
+                        {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
                         {% for image in elem.files_contents %}
+                            {% if elem.raw %}{{ image.1 }}{% else %}
                             <div class="elem-image">{{ image.1 }}</div><br>
                             <div class="elem-filename">
                                 Filename: {{ image.0 }}
                             </div>
+                            {% endif %}
                         {% endfor %}
                     {% endif %}
                 {% endfor %}
