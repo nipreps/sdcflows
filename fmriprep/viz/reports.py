@@ -16,6 +16,7 @@ class Element(object):
         self.title = title
         self.description = description
         self.files_contents = []
+        self.raw = raw
 
 
 class SubReport(object):
@@ -38,7 +39,8 @@ class SubReport(object):
                 if not name:
                     continue
                 new_elem = {'name': element.name, 'file_pattern': element.file_pattern,
-                            'title': element.title, 'description': element.description}
+                            'title': element.title, 'description': element.description,
+                            'raw': element.raw}
                 try:
                     new_element = Element(**new_elem)
                     run_reps[name].elements.append(new_element)
@@ -110,7 +112,8 @@ class Report(object):
                         if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
                             with open(f) as fp:
                                 content = fp.read()
-                                content = '\n'.join(content.split('\n')[1:])
+                                if not element.raw:
+                                    content = content.split('\n', 1)[1]
                                 element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()
