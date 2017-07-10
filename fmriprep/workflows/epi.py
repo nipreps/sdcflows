@@ -162,6 +162,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (epi_hmc_wf, discover_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
         (epi_reg_wf, discover_wf, [('outputnode.epi_t1', 'inputnode.fmri_file'),
                                    ('outputnode.epi_mask_t1', 'inputnode.epi_mask')]),
+        (validate, func_reports_wf, [('out_report', 'inputnode.validation_report')]),
         (epi_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.epi_reg_report'),
             ]),
@@ -1013,10 +1014,15 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
 
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_file', 'epi_mask_report', 'epi_reg_report', 'acompcor_report',
-                    'tcompcor_report', 'syn_sdc_report', 'ica_aroma_report']
+            fields=['source_file', 'validation_report', 'epi_mask_report', 'epi_reg_report',
+                    'acompcor_report', 'tcompcor_report', 'syn_sdc_report', 'ica_aroma_report']
             ),
         name='inputnode')
+
+    ds_validation_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='validation'),
+        name='ds_validation_report', run_without_submitting=True)
 
     ds_epi_mask_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
@@ -1049,6 +1055,8 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
         name='ds_ica_aroma_report', run_without_submitting=True)
 
     workflow.connect([
+        (inputnode, ds_validation_report, [('source_file', 'source_file'),
+                                           ('validation_report', 'in_file')]),
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
                                          ('epi_mask_report', 'in_file')]),
         (inputnode, ds_epi_reg_report, [('source_file', 'source_file'),
