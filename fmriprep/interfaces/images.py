@@ -10,6 +10,7 @@ Image tools interfaces
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import os
 import numpy as np
 import nibabel as nb
 
@@ -244,12 +245,12 @@ class ValidateImage(SimpleInterface):
                    r'A left-right flip may have occurred.',
                    r'Analyses of this dataset MAY BE INVALID.</p>')
 
-        with open('out_report', 'w') as fobj:
+        with open(out_report, 'w') as fobj:
             fobj.write('\n'.join('\t' * 3 + line for line in snippet))
             fobj.write('\n')
 
         self._results['out_report'] = out_report
-
+        return runtime
 
 
 class InvertT1wInputSpec(BaseInterfaceInputSpec):
