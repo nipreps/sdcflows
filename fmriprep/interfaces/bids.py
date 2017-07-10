@@ -223,7 +223,7 @@ class BIDSFreeSurferDirOutputSpec(TraitedSpec):
 
 
 class BIDSFreeSurferDir(SimpleInterface):
-    """ Create a FreeSurfer subjects directory in a BIDS derivatives directory
+    """Create a FreeSurfer subjects directory in a BIDS derivatives directory
     and copy fsaverage from the local FreeSurfer distribution.
 
     Output subjects_dir = ``{derivatives}/{subjects_dir}``, and may be passed to
@@ -259,7 +259,7 @@ class BIDSFreeSurferDir(SimpleInterface):
 
 
 def get_metadata_for_nifti(in_file):
-    """Fetchs metadata for a given nifi file"""
+    """Fetch metadata for a given nifti file"""
     in_file = op.abspath(in_file)
 
     fname, ext = op.splitext(in_file)
