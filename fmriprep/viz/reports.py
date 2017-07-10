@@ -23,11 +23,8 @@ class SubReport(object):
     def __init__(self, name, elements, title=''):
         self.name = name
         self.title = title
-        self.elements = []
         self.run_reports = []
-        for e in elements:
-            element = Element(**e)
-            self.elements.append(element)
+        self.elements = [Element(**e) for e in elements]
 
     def order_by_run(self):
         run_reps = {}
