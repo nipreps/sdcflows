@@ -10,7 +10,7 @@ from pkg_resources import resource_filename as pkgrf
 
 
 class Element(object):
-    def __init__(self, name, file_pattern, title, description):
+    def __init__(self, name, file_pattern, title=None, description=None, raw=False):
         self.name = name
         self.file_pattern = re.compile(file_pattern)
         self.title = title

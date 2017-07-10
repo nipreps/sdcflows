@@ -49,6 +49,11 @@
         "elements":
         [
             {
+                "name": "epi/validation",
+                "file_pattern": "func/.*_validation\\.",
+                "raw": true
+            },
+            {
                 "name": "epi/fmpa_reg",
                 "file_pattern": "func/.*fmap_reg\\.",
                 "title": "Fieldmap to EPI registration",
