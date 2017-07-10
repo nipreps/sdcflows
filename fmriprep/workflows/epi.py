@@ -23,7 +23,7 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 import niworkflows.data as nid
 
 from niworkflows.interfaces import SimpleBeforeAfter
-from fmriprep.interfaces import DerivativesDataSink, InvertT1w
+from fmriprep.interfaces import DerivativesDataSink, InvertT1w, ValidateImage
 
 from fmriprep.interfaces.images import GenerateSamplingReference, extract_wm
 from fmriprep.interfaces.nilearn import Merge
@@ -119,6 +119,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                            ]),
         ])
 
+    validate = pe.Node(ValidateImage(), name='validate')
+
     # HMC on the EPI
     epi_hmc_wf = init_epi_hmc_wf(name='epi_hmc_wf', metadata=metadata,
                                  bold_file_size_gb=bold_file_size_gb,
@@ -142,7 +144,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     discover_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     workflow.connect([
-        (inputnode, epi_hmc_wf, [('epi', 'inputnode.epi')]),
+        (inputnode, validate, [('epi', 'in_file')]),
+        (validate, epi_hmc_wf, [('out_file', 'inputnode.epi')]),
         (inputnode, epi_reg_wf, [('epi', 'inputnode.name_source'),
                                  ('t1_preproc', 'inputnode.t1_preproc'),
                                  ('t1_brain', 'inputnode.t1_brain'),
