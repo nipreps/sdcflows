@@ -919,7 +919,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
         pe_chooser = pe.Node(
             niu.Function(function=select_outputs,
-                         out_names=['warped_image', 'forward_transforms']),
+                         output_names=['warped_image', 'forward_transforms']),
             name='pe_chooser')
 
         workflow.connect([(inputnode, syn_i, [('epi_ref', 'moving_image')]),
