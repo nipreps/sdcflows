@@ -19,8 +19,8 @@ from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(bold_file_size_gb, use_aroma,
-                     ignore_aroma_err, name="discover_wf"):
+def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
+                     name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
@@ -57,9 +57,13 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     # CompCor
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
+                                   pre_filter='cosine',
+                                   save_pre_filter=True,
                                    percentile_threshold=.05),
                        name="tcompcor")
     tcompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
+    if 'RepetitionTime' in metadata:
+        tcompcor.inputs.repetition_time = metadata['RepetitionTime']
 
     CSF_roi = pe.Node(utility.Function(function=prepare_roi_from_probtissue,
                                        output_names=['roi_file', 'eroded_mask']),
@@ -128,9 +132,13 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
     combine_rois = pe.Node(utility.Function(function=combine_rois), name='combine_rois')
 
     acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
+                                   pre_filter='cosine',
+                                   save_pre_filter=True,
                                    generate_report=True),
                        name="acompcor")
     acompcor.interface.estimated_memory_gb = bold_file_size_gb * 3
+    if 'RepetitionTime' in metadata:
+        acompcor.inputs.repetition_time = metadata['RepetitionTime']
 
     # misc utilities
     concat = pe.Node(utility.Function(function=_gather_confounds), name="concat")
@@ -192,7 +200,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
         (signals, concat, [('out_file', 'signals')]),
         (dvars, concat, [('out_all', 'dvars')]),
         (frame_displace, concat, [('out_file', 'frame_displace')]),
-        (tcompcor, concat, [('components_file', 'tcompcor')]),
+        (tcompcor, concat, [('components_file', 'tcompcor'),
+                            ('pre_filter_file', 'cosine_basis')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
         (inputnode, add_header, [('movpar_file', 'in_file')]),
         (add_header, concat, [('out', 'motion')]),
@@ -217,10 +226,11 @@ def init_discover_wf(bold_file_size_gb, use_aroma,
 
 
 def _gather_confounds(signals=None, dvars=None, frame_displace=None,
-                      tcompcor=None, acompcor=None, motion=None, aroma=None):
+                      tcompcor=None, acompcor=None, cosine_basis=None,
+                      motion=None, aroma=None):
     ''' load confounds from the filenames, concatenate together horizontally, and re-save '''
+    import os
     import pandas as pd
-    import os.path as op
 
     def less_breakable(a_string):
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
@@ -238,8 +248,10 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
                                   len(left_df.index) - index_diff)
 
     all_files = [confound for confound in [signals, dvars, frame_displace,
-                                           tcompcor, acompcor, motion, aroma]
-                 if confound is not None]
+                                           tcompcor, acompcor, cosine_basis,
+                                           motion, aroma]
+                 if confound is not None and os.path.exists(confound) and
+                 os.stat(confound).st_size > 0]
 
     confounds_data = pd.DataFrame()
     for file_name in all_files:  # assumes they all have headings already
@@ -251,7 +263,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
         _adjust_indices(confounds_data, new)
         confounds_data = pd.concat((confounds_data, new), axis=1)
 
-    combined_out = op.abspath('confounds.tsv')
+    combined_out = os.path.abspath('confounds.tsv')
     confounds_data.to_csv(combined_out, sep=str("\t"), index=False,
                           na_rep="n/a")
 

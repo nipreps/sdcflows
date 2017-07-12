@@ -17,9 +17,10 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = init_discover_wf(bold_file_size_gb=1,
-                                    use_aroma=False,
-                                    ignore_aroma_err=False)
+        workflow = init_discover_wf(
+            bold_file_size_gb=1, use_aroma=False, ignore_aroma_err=False,
+            metadata={"RepetitionTime": 2.0,
+                      "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]})
         workflow.write_hierarchical_dotfile()
 
         # assert
@@ -37,17 +38,25 @@ class TestConfounds(TestWorkflow):
                                           # 'aCompCor': ['components_file', 'mask_file'], }) see ^^
                                           'tcompcor': ['components_file']})
 
+    @mock.patch('os.stat')
+    @mock.patch('os.path.exists')
     @mock.patch('pandas.read_csv')
     @mock.patch.object(pd.DataFrame, 'to_csv', autospec=True)
     @mock.patch.object(pd.DataFrame, '__eq__', autospec=True,
                        side_effect=lambda me, them: me.equals(them))
-    def test_gather_confounds(self, df_equality, mock_df, mock_csv_reader):
+    def test_gather_confounds(self, df_equality, mock_df, mock_csv_reader, mock_exists, mock_stat):
         ''' asserts that the function for node ConcatConfounds reads and writes
         the confounds properly '''
 
         # set up
         signals = "signals.tsv"
         dvars = "dvars.tsv"
+
+        mock_exists.side_effect = lambda x: True
+
+        class FakeStat():
+            st_size = 20
+        mock_stat.side_effect = lambda x: FakeStat()
 
         mock_csv_reader.side_effect = [pd.DataFrame({'a': [0.1]}), pd.DataFrame({'b': [0.2]})]
 
