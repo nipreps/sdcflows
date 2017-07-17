@@ -45,7 +45,7 @@ __longdesc__ = ("This package is a functional magnetic resonance image preproces
                 "better neuroimaging software become available.")
 
 DOWNLOAD_URL = (
-    'https://pypi.python.org/packages/source/{name[0]}/{name}/{name}-{ver}.tar.gz'.format(
+    'https://github.com/poldracklab/{name}/archive/{ver}.tar.gz'.format(
         name=__packagename__, ver=__version__))
 
 
