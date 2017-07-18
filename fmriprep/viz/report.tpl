@@ -43,9 +43,9 @@ body {
             {% else %}
                 <li><a href="#{{sub_report.name}}">{{ sub_report.name }}</a></li>
             {% endif %}
-            <li><a class="dropdown-item" href="#about">About</a></li>
-            <li><a class="dropdown-item" href="#errors">Errors</a></li>
         {% endfor %}
+        <li><a class="dropdown-item" href="#about">About</a></li>
+        <li><a class="dropdown-item" href="#errors">Errors</a></li>
     </ul>
 <div>
 </nav>
