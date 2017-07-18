@@ -38,12 +38,13 @@ body {
                     {% for run_report in sub_report.run_reports %}
                         <li><a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a></li>
                     {% endfor %}
-                    <li><a class="dropdown-item" href="#errors">Errors</a></li>
                     </ul>
                 </li>
             {% else %}
                 <li><a href="#{{sub_report.name}}">{{ sub_report.name }}</a></li>
             {% endif %}
+            <li><a class="dropdown-item" href="#about">About</a></li>
+            <li><a class="dropdown-item" href="#errors">Errors</a></li>
         {% endfor %}
     </ul>
 <div>
@@ -91,6 +92,14 @@ body {
     </div>
 {% endfor %}
 
+<div id="about">
+    <h1 class="sub-report-title">About</h1>
+    <ul>
+        <li>FMRIPREP version: {{ version }}</li>
+        <li>Report generated: {{ date }}</li>
+    </ul>
+</div>
+
 <div id="errors">
     <h1 class="sub-report-title">Errors</h1>
     <ul>
@@ -113,6 +122,8 @@ body {
             </div>
         </div>
         </li>
+    {% else %}
+        <li>No errors to report!</li>
     {% endfor %}
     </ul>
 </div>

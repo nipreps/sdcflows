@@ -3,10 +3,13 @@ from __future__ import unicode_literals
 import json
 import re
 import os
+import time
 
 import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
+
+from .. import __version__
 
 
 class Element(object):
@@ -153,7 +156,9 @@ class Report(object):
             trim_blocks=True, lstrip_blocks=True
         )
         report_tpl = env.get_template('viz/report.tpl')
-        report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors)
+        report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors,
+                                          date=time.strftime("%Y-%m-%d %H:%M:%S %z"),
+                                          version=__version__)
         with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return len(self.errors)
