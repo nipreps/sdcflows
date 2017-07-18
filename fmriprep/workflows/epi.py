@@ -260,6 +260,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     elif not use_syn:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
+        summary.inputs.distortion_correction = 'None'
         workflow.connect([
             (epi_hmc_wf, func_reports_wf, [
                 ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
