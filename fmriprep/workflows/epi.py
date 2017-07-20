@@ -27,6 +27,7 @@ from fmriprep.interfaces import DerivativesDataSink, InvertT1w, ValidateImage
 
 from fmriprep.interfaces.images import GenerateSamplingReference, extract_wm
 from fmriprep.interfaces.nilearn import Merge
+from fmriprep.interfaces.reports import FunctionalSummary
 from fmriprep.workflows import confounds
 from niworkflows.nipype.utils.filemanip import split_filename
 from fmriprep.workflows.fieldmap.unwarp import init_pepolar_unwarp_wf
@@ -93,6 +94,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         fields=['epi_t1', 'epi_mask_t1', 'epi_mni', 'epi_mask_mni', 'confounds', 'surfaces',
                 'aroma_noise_ics', 'melodic_mix']),
         name='outputnode')
+
+    summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary')
+    summary.inputs.slice_timing = "SliceTiming" in metadata and 'slicetiming' not in ignore
+    summary.inputs.registration = 'bbregister' if freesurfer else 'FLIRT'
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
                                            freesurfer=freesurfer,
@@ -176,6 +181,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
+        (discover_wf, summary, [('outputnode.confounds_list', 'confounds')]),
+        (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
         ])
 
     # Cases:
@@ -193,6 +200,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         fmap = fmaps[0]
 
         LOGGER.info('Fieldmap estimation: type "%s" found', fmap['type'])
+        summary.inputs.distortion_correction = fmap['type']
 
         if fmap['type'] == 'epi':
             epi_fmaps = [fmap['epi'] for fmap in fmaps if fmap['type'] == 'epi']
@@ -252,6 +260,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     elif not use_syn:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
+        summary.inputs.distortion_correction = 'None'
         workflow.connect([
             (epi_hmc_wf, func_reports_wf, [
                 ('outputnode.epi_mask_report', 'inputnode.epi_mask_report')]),
@@ -280,6 +289,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         if not fmaps:
             LOGGER.warn('No fieldmaps found or they were ignored. Using EXPERIMENTAL '
                         'nonlinear susceptibility correction for dataset %s.', bold_file)
+            summary.inputs.distortion_correction = 'SyN'
             workflow.connect([
                 (nonlinear_sdc_wf, func_reports_wf, [
                     ('outputnode.out_mask_report', 'inputnode.epi_mask_report')]),
@@ -1015,10 +1025,16 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
 
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_file', 'validation_report', 'epi_mask_report', 'epi_reg_report',
-                    'acompcor_report', 'tcompcor_report', 'syn_sdc_report', 'ica_aroma_report']
+            fields=['source_file', 'summary_report', 'validation_report', 'epi_mask_report',
+                    'epi_reg_report', 'acompcor_report', 'tcompcor_report', 'syn_sdc_report',
+                    'ica_aroma_report']
             ),
         name='inputnode')
+
+    ds_summary_report = pe.Node(
+        DerivativesDataSink(base_directory=reportlets_dir,
+                            suffix='summary'),
+        name='ds_summary_report', run_without_submitting=True)
 
     ds_validation_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
@@ -1056,6 +1072,8 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
         name='ds_ica_aroma_report', run_without_submitting=True)
 
     workflow.connect([
+        (inputnode, ds_summary_report, [('source_file', 'source_file'),
+                                        ('summary_report', 'in_file')]),
         (inputnode, ds_validation_report, [('source_file', 'source_file'),
                                            ('validation_report', 'in_file')]),
         (inputnode, ds_epi_mask_report, [('source_file', 'source_file'),
