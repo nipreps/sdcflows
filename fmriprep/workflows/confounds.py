@@ -260,9 +260,10 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
                            (acompcor, 'aCompCor'),
                            (motion, 'Motion parameters'),
                            (aroma, 'ICA-AROMA')):
-        if confound is not None and os.path.exists(confound) and os.stat(confound).st_size > 0:
-            all_files.append(confound)
+        if confound is not None:
             confounds_list.append(name)
+            if os.path.exists(confound) and os.stat(confound).st_size > 0:
+                all_files.append(confound)
 
     confounds_data = pd.DataFrame()
     for file_name in all_files:  # assumes they all have headings already
