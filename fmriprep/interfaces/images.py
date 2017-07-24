@@ -148,8 +148,8 @@ class ConformSeries(SimpleInterface):
                                for img in reoriented], axis=0)
         target_span = target_shape * target_zooms
 
-        resampled_imgs = []
-        for img in reoriented:
+        out_names = []
+        for img, orig, fname in zip(reoriented, orig_imgs, in_names):
             zooms = np.array(img.header.get_zooms()[:3])
             shape = np.array(img.shape)
 
@@ -185,17 +185,15 @@ class ConformSeries(SimpleInterface):
                 data = nli.resample_img(img, target_affine, target_shape).get_data()
                 img = img.__class__(data, target_affine, img.header)
 
-            resampled_imgs.append(img)
+            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
 
-        out_names = [fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-                     for fname in in_names]
-
-        for orig, final, in_name, out_name in zip(orig_imgs, resampled_imgs,
-                                                  in_names, out_names):
-            if final is orig:
-                copyfile(in_name, out_name, copy=True, use_hardlink=True)
+            # Image may be reoriented, rescaled, and/or resized
+            if img is not orig:
+                img.to_filename(out_name)
             else:
-                final.to_filename(out_name)
+                copyfile(fname, out_name, copy=True, use_hardlink=True)
+
+            out_names.append(out_name)
 
         self._results['t1w_list'] = out_names
 
