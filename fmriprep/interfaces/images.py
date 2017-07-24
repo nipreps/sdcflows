@@ -146,6 +146,7 @@ class ConformSeries(SimpleInterface):
         target_shape = np.max([img.shape for img in reoriented], axis=0)
         target_zooms = np.min([img.header.get_zooms()[:3]
                                for img in reoriented], axis=0)
+        target_span = target_shape * target_zooms
 
         resampled_imgs = []
         for img in reoriented:
@@ -174,7 +175,7 @@ class ConformSeries(SimpleInterface):
                 if resize:
                     # The shift is applied after scaling.
                     # Use a proportional shift to maintain relative position in dataset
-                    size_factor = (target_shape.astype(float) + shape) / (2 * shape)
+                    size_factor = target_span / (zooms * shape)
                     # Use integer shifts to avoid unnecessary interpolation
                     offset = (img.affine[:3, 3] * size_factor - img.affine[:3, 3]).astype(int)
                     target_affine[:3, 3] = img.affine[:3, 3] + offset
