@@ -13,9 +13,10 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import numpy as np
 import nibabel as nb
+import nilearn.image as nli
 
 from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
+from niworkflows.nipype.utils.filemanip import fname_presuffix, copyfile
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
@@ -138,9 +139,6 @@ class ConformSeries(SimpleInterface):
     output_spec = ConformSeriesOutputSpec
 
     def _run_interface(self, runtime):
-        import nibabel as nb
-        import nilearn.image as nli
-        from nipype.utils.filemanip import fname_presuffix, copyfile
 
         in_names = self.inputs.t1w_list
         orig_imgs = [nb.load(fname) for fname in in_names]
@@ -269,8 +267,6 @@ class InvertT1w(SimpleInterface):
     output_spec = InvertT1wOutputSpec
 
     def _run_interface(self, runtime):
-        from nilearn import image as nli
-
         t1_img = nli.load_img(self.inputs.in_file)
         t1_data = t1_img.get_data()
         epi_data = nli.load_img(self.inputs.epi_ref).get_data()
