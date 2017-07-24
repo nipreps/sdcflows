@@ -183,6 +183,8 @@ class ConformSeries(SimpleInterface):
 
                 data = nli.resample_img(img, target_affine, target_shape).get_data()
                 img = img.__class__(data, target_affine, img.header)
+                if rescale:
+                    img.header.set_zooms(target_zooms)
 
             resampled_imgs.append(img)
 
