@@ -167,7 +167,7 @@ class ConformSeries(SimpleInterface):
                 target_affine = np.eye(4, dtype=img.affine.dtype)
                 if rescale:
                     scale_factor = target_zooms / zooms
-                    target_affine[:3, :3] = np.diag(scale_factor).dot(img.affine[:3, :3])
+                    target_affine[:3, :3] = img.affine[:3, :3].dot(np.diag(scale_factor))
                 else:
                     target_affine[:3, :3] = img.affine[:3, :3]
 
@@ -183,8 +183,6 @@ class ConformSeries(SimpleInterface):
 
                 data = nli.resample_img(img, target_affine, target_shape).get_data()
                 img = img.__class__(data, target_affine, img.header)
-                if rescale:
-                    img.header.set_zooms(target_zooms)
 
             resampled_imgs.append(img)
 
