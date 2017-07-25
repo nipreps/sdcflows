@@ -125,6 +125,19 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
+CONFORMSERIES_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h3>
+\t\t<ul class="elem-desc">
+\t\t\t<li>Input T1w images: {n_t1w}</li>
+\t\t\t<li>Output orientation: RAS</li>
+\t\t\t<li>Output dimensions: {dims}</li>
+\t\t\t<li>Output voxel size: {zooms}</li>
+\t\t\t<li>Discarded images: {n_discards}</li>
+{discard_list}
+\t\t</ul>
+"""
+DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
+
+
 class ConformSeriesInputSpec(BaseInterfaceInputSpec):
     t1w_list = InputMultiPath(File(exists=True), mandatory=True,
                               desc='input T1w images')
@@ -133,7 +146,8 @@ class ConformSeriesInputSpec(BaseInterfaceInputSpec):
 
 
 class ConformSeriesOutputSpec(TraitedSpec):
-    t1w_list = OutputMultiPath(exists=True, desc='output T1w images')
+    t1w_list = OutputMultiPath(exists=True, desc='conformed T1w images')
+    out_report = File(exists=True, desc='conformation report')
 
 
 class ConformSeries(SimpleInterface):
@@ -157,6 +171,17 @@ class ConformSeries(SimpleInterface):
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
         return valid
+
+    def _generate_segment(self, discards, dims, zooms):
+        items = [DISCARD_TEMPLATE.format(path=path, basename=os.path.basename(path))
+                 for path in discards]
+        discard_list = '\n'.join(["\t\t\t<ul>"] + items + ['\t\t\t</ul>']) if items else ''
+        zoom_fmt = '{:.02g}mm x {:.02g}mm x {:.02g}mm'.format(*zooms)
+        return CONFORMSERIES_TEMPLATE.format(n_t1w=len(self.inputs.t1w_list),
+                                             dims='x'.join(map(str, dims)),
+                                             zooms=zoom_fmt,
+                                             n_discards=len(discards),
+                                             discard_list=discard_list)
 
     def _run_interface(self, runtime):
         # Load images, orient as RAS, collect shape and zoom data
@@ -228,6 +253,15 @@ class ConformSeries(SimpleInterface):
             out_names.append(out_name)
 
         self._results['t1w_list'] = out_names
+
+        # Create report
+        segment = self._generate_segment(dropped_images, target_shape, target_zooms)
+
+        out_report = os.path.join(runtime.cwd, 'report.html')
+        with open(out_report, 'w') as fobj:
+            fobj.write(segment)
+
+        self._results['out_report'] = out_report
 
         return runtime
 
