@@ -23,7 +23,7 @@ from niworkflows.nipype.interfaces.base import (
 from niworkflows.nipype.interfaces import fsl
 from niworkflows.interfaces.base import SimpleInterface
 
-from fmriprep.utils.misc import genfname
+from ..utils.misc import genfname
 
 LOGGER = logging.getLogger('interface')
 
