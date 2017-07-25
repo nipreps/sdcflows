@@ -374,7 +374,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
         (enhance_and_skullstrip_epi_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.out_report', 'out_report'),
+            ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (to_ants, outputnode, [('out', 'out_warp')]),
     ])
