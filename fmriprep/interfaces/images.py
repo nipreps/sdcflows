@@ -151,6 +151,19 @@ class ConformSeriesOutputSpec(TraitedSpec):
 
 
 class ConformSeries(SimpleInterface):
+    """Conform a series of T1w images to enable merging.
+
+    Performs two basic functions:
+    - Orient to RAS (left-right, posterior-anterior, inferior-superior)
+    - Along each dimension, resample to minimum voxel size, maximum number of voxels
+
+    The ``max_scale`` parameter sets a bound on the degree of up-sampling performed.
+    By default, an image with a voxel size greater than 3x the smallest voxel size
+    (calculated separately for each dimension) will be discarded.
+
+    To select images that require no scaling (i.e. all have smallest voxel sizes),
+    set ``max_scale=1``.
+    """
     input_spec = ConformSeriesInputSpec
     output_spec = ConformSeriesOutputSpec
 
