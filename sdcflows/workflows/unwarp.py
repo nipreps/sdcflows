@@ -447,7 +447,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     workflow = pe.Workflow(name=name)
 
     def _flatten(l):
-        return [item for sublist in l for item in sublist]
+        from niworkflows.nipype.utils.filemanip import filename_to_list
+        return [item for sublist in l for item in filename_to_list(sublist)]
 
     workflow.connect([
         (inputnode, split, [('fmaps', 'in_file')]),
