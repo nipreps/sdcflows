@@ -128,6 +128,8 @@ class IntraModalMerge(SimpleInterface):
 class ConformSeriesInputSpec(BaseInterfaceInputSpec):
     t1w_list = InputMultiPath(File(exists=True), mandatory=True,
                               desc='input T1w images')
+    max_scale = traits.Float(3.0, usedefault=True,
+                             desc='Maximum scaling factor in images to accept')
 
 
 class ConformSeriesOutputSpec(TraitedSpec):
@@ -138,18 +140,48 @@ class ConformSeries(SimpleInterface):
     input_spec = ConformSeriesInputSpec
     output_spec = ConformSeriesOutputSpec
 
-    def _run_interface(self, runtime):
+    def _prune_zooms(self, all_zooms, max_scale):
+        """Iteratively prune zooms until all scaling factors will be within
+        ``max_scale``.
 
-        in_names = self.inputs.t1w_list
-        orig_imgs = [nb.load(fname) for fname in in_names]
-        reoriented = [nb.as_closest_canonical(img) for img in orig_imgs]
-        target_shape = np.max([img.shape for img in reoriented], axis=0)
-        target_zooms = np.min([img.header.get_zooms()[:3]
-                               for img in reoriented], axis=0)
+        Removes the largest zooms, and recalculates scaling factors with
+        remaining zooms.
+        """
+        valid = np.ones(all_zooms.shape[0], dtype=bool)
+        while valid.any():
+            target_zooms = all_zooms[valid].min(axis=0)
+            scales = all_zooms[valid] / target_zooms
+            if np.all(scales < max_scale):
+                break
+
+            valid[valid] ^= np.any(scales == scales.max(), axis=1)
+
+        return valid
+
+    def _run_interface(self, runtime):
+        # Load images, orient as RAS, collect shape and zoom data
+        in_names = np.array(self.inputs.t1w_list)
+        orig_imgs = np.vectorize(nb.load)(in_names)
+        reoriented = np.vectorize(nb.as_closest_canonical)(orig_imgs)
+        all_zooms = np.array([img.header.get_zooms()[:3] for img in reoriented])
+        all_shapes = np.array([img.shape for img in reoriented])
+
+        # Identify images that would require excessive up-sampling
+        valid = self._prune_zooms(all_zooms, self.inputs.max_scale)
+        dropped_images = in_names[~valid]
+
+        # Ignore dropped images
+        valid_fnames = in_names[valid]
+        valid_imgs = orig_imgs[valid]
+        reoriented = reoriented[valid]
+
+        # Set target shape information
+        target_zooms = all_zooms[valid].min(axis=0)
+        target_shape = all_shapes[valid].max(axis=0)
         target_span = target_shape * target_zooms
 
         out_names = []
-        for img, orig, fname in zip(reoriented, orig_imgs, in_names):
+        for img, orig, fname in zip(reoriented, valid_imgs, valid_fnames):
             zooms = np.array(img.header.get_zooms()[:3])
             shape = np.array(img.shape)
 
