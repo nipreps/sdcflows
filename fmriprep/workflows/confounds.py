@@ -54,6 +54,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
                              name="frame_displace")
     frame_displace.interface.estimated_memory_gb = bold_file_size_gb * 3
     # CompCor
+    non_steady_state = pe.Node(confounds.NonSteadyStateDetector(), name='non_steady_state')
     tcompcor = pe.Node(TCompCorRPT(components_file='tcompcor.tsv',
                                    generate_report=True,
                                    pre_filter='cosine',
@@ -173,7 +174,11 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (inputnode, dvars, [('fmri_file', 'in_file'),
                             ('epi_mask', 'in_mask')]),
         (inputnode, frame_displace, [('movpar_file', 'in_file')]),
+        (inputnode, non_steady_state, [('fmri_file', 'in_file')]),
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
+
+        (non_steady_state, tcompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
+        (non_steady_state, acompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
 
         (inputnode, CSF_roi, [(('t1_tpms', pick_csf), 'in_file')]),
         (inputnode, CSF_roi, [('epi_mask', 'epi_mask')]),
