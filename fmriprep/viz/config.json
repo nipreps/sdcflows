@@ -11,6 +11,11 @@
                 "raw": true
             },
             {
+                "name": "anat/conform",
+                "file_pattern": "anat/.*_conform",
+                "raw": true
+            },
+            {
                 "name": "skullstrip_ants/t1_skull_strip",
                 "file_pattern": "anat/.*skull_strip",
                 "title": "Skull stripped T1",
