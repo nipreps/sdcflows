@@ -5,8 +5,6 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import copy
-import os
-from errno import EEXIST
 
 from bids.grabbids import BIDSLayout
 
@@ -42,15 +40,6 @@ def _first(inlist):
         inlist = [inlist]
 
     return sorted(inlist)[0]
-
-
-def make_folder(folder):
-    try:
-        os.makedirs(folder)
-    except OSError as exc:
-        if exc.errno == EEXIST:
-            pass
-    return folder
 
 
 def collect_bids_data(dataset, subject, task=None, session=None, run=None):

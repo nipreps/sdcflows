@@ -23,7 +23,6 @@ from niworkflows.nipype.interfaces.base import (
 from builtins import str, bytes
 
 from niworkflows.interfaces.base import SimpleInterface
-from fmriprep.utils.misc import make_folder
 
 LOGGER = logging.getLogger('interface')
 BIDS_NAME = re.compile(
@@ -138,7 +137,7 @@ class DerivativesDataSink(SimpleInterface):
 
         out_path = op.join(base_directory, out_path)
 
-        make_folder(out_path)
+        os.makedirs(out_path, exist_ok=True)
 
         base_fname = op.join(out_path, fname)
 
@@ -235,7 +234,7 @@ class BIDSFreeSurferDir(SimpleInterface):
     def _run_interface(self, runtime):
         subjects_dir = os.path.join(self.inputs.derivatives,
                                     self.inputs.subjects_dir)
-        make_folder(subjects_dir)
+        os.makedirs(subjects_dir, exist_ok=True)
         self._results['subjects_dir'] = subjects_dir
 
         spaces = list(self.inputs.spaces)
