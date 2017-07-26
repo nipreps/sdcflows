@@ -194,6 +194,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     #   F   |    T    |     F      | SyN
     #   F   |    F    |     F      | HMC only
 
+    # Predefine to pacify the lintian checks about
+    # "could be used before defined" - logic was tested to be sound
+    nonlinear_sdc_wf = sdc_unwarp_wf = None
+
     if fmaps:
         # In case there are multiple fieldmaps prefer EPI
         fmaps.sort(key=lambda fmap: {'epi': 0, 'fieldmap': 1, 'phasediff': 2}[fmap['type']])
@@ -203,7 +207,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         summary.inputs.distortion_correction = fmap['type']
 
         if fmap['type'] == 'epi':
-            epi_fmaps = [fmap['epi'] for fmap in fmaps if fmap['type'] == 'epi']
+            epi_fmaps = [fmap_['epi'] for fmap_ in fmaps if fmap_['type'] == 'epi']
             sdc_unwarp_wf = init_pepolar_unwarp_wf(fmaps=epi_fmaps,
                                                    layout=layout,
                                                    bold_file=bold_file,
