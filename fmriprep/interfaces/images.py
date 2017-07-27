@@ -13,16 +13,17 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import numpy as np
 import nibabel as nb
+import nilearn.image as nli
 
 from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
+from niworkflows.nipype.utils.filemanip import fname_presuffix, copyfile
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
 from niworkflows.nipype.interfaces import fsl
 from niworkflows.interfaces.base import SimpleInterface
 
-from fmriprep.utils.misc import genfname
+from ..utils.misc import genfname
 
 LOGGER = logging.getLogger('interface')
 
@@ -124,33 +125,102 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
+CONFORMSERIES_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h3>
+\t\t<ul class="elem-desc">
+\t\t\t<li>Input T1w images: {n_t1w}</li>
+\t\t\t<li>Output orientation: RAS</li>
+\t\t\t<li>Output dimensions: {dims}</li>
+\t\t\t<li>Output voxel size: {zooms}</li>
+\t\t\t<li>Discarded images: {n_discards}</li>
+{discard_list}
+\t\t</ul>
+"""
+DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
+
+
 class ConformSeriesInputSpec(BaseInterfaceInputSpec):
     t1w_list = InputMultiPath(File(exists=True), mandatory=True,
                               desc='input T1w images')
+    max_scale = traits.Float(3.0, usedefault=True,
+                             desc='Maximum scaling factor in images to accept')
 
 
 class ConformSeriesOutputSpec(TraitedSpec):
-    t1w_list = OutputMultiPath(exists=True, desc='output T1w images')
+    t1w_list = OutputMultiPath(exists=True, desc='conformed T1w images')
+    out_report = File(exists=True, desc='conformation report')
 
 
 class ConformSeries(SimpleInterface):
+    """Conform a series of T1w images to enable merging.
+
+    Performs two basic functions:
+
+    #. Orient to RAS (left-right, posterior-anterior, inferior-superior)
+    #. Along each dimension, resample to minimum voxel size, maximum number of voxels
+
+    The ``max_scale`` parameter sets a bound on the degree of up-sampling performed.
+    By default, an image with a voxel size greater than 3x the smallest voxel size
+    (calculated separately for each dimension) will be discarded.
+
+    To select images that require no scaling (i.e. all have smallest voxel sizes),
+    set ``max_scale=1``.
+    """
     input_spec = ConformSeriesInputSpec
     output_spec = ConformSeriesOutputSpec
 
+    def _prune_zooms(self, all_zooms, max_scale):
+        """Iteratively prune zooms until all scaling factors will be within
+        ``max_scale``.
+
+        Removes the largest zooms, and recalculates scaling factors with
+        remaining zooms.
+        """
+        valid = np.ones(all_zooms.shape[0], dtype=bool)
+        while valid.any():
+            target_zooms = all_zooms[valid].min(axis=0)
+            scales = all_zooms[valid] / target_zooms
+            if np.all(scales < max_scale):
+                break
+
+            valid[valid] ^= np.any(scales == scales.max(), axis=1)
+
+        return valid
+
+    def _generate_segment(self, discards, dims, zooms):
+        items = [DISCARD_TEMPLATE.format(path=path, basename=os.path.basename(path))
+                 for path in discards]
+        discard_list = '\n'.join(["\t\t\t<ul>"] + items + ['\t\t\t</ul>']) if items else ''
+        zoom_fmt = '{:.02g}mm x {:.02g}mm x {:.02g}mm'.format(*zooms)
+        return CONFORMSERIES_TEMPLATE.format(n_t1w=len(self.inputs.t1w_list),
+                                             dims='x'.join(map(str, dims)),
+                                             zooms=zoom_fmt,
+                                             n_discards=len(discards),
+                                             discard_list=discard_list)
+
     def _run_interface(self, runtime):
-        import nibabel as nb
-        import nilearn.image as nli
-        from nipype.utils.filemanip import fname_presuffix, copyfile
+        # Load images, orient as RAS, collect shape and zoom data
+        in_names = np.array(self.inputs.t1w_list)
+        orig_imgs = np.vectorize(nb.load)(in_names)
+        reoriented = np.vectorize(nb.as_closest_canonical)(orig_imgs)
+        all_zooms = np.array([img.header.get_zooms()[:3] for img in reoriented])
+        all_shapes = np.array([img.shape for img in reoriented])
 
-        in_names = self.inputs.t1w_list
-        orig_imgs = [nb.load(fname) for fname in in_names]
-        reoriented = [nb.as_closest_canonical(img) for img in orig_imgs]
-        target_shape = np.max([img.shape for img in reoriented], axis=0)
-        target_zooms = np.min([img.header.get_zooms()[:3]
-                               for img in reoriented], axis=0)
+        # Identify images that would require excessive up-sampling
+        valid = self._prune_zooms(all_zooms, self.inputs.max_scale)
+        dropped_images = in_names[~valid]
 
-        resampled_imgs = []
-        for img in reoriented:
+        # Ignore dropped images
+        valid_fnames = in_names[valid]
+        valid_imgs = orig_imgs[valid]
+        reoriented = reoriented[valid]
+
+        # Set target shape information
+        target_zooms = all_zooms[valid].min(axis=0)
+        target_shape = all_shapes[valid].max(axis=0)
+        target_span = target_shape * target_zooms
+
+        out_names = []
+        for img, orig, fname in zip(reoriented, valid_imgs, valid_fnames):
             zooms = np.array(img.header.get_zooms()[:3])
             shape = np.array(img.shape)
 
@@ -169,14 +239,14 @@ class ConformSeries(SimpleInterface):
                 target_affine = np.eye(4, dtype=img.affine.dtype)
                 if rescale:
                     scale_factor = target_zooms / zooms
-                    target_affine[:3, :3] = np.diag(scale_factor).dot(img.affine[:3, :3])
+                    target_affine[:3, :3] = img.affine[:3, :3].dot(np.diag(scale_factor))
                 else:
                     target_affine[:3, :3] = img.affine[:3, :3]
 
                 if resize:
                     # The shift is applied after scaling.
                     # Use a proportional shift to maintain relative position in dataset
-                    size_factor = (target_shape.astype(float) + shape) / (2 * shape)
+                    size_factor = target_span / (zooms * shape)
                     # Use integer shifts to avoid unnecessary interpolation
                     offset = (img.affine[:3, 3] * size_factor - img.affine[:3, 3]).astype(int)
                     target_affine[:3, 3] = img.affine[:3, 3] + offset
@@ -186,19 +256,26 @@ class ConformSeries(SimpleInterface):
                 data = nli.resample_img(img, target_affine, target_shape).get_data()
                 img = img.__class__(data, target_affine, img.header)
 
-            resampled_imgs.append(img)
+            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
 
-        out_names = [fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-                     for fname in in_names]
-
-        for orig, final, in_name, out_name in zip(orig_imgs, resampled_imgs,
-                                                  in_names, out_names):
-            if final is orig:
-                copyfile(in_name, out_name, copy=True, use_hardlink=True)
+            # Image may be reoriented, rescaled, and/or resized
+            if img is not orig:
+                img.to_filename(out_name)
             else:
-                final.to_filename(out_name)
+                copyfile(fname, out_name, copy=True, use_hardlink=True)
+
+            out_names.append(out_name)
 
         self._results['t1w_list'] = out_names
+
+        # Create report
+        segment = self._generate_segment(dropped_images, target_shape, target_zooms)
+
+        out_report = os.path.join(runtime.cwd, 'report.html')
+        with open(out_report, 'w') as fobj:
+            fobj.write(segment)
+
+        self._results['out_report'] = out_report
 
         return runtime
 
@@ -269,8 +346,6 @@ class InvertT1w(SimpleInterface):
     output_spec = InvertT1wOutputSpec
 
     def _run_interface(self, runtime):
-        from nilearn import image as nli
-
         t1_img = nli.load_img(self.inputs.in_file)
         t1_data = t1_img.get_data()
         epi_data = nli.load_img(self.inputs.epi_ref).get_data()
