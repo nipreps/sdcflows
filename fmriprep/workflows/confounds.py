@@ -262,6 +262,7 @@ def _gather_confounds(signals=None, dvars=None, frame_displace=None,
                            (frame_displace, 'Framewise displacement'),
                            (tcompcor, 'tCompCor'),
                            (acompcor, 'aCompCor'),
+                           (cosine_basis, 'Cosine basis'),
                            (motion, 'Motion parameters'),
                            (aroma, 'ICA-AROMA')):
         if confound is not None:
