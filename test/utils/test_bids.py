@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 from future.standard_library import install_aliases
 
-import fmriprep.utils.misc as misc
+import fmriprep.utils.bids as bids
 
 install_aliases()
 from urllib.request import urlopen  # noqa: E402
@@ -29,8 +29,8 @@ class TestCollectBids(unittest.TestCase):
                     zfile.extractall(cls.fake_data_root_location)
 
         cls.imaging_data = {
-            cls.subject_id: misc.collect_bids_data(os.path.join(cls.fake_ds_location),
-                                                   cls.subject_id)
+            cls.subject_id: bids.collect_data(os.path.join(cls.fake_ds_location),
+                                              cls.subject_id)
         }
 
     def test_collect_bids_data(self):
