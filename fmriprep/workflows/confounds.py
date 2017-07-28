@@ -11,7 +11,6 @@ from niworkflows.nipype.interfaces import utility
 from niworkflows.nipype.interfaces import fsl
 from niworkflows.nipype.algorithms import confounds
 from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces.fsl import ICA_AROMA as aroma
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 from niworkflows.interfaces import segmentation as nws
 
@@ -433,8 +432,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         name="melodic")
 
     # ica_aroma node
-    ica_aroma = pe.Node(aroma.ICA_AROMA(denoise_type='no'),
-                        name='ica_aroma')
+    ica_aroma = pe.Node(fsl.ICA_AROMA(denoise_type='no'), name='ica_aroma')
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
