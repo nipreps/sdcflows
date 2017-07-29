@@ -26,13 +26,38 @@ from niworkflows.interfaces.base import SimpleInterface
 
 LOGGER = logging.getLogger('interface')
 BIDS_NAME = re.compile(
-    '^(.*\/)?(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<ses_id>ses-[a-zA-Z0-9]+))?'
+    '^(.*\/)?(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<session_id>ses-[a-zA-Z0-9]+))?'
     '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
     '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?')
 
 
 class FileNotFoundError(IOError):
     pass
+
+
+class BIDSInfoInputSpec(BaseInterfaceInputSpec):
+    in_file = File(mandatory=True, desc='input file, part of a BIDS tree')
+
+
+class BIDSInfoOutputSpec(TraitedSpec):
+    subject_id = traits.Str()
+    session_id = traits.Str()
+    task_id = traits.Str()
+    acq_id = traits.Str()
+    rec_id = traits.Str()
+    run_id = traits.Str()
+
+
+class BIDSInfo(SimpleInterface):
+    input_spec = BIDSInfoInputSpec
+    output_spec = BIDSInfoOutputSpec
+
+    def _run_interface(self, runtime):
+        match = BIDS_NAME.search(self.inputs.in_file)
+        params = match.groupdict() if match is not None else {}
+        self._results = {key: val for key, val in list(params.items())
+                         if val is not None}
+        return runtime
 
 
 class BIDSDataGrabberInputSpec(BaseInterfaceInputSpec):
@@ -131,8 +156,8 @@ class DerivativesDataSink(SimpleInterface):
             base_directory = op.abspath(self.inputs.base_directory)
 
         out_path = '{}/{subject_id}'.format(self.out_path_base, **m.groupdict())
-        if m.groupdict().get('ses_id') is not None:
-            out_path += '/{ses_id}'.format(**m.groupdict())
+        if m.groupdict().get('session_id') is not None:
+            out_path += '/{session_id}'.format(**m.groupdict())
         out_path += '/{}'.format(mod)
 
         out_path = op.join(base_directory, out_path)
