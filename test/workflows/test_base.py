@@ -17,6 +17,7 @@ class TestBase(TestWorkflow):
                                          ignore=[],
                                          debug=False,
                                          anat_only=False,
+                                         longitudinal=False,
                                          omp_nthreads=1,
                                          skull_strip_ants=False,
                                          reportlets_dir='.',
