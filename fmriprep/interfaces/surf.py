@@ -8,12 +8,18 @@ Handling surfaces
 
 """
 import os
+import re
+
 import numpy as np
-import nibabel as nib
+import nibabel as nb
+
+from niworkflows.nipype.interfaces.base import BaseInterfaceInputSpec, TraitedSpec, File
+
+from niworkflows.interfaces.base import SimpleInterface
 
 
 class NormalizeSurfInputSpec(BaseInterfaceInputSpec):
-    in_file = File(mandatory=True, desc='input file, part of a BIDS tree')
+    in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
 
 
 class NormalizeSurfOutputSpec(TraitedSpec):
@@ -29,6 +35,23 @@ class NormalizeSurf(SimpleInterface):
         return runtime
 
 
+class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
+    in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
+
+
+class GiftiNameSourceOutputSpec(TraitedSpec):
+    out_file = File(desc='output file with re-centered GIFTI coordinates')
+
+
+class GiftiNameSource(SimpleInterface):
+    input_spec = GiftiNameSourceInputSpec
+    output_spec = GiftiNameSourceOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = get_gifti_name(self.inputs.in_file)
+        return runtime
+
+
 def normalize_surfs(in_file):
     """ Re-center GIFTI coordinates to fit align to native T1 space
 
@@ -40,7 +63,7 @@ def normalize_surfs(in_file):
     https://github.com/Washington-University/Pipelines/blob/ae69b9a/PostFreeSurfer/scripts/FreeSurfer2CaretConvertAndRegisterNonlinear.sh#L147
     """
 
-    img = nib.load(in_file)
+    img = nb.load(in_file)
     pointset = img.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0]
     coords = pointset.data
     c_ras_keys = ('VolGeomC_R', 'VolGeomC_A', 'VolGeomC_S')
@@ -49,9 +72,9 @@ def normalize_surfs(in_file):
     # Apply C_RAS translation to coordinates
     pointset.data = (coords + ras).astype(coords.dtype)
 
-    secondary = nib.gifti.GiftiNVPairs('AnatomicalStructureSecondary',
+    secondary = nb.gifti.GiftiNVPairs('AnatomicalStructureSecondary',
                                        'MidThickness')
-    geom_type = nib.gifti.GiftiNVPairs('GeometricType', 'Anatomical')
+    geom_type = nb.gifti.GiftiNVPairs('GeometricType', 'Anatomical')
     has_ass = has_geo = False
     for nvpair in pointset.meta.data:
         # Remove C_RAS translation from metadata to avoid double-dipping in FreeSurfer
@@ -71,3 +94,11 @@ def normalize_surfs(in_file):
             pointset.meta.data.insert(2, geom_type)
     img.to_filename(fname)
     return os.path.abspath(fname)
+
+
+def get_gifti_name(in_file):
+    in_format = re.compile(r'(?P<LR>[lr])h.(?P<surf>.+)_converted.gii')
+    name = os.path.basename(in_file)
+    info = in_format.match(name).groupdict()
+    info['LR'] = info['LR'].upper()
+    return '{surf}.{LR}.surf'.format(**info)
