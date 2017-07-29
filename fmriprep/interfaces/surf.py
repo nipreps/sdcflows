@@ -73,7 +73,7 @@ def normalize_surfs(in_file):
     pointset.data = (coords + ras).astype(coords.dtype)
 
     secondary = nb.gifti.GiftiNVPairs('AnatomicalStructureSecondary',
-                                       'MidThickness')
+                                      'MidThickness')
     geom_type = nb.gifti.GiftiNVPairs('GeometricType', 'Anatomical')
     has_ass = has_geo = False
     for nvpair in pointset.meta.data:
