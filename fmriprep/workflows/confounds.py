@@ -29,7 +29,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
         applying the transform to the images. Transforms should be fsl-formatted.
-    Calculates noise components identified from ICA_AROMA (if ``use_aroma=True``)
+    Calculates noise components identified from ICA-AROMA (if ``use_aroma=True``)
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(
@@ -310,7 +310,7 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
 
         return os.path.abspath(str(col_base) + "AROMAConfounds.tsv")
 
-    # load the txt files from ICA_AROMA
+    # load the txt files from ICA-AROMA
     melodic_mix = os.path.join(ica_out_dir, 'melodic.ica/melodic_mix')
     motion_ics = os.path.join(ica_out_dir, 'classified_motion_ICs.txt')
 
@@ -378,8 +378,8 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
 
     Steps:
     1) smooth data using SUSAN
-    2) run melodic outside of ICA_AROMA to generate the report
-    3) run ICA_AROMA
+    2) run melodic outside of ICA-AROMA to generate the report
+    3) run ICA-AROMA
     4) print identified motion components (aggressive) to tsv
     5) pass classified_motion_ICs and melodic_mix for user to complete nonaggr denoising
     '''
@@ -462,7 +462,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
         (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
         (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
-        # geneerate tsvs from ICA_AROMA
+        # generate tsvs from ICA-AROMA
         (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'ica_out_dir')]),
         # output for processing and reporting
         (ica_aroma_confound_extraction, outputnode, [('aroma_confounds', 'aroma_confounds'),
