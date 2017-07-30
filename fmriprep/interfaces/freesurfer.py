@@ -78,13 +78,13 @@ class MakeMidthickness(fs.MRIsExpand):
 
 
 class FSInjectBrainExtractedInputSpec(BaseInterfaceInputSpec):
-    subjects_dir = Directory(mandatory=True, desc='FreeSurfer SUBJECTS_HOME')
+    subjects_dir = Directory(mandatory=True, desc='FreeSurfer SUBJECTS_DIR')
     subject_id = traits.Str(mandatory=True, desc='Subject ID')
     in_brain = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
 
 
 class FSInjectBrainExtractedOutputSpec(TraitedSpec):
-    subjects_dir = Directory(desc='FreeSurfer SUBJECTS_HOME')
+    subjects_dir = Directory(desc='FreeSurfer SUBJECTS_DIR')
     subject_id = traits.Str(desc='Subject ID')
 
 
