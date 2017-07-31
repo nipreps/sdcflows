@@ -41,7 +41,7 @@ class TestCollectBids(unittest.TestCase):
     def test_epi(self):
         epi_template = os.path.join(self.fake_ds_location, '{subject}', 'func',
                                     '{subject}_task-machinegame_run-06_bold.nii.gz')
-        self.assert_key_exists(epi_template, 'func')
+        self.assert_key_exists(epi_template, 'bold')
 
     def test_sbref(self):
         sbref_template = (self.fake_ds_location + "/{subject}/func/"
@@ -54,7 +54,7 @@ class TestCollectBids(unittest.TestCase):
 
     def test_fieldmaps(self):
         fieldmap_pattern = r"{0}\/fmap\/{0}_dir-[0-9]+_run-[0-9]+_epi\.nii\.gz"
-        self.assert_fieldmap_files_exist(fieldmap_pattern, 'fieldmaps')
+        self.assert_fieldmap_files_exist(fieldmap_pattern, 'fmap')
 
     # HELPER ASSERTIONS
 
