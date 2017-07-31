@@ -24,7 +24,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
     Calculates global regressor and tCompCor
         from motion-corrected fMRI ('inputnode.fmri_file').
-    Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.epi_mask')
+    Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.bold_mask')
     Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
     Calculates segment regressors and aCompCor
         from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
@@ -33,7 +33,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(utility.IdentityInterface(
-        fields=['fmri_file', 'movpar_file', 't1_tpms', 'epi_mask', 'epi_mni', 'epi_mask_mni']),
+        fields=['fmri_file', 'movpar_file', 't1_tpms', 'bold_mask', 'bold_mni', 'bold_mask_mni']),
         name='inputnode')
     outputnode = pe.Node(utility.IdentityInterface(
         fields=['confounds_file', 'confounds_list', 'acompcor_report', 'tcompcor_report',
@@ -172,7 +172,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     workflow.connect([
         # connect inputnode to each non-anatomical confound node
         (inputnode, dvars, [('fmri_file', 'in_file'),
-                            ('epi_mask', 'in_mask')]),
+                            ('bold_mask', 'in_mask')]),
         (inputnode, frame_displace, [('movpar_file', 'in_file')]),
         (inputnode, non_steady_state, [('fmri_file', 'in_file')]),
         (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
@@ -181,11 +181,11 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (non_steady_state, acompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
 
         (inputnode, CSF_roi, [(('t1_tpms', pick_csf), 'in_file')]),
-        (inputnode, CSF_roi, [('epi_mask', 'epi_mask')]),
+        (inputnode, CSF_roi, [('bold_mask', 'epi_mask')]),
         (CSF_roi, tcompcor, [('eroded_mask', 'mask_files')]),
 
         (inputnode, WM_roi, [(('t1_tpms', pick_wm), 'in_file')]),
-        (inputnode, WM_roi, [('epi_mask', 'epi_mask')]),
+        (inputnode, WM_roi, [('bold_mask', 'epi_mask')]),
 
         (CSF_roi, combine_rois, [('roi_file', 'in_CSF')]),
         (WM_roi, combine_rois, [('roi_file', 'in_WM')]),
@@ -196,7 +196,7 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (combine_rois, acompcor, [('out', 'mask_files')]),
 
         (WM_roi, concat_rois, [('roi_file', 'in_WM')]),
-        (inputnode, concat_rois, [('epi_mask', 'in_mask')]),
+        (inputnode, concat_rois, [('bold_mask', 'in_mask')]),
         (inputnode, concat_rois, [('fmri_file', 'ref_header')]),
 
         # anatomical confound: signal extraction
@@ -220,8 +220,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     ])
     if use_aroma:
         workflow.connect([
-            (inputnode, ica_aroma_wf, [('epi_mni', 'inputnode.epi_mni'),
-                                       ('epi_mask_mni', 'inputnode.epi_mask_mni'),
+            (inputnode, ica_aroma_wf, [('bold_mni', 'inputnode.epi_mni'),
+                                       ('bold_mask_mni', 'inputnode.epi_mask_mni'),
                                        ('movpar_file', 'inputnode.movpar_file')]),
             (ica_aroma_wf, concat,
                 [('outputnode.aroma_confounds', 'aroma')]),
@@ -391,9 +391,9 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     '''
     workflow = pe.Workflow(name=name)
 
-    inputnode = pe.Node(utility.IdentityInterface(fields=['epi_mni',
+    inputnode = pe.Node(utility.IdentityInterface(fields=['bold_mni',
                                                           'movpar_file',
-                                                          'epi_mask_mni']),
+                                                          'bold_mask_mni']),
                         name='inputnode')
 
     outputnode = pe.Node(utility.IdentityInterface(
@@ -412,8 +412,8 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     calc_median_val = pe.Node(fsl.ImageStats(op_string='-k %s -p 50'),
                               name='calc_median_val')
 
-    calc_epi_mean = pe.Node(fsl.MeanImage(),
-                            name='calc_epi_mean')
+    calc_bold_mean = pe.Node(fsl.MeanImage(),
+                            name='calc_bold_mean')
 
     brightness_threshold = pe.Node(
         utility.Function(function=getbtthresh,
@@ -451,19 +451,19 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     # connect the nodes
     workflow.connect([
         # Connect input nodes to complete smoothing
-        (inputnode, calc_median_val, [('epi_mni', 'in_file'),
-                                      ('epi_mask_mni', 'mask_file')]),
+        (inputnode, calc_median_val, [('bold_mni', 'in_file'),
+                                      ('bold_mask_mni', 'mask_file')]),
         (calc_median_val, brightness_threshold, [('out_stat', 'medianval')]),
-        (inputnode, calc_epi_mean, [('epi_mni', 'in_file')]),
-        (calc_epi_mean, getusans, [('out_file', 'image')]),
+        (inputnode, calc_bold_mean, [('bold_mni', 'in_file')]),
+        (calc_bold_mean, getusans, [('out_file', 'image')]),
         (calc_median_val, getusans, [('out_stat', 'thresh')]),
-        (inputnode, smooth, [('epi_mni', 'in_file')]),
+        (inputnode, smooth, [('bold_mni', 'in_file')]),
         (getusans, smooth, [('usans', 'usans')]),
         (brightness_threshold, smooth, [('thresh', 'brightness_threshold')]),
         # connect smooth to melodic
         (smooth, melodic, [('smoothed_file', 'in_files')]),
-        (inputnode, melodic, [('epi_mask_mni', 'report_mask'),
-                              ('epi_mask_mni', 'mask')]),
+        (inputnode, melodic, [('bold_mask_mni', 'report_mask'),
+                              ('bold_mask_mni', 'mask')]),
         # connect nodes to ICA-AROMA
         (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
         (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),

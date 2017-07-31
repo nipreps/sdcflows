@@ -456,7 +456,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                             ('ref_image', 'reference_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
-        (normalize_motion, outputnode, [('out', 'movpar_file')]),
+        (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (inputnode, split, [('bold', 'in_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
@@ -634,8 +634,8 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
-        (merger, update_metadata, [('out', 'in_file')]),
-        (update_metadata, outputnode, [('out', 'surfaces')]),
+        (merger, update_metadata, [('out_file', 'in_file')]),
+        (update_metadata, outputnode, [('out_file', 'surfaces')]),
     ])
 
     return workflow
@@ -1159,7 +1159,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
             (inputnode, name_surfs, [('surfaces', 'in_file')]),
             (inputnode, ds_bold_surfs, [('source_file', 'source_file'),
                                         ('surfaces', 'in_file')]),
-            (name_surfs, ds_bold_surfs, [('out', 'suffix')]),
+            (name_surfs, ds_bold_surfs, [('out_file', 'suffix')]),
         ])
 
     return workflow
