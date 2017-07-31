@@ -37,7 +37,7 @@ case ${CIRCLE_NODE_INDEX} in
     find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
     ;;
   1)
-    docker run -ti --rm=false --entrypoint="python" poldracklab/fmriprep:latest -m unittest discover test
+    docker run -ti --rm=false --entrypoint="/usr/local/miniconda/bin/py.test" poldracklab/fmriprep:latest . --doctest-modules --ignore=docs --ignore=setup.py
     docker run -ti --rm=false -v $HOME/docs:/_build_html --entrypoint=sphinx-build poldracklab/fmriprep:latest \
         -T -E -b html -d _build/doctrees-readthedocs -W -D language=en docs/ /_build_html 2>&1 \
         | tee $HOME/docs/builddocs.log
