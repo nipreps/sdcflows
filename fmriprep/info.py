@@ -78,7 +78,8 @@ LINKS_REQUIRES = []
 
 TESTS_REQUIRES = [
     "mock",
-    "codecov"
+    "codecov",
+    "pytest",
 ]
 
 EXTRA_REQUIRES = {
