@@ -27,9 +27,11 @@ from niworkflows.nipype.interfaces import freesurfer as fs
 
 import niworkflows.data as nid
 from niworkflows.interfaces.registration import EstimateReferenceImage
-from niworkflows.interfaces import SimpleBeforeAfter
+from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
-from ..interfaces import DerivativesDataSink, InvertT1w, ValidateImage
+from ..interfaces import (
+    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiUpdateMeta
+)
 from ..interfaces.images import GenerateSamplingReference, extract_wm
 from ..interfaces.nilearn import Merge
 from ..interfaces.reports import FunctionalSummary
@@ -381,20 +383,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                 'ref_image_brain', 'movpar_file', 'n_volumes_to_discard',
                 'bold_mask_report']), name='outputnode')
 
-    def normalize_motion_func(in_file, format):
-        import os
-        import numpy as np
-        from niworkflows.nipype.utils.misc import normalize_mc_params
-        mpars = np.loadtxt(in_file)  # mpars is N_t x 6
-        mpars = np.apply_along_axis(func1d=normalize_mc_params,
-                                    axis=1, arr=mpars,
-                                    source=format)
-        np.savetxt("motion_params.txt", mpars)
-        return os.path.abspath("motion_params.txt")
-
-    normalize_motion = pe.Node(niu.Function(function=normalize_motion_func),
+    normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
                                name="normalize_motion")
-    normalize_motion.inputs.format = "FSL"
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(
@@ -440,19 +430,18 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             name="create_custom_slice_timing_file")
         create_custom_slice_timing_file.inputs.metadata = metadata
 
-        slice_timing_correction = pe.Node(interface=afni.TShift(),
-                                          name='slice_timing_correction')
-        slice_timing_correction.inputs.outputtype = 'NIFTI_GZ'
-        slice_timing_correction.inputs.tr = str(metadata["RepetitionTime"]) + "s"
+        slice_timing_correction = pe.Node(
+            afni.TShift(outputtype='NIFTI_GZ', tr=str(metadata["RepetitionTime"]) + "s"),
+            name='slice_timing_correction')
 
-        def prefix_at(x):
+        def _prefix_at(x):
             return "@" + x
 
         workflow.connect([
             (inputnode, slice_timing_correction, [('bold', 'in_file')]),
             (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [
-                (('out', prefix_at), 'tpattern')]),
+                (('out', _prefix_at), 'tpattern')]),
             (slice_timing_correction, hmc, [('out_file', 'in_file')])
         ])
 
@@ -614,7 +603,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
-                         iterfield=['space'], name='targets')
+                         iterfield=['space'], name='targets', run_without_submitting=True)
     targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
@@ -634,24 +623,8 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
     merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
                          joinsource='sampler', joinfield=['in1'], run_without_submitting=True)
 
-    def update_gifti_metadata(in_file):
-        import os
-        import nibabel as nib
-        img = nib.load(in_file)
-        fname = os.path.basename(in_file)
-        if fname[:3] in ('lh.', 'rh.'):
-            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
-        else:
-            raise ValueError(
-                "AnatomicalStructurePrimary cannot be derived from filename")
-        primary = nib.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
-        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
-            img.meta.data.insert(0, primary)
-        img.to_filename(fname)
-        return os.path.abspath(fname)
-
-    update_metadata = pe.MapNode(niu.Function(function=update_gifti_metadata),
-                                 iterfield='in_file', name='update_metadata')
+    update_metadata = pe.MapNode(GiftiUpdateMeta(), iterfield='in_file',
+                                 name='update_metadata')
 
     workflow.connect([
         (inputnode, targets, [('subject_id', 'subject_id')]),
@@ -1157,17 +1130,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                          ('melodic_mix', 'in_file')]),
         ])
 
-    def get_gifti_name(in_file):
-        import os
-        import re
-        in_format = re.compile(r'(?P<LR>[lr])h.(?P<space>\w+).gii')
-        info = in_format.match(os.path.basename(in_file)).groupdict()
-        info['LR'] = info['LR'].upper()
-        return 'space-{space}.{LR}.func'.format(**info)
-
-    name_surfs = pe.MapNode(niu.Function(function=get_gifti_name),
-                            iterfield='in_file', name='name_surfs')
-
+    name_surfs = pe.MapNode(GiftiNameSource(), iterfield='in_file', name='name_surfs')
     ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
                                iterfield=['in_file', 'suffix'], name='ds_bold_surfs',
                                run_without_submitting=True)

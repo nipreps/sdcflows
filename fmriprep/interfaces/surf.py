@@ -52,6 +52,34 @@ class GiftiNameSource(SimpleInterface):
         return runtime
 
 
+class GiftiUpdateMetaInputSpec(BaseInterfaceInputSpec):
+    in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
+
+
+class GiftiUpdateMetaOutputSpec(TraitedSpec):
+    out_file = File(desc='output file with re-centered GIFTI coordinates')
+
+
+class GiftiUpdateMeta(SimpleInterface):
+    input_spec = GiftiUpdateMetaInputSpec
+    output_spec = GiftiUpdateMetaOutputSpec
+
+    def _run_interface(self, runtime):
+        img = nb.load(self.inputs.in_file)
+        fname = os.path.basename(self.inputs.in_file)
+        if fname[:3] in ('lh.', 'rh.'):
+            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+        else:
+            raise ValueError(
+                "AnatomicalStructurePrimary cannot be derived from filename")
+        primary = nb.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
+        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
+            img.meta.data.insert(0, primary)
+        img.to_filename(fname)
+        self._results['out_file'] = os.path.abspath(fname)
+        return runtime
+
+
 def normalize_surfs(in_file):
     """ Re-center GIFTI coordinates to fit align to native T1 space
 
