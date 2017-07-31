@@ -16,10 +16,10 @@ from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
-from fmriprep.interfaces.images import extract_wm
+from ..interfaces.images import extract_wm
 
 
-def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
+def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
@@ -64,7 +64,7 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     return workflow
 
 
-def init_skullstrip_epi_wf(name='skullstrip_epi_wf'):
+def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
