@@ -884,7 +884,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
     workflow.connect([
         (inputnode, invert_t1w, [('t1_brain', 'in_file'),
-                                 ('bold_ref', 'bold_ref')]),
+                                 ('bold_ref', 'ref_file')]),
         (inputnode, ref_2_t1, [('bold_ref', 'moving_image')]),
         (invert_t1w, ref_2_t1, [('out_file', 'fixed_image')]),
         (inputnode, t1_2_ref, [('bold_ref', 'reference_image')]),
