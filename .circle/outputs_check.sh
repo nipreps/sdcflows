@@ -8,7 +8,7 @@ set -e         # Exit immediately if a command exits with a non-zero status.
 set -u         # Treat unset variables as an error when substituting.
 
 # Exit if docs_only tag is found
-if [ "$(grep -qiP 'docs[ _]?only' <<< "$GIT_COMMIT_MSG"; echo $? )" == "0" ]; then
+if echo ${GIT_COMMIT_DESC} | grep -Pi 'docs[ _]?only'; then
     echo "Building [docs_only], nothing to do."
     exit 0
 fi
@@ -20,7 +20,8 @@ if [ "${CIRCLE_NODE_INDEX:-0}" == "1" ]; then
 fi
 
 echo "Checking outputs (${DATASET})..."
-find $HOME/${DATASET}   | sed s+$HOME/++ | sort > $HOME/${DATASET}.out
-diff $HOME/$CIRCLE_PROJECT_REPONAME/.circle/data/${DATASET}_outputs.txt $HOME/${DATASET}.out
+mkdir -p ${HOME}/${DATASET}/test
+find $HOME/${DATASET}/out  | sed s+$HOME/++ | sort > ${HOME}/${DATASET}/test/outputs.out
+diff $HOME/$CIRCLE_PROJECT_REPONAME/.circle/data/${DATASET}_outputs.txt ${HOME}/${DATASET}/test/outputs.out
 
 exit $?

@@ -16,7 +16,7 @@ if [ "${CIRCLE_NODE_TOTAL:-}" != "2" ]; then
 fi
 
 # Only run docs if DOCSONLY or "docs only" (or similar) is in the commit message
-if echo $GIT_COMMIT_DESC | grep -Pi 'docs[ _]?only'; then
+if echo ${GIT_COMMIT_DESC} | grep -Pi 'docs[ _]?only'; then
     case ${CIRCLE_NODE_INDEX} in
         0)
           docker run -ti --rm=false -v $HOME/docs:/_build_html --entrypoint=sphinx-build poldracklab/fmriprep:latest \

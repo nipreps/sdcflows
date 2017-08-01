@@ -55,8 +55,10 @@ general:
   artifacts:
     - "~/ds054/out"
     - "~/ds054/scratch"
+    - "~/ds054/test"
     - "~/ds005/out"
     - "~/ds005/scratch"
+    - "~/ds005/test"
     - "~/docs"
 
 deployment:
