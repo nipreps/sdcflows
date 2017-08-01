@@ -104,7 +104,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         name='outputnode')
 
     summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary',
-                      estimated_memory_gb=0.05)
+                      mem_gb=0.05)
     summary.inputs.slice_timing = "SliceTiming" in metadata and 'slicetiming' not in ignore
     summary.inputs.registration = 'bbregister' if freesurfer else 'FLIRT'
 
@@ -133,7 +133,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                            ]),
     ])
 
-    validate = pe.Node(ValidateImage(), name='validate', estimated_memory_gb=0.05)
+    validate = pe.Node(ValidateImage(), name='validate', mem_gb=0.05)
 
     # HMC on the BOLD
     bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf', metadata=metadata,
@@ -386,20 +386,20 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                 'bold_mask_report']), name='outputnode')
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
-                               name="normalize_motion", estimated_memory_gb=0.05)
+                               name="normalize_motion", mem_gb=0.05)
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
-                  name='BOLD_hmc', estimated_memory_gb=bold_file_size_gb * 3)
+                  name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
 
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk',
-                         estimated_memory_gb=0.05)
+                         mem_gb=0.05)
 
     enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
-                      estimated_memory_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
+                      mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
 
     workflow.connect([
         (inputnode, gen_ref, [('bold', 'in_file')]),
@@ -413,7 +413,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
-                    estimated_memory_gb=bold_file_size_gb * 3)
+                    mem_gb=bold_file_size_gb * 3)
 
     if "SliceTiming" in metadata and 'slicetiming' not in ignore:
         LOGGER.info('Slice-timing correction will be included.')
@@ -432,7 +432,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             niu.Function(function=create_custom_slice_timing_file_func),
             name="create_custom_slice_timing_file",
             run_without_submitting=True,
-            estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+            mem_gb=DEFAULT_MEMORY_MIN_GB)
         create_custom_slice_timing_file.inputs.metadata = metadata
 
         # It would be good to fingerprint memory use of afni.TShift
@@ -501,14 +501,14 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
-                       estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                       mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     #  BOLD to T1 transform matrix is from fsl, using c3 tools to convert to
     #  something ANTs will like.
     fsl2itk_fwd = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                          name='fsl2itk_fwd', estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                          name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                          name='fsl2itk_inv', estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                          name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
         (inputnode, bbr_wf, [('ref_bold_brain', 'inputnode.in_file'),
@@ -533,12 +533,12 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
     ])
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref',
-                      estimated_memory_gb=0.3)  # 256x256x256 * 64 / 8 ~ 150MB
+                      mem_gb=0.3)  # 256x256x256 * 64 / 8 ~ 150MB
 
     mask_t1w_tfm = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor',
                              float=True),
-        name='mask_t1w_tfm', estimated_memory_gb=0.1
+        name='mask_t1w_tfm', mem_gb=0.1
     )
 
     workflow.connect([
@@ -553,7 +553,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
     if use_fieldwarp:
         merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
                                       name='merge_transforms', run_without_submitting=True,
-                                      estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
             (inputnode, merge_transforms, [('fieldwarp', 'in2'),
                                            ('hmc_xforms', 'in3')])
@@ -561,19 +561,19 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
     else:
         merge_transforms = pe.MapNode(niu.Merge(2), iterfield=['in2'],
                                       name='merge_transforms', run_without_submitting=True,
-                                      estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
             (inputnode, merge_transforms, [('hmc_xforms', 'in2')])
         ])
 
-    merge = pe.Node(Merge(), name='merge', estimated_memory_gb=bold_file_size_gb * 3)
+    merge = pe.Node(Merge(), name='merge', mem_gb=bold_file_size_gb * 3)
 
     bold_to_t1w_transform = pe.MapNode(
         ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
                              float=True),
         iterfield=['input_image', 'transforms'],
         name='bold_to_t1w_transform',
-        estimated_memory_gb=0.1)
+        mem_gb=0.1)
     bold_to_t1w_transform.terminal_output = 'file'
 
     workflow.connect([
@@ -614,13 +614,13 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
 
     targets = pe.MapNode(niu.Function(function=select_target),
                          iterfield=['space'], name='targets', run_without_submitting=True,
-                         estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                         mem_gb=DEFAULT_MEMORY_MIN_GB)
     targets.inputs.space = spaces
 
     # Rename the source file to the output space to simplify naming later
     rename_src = pe.MapNode(niu.Rename(format_string='%(subject)s', keep_ext=True),
                             iterfield='subject', name='rename_src', run_without_submitting=True,
-                            estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                            mem_gb=DEFAULT_MEMORY_MIN_GB)
     rename_src.inputs.subject = spaces
 
     sampler = pe.MapNode(
@@ -634,10 +634,10 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
 
     merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
                          joinsource='sampler', joinfield=['in1'], run_without_submitting=True,
-                         estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                         mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     update_metadata = pe.MapNode(GiftiUpdateMeta(), iterfield='in_file',
-                                 name='update_metadata', estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                 name='update_metadata', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
         (inputnode, targets, [('subject_id', 'subject_id')]),
@@ -682,7 +682,7 @@ def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
         return [in_value]
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref',
-                      estimated_memory_gb=0.3)  # 256x256x256 * 64 / 8 ~ 150MB)
+                      mem_gb=0.3)  # 256x256x256 * 64 / 8 ~ 150MB)
     template_str = nid.TEMPLATE_MAP[template]
     gen_ref.inputs.fixed_image = op.join(nid.get_dataset(template_str), '1mm_T1.nii.gz')
 
@@ -690,17 +690,17 @@ def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
         ants.ApplyTransforms(interpolation='NearestNeighbor',
                              float=True),
         name='mask_mni_tfm',
-        estimated_memory_gb=0.1
+        mem_gb=0.1
     )
 
     # Write corrected file in the designated output dir
     mask_merge_tfms = pe.Node(niu.Merge(2), name='mask_merge_tfms', run_without_submitting=True,
-                              estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                              mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     if use_fieldwarp:
         merge_transforms = pe.MapNode(niu.Merge(4), iterfield=['in4'],
                                       name='merge_transforms', run_without_submitting=True,
-                                      estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
             (inputnode, merge_transforms, [('fieldwarp', 'in3'),
                                            ('hmc_xforms', 'in4')])])
@@ -708,7 +708,7 @@ def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
     else:
         merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
                                       name='merge_transforms', run_without_submitting=True,
-                                      estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
             (inputnode, merge_transforms, [('hmc_xforms', 'in3')])])
 
@@ -722,7 +722,7 @@ def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
     ])
 
     merge = pe.Node(Merge(), name='merge',
-                    estimated_memory_gb=bold_file_size_gb * 3)
+                    mem_gb=bold_file_size_gb * 3)
     bold_to_mni_transform = pe.MapNode(
         ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
                              float=True),
@@ -846,7 +846,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
 
     invert_t1w = pe.Node(InvertT1w(), name='invert_t1w',
-                         estimated_memory_gb=0.3)
+                         mem_gb=0.3)
 
     ref_2_t1 = pe.Node(ants.Registration(from_file=affine_transform, num_threads=omp_nthreads),
                        name='ref_2_t1', n_procs=omp_nthreads)
@@ -856,7 +856,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
     # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
     transform_list = pe.Node(niu.Merge(3), name='transform_list',
-                             estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                             mem_gb=DEFAULT_MEMORY_MIN_GB)
     transform_list.inputs.in3 = atlas_2_template_affine
 
     # Inverting (1), then applying in reverse order:
@@ -866,16 +866,16 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         ants.ApplyTransforms(invert_transform_flags=[True, False, False],
                              num_threads=omp_nthreads),
         name='atlas_2_ref', n_procs=omp_nthreads,
-        estimated_memory_gb=0.3)
+        mem_gb=0.3)
     atlas_2_ref.inputs.input_image = atlas_img
 
     threshold_atlas = pe.Node(
         fsl.maths.MathsCommand(args='-thr {:.8g} -bin'.format(atlas_threshold),
                                output_datatype='char'),
-        name='threshold_atlas', estimated_memory_gb=0.3)
+        name='threshold_atlas', mem_gb=0.3)
 
     fixed_image_masks = pe.Node(niu.Merge(2), name='fixed_image_masks',
-                                estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                mem_gb=DEFAULT_MEMORY_MIN_GB)
     fixed_image_masks.inputs.in1 = 'NULL'
 
     if layout is None:
@@ -898,11 +898,11 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     seg_2_ref = pe.Node(
         ants.ApplyTransforms(interpolation='NearestNeighbor', float=True,
                              invert_transform_flags=[True], num_threads=omp_nthreads),
-        name='seg_2_ref', n_procs=omp_nthreads, estimated_memory_gb=0.3)
+        name='seg_2_ref', n_procs=omp_nthreads, mem_gb=0.3)
     sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
-                     estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                     mem_gb=DEFAULT_MEMORY_MIN_GB)
     syn_rpt = pe.Node(SimpleBeforeAfter(), name='syn_rpt',
-                      estimated_memory_gb=0.1)
+                      mem_gb=0.1)
 
     skullstrip_bold_wf = init_skullstrip_bold_wf()
 
@@ -940,7 +940,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         pe_chooser = pe.Node(
             niu.Function(function=select_outputs,
                          output_names=['warped_image', 'forward_transforms']),
-            name='pe_chooser', estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+            name='pe_chooser', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
         workflow.connect([(inputnode, syn_i, [('bold_ref', 'moving_image')]),
                           (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
@@ -1006,17 +1006,17 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
 
     map_seg = pe.Node(ants.ApplyTransforms(
         dimension=3, float=True, interpolation='NearestNeighbor'),
-        name='map_seg', estimated_memory_gb=0.3)
+        name='map_seg', mem_gb=0.3)
 
     sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
-                     estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                     mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
-                       estimated_memory_gb=0.1)
+                       mem_gb=0.1)
     bold_rpt_ds = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='variant-hmcsdc_preproc'), name='bold_rpt_ds',
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB,
+        mem_gb=DEFAULT_MEMORY_MIN_GB,
         run_without_submitting=True
     )
     workflow.connect([
@@ -1048,49 +1048,49 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='summary'),
         name='ds_summary_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_validation_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='validation'),
         name='ds_validation_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_bold_mask_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='bold_mask'),
         name='ds_bold_mask_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_syn_sdc_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='syn_sdc'),
         name='ds_syn_sdc_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_bold_reg_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='bbr' if freesurfer else 'flt_bbr'),
         name='ds_bold_reg_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_acompcor_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='acompcor'),
         name='ds_acompcor_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_tcompcor_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='tcompcor'),
         name='ds_tcompcor_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_ica_aroma_report = pe.Node(
         DerivativesDataSink(base_directory=reportlets_dir,
                             suffix='ica_aroma'),
         name='ds_ica_aroma_report', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
         (inputnode, ds_summary_report, [('source_file', 'source_file'),
@@ -1135,35 +1135,35 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
     ds_bold_t1 = pe.Node(DerivativesDataSink(
         base_directory=output_dir, suffix='space-T1w_preproc'),
         name='ds_bold_t1', run_without_submitting=True,
-        estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_bold_mask_t1 = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                   suffix='space-T1w_brainmask'),
                               name='ds_bold_mask_t1', run_without_submitting=True,
-                              estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                              mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     suffix_fmt = 'space-{}_{}'.format
     ds_bold_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                               suffix=suffix_fmt(template, 'preproc')),
                           name='ds_bold_mni', run_without_submitting=True,
-                          estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                          mem_gb=DEFAULT_MEMORY_MIN_GB)
     ds_bold_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                    suffix=suffix_fmt(template, 'brainmask')),
                                name='ds_bold_mask_mni', run_without_submitting=True,
-                               estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_confounds = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='confounds'),
                            name="ds_confounds", run_without_submitting=True,
-                           estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                           mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_aroma_noise_ics = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                      suffix='AROMAnoiseICs'),
                                  name="ds_aroma_noise_ics", run_without_submitting=True,
-                                 estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                                 mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_melodic_mix = pe.Node(DerivativesDataSink(base_directory=output_dir, suffix='MELODICmix'),
                              name="ds_melodic_mix", run_without_submitting=True,
-                             estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                             mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     if use_aroma:
         workflow.connect([
@@ -1174,12 +1174,12 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
         ])
 
     name_surfs = pe.MapNode(GiftiNameSource(), iterfield='in_file', name='name_surfs',
-                            estimated_memory_gb=DEFAULT_MEMORY_MIN_GB,
+                            mem_gb=DEFAULT_MEMORY_MIN_GB,
                             run_without_submitting=True)
     ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
                                iterfield=['in_file', 'suffix'], name='ds_bold_surfs',
                                run_without_submitting=True,
-                               estimated_memory_gb=DEFAULT_MEMORY_MIN_GB)
+                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
         (inputnode, ds_confounds, [('source_file', 'source_file'),
