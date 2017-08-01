@@ -46,7 +46,7 @@ test:
         parallel: true
         environment:
           GIT_COMMIT_DESC: $(git log --format=oneline -n 1 $CIRCLE_SHA1)
-    - bash .circle/outputs_check.sh
+    - bash .circle/outputs_check.sh :
         parallel: true
         environment:
           GIT_COMMIT_DESC: $(git log --format=oneline -n 1 $CIRCLE_SHA1)
