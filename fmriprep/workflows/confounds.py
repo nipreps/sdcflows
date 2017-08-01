@@ -413,7 +413,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
                               name='calc_median_val')
 
     calc_bold_mean = pe.Node(fsl.MeanImage(),
-                            name='calc_bold_mean')
+                             name='calc_bold_mean')
 
     brightness_threshold = pe.Node(
         utility.Function(function=getbtthresh,
