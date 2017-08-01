@@ -1,4 +1,4 @@
-ds054/out/
+ds054/out
 ds054/out/fmriprep
 ds054/out/fmriprep/logs
 ds054/out/fmriprep/sub-100185
@@ -23,16 +23,4 @@ ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-01_bold_space
 ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-02_bold_confounds.tsv
 ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-02_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz
 ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-02_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-03_bold_confounds.tsv
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-03_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-03_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-04_bold_confounds.tsv
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-04_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-04_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-05_bold_confounds.tsv
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-05_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-05_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-06_bold_confounds.tsv
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-06_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz
-ds054/out/fmriprep/sub-100185/func/sub-100185_task-machinegame_run-06_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
 ds054/out/fmriprep/sub-100185.html
