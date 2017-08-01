@@ -22,3 +22,5 @@ fi
 echo "Checking outputs (${DATASET})..."
 find $HOME/${DATASET}   | sed s+$HOME/++ | sort > $HOME/${DATASET}.out
 diff $HOME/$CIRCLE_PROJECT_REPONAME/.circle/data/${DATASET}_outputs.txt $HOME/${DATASET}.out
+
+exit $?
