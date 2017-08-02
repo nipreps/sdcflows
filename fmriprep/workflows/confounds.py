@@ -220,8 +220,8 @@ def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     ])
     if use_aroma:
         workflow.connect([
-            (inputnode, ica_aroma_wf, [('bold_mni', 'inputnode.epi_mni'),
-                                       ('bold_mask_mni', 'inputnode.epi_mask_mni'),
+            (inputnode, ica_aroma_wf, [('bold_mni', 'inputnode.bold_mni'),
+                                       ('bold_mask_mni', 'inputnode.bold_mask_mni'),
                                        ('movpar_file', 'inputnode.movpar_file')]),
             (ica_aroma_wf, concat,
                 [('outputnode.aroma_confounds', 'aroma')]),
