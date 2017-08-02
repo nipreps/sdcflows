@@ -396,7 +396,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                          iterfield=['transform_file'], name='hcm2itk',
                          mem_gb=0.05)
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
                       mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.

@@ -150,7 +150,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
     apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
@@ -357,7 +357,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     workflow.connect([
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
@@ -431,7 +431,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
                             out_file='template.nii.gz'),
         name='merge')
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
+        omp_nthreads=ants_nthreads)
 
     ants_settings = pkgr.resource_filename('fmriprep',
                                            'data/translation_rigid.json')
