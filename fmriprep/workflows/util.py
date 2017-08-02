@@ -161,6 +161,62 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
 
 
 def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
+    """
+    This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
+    a T1-weighted structural image.
+
+    It is a counterpart to `init_fsl_bbr_wf`_, which performs the same task
+    using FSL's FLIRT with a BBR cost function.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.util import init_bbreg_wf
+        wf = init_bbreg_wf(bold2t1w_dof=9, report=False)
+
+
+    Parameters
+
+        bold2t1w_dof : 6, 9 or 12
+            Degrees-of-freedom for BOLD-T1w registration
+        report : bool
+            Generate visual report of registration quality
+        rereigster : bool, optional
+            Update affine registration matrix with FreeSurfer-T1w transform
+            (default: True)
+        name : str, optional
+            Workflow name (default: bbreg_wf)
+
+
+    Inputs
+
+        in_file
+            Reference BOLD image to be registered
+        fs_2_t1_transform
+            FSL-style affine matrix translating from FreeSurfer T1.mgz to T1w
+        subjects_dir
+            FreeSurfer SUBJECTS_DIR
+        subject_id
+            FreeSurfer subject ID (must have folder in SUBJECTS_DIR)
+        t1_brain
+            Unused (see `init_fsl_bbr_wf`_)
+        t1_seg
+            Unused (see `init_fsl_bbr_wf`_)
+
+
+    Outputs
+
+        out_matrix_file
+            FSL-style registration matrix
+        out_reg_file
+            FreeSurfer-style registration matrix (.dat)
+        final_cost
+            Value of cost function at final registration
+        out_report
+            reportlet for assessing registration quality
+
+    """
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
@@ -228,6 +284,59 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
 
 def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
+    """
+    This workflow uses FSL FLIRT to register a BOLD image to a T1-weighted
+    structural image, using a boundary-based registration (BBR) cost function.
+
+    It is a counterpart to `init_bbreg_wf`_, which performs the same task
+    using FreeSurfer's ``bbregister``.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.util import init_fsl_bbr_wf
+        wf = init_fsl_bbr_wf(bold2t1w_dof=9, report=False)
+
+
+    Parameters
+
+        bold2t1w_dof : 6, 9 or 12
+            Degrees-of-freedom for BOLD-T1w registration
+        report : bool
+            Generate visual report of registration quality
+        name : str, optional
+            Workflow name (default: fsl_bbr_wf)
+
+
+    Inputs
+
+        in_file
+            Reference BOLD image to be registered
+        t1_brain
+            Skull-stripped T1-weighted structural image
+        t1_seg
+            FAST segmentation of ``t1_brain``
+        fs_2_t1_transform
+            Unused (see `init_bbreg_wf`_)
+        subjects_dir
+            Unused (see `init_bbreg_wf`_)
+        subject_id
+            Unused (see `init_bbreg_wf`_)
+
+
+    Outputs
+
+        out_matrix_file
+            FSL-style registration matrix
+        out_reg_file
+            Unused (see `init_bbreg_wf`_)
+        final_cost
+            Value of cost function at final registration
+        out_report
+            reportlet for assessing registration quality
+
+    """
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
