@@ -647,7 +647,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (sampler, merger, [('out_file', 'in1')]),
-        (merger, update_metadata, [('out_file', 'in_file')]),
+        (merger, update_metadata, [('out', 'in_file')]),
         (update_metadata, outputnode, [('out_file', 'surfaces')]),
     ])
 
