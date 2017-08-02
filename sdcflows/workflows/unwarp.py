@@ -357,7 +357,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf()
 
     workflow.connect([
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
@@ -366,9 +366,10 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         (to_ants, unwarp_reference, [('out', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
                                        ('in_reference', 'input_image')]),
-        (unwarp_reference, enhance_and_skullstrip_epi_wf, [('output_image', 'inputnode.in_file')]),
+        (unwarp_reference, enhance_and_skullstrip_bold_wf, [
+            ('output_image', 'inputnode.in_file')]),
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (enhance_and_skullstrip_epi_wf, outputnode, [
+        (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
             ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
