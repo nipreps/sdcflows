@@ -75,8 +75,9 @@ class GiftiUpdateMeta(SimpleInterface):
         primary = nb.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
         if not any(nvpair.name == primary.name for nvpair in img.meta.data):
             img.meta.data.insert(0, primary)
-        img.to_filename(fname)
-        self._results['out_file'] = os.path.abspath(fname)
+        out_file = os.path.abspath(fname)
+        img.to_filename(out_file)
+        self._results['out_file'] = out_file
         return runtime
 
 
