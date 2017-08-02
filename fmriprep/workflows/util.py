@@ -20,6 +20,36 @@ from ..interfaces.images import extract_wm
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
                                         omp_nthreads=1):
+    """
+    This workflow takes in a BOLD volume, and attempts to enhance the contrast
+    between gray and white matter, and skull-stripping the result.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.util import init_enhance_and_skullstrip_bold_wf
+        wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=1)
+
+
+    Inputs
+
+        in_file
+            BOLD image (single volume)
+
+
+    Outputs
+
+        bias_corrected_file
+            the ``in_file`` after `N4BiasFieldCorrection`_
+        skull_stripped_file
+            the ``bias_corrected_file`` after skull-stripping
+        mask_file
+            mask of the skull-stripped input file
+        out_report
+            reportlet for the skull-stripping
+
+    """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
@@ -66,6 +96,36 @@ def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
 
 
 def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
+    """
+    This workflow applies skull-stripping to a BOLD image.
+
+    It is intended to be used on an image that has previously been
+    bias-corrected with `init_enhance_and_skullstrip_bold_wf`_.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.util import init_skullstrip_bold_wf
+        wf = init_skullstrip_bold_wf()
+
+
+    Inputs
+
+        in_file
+            BOLD image (single volume)
+
+
+    Outputs
+
+        skull_stripped_file
+            the ``in_file`` after skull-stripping
+        mask_file
+            mask of the skull-stripped input file
+        out_report
+            reportlet for the skull-stripping
+
+    """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
