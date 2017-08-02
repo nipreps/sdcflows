@@ -13,7 +13,7 @@ import re
 import numpy as np
 import nibabel as nb
 
-from niworkflows.nipype.interfaces.base import BaseInterfaceInputSpec, TraitedSpec, File
+from niworkflows.nipype.interfaces.base import BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 from niworkflows.interfaces.base import SimpleInterface
 
@@ -37,6 +37,7 @@ class NormalizeSurf(SimpleInterface):
 
 class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
     in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
+    func = traits.Bool(False, usedefault=True, desc='generate functional surface filenames')
 
 
 class GiftiNameSourceOutputSpec(TraitedSpec):
@@ -47,8 +48,20 @@ class GiftiNameSource(SimpleInterface):
     input_spec = GiftiNameSourceInputSpec
     output_spec = GiftiNameSourceOutputSpec
 
+    _anat_patterns = (r'(?P<LR>[lr])h.(?P<surf>.+)_converted.gii',
+                      '{surf}.{LR}.surf'.format)
+    _func_patterns = (r'(?P<LR>[lr])h.(?P<space>\w+).gii',
+                      'space-{space}.{LR}.func'.format)
+
     def _run_interface(self, runtime):
-        self._results['out_file'] = get_gifti_name(self.inputs.in_file)
+        pattern, fileformat = (self._func_patterns if self.inputs.func
+                               else self._anat_patterns)
+        in_format = re.compile(pattern)
+
+        in_file = os.path.basename(self.inputs.in_file)
+        info = in_format.match(in_file).groupdict()
+        info['LR'] = info['LR'].upper()
+        self._results['out_file'] = fileformat(**info)
         return runtime
 
 
@@ -123,11 +136,3 @@ def normalize_surfs(in_file):
             pointset.meta.data.insert(2, geom_type)
     img.to_filename(fname)
     return os.path.abspath(fname)
-
-
-def get_gifti_name(in_file):
-    in_format = re.compile(r'(?P<LR>[lr])h.(?P<surf>.+)_converted.gii')
-    name = os.path.basename(in_file)
-    info = in_format.match(name).groupdict()
-    info['LR'] = info['LR'].upper()
-    return '{surf}.{LR}.surf'.format(**info)

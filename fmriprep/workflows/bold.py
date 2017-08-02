@@ -1173,7 +1173,9 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                          ('melodic_mix', 'in_file')]),
         ])
 
-    name_surfs = pe.MapNode(GiftiNameSource(), iterfield='in_file', name='name_surfs',
+    name_surfs = pe.MapNode(GiftiNameSource(func=True),
+                            iterfield='in_file',
+                            name='name_surfs',
                             mem_gb=DEFAULT_MEMORY_MIN_GB,
                             run_without_submitting=True)
     ds_bold_surfs = pe.MapNode(DerivativesDataSink(base_directory=output_dir),
