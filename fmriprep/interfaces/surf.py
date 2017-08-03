@@ -50,8 +50,6 @@ class GiftiNameSource(SimpleInterface):
     output_spec = GiftiNameSourceOutputSpec
 
     def _run_interface(self, runtime):
-        pattern, fileformat = (self._func_patterns if self.inputs.func
-                               else self._anat_patterns)
         in_format = re.compile(self.inputs.pattern)
         in_file = os.path.basename(self.inputs.in_file)
         info = in_format.match(in_file).groupdict()
