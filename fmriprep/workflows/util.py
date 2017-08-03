@@ -19,7 +19,8 @@ from niworkflows.interfaces.masks import SimpleShowMaskRPT
 from ..interfaces.images import extract_wm
 
 
-def init_enhance_and_skullstrip_bold_wf(omp_nthreads, name='enhance_and_skullstrip_bold_wf'):
+def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
+                                        omp_nthreads=1):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')

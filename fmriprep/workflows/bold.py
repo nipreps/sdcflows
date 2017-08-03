@@ -122,24 +122,27 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     workflow.connect([
         (inputnode, func_reports_wf, [('bold_file', 'inputnode.source_file')]),
         (inputnode, func_derivatives_wf, [('bold_file', 'inputnode.source_file')]),
-        (outputnode, func_derivatives_wf, [('bold_t1', 'inputnode.bold_t1'),
-                                           ('bold_mask_t1', 'inputnode.bold_mask_t1'),
-                                           ('bold_mni', 'inputnode.bold_mni'),
-                                           ('bold_mask_mni', 'inputnode.bold_mask_mni'),
-                                           ('confounds', 'inputnode.confounds'),
-                                           ('surfaces', 'inputnode.surfaces'),
-                                           ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
-                                           ('melodic_mix', 'inputnode.melodic_mix')
-                                           ]),
+        (outputnode, func_derivatives_wf, [
+            ('bold_t1', 'inputnode.bold_t1'),
+            ('bold_mask_t1', 'inputnode.bold_mask_t1'),
+            ('bold_mni', 'inputnode.bold_mni'),
+            ('bold_mask_mni', 'inputnode.bold_mask_mni'),
+            ('confounds', 'inputnode.confounds'),
+            ('surfaces', 'inputnode.surfaces'),
+            ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
+            ('melodic_mix', 'inputnode.melodic_mix')
+        ]),
     ])
 
     validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
                        run_without_submitting=True)
 
     # HMC on the BOLD
-    bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf', metadata=metadata,
+    bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf',
+                                   metadata=metadata,
                                    bold_file_size_gb=bold_file_size_gb,
-                                   ignore=ignore)
+                                   ignore=ignore,
+                                   omp_nthreads=omp_nthreads)
 
     # mean BOLD registration to T1w
     bold_reg_wf = init_bold_reg_wf(name='bold_reg_wf',
@@ -176,15 +179,18 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (bold_hmc_wf, bold_reg_wf, [('outputnode.bold_split', 'inputnode.bold_split'),
                                     ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (bold_hmc_wf, bold_confounds_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
-        (bold_reg_wf, bold_confounds_wf, [('outputnode.bold_t1', 'inputnode.fmri_file'),
-                                 ('outputnode.bold_mask_t1', 'inputnode.bold_mask')]),
+        (bold_reg_wf, bold_confounds_wf, [
+            ('outputnode.bold_t1', 'inputnode.fmri_file'),
+            ('outputnode.bold_mask_t1', 'inputnode.bold_mask')]),
         (validate, func_reports_wf, [('out_report', 'inputnode.validation_report')]),
         (bold_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.bold_reg_report'),
         ]),
-        (bold_confounds_wf, outputnode, [('outputnode.confounds_file', 'confounds'),
-                                ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
-                                ('outputnode.melodic_mix', 'melodic_mix')]),
+        (bold_confounds_wf, outputnode, [
+            ('outputnode.confounds_file', 'confounds'),
+            ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
+            ('outputnode.melodic_mix', 'melodic_mix'),
+        ]),
         (bold_reg_wf, outputnode, [('outputnode.bold_t1', 'bold_t1'),
                                    ('outputnode.bold_mask_t1', 'bold_mask_t1')]),
         (bold_confounds_wf, func_reports_wf, [
@@ -376,7 +382,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
 # pylint: disable=R0914
 def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
-                     name='bold_hmc_wf'):
+                     name='bold_hmc_wf', omp_nthreads=1):
     """
     Performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
@@ -401,7 +407,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                          iterfield=['transform_file'], name='hcm2itk',
                          mem_gb=0.05)
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
+        omp_nthreads=omp_nthreads)
 
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
                       mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
