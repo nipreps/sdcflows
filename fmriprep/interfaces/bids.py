@@ -19,7 +19,6 @@ Fetch some example data:
     >>> os.chdir(data_root)
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op

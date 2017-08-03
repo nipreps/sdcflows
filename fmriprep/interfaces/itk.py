@@ -8,7 +8,6 @@ ITK files handling
 
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import numpy as np
 import nibabel as nb

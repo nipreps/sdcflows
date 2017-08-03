@@ -16,7 +16,6 @@ This corresponds to the section 8.9.3 --fieldmap image (and one magnitude image)
 of the BIDS specification.
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu, fsl, ants

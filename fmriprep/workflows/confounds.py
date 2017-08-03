@@ -6,7 +6,6 @@
 Workflow for discovering confounds.
 Calculates frame displacement, segment regressors, global regressor, dvars, aCompCor, tCompCor
 '''
-from __future__ import print_function, division, absolute_import, unicode_literals
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu, fsl
 from niworkflows.nipype.interfaces.nilearn import SignalExtraction

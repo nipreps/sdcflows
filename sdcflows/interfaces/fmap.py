@@ -6,7 +6,6 @@
 Interfaces to deal with the various types of fieldmap sources
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 from builtins import range
