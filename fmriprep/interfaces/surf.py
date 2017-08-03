@@ -42,7 +42,7 @@ class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
 
 
 class GiftiNameSourceOutputSpec(TraitedSpec):
-    out_name = traits.Str(desc='filename or partial filename formatted according to template')
+    out_name = traits.Str(desc='(partial) filename formatted according to template')
 
 
 class GiftiNameSource(SimpleInterface):
