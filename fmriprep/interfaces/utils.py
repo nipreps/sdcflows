@@ -7,6 +7,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import numpy as np
 import nibabel as nb
+import pandas as pd
 import scipy.ndimage as nd
 from nilearn.image import resample_to_img
 
@@ -48,6 +49,7 @@ class TPM2ROIInputSpec(BaseInterfaceInputSpec):
                                  desc='erode input mask (kernel width in mm)')
     erode_mm = traits.Float(0.0, usedefault=True,
                             desc='erode output mask (kernel width in mm)')
+
 
 class TPM2ROIOutputSpec(TraitedSpec):
     roi_file = File(exists=True, desc='output ROI file')
@@ -128,6 +130,7 @@ class AddTSVHeader(SimpleInterface):
     def _run_interface(self, runtime):
         self._results['out_file'] = _add_tsv_header(self.inputs.in_file, self.inputs.columns)
         return runtime
+
 
 def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
     """

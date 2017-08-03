@@ -15,7 +15,9 @@ from niworkflows.nipype.algorithms import confounds as nac
 from niworkflows.interfaces import segmentation as nws
 from niworkflows.interfaces.masks import ACompCorRPT, TCompCorRPT
 
-from ..interfaces import TPM2ROI, ConcatROIs, CombineROIs, AddTSVHeader, GatherConfounds
+from ..interfaces import (
+    TPM2ROI, ConcatROIs, CombineROIs, AddTSVHeader, GatherConfounds, ICAConfounds
+)
 
 
 def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
@@ -51,7 +53,7 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
     # Frame displacement
     fdisp = pe.Node(nac.FramewiseDisplacement(parameter_source="SPM"),
-                             name="fdisp", mem_gb=bold_file_size_gb * 3)
+                    name="fdisp", mem_gb=bold_file_size_gb * 3)
 
     # CompCor
     non_steady_state = pe.Node(nac.NonSteadyStateDetector(), name='non_steady_state')
@@ -61,9 +63,11 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
                                    save_pre_filter=True,
                                    percentile_threshold=.05),
                        name="tcompcor", mem_gb=bold_file_size_gb * 3)
-
-    if 'RepetitionTime' in metadata:
-        tcompcor.inputs.repetition_time = metadata['RepetitionTime']
+    acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
+                                   pre_filter='cosine',
+                                   save_pre_filter=True,
+                                   generate_report=True),
+                       name="acompcor", mem_gb=bold_file_size_gb * 3)
 
     csf_roi = pe.Node(TPM2ROI(erode_mm=0, mask_erode_mm=30), name='csf_roi')
     wm_roi = pe.Node(TPM2ROI(erode_mm=6, mask_erode_mm=10), name='wm_roi')
@@ -76,20 +80,15 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
                                        class_labels=["WhiteMatter", "GlobalSignal"]),
                       name="signals", mem_gb=bold_file_size_gb * 3)
 
-
-    acompcor = pe.Node(ACompCorRPT(components_file='acompcor.tsv',
-                                   pre_filter='cosine',
-                                   save_pre_filter=True,
-                                   generate_report=True),
-                       name="acompcor", mem_gb=bold_file_size_gb * 3)
-
-    if 'RepetitionTime' in metadata:
-        acompcor.inputs.repetition_time = metadata['RepetitionTime']
-
     # Arrange confounds
     add_header = pe.Node(AddTSVHeader(columns=["X", "Y", "Z", "RotX", "RotY", "RotZ"]),
                          name="add_header", mem_gb=0.01, run_without_submit=True)
     concat = pe.Node(GatherConfounds(), name="concat", mem_gb=0.01, run_without_submit=True)
+
+    # Set TR if present
+    if 'RepetitionTime' in metadata:
+        tcompcor.inputs.repetition_time = metadata['RepetitionTime']
+        acompcor.inputs.repetition_time = metadata['RepetitionTime']
 
     def _pick_csf(files):
         return files[0]
@@ -192,66 +191,42 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         fields=['aroma_confounds', 'out_report',
                 'aroma_noise_ics', 'melodic_mix']), name='outputnode')
 
-    # helper function to get
-    # smoothing node (SUSAN)
-    # functions to help set SUSAN
-    def getbtthresh(medianval):
-        return 0.75 * medianval
+    calc_median_val = pe.Node(fsl.ImageStats(op_string='-k %s -p 50'), name='calc_median_val')
+    calc_bold_mean = pe.Node(fsl.MeanImage(), name='calc_bold_mean')
 
     def getusans_func(image, thresh):
         return [tuple([image, thresh])]
+    getusans = pe.Node(niu.Function(
+        function=getusans_func, input_names=['image', 'thresh'], output_names=['usans']),
+        name='getusans', run_without_submit=True, mem_gb=0.01)
 
-    calc_median_val = pe.Node(fsl.ImageStats(op_string='-k %s -p 50'),
-                              name='calc_median_val')
-
-    calc_bold_mean = pe.Node(fsl.MeanImage(),
-                             name='calc_bold_mean')
-
-    brightness_threshold = pe.Node(
-        niu.Function(function=getbtthresh,
-                         input_names=['medianval'],
-                         output_names=['thresh']),
-        name='brightness_threshold')
-
-    getusans = pe.Node(
-        niu.Function(function=getusans_func,
-                         input_names=['image', 'thresh'],
-                         output_names=['usans']),
-        name='getusans')
-
-    smooth = pe.Node(fsl.SUSAN(fwhm=6.0),
-                     name='smooth')
+    smooth = pe.Node(fsl.SUSAN(fwhm=6.0), name='smooth')
 
     # melodic node
-    melodic = pe.Node(
-        nws.MELODICRPT(no_bet=True,
-                       no_mm=True,
-                       generate_report=True),
-        name="melodic")
+    melodic = pe.Node(nws.MELODICRPT(no_bet=True, no_mm=True, generate_report=True),
+                      name="melodic")
 
     # ica_aroma node
     ica_aroma = pe.Node(fsl.ICA_AROMA(denoise_type='no'), name='ica_aroma')
 
     # extract the confound ICs from the results
-    ica_aroma_confound_extraction = pe.Node(
-        niu.Function(function=get_ica_confounds,
-                         input_names=['ica_out_dir', 'ignore_aroma_err'],
-                         output_names=['aroma_confounds', 'aroma_noise_ics', 'melodic_mix']),
-        name='ica_aroma_confound_extraction')
-    ica_aroma_confound_extraction.inputs.ignore_aroma_err = ignore_aroma_err
+    ica_aroma_confound_extraction = pe.Node(ICAConfounds(ignore_aroma_err=ignore_aroma_err),
+                                            name='ica_aroma_confound_extraction')
+
+    def _getbtthresh(medianval):
+        return 0.75 * medianval
 
     # connect the nodes
     workflow.connect([
         # Connect input nodes to complete smoothing
         (inputnode, calc_median_val, [('bold_mni', 'in_file'),
                                       ('bold_mask_mni', 'mask_file')]),
-        (calc_median_val, brightness_threshold, [('out_stat', 'medianval')]),
         (inputnode, calc_bold_mean, [('bold_mni', 'in_file')]),
         (calc_bold_mean, getusans, [('out_file', 'image')]),
         (calc_median_val, getusans, [('out_stat', 'thresh')]),
         (inputnode, smooth, [('bold_mni', 'in_file')]),
         (getusans, smooth, [('usans', 'usans')]),
-        (brightness_threshold, smooth, [('thresh', 'brightness_threshold')]),
+        (calc_median_val, smooth, [(('out_stat', _getbtthresh), 'brightness_threshold')]),
         # connect smooth to melodic
         (smooth, melodic, [('smoothed_file', 'in_files')]),
         (inputnode, melodic, [('bold_mask_mni', 'report_mask'),
