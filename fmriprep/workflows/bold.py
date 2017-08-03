@@ -30,7 +30,7 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiUpdateMeta
+    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure
 )
 from ..interfaces.images import GenerateSamplingReference, extract_wm
 from ..interfaces.nilearn import Merge
@@ -92,11 +92,11 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     # Build workflow
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['bold', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
+        fields=['bold_file', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
                 't1_2_mni_forward_transform', 't1_2_mni_reverse_transform',
                 'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
         name='inputnode')
-    inputnode.inputs.bold = bold_file
+    inputnode.inputs.bold_file = bold_file
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_t1', 'bold_mask_t1', 'bold_mni', 'bold_mask_mni', 'confounds', 'surfaces',
@@ -120,8 +120,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                                    use_aroma=use_aroma)
 
     workflow.connect([
-        (inputnode, func_reports_wf, [('bold', 'inputnode.source_file')]),
-        (inputnode, func_derivatives_wf, [('bold', 'inputnode.source_file')]),
+        (inputnode, func_reports_wf, [('bold_file', 'inputnode.source_file')]),
+        (inputnode, func_derivatives_wf, [('bold_file', 'inputnode.source_file')]),
         (outputnode, func_derivatives_wf, [('bold_t1', 'inputnode.bold_t1'),
                                            ('bold_mask_t1', 'inputnode.bold_mask_t1'),
                                            ('bold_mni', 'inputnode.bold_mni'),
@@ -133,7 +133,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                            ]),
     ])
 
-    validate = pe.Node(ValidateImage(), name='validate', mem_gb=0.05)
+    validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
+                       run_without_submitting=True)
 
     # HMC on the BOLD
     bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf', metadata=metadata,
@@ -150,17 +151,18 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                    use_fieldwarp=(fmaps is not None or use_syn))
 
     # get confounds
-    confs_wf = confounds.init_discover_wf(bold_file_size_gb=bold_file_size_gb,
-                                          use_aroma=use_aroma,
-                                          ignore_aroma_err=ignore_aroma_err,
-                                          metadata=metadata,
-                                          name='bold_confounds_wf')
-    confs_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
+    bold_confounds_wf = confounds.init_bold_confs_wf(
+        bold_file_size_gb=bold_file_size_gb,
+        use_aroma=use_aroma,
+        ignore_aroma_err=ignore_aroma_err,
+        metadata=metadata,
+        name='bold_confounds_wf')
+    bold_confounds_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     workflow.connect([
-        (inputnode, validate, [('bold', 'in_file')]),
-        (validate, bold_hmc_wf, [('out_file', 'inputnode.bold')]),
-        (inputnode, bold_reg_wf, [('bold', 'inputnode.name_source'),
+        (inputnode, validate, [('bold_file', 'in_file')]),
+        (validate, bold_hmc_wf, [('out_file', 'inputnode.bold_file')]),
+        (inputnode, bold_reg_wf, [('bold_file', 'inputnode.name_source'),
                                   ('t1_preproc', 'inputnode.t1_preproc'),
                                   ('t1_brain', 'inputnode.t1_brain'),
                                   ('t1_mask', 'inputnode.t1_mask'),
@@ -170,26 +172,26 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   ('subject_id', 'inputnode.subject_id'),
                                   ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                   ]),
-        (inputnode, confs_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
+        (inputnode, bold_confounds_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
         (bold_hmc_wf, bold_reg_wf, [('outputnode.bold_split', 'inputnode.bold_split'),
                                     ('outputnode.xforms', 'inputnode.hmc_xforms')]),
-        (bold_hmc_wf, confs_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
-        (bold_reg_wf, confs_wf, [('outputnode.bold_t1', 'inputnode.fmri_file'),
+        (bold_hmc_wf, bold_confounds_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
+        (bold_reg_wf, bold_confounds_wf, [('outputnode.bold_t1', 'inputnode.fmri_file'),
                                  ('outputnode.bold_mask_t1', 'inputnode.bold_mask')]),
         (validate, func_reports_wf, [('out_report', 'inputnode.validation_report')]),
         (bold_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.bold_reg_report'),
         ]),
-        (confs_wf, outputnode, [('outputnode.confounds_file', 'confounds'),
+        (bold_confounds_wf, outputnode, [('outputnode.confounds_file', 'confounds'),
                                 ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
                                 ('outputnode.melodic_mix', 'melodic_mix')]),
         (bold_reg_wf, outputnode, [('outputnode.bold_t1', 'bold_t1'),
                                    ('outputnode.bold_mask_t1', 'bold_mask_t1')]),
-        (confs_wf, func_reports_wf, [
+        (bold_confounds_wf, func_reports_wf, [
             ('outputnode.acompcor_report', 'inputnode.acompcor_report'),
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
-        (confs_wf, summary, [('outputnode.confounds_list', 'confounds')]),
+        (bold_confounds_wf, summary, [('outputnode.confounds_list', 'confounds')]),
         (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
     ])
 
@@ -207,7 +209,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     nonlinear_sdc_wf = sdc_unwarp_wf = None
 
     if fmaps:
-        # In case there are multiple fieldmaps prefer BOLD
+        # In case there are multiple fieldmaps prefer EPI
         fmaps.sort(key=lambda fmap: {'epi': 0, 'fieldmap': 1, 'phasediff': 2}[fmap['type']])
         fmap = fmaps[0]
 
@@ -244,7 +246,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
         # Connections and workflows common for all types of fieldmaps
         workflow.connect([
-            (inputnode, sdc_unwarp_wf, [('bold', 'inputnode.name_source')]),
+            (inputnode, sdc_unwarp_wf, [('bold_file', 'inputnode.name_source')]),
             (bold_hmc_wf, sdc_unwarp_wf, [
                 ('outputnode.ref_image', 'inputnode.in_reference'),
                 ('outputnode.ref_image_brain', 'inputnode.in_reference_brain'),
@@ -260,15 +262,17 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         # Report on BOLD correction
         fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(reportlets_dir=reportlets_dir,
                                                            name='fmap_unwarp_report_wf')
-        workflow.connect([(inputnode, fmap_unwarp_report_wf, [('t1_seg', 'inputnode.in_seg'),
-                                                              ('bold', 'inputnode.name_source')]),
-                          (bold_hmc_wf, fmap_unwarp_report_wf, [
-                              ('outputnode.ref_image', 'inputnode.in_pre')]),
-                          (sdc_unwarp_wf, fmap_unwarp_report_wf, [
-                              ('outputnode.out_reference', 'inputnode.in_post')]),
-                          (bold_reg_wf, fmap_unwarp_report_wf, [
-                              ('outputnode.itk_t1_to_bold', 'inputnode.in_xfm')]),
-                          ])
+        workflow.connect([
+            (inputnode, fmap_unwarp_report_wf, [
+                ('t1_seg', 'inputnode.in_seg'),
+                ('bold_file', 'inputnode.name_source')]),
+            (bold_hmc_wf, fmap_unwarp_report_wf, [
+                ('outputnode.ref_image', 'inputnode.in_pre')]),
+            (sdc_unwarp_wf, fmap_unwarp_report_wf, [
+                ('outputnode.out_reference', 'inputnode.in_post')]),
+            (bold_reg_wf, fmap_unwarp_report_wf, [
+                ('outputnode.itk_t1_to_bold', 'inputnode.in_xfm')]),
+        ])
     elif not use_syn:
         LOGGER.warn('No fieldmaps found or they were ignored, building base workflow '
                     'for dataset %s.', bold_file)
@@ -324,7 +328,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
         workflow.connect([
             (inputnode, bold_mni_trans_wf, [
-                ('bold', 'inputnode.name_source'),
+                ('bold_file', 'inputnode.name_source'),
                 ('t1_2_mni_forward_transform', 'inputnode.t1_2_mni_forward_transform')]),
             (bold_hmc_wf, bold_mni_trans_wf, [
                 ('outputnode.bold_split', 'inputnode.bold_split'),
@@ -333,7 +337,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('outputnode.itk_bold_to_t1', 'inputnode.itk_bold_to_t1')]),
             (bold_mni_trans_wf, outputnode, [('outputnode.bold_mni', 'bold_mni'),
                                              ('outputnode.bold_mask_mni', 'bold_mask_mni')]),
-            (bold_mni_trans_wf, confs_wf, [
+            (bold_mni_trans_wf, bold_confounds_wf, [
                 ('outputnode.bold_mask_mni', 'inputnode.bold_mask_mni'),
                 ('outputnode.bold_mni', 'inputnode.bold_mni')])
         ])
@@ -378,7 +382,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
     """
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['bold']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file']),
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['xforms', 'bold_hmc', 'bold_split', 'bold_mask', 'ref_image',
@@ -386,7 +390,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                 'bold_mask_report']), name='outputnode')
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
-                               name="normalize_motion", mem_gb=0.05)
+                               name="normalize_motion",
+                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
@@ -402,7 +407,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                       mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
 
     workflow.connect([
-        (inputnode, gen_ref, [('bold', 'in_file')]),
+        (inputnode, gen_ref, [('bold_file', 'in_file')]),
         (gen_ref, enhance_and_skullstrip_bold_wf, [('ref_image', 'inputnode.in_file')]),
         (gen_ref, hmc, [('ref_image', 'ref_file')]),
         (enhance_and_skullstrip_bold_wf, outputnode, [
@@ -444,7 +449,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             return "@" + x
 
         workflow.connect([
-            (inputnode, slice_timing_correction, [('bold', 'in_file')]),
+            (inputnode, slice_timing_correction, [('bold_file', 'in_file')]),
             (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [
                 (('out', _prefix_at), 'tpattern')]),
@@ -453,7 +458,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     else:
         workflow.connect([
-            (inputnode, hmc, [('bold', 'in_file')])
+            (inputnode, hmc, [('bold_file', 'in_file')])
         ])
 
     workflow.connect([
@@ -463,7 +468,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
-        (inputnode, split, [('bold', 'in_file')]),
+        (inputnode, split, [('bold_file', 'in_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
 
@@ -636,7 +641,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
                          joinsource='sampler', joinfield=['in1'], run_without_submitting=True,
                          mem_gb=DEFAULT_MEMORY_MIN_GB)
 
-    update_metadata = pe.MapNode(GiftiUpdateMeta(), iterfield='in_file',
+    update_metadata = pe.MapNode(GiftiSetAnatomicalStructure(), iterfield='in_file',
                                  name='update_metadata', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
@@ -1173,7 +1178,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                          ('melodic_mix', 'in_file')]),
         ])
 
-    name_surfs = pe.MapNode(GiftiNameSource(func=True),
+    name_surfs = pe.MapNode(GiftiNameSource(pattern=r'(?P<LR>[lr])h.(?P<space>\w+).gii',
+                                            template='space-{space}.{LR}.func'),
                             iterfield='in_file',
                             name='name_surfs',
                             mem_gb=DEFAULT_MEMORY_MIN_GB,

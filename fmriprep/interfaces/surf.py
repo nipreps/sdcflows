@@ -37,45 +37,42 @@ class NormalizeSurf(SimpleInterface):
 
 class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
     in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
-    func = traits.Bool(False, usedefault=True, desc='generate functional surface filenames')
+    pattern = traits.Str(mandatory=True, desc='input file name pattern')
+    template = traits.Str(mandatory=True, desc='output file name template')
 
 
 class GiftiNameSourceOutputSpec(TraitedSpec):
-    out_file = File(desc='output file with re-centered GIFTI coordinates')
+    out_file = File(desc='output file with updated AnatomicalStructurePrimary entry')
 
 
 class GiftiNameSource(SimpleInterface):
     input_spec = GiftiNameSourceInputSpec
     output_spec = GiftiNameSourceOutputSpec
 
-    _anat_patterns = (r'(?P<LR>[lr])h.(?P<surf>.+)_converted.gii',
-                      '{surf}.{LR}.surf'.format)
-    _func_patterns = (r'(?P<LR>[lr])h.(?P<space>\w+).gii',
-                      'space-{space}.{LR}.func'.format)
-
     def _run_interface(self, runtime):
         pattern, fileformat = (self._func_patterns if self.inputs.func
                                else self._anat_patterns)
-        in_format = re.compile(pattern)
-
+        in_format = re.compile(self.inputs.pattern)
         in_file = os.path.basename(self.inputs.in_file)
         info = in_format.match(in_file).groupdict()
         info['LR'] = info['LR'].upper()
-        self._results['out_file'] = fileformat(**info)
+        filefmt = self.inputs.template
+        self._results['out_file'] = filefmt.format(**info)
         return runtime
 
 
-class GiftiUpdateMetaInputSpec(BaseInterfaceInputSpec):
-    in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
+class GiftiSetAnatomicalStructureInputSpec(BaseInterfaceInputSpec):
+    in_file = File(mandatory=True, exists=True,
+                   desc='GIFTI file beginning with "lh." or "rh."')
 
 
-class GiftiUpdateMetaOutputSpec(TraitedSpec):
+class GiftiSetAnatomicalStructureOutputSpec(TraitedSpec):
     out_file = File(desc='output file with re-centered GIFTI coordinates')
 
 
-class GiftiUpdateMeta(SimpleInterface):
-    input_spec = GiftiUpdateMetaInputSpec
-    output_spec = GiftiUpdateMetaOutputSpec
+class GiftiSetAnatomicalStructure(SimpleInterface):
+    input_spec = GiftiSetAnatomicalStructureInputSpec
+    output_spec = GiftiSetAnatomicalStructureOutputSpec
 
     def _run_interface(self, runtime):
         img = nb.load(self.inputs.in_file)

@@ -18,8 +18,8 @@ from niworkflows.nipype.interfaces.nilearn import SignalExtraction
 from fmriprep.interfaces.utils import prepare_roi_from_probtissue
 
 
-def init_discover_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
-                     name="discover_wf"):
+def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
+                       name="discover_wf"):
     ''' All input fields are required.
 
     Calculates global regressor and tCompCor
