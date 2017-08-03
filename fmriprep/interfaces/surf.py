@@ -56,7 +56,7 @@ class GiftiNameSource(SimpleInterface):
         info = in_format.match(in_file).groupdict()
         info['LR'] = info['LR'].upper()
         filefmt = self.inputs.template
-        self._results['out_file'] = filefmt.format(**info)
+        self._results['out_name'] = filefmt.format(**info)
         return runtime
 
 
