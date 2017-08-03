@@ -13,7 +13,7 @@ import re
 import numpy as np
 import nibabel as nb
 
-from niworkflows.nipype.interfaces.base import BaseInterfaceInputSpec, TraitedSpec, File
+from niworkflows.nipype.interfaces.base import BaseInterfaceInputSpec, TraitedSpec, File, traits
 
 from niworkflows.interfaces.base import SimpleInterface
 
@@ -37,10 +37,13 @@ class NormalizeSurf(SimpleInterface):
 
 class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
     in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
+    pattern = traits.Str(mandatory=True,
+                         desc='input file name pattern (must capture named group "LR")')
+    template = traits.Str(mandatory=True, desc='output file name template')
 
 
 class GiftiNameSourceOutputSpec(TraitedSpec):
-    out_file = File(desc='output file with re-centered GIFTI coordinates')
+    out_name = traits.Str(desc='(partial) filename formatted according to template')
 
 
 class GiftiNameSource(SimpleInterface):
@@ -48,7 +51,42 @@ class GiftiNameSource(SimpleInterface):
     output_spec = GiftiNameSourceOutputSpec
 
     def _run_interface(self, runtime):
-        self._results['out_file'] = get_gifti_name(self.inputs.in_file)
+        in_format = re.compile(self.inputs.pattern)
+        in_file = os.path.basename(self.inputs.in_file)
+        info = in_format.match(in_file).groupdict()
+        info['LR'] = info['LR'].upper()
+        filefmt = self.inputs.template
+        self._results['out_name'] = filefmt.format(**info)
+        return runtime
+
+
+class GiftiSetAnatomicalStructureInputSpec(BaseInterfaceInputSpec):
+    in_file = File(mandatory=True, exists=True,
+                   desc='GIFTI file beginning with "lh." or "rh."')
+
+
+class GiftiSetAnatomicalStructureOutputSpec(TraitedSpec):
+    out_file = File(desc='output file with updated AnatomicalStructurePrimary entry')
+
+
+class GiftiSetAnatomicalStructure(SimpleInterface):
+    input_spec = GiftiSetAnatomicalStructureInputSpec
+    output_spec = GiftiSetAnatomicalStructureOutputSpec
+
+    def _run_interface(self, runtime):
+        img = nb.load(self.inputs.in_file)
+        fname = os.path.basename(self.inputs.in_file)
+        if fname[:3] in ('lh.', 'rh.'):
+            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+        else:
+            raise ValueError(
+                "AnatomicalStructurePrimary cannot be derived from filename")
+        primary = nb.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
+        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
+            img.meta.data.insert(0, primary)
+        out_file = os.path.abspath(fname)
+        img.to_filename(out_file)
+        self._results['out_file'] = out_file
         return runtime
 
 
@@ -94,11 +132,3 @@ def normalize_surfs(in_file):
             pointset.meta.data.insert(2, geom_type)
     img.to_filename(fname)
     return os.path.abspath(fname)
-
-
-def get_gifti_name(in_file):
-    in_format = re.compile(r'(?P<LR>[lr])h.(?P<surf>.+)_converted.gii')
-    name = os.path.basename(in_file)
-    info = in_format.match(name).groupdict()
-    info['LR'] = info['LR'].upper()
-    return '{surf}.{LR}.surf'.format(**info)

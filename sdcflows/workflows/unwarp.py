@@ -26,12 +26,8 @@ from niworkflows.nipype.interfaces import afni, ants, fsl, utility as niu
 from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from fmriprep.interfaces import itk
-from fmriprep.interfaces import ReadSidecarJSON
-from fmriprep.interfaces.bids import DerivativesDataSink
-
-from fmriprep.interfaces import StructuralReference
-from fmriprep.workflows.util import init_enhance_and_skullstrip_epi_wf
+from ...interfaces import itk, ReadSidecarJSON, StructuralReference, DerivativesDataSink
+from ...workflows.util import init_enhance_and_skullstrip_bold_wf
 
 
 def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
@@ -154,7 +150,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
     apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
 
-    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     workflow.connect([
         (inputnode, meta, [('name_source', 'in_file')]),
@@ -188,9 +184,9 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (fmap2ref_reg, fmap_fov2ref_apply, [('composite_transform', 'transforms')]),
         (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
         (unwarp_reference, apply_fov_mask, [('output_image', 'in_file')]),
-        (apply_fov_mask, enhance_and_skullstrip_epi_wf, [('out_file', 'inputnode.in_file')]),
+        (apply_fov_mask, enhance_and_skullstrip_bold_wf, [('out_file', 'inputnode.in_file')]),
         (apply_fov_mask, outputnode, [('out_file', 'out_reference')]),
-        (enhance_and_skullstrip_epi_wf, outputnode, [
+        (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
             ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
@@ -361,7 +357,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     workflow.connect([
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
@@ -370,9 +366,10 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         (to_ants, unwarp_reference, [('out', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
                                        ('in_reference', 'input_image')]),
-        (unwarp_reference, enhance_and_skullstrip_epi_wf, [('output_image', 'inputnode.in_file')]),
+        (unwarp_reference, enhance_and_skullstrip_bold_wf, [
+            ('output_image', 'inputnode.in_file')]),
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (enhance_and_skullstrip_epi_wf, outputnode, [
+        (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
             ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
@@ -434,7 +431,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
                             out_file='template.nii.gz'),
         name='merge')
 
-    enhance_and_skullstrip_epi_wf = init_enhance_and_skullstrip_epi_wf()
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
+        omp_nthreads=ants_nthreads)
 
     ants_settings = pkgr.resource_filename('fmriprep',
                                            'data/translation_rigid.json')
@@ -453,8 +451,8 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
     workflow.connect([
         (inputnode, split, [('fmaps', 'in_file')]),
         (split, merge, [(('out_files', _flatten), 'in_files')]),
-        (merge, enhance_and_skullstrip_epi_wf, [('out_file', 'inputnode.in_file')]),
-        (enhance_and_skullstrip_epi_wf, fmap2ref_reg, [
+        (merge, enhance_and_skullstrip_bold_wf, [('out_file', 'inputnode.in_file')]),
+        (enhance_and_skullstrip_bold_wf, fmap2ref_reg, [
             ('outputnode.skull_stripped_file', 'moving_image')]),
         (inputnode, fmap2ref_reg, [('ref_brain', 'fixed_image')]),
         (fmap2ref_reg, outputnode, [('warped_image', 'out_file')]),

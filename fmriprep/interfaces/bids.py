@@ -147,7 +147,7 @@ class DerivativesDataSink(SimpleInterface):
     >>> open(tmpfile, 'w').close()  # "touch" the file
     >>> dsink = DerivativesDataSink(base_directory=tmpdir)
     >>> dsink.inputs.in_file = tmpfile
-    >>> dsink.inputs.source_file = collect_data('ds114', '01')['t1w'][0]
+    >>> dsink.inputs.source_file = collect_data('ds114', '01')[0]['t1w'][0]
     >>> dsink.inputs.suffix = 'target-mni'
     >>> res = dsink.run()
     >>> res.outputs.out_file  # doctest: +ELLIPSIS

@@ -5,7 +5,7 @@ import mock
 
 import pandas as pd
 
-from fmriprep.workflows.confounds import init_discover_wf, _gather_confounds
+from fmriprep.workflows.confounds import init_bold_confs_wf, _gather_confounds
 
 from test.workflows.utilities import TestWorkflow
 
@@ -17,7 +17,7 @@ class TestConfounds(TestWorkflow):
 
     def test_discover_wf(self):
         # run
-        workflow = init_discover_wf(
+        workflow = init_bold_confs_wf(
             bold_file_size_gb=1, use_aroma=False, ignore_aroma_err=False,
             metadata={"RepetitionTime": 2.0,
                       "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]})

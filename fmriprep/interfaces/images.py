@@ -333,8 +333,8 @@ class ValidateImage(SimpleInterface):
 class InvertT1wInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True,
                    desc='Skull-stripped T1w structural image')
-    epi_ref = File(exists=True, mandatory=True,
-                   desc='Skull-stripped EPI reference image')
+    ref_file = File(exists=True, mandatory=True,
+                    desc='Skull-stripped reference image')
 
 
 class InvertT1wOutputSpec(TraitedSpec):
@@ -348,7 +348,7 @@ class InvertT1w(SimpleInterface):
     def _run_interface(self, runtime):
         t1_img = nli.load_img(self.inputs.in_file)
         t1_data = t1_img.get_data()
-        epi_data = nli.load_img(self.inputs.epi_ref).get_data()
+        epi_data = nli.load_img(self.inputs.ref_file).get_data()
 
         # We assume the image is already masked
         mask = t1_data > 0
