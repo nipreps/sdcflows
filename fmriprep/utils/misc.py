@@ -10,6 +10,12 @@ Miscelaneous utilities
 def fix_multi_T1w_source_name(in_files):
     """
     Make up a generic source name when there are multiple T1s
+
+    >>> fix_multi_T1w_source_name([
+    ...     '/path/to/sub-045_ses-test_T1w.nii.gz',
+    ...     '/path/to/sub-045_ses-retest_T1w.nii.gz'])
+    '/path/to/sub-045_T1w.nii.gz'
+
     """
     import os
     if not isinstance(in_files, list):
@@ -22,6 +28,12 @@ def fix_multi_T1w_source_name(in_files):
 def add_suffix(in_files, suffix):
     """
     Wrap nipype's fname_presuffix to conveniently just add a prefix
+
+    >>> add_suffix([
+    ...     '/path/to/sub-045_ses-test_T1w.nii.gz',
+    ...     '/path/to/sub-045_ses-retest_T1w.nii.gz'], 'test')
+    'sub-045_ses-test_T1w_test.nii.gz'
+
     """
     import os.path as op
     from niworkflows.nipype.utils.filemanip import fname_presuffix, filename_to_list
