@@ -37,12 +37,12 @@ class NormalizeSurf(SimpleInterface):
 
 class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
     in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
-    pattern = traits.Str(mandatory=True, desc='input file name pattern')
+    pattern = traits.Str(mandatory=True, desc='input file name pattern (must capture named group "LR")')
     template = traits.Str(mandatory=True, desc='output file name template')
 
 
 class GiftiNameSourceOutputSpec(TraitedSpec):
-    out_file = File(desc='output file with updated AnatomicalStructurePrimary entry')
+    out_name = traits.Str(desc='filename or partial filename formatted according to template')
 
 
 class GiftiNameSource(SimpleInterface):
@@ -65,7 +65,7 @@ class GiftiSetAnatomicalStructureInputSpec(BaseInterfaceInputSpec):
 
 
 class GiftiSetAnatomicalStructureOutputSpec(TraitedSpec):
-    out_file = File(desc='output file with re-centered GIFTI coordinates')
+    out_file = File(desc='output file with updated AnatomicalStructurePrimary entry')
 
 
 class GiftiSetAnatomicalStructure(SimpleInterface):
