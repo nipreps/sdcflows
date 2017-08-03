@@ -1219,7 +1219,7 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
             (inputnode, name_surfs, [('surfaces', 'in_file')]),
             (inputnode, ds_bold_surfs, [('source_file', 'source_file'),
                                         ('surfaces', 'in_file')]),
-            (name_surfs, ds_bold_surfs, [('out_file', 'suffix')]),
+            (name_surfs, ds_bold_surfs, [('out_name', 'suffix')]),
         ])
 
     return workflow
