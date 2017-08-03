@@ -37,7 +37,8 @@ class NormalizeSurf(SimpleInterface):
 
 class GiftiNameSourceInputSpec(BaseInterfaceInputSpec):
     in_file = File(mandatory=True, exists=True, desc='input file, part of a BIDS tree')
-    pattern = traits.Str(mandatory=True, desc='input file name pattern (must capture named group "LR")')
+    pattern = traits.Str(mandatory=True,
+                         desc='input file name pattern (must capture named group "LR")')
     template = traits.Str(mandatory=True, desc='output file name template')
 
 
