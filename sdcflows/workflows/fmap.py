@@ -19,16 +19,12 @@ of the BIDS specification.
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import utility as niu
-
-from niworkflows.nipype.interfaces import fsl, ants
-from niworkflows.interfaces.masks import BETRPT
+from niworkflows.nipype.interfaces import utility as niu, fsl, ants
 # Note that deman_image imports from nipype
 from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
-from fmriprep.interfaces import IntraModalMerge
-from fmriprep.interfaces.bids import DerivativesDataSink
-from fmriprep.interfaces.fmap import FieldEnhance
-from fmriprep.interfaces.utils import ApplyMask
+from niworkflows.interfaces.masks import BETRPT
+
+from ...interfaces import IntraModalMerge, DerivativesDataSink, FieldEnhance, ApplyMask
 
 
 def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):

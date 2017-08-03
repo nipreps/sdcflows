@@ -25,8 +25,7 @@ from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_ima
     cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import ReadSidecarJSON, IntraModalMerge
-from ...interfaces.bids import DerivativesDataSink
+from ...interfaces import ReadSidecarJSON, IntraModalMerge, DerivativesDataSink
 
 
 def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
