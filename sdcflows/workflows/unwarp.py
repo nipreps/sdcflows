@@ -495,11 +495,13 @@ def _get_pedir_fugue(in_dict):
 
 def _hz2rads(in_file, out_file=None):
     """Transform a fieldmap in Hz into rad/s"""
+    import os
     from math import pi
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.filemanip import fname_presuffix
     if out_file is None:
-        out_file = genfname(in_file, 'rads')
+        out_file = fname_presuffix(in_file, suffix='rads',
+                                   newpath=os.getcwd())
     nii = nb.load(in_file)
     data = nii.get_data() * 2.0 * pi
     nb.Nifti1Image(data, nii.get_affine(),
@@ -508,12 +510,14 @@ def _hz2rads(in_file, out_file=None):
 
 
 def _demean(in_file, in_mask, out_file=None):
+    import os
     import numpy as np
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = genfname(in_file, 'demeaned')
+        out_file = fname_presuffix(in_file, suffix='demeaned',
+                                   newpath=os.getcwd())
     nii = nb.load(in_file)
     msk = nb.load(in_mask).get_data()
     data = nii.get_data()

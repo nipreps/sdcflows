@@ -60,13 +60,14 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
                       name='fmapmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
-    n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
-                         name='n4_correct')
+    n4_correct = pe.Node(ants.N4BiasFieldCorrection(
+        dimension=3, copy_header=True, num_threads=omp_nthreads),
+        n_procs=omp_nthreads, name='n4_correct')
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_fmap_mask = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='fmap_mask'), name='ds_fmap_mask')
+    ds_fmap_mask = pe.Node(DerivativesDataSink(
+        base_directory=reportlets_dir, suffix='fmap_mask'),
+        name='ds_fmap_mask', run_without_submitting=True)
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
@@ -83,9 +84,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         # despike_threshold=1.0, mask_erode=1),
         fmapenh = pe.Node(FieldEnhance(
             unwrap=False, despike=False, njobs=omp_nthreads),
-            name='fmapenh')
-        fmapenh.interface.num_threads = omp_nthreads
-        fmapenh.interface.estimated_memory_gb = 4
+            name='fmapenh', mem_gb=4, n_procs=omp_nthreads)
 
         workflow.connect([
             (bet, fmapenh, [('mask_file', 'in_mask'),
@@ -96,9 +95,11 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 
     else:
         torads = pe.Node(niu.Function(output_names=['out_file', 'cutoff_hz'],
-                                      function=_torads), name='torads')
+                                      function=_torads), name='torads',
+                         run_without_submitting=True)
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(niu.Function(function=_tohz), name='tohz')
+        tohz = pe.Node(niu.Function(function=_tohz), name='tohz',
+                       run_without_submitting=True)
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
@@ -127,12 +128,14 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 
 
 def _torads(in_file, out_file=None):
+    import os
     from math import pi
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = genfname(in_file, suffix='rad')
+        out_file = fname_presuffix(
+            in_file, suffix='rad', newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
@@ -145,11 +148,14 @@ def _torads(in_file, out_file=None):
 
 
 def _tohz(in_file, cutoff_hz, out_file=None):
+    import os
     from math import pi
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.filemanip import fname_presuffix
+
     if out_file is None:
-        out_file = genfname(in_file, suffix='hz')
+        out_file = fname_presuffix(in_file, suffix='hz',
+                                   newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
