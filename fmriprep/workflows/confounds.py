@@ -139,7 +139,7 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (tcompcor, concat, [('components_file', 'tcompcor'),
                             ('pre_filter_file', 'cos_basis')]),
         (acompcor, concat, [('components_file', 'acompcor')]),
-        (add_header, concat, [('out', 'motion')]),
+        (add_header, concat, [('out_file', 'motion')]),
 
         (concat, outputnode, [('confounds_file', 'confounds_file'),
                               ('confounds_list', 'confounds_list')]),
