@@ -499,7 +499,7 @@ def _hz2rads(in_file, out_file=None):
     import os
     from math import pi
     import nibabel as nb
-    from niworkflows.nipype.filemanip import fname_presuffix
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
     if out_file is None:
         out_file = fname_presuffix(in_file, suffix='rads',
                                    newpath=os.getcwd())
@@ -514,7 +514,7 @@ def _demean(in_file, in_mask, out_file=None):
     import os
     import numpy as np
     import nibabel as nb
-    from niworkflows.nipype.filemanip import fname_presuffix
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
         out_file = fname_presuffix(in_file, suffix='demeaned',
