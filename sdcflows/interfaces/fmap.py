@@ -8,7 +8,6 @@ Interfaces to deal with the various types of fieldmap sources
 """
 
 import os
-from builtins import range
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype import logging
@@ -138,11 +137,11 @@ def _despike2d(data, thres, neigh=None):
         neigh = [-1, 0, 1]
     nslices = data.shape[-1]
 
-    for k in range(nslices):
+    for k in list(range(nslices)):
         data2d = data[..., k]
 
-        for i in range(data2d.shape[0]):
-            for j in range(data2d.shape[1]):
+        for i in list(range(data2d.shape[0])):
+            for j in list(range(data2d.shape[1])):
                 vals = []
                 thisval = data2d[i, j]
                 for ii in neigh:

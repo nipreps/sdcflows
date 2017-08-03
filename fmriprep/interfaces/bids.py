@@ -31,7 +31,6 @@ from niworkflows.nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterfaceInputSpec,
     File, Directory, InputMultiPath, OutputMultiPath, Str
 )
-from builtins import str, bytes
 
 from niworkflows.interfaces.base import SimpleInterface
 
@@ -72,7 +71,7 @@ class BIDSInfo(SimpleInterface):
 
 
 class BIDSDataGrabberInputSpec(BaseInterfaceInputSpec):
-    subject_data = traits.Dict((str, bytes), traits.Any)
+    subject_data = traits.Dict(Str, traits.Any)
     subject_id = Str()
 
 
