@@ -10,7 +10,7 @@ import nibabel as nb
 import scipy.ndimage as nd
 from nilearn.image import resample_to_img
 
-from niworkflows.nipype.filemanip import fname_presuffix
+from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath
 )

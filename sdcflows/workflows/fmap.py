@@ -127,7 +127,7 @@ def _torads(in_file, out_file=None):
     import os
     from math import pi
     import nibabel as nb
-    from niworkflows.nipype.filemanip import fname_presuffix
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
         out_file = fname_presuffix(
@@ -147,7 +147,7 @@ def _tohz(in_file, cutoff_hz, out_file=None):
     import os
     from math import pi
     import nibabel as nb
-    from niworkflows.nipype.filemanip import fname_presuffix
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
         out_file = fname_presuffix(in_file, suffix='hz',
