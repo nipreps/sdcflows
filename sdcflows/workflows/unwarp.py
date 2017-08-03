@@ -93,7 +93,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
                 'out_jacobian', 'out_mask_report']), name='outputnode')
 
     meta = pe.Node(ReadSidecarJSON(), name='meta',
-        mem_gb=0.01, run_without_submitting=True)
+                   mem_gb=0.01, run_without_submitting=True)
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -348,10 +348,10 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         workflow.connect([(inputnode, qwarp, [('in_reference_brain', 'source_file')])])
 
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
-        mem_gb=0.01, run_without_submitting=True)
+                      mem_gb=0.01, run_without_submitting=True)
 
     cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp',
-        mem_gb=0.01, run_without_submitting=True)
+                         mem_gb=0.01, run_without_submitting=True)
 
     unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
                                                       generate_report=False,
