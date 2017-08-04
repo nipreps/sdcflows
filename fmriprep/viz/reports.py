@@ -112,8 +112,6 @@ class Report(object):
                         if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
                             with open(f) as fp:
                                 content = fp.read()
-                                if not element.raw:
-                                    content = content.split('\n', 1)[1]
                                 element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()

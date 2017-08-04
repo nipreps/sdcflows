@@ -321,8 +321,8 @@ def get_ica_confounds(ica_out_dir, ignore_aroma_err):
     motion_ics = os.path.join(ica_out_dir, 'classified_motion_ICs.txt')
 
     # Change names of motion_ics and melodic_mix for output
-    melodic_mix_out = os.path.join(ica_out_dir, 'MELODICmix.tsv')
-    motion_ics_out = os.path.join(ica_out_dir, 'AROMAnoiseICs.csv')
+    melodic_mix_out = os.path.abspath('MELODICmix.tsv')
+    motion_ics_out = os.path.abspath('AROMAnoiseICs.csv')
 
     # melodic_mix replace spaces with tabs
     with open(melodic_mix, 'r') as melodic_file:
@@ -432,13 +432,13 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
 
     # melodic node
     melodic = pe.Node(
-        nws.MELODICRPT(no_bet=True,
-                       no_mm=True,
-                       generate_report=True),
+        fsl.MELODIC(no_bet=True,
+                    no_mm=True),
         name="melodic")
 
     # ica_aroma node
-    ica_aroma = pe.Node(fsl.ICA_AROMA(denoise_type='no'), name='ica_aroma')
+    ica_aroma = pe.Node(nws.ICA_AROMARPT(denoise_type='no',
+                                         generate_report=True), name='ica_aroma')
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(
@@ -462,11 +462,10 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         (brightness_threshold, smooth, [('thresh', 'brightness_threshold')]),
         # connect smooth to melodic
         (smooth, melodic, [('smoothed_file', 'in_files')]),
-        (inputnode, melodic, [('epi_mask_mni', 'report_mask'),
-                              ('epi_mask_mni', 'mask')]),
         # connect nodes to ICA-AROMA
         (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
-        (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
+        (inputnode, ica_aroma, [('epi_mask_mni', 'report_mask'),
+                                ('movpar_file', 'motion_parameters')]),
         (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
         # generate tsvs from ICA-AROMA
         (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'ica_out_dir')]),
@@ -475,7 +474,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
                                                      ('aroma_noise_ics', 'aroma_noise_ics'),
                                                      ('melodic_mix', 'melodic_mix')]),
         # TODO change melodic report to reflect noise and non-noise components
-        (melodic, outputnode, [('out_report', 'out_report')]),
+        (ica_aroma, outputnode, [('out_report', 'out_report')]),
     ])
 
     return workflow
