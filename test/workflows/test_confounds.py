@@ -1,10 +1,5 @@
 ''' Testing module for fmriprep.workflows.confounds '''
 import logging
-import os
-import mock
-
-import pandas as pd
-
 from fmriprep.workflows.confounds import init_bold_confs_wf
 from .utilities import TestWorkflow
 
