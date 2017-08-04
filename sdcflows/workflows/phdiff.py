@@ -28,7 +28,7 @@ from niworkflows.interfaces.masks import BETRPT
 from ...interfaces import ReadSidecarJSON, IntraModalMerge, DerivativesDataSink
 
 
-def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
+def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
