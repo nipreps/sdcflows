@@ -8,7 +8,6 @@ ITK files handling
 
 
 """
-import os
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype.utils.filemanip import fname_presuffix
