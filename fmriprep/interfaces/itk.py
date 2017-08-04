@@ -8,7 +8,6 @@ ITK files handling
 
 
 """
-import os
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype.utils.filemanip import fname_presuffix
@@ -76,7 +75,7 @@ class FUGUEvsm2ANTSwarp(SimpleInterface):
 
         # Write out
         self._results['out_file'] = fname_presuffix(
-            self.inputs.in_file, suffix='antswarp', newpath=os.getcwd())
+            self.inputs.in_file, suffix='_antswarp', newpath=runtime.cwd)
         nb.Nifti1Image(
             field.astype(np.dtype('<f4')), nii.affine, hdr).to_filename(
                 self._results['out_file'])

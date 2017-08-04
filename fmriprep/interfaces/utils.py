@@ -6,7 +6,6 @@
 import os
 import numpy as np
 import nibabel as nb
-import pandas as pd
 import scipy.ndimage as nd
 from nilearn.image import resample_to_img
 
@@ -31,8 +30,8 @@ class ApplyMask(SimpleInterface):
     output_spec = ApplyMaskOutputSpec
 
     def _run_interface(self, runtime):
-        out_file = fname_presuffix(self.inputs.in_file, suffix='brainmask',
-                                   newpath=os.getcwd())
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_brainmask',
+                                   newpath=runtime.cwd)
         nii = nb.load(self.inputs.in_file)
         data = nii.get_data()
         data[nb.load(self.inputs.in_mask).get_data() <= 0] = 0
@@ -48,8 +47,8 @@ class TPM2ROIInputSpec(BaseInterfaceInputSpec):
                                  desc='erode input mask (kernel width in mm)')
     erode_mm = traits.Float(0.0, usedefault=True,
                             desc='erode output mask (kernel width in mm)')
-    pthres = traits.Float(0.95, usedefault=True,
-                          desc='threshold for the tissue probability maps')
+    prob_thresh = traits.Float(0.95, usedefault=True,
+                               desc='threshold for the tissue probability maps')
 
 
 class TPM2ROIOutputSpec(TraitedSpec):
@@ -71,7 +70,7 @@ class TPM2ROI(SimpleInterface):
             self.inputs.in_mask,
             self.inputs.mask_erode_mm,
             self.inputs.erode_mm,
-            self.inputs.pthres
+            self.inputs.prob_thresh
         )
         self._results['roi_file'] = roi_file
         self._results['eroded_mask'] = eroded_mask
@@ -203,8 +202,10 @@ def _concat_rois(in_file, in_mask, ref_header):
 
 
 def _add_tsv_header(in_file, columns):
-    out_file = fname_presuffix(in_file, suffix='motion', newpath=os.getcwd())
+    out_file = fname_presuffix(in_file, suffix='_motion.tsv',
+                               newpath=os.getcwd(),
+                               use_ext=False)
     data = np.loadtxt(in_file)
-    df = pd.DataFrame(data, columns=columns)
-    df.to_csv(out_file, sep="\t", index=None)
+    np.savetxt(out_file, data, delimiter='\t', header='\t'.join(columns),
+               comments='')
     return out_file

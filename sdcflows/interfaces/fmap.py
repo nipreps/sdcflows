@@ -136,11 +136,11 @@ def _despike2d(data, thres, neigh=None):
         neigh = [-1, 0, 1]
     nslices = data.shape[-1]
 
-    for k in list(range(nslices)):
+    for k in range(nslices):
         data2d = data[..., k]
 
-        for i in list(range(data2d.shape[0])):
-            for j in list(range(data2d.shape[1])):
+        for i in range(data2d.shape[0]):
+            for j in range(data2d.shape[1]):
                 vals = []
                 thisval = data2d[i, j]
                 for ii in neigh:
@@ -168,7 +168,7 @@ def _unwrap(fmap_data, mag_file, mask=None):
         mask = np.ones_like(fmap_data, dtype=np.uint8)
 
     fmapmax = max(abs(fmap_data[mask > 0].min()), fmap_data[mask > 0].max())
-    fmap_data *= pi/fmapmax
+    fmap_data *= pi / fmapmax
 
     nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
     nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
@@ -179,5 +179,5 @@ def _unwrap(fmap_data, mag_file, mask=None):
                   magnitude_file='fmap_mag.nii.gz',
                   mask_file='fmap_mask.nii.gz').run()
 
-    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax/pi)
+    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax / pi)
     return unwrapped
