@@ -31,4 +31,3 @@ class TestConfounds(TestWorkflow):
                                                      'tcompcor'],
                                           # 'aCompCor': ['components_file', 'mask_file'], }) see ^^
                                           'tcompcor': ['components_file']})
-
