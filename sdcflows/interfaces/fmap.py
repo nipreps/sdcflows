@@ -81,7 +81,7 @@ class FieldEnhance(SimpleInterface):
             datanii.to_filename(self._results['out_file'])
             return runtime
         else:
-            from fmriprep.utils import bspline as fbsp
+            from ..utils import bspline as fbsp
             from statsmodels.robust.scale import mad
 
             # Fit BSplines (coarse)
