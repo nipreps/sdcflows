@@ -48,6 +48,8 @@ class TPM2ROIInputSpec(BaseInterfaceInputSpec):
                                  desc='erode input mask (kernel width in mm)')
     erode_mm = traits.Float(0.0, usedefault=True,
                             desc='erode output mask (kernel width in mm)')
+    pthres = traits.Float(0.95, usedefault=True,
+                          desc='threshold for the tissue probability maps')
 
 
 class TPM2ROIOutputSpec(TraitedSpec):
@@ -68,7 +70,8 @@ class TPM2ROI(SimpleInterface):
             self.inputs.in_file,
             self.inputs.in_mask,
             self.inputs.mask_erode_mm,
-            self.inputs.erode_mm
+            self.inputs.erode_mm,
+            self.inputs.pthres
         )
         self._results['roi_file'] = roi_file
         self._results['eroded_mask'] = eroded_mask
@@ -131,7 +134,7 @@ class AddTSVHeader(SimpleInterface):
         return runtime
 
 
-def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
+def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0, pthres=0.95):
     """
     Generate a mask from a tissue probability map
     """
@@ -139,7 +142,7 @@ def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
     probability_map_data = probability_map_nii.get_data()
 
     # thresholding
-    probability_map_data[probability_map_data < 0.95] = 0
+    probability_map_data[probability_map_data < pthres] = 0
     probability_map_data[probability_map_data != 0] = 1
 
     epi_mask_nii = nb.load(epi_mask)
@@ -158,7 +161,7 @@ def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0):
 
     # shrinking
     if erosion_mm:
-        iter_n = int(erosion_mm/max(probability_map_nii.header.get_zooms()))
+        iter_n = int(erosion_mm / max(probability_map_nii.header.get_zooms()))
         probability_map_data = nd.binary_erosion(probability_map_data,
                                                  iterations=iter_n).astype(int)
 
