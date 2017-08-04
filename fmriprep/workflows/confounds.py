@@ -234,7 +234,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         (inputnode, melodic, [('bold_mask_mni', 'mask')]),
         # connect nodes to ICA-AROMA
         (smooth, ica_aroma, [('smoothed_file', 'in_file')]),
-        (inputnode, ica_aroma, [('epi_mask_mni', 'report_mask'),
+        (inputnode, ica_aroma, [('bold_mask_mni', 'report_mask'),
                                 ('movpar_file', 'motion_parameters')]),
         (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
         # generate tsvs from ICA-AROMA
