@@ -4,7 +4,6 @@
 """
 Base module variables
 """
-from __future__ import unicode_literals
 
 __version__ = '0.6.1-dev'
 __author__ = 'The CRN developers'
@@ -78,7 +77,8 @@ LINKS_REQUIRES = []
 
 TESTS_REQUIRES = [
     "mock",
-    "codecov"
+    "codecov",
+    "pytest",
 ]
 
 EXTRA_REQUIRES = {

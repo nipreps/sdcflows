@@ -5,7 +5,6 @@
 """
 Utility workflows
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
@@ -16,10 +15,11 @@ from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
-from fmriprep.interfaces.images import extract_wm
+from ..interfaces.images import extract_wm
 
 
-def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
+def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
+                                        omp_nthreads=1):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
@@ -28,8 +28,9 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
                                                        'bias_corrected_file',
                                                        'out_report']),
                          name='outputnode')
-    n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
-                         name='n4_correct')
+    n4_correct = pe.Node(
+        ants.N4BiasFieldCorrection(dimension=3, copy_header=True, num_threads=omp_nthreads),
+        name='n4_correct', n_procs=omp_nthreads)
     skullstrip_first_pass = pe.Node(fsl.BET(frac=0.2, mask=True),
                                     name='skullstrip_first_pass')
     unifize = pe.Node(afni.Unifize(t2=True, outputtype='NIFTI_GZ',
@@ -64,7 +65,7 @@ def init_enhance_and_skullstrip_epi_wf(name='enhance_and_skullstrip_epi_wf'):
     return workflow
 
 
-def init_skullstrip_epi_wf(name='skullstrip_epi_wf'):
+def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
                         name='inputnode')
@@ -137,7 +138,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         return np.loadtxt(in_file, usecols=[0])
 
     get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost', run_without_submitting=True)
+                       name='get_cost')
 
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
@@ -197,7 +198,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                      'issue, with contents of {}'.format(in_file))
 
     get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost', run_without_submitting=True)
+                       name='get_cost')
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
