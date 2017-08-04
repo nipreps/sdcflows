@@ -91,11 +91,9 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 
     else:
         torads = pe.Node(niu.Function(output_names=['out_file', 'cutoff_hz'],
-                                      function=_torads), name='torads',
-                         run_without_submitting=True)
+                                      function=_torads), name='torads')
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(niu.Function(function=_tohz), name='tohz',
-                       run_without_submitting=True)
+        tohz = pe.Node(niu.Function(function=_tohz), name='tohz')
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
