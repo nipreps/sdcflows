@@ -6,7 +6,6 @@
 import os
 import numpy as np
 import nibabel as nb
-import pandas as pd
 import scipy.ndimage as nd
 from nilearn.image import resample_to_img
 
@@ -203,8 +202,10 @@ def _concat_rois(in_file, in_mask, ref_header):
 
 
 def _add_tsv_header(in_file, columns):
-    out_file = fname_presuffix(in_file, suffix='motion', newpath=os.getcwd())
+    out_file = fname_presuffix(in_file, suffix='_motion.tsv',
+                               newpath=os.getcwd(),
+                               use_ext=False)
     data = np.loadtxt(in_file)
-    df = pd.DataFrame(data, columns=columns)
-    df.to_csv(out_file, sep="\t", index=None)
+    np.savetxt(out_file, data, delimiter='\t', header='\t'.join(columns),
+               comments='')
     return out_file
