@@ -39,7 +39,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
-        wf = init_phdiff_wf(reportlets_dir='.')
+        wf = init_phdiff_wf(reportlets_dir='.', omp_nthreads=1)
 
 
     Outputs::
