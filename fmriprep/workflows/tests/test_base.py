@@ -1,8 +1,8 @@
 ''' Testing module for fmriprep.workflows.base '''
 import mock
 
-from fmriprep.workflows.base import init_single_subject_wf
-from test.workflows.utilities import TestWorkflow
+from ...utils.testing import TestWorkflow
+from ..base import init_single_subject_wf
 
 
 @mock.patch('fmriprep.interfaces.BIDSDataGrabber')  # no actual BIDS dir necessary
