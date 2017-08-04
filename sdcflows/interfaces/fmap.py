@@ -70,13 +70,13 @@ class FieldEnhance(SimpleInterface):
                     ).astype(np.uint8)  # pylint: disable=no-member
 
         self._results['out_file'] = fname_presuffix(
-            self.inputs.in_file, suffix='enh', newpath=os.getcwd())
+            self.inputs.in_file, suffix='_enh', newpath=os.getcwd())
         datanii = nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header)
 
         if self.inputs.unwrap:
             data = _unwrap(data, self.inputs.in_magnitude, mask)
             self._results['out_unwrapped'] = fname_presuffix(
-                self.inputs.in_file, suffix='unwrap', newpath=os.getcwd())
+                self.inputs.in_file, suffix='_unwrap', newpath=os.getcwd())
             nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header).to_filename(
                 self._results['out_unwrapped'])
 

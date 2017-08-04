@@ -501,7 +501,7 @@ def _hz2rads(in_file, out_file=None):
     import nibabel as nb
     from niworkflows.nipype.utils.filemanip import fname_presuffix
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='rads',
+        out_file = fname_presuffix(in_file, suffix='_rads',
                                    newpath=os.getcwd())
     nii = nb.load(in_file)
     data = nii.get_data() * 2.0 * pi
@@ -517,7 +517,7 @@ def _demean(in_file, in_mask, out_file=None):
     from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='demeaned',
+        out_file = fname_presuffix(in_file, suffix='_demeaned',
                                    newpath=os.getcwd())
     nii = nb.load(in_file)
     msk = nb.load(in_mask).get_data()

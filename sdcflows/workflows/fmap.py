@@ -131,7 +131,7 @@ def _torads(in_file, out_file=None):
 
     if out_file is None:
         out_file = fname_presuffix(
-            in_file, suffix='rad', newpath=os.getcwd())
+            in_file, suffix='_rad', newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
@@ -150,7 +150,7 @@ def _tohz(in_file, cutoff_hz, out_file=None):
     from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='hz',
+        out_file = fname_presuffix(in_file, suffix='_hz',
                                    newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)
