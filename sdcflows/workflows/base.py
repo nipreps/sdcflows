@@ -10,7 +10,6 @@ Base fieldmap estimation
 * Subject can have a fieldmap acquisition.
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 
 def init_fmap_estimator_wf(fmap_bids, reportlets_dir, omp_nthreads,

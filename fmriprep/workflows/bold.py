@@ -11,7 +11,6 @@ BOLD fMRI -processing workflows
       Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
@@ -232,7 +231,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         else:
             # Import specific workflows here, so we don't brake everything with one
             # unused workflow.
-            from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
+            from .fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
             fmap_estimator_wf = init_fmap_estimator_wf(fmap_bids=fmap,
                                                        reportlets_dir=reportlets_dir,
                                                        omp_nthreads=omp_nthreads,

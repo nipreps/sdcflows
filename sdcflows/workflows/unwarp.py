@@ -17,7 +17,6 @@ Apply susceptibility distortion correction (SDC)
         displacements field map -- a nifti warp file compatible with ANTs (mm)
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import pkg_resources as pkgr
 

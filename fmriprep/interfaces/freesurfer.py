@@ -7,7 +7,6 @@ FreeSurfer tools interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os.path as op
 import nibabel as nb

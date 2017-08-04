@@ -16,7 +16,6 @@ Fieldmap preprocessing workflow for fieldmap data structure
 8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 from niworkflows.nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.nipype.pipeline import engine as pe

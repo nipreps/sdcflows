@@ -6,9 +6,7 @@
 Interfaces to deal with the various types of fieldmap sources
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
-from builtins import range
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype import logging
@@ -83,7 +81,7 @@ class FieldEnhance(SimpleInterface):
             datanii.to_filename(self._results['out_file'])
             return runtime
         else:
-            from fmriprep.utils import bspline as fbsp
+            from ..utils import bspline as fbsp
             from statsmodels.robust.scale import mad
 
             # Fit BSplines (coarse)
@@ -170,7 +168,7 @@ def _unwrap(fmap_data, mag_file, mask=None):
         mask = np.ones_like(fmap_data, dtype=np.uint8)
 
     fmapmax = max(abs(fmap_data[mask > 0].min()), fmap_data[mask > 0].max())
-    fmap_data *= pi/fmapmax
+    fmap_data *= pi / fmapmax
 
     nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
     nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
@@ -181,5 +179,5 @@ def _unwrap(fmap_data, mag_file, mask=None):
                   magnitude_file='fmap_mag.nii.gz',
                   mask_file='fmap_mask.nii.gz').run()
 
-    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax/pi)
+    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax / pi)
     return unwrapped
