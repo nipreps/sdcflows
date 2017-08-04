@@ -92,7 +92,8 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask',
                 'out_jacobian', 'out_mask_report']), name='outputnode')
 
-    meta = pe.Node(ReadSidecarJSON(), name='meta')
+    meta = pe.Node(ReadSidecarJSON(), name='meta',
+                   mem_gb=0.01, run_without_submitting=True)
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -104,12 +105,11 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         ANTSRegistrationRPT(
             generate_report=True, from_file=ants_settings, output_inverse_warped_image=True,
             output_warped_image=True, num_threads=omp_nthreads),
-        name='fmap2ref_reg')
-    fmap2ref_reg.interface.num_threads = omp_nthreads
+        name='fmap2ref_reg', n_procs=omp_nthreads)
 
-    ds_reg = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='fmap_reg'), name='ds_reg')
+    ds_reg = pe.Node(DerivativesDataSink(
+        base_directory=reportlets_dir, suffix='fmap_reg'), name='ds_reg',
+        mem_gb=0.01, run_without_submitting=True)
 
     # Map the VSM into the EPI space
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
@@ -121,9 +121,9 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         float=True),
         name='fmap_mask2ref_apply')
 
-    ds_reg_vsm = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='fmap_reg_vsm'), name='ds_reg_vsm')
+    ds_reg_vsm = pe.Node(DerivativesDataSink(
+        base_directory=reportlets_dir, suffix='fmap_reg_vsm'), name='ds_reg_vsm',
+        mem_gb=0.01, run_without_submitting=True)
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
     torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
@@ -301,7 +301,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                 add_list = usable_fieldmaps_matching_pe
             add_list.append(fmap)
 
-    if len(usable_fieldmaps_opposite_pe) == 0:
+    if not usable_fieldmaps_opposite_pe:
         raise Exception("None of the discovered fieldmaps has the right "
                         "phase encoding direction. Possibly a problem with "
                         "metadata. If not, rerun with '--ignore fieldmaps' to "
@@ -316,7 +316,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                 'out_mask_report']),
         name='outputnode')
 
-    prepare_epi_opposite_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
+    prepare_epi_opposite_wf = init_prepare_epi_wf(omp_nthreads=omp_nthreads,
                                                   name="prepare_epi_opposite_wf")
     prepare_epi_opposite_wf.inputs.inputnode.fmaps = usable_fieldmaps_opposite_pe
 
@@ -325,10 +325,9 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                                         noweight=True,
                                         minpatch=9,
                                         nopadWARP=True,
-                                        environ={'OMP_NUM_THREADS': str(omp_nthreads)},
+                                        environ={'OMP_NUM_THREADS': '%d' % omp_nthreads},
                                         args=args),
-                    name='qwarp')
-    qwarp.interface.num_threads = omp_nthreads
+                    name='qwarp', n_procs=omp_nthreads)
 
     workflow.connect([
         (inputnode, prepare_epi_opposite_wf, [('in_reference_brain', 'inputnode.ref_brain')]),
@@ -336,7 +335,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     ])
 
     if usable_fieldmaps_matching_pe:
-        prepare_epi_matching_wf = init_prepare_epi_wf(ants_nthreads=omp_nthreads,
+        prepare_epi_matching_wf = init_prepare_epi_wf(omp_nthreads=omp_nthreads,
                                                       name="prepare_epi_matching_wf")
         prepare_epi_matching_wf.inputs.inputnode.fmaps = usable_fieldmaps_matching_pe
 
@@ -347,9 +346,11 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     else:
         workflow.connect([(inputnode, qwarp, [('in_reference_brain', 'source_file')])])
 
-    to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants')
+    to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
+                      mem_gb=0.01)
 
-    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp')
+    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp',
+                         mem_gb=0.01, run_without_submitting=True)
 
     unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
                                                       generate_report=False,
@@ -379,7 +380,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     return workflow
 
 
-def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
+def init_prepare_epi_wf(omp_nthreads, name="prepare_epi_wf"):
     """
     This workflow takes in a set of EPI files with with the same phase
     encoding direction and returns a single 3D volume ready to be used in
@@ -395,7 +396,7 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_prepare_epi_wf
-        wf = init_prepare_epi_wf(ants_nthreads=8)
+        wf = init_prepare_epi_wf(omp_nthreads=8)
 
 
     Inputs
@@ -432,15 +433,14 @@ def init_prepare_epi_wf(ants_nthreads, name="prepare_epi_wf"):
         name='merge')
 
     enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
-        omp_nthreads=ants_nthreads)
+        omp_nthreads=omp_nthreads)
 
     ants_settings = pkgr.resource_filename('fmriprep',
                                            'data/translation_rigid.json')
     fmap2ref_reg = pe.Node(ants.Registration(from_file=ants_settings,
                                              output_warped_image=True,
-                                             num_threads=ants_nthreads),
-                           name='fmap2ref_reg')
-    fmap2ref_reg.interface.num_threads = ants_nthreads
+                                             num_threads=omp_nthreads),
+                           name='fmap2ref_reg', n_procs=omp_nthreads)
 
     workflow = pe.Workflow(name=name)
 
@@ -495,11 +495,13 @@ def _get_pedir_fugue(in_dict):
 
 def _hz2rads(in_file, out_file=None):
     """Transform a fieldmap in Hz into rad/s"""
+    import os
     from math import pi
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
     if out_file is None:
-        out_file = genfname(in_file, 'rads')
+        out_file = fname_presuffix(in_file, suffix='_rads',
+                                   newpath=os.getcwd())
     nii = nb.load(in_file)
     data = nii.get_data() * 2.0 * pi
     nb.Nifti1Image(data, nii.get_affine(),
@@ -508,12 +510,14 @@ def _hz2rads(in_file, out_file=None):
 
 
 def _demean(in_file, in_mask, out_file=None):
+    import os
     import numpy as np
     import nibabel as nb
-    from fmriprep.utils.misc import genfname
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = genfname(in_file, 'demeaned')
+        out_file = fname_presuffix(in_file, suffix='_demeaned',
+                                   newpath=os.getcwd())
     nii = nb.load(in_file)
     msk = nb.load(in_mask).get_data()
     data = nii.get_data()

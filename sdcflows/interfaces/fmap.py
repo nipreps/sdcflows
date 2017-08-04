@@ -12,10 +12,10 @@ from builtins import range
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype import logging
+from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, isdefined, traits)
 from niworkflows.interfaces.base import SimpleInterface
-from fmriprep.utils.misc import genfname
 
 LOGGER = logging.getLogger('interface')
 
@@ -66,14 +66,16 @@ class FieldEnhance(SimpleInterface):
                 mask = sim.binary_erosion(
                     mask, struc,
                     iterations=self.inputs.mask_erode
-                    ).astype(np.uint8)  # pylint: disable=no-member
+                ).astype(np.uint8)  # pylint: disable=no-member
 
-        self._results['out_file'] = genfname(self.inputs.in_file, suffix='enh')
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.in_file, suffix='_enh', newpath=runtime.cwd)
         datanii = nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header)
 
         if self.inputs.unwrap:
             data = _unwrap(data, self.inputs.in_magnitude, mask)
-            self._results['out_unwrapped'] = genfname(self.inputs.in_file, suffix='unwrap')
+            self._results['out_unwrapped'] = fname_presuffix(
+                self.inputs.in_file, suffix='_unwrap', newpath=runtime.cwd)
             nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header).to_filename(
                 self._results['out_unwrapped'])
 
