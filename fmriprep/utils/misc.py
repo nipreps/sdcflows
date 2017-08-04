@@ -31,7 +31,7 @@ def add_suffix(in_files, suffix):
 
     >>> add_suffix([
     ...     '/path/to/sub-045_ses-test_T1w.nii.gz',
-    ...     '/path/to/sub-045_ses-retest_T1w.nii.gz'], 'test')
+    ...     '/path/to/sub-045_ses-retest_T1w.nii.gz'], '_test')
     'sub-045_ses-test_T1w_test.nii.gz'
 
     """
