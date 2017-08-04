@@ -47,8 +47,8 @@ class TPM2ROIInputSpec(BaseInterfaceInputSpec):
                                  desc='erode input mask (kernel width in mm)')
     erode_mm = traits.Float(0.0, usedefault=True,
                             desc='erode output mask (kernel width in mm)')
-    pthres = traits.Float(0.95, usedefault=True,
-                          desc='threshold for the tissue probability maps')
+    prob_thresh = traits.Float(0.95, usedefault=True,
+                               desc='threshold for the tissue probability maps')
 
 
 class TPM2ROIOutputSpec(TraitedSpec):
@@ -70,7 +70,7 @@ class TPM2ROI(SimpleInterface):
             self.inputs.in_mask,
             self.inputs.mask_erode_mm,
             self.inputs.erode_mm,
-            self.inputs.pthres
+            self.inputs.prob_thresh
         )
         self._results['roi_file'] = roi_file
         self._results['eroded_mask'] = eroded_mask
