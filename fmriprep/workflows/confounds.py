@@ -235,7 +235,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         (inputnode, ica_aroma, [('movpar_file', 'motion_parameters')]),
         (melodic, ica_aroma, [('out_dir', 'melodic_dir')]),
         # generate tsvs from ICA-AROMA
-        (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'ica_out_dir')]),
+        (ica_aroma, ica_aroma_confound_extraction, [('out_dir', 'in_directory')]),
         # output for processing and reporting
         (ica_aroma_confound_extraction, outputnode, [('aroma_confounds', 'aroma_confounds'),
                                                      ('aroma_noise_ics', 'aroma_noise_ics'),
