@@ -31,7 +31,7 @@ class ApplyMask(SimpleInterface):
 
     def _run_interface(self, runtime):
         out_file = fname_presuffix(self.inputs.in_file, suffix='_brainmask',
-                                   newpath=os.getcwd())
+                                   newpath=runtime.cwd)
         nii = nb.load(self.inputs.in_file)
         data = nii.get_data()
         data[nb.load(self.inputs.in_mask).get_data() <= 0] = 0

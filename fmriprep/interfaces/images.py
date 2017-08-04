@@ -76,7 +76,7 @@ class IntraModalMerge(SimpleInterface):
 
         # Generate output average name early
         self._results['out_avg'] = fname_presuffix(self.inputs.in_files[0],
-                                                   suffix='_avg', newpath=os.getcwd())
+                                                   suffix='_avg', newpath=runtime.cwd)
 
         if self.inputs.to_ras:
             in_files = [reorient(inf) for inf in in_files]
@@ -92,7 +92,7 @@ class IntraModalMerge(SimpleInterface):
                     raise RuntimeError('Input image (%s) is 5D' % in_files[0])
                 else:
                     in_files = [fname_presuffix(in_files[0], suffix='_squeezed',
-                                                newpath=os.getcwd())]
+                                                newpath=runtime.cwd)]
                     nb.Nifti1Image(sqdata, filenii.get_affine(),
                                    filenii.get_header()).to_filename(in_files[0])
 
