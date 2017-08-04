@@ -7,7 +7,6 @@ Interfaces to deal with the various types of fieldmap sources
 
 """
 
-import os
 import numpy as np
 import nibabel as nb
 from niworkflows.nipype import logging
@@ -65,16 +64,16 @@ class FieldEnhance(SimpleInterface):
                 mask = sim.binary_erosion(
                     mask, struc,
                     iterations=self.inputs.mask_erode
-                    ).astype(np.uint8)  # pylint: disable=no-member
+                ).astype(np.uint8)  # pylint: disable=no-member
 
         self._results['out_file'] = fname_presuffix(
-            self.inputs.in_file, suffix='_enh', newpath=os.getcwd())
+            self.inputs.in_file, suffix='_enh', newpath=runtime.cwd)
         datanii = nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header)
 
         if self.inputs.unwrap:
             data = _unwrap(data, self.inputs.in_magnitude, mask)
             self._results['out_unwrapped'] = fname_presuffix(
-                self.inputs.in_file, suffix='_unwrap', newpath=os.getcwd())
+                self.inputs.in_file, suffix='_unwrap', newpath=runtime.cwd)
             nb.Nifti1Image(data, fmap_nii.affine, fmap_nii.header).to_filename(
                 self._results['out_unwrapped'])
 
