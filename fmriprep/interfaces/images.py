@@ -76,7 +76,7 @@ class IntraModalMerge(SimpleInterface):
 
         # Generate output average name early
         self._results['out_avg'] = fname_presuffix(self.inputs.in_files[0],
-                                                   suffix='avg', newpath=os.getcwd())
+                                                   suffix='_avg', newpath=os.getcwd())
 
         if self.inputs.to_ras:
             in_files = [reorient(inf) for inf in in_files]
@@ -91,7 +91,7 @@ class IntraModalMerge(SimpleInterface):
                 if sqdata.ndim == 5:
                     raise RuntimeError('Input image (%s) is 5D' % in_files[0])
                 else:
-                    in_files = [fname_presuffix(in_files[0], suffix='squeezed',
+                    in_files = [fname_presuffix(in_files[0], suffix='_squeezed',
                                                 newpath=os.getcwd())]
                     nb.Nifti1Image(sqdata, filenii.get_affine(),
                                    filenii.get_header()).to_filename(in_files[0])
@@ -367,7 +367,7 @@ class InvertT1w(SimpleInterface):
 def reorient(in_file, out_file=None):
     """Reorient Nifti files to RAS"""
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='ras', newpath=os.getcwd())
+        out_file = fname_presuffix(in_file, suffix='_ras', newpath=os.getcwd())
     nb.as_closest_canonical(nb.load(in_file)).to_filename(out_file)
     return out_file
 
@@ -394,7 +394,7 @@ def _flatten_split_merge(in_files):
     if len(all_nii) == nfiles:
         flat_split = in_files
     else:
-        splitname = fname_presuffix(in_files[0], suffix='split%04d', newpath=os.getcwd())
+        splitname = fname_presuffix(in_files[0], suffix='_split%04d', newpath=os.getcwd())
         flat_split = []
         for i, nii in enumerate(all_nii):
             flat_split.append(splitname % i)
@@ -405,7 +405,7 @@ def _flatten_split_merge(in_files):
         merged = in_files[0]
     else:
         # More that one in_files - need merge
-        merged = fname_presuffix(in_files[0], suffix='merged', newpath=os.getcwd())
+        merged = fname_presuffix(in_files[0], suffix='_merged', newpath=os.getcwd())
         nb.concat_images(all_nii).to_filename(merged)
 
     return merged, flat_split
@@ -413,7 +413,7 @@ def _flatten_split_merge(in_files):
 
 def _gen_reference(fixed_image, moving_image, out_file=None):
     if out_file is None:
-        out_file = fname_presuffix(fixed_image, suffix='reference', newpath=os.getcwd())
+        out_file = fname_presuffix(fixed_image, suffix='_reference', newpath=os.getcwd())
     new_zooms = nli.load_img(moving_image).header.get_zooms()[:3]
     # Avoid small differences in reported resolution to cause changes to
     # FOV. See https://github.com/poldracklab/fmriprep/issues/512

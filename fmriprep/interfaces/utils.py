@@ -30,7 +30,7 @@ class ApplyMask(SimpleInterface):
     output_spec = ApplyMaskOutputSpec
 
     def _run_interface(self, runtime):
-        out_file = fname_presuffix(self.inputs.in_file, suffix='brainmask',
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_brainmask',
                                    newpath=os.getcwd())
         nii = nb.load(self.inputs.in_file)
         data = nii.get_data()
