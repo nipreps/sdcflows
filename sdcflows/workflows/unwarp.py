@@ -125,8 +125,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         mem_gb=0.01, run_without_submitting=True)
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
-    torads = pe.Node(niu.Function(function=_hz2rads), name='torads',
-                     mem_gb=0.01, run_without_submitting=True)
+    torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
 
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
     # Convert the VSM into a DFM (displacements field map)
@@ -347,7 +346,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         workflow.connect([(inputnode, qwarp, [('in_reference_brain', 'source_file')])])
 
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
-                      mem_gb=0.01, run_without_submitting=True)
+                      mem_gb=0.01)
 
     cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp',
                          mem_gb=0.01, run_without_submitting=True)
@@ -500,7 +499,7 @@ def _hz2rads(in_file, out_file=None):
     import nibabel as nb
     from niworkflows.nipype.utils.filemanip import fname_presuffix
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='rads',
+        out_file = fname_presuffix(in_file, suffix='_rads',
                                    newpath=os.getcwd())
     nii = nb.load(in_file)
     data = nii.get_data() * 2.0 * pi
@@ -516,7 +515,7 @@ def _demean(in_file, in_mask, out_file=None):
     from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='demeaned',
+        out_file = fname_presuffix(in_file, suffix='_demeaned',
                                    newpath=os.getcwd())
     nii = nb.load(in_file)
     msk = nb.load(in_mask).get_data()

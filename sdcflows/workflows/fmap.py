@@ -90,11 +90,9 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 
     else:
         torads = pe.Node(niu.Function(output_names=['out_file', 'cutoff_hz'],
-                                      function=_torads), name='torads',
-                         run_without_submitting=True)
+                                      function=_torads), name='torads')
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(niu.Function(function=_tohz), name='tohz',
-                       run_without_submitting=True)
+        tohz = pe.Node(niu.Function(function=_tohz), name='tohz')
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
@@ -130,7 +128,7 @@ def _torads(in_file, out_file=None):
 
     if out_file is None:
         out_file = fname_presuffix(
-            in_file, suffix='rad', newpath=os.getcwd())
+            in_file, suffix='_rad', newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)
     fmapdata = fmapnii.get_data()
@@ -149,7 +147,7 @@ def _tohz(in_file, cutoff_hz, out_file=None):
     from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='hz',
+        out_file = fname_presuffix(in_file, suffix='_hz',
                                    newpath=os.getcwd())
 
     fmapnii = nb.load(in_file)

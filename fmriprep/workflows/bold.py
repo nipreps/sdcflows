@@ -442,7 +442,6 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
         create_custom_slice_timing_file = pe.Node(
             niu.Function(function=create_custom_slice_timing_file_func),
             name="create_custom_slice_timing_file",
-            run_without_submitting=True,
             mem_gb=DEFAULT_MEMORY_MIN_GB)
         create_custom_slice_timing_file.inputs.metadata = metadata
 
@@ -624,7 +623,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
-                         iterfield=['space'], name='targets', run_without_submitting=True,
+                         iterfield=['space'], name='targets',
                          mem_gb=DEFAULT_MEMORY_MIN_GB)
     targets.inputs.space = spaces
 

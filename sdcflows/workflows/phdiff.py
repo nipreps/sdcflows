@@ -27,7 +27,7 @@ from niworkflows.interfaces.masks import BETRPT
 from ...interfaces import ReadSidecarJSON, IntraModalMerge, DerivativesDataSink
 
 
-def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
+def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
     """
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
@@ -62,8 +62,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(), name='meta', mem_gb=0.01, run_without_submitting=True)
-    dte = pe.Node(niu.Function(function=_delta_te), name='dte', mem_gb=0.01,
-                  run_without_submitting=True)
+    dte = pe.Node(niu.Function(function=_delta_te), name='dte', mem_gb=0.01)
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -81,8 +80,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
 
     # phase diff -> radians
-    pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads',
-                       run_without_submitting=True)
+    pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
 
     # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.Node(fsl.PRELUDE(), name='prelude')
@@ -90,8 +88,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads=1, name='phdiff_wf'):
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                         kernel_size=3), name='denoise')
 
-    demean = pe.Node(niu.Function(function=demean_image), name='demean',
-                     run_without_submitting=True)
+    demean = pe.Node(niu.Function(function=demean_image), name='demean')
 
     cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
 
