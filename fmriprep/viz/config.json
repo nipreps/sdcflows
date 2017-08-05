@@ -111,6 +111,12 @@
                 "description": "EPI was used to generate transformations from EPI space to T1 Space"
             },
             {
+                "name": "ica_aroma",
+                "file_pattern": "func/.*ica_aroma",
+                "title": "ICA AROMA",
+                "description": "Maps created with maximum intensity projection (glass brain) with a black brain outline. Right hand side of each map: time series (top in seconds), frequency spectrum (bottom in Hertz). Components classified as signal in green; noise in red."
+            },
+            {
                 "name": "epi/acompcor",
                 "file_pattern": "func/.*_acompcor",
                 "title": "aCompCor ROI",
