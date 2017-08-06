@@ -1166,8 +1166,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                                suffix=variant_suffix_fmt(template,
                                                                          'smoothAROMAnonaggr',
                                                                          'preproc')),
-                          name='ds_aroma_mni', run_without_submitting=True,
-                          mem_gb=DEFAULT_MEMORY_MIN_GB)
+                           name='ds_aroma_mni', run_without_submitting=True,
+                           mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     ds_bold_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                    suffix=suffix_fmt(template, 'brainmask')),
