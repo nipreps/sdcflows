@@ -38,7 +38,8 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['confounds_file', 'confounds_list', 'acompcor_report', 'tcompcor_report',
-                'ica_aroma_report', 'aroma_noise_ics', 'melodic_mix']),
+                'ica_aroma_report', 'aroma_noise_ics', 'melodic_mix',
+                'nonaggr_denoised_file']),
         name='outputnode')
 
     # ICA-AROMA
@@ -157,7 +158,8 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
             (ica_aroma_wf, outputnode,
                 [('outputnode.out_report', 'ica_aroma_report'),
                  ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
-                 ('outputnode.melodic_mix', 'melodic_mix')])
+                 ('outputnode.melodic_mix', 'melodic_mix'),
+                 ('outputnode.nonaggr_denoised_file', 'nonaggr_denoised_file')])
         ])
     return workflow
 
@@ -188,7 +190,8 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['aroma_confounds', 'out_report',
-                'aroma_noise_ics', 'melodic_mix']), name='outputnode')
+                'aroma_noise_ics', 'melodic_mix',
+                'nonaggr_denoised_file']), name='outputnode')
 
     calc_median_val = pe.Node(fsl.ImageStats(op_string='-k %s -p 50'), name='calc_median_val')
     calc_bold_mean = pe.Node(fsl.MeanImage(), name='calc_bold_mean')
@@ -208,7 +211,7 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
         name="melodic")
 
     # ica_aroma node
-    ica_aroma = pe.Node(nws.ICA_AROMARPT(denoise_type='no',
+    ica_aroma = pe.Node(nws.ICA_AROMARPT(denoise_type='nonaggr',
                                          generate_report=True), name='ica_aroma')
 
     # extract the confound ICs from the results
@@ -244,7 +247,8 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
                                                      ('aroma_noise_ics', 'aroma_noise_ics'),
                                                      ('melodic_mix', 'melodic_mix')]),
         # TODO change melodic report to reflect noise and non-noise components
-        (ica_aroma, outputnode, [('out_report', 'out_report')]),
+        (ica_aroma, outputnode, [('out_report', 'out_report'),
+                                 ('nonaggr_denoised_file', 'nonaggr_denoised_file')]),
     ])
 
     return workflow
