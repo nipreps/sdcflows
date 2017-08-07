@@ -12,13 +12,10 @@ fMRIprep reports builder
 import json
 import re
 import os
-import time
 
 import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
-
-from .. import __version__
 
 
 class Element(object):
