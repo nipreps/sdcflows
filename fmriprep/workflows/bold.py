@@ -51,6 +51,127 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          fmap_bspline, fmap_demean, use_syn, force_syn,
                          use_aroma, ignore_aroma_err,
                          debug, low_mem, output_grid_ref, layout=None):
+    """
+    This workflow controls the functional preprocessing stages of FMRIPREP.
+
+    .. workflow::
+        :graph2use: orig
+        :simpleform: yes
+
+        from fmriprep.workflows.functional import init_func_preproc_wf
+        wf = init_func_preproc_wf('/completely/made/up/path/sub-01_task-nback_bold.nii.gz',
+                                  omp_nthreads=1,
+                                  ignore=[],
+                                  freesurfer=True,
+                                  reportlets_dir='.',
+                                  output_dir='.',
+                                  template='MNI152NLin2009cAsym',
+                                  output_spaces=['T1w', 'fsnative',
+                                                 'template', 'fsaverage5'],
+                                  debug=False,
+                                  bold2t1w_dof=9,
+                                  fmap_bspline=True,
+                                  fmap_demean=True,
+                                  use_syn=True,
+                                  force_syn=True,
+                                  low_mem=False,
+                                  output_grid_ref=None,
+                                  use_aroma=False,
+                                  ignore_aroma_err=False)
+
+    Parameters
+
+        bold_file : str
+            BOLD series NIfTI file
+        ignore : list
+            Preprocessing steps to skip (may include "slicetiming", "fieldmaps")
+        freesurfer : bool
+            Enable FreeSurfer functional registration (bbregister) and resampling
+            BOLD series to FreeSurfer surface meshes.
+        bold2t1w_dof : 6, 9 or 12
+            Degrees-of-freedom for BOLD-T1w registration
+        reportlets_dir : str
+            Directory in which to save reportlets
+        output_spaces : list
+            List of output spaces functional images are to be resampled to
+            Some parts of pipeline will only be instantiated for some output spaces
+            Valid spaces:
+             - T1w
+             - template
+             - fsnative
+             - fsaverage (or other pre-existing FreeSurfer templates)
+        template : str
+            Name of template targeted by `'template'` output space
+        output_dir : str
+            Directory in which to save derivatives
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        fmap_bspline : bool
+        fmap_demean : bool
+        use_syn : bool [EXPERIMENTAL]
+            Enable ANTs SyN-based susceptibility distortion correction (SDC)
+            If fieldmaps are present and enabled, this is not run, by default.
+        force_syn : bool [TEMPORARY]
+            Always run SyN-based SDC
+        use_aroma : bool
+            Perform ICA-AROMA on MNI-resampled functional series
+        ignore_aroma_err : bool
+            Do not fail on ICA-AROMA errors
+        debug : bool
+            Enable debugging outputs
+        low_mem : bool
+            Write uncompressed .nii files in some cases to reduce memory usage
+        output_grid_ref : str or None
+            Path of custom reference image for normalization
+        layout : BIDSLayout
+            BIDSLayout structure to enable metadata retrieval
+
+    Inputs
+
+        bold_file
+            BOLD series NIfTI file
+        t1_preproc
+            Bias-corrected structural template image
+        t1_brain
+            Skull-stripped ``t1_preproc``
+        t1_mask
+            Mask of the skull-stripped template image
+        t1_seg
+            Segmentation of preprocessed structural image, including
+            gray-matter (GM), white-matter (WM) and cerebrospinal fluid (CSF)
+        t1_tpms
+            List of tissue probability maps in T1w space
+        t1_2_mni_forward_transform
+            ANTs-compatible affine-and-warp transform file
+        t1_2_mni_reverse_transform
+            ANTs-compatible affine-and-warp transform file (inverse)
+        subjects_dir
+            FreeSurfer SUBJECTS_DIR
+        subject_id
+            FreeSurfer subject ID
+        fs_2_t1_transform
+            Affine transform from FreeSurfer subject space to T1w space
+
+
+    Outputs
+
+        bold_t1
+            BOLD series, resampled to T1w space
+        bold_mask_t1
+            BOLD series mask in T1w space
+        bold_mni
+            BOLD series, resampled to template space
+        bold_mask_mni
+            BOLD series mask in template space
+        confounds
+            TSV of confounds
+        surfaces
+            BOLD series, resampled to FreeSurfer surfaces
+        aroma_noise_ics
+            Noise components identified by ICA-AROMA
+        melodic_mix
+            FSL MELODIC mixing matrix
+    """
 
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
