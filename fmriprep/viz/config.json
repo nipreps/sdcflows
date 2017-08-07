@@ -2,14 +2,20 @@
 "sub_reports":
 [
     {
-        "name": "Anatomical",
+        "name": "Summary",
         "elements":
         [
             {
                 "name": "anat/summary",
                 "file_pattern": "anat/.*_summary",
                 "raw": true
-            },
+            }
+        ]
+    },
+    {
+        "name": "Anatomical",
+        "elements":
+        [
             {
                 "name": "anat/conform",
                 "file_pattern": "anat/.*_conform",
