@@ -142,7 +142,7 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
     csf_roi = pe.Node(TPM2ROI(erode_mm=0, mask_erode_mm=30), name='csf_roi')
     wm_roi = pe.Node(TPM2ROI(erode_mm=6, mask_erode_mm=10), name='wm_roi')
-    merge_rois = pe.Node(niu.Merge(2), name='merge_rois', run_without_submit=True, mem_gb=0.01)
+    merge_rois = pe.Node(niu.Merge(2), name='merge_rois', run_without_submitting=True, mem_gb=0.01)
     combine_rois = pe.Node(CombineROIs(), name='combine_rois')
     concat_rois = pe.Node(ConcatROIs(), name='concat_rois')
 
@@ -153,8 +153,8 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
     # Arrange confounds
     add_header = pe.Node(AddTSVHeader(columns=["X", "Y", "Z", "RotX", "RotY", "RotZ"]),
-                         name="add_header", mem_gb=0.01, run_without_submit=True)
-    concat = pe.Node(GatherConfounds(), name="concat", mem_gb=0.01, run_without_submit=True)
+                         name="add_header", mem_gb=0.01, run_without_submitting=True)
+    concat = pe.Node(GatherConfounds(), name="concat", mem_gb=0.01, run_without_submitting=True)
 
     # Set TR if present
     if 'RepetitionTime' in metadata:
@@ -271,21 +271,17 @@ def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
 
     def getusans_func(image, thresh):
         return [tuple([image, thresh])]
-    getusans = pe.Node(niu.Function(
-        function=getusans_func, input_names=['image', 'thresh'], output_names=['usans']),
-        name='getusans', run_without_submit=True, mem_gb=0.01)
+    getusans = pe.Node(niu.Function(function=getusans_func, output_names=['usans']),
+                       name='getusans', mem_gb=0.01)
 
     smooth = pe.Node(fsl.SUSAN(fwhm=6.0), name='smooth')
 
     # melodic node
-    melodic = pe.Node(
-        fsl.MELODIC(no_bet=True,
-                    no_mm=True),
-        name="melodic")
+    melodic = pe.Node(fsl.MELODIC(no_bet=True, no_mm=True), name="melodic")
 
     # ica_aroma node
-    ica_aroma = pe.Node(nws.ICA_AROMARPT(denoise_type='nonaggr',
-                                         generate_report=True), name='ica_aroma')
+    ica_aroma = pe.Node(nws.ICA_AROMARPT(denoise_type='nonaggr', generate_report=True),
+                        name='ica_aroma')
 
     # extract the confound ICs from the results
     ica_aroma_confound_extraction = pe.Node(ICAConfounds(ignore_aroma_err=ignore_aroma_err),
