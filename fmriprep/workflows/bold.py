@@ -99,7 +99,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_t1', 'bold_mask_t1', 'bold_mni', 'bold_mask_mni', 'confounds', 'surfaces',
-                'aroma_noise_ics', 'melodic_mix']),
+                'aroma_noise_ics', 'melodic_mix', 'nonaggr_denoised_file']),
         name='outputnode')
 
     summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary',
@@ -129,7 +129,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('confounds', 'inputnode.confounds'),
             ('surfaces', 'inputnode.surfaces'),
             ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
-            ('melodic_mix', 'inputnode.melodic_mix')
+            ('melodic_mix', 'inputnode.melodic_mix'),
+            ('nonaggr_denoised_file', 'inputnode.nonaggr_denoised_file'),
         ]),
     ])
 
@@ -189,6 +190,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.confounds_file', 'confounds'),
             ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
             ('outputnode.melodic_mix', 'melodic_mix'),
+            ('outputnode.nonaggr_denoised_file', 'nonaggr_denoised_file'),
         ]),
         (bold_reg_wf, outputnode, [('outputnode.bold_t1', 'bold_t1'),
                                    ('outputnode.bold_mask_t1', 'bold_mask_t1')]),
@@ -1139,7 +1141,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=['source_file', 'bold_t1', 'bold_mask_t1', 'bold_mni', 'bold_mask_mni',
-                    'confounds', 'surfaces', 'aroma_noise_ics', 'melodic_mix']),
+                    'confounds', 'surfaces', 'aroma_noise_ics', 'melodic_mix',
+                    'nonaggr_denoised_file']),
         name='inputnode')
 
     ds_bold_t1 = pe.Node(DerivativesDataSink(
@@ -1157,6 +1160,15 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                               suffix=suffix_fmt(template, 'preproc')),
                           name='ds_bold_mni', run_without_submitting=True,
                           mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    variant_suffix_fmt = 'space-{}_variant-{}_{}'.format
+    ds_aroma_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                               suffix=variant_suffix_fmt(template,
+                                                                         'smoothAROMAnonaggr',
+                                                                         'preproc')),
+                           name='ds_aroma_mni', run_without_submitting=True,
+                           mem_gb=DEFAULT_MEMORY_MIN_GB)
+
     ds_bold_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                    suffix=suffix_fmt(template, 'brainmask')),
                                name='ds_bold_mask_mni', run_without_submitting=True,
@@ -1181,6 +1193,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                              ('aroma_noise_ics', 'in_file')]),
             (inputnode, ds_melodic_mix, [('source_file', 'source_file'),
                                          ('melodic_mix', 'in_file')]),
+            (inputnode, ds_aroma_mni, [('source_file', 'source_file'),
+                                       ('nonaggr_denoised_file', 'in_file')]),
         ])
 
     name_surfs = pe.MapNode(GiftiNameSource(pattern=r'(?P<LR>[lr])h.(?P<space>\w+).gii',
