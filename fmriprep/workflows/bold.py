@@ -304,8 +304,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                     ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (bold_hmc_wf, bold_confounds_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
         (bold_reg_wf, bold_confounds_wf, [
-            ('outputnode.bold_t1', 'inputnode.fmri_file'),
-            ('outputnode.bold_mask_t1', 'inputnode.bold_mask')]),
+            ('outputnode.bold_t1', 'inputnode.bold_t1'),
+            ('outputnode.bold_mask_t1', 'inputnode.bold_mask_t1')]),
         (bold_reference_wf, func_reports_wf, [
             ('outputnode.validation_report', 'inputnode.validation_report')]),
         (bold_reg_wf, func_reports_wf, [

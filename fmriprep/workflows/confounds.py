@@ -21,21 +21,91 @@ from ..interfaces import (
 
 def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
                        name="bold_confs_wf"):
-    ''' All input fields are required.
+    """
+    This workflow calculates confounds for a BOLD series, and aggregates them
+    into a :abbr:`TSV (tab-separated value)` file, for use as nuisance
+    regressors in a :abbr:`GLM (general linear model)`.
 
-    Calculates global regressor and tCompCor
-        from motion-corrected fMRI ('inputnode.fmri_file').
-    Calculates DVARS from the fMRI and an EPI brain mask ('inputnode.bold_mask')
-    Calculates frame displacement from MCFLIRT movement parameters ('inputnode.movpar_file')
-    Calculates segment regressors and aCompCor
-        from the fMRI and a white matter/gray matter/CSF segmentation ('inputnode.t1_seg'), after
-        applying the transform to the images. Transforms should be fsl-formatted.
-    Calculates noise components identified from ICA-AROMA (if ``use_aroma=True``)
-    Saves the confounds in a file ('outputnode.confounds_file')'''
+    The following confounds are calculated, with column headings in parentheses:
+
+    #. White matter / global signals (WhiteMatter, GlobalSignal)
+    #. DVARS - standard, nonstandard, and voxel-wise standard variants
+        (stdDVARS, non-stdDVARS, vx-wisestdDVARS)
+    #. Framewise displacement, based on MCFLIRT motion parameters (FramewiseDisplacement)
+    #. tCompCor
+    #. aCompCor
+    #. Cosine basis set for high-pass filtering w/ 0.008 Hz cut-off (CosineXX)
+    #. Non-steady-state volumes (NonSteadyStateXX)
+    #. MCFLIRT motion parameters, in mm and rad (X, Y, Z, RotX, RotY, RotZ)
+    #. ICA-AROMA-identified noise components, if enabled (AROMAAggrCompXX)
+
+    Prior to estimating aCompCor and tCompCor, non-steady-state volumes are
+    censored and high-pass filtered using a :abbr:`DCT (discrete cosine
+    transform)` basis.
+    The cosine basis, as well as one regressor per censored volume, are included
+    for convenience.
+
+    .. workflow::
+        :graph2use: orig
+        :simpleform: yes
+
+        from fmriprep.workflows.confounds import init_bold_confs_wf
+        wf = init_bold_confs_wf(bold_file_size_gb=1,
+                                use_aroma=True,
+                                ignore_aroma_err=True,
+                                metadata={})
+
+    Parameters
+
+        bold_file_size_gb : float
+            Size of BOLD file in GB
+        use_aroma : bool
+            Perform ICA-AROMA on MNI-resampled functional series
+        ignore_aroma_err : bool
+            Do not fail on ICA-AROMA errors
+        metadata : dict
+            BIDS metadata for BOLD file
+
+    Inputs
+
+        bold_t1
+            BOLD image, resampled in T1w space
+        movpar_file
+            SPM-formatted motion parameters file
+        t1_mask
+            Mask of the skull-stripped template image
+        t1_tpms
+            List of tissue probability maps in T1w space
+        bold_mask_t1
+            BOLD series mask in T1w space
+        bold_mni
+            BOLD series, resampled to template space
+        bold_mask_mni
+            BOLD series mask in template space
+
+    Outputs
+
+        confounds_file
+            TSV of all aggregated confounds
+        confounds_list
+            List of calculated confounds for reporting
+        acompcor_report
+            Reportlet visualizing white-matter/CSF mask used for aCompCor
+        tcompcor_report
+            Reportlet visualizing ROI identified in tCompCor
+        ica_aroma_report
+            Reportlet visualizing MELODIC ICs, with ICA-AROMA signal/noise labels
+        aroma_noise_ics
+            CSV of noise components identified by ICA-AROMA
+        melodic_mix
+            FSL MELODIC mixing matrix
+        nonaggr_denoised_file
+            BOLD series with non-aggressive ICA-AROMA denoising applied
+    """
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmri_file', 'movpar_file', 't1_mask', 't1_tpms',
-                'bold_mask', 'bold_mni', 'bold_mask_mni']),
+        fields=['bold_t1', 'movpar_file', 't1_mask', 't1_tpms',
+                'bold_mask_t1', 'bold_mni', 'bold_mask_mni']),
         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['confounds_file', 'confounds_list', 'acompcor_report', 'tcompcor_report',
@@ -100,40 +170,40 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     workflow = pe.Workflow(name=name)
     workflow.connect([
         # connect inputnode to each non-anatomical confound node
-        (inputnode, dvars, [('fmri_file', 'in_file'),
-                            ('bold_mask', 'in_mask')]),
+        (inputnode, dvars, [('bold_t1', 'in_file'),
+                            ('bold_mask_t1', 'in_mask')]),
         (inputnode, fdisp, [('movpar_file', 'in_file')]),
-        (inputnode, non_steady_state, [('fmri_file', 'in_file')]),
-        (inputnode, tcompcor, [('fmri_file', 'realigned_file')]),
+        (inputnode, non_steady_state, [('bold_t1', 'in_file')]),
+        (inputnode, tcompcor, [('bold_t1', 'realigned_file')]),
 
         (non_steady_state, tcompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
         (non_steady_state, acompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
 
         (inputnode, csf_roi, [(('t1_tpms', _pick_csf), 't1_tpm'),
                               ('t1_mask', 't1_mask'),
-                              ('bold_mask', 'bold_mask')]),
+                              ('bold_mask_t1', 'bold_mask')]),
         (csf_roi, tcompcor, [('eroded_mask', 'mask_files')]),
 
         (inputnode, wm_roi, [(('t1_tpms', _pick_wm), 't1_tpm'),
                              ('t1_mask', 't1_mask'),
-                             ('bold_mask', 'bold_mask')]),
+                             ('bold_mask_t1', 'bold_mask')]),
 
         (csf_roi, merge_rois, [('roi_file', 'in1')]),
         (wm_roi, merge_rois, [('roi_file', 'in2')]),
         (merge_rois, combine_rois, [('out', 'in_files')]),
-        (inputnode, combine_rois, [('fmri_file', 'ref_header')]),
+        (inputnode, combine_rois, [('bold_t1', 'ref_header')]),
 
         # anatomical confound: aCompCor.
-        (inputnode, acompcor, [('fmri_file', 'realigned_file')]),
+        (inputnode, acompcor, [('bold_t1', 'realigned_file')]),
         (combine_rois, acompcor, [('out_file', 'mask_files')]),
 
         (wm_roi, concat_rois, [('roi_file', 'in_file')]),
-        (inputnode, concat_rois, [('bold_mask', 'in_mask')]),
-        (inputnode, concat_rois, [('fmri_file', 'ref_header')]),
+        (inputnode, concat_rois, [('bold_mask_t1', 'in_mask')]),
+        (inputnode, concat_rois, [('bold_t1', 'ref_header')]),
 
         # anatomical confound: signal extraction
         (concat_rois, signals, [('out_file', 'label_files')]),
-        (inputnode, signals, [('fmri_file', 'in_file')]),
+        (inputnode, signals, [('bold_t1', 'in_file')]),
 
         # connect the confound nodes to the concatenate node
         (inputnode, add_header, [('movpar_file', 'in_file')]),
