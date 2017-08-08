@@ -239,22 +239,56 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
 
 def init_ica_aroma_wf(name='ica_aroma_wf', ignore_aroma_err=False):
     '''
-    From: https://github.com/rhr-pruim/ICA-AROMA
-    Description:
-    ICA-AROMA (i.e. ‘ICA-based Automatic Removal Of Motion Artifacts’) concerns
-    a data-driven method to identify and remove motion-related independent
-    components from fMRI data.
+    This workflow wraps `ICA-AROMA`_ to identify and remove motion-related
+    independent components from a BOLD time series.
 
-    Preconditions/Assumptions:
-    The input fmri bold file is in standard space
-    (for ease of interfacing with the original ICA-AROMA code)
+    The following steps are performed:
 
-    Steps:
-    1) smooth data using SUSAN
-    2) run melodic outside of ICA-AROMA to generate the report
-    3) run ICA-AROMA
-    4) print identified motion components (aggressive) to tsv
-    5) pass classified_motion_ICs and melodic_mix for user to complete nonaggr denoising
+    #. Smooth data using SUSAN
+    #. Run MELODIC outside of ICA-AROMA to generate the report
+    #. Run ICA-AROMA
+    #. Aggregate identified motion components (aggressive) to TSV
+    #. Return classified_motion_ICs and melodic_mix for user to complete
+        non-aggressive denoising in T1w space
+
+    Additionally, non-aggressive denoising is performed on the BOLD series
+    resampled into MNI space.
+
+    .. workflow::
+        :graph2use: orig
+        :simpleform: yes
+
+        from fmriprep.workflows.confounds import init_ica_aroma_wf
+        wf = init_ica_aroma_wf()
+
+    Parameters
+
+        ignore_aroma_err : bool
+            Do not fail on ICA-AROMA errors
+
+    Inputs
+
+        bold_mni
+            BOLD series, resampled to template space
+        movpar_file
+            SPM-formatted motion parameters file
+        bold_mask_mni
+            BOLD series mask in template space
+
+    Outputs
+
+        aroma_confounds
+            TSV of confounds identified as noise by ICA-AROMA
+        aroma_noise_ics
+            CSV of noise components identified by ICA-AROMA
+        melodic_mix
+            FSL MELODIC mixing matrix
+        nonaggr_denoised_file
+            BOLD series with non-aggressive ICA-AROMA denoising applied
+        out_report
+            Reportlet visualizing MELODIC ICs, with ICA-AROMA signal/noise labels
+
+    .. _ICA-AROMA: https://github.com/rhr-pruim/ICA-AROMA
     '''
     workflow = pe.Workflow(name=name)
 
