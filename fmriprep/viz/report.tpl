@@ -44,7 +44,6 @@ body {
                 <li><a href="#{{sub_report.name}}">{{ sub_report.name }}</a></li>
             {% endif %}
         {% endfor %}
-        <li><a class="dropdown-item" href="#about">About</a></li>
         <li><a class="dropdown-item" href="#errors">Errors</a></li>
     </ul>
 <div>
@@ -94,14 +93,6 @@ body {
     {% endif %}
     </div>
 {% endfor %}
-
-<div id="about">
-    <h1 class="sub-report-title">About</h1>
-    <ul>
-        <li>FMRIPREP version: {{ version }}</li>
-        <li>Report generated: {{ date }}</li>
-    </ul>
-</div>
 
 <div id="errors">
     <h1 class="sub-report-title">Errors</h1>
