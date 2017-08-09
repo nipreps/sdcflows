@@ -1421,6 +1421,37 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
 
 
 def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
+    """
+    This workflow generates and saves a reportlet showing the effect of fieldmap
+    unwarping a BOLD image.
+
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.anatomical import init_fmap_unwarp_report_wf
+        wf = init_fmap_unwarp_report_wf(reportlets_dir='.')
+
+    Parameters
+
+        reportlets_dir : str
+            Directory in which to save reportlets
+        name : str, optional
+            Workflow name (default: fmap_unwarp_report_wf)
+
+    Inputs
+
+        in_pre
+            Reference image, before unwarping
+        in_post
+            Reference image, after unwarping
+        in_seg
+            Segmentation of preprocessed structural image, including
+            gray-matter (GM), white-matter (WM) and cerebrospinal fluid (CSF)
+        in_xfm
+            Affine transform from T1 space to BOLD space (ITK format)
+
+    """
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(niu.IdentityInterface(
@@ -1458,6 +1489,9 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
 
 
 def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='func_reports_wf'):
+    """
+    Set up a battery of datasinks to store reports in the right location
+    """
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
@@ -1547,6 +1581,9 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
 
 def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                              use_aroma, name='func_derivatives_wf'):
+    """
+    Set up a battery of datasinks to store derivatives in the right location
+    """
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
