@@ -171,6 +171,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             Noise components identified by ICA-AROMA
         melodic_mix
             FSL MELODIC mixing matrix
+
     """
 
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
@@ -511,10 +512,53 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
 
 def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf'):
-    """Generate a reference BOLD image for a series
+    """
+    This workflow generates reference BOLD images for a series
 
-    This image is the target of head-motion-correction, and the subject of distortion
-    correction and registration to T1w and template spaces.
+    The raw reference image is the target of :abbr:`HMC (head motion correction)`, and a
+    contrast-enhanced reference is the subject of distortion correction, as well as
+    boundary-based registration to T1w and template spaces.
+
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_reference_wf
+        wf = init_bold_reference_wf(omp_nthreads=1)
+
+    Parameters
+
+        bold_file : str
+            BOLD series NIfTI file
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        name : str
+            Name of workflow (default: ``bold_reference_wf``)
+
+    Inputs
+
+        bold_file
+            BOLD series NIfTI file
+
+    Outputs
+
+        bold_file
+            Validated BOLD series NIfTI file
+        raw_ref_image
+            Reference image to which BOLD series is motion corrected
+        skip_vols
+            Number of non-steady-state volumes detected at beginning of ``bold_file``
+        ref_image
+            Contrast-enhanced reference image
+        ref_image_brain
+            Skull-stripped reference image
+        bold_mask
+            Skull-stripping mask of reference image
+        bold_mask_report
+            Reportlet showing quality of masking
+        validation_report
+            HTML reportlet indicating whether ``bold_file`` had a valid affine
+
     """
     workflow = pe.Workflow(name=name)
 
@@ -557,14 +601,58 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                      name='bold_hmc_wf', omp_nthreads=1):
     """
-    Performs :abbr:`HMC (head motion correction)` over the input
+    This workflow performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
+
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_hmc_wf
+        wf = init_bold_hmc_wf(
+            metadata={"RepetitionTime": 2.0,
+                      "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]},
+                      ignore=[],
+                      bold_file_size_gb=3)
+
+    Parameters
+
+        metadata : dict
+            BIDS metadata for BOLD file
+        bold_file_size_gb : float
+            Size of BOLD file in GB
+        ignore : list
+            Preprocessing steps to skip - if "slicetiming" is included, skip
+            slice-timing correction
+        name : str
+            Name of workflow (default: ``bold_hmc_wf``)
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+
+    Inputs
+
+        bold_file
+            BOLD series NIfTI file
+        raw_ref_image
+            Reference image to which BOLD series is motion corrected
+        skip_vols
+            Number of non-steady-state volumes detected at beginning of ``bold_file``
+
+    Outputs
+
+        bold_split
+            Individual 3D volumes, not motion corrected
+        xforms
+            List of affine transforms aligning each volume to ``ref_image`` in ITK format
+        movpar_file
+            MCFLIRT motion parameters, normalized to SPM format (X, Y, Z, Rx, Ry, Rz)
+
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file', 'raw_ref_image', 'skip_vols']),
                         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['xforms', 'bold_hmc', 'bold_split', 'movpar_file']),
+        niu.IdentityInterface(fields=['bold_split', 'xforms', 'movpar_file']),
         name='outputnode')
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
