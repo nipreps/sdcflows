@@ -731,8 +731,90 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
                      name='bold_reg_wf', use_compression=True,
                      use_fieldwarp=False):
     """
-    Uses FSL FLIRT with the BBR cost function to find the transform that
-    maps the BOLD space into the T1-space
+    This workflow registers the reference BOLD image to T1-space, using a
+    boundary-based registration (BBR) cost function.
+
+    If FreeSurfer-based preprocessing is enabled, the ``bbregister`` utility
+    is used to align the BOLD images to the reconstructed subject, and the
+    resulting transform is adjusted to target the T1 space.
+    If FreeSurfer-based preprocessing is disabled, FSL FLIRT is used with the
+    BBR cost function to directly target the T1 space.
+
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_reg_wf
+        wf = init_bold_reg_wf(freesurfer=True,
+                              bold_file_size_gb=3,
+                              bold2t1w_dof=9)
+
+    Parameters
+
+        freesurfer : bool
+            Enable FreeSurfer functional registration (bbregister)
+        bold2t1w_dof : 6, 9 or 12
+            Degrees-of-freedom for BOLD-T1w registration
+        bold_file_size_gb : float
+            Size of BOLD file in GB
+        name : str
+            Name of workflow (default: ``bold_reg_wf``)
+        use_compression : bool
+            Save registered BOLD series as ``.nii.gz``
+        use_fieldwarp : bool
+            Include SDC warp in single-shot transform from BOLD to T1
+
+    Inputs
+
+        name_source
+            BOLD series NIfTI file
+            Used to recover original information lost during processing
+        ref_bold_brain
+            Reference image to which BOLD series is aligned
+            If ``fieldwarp == True``, ``ref_bold_brain`` should be unwarped
+        ref_bold_mask
+            Skull-stripping mask of reference image
+        t1_preproc
+            Bias-corrected structural template image
+        t1_brain
+            Skull-stripped ``t1_preproc``
+        t1_mask
+            Mask of the skull-stripped template image
+        t1_seg
+            Segmentation of preprocessed structural image, including
+            gray-matter (GM), white-matter (WM) and cerebrospinal fluid (CSF)
+        bold_split
+            Individual 3D BOLD volumes, not motion corrected
+        hmc_xforms
+            List of affine transforms aligning each volume to ``ref_image`` in ITK format
+        subjects_dir
+            FreeSurfer SUBJECTS_DIR
+        subject_id
+            FreeSurfer subject ID
+        fs_2_t1_transform
+            Affine transform from FreeSurfer subject space to T1w space
+        fieldwarp
+            a :abbr:`DFM (displacements field map)` in ITK format
+
+    Outputs
+
+        mat_bold_to_t1
+            Affine transform from ``ref_bold_brain`` to T1 space (FSL format)
+        mat_t1_to_bold
+            Affine transform from T1 space to BOLD space (FSL format)
+        itk_bold_to_t1
+            Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
+        itk_t1_to_bold
+            Affine transform from T1 space to BOLD space (ITK format)
+        bold_t1
+            Motion-corrected BOLD series in T1 space
+        bold_mask_t1
+            BOLD mask in T1 space
+        fs_reg_file
+            Affine transform from ``ref_bold_brain`` to T1 space (FreeSurfer ``reg`` format)
+        out_report
+            Reportlet visualizing quality of registration
+
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
