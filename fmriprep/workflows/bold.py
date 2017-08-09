@@ -454,7 +454,6 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         # Apply transforms in 1 shot
         # Only use uncompressed output if AROMA is to be run
         bold_mni_trans_wf = init_bold_mni_trans_wf(
-            output_dir=output_dir,
             template=template,
             bold_file_size_gb=bold_file_size_gb,
             output_grid_ref=output_grid_ref,
@@ -1024,10 +1023,64 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
     return workflow
 
 
-def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
+def init_bold_mni_trans_wf(template, bold_file_size_gb,
                            name='bold_mni_trans_wf',
                            output_grid_ref=None, use_compression=True,
                            use_fieldwarp=False):
+    """
+    This workflow samples functional images to the MNI template in a "single shot"
+    from the original BOLD series.
+
+    .. workflow::
+        :graph2use: colored
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_mni_trans_wf
+        wf = init_bold_mni_trans_wf(template='MNI152NLin2009cAsym',
+                                    bold_file_size_gb=3,
+                                    output_grid_ref=None)
+
+    Parameters
+
+        template : str
+            Name of template targeted by `'template'` output space
+        bold_file_size_gb : float
+            Size of BOLD file in GB
+        name : str
+            Name of workflow (default: ``bold_mni_trans_wf``)
+        output_grid_ref : str or None
+            Path of custom reference image for normalization
+        use_compression : bool
+            Save registered BOLD series as ``.nii.gz``
+        use_fieldwarp : bool
+            Include SDC warp in single-shot transform from BOLD to MNI
+
+    Inputs
+
+        itk_bold_to_t1
+            Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
+        t1_2_mni_forward_transform
+            ANTs-compatible affine-and-warp transform file
+        bold_split
+            Individual 3D volumes, not motion corrected
+        bold_mask
+            Skull-stripping mask of reference image
+        name_source
+            BOLD series NIfTI file
+            Used to recover original information lost during processing
+        hmc_xforms
+            List of affine transforms aligning each volume to ``ref_image`` in ITK format
+        fieldwarp
+            a :abbr:`DFM (displacements field map)` in ITK format
+
+    Outputs
+
+        bold_mni
+            BOLD series, resampled to template space
+        bold_mask_mni
+            BOLD series mask in template space
+
+    """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
