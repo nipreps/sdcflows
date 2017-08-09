@@ -929,14 +929,45 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
 
 
 def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
-    """ Sample functional images to FreeSurfer surfaces
+    """
+    This workflow samples functional images to FreeSurfer surfaces
 
     For each vertex, the cortical ribbon is sampled at six points (spaced 20% of thickness apart)
     and averaged.
 
     Outputs are in GIFTI format.
 
-    output_spaces : set of structural spaces to sample functional series to
+    .. workflow::
+        :graph2use: colored
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_surf_wf
+        wf = init_bold_surf_wf(output_spaces=['T1w', 'fsnative',
+                                             'template', 'fsaverage5'])
+
+    Parameters
+
+        output_spaces : list
+            List of output spaces functional images are to be resampled to
+            Target spaces beginning with ``fs`` will be selected for resampling,
+            such as ``fsaverage`` or related template spaces
+            If the list contains ``fsnative``, images will be resampled to the
+            individual subject's native surface
+
+    Inputs
+
+        source_file
+            Motion-corrected BOLD series in T1 space
+        subjects_dir
+            FreeSurfer SUBJECTS_DIR
+        subject_id
+            FreeSurfer subject ID
+
+    Outputs
+
+        surfaces
+            BOLD series, resampled to FreeSurfer surfaces
+
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
