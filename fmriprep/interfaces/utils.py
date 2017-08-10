@@ -41,8 +41,9 @@ class ApplyMask(SimpleInterface):
 
 
 class TPM2ROIInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='input file')
-    in_mask = File(exists=True, mandatory=True, desc='input mask')
+    t1_tpm = File(exists=True, mandatory=True, desc='Tissue probability map file in T1 space')
+    t1_mask = File(exists=True, mandatory=True, desc='Binary mask of skull-stripped T1w image')
+    bold_mask = File(exists=True, mandatory=True, desc='Binary mask of skull-stripped BOLD image')
     mask_erode_mm = traits.Float(0.0, usedefault=True,
                                  desc='erode input mask (kernel width in mm)')
     erode_mm = traits.Float(0.0, usedefault=True,
@@ -66,8 +67,9 @@ class TPM2ROI(SimpleInterface):
 
     def _run_interface(self, runtime):
         roi_file, eroded_mask = _tpm2roi(
-            self.inputs.in_file,
-            self.inputs.in_mask,
+            self.inputs.t1_tpm,
+            self.inputs.t1_mask,
+            self.inputs.bold_mask,
             self.inputs.mask_erode_mm,
             self.inputs.erode_mm,
             self.inputs.prob_thresh
@@ -133,41 +135,53 @@ class AddTSVHeader(SimpleInterface):
         return runtime
 
 
-def _tpm2roi(in_file, epi_mask, epi_mask_erosion_mm=0, erosion_mm=0, pthres=0.95):
+def _tpm2roi(t1_tpm, t1_mask, bold_mask, mask_erosion_mm=0, erosion_mm=0, pthres=0.95):
     """
     Generate a mask from a tissue probability map
     """
-    probability_map_nii = resample_to_img(in_file, epi_mask)
-    probability_map_data = probability_map_nii.get_data()
+    tpm_img = nb.load(t1_tpm)
+    bold_mask_img = nb.load(bold_mask)
 
-    # thresholding
-    probability_map_data[probability_map_data < pthres] = 0
-    probability_map_data[probability_map_data != 0] = 1
+    probability_map_data = (tpm_img.get_data() >= pthres).astype(np.uint8)
 
-    epi_mask_nii = nb.load(epi_mask)
-    epi_mask_data = epi_mask_nii.get_data()
-    if epi_mask_erosion_mm > 0:
-        epi_mask_data = nd.binary_erosion(
-            epi_mask_data,
-            iterations=int(epi_mask_erosion_mm /
-                           max(probability_map_nii.header.get_zooms()))).astype(int)
-        eroded_mask_file = os.path.abspath("erodd_mask.nii.gz")
-        nb.Nifti1Image(epi_mask_data, epi_mask_nii.affine,
-                       epi_mask_nii.header).to_filename(eroded_mask_file)
-    else:
-        eroded_mask_file = epi_mask
-    probability_map_data[epi_mask_data != 1] = 0
+    eroded_mask_file = bold_mask
+    if mask_erosion_mm > 0:
+        eroded_mask_file = os.path.abspath("eroded_mask.nii.gz")
+
+        mask_img = nb.load(t1_mask)
+        iter_n = int(mask_erosion_mm / max(mask_img.header.get_zooms()))
+        mask_data = nd.binary_erosion(mask_img.get_data().astype(np.uint8), iterations=iter_n)
+
+        # Resample to BOLD and save
+        eroded_t1 = nb.Nifti1Image(mask_data, mask_img.affine, mask_img.header)
+        eroded_t1.set_data_dtype(np.uint8)
+        eroded_bold = _resample_and_mask(eroded_t1, bold_mask_img, interpolation='nearest')
+        eroded_bold.to_filename(eroded_mask_file)
+
+        # Mask TPM data (no effect if not eroded)
+        probability_map_data[~mask_data] = 0
 
     # shrinking
     if erosion_mm:
-        iter_n = int(erosion_mm / max(probability_map_nii.header.get_zooms()))
-        probability_map_data = nd.binary_erosion(probability_map_data,
-                                                 iterations=iter_n).astype(int)
+        iter_n = int(erosion_mm / max(tpm_img.header.get_zooms()))
+        probability_map_data = nd.binary_erosion(probability_map_data, iterations=iter_n)
 
-    new_nii = nb.Nifti1Image(probability_map_data, probability_map_nii.affine,
-                             probability_map_nii.header)
-    new_nii.to_filename("roi.nii.gz")
+    # Create image to resample
+    img_t1 = nb.Nifti1Image(probability_map_data, tpm_img.affine, tpm_img.header)
+    img_t1.set_data_dtype(np.uint8)
+    roi_img = _resample_and_mask(img_t1, bold_mask_img, interpolation='nearest')
+
+    roi_img.to_filename("roi.nii.gz")
     return os.path.abspath("roi.nii.gz"), eroded_mask_file
+
+
+def _resample_and_mask(source_img, mask_img, interpolation='continuous'):
+    resampled_img = resample_to_img(source_img, mask_img, interpolation=interpolation)
+    masked_data = resampled_img.get_data() * mask_img.get_data().astype(bool)
+
+    out_img = mask_img.__class__(masked_data, mask_img.affine, mask_img.header)
+    out_img.set_data_dtype(source_img.get_data_dtype())
+    return out_img
 
 
 def _combine_rois(in_files, ref_header):

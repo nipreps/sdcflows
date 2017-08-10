@@ -34,7 +34,8 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
     Saves the confounds in a file ('outputnode.confounds_file')'''
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmri_file', 'movpar_file', 't1_tpms', 'bold_mask', 'bold_mni', 'bold_mask_mni']),
+        fields=['fmri_file', 'movpar_file', 't1_mask', 't1_tpms',
+                'bold_mask', 'bold_mni', 'bold_mask_mni']),
         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['confounds_file', 'confounds_list', 'acompcor_report', 'tcompcor_report',
@@ -108,12 +109,14 @@ def init_bold_confs_wf(bold_file_size_gb, use_aroma, ignore_aroma_err, metadata,
         (non_steady_state, tcompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
         (non_steady_state, acompcor, [('n_volumes_to_discard', 'ignore_initial_volumes')]),
 
-        (inputnode, csf_roi, [(('t1_tpms', _pick_csf), 'in_file')]),
-        (inputnode, csf_roi, [('bold_mask', 'in_mask')]),
+        (inputnode, csf_roi, [(('t1_tpms', _pick_csf), 't1_tpm'),
+                              ('t1_mask', 't1_mask'),
+                              ('bold_mask', 'bold_mask')]),
         (csf_roi, tcompcor, [('eroded_mask', 'mask_files')]),
 
-        (inputnode, wm_roi, [(('t1_tpms', _pick_wm), 'in_file')]),
-        (inputnode, wm_roi, [('bold_mask', 'in_mask')]),
+        (inputnode, wm_roi, [(('t1_tpms', _pick_wm), 't1_tpm'),
+                             ('t1_mask', 't1_mask'),
+                             ('bold_mask', 'bold_mask')]),
 
         (csf_roi, merge_rois, [('roi_file', 'in1')]),
         (wm_roi, merge_rois, [('roi_file', 'in2')]),
