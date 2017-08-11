@@ -489,19 +489,20 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                                                   ('skip_vols', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [
                 (('out', _prefix_at), 'tpattern')]),
-            (slice_timing_correction, hmc, [('out_file', 'in_file')])
+            (slice_timing_correction, hmc, [('out_file', 'in_file')]),
+            (slice_timing_correction, split, [('out_file', 'in_file')]),
         ])
 
     else:
         workflow.connect([
-            (inputnode, hmc, [('bold_file', 'in_file')])
+            (inputnode, hmc, [('bold_file', 'in_file')]),
+            (inputnode, split, [('bold_file', 'in_file')]),
         ])
 
     workflow.connect([
         (inputnode, hmc, [('raw_ref_image', 'ref_file')]),
         (inputnode, hcm2itk, [('raw_ref_image', 'source_file'),
                               ('raw_ref_image', 'reference_file')]),
-        (inputnode, split, [('bold_file', 'in_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
         (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
