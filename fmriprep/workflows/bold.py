@@ -334,6 +334,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             template=template,
             bold_file_size_gb=bold_file_size_gb,
             output_grid_ref=output_grid_ref,
+            use_fieldwarp=(fmaps is not None or use_syn),
             name='bold_mni_trans_wf'
         )
 
