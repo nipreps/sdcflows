@@ -24,7 +24,8 @@ import os
 import os.path as op
 import re
 import simplejson as json
-from shutil import copy, copytree, rmtree
+import gzip
+from shutil import copy, copytree, rmtree, copyfileobj
 
 from niworkflows.nipype import logging
 from niworkflows.nipype.interfaces.base import (
@@ -166,6 +167,9 @@ class DerivativesDataSink(SimpleInterface):
     def _run_interface(self, runtime):
         fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
+        compress = ext == '.nii'
+        if compress:
+            ext = '.nii.gz'
 
         m = BIDS_NAME.search(fname)
 
@@ -207,7 +211,12 @@ class DerivativesDataSink(SimpleInterface):
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
-            copy(self.inputs.in_file[i], out_file)
+            if compress:
+                with open(fname, 'rb') as f_in:
+                    with gzip.open(out_file, 'wb') as f_out:
+                        copyfileobj(f_in, f_out)
+            else:
+                copy(fname, out_file)
 
         return runtime
 
