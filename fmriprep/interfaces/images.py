@@ -140,7 +140,7 @@ class PruneExcessiveZoomOutputSpec(TraitedSpec):
     target_shape = traits.List(traits.Int,
                                desc='Target shape information')
     target_span = traits.List(traits.Float,
-                               desc='Target span information')
+                              desc='Target span information')
 
     out_report = File(exists=True, desc='conformation report')
 
@@ -157,6 +157,7 @@ CONFORMSERIES_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</
 """
 
 DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
+
 
 class PruneExcessiveZoom(SimpleInterface):
     """Filter a series of T1w images based on the requirements for up-sampling.
@@ -226,6 +227,7 @@ class PruneExcessiveZoom(SimpleInterface):
 
         return runtime
 
+
 class ConformSeriesInputSpec(BaseInterfaceInputSpec):
     t1w = File(exists=True, mandatory=True,
                desc='input T1w image')
@@ -235,7 +237,7 @@ class ConformSeriesInputSpec(BaseInterfaceInputSpec):
     target_shape = traits.List(traits.Int,
                                desc='Target shape information')
     target_span = traits.List(traits.Float,
-                               desc='Target span information')
+                              desc='Target span information')
 
 
 class ConformSeriesOutputSpec(TraitedSpec):
@@ -292,8 +294,8 @@ class ConformSeries(SimpleInterface):
                 # Use a proportional shift to maintain relative position in dataset
                 size_factor = target_span / (zooms * shape)
                 # Use integer shifts to avoid unnecessary interpolation
-                offset = (reoriented.affine[:3, 3] * size_factor - reoriented.affine[:3, 3]).astype(int)
-                target_affine[:3, 3] = reoriented.affine[:3, 3] + offset
+                offset = (reoriented.affine[:3, 3] * size_factor - reoriented.affine[:3, 3])
+                target_affine[:3, 3] = reoriented.affine[:3, 3] + offset.astype(int)
             else:
                 target_affine[:3, 3] = reoriented.affine[:3, 3]
 
