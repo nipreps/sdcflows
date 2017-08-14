@@ -5,7 +5,6 @@
 """
 Utility workflows
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
@@ -139,7 +138,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         return np.loadtxt(in_file, usecols=[0])
 
     get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost', run_without_submitting=True)
+                       name='get_cost')
 
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
@@ -199,7 +198,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                      'issue, with contents of {}'.format(in_file))
 
     get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost', run_without_submitting=True)
+                       name='get_cost')
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),

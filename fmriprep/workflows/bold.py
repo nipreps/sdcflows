@@ -11,7 +11,6 @@ BOLD fMRI -processing workflows
       Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import os.path as op
@@ -100,7 +99,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_t1', 'bold_mask_t1', 'bold_mni', 'bold_mask_mni', 'confounds', 'surfaces',
-                'aroma_noise_ics', 'melodic_mix']),
+                'aroma_noise_ics', 'melodic_mix', 'nonaggr_denoised_file']),
         name='outputnode')
 
     summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary',
@@ -130,12 +129,12 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('confounds', 'inputnode.confounds'),
             ('surfaces', 'inputnode.surfaces'),
             ('aroma_noise_ics', 'inputnode.aroma_noise_ics'),
-            ('melodic_mix', 'inputnode.melodic_mix')
+            ('melodic_mix', 'inputnode.melodic_mix'),
+            ('nonaggr_denoised_file', 'inputnode.nonaggr_denoised_file'),
         ]),
     ])
 
-    validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
-                       run_without_submitting=True)
+    bold_reference_wf = init_bold_reference_wf(omp_nthreads=omp_nthreads)
 
     # HMC on the BOLD
     bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf',
@@ -163,8 +162,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     bold_confounds_wf.get_node('inputnode').inputs.t1_transform_flags = [False]
 
     workflow.connect([
-        (inputnode, validate, [('bold_file', 'in_file')]),
-        (validate, bold_hmc_wf, [('out_file', 'inputnode.bold_file')]),
+        (inputnode, bold_reference_wf, [('bold_file', 'inputnode.bold_file')]),
+        (bold_reference_wf, bold_hmc_wf, [('outputnode.bold_file', 'inputnode.bold_file'),
+                                          ('outputnode.raw_ref_image', 'inputnode.raw_ref_image'),
+                                          ('outputnode.skip_vols', 'inputnode.skip_vols')]),
         (inputnode, bold_reg_wf, [('bold_file', 'inputnode.name_source'),
                                   ('t1_preproc', 'inputnode.t1_preproc'),
                                   ('t1_brain', 'inputnode.t1_brain'),
@@ -175,14 +176,16 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   ('subject_id', 'inputnode.subject_id'),
                                   ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
                                   ]),
-        (inputnode, bold_confounds_wf, [('t1_tpms', 'inputnode.t1_tpms')]),
+        (inputnode, bold_confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
+                                        ('t1_mask', 'inputnode.t1_mask')]),
         (bold_hmc_wf, bold_reg_wf, [('outputnode.bold_split', 'inputnode.bold_split'),
                                     ('outputnode.xforms', 'inputnode.hmc_xforms')]),
         (bold_hmc_wf, bold_confounds_wf, [('outputnode.movpar_file', 'inputnode.movpar_file')]),
         (bold_reg_wf, bold_confounds_wf, [
             ('outputnode.bold_t1', 'inputnode.fmri_file'),
             ('outputnode.bold_mask_t1', 'inputnode.bold_mask')]),
-        (validate, func_reports_wf, [('out_report', 'inputnode.validation_report')]),
+        (bold_reference_wf, func_reports_wf, [
+            ('outputnode.validation_report', 'inputnode.validation_report')]),
         (bold_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.bold_reg_report'),
         ]),
@@ -190,6 +193,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.confounds_file', 'confounds'),
             ('outputnode.aroma_noise_ics', 'aroma_noise_ics'),
             ('outputnode.melodic_mix', 'melodic_mix'),
+            ('outputnode.nonaggr_denoised_file', 'nonaggr_denoised_file'),
         ]),
         (bold_reg_wf, outputnode, [('outputnode.bold_t1', 'bold_t1'),
                                    ('outputnode.bold_mask_t1', 'bold_mask_t1')]),
@@ -232,7 +236,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         else:
             # Import specific workflows here, so we don't brake everything with one
             # unused workflow.
-            from fmriprep.workflows.fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
+            from .fieldmap import init_fmap_estimator_wf, init_sdc_unwarp_wf
             fmap_estimator_wf = init_fmap_estimator_wf(fmap_bids=fmap,
                                                        reportlets_dir=reportlets_dir,
                                                        omp_nthreads=omp_nthreads,
@@ -253,7 +257,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         # Connections and workflows common for all types of fieldmaps
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [('bold_file', 'inputnode.name_source')]),
-            (bold_hmc_wf, sdc_unwarp_wf, [
+            (bold_reference_wf, sdc_unwarp_wf, [
                 ('outputnode.ref_image', 'inputnode.in_reference'),
                 ('outputnode.ref_image_brain', 'inputnode.in_reference_brain'),
                 ('outputnode.bold_mask', 'inputnode.in_mask')]),
@@ -272,7 +276,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             (inputnode, fmap_unwarp_report_wf, [
                 ('t1_seg', 'inputnode.in_seg'),
                 ('bold_file', 'inputnode.name_source')]),
-            (bold_hmc_wf, fmap_unwarp_report_wf, [
+            (bold_reference_wf, fmap_unwarp_report_wf, [
                 ('outputnode.ref_image', 'inputnode.in_pre')]),
             (sdc_unwarp_wf, fmap_unwarp_report_wf, [
                 ('outputnode.out_reference', 'inputnode.in_post')]),
@@ -284,10 +288,11 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                     'for dataset %s.', bold_file)
         summary.inputs.distortion_correction = 'None'
         workflow.connect([
-            (bold_hmc_wf, func_reports_wf, [
+            (bold_reference_wf, func_reports_wf, [
                 ('outputnode.bold_mask_report', 'inputnode.bold_mask_report')]),
-            (bold_hmc_wf, bold_reg_wf, [('outputnode.ref_image_brain', 'inputnode.ref_bold_brain'),
-                                        ('outputnode.bold_mask', 'inputnode.ref_bold_mask')]),
+            (bold_reference_wf, bold_reg_wf, [
+                ('outputnode.ref_image_brain', 'inputnode.ref_bold_brain'),
+                ('outputnode.bold_mask', 'inputnode.ref_bold_mask')]),
         ])
 
     if use_syn:
@@ -302,7 +307,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
                 ('subjects_dir', 'inputnode.subjects_dir'),
                 ('subject_id', 'inputnode.subject_id')]),
-            (bold_hmc_wf, nonlinear_sdc_wf, [
+            (bold_reference_wf, nonlinear_sdc_wf, [
                 ('outputnode.ref_image_brain', 'inputnode.bold_ref')]),
             (nonlinear_sdc_wf, func_reports_wf, [
                 ('outputnode.out_warp_report', 'inputnode.syn_sdc_report')]),
@@ -329,6 +334,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             template=template,
             bold_file_size_gb=bold_file_size_gb,
             output_grid_ref=output_grid_ref,
+            use_fieldwarp=(fmaps is not None or use_syn),
             name='bold_mni_trans_wf'
         )
 
@@ -362,7 +368,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ])
         else:
             workflow.connect([
-                (bold_hmc_wf, bold_mni_trans_wf, [
+                (bold_reference_wf, bold_mni_trans_wf, [
                     ('outputnode.bold_mask', 'inputnode.bold_mask')]),
             ])
 
@@ -380,6 +386,49 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     return workflow
 
 
+def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf'):
+    """Generate a reference BOLD image for a series
+
+    This image is the target of head-motion-correction, and the subject of distortion
+    correction and registration to T1w and template spaces.
+    """
+    workflow = pe.Workflow(name=name)
+
+    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file']), name='inputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['bold_file', 'raw_ref_image', 'skip_vols', 'ref_image',
+                                      'ref_image_brain', 'bold_mask', 'bold_mask_report',
+                                      'validation_report']),
+        name='outputnode')
+
+    # Simplify manually setting input image
+    if bold_file is not None:
+        inputnode.inputs.bold_file = bold_file
+
+    validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
+                       run_without_submitting=True)
+    gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
+                      mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
+
+    workflow.connect([
+        (inputnode, validate, [('bold_file', 'in_file')]),
+        (validate, gen_ref, [('out_file', 'in_file')]),
+        (gen_ref, enhance_and_skullstrip_bold_wf, [('ref_image', 'inputnode.in_file')]),
+        (validate, outputnode, [('out_file', 'bold_file'),
+                                ('out_report', 'validation_report')]),
+        (gen_ref, outputnode, [('ref_image', 'raw_ref_image'),
+                               ('n_volumes_to_discard', 'skip_vols')]),
+        (enhance_and_skullstrip_bold_wf, outputnode, [
+            ('outputnode.bias_corrected_file', 'ref_image'),
+            ('outputnode.mask_file', 'bold_mask'),
+            ('outputnode.out_report', 'bold_mask_report'),
+            ('outputnode.skull_stripped_file', 'ref_image_brain')]),
+        ])
+
+    return workflow
+
+
 # pylint: disable=R0914
 def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                      name='bold_hmc_wf', omp_nthreads=1):
@@ -388,12 +437,11 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
     """
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file', 'raw_ref_image', 'skip_vols']),
                         name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['xforms', 'bold_hmc', 'bold_split', 'bold_mask', 'ref_image',
-                'ref_image_brain', 'movpar_file', 'n_volumes_to_discard',
-                'bold_mask_report']), name='outputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['xforms', 'bold_hmc', 'bold_split', 'movpar_file']),
+        name='outputnode')
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
                                name="normalize_motion",
@@ -406,23 +454,6 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                          iterfield=['transform_file'], name='hcm2itk',
                          mem_gb=0.05)
-
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
-        omp_nthreads=omp_nthreads)
-
-    gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
-                      mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
-
-    workflow.connect([
-        (inputnode, gen_ref, [('bold_file', 'in_file')]),
-        (gen_ref, enhance_and_skullstrip_bold_wf, [('ref_image', 'inputnode.in_file')]),
-        (gen_ref, hmc, [('ref_image', 'ref_file')]),
-        (enhance_and_skullstrip_bold_wf, outputnode, [
-            ('outputnode.bias_corrected_file', 'ref_image'),
-            ('outputnode.mask_file', 'bold_mask'),
-            ('outputnode.out_report', 'bold_mask_report'),
-            ('outputnode.skull_stripped_file', 'ref_image_brain')]),
-    ])
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
@@ -443,7 +474,6 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
         create_custom_slice_timing_file = pe.Node(
             niu.Function(function=create_custom_slice_timing_file_func),
             name="create_custom_slice_timing_file",
-            run_without_submitting=True,
             mem_gb=DEFAULT_MEMORY_MIN_GB)
         create_custom_slice_timing_file.inputs.metadata = metadata
 
@@ -456,26 +486,28 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             return "@" + x
 
         workflow.connect([
-            (inputnode, slice_timing_correction, [('bold_file', 'in_file')]),
-            (gen_ref, slice_timing_correction, [('n_volumes_to_discard', 'ignore')]),
+            (inputnode, slice_timing_correction, [('bold_file', 'in_file'),
+                                                  ('skip_vols', 'ignore')]),
             (create_custom_slice_timing_file, slice_timing_correction, [
                 (('out', _prefix_at), 'tpattern')]),
-            (slice_timing_correction, hmc, [('out_file', 'in_file')])
+            (slice_timing_correction, hmc, [('out_file', 'in_file')]),
+            (slice_timing_correction, split, [('out_file', 'in_file')]),
         ])
 
     else:
         workflow.connect([
-            (inputnode, hmc, [('bold_file', 'in_file')])
+            (inputnode, hmc, [('bold_file', 'in_file')]),
+            (inputnode, split, [('bold_file', 'in_file')]),
         ])
 
     workflow.connect([
+        (inputnode, hmc, [('raw_ref_image', 'ref_file')]),
+        (inputnode, hcm2itk, [('raw_ref_image', 'source_file'),
+                              ('raw_ref_image', 'reference_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
-        (gen_ref, hcm2itk, [('ref_image', 'source_file'),
-                            ('ref_image', 'reference_file')]),
-        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
+        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
-        (inputnode, split, [('bold_file', 'in_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
 
@@ -625,7 +657,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         return subject_id if space == 'fsnative' else space
 
     targets = pe.MapNode(niu.Function(function=select_target),
-                         iterfield=['space'], name='targets', run_without_submitting=True,
+                         iterfield=['space'], name='targets',
                          mem_gb=DEFAULT_MEMORY_MIN_GB)
     targets.inputs.space = spaces
 
@@ -1141,7 +1173,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=['source_file', 'bold_t1', 'bold_mask_t1', 'bold_mni', 'bold_mask_mni',
-                    'confounds', 'surfaces', 'aroma_noise_ics', 'melodic_mix']),
+                    'confounds', 'surfaces', 'aroma_noise_ics', 'melodic_mix',
+                    'nonaggr_denoised_file']),
         name='inputnode')
 
     ds_bold_t1 = pe.Node(DerivativesDataSink(
@@ -1159,6 +1192,15 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                               suffix=suffix_fmt(template, 'preproc')),
                           name='ds_bold_mni', run_without_submitting=True,
                           mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    variant_suffix_fmt = 'space-{}_variant-{}_{}'.format
+    ds_aroma_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
+                                               suffix=variant_suffix_fmt(template,
+                                                                         'smoothAROMAnonaggr',
+                                                                         'preproc')),
+                           name='ds_aroma_mni', run_without_submitting=True,
+                           mem_gb=DEFAULT_MEMORY_MIN_GB)
+
     ds_bold_mask_mni = pe.Node(DerivativesDataSink(base_directory=output_dir,
                                                    suffix=suffix_fmt(template, 'brainmask')),
                                name='ds_bold_mask_mni', run_without_submitting=True,
@@ -1183,6 +1225,8 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
                                              ('aroma_noise_ics', 'in_file')]),
             (inputnode, ds_melodic_mix, [('source_file', 'source_file'),
                                          ('melodic_mix', 'in_file')]),
+            (inputnode, ds_aroma_mni, [('source_file', 'source_file'),
+                                       ('nonaggr_denoised_file', 'in_file')]),
         ])
 
     name_surfs = pe.MapNode(GiftiNameSource(pattern=r'(?P<LR>[lr])h.(?P<space>\w+).gii',

@@ -4,9 +4,8 @@
 """
 Base module variables
 """
-from __future__ import unicode_literals
 
-__version__ = '0.6.1-dev'
+__version__ = '1.0.0-rc3-dev'
 __author__ = 'The CRN developers'
 __copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski',
@@ -66,9 +65,9 @@ REQUIRES = [
     'nibabel>=2.1.0',
     'pandas',
     'grabbit',
-    'pybids>=0.2.1',
+    'pybids>=0.3',
     'nitime',
-    'niworkflows>=0.1.5',
+    'niworkflows>=0.1.6',
     'statsmodels',
     'nipype',
     'seaborn',

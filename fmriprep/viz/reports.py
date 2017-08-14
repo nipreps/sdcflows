@@ -1,15 +1,21 @@
-from __future__ import unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+fMRIprep reports builder
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+"""
 
 import json
 import re
 import os
-import time
 
 import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
-
-from .. import __version__
 
 
 class Element(object):
@@ -112,8 +118,6 @@ class Report(object):
                         if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
                             with open(f) as fp:
                                 content = fp.read()
-                                if not element.raw:
-                                    content = content.split('\n', 1)[1]
                                 element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()
@@ -160,15 +164,35 @@ class Report(object):
         sub_reports = [sub_report for sub_report in self.sub_reports
                        if len(sub_report.run_reports) > 0 or
                        any(elem.files_contents for elem in sub_report.elements)]
-        report_render = report_tpl.render(sub_reports=sub_reports, errors=self.errors,
-                                          date=time.strftime("%Y-%m-%d %H:%M:%S %z"),
-                                          version=__version__)
+        report_render = report_tpl.render(sub_reports=sub_reports, errors=self.errors)
         with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return len(self.errors)
 
 
 def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
+    """
+    Runs the reports
+
+    >>> import os
+    >>> from shutil import copytree
+    >>> from tempfile import TemporaryDirectory
+    >>> filepath = os.path.dirname(os.path.realpath(__file__))
+    >>> test_data_path = os.path.realpath(os.path.join(filepath,
+    ...                                   '../data/tests/work'))
+    >>> curdir = os.getcwd()
+    >>> tmpdir = TemporaryDirectory()
+    >>> os.chdir(tmpdir.name)
+    >>> data_dir = copytree(test_data_path, os.path.abspath('work'))
+    >>> os.makedirs('out/fmriprep', exist_ok=True)
+    >>> run_reports(os.path.abspath('work/reportlets'),
+    ...             os.path.abspath('out'),
+    ...             '01', 'madeoutuuid')
+    0
+    >>> os.chdir(curdir)
+    >>> tmpdir.cleanup()
+
+    """
     reportlet_path = os.path.join(reportlets_dir, 'fmriprep', "sub-" + subject_label)
     config = pkgrf('fmriprep', 'viz/config.json')
 

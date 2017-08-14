@@ -8,7 +8,6 @@ Image tools interfaces
 
 
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import numpy as np
@@ -23,7 +22,6 @@ from niworkflows.nipype.interfaces.base import (
 from niworkflows.nipype.interfaces import fsl
 from niworkflows.interfaces.base import SimpleInterface
 
-from ..utils.misc import genfname
 
 LOGGER = logging.getLogger('interface')
 
@@ -77,8 +75,8 @@ class IntraModalMerge(SimpleInterface):
             in_files = [self.inputs.in_files]
 
         # Generate output average name early
-        self._results['out_avg'] = genfname(self.inputs.in_files[0],
-                                            suffix='avg')
+        self._results['out_avg'] = fname_presuffix(self.inputs.in_files[0],
+                                                   suffix='_avg', newpath=runtime.cwd)
 
         if self.inputs.to_ras:
             in_files = [reorient(inf) for inf in in_files]
@@ -93,7 +91,8 @@ class IntraModalMerge(SimpleInterface):
                 if sqdata.ndim == 5:
                     raise RuntimeError('Input image (%s) is 5D' % in_files[0])
                 else:
-                    in_files = [genfname(in_files[0], suffix='squeezed')]
+                    in_files = [fname_presuffix(in_files[0], suffix='_squeezed',
+                                                newpath=runtime.cwd)]
                     nb.Nifti1Image(sqdata, filenii.get_affine(),
                                    filenii.get_header()).to_filename(in_files[0])
 
@@ -400,24 +399,15 @@ class InvertT1w(SimpleInterface):
 
 
 def reorient(in_file, out_file=None):
-    import nibabel as nb
-    from fmriprep.utils.misc import genfname
-    from builtins import (str, bytes)
-
+    """Reorient Nifti files to RAS"""
     if out_file is None:
-        out_file = genfname(in_file, suffix='ras')
-
-    if isinstance(in_file, (str, bytes)):
-        nii = nb.load(in_file)
-    nii = nb.as_closest_canonical(nii)
-    nii.to_filename(out_file)
+        out_file = fname_presuffix(in_file, suffix='_ras', newpath=os.getcwd())
+    nb.as_closest_canonical(nb.load(in_file)).to_filename(out_file)
     return out_file
 
 
 def _flatten_split_merge(in_files):
-    from builtins import bytes, str
-
-    if isinstance(in_files, (bytes, str)):
+    if isinstance(in_files, str):
         in_files = [in_files]
 
     nfiles = len(in_files)
@@ -432,13 +422,13 @@ def _flatten_split_merge(in_files):
             all_nii.append(nii)
 
     if len(all_nii) == 1:
-        LOGGER.warn('File %s cannot be split', all_nii[0])
+        LOGGER.warning('File %s cannot be split', all_nii[0])
         return in_files[0], in_files
 
     if len(all_nii) == nfiles:
         flat_split = in_files
     else:
-        splitname = genfname(in_files[0], suffix='split%04d')
+        splitname = fname_presuffix(in_files[0], suffix='_split%04d', newpath=os.getcwd())
         flat_split = []
         for i, nii in enumerate(all_nii):
             flat_split.append(splitname % i)
@@ -449,24 +439,21 @@ def _flatten_split_merge(in_files):
         merged = in_files[0]
     else:
         # More that one in_files - need merge
-        merged = genfname(in_files[0], suffix='merged')
+        merged = fname_presuffix(in_files[0], suffix='_merged', newpath=os.getcwd())
         nb.concat_images(all_nii).to_filename(merged)
 
     return merged, flat_split
 
 
 def _gen_reference(fixed_image, moving_image, out_file=None):
-    import numpy
-    from nilearn.image import resample_img, load_img
-
     if out_file is None:
-        out_file = genfname(fixed_image, suffix='reference')
-    new_zooms = load_img(moving_image).header.get_zooms()[:3]
+        out_file = fname_presuffix(fixed_image, suffix='_reference', newpath=os.getcwd())
+    new_zooms = nli.load_img(moving_image).header.get_zooms()[:3]
     # Avoid small differences in reported resolution to cause changes to
     # FOV. See https://github.com/poldracklab/fmriprep/issues/512
-    new_zooms_round = numpy.round(new_zooms, 3)
-    resample_img(fixed_image, target_affine=numpy.diag(new_zooms_round),
-                 interpolation='nearest').to_filename(out_file)
+    new_zooms_round = np.round(new_zooms, 3)
+    nli.resample_img(fixed_image, target_affine=np.diag(new_zooms_round),
+                     interpolation='nearest').to_filename(out_file)
     return out_file
 
 
