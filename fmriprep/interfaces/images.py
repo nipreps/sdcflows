@@ -241,7 +241,6 @@ class ConformSeriesInputSpec(BaseInterfaceInputSpec):
 
 class ConformSeriesOutputSpec(TraitedSpec):
     t1w = File(exists=True, desc='conformed T1w image')
-    out_report = File(exists=True, desc='conformation report')
 
 
 class ConformSeries(SimpleInterface):
