@@ -99,19 +99,17 @@ class BIDSDataGrabber(SimpleInterface):
         bids_dict = self.inputs.subject_data
 
         self._results['out_dict'] = bids_dict
+        self._results.update(bids_dict)
 
-        self._results['t1w'] = bids_dict['t1w']
         if not bids_dict['t1w']:
             raise FileNotFoundError('No T1w images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
-        self._results['bold'] = bids_dict['bold']
         if self._require_funcs and not bids_dict['bold']:
             raise FileNotFoundError('No functional images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
         for imtype in ['bold', 't2w', 'fmap', 'sbref']:
-            self._results[imtype] = bids_dict[imtype]
             if not bids_dict[imtype]:
                 LOGGER.warn('No \'{}\' images found for sub-{}'.format(
                     imtype, self.inputs.subject_id))
