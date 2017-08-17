@@ -160,17 +160,18 @@ class GiftiSetAnatomicalStructure(SimpleInterface):
 
     def _run_interface(self, runtime):
         img = nb.load(self.inputs.in_file)
-        fname = os.path.basename(self.inputs.in_file)
-        if fname[:3] in ('lh.', 'rh.'):
-            asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+        if any(nvpair.name == 'AnatomicalStruturePrimary' for nvpair in img.meta.data):
+            out_file = self.inputs.in_file
         else:
-            raise ValueError(
-                "AnatomicalStructurePrimary cannot be derived from filename")
-        primary = nb.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp)
-        if not any(nvpair.name == primary.name for nvpair in img.meta.data):
-            img.meta.data.insert(0, primary)
-        out_file = os.path.abspath(fname)
-        img.to_filename(out_file)
+            fname = os.path.basename(self.inputs.in_file)
+            if fname[:3] in ('lh.', 'rh.'):
+                asp = 'CortexLeft' if fname[0] == 'l' else 'CortexRight'
+            else:
+                raise ValueError(
+                    "AnatomicalStructurePrimary cannot be derived from filename")
+            img.meta.data.insert(0, nb.gifti.GiftiNVPairs('AnatomicalStructurePrimary', asp))
+            out_file = os.path.abspath(fname)
+            img.to_filename(out_file)
         self._results['out_file'] = out_file
         return runtime
 
