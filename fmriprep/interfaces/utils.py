@@ -16,30 +16,6 @@ from niworkflows.nipype.interfaces.base import (
 from niworkflows.interfaces.base import SimpleInterface
 
 
-class ApplyMaskInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='input file')
-    in_mask = File(exists=True, mandatory=True, desc='input mask')
-
-
-class ApplyMaskOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='output average file')
-
-
-class ApplyMask(SimpleInterface):
-    input_spec = ApplyMaskInputSpec
-    output_spec = ApplyMaskOutputSpec
-
-    def _run_interface(self, runtime):
-        out_file = fname_presuffix(self.inputs.in_file, suffix='_brainmask',
-                                   newpath=runtime.cwd)
-        nii = nb.load(self.inputs.in_file)
-        data = nii.get_data()
-        data[nb.load(self.inputs.in_mask).get_data() <= 0] = 0
-        nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
-        self._results['out_file'] = out_file
-        return runtime
-
-
 class TPM2ROIInputSpec(BaseInterfaceInputSpec):
     t1_tpm = File(exists=True, mandatory=True, desc='Tissue probability map file in T1 space')
     t1_mask = File(exists=True, mandatory=True, desc='Binary mask of skull-stripped T1w image')
