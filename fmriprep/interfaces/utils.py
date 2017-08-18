@@ -164,29 +164,33 @@ def _combine_rois(in_files, ref_header):
     if len(in_files) < 2:
         raise RuntimeError('Combining ROIs requires at least two inputs')
 
-    nii = nb.concat_images([nb.load(f) for f in in_files])
-    combined = nii.get_data().astype(int).sum(3)
-    combined[combined > 0] = 1
+    ref = nb.load(ref_header)
+
+    nii = nb.concat_images([nb.load(f) for f in in_files], axis=3)
+    combined = nii.get_data().any(3).astype(np.uint8)
+
     # we have to do this explicitly because of potential differences in
     # qform_code between the two files that prevent aCompCor to work
-    new_nii = nb.Nifti1Image(combined, nb.load(ref_header).affine,
-                             nb.load(ref_header).header)
-    new_nii.to_filename("logical_or.nii.gz")
+    combined_nii = nb.Nifti1Image(combined, ref.affine, ref.header)
+    combined_nii.set_data_dtype(np.uint8)
+
+    combined_nii.to_filename("logical_or.nii.gz")
     return os.path.abspath("logical_or.nii.gz")
 
 
 def _concat_rois(in_file, in_mask, ref_header):
     nii = nb.load(in_file)
     mask_nii = nb.load(in_mask)
+    ref = nb.load(ref_header)
 
     # we have to do this explicitly because of potential differences in
     # qform_code between the two files that prevent SignalExtraction to do
     # the concatenation
     concat_nii = nb.concat_images([
         resample_to_img(nii, mask_nii, interpolation='nearest'), mask_nii])
-    concat_nii = nb.Nifti1Image(concat_nii.get_data(),
-                                nb.load(ref_header).affine,
-                                nb.load(ref_header).header)
+    concat_nii = nb.Nifti1Image(concat_nii.get_data().astype(np.uint8), ref.affine, ref.header)
+    concat_nii.set_data_dtype(np.uint8)
+
     concat_nii.to_filename("concat.nii.gz")
     return os.path.abspath("concat.nii.gz")
 
