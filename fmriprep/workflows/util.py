@@ -165,8 +165,8 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
     This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
     a T1-weighted structural image.
 
-    It is a counterpart to `init_fsl_bbr_wf`_, which performs the same task
-    using FSL's FLIRT with a BBR cost function.
+    It is a counterpart to :py:func:`~fmriprep.workflows.util.init_fsl_bbr_wf`,
+    which performs the same task using FSL's FLIRT with a BBR cost function.
 
     .. workflow ::
         :graph2use: orig
@@ -200,9 +200,9 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         subject_id
             FreeSurfer subject ID (must have folder in SUBJECTS_DIR)
         t1_brain
-            Unused (see `init_fsl_bbr_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_fsl_bbr_wf`)
         t1_seg
-            Unused (see `init_fsl_bbr_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_fsl_bbr_wf`)
 
 
     Outputs
@@ -288,8 +288,8 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
     This workflow uses FSL FLIRT to register a BOLD image to a T1-weighted
     structural image, using a boundary-based registration (BBR) cost function.
 
-    It is a counterpart to `init_bbreg_wf`_, which performs the same task
-    using FreeSurfer's ``bbregister``.
+    It is a counterpart to :py:func:`~fmriprep.workflows.util.init_bbreg_wf`,
+    which performs the same task using FreeSurfer's ``bbregister``.
 
     .. workflow ::
         :graph2use: orig
@@ -318,11 +318,11 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         t1_seg
             FAST segmentation of ``t1_brain``
         fs_2_t1_transform
-            Unused (see `init_bbreg_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
         subjects_dir
-            Unused (see `init_bbreg_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
         subject_id
-            Unused (see `init_bbreg_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
 
 
     Outputs
@@ -330,7 +330,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         out_matrix_file
             FSL-style registration matrix
         out_reg_file
-            Unused (see `init_bbreg_wf`_)
+            Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
         final_cost
             Value of cost function at final registration
         out_report

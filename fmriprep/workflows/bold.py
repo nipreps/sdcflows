@@ -6,6 +6,23 @@
 BOLD fMRI -processing workflows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. autofunction:: init_func_preproc_wf
+.. autofunction:: init_bold_reference_wf
+.. autofunction:: init_bold_hmc_wf
+.. autofunction:: init_bold_reg_wf
+
+Registration workflows
+++++++++++++++++++++++
+
+.. autofunction:: fmriprep.workflows.util.init_bbreg_wf
+.. autofunction:: fmriprep.workflows.util.init_fsl_bbr_wf
+
+Resampling workflows
+++++++++++++++++++++
+
+.. autofunction:: init_bold_surf_wf
+.. autofunction:: init_bold_mni_trans_wf
+
   .. note ::
 
       Originally coded by Craig Moodie. Refactored by the CRN Developers.
@@ -56,9 +73,9 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     .. workflow::
         :graph2use: orig
-        :simpleform: yes
+        :simple_form: yes
 
-        from fmriprep.workflows.functional import init_func_preproc_wf
+        from fmriprep.workflows.bold import init_func_preproc_wf
         wf = init_func_preproc_wf('/completely/made/up/path/sub-01_task-nback_bold.nii.gz',
                                   omp_nthreads=1,
                                   ignore=[],
@@ -93,13 +110,15 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         reportlets_dir : str
             Directory in which to save reportlets
         output_spaces : list
-            List of output spaces functional images are to be resampled to
-            Some parts of pipeline will only be instantiated for some output spaces
+            List of output spaces functional images are to be resampled to.
+            Some parts of pipeline will only be instantiated for some output spaces.
+
             Valid spaces:
-             - T1w
-             - template
-             - fsnative
-             - fsaverage (or other pre-existing FreeSurfer templates)
+
+                - T1w
+                - template
+                - fsnative
+                - fsaverage (or other pre-existing FreeSurfer templates)
         template : str
             Name of template targeted by `'template'` output space
         output_dir : str
