@@ -103,6 +103,45 @@ class AddTSVHeaderOutputSpec(TraitedSpec):
 
 
 class AddTSVHeader(SimpleInterface):
+    """Add a header row to a TSV file
+
+    .. testsetup::
+
+    >>> import os
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from tempfile import TemporaryDirectory
+    >>> tmpdir = TemporaryDirectory()
+    >>> os.chdir(tmpdir.name)
+
+    .. doctest::
+
+    An example TSV:
+
+    >>> np.savetxt('data.tsv', np.arange(30).reshape((6, 5)), delimiter='\t')
+
+    Add headers:
+
+    >>> from fmriprep.interfaces import AddTSVHeader
+    >>> addheader = AddTSVHeader()
+    >>> addheader.inputs.in_file = 'data.tsv'
+    >>> addheader.inputs.columns = ['a', 'b', 'c', 'd', 'e']
+    >>> res = addheader.run()
+    >>> pd.read_csv(res.outputs.out_file, sep='\s+', index_col=None,
+    ...             engine='python')  # doctest: +NORMALIZE_WHITESPACE
+          a     b     c     d     e
+    0   0.0   1.0   2.0   3.0   4.0
+    1   5.0   6.0   7.0   8.0   9.0
+    2  10.0  11.0  12.0  13.0  14.0
+    3  15.0  16.0  17.0  18.0  19.0
+    4  20.0  21.0  22.0  23.0  24.0
+    5  25.0  26.0  27.0  28.0  29.0
+
+    .. testcleanup::
+
+    >>> tmpdir.cleanup()
+
+    """
     input_spec = AddTSVHeaderInputSpec
     output_spec = AddTSVHeaderOutputSpec
 
