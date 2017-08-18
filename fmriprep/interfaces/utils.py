@@ -146,7 +146,13 @@ class AddTSVHeader(SimpleInterface):
     output_spec = AddTSVHeaderOutputSpec
 
     def _run_interface(self, runtime):
-        self._results['out_file'] = _add_tsv_header(self.inputs.in_file, self.inputs.columns)
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_motion.tsv', newpath=runtime.cwd,
+                                   use_ext=False)
+        data = np.loadtxt(self.inputs.in_file)
+        np.savetxt(out_file, data, delimiter='\t', header='\t'.join(self.inputs.columns),
+                   comments='')
+
+        self._results['out_file'] = out_file
         return runtime
 
 
@@ -232,13 +238,3 @@ def _concat_rois(in_file, in_mask, ref_header):
 
     concat_nii.to_filename("concat.nii.gz")
     return os.path.abspath("concat.nii.gz")
-
-
-def _add_tsv_header(in_file, columns):
-    out_file = fname_presuffix(in_file, suffix='_motion.tsv',
-                               newpath=os.getcwd(),
-                               use_ext=False)
-    data = np.loadtxt(in_file)
-    np.savetxt(out_file, data, delimiter='\t', header='\t'.join(columns),
-               comments='')
-    return out_file
