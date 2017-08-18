@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+Miscellaneous utilities
+^^^^^^^^^^^^^^^^^^^^^^^
+
+"""
 
 import os
 import numpy as np
@@ -34,8 +39,17 @@ class TPM2ROIOutputSpec(TraitedSpec):
 
 
 class TPM2ROI(SimpleInterface):
-    """
-    Convert tissue probability maps (TPMs) into ROIs
+    """Convert tissue probability maps (TPMs) into ROIs
+
+    This interface follows the following logic:
+
+    #. Erode ``t1_mask`` by ``mask_erode_mm`` and apply to ``t1_tpm``
+    #. Threshold masked TPM at ``prob_thresh``
+    #. Erode resulting mask by ``erode_mm``
+
+    Both the eroded brain mask and eroded ROI mask are then resampled to BOLD
+    resolution, and masked by ``bold_mask``.
+
     """
 
     input_spec = TPM2ROIInputSpec
@@ -57,14 +71,16 @@ class TPM2ROI(SimpleInterface):
 
 class CombineROIsInputSpec(BaseInterfaceInputSpec):
     in_files = InputMultiPath(File(exists=True), mandatory=True, desc='input list of ROIs')
-    ref_header = File(exists=True, mandatory=True, desc='input mask')
+    ref_header = File(exists=True, mandatory=True,
+                      desc='reference NIfTI file with desired output header/affine')
 
 
 class CombineROIsOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='output average file')
+    out_file = File(exists=True, desc='union of binarized input files')
 
 
 class CombineROIs(SimpleInterface):
+    """Generate the union (logical or) of a series of ROI masks"""
     input_spec = CombineROIsInputSpec
     output_spec = CombineROIsOutputSpec
 
@@ -75,8 +91,9 @@ class CombineROIs(SimpleInterface):
 
 class ConcatROIsInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input file')
-    in_mask = File(exists=True, mandatory=True, desc='input file')
-    ref_header = File(exists=True, mandatory=True, desc='input mask')
+    in_mask = File(exists=True, mandatory=True, desc='input mask')
+    ref_header = File(exists=True, mandatory=True,
+                      desc='reference NIfTI file with desired output header/affine')
 
 
 class ConcatROIsOutputSpec(TraitedSpec):
@@ -84,6 +101,11 @@ class ConcatROIsOutputSpec(TraitedSpec):
 
 
 class ConcatROIs(SimpleInterface):
+    """Concatenate two ROI files along time axis
+
+    ``in_file`` is resampled to match ``in_mask``, and the two concatenated
+    datasets are saved with the affine and header of ``ref_header``.
+    """
     input_spec = ConcatROIsInputSpec
     output_spec = ConcatROIsOutputSpec
 
@@ -231,8 +253,8 @@ def _concat_rois(in_file, in_mask, ref_header):
     # we have to do this explicitly because of potential differences in
     # qform_code between the two files that prevent SignalExtraction to do
     # the concatenation
-    concat_nii = nb.concat_images([
-        resample_to_img(nii, mask_nii, interpolation='nearest'), mask_nii])
+    concat_nii = nb.concat_images([resample_to_img(nii, mask_nii, interpolation='nearest'),
+                                   mask_nii], axis=3)
     concat_nii = nb.Nifti1Image(concat_nii.get_data().astype(np.uint8), ref.affine, ref.header)
     concat_nii.set_data_dtype(np.uint8)
 
