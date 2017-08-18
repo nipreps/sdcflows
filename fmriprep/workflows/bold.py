@@ -270,8 +270,6 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                    freesurfer=freesurfer,
                                    bold2t1w_dof=bold2t1w_dof,
                                    bold_file_size_gb=bold_file_size_gb,
-                                   output_spaces=output_spaces,
-                                   output_dir=output_dir,
                                    use_compression=not low_mem,
                                    use_fieldwarp=(fmaps is not None or use_syn))
 
@@ -725,8 +723,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     return workflow
 
 
-def init_bold_reg_wf(freesurfer, bold2t1w_dof,
-                     bold_file_size_gb, output_spaces, output_dir,
+def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
                      name='bold_reg_wf', use_compression=True,
                      use_fieldwarp=False):
     """
