@@ -163,13 +163,13 @@ class DerivativesDataSink(SimpleInterface):
             self.out_path_base = out_path_base
 
     def _run_interface(self, runtime):
-        fname, _ = _splitext(self.inputs.source_file)
+        src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
         compress = ext == '.nii'
         if compress:
             ext = '.nii.gz'
 
-        m = BIDS_NAME.search(fname)
+        m = BIDS_NAME.search(src_fname)
 
         # TODO this quick and dirty modality detection needs to be implemented
         # correctly
@@ -194,7 +194,7 @@ class DerivativesDataSink(SimpleInterface):
 
         os.makedirs(out_path, exist_ok=True)
 
-        base_fname = op.join(out_path, fname)
+        base_fname = op.join(out_path, src_fname)
 
         formatstr = '{bname}_{suffix}{ext}'
         if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
