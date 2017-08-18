@@ -4,6 +4,11 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 Utility workflows
+^^^^^^^^^^^^^^^^^
+
+.. autofunction:: init_enhance_and_skullstrip_bold_wf
+.. autofunction:: init_skullstrip_bold_wf
+
 """
 
 import os
@@ -49,6 +54,7 @@ def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
         out_report
             reportlet for the skull-stripping
 
+    .. _N4BiasFieldCorrection: https://hdl.handle.net/10380/3053
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_file']),
@@ -100,7 +106,8 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     This workflow applies skull-stripping to a BOLD image.
 
     It is intended to be used on an image that has previously been
-    bias-corrected with `init_enhance_and_skullstrip_bold_wf`_.
+    bias-corrected with
+    :py:func:`~fmriprep.workflows.util.init_enhance_and_skullstrip_bold_wf`
 
     .. workflow ::
         :graph2use: orig
