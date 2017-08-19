@@ -124,15 +124,15 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
-class PruneExcessiveZoomInputSpec(BaseInterfaceInputSpec):
+class TemplateDimensionsInputSpec(BaseInterfaceInputSpec):
     t1w_list = InputMultiPath(File(exists=True), mandatory=True,
                               desc='input T1w images')
     max_scale = traits.Float(3.0, usedefault=True,
                              desc='Maximum scaling factor in images to accept')
 
 
-class PruneExcessiveZoomOutputSpec(TraitedSpec):
     t1w_dropped_list = OutputMultiPath(exists=True, desc='invalid T1w images')
+class TemplateDimensionsOutputSpec(TraitedSpec):
     t1w_valid_list = OutputMultiPath(exists=True, desc='valid T1w images')
 
     target_zooms = traits.List(traits.Float,
@@ -159,7 +159,7 @@ CONFORMSERIES_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</
 DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
 
 
-class PruneExcessiveZoom(SimpleInterface):
+class TemplateDimensions(SimpleInterface):
     """Filter a series of T1w images based on the requirements for up-sampling.
 
     The ``max_scale`` parameter sets a bound on the degree of up-sampling performed.
@@ -169,8 +169,8 @@ class PruneExcessiveZoom(SimpleInterface):
     To select images that require no scaling (i.e. all have smallest voxel sizes),
     set ``max_scale=1``.
     """
-    input_spec = PruneExcessiveZoomInputSpec
-    output_spec = PruneExcessiveZoomOutputSpec
+    input_spec = TemplateDimensionsInputSpec
+    output_spec = TemplateDimensionsOutputSpec
 
     def _generate_segment(self, discards, dims, zooms):
         items = [DISCARD_TEMPLATE.format(path=path, basename=os.path.basename(path))
