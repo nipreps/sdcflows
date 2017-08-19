@@ -131,16 +131,13 @@ class TemplateDimensionsInputSpec(BaseInterfaceInputSpec):
                              desc='Maximum scaling factor in images to accept')
 
 
-    t1w_dropped_list = OutputMultiPath(exists=True, desc='invalid T1w images')
 class TemplateDimensionsOutputSpec(TraitedSpec):
     t1w_valid_list = OutputMultiPath(exists=True, desc='valid T1w images')
 
-    target_zooms = traits.List(traits.Float,
+    target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float, 
                                desc='Target zoom information')
-    target_shape = traits.List(traits.Int,
+    target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int, 
                                desc='Target shape information')
-    target_span = traits.List(traits.Float,
-                              desc='Target span information')
 
     out_report = File(exists=True, desc='conformation report')
 
@@ -201,9 +198,6 @@ class TemplateDimensions(SimpleInterface):
                 break
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
-        dropped_images = in_names[~valid]
-        self._results['t1w_dropped_list'] = dropped_images.tolist()
-
         # Ignore dropped images
         valid_fnames = in_names[valid]
         self._results['t1w_valid_list'] = valid_fnames.tolist()
@@ -211,13 +205,12 @@ class TemplateDimensions(SimpleInterface):
         # Set target shape information
         target_zooms = all_zooms[valid].min(axis=0)
         target_shape = all_shapes[valid].max(axis=0)
-        target_span = target_shape * target_zooms
 
-        self._results['target_zooms'] = target_zooms.tolist()
-        self._results['target_shape'] = target_shape.astype(np.int64).tolist()
-        self._results['target_span'] = target_span.tolist()
+        self._results['target_zooms'] = tuple(target_zooms.tolist())
+        self._results['target_shape'] = tuple(target_shape.tolist())
 
         # Create report
+        dropped_images = in_names[~valid]
         segment = self._generate_segment(dropped_images, target_shape, target_zooms)
         out_report = os.path.join(runtime.cwd, 'report.html')
         with open(out_report, 'w') as fobj:
