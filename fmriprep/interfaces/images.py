@@ -221,23 +221,21 @@ class TemplateDimensions(SimpleInterface):
         return runtime
 
 
-class ConformSeriesInputSpec(BaseInterfaceInputSpec):
-    t1w = File(exists=True, mandatory=True,
-               desc='input T1w image')
+class ConformInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='Input T1w image')
 
-    target_zooms = traits.List(traits.Float,
+    target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float, 
                                desc='Target zoom information')
-    target_shape = traits.List(traits.Int,
+    target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int, 
                                desc='Target shape information')
-    target_span = traits.List(traits.Float,
-                              desc='Target span information')
 
 
-class ConformSeriesOutputSpec(TraitedSpec):
-    t1w = File(exists=True, desc='conformed T1w image')
+class ConformOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='Conformed T1w image')
 
 
-class ConformSeries(SimpleInterface):
+class Conform(SimpleInterface):
     """Conform a series of T1w images to enable merging.
 
     Performs two basic functions:
@@ -245,19 +243,19 @@ class ConformSeries(SimpleInterface):
     #. Orient to RAS (left-right, posterior-anterior, inferior-superior)
     #. Along each dimension, resample to minimum voxel size, maximum number of voxels
     """
-    input_spec = ConformSeriesInputSpec
-    output_spec = ConformSeriesOutputSpec
+    input_spec = ConformInputSpec
+    output_spec = ConformOutputSpec
 
     def _run_interface(self, runtime):
         # Load image, orient as RAS
-        fname = self.inputs.t1w
+        fname = self.inputs.in_file
         orig_img = nb.load(fname)
         reoriented = nb.as_closest_canonical(orig_img)
 
         # Set target shape information
         target_zooms = np.array(self.inputs.target_zooms)
-        target_shape = np.array(self.inputs.target_shape, dtype=np.int64)
-        target_span = np.array(self.inputs.target_span)
+        target_shape = np.array(self.inputs.target_shape, dtype=int)
+        target_span = target_shape * target_zooms
 
         zooms = np.array(reoriented.header.get_zooms()[:3])
         shape = np.array(reoriented.shape)
@@ -303,7 +301,7 @@ class ConformSeries(SimpleInterface):
         else:
             copyfile(fname, out_name, copy=True, use_hardlink=True)
 
-        self._results['t1w'] = out_name
+        self._results['out_file'] = out_name
 
         return runtime
 
