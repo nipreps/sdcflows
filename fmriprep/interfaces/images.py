@@ -177,10 +177,10 @@ class TemplateDimensions(SimpleInterface):
         discard_list = '\n'.join(["\t\t\t<ul>"] + items + ['\t\t\t</ul>']) if items else ''
         zoom_fmt = '{:.02g}mm x {:.02g}mm x {:.02g}mm'.format(*zooms)
         return CONFORMATION_TEMPLATE.format(n_t1w=len(self.inputs.t1w_list),
-                                             dims='x'.join(map(str, dims)),
-                                             zooms=zoom_fmt,
-                                             n_discards=len(discards),
-                                             discard_list=discard_list)
+                                            dims='x'.join(map(str, dims)),
+                                            zooms=zoom_fmt,
+                                            n_discards=len(discards),
+                                            discard_list=discard_list)
 
     def _run_interface(self, runtime):
         # Load images, orient as RAS, collect shape and zoom data
