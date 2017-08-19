@@ -306,6 +306,40 @@ class Conform(SimpleInterface):
         return runtime
 
 
+class ReorientInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='Input T1w image')
+
+
+class ReorientOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='Reoriented T1w image')
+
+
+class Reorient(SimpleInterface):
+    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)
+    """
+    input_spec = ReorientInputSpec
+    output_spec = ReorientOutputSpec
+
+    def _run_interface(self, runtime):
+        # Load image, orient as RAS
+        fname = self.inputs.in_file
+        orig_img = nb.load(fname)
+        reoriented = nb.as_closest_canonical(orig_img)
+
+        out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
+
+        # Image may be reoriented
+        if reoriented is not orig_img:
+            reoriented.to_filename(out_name)
+        else:
+            copyfile(fname, out_name, copy=True, use_hardlink=True)
+
+        self._results['out_file'] = out_name
+
+        return runtime
+
+
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
 
