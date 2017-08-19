@@ -144,7 +144,7 @@ class TemplateDimensionsOutputSpec(TraitedSpec):
     out_report = File(exists=True, desc='conformation report')
 
 
-CONFORMSERIES_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h3>
+CONFORMATION_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h3>
 \t\t<ul class="elem-desc">
 \t\t\t<li>Input T1w images: {n_t1w}</li>
 \t\t\t<li>Output orientation: RAS</li>
@@ -176,7 +176,7 @@ class TemplateDimensions(SimpleInterface):
                  for path in discards]
         discard_list = '\n'.join(["\t\t\t<ul>"] + items + ['\t\t\t</ul>']) if items else ''
         zoom_fmt = '{:.02g}mm x {:.02g}mm x {:.02g}mm'.format(*zooms)
-        return CONFORMSERIES_TEMPLATE.format(n_t1w=len(self.inputs.t1w_list),
+        return CONFORMATION_TEMPLATE.format(n_t1w=len(self.inputs.t1w_list),
                                              dims='x'.join(map(str, dims)),
                                              zooms=zoom_fmt,
                                              n_discards=len(discards),
