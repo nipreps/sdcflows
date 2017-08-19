@@ -257,7 +257,7 @@ class Conform(SimpleInterface):
 
         # Set target shape information
         target_zooms = np.array(self.inputs.target_zooms)
-        target_shape = np.array(self.inputs.target_shape, dtype=int)
+        target_shape = np.array(self.inputs.target_shape)
         target_span = target_shape * target_zooms
 
         zooms = np.array(reoriented.header.get_zooms()[:3])
