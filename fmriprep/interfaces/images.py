@@ -124,26 +124,6 @@ class IntraModalMerge(SimpleInterface):
         return runtime
 
 
-class TemplateDimensionsInputSpec(BaseInterfaceInputSpec):
-    t1w_list = InputMultiPath(File(exists=True), mandatory=True,
-                              desc='input T1w images')
-
-    max_scale = traits.Float(3.0, usedefault=True,
-                             desc='Maximum scaling factor in images to accept')
-
-
-class TemplateDimensionsOutputSpec(TraitedSpec):
-    t1w_valid_list = OutputMultiPath(exists=True, desc='valid T1w images')
-
-    target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float,
-                                desc='Target zoom information')
-
-    target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int,
-                                desc='Target shape information')
-
-    out_report = File(exists=True, desc='conformation report')
-
-
 CONFORMATION_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h3>
 \t\t<ul class="elem-desc">
 \t\t\t<li>Input T1w images: {n_t1w}</li>
@@ -156,6 +136,21 @@ CONFORMATION_TEMPLATE = """\t\t<h3 class="elem-title">Anatomical Conformation</h
 """
 
 DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
+
+
+class TemplateDimensionsInputSpec(BaseInterfaceInputSpec):
+    t1w_list = InputMultiPath(File(exists=True), mandatory=True, desc='input T1w images')
+    max_scale = traits.Float(3.0, usedefault=True,
+                             desc='Maximum scaling factor in images to accept')
+
+
+class TemplateDimensionsOutputSpec(TraitedSpec):
+    t1w_valid_list = OutputMultiPath(exists=True, desc='valid T1w images')
+    target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float,
+                                desc='Target zoom information')
+    target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int,
+                                desc='Target shape information')
+    out_report = File(exists=True, desc='conformation report')
 
 
 class TemplateDimensions(SimpleInterface):
@@ -228,12 +223,9 @@ class TemplateDimensions(SimpleInterface):
 
 
 class ConformInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True,
-                   desc='Input T1w image')
-
+    in_file = File(exists=True, mandatory=True, desc='Input T1w image')
     target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float,
                                 desc='Target zoom information')
-
     target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int,
                                 desc='Target shape information')
 
