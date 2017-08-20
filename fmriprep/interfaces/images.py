@@ -15,7 +15,7 @@ import nibabel as nb
 import nilearn.image as nli
 
 from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix, copyfile
+from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
@@ -292,13 +292,12 @@ class Conform(SimpleInterface):
             data = nli.resample_img(reoriented, target_affine, target_shape).get_data()
             reoriented = reoriented.__class__(data, target_affine, reoriented.header)
 
-        out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-
         # Image may be reoriented, rescaled, and/or resized
         if reoriented is not orig_img:
+            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
             reoriented.to_filename(out_name)
         else:
-            copyfile(fname, out_name, copy=True, use_hardlink=True)
+            out_name = fname
 
         self._results['out_file'] = out_name
 
@@ -326,13 +325,12 @@ class Reorient(SimpleInterface):
         orig_img = nb.load(fname)
         reoriented = nb.as_closest_canonical(orig_img)
 
-        out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-
         # Image may be reoriented
         if reoriented is not orig_img:
+            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
             reoriented.to_filename(out_name)
         else:
-            copyfile(fname, out_name, copy=True, use_hardlink=True)
+            out_name = fname
 
         self._results['out_file'] = out_name
 
