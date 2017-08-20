@@ -159,7 +159,12 @@ DISCARD_TEMPLATE = """\t\t\t\t<li><abbr title="{path}">{basename}</abbr></li>"""
 
 
 class TemplateDimensions(SimpleInterface):
-    """Filter a series of T1w images based on the requirements for up-sampling.
+    """
+    Finds template target dimensions for a series of T1w images, filtering low-resolution images,
+    if necessary.
+
+    Along each axis, the minimum voxel size (zoom) and the maximum number of voxels (shape) are
+    found across images.
 
     The ``max_scale`` parameter sets a bound on the degree of up-sampling performed.
     By default, an image with a voxel size greater than 3x the smallest voxel size
