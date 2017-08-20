@@ -191,12 +191,11 @@ class TemplateDimensions(SimpleInterface):
         all_shapes = np.array([img.shape for img in reoriented])
 
         # Identify images that would require excessive up-sampling
-        max_scale = self.inputs.max_scale
         valid = np.ones(all_zooms.shape[0], dtype=bool)
         while valid.any():
             target_zooms = all_zooms[valid].min(axis=0)
             scales = all_zooms[valid] / target_zooms
-            if np.all(scales < max_scale):
+            if np.all(scales < self.inputs.max_scale):
                 break
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
