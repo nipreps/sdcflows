@@ -24,7 +24,8 @@ import os
 import os.path as op
 import re
 import simplejson as json
-from shutil import copy, copytree, rmtree
+import gzip
+from shutil import copy, copytree, rmtree, copyfileobj
 
 from niworkflows.nipype import logging
 from niworkflows.nipype.interfaces.base import (
@@ -99,19 +100,17 @@ class BIDSDataGrabber(SimpleInterface):
         bids_dict = self.inputs.subject_data
 
         self._results['out_dict'] = bids_dict
+        self._results.update(bids_dict)
 
-        self._results['t1w'] = bids_dict['t1w']
         if not bids_dict['t1w']:
             raise FileNotFoundError('No T1w images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
-        self._results['bold'] = bids_dict['bold']
         if self._require_funcs and not bids_dict['bold']:
             raise FileNotFoundError('No functional images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
         for imtype in ['bold', 't2w', 'fmap', 'sbref']:
-            self._results[imtype] = bids_dict[imtype]
             if not bids_dict[imtype]:
                 LOGGER.warn('No \'{}\' images found for sub-{}'.format(
                     imtype, self.inputs.subject_id))
@@ -164,10 +163,13 @@ class DerivativesDataSink(SimpleInterface):
             self.out_path_base = out_path_base
 
     def _run_interface(self, runtime):
-        fname, _ = _splitext(self.inputs.source_file)
+        src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
+        compress = ext == '.nii'
+        if compress:
+            ext = '.nii.gz'
 
-        m = BIDS_NAME.search(fname)
+        m = BIDS_NAME.search(src_fname)
 
         # TODO this quick and dirty modality detection needs to be implemented
         # correctly
@@ -192,7 +194,7 @@ class DerivativesDataSink(SimpleInterface):
 
         os.makedirs(out_path, exist_ok=True)
 
-        base_fname = op.join(out_path, fname)
+        base_fname = op.join(out_path, src_fname)
 
         formatstr = '{bname}_{suffix}{ext}'
         if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
@@ -207,7 +209,12 @@ class DerivativesDataSink(SimpleInterface):
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
-            copy(self.inputs.in_file[i], out_file)
+            if compress:
+                with open(fname, 'rb') as f_in:
+                    with gzip.open(out_file, 'wb') as f_out:
+                        copyfileobj(f_in, f_out)
+            else:
+                copy(fname, out_file)
 
         return runtime
 

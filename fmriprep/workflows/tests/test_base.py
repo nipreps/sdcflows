@@ -16,6 +16,7 @@ class TestBase(TestWorkflow):
                                          task_id='',
                                          ignore=[],
                                          debug=False,
+                                         low_mem=False,
                                          anat_only=False,
                                          longitudinal=False,
                                          omp_nthreads=1,

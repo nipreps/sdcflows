@@ -50,7 +50,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          output_spaces, template, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, use_syn, force_syn,
                          use_aroma, ignore_aroma_err,
-                         debug, output_grid_ref, layout=None):
+                         debug, low_mem, output_grid_ref, layout=None):
 
     if bold_file == '/completely/made/up/path/sub-01_task-nback_bold.nii.gz':
         bold_file_size_gb = 1
@@ -150,6 +150,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                    bold_file_size_gb=bold_file_size_gb,
                                    output_spaces=output_spaces,
                                    output_dir=output_dir,
+                                   use_compression=not low_mem,
                                    use_fieldwarp=(fmaps is not None or use_syn))
 
     # get confounds
@@ -329,11 +330,13 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     if 'template' in output_spaces:
         # Apply transforms in 1 shot
+        # Only use uncompressed output if AROMA is to be run
         bold_mni_trans_wf = init_bold_mni_trans_wf(
             output_dir=output_dir,
             template=template,
             bold_file_size_gb=bold_file_size_gb,
             output_grid_ref=output_grid_ref,
+            use_compression=not (low_mem and use_aroma),
             use_fieldwarp=(fmaps is not None or use_syn),
             name='bold_mni_trans_wf'
         )
@@ -516,7 +519,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
 
 def init_bold_reg_wf(freesurfer, bold2t1w_dof,
                      bold_file_size_gb, output_spaces, output_dir,
-                     name='bold_reg_wf', use_fieldwarp=False):
+                     name='bold_reg_wf', use_compression=True,
+                     use_fieldwarp=False):
     """
     Uses FSL FLIRT with the BBR cost function to find the transform that
     maps the BOLD space into the T1-space
@@ -610,7 +614,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof,
             (inputnode, merge_transforms, [('hmc_xforms', 'in2')])
         ])
 
-    merge = pe.Node(Merge(), name='merge', mem_gb=bold_file_size_gb * 3)
+    merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
     bold_to_t1w_transform = pe.MapNode(
         ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
@@ -700,7 +704,7 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
 
 def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
                            name='bold_mni_trans_wf',
-                           output_grid_ref=None,
+                           output_grid_ref=None, use_compression=True,
                            use_fieldwarp=False):
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
@@ -765,7 +769,7 @@ def init_bold_mni_trans_wf(output_dir, template, bold_file_size_gb,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
-    merge = pe.Node(Merge(), name='merge',
+    merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
     bold_to_mni_transform = pe.MapNode(
         ants.ApplyTransforms(interpolation="LanczosWindowedSinc",

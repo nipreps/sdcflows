@@ -23,7 +23,7 @@ from niworkflows.nipype.interfaces import utility as niu, fsl, ants
 from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import IntraModalMerge, DerivativesDataSink, FieldEnhance, ApplyMask
+from ...interfaces import IntraModalMerge, DerivativesDataSink, FieldEnhance
 
 
 def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
@@ -99,7 +99,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         demean = pe.Node(niu.Function(function=demean_image), name='demean')
         cleanup_wf = cleanup_edge_pipeline(name='cleanup_wf')
 
-        applymsk = pe.Node(ApplyMask(), name='applymsk')
+        applymsk = pe.Node(fsl.ApplyMask(), name='applymsk')
 
         workflow.connect([
             (bet, prelude, [('mask_file', 'mask_file'),
@@ -113,7 +113,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
             (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
             (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
             (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
-            (bet, applymsk, [('mask_file', 'in_mask')]),
+            (bet, applymsk, [('mask_file', 'mask_file')]),
             (applymsk, outputnode, [('out_file', 'fmap')]),
         ])
 
