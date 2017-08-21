@@ -240,7 +240,7 @@ class Conform(SimpleInterface):
     Performs two basic functions:
 
     #. Orient to RAS (left-right, posterior-anterior, inferior-superior)
-    #. Along each dimension, resample to minimum voxel size, maximum number of voxels
+    #. Resample to target zooms (voxel sizes) and shape (number of voxels)
     """
     input_spec = ConformInputSpec
     output_spec = ConformOutputSpec
@@ -314,8 +314,7 @@ class ReorientOutputSpec(TraitedSpec):
 
 
 class Reorient(SimpleInterface):
-    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)
-    """
+    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)"""
     input_spec = ReorientInputSpec
     output_spec = ReorientOutputSpec
 
