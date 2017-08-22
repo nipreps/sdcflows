@@ -190,7 +190,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         from niworkflows.nipype import logging
         with open(in_file, 'r') as fobj:
             for line in fobj:
-                if line.startswith('>> print U:1'):
+                if line.startswith(' >> print U:1'):
                     costs = next(fobj).split()
                     return float(costs[0])
         logger = logging.getLogger('interface')
