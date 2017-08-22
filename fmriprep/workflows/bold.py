@@ -126,12 +126,14 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         omp_nthreads : int
             Maximum number of threads an individual process may use
         fmap_bspline : bool
+            **Experimental**: Fit B-Spline field using least-squares
         fmap_demean : bool
-        use_syn : bool [EXPERIMENTAL]
-            Enable ANTs SyN-based susceptibility distortion correction (SDC)
+            Demean voxel-shift map during unwarp
+        use_syn : bool
+            **Experimental**: Enable ANTs SyN-based susceptibility distortion correction (SDC).
             If fieldmaps are present and enabled, this is not run, by default.
-        force_syn : bool [TEMPORARY]
-            Always run SyN-based SDC
+        force_syn : bool
+            **Temporary**: Always run SyN-based SDC
         use_aroma : bool
             Perform ICA-AROMA on MNI-resampled functional series
         ignore_aroma_err : bool
