@@ -34,7 +34,7 @@ fi
 case ${CIRCLE_NODE_INDEX} in
   0)
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
-    find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
+    find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -type f -delete
     ;;
   1)
     docker run -ti --rm=false --entrypoint="/usr/local/miniconda/bin/py.test" poldracklab/fmriprep:latest . --doctest-modules --ignore=docs --ignore=setup.py
@@ -44,6 +44,6 @@ case ${CIRCLE_NODE_INDEX} in
     cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
     fmriprep-docker -i poldracklab/fmriprep:latest --help
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
-    find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.svg" -not -name "*.rst" -type f -delete
+    find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -type f -delete
     ;;
 esac
