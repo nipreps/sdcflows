@@ -233,7 +233,7 @@ def _combine_rois(in_files, ref_header):
 
     ref = nb.load(ref_header)
 
-    nii = nb.concat_images([nb.load(f) for f in in_files], axis=3)
+    nii = nb.concat_images([nb.load(f) for f in in_files])
     combined = nii.get_data().any(3).astype(np.uint8)
 
     # we have to do this explicitly because of potential differences in
@@ -254,7 +254,7 @@ def _concat_rois(in_file, in_mask, ref_header):
     # qform_code between the two files that prevent SignalExtraction to do
     # the concatenation
     concat_nii = nb.concat_images([resample_to_img(nii, mask_nii, interpolation='nearest'),
-                                   mask_nii], axis=3)
+                                   mask_nii])
     concat_nii = nb.Nifti1Image(concat_nii.get_data().astype(np.uint8), ref.affine, ref.header)
     concat_nii.set_data_dtype(np.uint8)
 
