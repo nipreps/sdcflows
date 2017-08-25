@@ -23,11 +23,9 @@ Resampling workflows
 .. autofunction:: init_bold_surf_wf
 .. autofunction:: init_bold_mni_trans_wf
 
-  .. note ::
-
-      Originally coded by Craig Moodie. Refactored by the CRN Developers.
-
 """
+
+# Originally coded by Craig Moodie. Refactored by the CRN Developers.
 
 import os
 import os.path as op
