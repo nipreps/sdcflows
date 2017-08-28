@@ -18,6 +18,11 @@ Fetch some example data:
     >>> data_root = data.get_bids_examples(variant='BIDS-examples-1-enh-ds054')
     >>> os.chdir(data_root)
 
+Disable warnings:
+
+    >>> import niworkflows.nipype as nn
+    >>> nn.logging.getLogger('interface').setLevel('ERROR')
+
 """
 
 import os
@@ -60,6 +65,30 @@ class BIDSInfoOutputSpec(TraitedSpec):
 
 
 class BIDSInfo(SimpleInterface):
+    """
+    Extract metadata from a BIDS-conforming filename
+
+    This interface uses only the basename, not the path, to determine the
+    subject, session, task, run, acquisition or reconstruction.
+
+    >>> from fmriprep.interfaces import BIDSInfo
+    >>> from fmriprep.utils.bids import collect_data
+    >>> bids_info = BIDSInfo()
+    >>> bids_info.inputs.in_file = collect_data('ds114', '01')[0]['bold'][0]
+    >>> bids_info.inputs.in_file  # doctest: +ELLIPSIS
+    '.../ds114/sub-01/ses-retest/func/sub-01_ses-retest_task-covertverbgeneration_bold.nii.gz'
+    >>> res = bids_info.run()
+    >>> res.outputs
+    <BLANKLINE>
+    acq_id = <undefined>
+    rec_id = <undefined>
+    run_id = <undefined>
+    session_id = ses-retest
+    subject_id = sub-01
+    task_id = task-covertverbgeneration
+    <BLANKLINE>
+
+    """
     input_spec = BIDSInfoInputSpec
     output_spec = BIDSInfoOutputSpec
 
@@ -86,6 +115,20 @@ class BIDSDataGrabberOutputSpec(TraitedSpec):
 
 
 class BIDSDataGrabber(SimpleInterface):
+    """
+    Collect files from a BIDS directory structure
+
+    >>> from fmriprep.interfaces import BIDSDataGrabber
+    >>> from fmriprep.utils.bids import collect_data
+    >>> bids_src = BIDSDataGrabber(anat_only=False)
+    >>> bids_src.inputs.subject_data = collect_data('ds114', '01')[0]
+    >>> bids_src.inputs.subject_id = 'ds114'
+    >>> res = bids_src.run()
+    >>> res.outputs.t1w  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    ['.../ds114/sub-01/ses-retest/anat/sub-01_ses-retest_T1w.nii.gz',
+     '.../ds114/sub-01/ses-test/anat/sub-01_ses-test_T1w.nii.gz']
+
+    """
     input_spec = BIDSDataGrabberInputSpec
     output_spec = BIDSDataGrabberOutputSpec
     _require_funcs = True
@@ -236,7 +279,7 @@ class ReadSidecarJSONOutputSpec(TraitedSpec):
 
 class ReadSidecarJSON(SimpleInterface):
     """
-    An utility to find and read JSON sidecar files of a BIDS tree
+    A utility to find and read JSON sidecar files of a BIDS tree
     """
     expr = re.compile('^sub-(?P<subject_id>[a-zA-Z0-9]+)(_ses-(?P<session_id>[a-zA-Z0-9]+))?'
                       '(_task-(?P<task_id>[a-zA-Z0-9]+))?(_acq-(?P<acq_id>[a-zA-Z0-9]+))?'

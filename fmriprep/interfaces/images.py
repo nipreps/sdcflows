@@ -61,8 +61,8 @@ class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
 class IntraModalMergeOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='merged image')
     out_avg = File(exists=True, desc='average image')
-    out_mats = OutputMultiPath(exists=True, desc='output matrices')
-    out_movpar = OutputMultiPath(exists=True, desc='output movement parameters')
+    out_mats = OutputMultiPath(File(exists=True), desc='output matrices')
+    out_movpar = OutputMultiPath(File(exists=True), desc='output movement parameters')
 
 
 class IntraModalMerge(SimpleInterface):

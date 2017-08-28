@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+"""
+Miscellaneous utilities
+^^^^^^^^^^^^^^^^^^^^^^^
+
+"""
 
 import os
 import numpy as np
@@ -34,8 +39,17 @@ class TPM2ROIOutputSpec(TraitedSpec):
 
 
 class TPM2ROI(SimpleInterface):
-    """
-    Convert tissue probability maps (TPMs) into ROIs
+    """Convert tissue probability maps (TPMs) into ROIs
+
+    This interface follows the following logic:
+
+    #. Erode ``t1_mask`` by ``mask_erode_mm`` and apply to ``t1_tpm``
+    #. Threshold masked TPM at ``prob_thresh``
+    #. Erode resulting mask by ``erode_mm``
+
+    Both the eroded brain mask and eroded ROI mask are then resampled to BOLD
+    resolution, and masked by ``bold_mask``.
+
     """
 
     input_spec = TPM2ROIInputSpec
@@ -57,14 +71,16 @@ class TPM2ROI(SimpleInterface):
 
 class CombineROIsInputSpec(BaseInterfaceInputSpec):
     in_files = InputMultiPath(File(exists=True), mandatory=True, desc='input list of ROIs')
-    ref_header = File(exists=True, mandatory=True, desc='input mask')
+    ref_header = File(exists=True, mandatory=True,
+                      desc='reference NIfTI file with desired output header/affine')
 
 
 class CombineROIsOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='output average file')
+    out_file = File(exists=True, desc='union of binarized input files')
 
 
 class CombineROIs(SimpleInterface):
+    """Generate the union (logical or) of a series of ROI masks"""
     input_spec = CombineROIsInputSpec
     output_spec = CombineROIsOutputSpec
 
@@ -75,8 +91,9 @@ class CombineROIs(SimpleInterface):
 
 class ConcatROIsInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input file')
-    in_mask = File(exists=True, mandatory=True, desc='input file')
-    ref_header = File(exists=True, mandatory=True, desc='input mask')
+    in_mask = File(exists=True, mandatory=True, desc='input mask')
+    ref_header = File(exists=True, mandatory=True,
+                      desc='reference NIfTI file with desired output header/affine')
 
 
 class ConcatROIsOutputSpec(TraitedSpec):
@@ -84,6 +101,11 @@ class ConcatROIsOutputSpec(TraitedSpec):
 
 
 class ConcatROIs(SimpleInterface):
+    """Concatenate two ROI files along time axis
+
+    ``in_file`` is resampled to match ``in_mask``, and the two concatenated
+    datasets are saved with the affine and header of ``ref_header``.
+    """
     input_spec = ConcatROIsInputSpec
     output_spec = ConcatROIsOutputSpec
 
@@ -103,11 +125,56 @@ class AddTSVHeaderOutputSpec(TraitedSpec):
 
 
 class AddTSVHeader(SimpleInterface):
+    """Add a header row to a TSV file
+
+    .. testsetup::
+
+    >>> import os
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from tempfile import TemporaryDirectory
+    >>> tmpdir = TemporaryDirectory()
+    >>> os.chdir(tmpdir.name)
+
+    .. doctest::
+
+    An example TSV:
+
+    >>> np.savetxt('data.tsv', np.arange(30).reshape((6, 5)), delimiter='\t')
+
+    Add headers:
+
+    >>> from fmriprep.interfaces import AddTSVHeader
+    >>> addheader = AddTSVHeader()
+    >>> addheader.inputs.in_file = 'data.tsv'
+    >>> addheader.inputs.columns = ['a', 'b', 'c', 'd', 'e']
+    >>> res = addheader.run()
+    >>> pd.read_csv(res.outputs.out_file, sep='\s+', index_col=None,
+    ...             engine='python')  # doctest: +NORMALIZE_WHITESPACE
+          a     b     c     d     e
+    0   0.0   1.0   2.0   3.0   4.0
+    1   5.0   6.0   7.0   8.0   9.0
+    2  10.0  11.0  12.0  13.0  14.0
+    3  15.0  16.0  17.0  18.0  19.0
+    4  20.0  21.0  22.0  23.0  24.0
+    5  25.0  26.0  27.0  28.0  29.0
+
+    .. testcleanup::
+
+    >>> tmpdir.cleanup()
+
+    """
     input_spec = AddTSVHeaderInputSpec
     output_spec = AddTSVHeaderOutputSpec
 
     def _run_interface(self, runtime):
-        self._results['out_file'] = _add_tsv_header(self.inputs.in_file, self.inputs.columns)
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_motion.tsv', newpath=runtime.cwd,
+                                   use_ext=False)
+        data = np.loadtxt(self.inputs.in_file)
+        np.savetxt(out_file, data, delimiter='\t', header='\t'.join(self.inputs.columns),
+                   comments='')
+
+        self._results['out_file'] = out_file
         return runtime
 
 
@@ -164,38 +231,32 @@ def _combine_rois(in_files, ref_header):
     if len(in_files) < 2:
         raise RuntimeError('Combining ROIs requires at least two inputs')
 
+    ref = nb.load(ref_header)
+
     nii = nb.concat_images([nb.load(f) for f in in_files])
-    combined = nii.get_data().astype(int).sum(3)
-    combined[combined > 0] = 1
+    combined = nii.get_data().any(3).astype(np.uint8)
+
     # we have to do this explicitly because of potential differences in
     # qform_code between the two files that prevent aCompCor to work
-    new_nii = nb.Nifti1Image(combined, nb.load(ref_header).affine,
-                             nb.load(ref_header).header)
-    new_nii.to_filename("logical_or.nii.gz")
+    combined_nii = nb.Nifti1Image(combined, ref.affine, ref.header)
+    combined_nii.set_data_dtype(np.uint8)
+
+    combined_nii.to_filename("logical_or.nii.gz")
     return os.path.abspath("logical_or.nii.gz")
 
 
 def _concat_rois(in_file, in_mask, ref_header):
     nii = nb.load(in_file)
     mask_nii = nb.load(in_mask)
+    ref = nb.load(ref_header)
 
     # we have to do this explicitly because of potential differences in
     # qform_code between the two files that prevent SignalExtraction to do
     # the concatenation
-    concat_nii = nb.concat_images([
-        resample_to_img(nii, mask_nii, interpolation='nearest'), mask_nii])
-    concat_nii = nb.Nifti1Image(concat_nii.get_data(),
-                                nb.load(ref_header).affine,
-                                nb.load(ref_header).header)
+    concat_nii = nb.concat_images([resample_to_img(nii, mask_nii, interpolation='nearest'),
+                                   mask_nii])
+    concat_nii = nb.Nifti1Image(concat_nii.get_data().astype(np.uint8), ref.affine, ref.header)
+    concat_nii.set_data_dtype(np.uint8)
+
     concat_nii.to_filename("concat.nii.gz")
     return os.path.abspath("concat.nii.gz")
-
-
-def _add_tsv_header(in_file, columns):
-    out_file = fname_presuffix(in_file, suffix='_motion.tsv',
-                               newpath=os.getcwd(),
-                               use_ext=False)
-    data = np.loadtxt(in_file)
-    np.savetxt(out_file, data, delimiter='\t', header='\t'.join(columns),
-               comments='')
-    return out_file
