@@ -64,7 +64,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                          bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, use_syn, force_syn,
-                         use_aroma, ignore_aroma_err,
+                         use_aroma, ignore_aroma_err, medial_surface_nan,
                          debug, low_mem, output_grid_ref, layout=None):
     """
     This workflow controls the functional preprocessing stages of FMRIPREP.
@@ -91,6 +91,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   force_syn=True,
                                   low_mem=False,
                                   output_grid_ref=None,
+                                  medial_surface_nan=False,
                                   use_aroma=False,
                                   ignore_aroma_err=False)
 
@@ -136,6 +137,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             Perform ICA-AROMA on MNI-resampled functional series
         ignore_aroma_err : bool
             Do not fail on ICA-AROMA errors
+        medial_surface_nan : bool
+            Replace medial wall values with NaNs on surface gifti files
         debug : bool
             Enable debugging outputs
         low_mem : bool
@@ -516,6 +519,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     if freesurfer and any(space.startswith('fs') for space in output_spaces):
         LOGGER.info('Creating FreeSurfer processing flow.')
         bold_surf_wf = init_bold_surf_wf(output_spaces=output_spaces,
+                                         medial_surface_nan=medial_surface_nan,
                                          name='bold_surf_wf')
         workflow.connect([
             (inputnode, bold_surf_wf, [('subjects_dir', 'inputnode.subjects_dir'),
@@ -943,7 +947,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
     return workflow
 
 
-def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
+def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_wf'):
     """
     This workflow samples functional images to FreeSurfer surfaces
 
@@ -968,6 +972,9 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
             such as ``fsaverage`` or related template spaces
             If the list contains ``fsnative``, images will be resampled to the
             individual subject's native surface
+
+        medial_surface_nan : bool
+            Replace medial wall values with NaNs on surface gifti files
 
     Inputs
 
@@ -1017,6 +1024,36 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
 
+    def medial_wall_to_nan(in_file, subjects_dir):
+        """ Convert values on medial wall to NaNs
+        """
+
+        import nibabel as nb
+        import numpy as np
+        import os
+    
+        fn = os.path.basename(in_file)
+        space = fn.split('.')[1]
+
+        if not space.startswith('fsaverage'):
+            return in_file
+
+        cortex = nb.freesurfer.read_label(os.path.join(
+            subjects_dir, '{}'.format(space), 'label', '{}.cortex.label'.format(fn[:2])))
+        func = nb.load(in_file)
+        medial = np.delete(np.arange(len(func.darrays[0].data)), cortex)
+
+        for darray in func.darrays:
+            darray.data[medial] = np.nan
+
+        out_file = os.path.join(os.getcwd(), fn)
+        func.to_filename(out_file)
+        return out_file
+    
+    medial_nans = pe.MapNode(niu.Function(function=medial_wall_to_nan),
+                             iterfield=['in_file'], name='medial_nans',
+                             mem_gb=DEFAULT_MEMORY_MIN_GB)
+    
     merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
                          joinsource='sampler', joinfield=['in1'], run_without_submitting=True,
                          mem_gb=DEFAULT_MEMORY_MIN_GB)
@@ -1031,10 +1068,18 @@ def init_bold_surf_wf(output_spaces, name='bold_surf_wf'):
                               ('subject_id', 'subject_id')]),
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
-        (sampler, merger, [('out_file', 'in1')]),
         (merger, update_metadata, [('out', 'in_file')]),
         (update_metadata, outputnode, [('out_file', 'surfaces')]),
     ])
+    
+    if medial_surface_nan:
+        workflow.connect([
+            (inputnode, medial_nans, [('subjects_dir', 'subjects_dir')]),
+            (sampler, medial_nans, [('out_file', 'in_file')]),
+            (medial_nans, merger, [('out', 'in1')]),
+        ])
+    else:
+        workflow.connect(sampler, 'out_file', merger, 'in1')
 
     return workflow
 
