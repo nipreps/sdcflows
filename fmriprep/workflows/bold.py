@@ -138,7 +138,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         ignore_aroma_err : bool
             Do not fail on ICA-AROMA errors
         medial_surface_nan : bool
-            Replace medial wall values with NaNs on surface gifti files
+            Replace medial wall values with NaNs on functional GIFTI files
         debug : bool
             Enable debugging outputs
         low_mem : bool
@@ -972,9 +972,8 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_w
             such as ``fsaverage`` or related template spaces
             If the list contains ``fsnative``, images will be resampled to the
             individual subject's native surface
-
         medial_surface_nan : bool
-            Replace medial wall values with NaNs on surface gifti files
+            Replace medial wall values with NaNs on functional GIFTI files
 
     Inputs
 
@@ -1024,25 +1023,21 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_w
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
 
-    def medial_wall_to_nan(in_file, subjects_dir):
+    def medial_wall_to_nan(in_file, subjects_dir, target_subject):
         """ Convert values on medial wall to NaNs
         """
-
         import nibabel as nb
         import numpy as np
         import os
-    
-        fn = os.path.basename(in_file)
-        space = fn.split('.')[1]
 
-        if not space.startswith('fsaverage'):
+        fn = os.path.basename(in_file)
+        if not target_subject.startswith('fs'):
             return in_file
 
         cortex = nb.freesurfer.read_label(os.path.join(
-            subjects_dir, '{}'.format(space), 'label', '{}.cortex.label'.format(fn[:2])))
+            subjects_dir, target_subject, 'label', '{}.cortex.label'.format(fn[:2])))
         func = nb.load(in_file)
         medial = np.delete(np.arange(len(func.darrays[0].data)), cortex)
-
         for darray in func.darrays:
             darray.data[medial] = np.nan
 
@@ -1051,9 +1046,9 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_w
         return out_file
     
     medial_nans = pe.MapNode(niu.Function(function=medial_wall_to_nan),
-                             iterfield=['in_file'], name='medial_nans',
+                             iterfield=['in_file', 'target_subject'], name='medial_nans',
                              mem_gb=DEFAULT_MEMORY_MIN_GB)
-    
+
     merger = pe.JoinNode(niu.Merge(1, ravel_inputs=True), name='merger',
                          joinsource='sampler', joinfield=['in1'], run_without_submitting=True,
                          mem_gb=DEFAULT_MEMORY_MIN_GB)
@@ -1071,11 +1066,12 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_w
         (merger, update_metadata, [('out', 'in_file')]),
         (update_metadata, outputnode, [('out_file', 'surfaces')]),
     ])
-    
+
     if medial_surface_nan:
         workflow.connect([
             (inputnode, medial_nans, [('subjects_dir', 'subjects_dir')]),
             (sampler, medial_nans, [('out_file', 'in_file')]),
+            (targets, medial_nans, [('out', 'target_subject')]),
             (medial_nans, merger, [('out', 'in1')]),
         ])
     else:
