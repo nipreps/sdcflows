@@ -1044,7 +1044,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_w
         out_file = os.path.join(os.getcwd(), fn)
         func.to_filename(out_file)
         return out_file
-    
+
     medial_nans = pe.MapNode(niu.Function(function=medial_wall_to_nan),
                              iterfield=['in_file', 'target_subject'], name='medial_nans',
                              mem_gb=DEFAULT_MEMORY_MIN_GB)
