@@ -18,7 +18,7 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.interfaces.utils import CopyXForm
 from niworkflows.nipype.interfaces import fsl, afni, c3, ants, freesurfer as fs
-from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
+from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT, MRICoregRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
 from ..interfaces.images import extract_wm
@@ -174,7 +174,7 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     return workflow
 
 
-def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
+def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     """
     This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
     a T1-weighted structural image.
@@ -187,7 +187,7 @@ def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_bbreg_wf
-        wf = init_bbreg_wf(bold2t1w_dof=9)
+        wf = init_bbreg_wf(bold2t1w_dof=9, omp_nthreads=1)
 
 
     Parameters
@@ -236,9 +236,14 @@ def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
         niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
+    mri_coreg= pe.Node(
+        MRICoregRPT(dof=bold2t1w_dof, sep=[4], ftol=0.0001, linmintol=0.01,
+                    num_threads=omp_nthreads, generate_report=True),
+        name='mri_coreg', n_procs=omp_nthreads)
+
     bbregister = pe.Node(
-        BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
-                      registered_file=True, out_lta_file=True, generate_report=True),
+        BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', registered_file=True,
+                      out_lta_file=True, generate_report=True),
         name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
@@ -252,9 +257,13 @@ def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
+        (inputnode, mri_coreg, [('subjects_dir', 'subjects_dir'),
+                                ('subject_id', 'subject_id'),
+                                ('in_file', 'source_file')]),
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
+        (mri_coreg, bbregister, [('out_lta_file', 'init_reg_file')]),
         (bbregister, outputnode, [('out_report', 'out_report')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),

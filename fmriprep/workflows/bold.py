@@ -899,7 +899,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     )
 
     if freesurfer:
-        bbr_wf = init_bbreg_wf(bold2t1w_dof)
+        bbr_wf = init_bbreg_wf(bold2t1w_dof, omp_nthreads=omp_nthreads)
     else:
         bbr_wf = init_fsl_bbr_wf(bold2t1w_dof)
 
