@@ -947,7 +947,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
     return workflow
 
 
-def init_bold_surf_wf(output_spaces, medial_surface_nan=False, name='bold_surf_wf'):
+def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     """
     This workflow samples functional images to FreeSurfer surfaces
 
