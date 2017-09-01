@@ -962,7 +962,8 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
 
         from fmriprep.workflows.bold import init_bold_surf_wf
         wf = init_bold_surf_wf(output_spaces=['T1w', 'fsnative',
-                                             'template', 'fsaverage5'])
+                                             'template', 'fsaverage5'],
+                               medial_surface_nan=False)
 
     Parameters
 
