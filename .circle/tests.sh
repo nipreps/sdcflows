@@ -34,7 +34,13 @@ fi
 case ${CIRCLE_NODE_INDEX} in
   0)
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
+    # Place mock crash log and rebuild report
+    UUID="$(date '+%Y%m%d-%H%M%S_')$(uuidgen)"
+    cp fmriprep/data/tests/crash_files/*.txt $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
+    # Clean up
     find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -type f -delete
+    rm -r $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     ;;
   1)
     docker run -ti --rm=false --entrypoint="/usr/local/miniconda/bin/py.test" poldracklab/fmriprep:latest . --doctest-modules --ignore=docs --ignore=setup.py
