@@ -345,11 +345,10 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
-    flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=False), name='flt_bbr_init')
-    flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, save_log=True,
-                               generate_report=True), name='flt_bbr')
-    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
-                                      'etc/flirtsch/bbr.sch')
+    flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=True), name='flt_bbr_init')
+    flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, generate_report=True),
+                      name='flt_bbr')
+    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')
 
     # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
