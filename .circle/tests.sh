@@ -42,6 +42,7 @@ case ${CIRCLE_NODE_INDEX} in
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
     # Place mock crash log and rebuild report
     UUID="$(date '+%Y%m%d-%H%M%S_')$(uuidgen)"
+    mkdir -p $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     cp fmriprep/data/tests/crash_files/*.txt $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
     # Clean up
