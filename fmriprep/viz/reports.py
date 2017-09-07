@@ -12,6 +12,7 @@ fMRIprep reports builder
 import json
 import re
 import os
+import html
 
 import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
@@ -134,9 +135,9 @@ class Report(object):
         for root, directories, filenames in os.walk(error_dir):
             for f in filenames:
                 crashtype = os.path.splitext(f)[1]
-                if f[:5] == 'crash' and crashtype == 'pklz':
+                if f[:5] == 'crash' and crashtype == '.pklz':
                     self.errors.append(self._read_pkl(os.path.join(root, f)))
-                elif f[:5] == 'crash' and crashtype == 'txt':
+                elif f[:5] == 'crash' and crashtype == '.txt':
                     self.errors.append(self._read_txt(os.path.join(root, f)))
 
     @staticmethod
@@ -168,7 +169,7 @@ class Report(object):
                 if not line:
                     traceback_start = i + 1
                     break
-                inputs.append(line.split(' = ', 1))
+                inputs.append(tuple(map(html.escape, line.split(' = ', 1))))
             data['inputs'] = sorted(inputs)
         else:
             data['node_dir'] = "Node crashed before execution"
