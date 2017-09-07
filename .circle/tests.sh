@@ -47,7 +47,7 @@ case ${CIRCLE_NODE_INDEX} in
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
     # Clean up
     find ~/ds054/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -type f -delete
-    rm -r $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
+    rm -r $HOME/ds054/out/fmriprep/sub-100185/log
     ;;
   1)
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
