@@ -1196,7 +1196,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
 
     workflow.connect([
         (inputnode, merge_xforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('itk_bold_to_t1', _aslist), 'in2')]),
+                                   (('itk_bold_to_t1', _aslist), 'in2')]),
         (merge_xforms, bold_to_mni_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, bold_to_mni_transform, [('bold_split', 'input_image')]),
