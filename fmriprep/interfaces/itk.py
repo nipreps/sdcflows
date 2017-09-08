@@ -8,6 +8,7 @@ ITK files handling
 
 
 """
+import os
 import numpy as np
 import nibabel as nb
 
@@ -52,7 +53,9 @@ class MCFLIRT2ITK(SimpleInterface):
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(
             [el[1] for el in sorted(itk_outs)])
-        with open('mat2itk.txt', 'w') as f:
+
+        self._results['out_file'] = os.path.abspath('mat2itk.txt')
+        with open(self._results['out_file'], 'w') as f:
             f.write(tfms)
 
         return runtime
