@@ -733,9 +733,9 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     workflow.connect([
         (inputnode, hmc, [('raw_ref_image', 'ref_file')]),
-        (inputnode, hcm2itk, [('raw_ref_image', 'source_file'),
-                              ('raw_ref_image', 'reference_file')]),
-        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
+        (inputnode, hcm2itk, [('raw_ref_image', 'in_source'),
+                              ('raw_ref_image', 'in_reference')]),
+        (hmc, hcm2itk, [('mat_file', 'in_files')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
         (hcm2itk, outputnode, [('out_file', 'xforms')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
