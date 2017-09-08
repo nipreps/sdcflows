@@ -13,11 +13,12 @@ import numpy as np
 import nibabel as nb
 
 from joblib import Parallel, delayed
+from mimetypes import guess_type
 from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
-    traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath)
+    traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
 
-from niworkflows.nipype.interfaces.ants import ApplyTransformsInputSpec
+from niworkflows.nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
 from niworkflows.interfaces.base import SimpleInterface
 
 
@@ -70,7 +71,7 @@ class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
 
 
 class MultiApplyTransformsOutputSpec(TraitedSpec):
-    out_file = File(desc='the output ITKTransform file')
+    out_files = OutputMultiPath(File(), desc='the output ITKTransform file')
 
 
 class MultiApplyTransforms(SimpleInterface):
@@ -82,22 +83,81 @@ class MultiApplyTransforms(SimpleInterface):
     output_spec = MultiApplyTransformsOutputSpec
 
     def _run_interface(self, runtime):
-
+        # Get all inputs from the ApplyTransforms object
         ifargs = self.inputs.get()
 
-        parallel = Parallel(n_jobs=self.inputs.nprocs)
-        itk_outs = parallel(delayed(_applytfms)(
-            in_file, self.inputs.in_reference, self.inputs.in_source,
-            i, runtime.cwd) for i, in_file in enumerate(self.inputs.input_image))
+        # Get number of parallel jobs
+        nprocs = ifargs.pop('nprocs')
 
-        # Compose the collated ITK transform file and write
-        tfms = '#Insight Transform File V1.0\n' + ''.join(
-            [el[1] for el in sorted(itk_outs)])
+        # Remove certain keys
+        for key in ['environ', 'ignore_exception', 'num_threads',
+                    'terminal_output', 'output_image']:
+            ifargs.pop(key)
 
-        self._results['out_file'] = os.path.abspath('mat2itk.txt')
-        with open(self._results['out_file'], 'w') as f:
-            f.write(tfms)
+        # Extract number of input images and transforms
+        in_files = ifargs.pop('input_image')
+        num_files = len(in_files)
+        transforms = ifargs.pop('transforms')
 
+        base_xform = ['#Insight Transform File V1.0', '#Transform 0']
+        # Initialize the transforms matrix
+        xfms_T = []
+        for i, tf_file in enumerate(transforms):
+            # If it is a deformation field, copy to the tfs_matrix directly
+            if guess_type(tf_file)[0] != 'text/plain':
+                xfms_T.append([tf_file] * num_files)
+                continue
+
+            with open(tf_file) as tf_fh:
+                tfdata = tf_fh.read().strip()
+
+            # If it is not an ITK transform file, copy to the tfs_matrix directly
+            if not tfdata.startswith('#Insight Transform File'):
+                xfms_T.append([tf_file] * num_files)
+                continue
+
+            # Count number of transforms in ITK transform file
+            nxforms = tfdata.count('#Transform')
+
+            # Remove first line
+            tfdata = tfdata.split('\n')[1:]
+
+            # If it is a ITK transform file with only 1 xform, copy to the tfs_matrix directly
+            if nxforms == 1:
+                xfms_T.append([tf_file] * num_files)
+                continue
+
+            if nxforms != num_files:
+                raise RuntimeError('Number of transforms (%d) found in the ITK file does not match'
+                                   ' the number of input image files (%d).' % (nxforms, num_files))
+
+            # At this point splitting transforms will be necessary, generate a base name
+            out_base = fname_presuffix(tf_file, suffix='_pos-%03d_xfm-{:05d}' % i,
+                                       newpath=runtime.cwd).format
+            # Split combined ITK transforms file
+            split_xfms = []
+            for xform_i in range(nxforms):
+                # Find start token to extract
+                startidx = tfdata.index('#Transform %d' % xform_i)
+                next_xform = base_xform + tfdata[startidx + 1:startidx + 4] + ['']
+                xfm_file = out_base(xform_i)
+                with open(xfm_file, 'w') as out_xfm:
+                    out_xfm.write('\n'.join(next_xform))
+                split_xfms.append(xfm_file)
+            xfms_T.append(split_xfms)
+
+        # Transpose back (only Python 3)
+        xfms_list = list(map(list, zip(*xfms_T)))
+        assert len(xfms_list) == num_files
+
+        # Inputs are ready to run in parallel
+        parallel = Parallel(n_jobs=nprocs)
+        out_files = parallel(delayed(_applytfms)(
+            in_file, in_xfm, ifargs, i,
+            runtime.cwd) for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list)))
+
+        # Collect output file names, after sorting by index
+        self._results['out_files'] = [el[1] for el in sorted(out_files)]
         return runtime
 
 
@@ -185,14 +245,13 @@ def _mat2itk(in_file, in_ref, in_src, index=0, newpath=None):
     return (index, transform)
 
 
-def _applytfms(in_file, ifargs, index=0, newpath=None):
+def _applytfms(in_file, in_xform, ifargs, index=0, newpath=None):
     from niworkflows.nipype.utils.filemanip import fname_presuffix
     from niworkflows.nipype.interfaces.ants import ApplyTransforms
 
+    out_file = fname_presuffix(in_file, suffix='_xform-%05d' % index,
+                               newpath=newpath, use_ext=True)
 
-    # Generate a temporal file name
-    out_file = fname_presuffix(in_file, suffix='_itk-%05d.txt' % index,
-                               newpath=newpath)
-
-
+    ApplyTransforms(
+        input_image=in_file, transforms=in_xform, output_image=out_file, **ifargs).run()
     return (index, out_file)
