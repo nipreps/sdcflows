@@ -293,6 +293,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                    freesurfer=freesurfer,
                                    bold2t1w_dof=bold2t1w_dof,
                                    bold_file_size_gb=bold_file_size_gb,
+                                   omp_nthreads=omp_nthreads,
                                    use_compression=not low_mem,
                                    use_fieldwarp=(fmaps is not None or use_syn))
 
@@ -477,6 +478,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         bold_mni_trans_wf = init_bold_mni_trans_wf(
             template=template,
             bold_file_size_gb=bold_file_size_gb,
+            omp_nthreads=omp_nthreads,
             output_grid_ref=output_grid_ref,
             use_compression=not (low_mem and use_aroma),
             use_fieldwarp=(fmaps is not None or use_syn),
@@ -619,8 +621,8 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 
 
 # pylint: disable=R0914
-def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
-                     name='bold_hmc_wf', omp_nthreads=1):
+def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
+                     name='bold_hmc_wf'):
     """
     This workflow performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
@@ -634,7 +636,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             metadata={"RepetitionTime": 2.0,
                       "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]},
                       ignore=[],
-                      bold_file_size_gb=3)
+                      bold_file_size_gb=3,
+                      omp_nthreads=1)
 
     Parameters
 
@@ -684,7 +687,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                   name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
 
-    hcm2itk = pe.Node(MCFLIRT2ITK(), name='hcm2itk', mem_gb=0.05)
+    hcm2itk = pe.Node(MCFLIRT2ITK(), name='hcm2itk', mem_gb=0.05, n_procs=omp_nthreads)
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
@@ -745,7 +748,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     return workflow
 
 
-def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
+def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
                      name='bold_reg_wf', use_compression=True,
                      use_fieldwarp=False):
     """
@@ -765,6 +768,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
         from fmriprep.workflows.bold import init_bold_reg_wf
         wf = init_bold_reg_wf(freesurfer=True,
                               bold_file_size_gb=3,
+                              omp_nthreads=1,
                               bold2t1w_dof=9)
 
     Parameters
@@ -775,6 +779,8 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
             Degrees-of-freedom for BOLD-T1w registration
         bold_file_size_gb : float
             Size of BOLD file in GB
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
         name : str
             Name of workflow (default: ``bold_reg_wf``)
         use_compression : bool
@@ -922,7 +928,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
 
     bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
         interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_t1w_transform', mem_gb=0.1)
+        name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
     # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
@@ -1073,7 +1079,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     return workflow
 
 
-def init_bold_mni_trans_wf(template, bold_file_size_gb,
+def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
                            name='bold_mni_trans_wf',
                            output_grid_ref=None, use_compression=True,
                            use_fieldwarp=False):
@@ -1088,6 +1094,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
         from fmriprep.workflows.bold import init_bold_mni_trans_wf
         wf = init_bold_mni_trans_wf(template='MNI152NLin2009cAsym',
                                     bold_file_size_gb=3,
+                                    omp_nthreads=1,
                                     output_grid_ref=None)
 
     Parameters
@@ -1096,6 +1103,8 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
             Name of template targeted by `'template'` output space
         bold_file_size_gb : float
             Size of BOLD file in GB
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
         name : str
             Name of workflow (default: ``bold_mni_trans_wf``)
         output_grid_ref : str or None
@@ -1189,7 +1198,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
 
     bold_to_mni_transform = pe.Node(MultiApplyTransforms(
         interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_mni_transform', mem_gb=0.1)
+        name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
     # bold_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
