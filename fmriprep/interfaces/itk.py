@@ -14,6 +14,8 @@ import nibabel as nb
 
 from joblib import Parallel, delayed
 from mimetypes import guess_type
+from tempfile import TemporaryDirectory
+
 from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
@@ -46,11 +48,12 @@ class MCFLIRT2ITK(SimpleInterface):
     output_spec = MCFLIRT2ITKOutputSpec
 
     def _run_interface(self, runtime):
-
+        tmp_folder = TemporaryDirectory()
         parallel = Parallel(n_jobs=self.inputs.nprocs)
         itk_outs = parallel(delayed(_mat2itk)(
-            in_mat, self.inputs.in_reference, self.inputs.in_source,
-            i, runtime.cwd) for i, in_mat in enumerate(self.inputs.in_files))
+            in_mat, self.inputs.in_reference, self.inputs.in_source, i,
+            tmp_folder.name) for i, in_mat in enumerate(self.inputs.in_files))
+        tmp_folder.cleanup()
 
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(
@@ -99,6 +102,9 @@ class MultiApplyTransforms(SimpleInterface):
         num_files = len(in_files)
         transforms = ifargs.pop('transforms')
 
+        # Get a temp folder ready
+        tmp_folder = TemporaryDirectory()
+
         base_xform = ['#Insight Transform File V1.0', '#Transform 0']
         # Initialize the transforms matrix
         xfms_T = []
@@ -133,7 +139,7 @@ class MultiApplyTransforms(SimpleInterface):
 
             # At this point splitting transforms will be necessary, generate a base name
             out_base = fname_presuffix(tf_file, suffix='_pos-%03d_xfm-{:05d}' % i,
-                                       newpath=runtime.cwd).format
+                                       newpath=tmp_folder.name).format
             # Split combined ITK transforms file
             split_xfms = []
             for xform_i in range(nxforms):
@@ -156,6 +162,7 @@ class MultiApplyTransforms(SimpleInterface):
             in_file, in_xfm, ifargs, i,
             runtime.cwd) for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list)))
 
+        tmp_folder.cleanup()
         # Collect output file names, after sorting by index
         self._results['out_files'] = [el[1] for el in sorted(out_files)]
         return runtime
