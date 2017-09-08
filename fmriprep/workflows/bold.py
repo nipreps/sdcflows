@@ -907,20 +907,17 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
         (mask_t1w_tfm, outputnode, [('output_image', 'bold_mask_t1')])
     ])
 
+    # Merge transforms placing the head motion correction last
+    nforms = 3 if use_fieldwarp else 2
+    merge_xforms = pe.Node(niu.Merge(nforms), name='merge_xforms',
+                           run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
+    workflow.connect([
+        (inputnode, merge_xforms, [('hmc_xforms', 'in%d' % nforms)])
+    ])
+
     if use_fieldwarp:
-        merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
-            (inputnode, merge_transforms, [('fieldwarp', 'in2'),
-                                           ('hmc_xforms', 'in3')])
-        ])
-    else:
-        merge_transforms = pe.MapNode(niu.Merge(2), iterfield=['in2'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('hmc_xforms', 'in2')])
+            (inputnode, merge_xforms, [('fieldwarp', 'in2')])
         ])
 
     bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
@@ -930,8 +927,8 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
     workflow.connect([
-        (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
-        (merge_transforms, bold_to_t1w_transform, [('out', 'transforms')]),
+        (fsl2itk_fwd, merge_xforms, [('itk_transform', 'in1')]),
+        (merge_xforms, bold_to_t1w_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (merge, outputnode, [('out_file', 'bold_t1')]),
         (inputnode, bold_to_t1w_transform, [('bold_split', 'input_image')]),
@@ -1173,20 +1170,13 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
     mask_merge_tfms = pe.Node(niu.Merge(2), name='mask_merge_tfms', run_without_submitting=True,
                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
-    if use_fieldwarp:
-        merge_transforms = pe.MapNode(niu.Merge(4), iterfield=['in4'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('fieldwarp', 'in3'),
-                                           ('hmc_xforms', 'in4')])])
+    nxforms = 4 if use_fieldwarp else 3
+    merge_xforms = pe.Node(niu.Merge(nxforms), name='merge_xforms',
+                           run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
+    workflow.connect([(inputnode, merge_xforms, [('hmc_xforms', 'in%d' % nxforms)])])
 
-    else:
-        merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('hmc_xforms', 'in3')])])
+    if use_fieldwarp:
+        workflow.connect([(inputnode, merge_xforms, [('fieldwarp', 'in3')])])
 
     workflow.connect([
         (inputnode, gen_ref, [('bold_mask', 'moving_image')]),
@@ -1197,22 +1187,20 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
+    bold_to_mni_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True),
+        name='bold_to_mni_transform', mem_gb=0.1)
+    # bold_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
-    bold_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='bold_to_mni_transform')
-    bold_to_mni_transform.terminal_output = 'file'
 
     workflow.connect([
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
+        (inputnode, merge_xforms, [('t1_2_mni_forward_transform', 'in1'),
                                        (('itk_bold_to_t1', _aslist), 'in2')]),
-        (merge_transforms, bold_to_mni_transform, [('out', 'transforms')]),
-        (bold_to_mni_transform, merge, [('output_image', 'in_files')]),
+        (merge_xforms, bold_to_mni_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, bold_to_mni_transform, [('bold_split', 'input_image')]),
+        (bold_to_mni_transform, merge, [('out_files', 'in_files')]),
         (merge, outputnode, [('out_file', 'bold_mni')]),
     ])
 
