@@ -17,6 +17,7 @@ from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath)
 
+from niworkflows.nipype.interfaces.ants import ApplyTransformsInputSpec
 from niworkflows.interfaces.base import SimpleInterface
 
 
@@ -49,6 +50,45 @@ class MCFLIRT2ITK(SimpleInterface):
         itk_outs = parallel(delayed(_mat2itk)(
             in_mat, self.inputs.in_reference, self.inputs.in_source,
             i, runtime.cwd) for i, in_mat in enumerate(self.inputs.in_files))
+
+        # Compose the collated ITK transform file and write
+        tfms = '#Insight Transform File V1.0\n' + ''.join(
+            [el[1] for el in sorted(itk_outs)])
+
+        self._results['out_file'] = os.path.abspath('mat2itk.txt')
+        with open(self._results['out_file'], 'w') as f:
+            f.write(tfms)
+
+        return runtime
+
+
+class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
+    input_image = InputMultiPath(File(exists=True), mandatory=True,
+                                 desc='list of MAT files from MCFLIRT')
+    nprocs = traits.Int(1, usedefault=True, nohash=True,
+                        desc='number of parallel processes')
+
+
+class MultiApplyTransformsOutputSpec(TraitedSpec):
+    out_file = File(desc='the output ITKTransform file')
+
+
+class MultiApplyTransforms(SimpleInterface):
+
+    """
+    Apply the corresponding list of input transforms
+    """
+    input_spec = MultiApplyTransformsInputSpec
+    output_spec = MultiApplyTransformsOutputSpec
+
+    def _run_interface(self, runtime):
+
+        ifargs = self.inputs.get()
+
+        parallel = Parallel(n_jobs=self.inputs.nprocs)
+        itk_outs = parallel(delayed(_applytfms)(
+            in_file, self.inputs.in_reference, self.inputs.in_source,
+            i, runtime.cwd) for i, in_file in enumerate(self.inputs.input_image))
 
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(
@@ -143,3 +183,16 @@ def _mat2itk(in_file, in_ref, in_src, index=0, newpath=None):
         transform += ''.join(itkfh.readlines()[2:])
 
     return (index, transform)
+
+
+def _applytfms(in_file, ifargs, index=0, newpath=None):
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from niworkflows.nipype.interfaces.ants import ApplyTransforms
+
+
+    # Generate a temporal file name
+    out_file = fname_presuffix(in_file, suffix='_itk-%05d.txt' % index,
+                               newpath=newpath)
+
+
+    return (index, out_file)
