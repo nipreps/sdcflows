@@ -932,11 +932,11 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
     workflow.connect([
         (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
         (merge_transforms, bold_to_t1w_transform, [('out', 'transforms')]),
-        (bold_to_t1w_transform, merge, [('output_image', 'in_files')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (merge, outputnode, [('out_file', 'bold_t1')]),
         (inputnode, bold_to_t1w_transform, [('bold_split', 'input_image')]),
         (gen_ref, bold_to_t1w_transform, [('out_file', 'reference_image')]),
+        (bold_to_t1w_transform, merge, [('out_files', 'in_files')]),
     ])
 
     return workflow
