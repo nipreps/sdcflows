@@ -26,6 +26,27 @@ from ..interfaces.images import extract_wm
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
+def compare_xforms(fallback_mat, test_mat):
+    import numpy as np
+    from transforms3d.affines import decompose44
+    from transforms3d.axangles import mat2axangle
+    # [[R], [A], [S], [1]] = mat1.dot([[x], [y], [z], [1]])
+    mat1 = np.loadtxt(fallback_mat)
+    # [[R'], [A'], [S'], [1]] = mat2.dot([[x], [y], [z], [1]])
+    mat2 = np.loadtxt(test_mat)
+    # [[R'], [A'], [S'], [1]] = mat2.dot(mat1_inv.dot([[R], [A], [S], [1]]))
+    comp = mat2.dot(np.linalg.pinv(mat1))
+    trans, rotation_matrix, scales, shears = decompose44(comp)
+
+    max_trans = np.max(np.abs(trans))
+    rot = mat2axangle(rotation_matrix)[1]
+    max_scale = np.max(np.abs(scales))
+
+    fallback = any((max_trans > 2, rot > np.pi / 36, max_scale > 1.1))
+
+    return 0 if fallback else 1
+
+
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
                                         omp_nthreads=1):
     """
@@ -236,7 +257,7 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
-    mri_coreg= pe.Node(
+    mri_coreg = pe.Node(
         MRICoregRPT(dof=bold2t1w_dof, sep=[4], ftol=0.0001, linmintol=0.01,
                     num_threads=omp_nthreads, generate_report=True),
         name='mri_coreg', n_procs=omp_nthreads)
@@ -256,6 +277,14 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
+    transforms = pe.Node(niu.Merge(2), run_without_submitting=True, name='transforms')
+    reports = pe.Node(niu.Merge(2), run_without_submitting=True, name='reports')
+
+    compare_transforms = pe.Node(niu.Function(function=compare_xforms), name='compare_transforms')
+
+    select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
+    select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
+
     workflow.connect([
         (inputnode, mri_coreg, [('subjects_dir', 'subjects_dir'),
                                 ('subject_id', 'subject_id'),
@@ -264,11 +293,7 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
         (mri_coreg, bbregister, [('out_lta_file', 'init_reg_file')]),
-        (bbregister, outputnode, [('out_report', 'out_report')]),
-        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
-        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
-        (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
         (lta_concat, lta2fsl_fwd, [('out_file', 'in_lta')]),
         (lta_concat, lta2fsl_inv, [('out_file', 'in_lta')]),
         (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
@@ -277,6 +302,20 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
                                   ('t1_brain', 'source_file')]),
         (lta2fsl_fwd, fsl2itk_fwd, [('out_fsl', 'transform_file')]),
         (lta2fsl_inv, fsl2itk_inv, [('out_fsl', 'transform_file')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
+        (mri_coreg, transforms, [('out_lta_file', 'in1')]),
+        (bbregister, transforms, [('out_lta_file', 'in2')]),
+        (mri_coreg, compare_transforms, [('out_lta_file', 'fallback_mat')]),
+        (bbregister, compare_transforms, [('out_lta_file', 'test_mat')]),
+        (transforms, select_transform, [('out', 'inlist')]),
+        (compare_transforms, select_transform, [('out', 'index')]),
+        (select_transform, lta_concat, [('out', 'in_lta1')]),
+        (mri_coreg, reports, [('out_report', 'in1')]),
+        (bbregister, reports, [('out_report', 'in2')]),
+        (reports, select_report, [('out', 'inlist')]),
+        (compare_transforms, select_report, [('out', 'index')]),
+        (select_report, outputnode, [('out', 'out_report')]),
         ])
 
     return workflow
