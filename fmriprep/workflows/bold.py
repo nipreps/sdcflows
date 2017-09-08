@@ -44,7 +44,7 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure
+    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure, MCFLIRT2ITK
 )
 from ..interfaces.images import GenerateSamplingReference, extract_wm
 from ..interfaces.nilearn import Merge
@@ -683,9 +683,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                   name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
 
-    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                         iterfield=['transform_file'], name='hcm2itk',
-                         mem_gb=0.05)
+    hcm2itk = pe.Node(MCFLIRT2ITK(), name='hcm2itk', mem_gb=0.05)
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
@@ -738,7 +736,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
                               ('raw_ref_image', 'reference_file')]),
         (hmc, hcm2itk, [('mat_file', 'transform_file')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
-        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+        (hcm2itk, outputnode, [('out_file', 'xforms')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
