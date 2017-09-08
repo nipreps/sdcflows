@@ -687,7 +687,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                   name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
 
-    hcm2itk = pe.Node(MCFLIRT2ITK(), name='hcm2itk', mem_gb=0.05, n_procs=omp_nthreads)
+    hcm2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='hcm2itk',
+                      mem_gb=0.05, n_procs=omp_nthreads)
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
