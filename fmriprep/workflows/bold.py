@@ -44,7 +44,8 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure, MCFLIRT2ITK
+    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
+    MCFLIRT2ITK, MultiApplyTransforms
 )
 from ..interfaces.images import GenerateSamplingReference, extract_wm
 from ..interfaces.nilearn import Merge
@@ -922,15 +923,11 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
             (inputnode, merge_transforms, [('hmc_xforms', 'in2')])
         ])
 
+    bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True),
+        name='bold_to_t1w_transform', mem_gb=0.1)
+    # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
-
-    bold_to_t1w_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='bold_to_t1w_transform',
-        mem_gb=0.1)
-    bold_to_t1w_transform.terminal_output = 'file'
 
     workflow.connect([
         (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
