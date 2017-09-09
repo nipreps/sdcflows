@@ -52,7 +52,7 @@ class MCFLIRT2ITK(SimpleInterface):
         with TemporaryDirectory() as tmp_folder:
             itk_outs = parallel(delayed(_mat2itk)(
                 in_mat, self.inputs.in_reference, self.inputs.in_source, i,
-                tmp_folder.name) for i, in_mat in enumerate(self.inputs.in_files))
+                tmp_folder) for i, in_mat in enumerate(self.inputs.in_files))
 
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(
