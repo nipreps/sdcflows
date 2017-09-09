@@ -48,12 +48,11 @@ class MCFLIRT2ITK(SimpleInterface):
     output_spec = MCFLIRT2ITKOutputSpec
 
     def _run_interface(self, runtime):
-        tmp_folder = TemporaryDirectory()
         parallel = Parallel(n_jobs=self.inputs.nprocs)
-        itk_outs = parallel(delayed(_mat2itk)(
-            in_mat, self.inputs.in_reference, self.inputs.in_source, i,
-            tmp_folder.name) for i, in_mat in enumerate(self.inputs.in_files))
-        tmp_folder.cleanup()
+        with TemporaryDirectory() as tmp_folder:
+            itk_outs = parallel(delayed(_mat2itk)(
+                in_mat, self.inputs.in_reference, self.inputs.in_source, i,
+                tmp_folder.name) for i, in_mat in enumerate(self.inputs.in_files))
 
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(
@@ -68,7 +67,8 @@ class MCFLIRT2ITK(SimpleInterface):
 
 class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
     input_image = InputMultiPath(File(exists=True), mandatory=True,
-                                 desc='list of MAT files from MCFLIRT')
+                                 desc='input time-series as a list of volumes after splitting'
+                                      ' through the fourth dimension')
     nprocs = traits.Int(1, usedefault=True, nohash=True,
                         desc='number of parallel processes')
 
