@@ -44,7 +44,8 @@ from niworkflows.interfaces.registration import EstimateReferenceImage
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure
+    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
+    MCFLIRT2ITK, MultiApplyTransforms
 )
 from ..interfaces.images import GenerateSamplingReference, extract_wm
 from ..interfaces.nilearn import Merge
@@ -292,6 +293,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                    freesurfer=freesurfer,
                                    bold2t1w_dof=bold2t1w_dof,
                                    bold_file_size_gb=bold_file_size_gb,
+                                   omp_nthreads=omp_nthreads,
                                    use_compression=not low_mem,
                                    use_fieldwarp=(fmaps is not None or use_syn))
 
@@ -476,6 +478,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         bold_mni_trans_wf = init_bold_mni_trans_wf(
             template=template,
             bold_file_size_gb=bold_file_size_gb,
+            omp_nthreads=omp_nthreads,
             output_grid_ref=output_grid_ref,
             use_compression=not (low_mem and use_aroma),
             use_fieldwarp=(fmaps is not None or use_syn),
@@ -618,8 +621,8 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 
 
 # pylint: disable=R0914
-def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
-                     name='bold_hmc_wf', omp_nthreads=1):
+def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
+                     name='bold_hmc_wf'):
     """
     This workflow performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
@@ -633,7 +636,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
             metadata={"RepetitionTime": 2.0,
                       "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]},
                       ignore=[],
-                      bold_file_size_gb=3)
+                      bold_file_size_gb=3,
+                      omp_nthreads=1)
 
     Parameters
 
@@ -683,9 +687,8 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                   name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
 
-    hcm2itk = pe.MapNode(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                         iterfield=['transform_file'], name='hcm2itk',
-                         mem_gb=0.05)
+    hcm2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='hcm2itk',
+                      mem_gb=0.05, n_procs=omp_nthreads)
 
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
@@ -734,11 +737,11 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
 
     workflow.connect([
         (inputnode, hmc, [('raw_ref_image', 'ref_file')]),
-        (inputnode, hcm2itk, [('raw_ref_image', 'source_file'),
-                              ('raw_ref_image', 'reference_file')]),
-        (hmc, hcm2itk, [('mat_file', 'transform_file')]),
+        (inputnode, hcm2itk, [('raw_ref_image', 'in_source'),
+                              ('raw_ref_image', 'in_reference')]),
+        (hmc, hcm2itk, [('mat_file', 'in_files')]),
         (hmc, normalize_motion, [('par_file', 'in_file')]),
-        (hcm2itk, outputnode, [('itk_transform', 'xforms')]),
+        (hcm2itk, outputnode, [('out_file', 'xforms')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
@@ -746,7 +749,7 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore,
     return workflow
 
 
-def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
+def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
                      name='bold_reg_wf', use_compression=True,
                      use_fieldwarp=False):
     """
@@ -766,6 +769,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
         from fmriprep.workflows.bold import init_bold_reg_wf
         wf = init_bold_reg_wf(freesurfer=True,
                               bold_file_size_gb=3,
+                              omp_nthreads=1,
                               bold2t1w_dof=9)
 
     Parameters
@@ -776,6 +780,8 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
             Degrees-of-freedom for BOLD-T1w registration
         bold_file_size_gb : float
             Size of BOLD file in GB
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
         name : str
             Name of workflow (default: ``bold_reg_wf``)
         use_compression : bool
@@ -908,40 +914,33 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb,
         (mask_t1w_tfm, outputnode, [('output_image', 'bold_mask_t1')])
     ])
 
+    # Merge transforms placing the head motion correction last
+    nforms = 3 if use_fieldwarp else 2
+    merge_xforms = pe.Node(niu.Merge(nforms), name='merge_xforms',
+                           run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
+    workflow.connect([
+        (inputnode, merge_xforms, [('hmc_xforms', 'in%d' % nforms)])
+    ])
+
     if use_fieldwarp:
-        merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
         workflow.connect([
-            (inputnode, merge_transforms, [('fieldwarp', 'in2'),
-                                           ('hmc_xforms', 'in3')])
-        ])
-    else:
-        merge_transforms = pe.MapNode(niu.Merge(2), iterfield=['in2'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('hmc_xforms', 'in2')])
+            (inputnode, merge_xforms, [('fieldwarp', 'in2')])
         ])
 
+    bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True, nprocs=omp_nthreads),
+        name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
+    # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
-    bold_to_t1w_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='bold_to_t1w_transform',
-        mem_gb=0.1)
-    bold_to_t1w_transform.terminal_output = 'file'
-
     workflow.connect([
-        (fsl2itk_fwd, merge_transforms, [('itk_transform', 'in1')]),
-        (merge_transforms, bold_to_t1w_transform, [('out', 'transforms')]),
-        (bold_to_t1w_transform, merge, [('output_image', 'in_files')]),
+        (fsl2itk_fwd, merge_xforms, [('itk_transform', 'in1')]),
+        (merge_xforms, bold_to_t1w_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (merge, outputnode, [('out_file', 'bold_t1')]),
         (inputnode, bold_to_t1w_transform, [('bold_split', 'input_image')]),
         (gen_ref, bold_to_t1w_transform, [('out_file', 'reference_image')]),
+        (bold_to_t1w_transform, merge, [('out_files', 'in_files')]),
     ])
 
     return workflow
@@ -1081,7 +1080,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     return workflow
 
 
-def init_bold_mni_trans_wf(template, bold_file_size_gb,
+def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
                            name='bold_mni_trans_wf',
                            output_grid_ref=None, use_compression=True,
                            use_fieldwarp=False):
@@ -1096,6 +1095,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
         from fmriprep.workflows.bold import init_bold_mni_trans_wf
         wf = init_bold_mni_trans_wf(template='MNI152NLin2009cAsym',
                                     bold_file_size_gb=3,
+                                    omp_nthreads=1,
                                     output_grid_ref=None)
 
     Parameters
@@ -1104,6 +1104,8 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
             Name of template targeted by `'template'` output space
         bold_file_size_gb : float
             Size of BOLD file in GB
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
         name : str
             Name of workflow (default: ``bold_mni_trans_wf``)
         output_grid_ref : str or None
@@ -1178,20 +1180,13 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
     mask_merge_tfms = pe.Node(niu.Merge(2), name='mask_merge_tfms', run_without_submitting=True,
                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
-    if use_fieldwarp:
-        merge_transforms = pe.MapNode(niu.Merge(4), iterfield=['in4'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('fieldwarp', 'in3'),
-                                           ('hmc_xforms', 'in4')])])
+    nxforms = 4 if use_fieldwarp else 3
+    merge_xforms = pe.Node(niu.Merge(nxforms), name='merge_xforms',
+                           run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
+    workflow.connect([(inputnode, merge_xforms, [('hmc_xforms', 'in%d' % nxforms)])])
 
-    else:
-        merge_transforms = pe.MapNode(niu.Merge(3), iterfield=['in3'],
-                                      name='merge_transforms', run_without_submitting=True,
-                                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-        workflow.connect([
-            (inputnode, merge_transforms, [('hmc_xforms', 'in3')])])
+    if use_fieldwarp:
+        workflow.connect([(inputnode, merge_xforms, [('fieldwarp', 'in3')])])
 
     workflow.connect([
         (inputnode, gen_ref, [('bold_mask', 'moving_image')]),
@@ -1202,22 +1197,20 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
+    bold_to_mni_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True, nprocs=omp_nthreads),
+        name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
+    # bold_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
-    bold_to_mni_transform = pe.MapNode(
-        ants.ApplyTransforms(interpolation="LanczosWindowedSinc",
-                             float=True),
-        iterfield=['input_image', 'transforms'],
-        name='bold_to_mni_transform')
-    bold_to_mni_transform.terminal_output = 'file'
 
     workflow.connect([
-        (inputnode, merge_transforms, [('t1_2_mni_forward_transform', 'in1'),
-                                       (('itk_bold_to_t1', _aslist), 'in2')]),
-        (merge_transforms, bold_to_mni_transform, [('out', 'transforms')]),
-        (bold_to_mni_transform, merge, [('output_image', 'in_files')]),
+        (inputnode, merge_xforms, [('t1_2_mni_forward_transform', 'in1'),
+                                   (('itk_bold_to_t1', _aslist), 'in2')]),
+        (merge_xforms, bold_to_mni_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (inputnode, bold_to_mni_transform, [('bold_split', 'input_image')]),
+        (bold_to_mni_transform, merge, [('out_files', 'in_files')]),
         (merge, outputnode, [('out_file', 'bold_mni')]),
     ])
 
