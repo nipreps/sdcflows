@@ -8,6 +8,7 @@ BOLD fMRI -processing workflows
 
 .. autofunction:: init_func_preproc_wf
 .. autofunction:: init_bold_reference_wf
+.. autofunction:: init_bold_stc_wf
 .. autofunction:: init_bold_hmc_wf
 .. autofunction:: init_bold_reg_wf
 
@@ -281,11 +282,13 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     bold_reference_wf = init_bold_reference_wf(omp_nthreads=omp_nthreads)
 
+    # STC on the BOLD
+    if "SliceTiming" in metadata and 'slicetiming' not in ignore:
+        bold_stc_wf = init_bold_stc_wf(name='bold_stc_wf', metadata=metadata)
+
     # HMC on the BOLD
     bold_hmc_wf = init_bold_hmc_wf(name='bold_hmc_wf',
-                                   metadata=metadata,
                                    bold_file_size_gb=bold_file_size_gb,
-                                   ignore=ignore,
                                    omp_nthreads=omp_nthreads)
 
     # mean BOLD registration to T1w
@@ -308,9 +311,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     workflow.connect([
         (inputnode, bold_reference_wf, [('bold_file', 'inputnode.bold_file')]),
-        (bold_reference_wf, bold_hmc_wf, [('outputnode.bold_file', 'inputnode.bold_file'),
-                                          ('outputnode.raw_ref_image', 'inputnode.raw_ref_image'),
-                                          ('outputnode.skip_vols', 'inputnode.skip_vols')]),
+        (bold_reference_wf, bold_hmc_wf, [
+            ('outputnode.raw_ref_image', 'inputnode.raw_ref_image')]),
         (inputnode, bold_reg_wf, [('bold_file', 'inputnode.name_source'),
                                   ('t1_preproc', 'inputnode.t1_preproc'),
                                   ('t1_brain', 'inputnode.t1_brain'),
@@ -349,6 +351,15 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (bold_confounds_wf, summary, [('outputnode.confounds_list', 'confounds')]),
         (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
     ])
+
+    if "SliceTiming" in metadata and 'slicetiming' not in ignore:
+        workflow.connect([
+            (bold_reference_wf, bold_stc_wf, [('outputnode.bold_file', 'inputnode.bold_file'),
+                                              ('outputnode.skip_vols', 'inputnode.skip_vols')]),
+            (bold_stc_wf, bold_hmc_wf, [('outputnode.stc_file', 'inputnode.bold_file')])])
+    else:
+        workflow.connect([
+            (bold_reference_wf, bold_hmc_wf, [('outputnode.bold_file', 'inputnode.bold_file')])])
 
     # Cases:
     # fmaps | use_syn | force_syn  |  ACTION
@@ -621,8 +632,84 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 
 
 # pylint: disable=R0914
-def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
-                     name='bold_hmc_wf'):
+def init_bold_stc_wf(metadata, name='bold_stc_wf'):
+    """
+    This workflow performs :abbr:`STC (slice-timing correction)` over the input
+    :abbr:`BOLD (blood-oxygen-level dependent)` image.
+
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.bold import init_bold_stc_wf
+        wf = init_bold_stc_wf(
+            metadata={"RepetitionTime": 2.0,
+                      "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]},
+            )
+
+    Parameters
+
+        metadata : dict
+            BIDS metadata for BOLD file
+        name : str
+            Name of workflow (default: ``bold_stc_wf``)
+
+    Inputs
+
+        bold_file
+            BOLD series NIfTI file
+        skip_vols
+            Number of non-steady-state volumes detected at beginning of ``bold_file``
+
+    Outputs
+
+        stc_file
+            Slice-timing corrected BOLD series NIfTI file
+
+    """
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file', 'skip_vols']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['stc_file']), name='outputnode')
+
+    LOGGER.info('Slice-timing correction will be included.')
+
+    def create_custom_slice_timing_file_func(metadata):
+        import os
+        slice_timings = metadata["SliceTiming"]
+        slice_timings_ms = [str(t) for t in slice_timings]
+        out_file = "timings.1D"
+        with open("timings.1D", "w") as fp:
+            fp.write("\t".join(slice_timings_ms))
+
+        return os.path.abspath(out_file)
+
+    create_custom_slice_timing_file = pe.Node(
+        niu.Function(function=create_custom_slice_timing_file_func),
+        name="create_custom_slice_timing_file",
+        mem_gb=DEFAULT_MEMORY_MIN_GB)
+    create_custom_slice_timing_file.inputs.metadata = metadata
+
+    # It would be good to fingerprint memory use of afni.TShift
+    slice_timing_correction = pe.Node(
+        afni.TShift(outputtype='NIFTI_GZ', tr=str(metadata["RepetitionTime"]) + "s"),
+        name='slice_timing_correction')
+
+    def _prefix_at(x):
+        return "@" + x
+
+    workflow.connect([
+        (inputnode, slice_timing_correction, [('bold_file', 'in_file'),
+                                              ('skip_vols', 'ignore')]),
+        (create_custom_slice_timing_file, slice_timing_correction, [
+            (('out', _prefix_at), 'tpattern')]),
+        (slice_timing_correction, outputnode, [('out_file', 'bold_stc_file')]),
+    ])
+
+    return workflow
+
+
+# pylint: disable=R0914
+def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
     """
     This workflow performs :abbr:`HMC (head motion correction)` over the input
     :abbr:`BOLD (blood-oxygen-level dependent)` image.
@@ -632,26 +719,16 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
         :simple_form: yes
 
         from fmriprep.workflows.bold import init_bold_hmc_wf
-        wf = init_bold_hmc_wf(
-            metadata={"RepetitionTime": 2.0,
-                      "SliceTiming": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]},
-                      ignore=[],
-                      bold_file_size_gb=3,
-                      omp_nthreads=1)
+        wf = init_bold_hmc_wf(bold_file_size_gb=3, omp_nthreads=1)
 
     Parameters
 
-        metadata : dict
-            BIDS metadata for BOLD file
         bold_file_size_gb : float
             Size of BOLD file in GB
-        ignore : list
-            Preprocessing steps to skip - if "slicetiming" is included, skip
-            slice-timing correction
-        name : str
-            Name of workflow (default: ``bold_hmc_wf``)
         omp_nthreads : int
             Maximum number of threads an individual process may use
+        name : str
+            Name of workflow (default: ``bold_hmc_wf``)
 
     Inputs
 
@@ -659,29 +736,23 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
             BOLD series NIfTI file
         raw_ref_image
             Reference image to which BOLD series is motion corrected
-        skip_vols
-            Number of non-steady-state volumes detected at beginning of ``bold_file``
 
     Outputs
 
         bold_split
             Individual 3D volumes, not motion corrected
         xforms
-            List of affine transforms aligning each volume to ``ref_image`` in ITK format
+            ITKTransform file aligning each volume to ``ref_image``
         movpar_file
             MCFLIRT motion parameters, normalized to SPM format (X, Y, Z, Rx, Ry, Rz)
 
     """
     workflow = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file', 'raw_ref_image', 'skip_vols']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['bold_file', 'raw_ref_image']),
                         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['bold_split', 'xforms', 'movpar_file']),
         name='outputnode')
-
-    normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
-                               name="normalize_motion",
-                               mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     # Head motion correction (hmc)
     hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
@@ -690,53 +761,17 @@ def init_bold_hmc_wf(metadata, bold_file_size_gb, ignore, omp_nthreads,
     hcm2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='hcm2itk',
                       mem_gb=0.05, n_procs=omp_nthreads)
 
+    normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
+                               name="normalize_motion",
+                               mem_gb=DEFAULT_MEMORY_MIN_GB)
+
     split = pe.Node(fsl.Split(dimension='t'), name='split',
                     mem_gb=bold_file_size_gb * 3)
 
-    if "SliceTiming" in metadata and 'slicetiming' not in ignore:
-        LOGGER.info('Slice-timing correction will be included.')
-
-        def create_custom_slice_timing_file_func(metadata):
-            import os
-            slice_timings = metadata["SliceTiming"]
-            slice_timings_ms = [str(t) for t in slice_timings]
-            out_file = "timings.1D"
-            with open("timings.1D", "w") as fp:
-                fp.write("\t".join(slice_timings_ms))
-
-            return os.path.abspath(out_file)
-
-        create_custom_slice_timing_file = pe.Node(
-            niu.Function(function=create_custom_slice_timing_file_func),
-            name="create_custom_slice_timing_file",
-            mem_gb=DEFAULT_MEMORY_MIN_GB)
-        create_custom_slice_timing_file.inputs.metadata = metadata
-
-        # It would be good to fingerprint memory use of afni.TShift
-        slice_timing_correction = pe.Node(
-            afni.TShift(outputtype='NIFTI_GZ', tr=str(metadata["RepetitionTime"]) + "s"),
-            name='slice_timing_correction')
-
-        def _prefix_at(x):
-            return "@" + x
-
-        workflow.connect([
-            (inputnode, slice_timing_correction, [('bold_file', 'in_file'),
-                                                  ('skip_vols', 'ignore')]),
-            (create_custom_slice_timing_file, slice_timing_correction, [
-                (('out', _prefix_at), 'tpattern')]),
-            (slice_timing_correction, hmc, [('out_file', 'in_file')]),
-            (slice_timing_correction, split, [('out_file', 'in_file')]),
-        ])
-
-    else:
-        workflow.connect([
-            (inputnode, hmc, [('bold_file', 'in_file')]),
-            (inputnode, split, [('bold_file', 'in_file')]),
-        ])
-
     workflow.connect([
-        (inputnode, hmc, [('raw_ref_image', 'ref_file')]),
+        (inputnode, split, [('bold_file', 'in_file')]),
+        (inputnode, hmc, [('raw_ref_image', 'ref_file'),
+                          ('bold_file', 'in_file')]),
         (inputnode, hcm2itk, [('raw_ref_image', 'in_source'),
                               ('raw_ref_image', 'in_reference')]),
         (hmc, hcm2itk, [('mat_file', 'in_files')]),
