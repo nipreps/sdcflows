@@ -258,11 +258,13 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 'aroma_noise_ics', 'melodic_mix', 'nonaggr_denoised_file']),
         name='outputnode')
 
-    summary = pe.Node(FunctionalSummary(output_spaces=output_spaces,
-                                        pe_direction=bold_pe), name='summary',
-                      mem_gb=0.05)
-    summary.inputs.slice_timing = run_stc
-    summary.inputs.registration = 'bbregister' if freesurfer else 'FLIRT'
+    summary = pe.Node(
+        FunctionalSummary(output_spaces=output_spaces,
+                          slice_timing=run_stc,
+                          registration='FreeSurfer' if freesurfer else 'FSL',
+                          registration_dof=bold2t1w_dof,
+                          pe_direction=bold_pe),
+        name='summary', mem_gb=DEFAULT_MEMORY_MIN_GB, run_without_submitting=True)
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
                                            freesurfer=freesurfer,
@@ -348,6 +350,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.validation_report', 'inputnode.validation_report')]),
         (bold_reg_wf, func_reports_wf, [
             ('outputnode.out_report', 'inputnode.bold_reg_report'),
+            ('outputnode.fallback', 'inputnode.bold_reg_fallback'),
         ]),
         (bold_confounds_wf, outputnode, [
             ('outputnode.confounds_file', 'confounds'),
@@ -362,6 +365,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('outputnode.tcompcor_report', 'inputnode.tcompcor_report'),
             ('outputnode.ica_aroma_report', 'inputnode.ica_aroma_report')]),
         (bold_confounds_wf, summary, [('outputnode.confounds_list', 'confounds')]),
+        (bold_reg_wf, summary, [('outputnode.fallback', 'fallback')]),
         (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
     ])
 
@@ -880,6 +884,8 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
             BOLD mask in T1 space
         out_report
             Reportlet visualizing quality of registration
+        fallback
+            Boolean indicating whether BBR was rejected (mri_coreg registration returned)
 
     """
     workflow = pe.Workflow(name=name)
@@ -894,7 +900,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['itk_bold_to_t1', 'itk_t1_to_bold',
                                       'bold_t1', 'bold_mask_t1',
-                                      'out_report']),
+                                      'out_report', 'fallback']),
         name='outputnode'
     )
 
@@ -913,7 +919,8 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
             ('t1_brain', 'inputnode.t1_brain')]),
         (bbr_wf, outputnode, [('outputnode.itk_bold_to_t1', 'itk_bold_to_t1'),
                               ('outputnode.itk_t1_to_bold', 'itk_t1_to_bold'),
-                              ('outputnode.out_report', 'out_report')]),
+                              ('outputnode.out_report', 'out_report'),
+                              ('outputnode.fallback', 'fallback')]),
     ])
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref',
@@ -1495,8 +1502,8 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=['source_file', 'summary_report', 'validation_report', 'bold_mask_report',
-                    'bold_reg_report', 'acompcor_report', 'tcompcor_report', 'syn_sdc_report',
-                    'ica_aroma_report']),
+                    'bold_reg_report', 'bold_reg_fallback', 'acompcor_report', 'tcompcor_report',
+                    'syn_sdc_report', 'ica_aroma_report']),
         name='inputnode')
 
     ds_summary_report = pe.Node(
@@ -1523,9 +1530,14 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
         name='ds_syn_sdc_report', run_without_submitting=True,
         mem_gb=DEFAULT_MEMORY_MIN_GB)
 
+    def _bold_reg_suffix(fallback, freesurfer):
+        if fallback:
+            return 'coreg' if freesurfer else 'flirt'
+        else:
+            return 'bbr' if freesurfer else 'flt_bbr'
+
     ds_bold_reg_report = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='bbr' if freesurfer else 'flt_bbr'),
+        DerivativesDataSink(base_directory=reportlets_dir),
         name='ds_bold_reg_report', run_without_submitting=True,
         mem_gb=DEFAULT_MEMORY_MIN_GB)
 
@@ -1554,8 +1566,10 @@ def init_func_reports_wf(reportlets_dir, freesurfer, use_aroma, use_syn, name='f
                                            ('validation_report', 'in_file')]),
         (inputnode, ds_bold_mask_report, [('source_file', 'source_file'),
                                           ('bold_mask_report', 'in_file')]),
-        (inputnode, ds_bold_reg_report, [('source_file', 'source_file'),
-                                         ('bold_reg_report', 'in_file')]),
+        (inputnode, ds_bold_reg_report, [
+            ('source_file', 'source_file'),
+            ('bold_reg_report', 'in_file'),
+            (('bold_reg_fallback', _bold_reg_suffix, freesurfer), 'suffix')]),
         (inputnode, ds_acompcor_report, [('source_file', 'source_file'),
                                          ('acompcor_report', 'in_file')]),
         (inputnode, ds_tcompcor_report, [('source_file', 'source_file'),

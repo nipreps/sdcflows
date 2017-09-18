@@ -26,7 +26,7 @@ from ..interfaces.images import extract_wm
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def compare_xforms(fallback_mat, test_mat):
+def compare_xforms(test_mat, fallback_mat):
     import numpy as np
     from transforms3d.affines import decompose44
     from transforms3d.axangles import mat2axangle
@@ -42,9 +42,7 @@ def compare_xforms(fallback_mat, test_mat):
     rot = mat2axangle(rotation_matrix)[1]
     max_scale = np.max(np.abs(scales))
 
-    fallback = any((max_trans > 2, rot > np.pi / 36, max_scale > 1.1))
-
-    return 0 if fallback else 1
+    return any((max_trans > 2, rot > np.pi / 36, max_scale > 1.1))
 
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
@@ -242,7 +240,9 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
         out_report
-            reportlet for assessing registration quality
+            Reportlet for assessing registration quality
+        fallback
+            Boolean indicating whether BBR was rejected (mri_coreg registration returned)
 
     """
     workflow = pe.Workflow(name=name)
@@ -254,7 +254,7 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'fallback']),
         name='outputnode')
 
     mri_coreg = pe.Node(
@@ -305,17 +305,18 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (lta2fsl_inv, fsl2itk_inv, [('out_fsl', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
-        (mri_coreg, transforms, [('out_lta_file', 'in1')]),
-        (bbregister, transforms, [('out_lta_file', 'in2')]),
+        (bbregister, transforms, [('out_lta_file', 'in1')]),
+        (mri_coreg, transforms, [('out_lta_file', 'in2')]),
         # Compare transforms
-        (mri_coreg, compare_transforms, [('out_lta_file', 'fallback_mat')]),
         (bbregister, compare_transforms, [('out_lta_file', 'test_mat')]),
+        (mri_coreg, compare_transforms, [('out_lta_file', 'fallback_mat')]),
+        (compare_transforms, outputnode, [('out', 'fallback')]),
         # Select output transform
         (transforms, select_transform, [('out', 'inlist')]),
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, lta_concat, [('out', 'in_lta1')]),
-        (mri_coreg, reports, [('out_report', 'in1')]),
-        (bbregister, reports, [('out_report', 'in2')]),
+        (bbregister, reports, [('out_report', 'in1')]),
+        (mri_coreg, reports, [('out_report', 'in2')]),
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
         (select_report, outputnode, [('out', 'out_report')]),
@@ -371,7 +372,9 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
         out_report
-            reportlet for assessing registration quality
+            Reportlet for assessing registration quality
+        fallback
+            Boolean indicating whether BBR was rejected (rigid FLIRT registration returned)
 
     """
     workflow = pe.Workflow(name=name)
@@ -383,7 +386,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'fallback']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
@@ -423,11 +426,12 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
                                   ('t1_brain', 'source_file')]),
         # Compare transforms
-        (flt_bbr_init, compare_transforms, [('out_matrix_file', 'fallback_mat')]),
         (flt_bbr, compare_transforms, [('out_matrix_file', 'test_mat')]),
+        (flt_bbr_init, compare_transforms, [('out_matrix_file', 'fallback_mat')]),
+        (compare_transforms, outputnode, [('out', 'fallback')]),
         # Select output transform
-        (flt_bbr_init, transforms, [('out_matrix_file', 'in1')]),
-        (flt_bbr, transforms, [('out_matrix_file', 'in2')]),
+        (flt_bbr, transforms, [('out_matrix_file', 'in1')]),
+        (flt_bbr_init, transforms, [('out_matrix_file', 'in2')]),
         (transforms, select_transform, [('out', 'inlist')]),
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, invt_bbr, [('out', 'in_file')]),
@@ -435,8 +439,8 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
-        (flt_bbr_init, reports, [('out_report', 'in1')]),
-        (flt_bbr, reports, [('out_report', 'in2')]),
+        (flt_bbr, reports, [('out_report', 'in1')]),
+        (flt_bbr_init, reports, [('out_report', 'in2')]),
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
         (select_report, outputnode, [('out', 'out_report')])])
