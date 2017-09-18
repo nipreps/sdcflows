@@ -296,6 +296,7 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
         (lta_concat, lta2fsl_fwd, [('out_file', 'in_lta')]),
         (lta_concat, lta2fsl_inv, [('out_file', 'in_lta')]),
+        # Output ITK transforms
         (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
                                   ('in_file', 'source_file')]),
         (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
@@ -306,8 +307,10 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (mri_coreg, transforms, [('out_lta_file', 'in1')]),
         (bbregister, transforms, [('out_lta_file', 'in2')]),
+        # Compare transforms
         (mri_coreg, compare_transforms, [('out_lta_file', 'fallback_mat')]),
         (bbregister, compare_transforms, [('out_lta_file', 'test_mat')]),
+        # Select output transform
         (transforms, select_transform, [('out', 'inlist')]),
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, lta_concat, [('out', 'in_lta1')]),
@@ -389,7 +392,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
                       name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')
 
-    # make equivalent warp fields
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
                        mem_gb=DEFAULT_MEMORY_MIN_GB)
 
@@ -399,6 +401,14 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
                           name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    transforms = pe.Node(niu.Merge(2), run_without_submitting=True, name='transforms')
+    reports = pe.Node(niu.Merge(2), run_without_submitting=True, name='reports')
+
+    compare_transforms = pe.Node(niu.Function(function=compare_xforms), name='compare_transforms')
+
+    select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
+    select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
@@ -412,12 +422,23 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
                                   ('in_file', 'source_file')]),
         (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
                                   ('t1_brain', 'source_file')]),
-        (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
-        (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
+        # Compare transforms
+        (flt_bbr_init, compare_transforms, [('out_matrix_file', 'fallback_mat')]),
+        (flt_bbr, compare_transforms, [('out_matrix_file', 'test_mat')]),
+        # Select output transform
+        (flt_bbr_init, transforms, [('out_matrix_file', 'in1')]),
+        (flt_bbr, transforms, [('out_matrix_file', 'in2')]),
+        (transforms, select_transform, [('out', 'inlist')]),
+        (compare_transforms, select_transform, [('out', 'index')]),
+        (select_transform, invt_bbr, [('out', 'in_file')]),
+        (select_transform, fsl2itk_fwd, [('out', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
-        (flt_bbr, outputnode, [('out_report', 'out_report')]),
-        ])
+        (flt_bbr_init, reports, [('out_report', 'in1')]),
+        (flt_bbr, reports, [('out_report', 'in2')]),
+        (reports, select_report, [('out', 'inlist')]),
+        (compare_transforms, select_report, [('out', 'index')]),
+        (select_report, outputnode, [('out', 'out_report')])])
 
     return workflow
