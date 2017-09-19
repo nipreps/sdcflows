@@ -221,11 +221,17 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             'magnitude1': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude1.nii.gz',
             'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz'
         }]
+        run_stc = True
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
         fmaps = layout.get_fieldmap(bold_file, return_list=True) \
             if 'fieldmaps' not in ignore else []
+
+        if "SliceTiming" in metadata and 'slicetiming' not in ignore:
+            run_stc = _get_series_len(bold_file) > 4 or "TooShort"
+        else:
+            run_stc = False
 
     # TODO: To be removed (supported fieldmaps):
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
@@ -250,7 +256,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary',
                       mem_gb=0.05)
-    summary.inputs.slice_timing = "SliceTiming" in metadata and 'slicetiming' not in ignore
+    summary.inputs.slice_timing = run_stc
     summary.inputs.registration = 'bbregister' if freesurfer else 'FLIRT'
 
     func_reports_wf = init_func_reports_wf(reportlets_dir=reportlets_dir,
@@ -283,7 +289,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     bold_reference_wf = init_bold_reference_wf(omp_nthreads=omp_nthreads)
 
     # STC on the BOLD
-    if "SliceTiming" in metadata and 'slicetiming' not in ignore:
+    if run_stc is True:
         bold_stc_wf = init_bold_stc_wf(name='bold_stc_wf', metadata=metadata)
 
     # HMC on the BOLD
@@ -352,7 +358,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
     ])
 
-    if "SliceTiming" in metadata and 'slicetiming' not in ignore:
+    if run_stc is True:
         workflow.connect([
             (bold_reference_wf, bold_stc_wf, [('outputnode.bold_file', 'inputnode.bold_file'),
                                               ('outputnode.skip_vols', 'inputnode.skip_vols')]),
@@ -1770,3 +1776,19 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
         ])
 
     return workflow
+
+
+def _get_series_len(bold_fname):
+    import nibabel as nb
+    from niworkflows.nipype.algorithms.confounds import is_outlier
+    img = nb.load(bold_fname)
+    if len(img.shape) < 4:
+        return 1
+
+    # Replicate work done in EstimateReferenceImage to have access to
+    # skip_vols at workflow creation time
+    data_slice = img.dataobj[:, :, :, :50]
+    global_signal = data_slice.mean(axis=0).mean(axis=0).mean(axis=0)
+    skip_vols = is_outlier(global_signal)
+
+    return img.shape[3] - skip_vols
