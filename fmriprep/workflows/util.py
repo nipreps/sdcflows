@@ -46,6 +46,9 @@ def compare_xforms(test_mat, fallback_mat):
     rot = mat2axangle(rotation_matrix)[1]
     max_scale = np.max(np.abs(scales))
 
+    print("Shift: {:.1g}mm\nRotation: {:.1g}°\nScale: {:.2g}".format(
+        shift_magnitude, rot * 180 / np.pi, max_scale))
+
     return shift_magnitude > shift_thresh or rot > rot_thresh or max_scale > scale_thresh
 
 
