@@ -38,11 +38,15 @@ def compare_xforms(test_mat, fallback_mat):
     comp = mat2.dot(np.linalg.pinv(mat1))
     trans, rotation_matrix, scales, shears = decompose44(comp)
 
-    max_trans = np.max(np.abs(trans))
+    shift_thresh = 5         # mm
+    rot_thresh = np.pi / 36  # 5 degrees
+    scale_thresh = 1.1       # scale factor
+
+    shift_magnitude = np.sqrt(trans.dot(trans))  # 2-norm
     rot = mat2axangle(rotation_matrix)[1]
     max_scale = np.max(np.abs(scales))
 
-    return any((max_trans > 2, rot > np.pi / 36, max_scale > 1.1))
+    return shift_magnitude > shift_thresh or rot > rot_thresh or max_scale > scale_thresh
 
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
