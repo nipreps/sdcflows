@@ -708,7 +708,7 @@ def init_bold_stc_wf(metadata, name='bold_stc_wf'):
                                               ('skip_vols', 'ignore')]),
         (create_custom_slice_timing_file, slice_timing_correction, [
             (('out', _prefix_at), 'tpattern')]),
-        (slice_timing_correction, outputnode, [('out_file', 'bold_stc_file')]),
+        (slice_timing_correction, outputnode, [('out_file', 'stc_file')]),
     ])
 
     return workflow
