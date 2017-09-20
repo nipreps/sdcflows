@@ -520,7 +520,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ])
 
     if freesurfer and any(space.startswith('fs') for space in output_spaces):
-        LOGGER.info('Creating FreeSurfer processing flow.')
+        LOGGER.info('Creating BOLD surface-sampling workflow.')
         bold_surf_wf = init_bold_surf_wf(output_spaces=output_spaces,
                                          medial_surface_nan=medial_surface_nan,
                                          name='bold_surf_wf')
