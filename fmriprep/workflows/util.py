@@ -292,6 +292,9 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
     select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
 
+    lta_convert = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_lta'],
+                             name='lta_convert')
+
     workflow.connect([
         (inputnode, mri_coreg, [('subjects_dir', 'subjects_dir'),
                                 ('subject_id', 'subject_id'),
@@ -327,6 +330,8 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
         (select_report, outputnode, [('out', 'out_report')]),
+        # Convert VOX2VOX transforms to RAS2RAS transforms
+        (transforms, lta_convert, [('out', 'in_lta')]),
         ])
 
     return workflow
@@ -420,6 +425,9 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
     select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
     select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
 
+    lta_convert = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_fsl'],
+                             name='lta_convert')
+
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
         (inputnode, flt_bbr_init, [('in_file', 'in_file'),
@@ -450,6 +458,11 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         (flt_bbr_init, reports, [('out_report', 'in2')]),
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
-        (select_report, outputnode, [('out', 'out_report')])])
+        (select_report, outputnode, [('out', 'out_report')]),
+        # Convert FSL transforms to LTA transforms
+        (transforms, lta_convert, [('out', 'in_fsl')]),
+        (inputnode, lta_convert, [('in_file', 'source_file'),
+                                  ('t1_brain', 'target_file')]),
+        ])
 
     return workflow
