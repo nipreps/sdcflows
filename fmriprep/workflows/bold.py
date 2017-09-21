@@ -761,10 +761,10 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
         name='outputnode')
 
     # Head motion correction (hmc)
-    hmc = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
-                  name='BOLD_hmc', mem_gb=bold_file_size_gb * 3)
+    mcflirt = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
+                      name='mcflirt', mem_gb=bold_file_size_gb * 3)
 
-    hcm2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='hcm2itk',
+    fsl2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='fsl2itk',
                       mem_gb=0.05, n_procs=omp_nthreads)
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
@@ -776,13 +776,13 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
 
     workflow.connect([
         (inputnode, split, [('bold_file', 'in_file')]),
-        (inputnode, hmc, [('raw_ref_image', 'ref_file'),
-                          ('bold_file', 'in_file')]),
-        (inputnode, hcm2itk, [('raw_ref_image', 'in_source'),
+        (inputnode, mcflirt, [('raw_ref_image', 'ref_file'),
+                              ('bold_file', 'in_file')]),
+        (inputnode, fsl2itk, [('raw_ref_image', 'in_source'),
                               ('raw_ref_image', 'in_reference')]),
-        (hmc, hcm2itk, [('mat_file', 'in_files')]),
-        (hmc, normalize_motion, [('par_file', 'in_file')]),
-        (hcm2itk, outputnode, [('out_file', 'xforms')]),
+        (mcflirt, fsl2itk, [('mat_file', 'in_files')]),
+        (mcflirt, normalize_motion, [('par_file', 'in_file')]),
+        (fsl2itk, outputnode, [('out_file', 'xforms')]),
         (normalize_motion, outputnode, [('out_file', 'movpar_file')]),
         (split, outputnode, [('out_files', 'bold_split')]),
     ])
