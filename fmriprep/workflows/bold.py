@@ -228,10 +228,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         fmaps = layout.get_fieldmap(bold_file, return_list=True) \
             if 'fieldmaps' not in ignore else []
 
-        if "SliceTiming" in metadata and 'slicetiming' not in ignore:
-            run_stc = _get_series_len(bold_file) > 4 or "TooShort"
-        else:
-            run_stc = False
+        # Short circuits: (True and True and (False or 'TooShort')) == 'TooShort'
+        run_stc = ("SliceTiming" in metadata and
+                   'slicetiming' not in ignore and
+                   (_get_series_len(bold_file) > 4 or "TooShort"))
 
     # TODO: To be removed (supported fieldmaps):
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
@@ -289,6 +289,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     bold_reference_wf = init_bold_reference_wf(omp_nthreads=omp_nthreads)
 
     # STC on the BOLD
+    # bool('TooShort') == True, so check True explicitly
     if run_stc is True:
         bold_stc_wf = init_bold_stc_wf(name='bold_stc_wf', metadata=metadata)
 
@@ -358,6 +359,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (summary, func_reports_wf, [('out_report', 'inputnode.summary_report')]),
     ])
 
+    # bool('TooShort') == True, so check True explicitly
     if run_stc is True:
         workflow.connect([
             (bold_reference_wf, bold_stc_wf, [('outputnode.bold_file', 'inputnode.bold_file'),
@@ -697,7 +699,7 @@ def init_bold_stc_wf(metadata, name='bold_stc_wf'):
 
     # It would be good to fingerprint memory use of afni.TShift
     slice_timing_correction = pe.Node(
-        afni.TShift(outputtype='NIFTI_GZ', tr=str(metadata["RepetitionTime"]) + "s"),
+        afni.TShift(outputtype='NIFTI_GZ', tr='{}s'.format(metadata["RepetitionTime"])),
         name='slice_timing_correction')
 
     def _prefix_at(x):
