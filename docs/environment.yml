@@ -17,9 +17,9 @@ dependencies:
 - statsmodels
 - xvfbwrapper
 - funcsigs
-- networkx
+- networkx>=2.0.0
 - python-dateutil
-- pydotplus
+- pydot>=1.2.3
 - cython
 
 - pip:
