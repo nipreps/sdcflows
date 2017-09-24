@@ -17,9 +17,9 @@ dependencies:
 - statsmodels
 - xvfbwrapper
 - funcsigs
-- networkx
+- networkx>=2.0.0
 - python-dateutil
-- pydotplus
+- pydot>=1.2.3
 - cython
 
 - pip:
@@ -28,4 +28,4 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - niworkflows>=0.1.6
+    - git+https://github.com/poldracklab/niworkflows.git@41f187b60c15c60f79ec4a6aef490a2d7b119624#egg=niworkflows-0.1.7-dev
