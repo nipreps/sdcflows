@@ -28,28 +28,13 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 def compare_xforms(test_mat, fallback_mat):
     import numpy as np
-    from transforms3d.affines import decompose44
-    from transforms3d.axangles import mat2axangle
-    # [[R], [A], [S], [1]] = mat1.dot([[x], [y], [z], [1]])
+    from niworkflows.nipype.algorithms.rapidart import _calc_norm_affine
     mat1 = np.loadtxt(fallback_mat)
-    # [[R'], [A'], [S'], [1]] = mat2.dot([[x], [y], [z], [1]])
     mat2 = np.loadtxt(test_mat)
-    # [[R'], [A'], [S'], [1]] = mat2.dot(mat1_inv.dot([[R], [A], [S], [1]]))
-    comp = mat2.dot(np.linalg.pinv(mat1))
-    trans, rotation_matrix, scales, shears = decompose44(comp)
 
-    shift_thresh = 5         # mm
-    rot_thresh = np.pi / 36  # 5 degrees
-    scale_thresh = 1.1       # scale factor
+    norm, _ = _calc_norm_affine([mat2, mat1], use_differences=True)
 
-    shift_magnitude = np.sqrt(trans.dot(trans))  # 2-norm
-    rot = mat2axangle(rotation_matrix)[1]
-    max_scale = np.max(np.abs(scales))
-
-    print("Shift: {:.1g}mm\nRotation: {:.1g}°\nScale: {:.2g}".format(
-        shift_magnitude, rot * 180 / np.pi, max_scale))
-
-    return shift_magnitude > shift_thresh or rot > rot_thresh or max_scale > scale_thresh
+    return norm[1] > 15
 
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
