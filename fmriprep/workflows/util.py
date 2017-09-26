@@ -26,15 +26,24 @@ from ..interfaces.images import extract_wm
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def compare_xforms(test_mat, fallback_mat):
+def compare_xforms(lta_list, norm_threshold=15):
     import numpy as np
     from niworkflows.nipype.algorithms.rapidart import _calc_norm_affine
-    mat1 = np.loadtxt(fallback_mat)
-    mat2 = np.loadtxt(test_mat)
 
-    norm, _ = _calc_norm_affine([mat2, mat1], use_differences=True)
+    def read_lta(fname):
+        with open(fname, 'rb') as fobj:
+            for line in fobj:
+                if line.strip() == b'1 4 4':
+                    break
+            lines = fobj.readlines()[:4]
+        return np.genfromtxt(lines)
 
-    return norm[1] > 15
+    bbr_affine = read_lta(lta_list[0])
+    fallback_affine = read_lta(lta_list[1])
+
+    norm, _ = _calc_norm_affine([fallback_affine, bbr_affine], use_differences=True)
+
+    return norm[1] > norm_threshold
 
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
@@ -318,20 +327,19 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     transforms = pe.Node(niu.Merge(2), run_without_submitting=True, name='transforms')
     reports = pe.Node(niu.Merge(2), run_without_submitting=True, name='reports')
 
+    lta_ras2ras = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_lta'],
+                             name='lta_ras2ras')
     compare_transforms = pe.Node(niu.Function(function=compare_xforms), name='compare_transforms')
 
     select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
     select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
 
-    lta_convert = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_lta'],
-                             name='lta_convert')
-
     workflow.connect([
         (bbregister, transforms, [('out_lta_file', 'in1')]),
         (mri_coreg, transforms, [('out_lta_file', 'in2')]),
-        # Compare transforms
-        (bbregister, compare_transforms, [('out_lta_file', 'test_mat')]),
-        (mri_coreg, compare_transforms, [('out_lta_file', 'fallback_mat')]),
+        # Normalize LTA transforms to RAS2RAS (inputs are VOX2VOX) and compare
+        (transforms, lta_ras2ras, [('out', 'in_lta')]),
+        (lta_ras2ras, compare_transforms, [('out_lta', 'lta_list')]),
         (compare_transforms, outputnode, [('out', 'fallback')]),
         # Select output transform
         (transforms, select_transform, [('out', 'inlist')]),
@@ -343,8 +351,6 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
         (select_report, outputnode, [('out', 'out_report')]),
-        # Convert VOX2VOX transforms to RAS2RAS transforms
-        (transforms, lta_convert, [('out', 'in_lta')]),
         ])
 
     return workflow
@@ -485,17 +491,19 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
     select_transform = pe.Node(niu.Select(), run_without_submitting=True, name='select_transform')
     select_report = pe.Node(niu.Select(), run_without_submitting=True, name='select_report')
 
-    lta_convert = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_fsl'],
-                             name='lta_convert')
+    fsl_to_lta = pe.MapNode(fs.utils.LTAConvert(out_lta=True), iterfield=['in_fsl'],
+                            name='fsl_to_lta')
 
     workflow.connect([
-        # Compare transforms
-        (flt_bbr, compare_transforms, [('out_matrix_file', 'test_mat')]),
-        (flt_bbr_init, compare_transforms, [('out_matrix_file', 'fallback_mat')]),
-        (compare_transforms, outputnode, [('out', 'fallback')]),
-        # Select output transform
         (flt_bbr, transforms, [('out_matrix_file', 'in1')]),
         (flt_bbr_init, transforms, [('out_matrix_file', 'in2')]),
+        # Convert FSL transforms to LTA (RAS2RAS) transforms and compare
+        (inputnode, fsl_to_lta, [('in_file', 'source_file'),
+                                 ('t1_brain', 'target_file')]),
+        (transforms, fsl_to_lta, [('out', 'in_fsl')]),
+        (fsl_to_lta, compare_transforms, [('out_lta', 'lta_list')]),
+        (compare_transforms, outputnode, [('out', 'fallback')]),
+        # Select output transform
         (transforms, select_transform, [('out', 'inlist')]),
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, invt_bbr, [('out', 'in_file')]),
@@ -505,10 +513,6 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
         (reports, select_report, [('out', 'inlist')]),
         (compare_transforms, select_report, [('out', 'index')]),
         (select_report, outputnode, [('out', 'out_report')]),
-        # Convert FSL transforms to LTA transforms
-        (transforms, lta_convert, [('out', 'in_fsl')]),
-        (inputnode, lta_convert, [('in_file', 'source_file'),
-                                  ('t1_brain', 'target_file')]),
         ])
 
     return workflow
