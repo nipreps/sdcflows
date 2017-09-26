@@ -393,10 +393,7 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
-    flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=True), name='flt_bbr_init')
-    flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, generate_report=True),
-                      name='flt_bbr')
-    flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')
+    flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=not use_bbr), name='flt_bbr_init')
 
     invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
                        mem_gb=DEFAULT_MEMORY_MIN_GB)
@@ -407,6 +404,53 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
                           name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    workflow.connect([
+        (inputnode, flt_bbr_init, [('in_file', 'in_file'),
+                                   ('t1_brain', 'reference')]),
+        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+                                  ('in_file', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
+                                  ('t1_brain', 'source_file')]),
+        (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
+        ])
+
+    # Short-circuit workflow building, use rigid registration
+    if use_bbr is False:
+        workflow.connect([
+            (flt_bbr_init, invt_bbr, [('out_matrix_file', 'in_file')]),
+            (flt_bbr_init, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
+            (flt_bbr_init, outputnode, [('out_report', 'out_report')]),
+            ])
+        outputnode.inputs.fallback = True
+
+        return workflow
+
+    flt_bbr = pe.Node(
+        FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, generate_report=True,
+                 schedule=op.join(os.getenv('FSLDIR'), 'etc/flirtsch/bbr.sch')),
+        name='flt_bbr')
+
+    workflow.connect([
+        (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
+        (inputnode, flt_bbr, [('in_file', 'in_file'),
+                              ('t1_brain', 'reference')]),
+        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
+        (wm_mask, flt_bbr, [('out', 'wm_seg')]),
+        ])
+
+    # Short-circuit workflow building, use boundary-based registration
+    if use_bbr is True:
+        workflow.connect([
+            (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
+            (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
+            (flt_bbr, outputnode, [('out_report', 'out_report')]),
+            ])
+        outputnode.inputs.fallback = False
+
+        return workflow
 
     transforms = pe.Node(niu.Merge(2), run_without_submitting=True, name='transforms')
     reports = pe.Node(niu.Merge(2), run_without_submitting=True, name='reports')
@@ -420,17 +464,6 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
                              name='lta_convert')
 
     workflow.connect([
-        (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
-        (inputnode, flt_bbr_init, [('in_file', 'in_file'),
-                                   ('t1_brain', 'reference')]),
-        (flt_bbr_init, flt_bbr, [('out_matrix_file', 'in_matrix_file')]),
-        (inputnode, flt_bbr, [('in_file', 'in_file'),
-                              ('t1_brain', 'reference')]),
-        (wm_mask, flt_bbr, [('out', 'wm_seg')]),
-        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
-                                  ('in_file', 'source_file')]),
-        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
-                                  ('t1_brain', 'source_file')]),
         # Compare transforms
         (flt_bbr, compare_transforms, [('out_matrix_file', 'test_mat')]),
         (flt_bbr_init, compare_transforms, [('out_matrix_file', 'fallback_mat')]),
@@ -442,9 +475,6 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, invt_bbr, [('out', 'in_file')]),
         (select_transform, fsl2itk_fwd, [('out', 'transform_file')]),
-        (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
-        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
-        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (flt_bbr, reports, [('out_report', 'in1')]),
         (flt_bbr_init, reports, [('out_report', 'in2')]),
         (reports, select_report, [('out', 'inlist')]),
