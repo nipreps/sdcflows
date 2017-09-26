@@ -254,13 +254,8 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
 
     mri_coreg = pe.Node(
         MRICoregRPT(dof=bold2t1w_dof, sep=[4], ftol=0.0001, linmintol=0.01,
-                    num_threads=omp_nthreads, generate_report=True),
+                    num_threads=omp_nthreads, generate_report=not use_bbr),
         name='mri_coreg', n_procs=omp_nthreads)
-
-    bbregister = pe.Node(
-        BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', registered_file=True,
-                      out_lta_file=True, generate_report=True),
-        name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
     # XXX LTA-FSL-ITK may ultimately be able to be replaced with a straightforward
@@ -271,6 +266,54 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
                           name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    workflow.connect([
+        (inputnode, mri_coreg, [('subjects_dir', 'subjects_dir'),
+                                ('subject_id', 'subject_id'),
+                                ('in_file', 'source_file')]),
+        # Output ITK transforms
+        (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
+        (lta_concat, lta2fsl_fwd, [('out_file', 'in_lta')]),
+        (lta_concat, lta2fsl_inv, [('out_file', 'in_lta')]),
+        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+                                  ('in_file', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
+                                  ('t1_brain', 'source_file')]),
+        (lta2fsl_fwd, fsl2itk_fwd, [('out_fsl', 'transform_file')]),
+        (lta2fsl_inv, fsl2itk_inv, [('out_fsl', 'transform_file')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
+        ])
+
+    # Short-circuit workflow building, use initial registration
+    if use_bbr is False:
+        workflow.connect([
+            (mri_coreg, outputnode, [('out_report', 'out_report')]),
+            (mri_coreg, lta_concat, [('out_lta_file', 'in_lta1')])])
+        outputnode.inputs.fallback = True
+
+        return workflow
+
+    bbregister = pe.Node(
+        BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', registered_file=True,
+                      out_lta_file=True, generate_report=True),
+        name='bbregister')
+
+    workflow.connect([
+        (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
+                                 ('subject_id', 'subject_id'),
+                                 ('in_file', 'source_file')]),
+        (mri_coreg, bbregister, [('out_lta_file', 'init_reg_file')]),
+        ])
+
+    # Short-circuit workflow building, use boundary-based registration
+    if use_bbr is True:
+        workflow.connect([
+            (bbregister, outputnode, [('out_report', 'out_report')]),
+            (bbregister, lta_concat, [('out_lta_file', 'in_lta1')])])
+        outputnode.inputs.fallback = False
+
+        return workflow
 
     transforms = pe.Node(niu.Merge(2), run_without_submitting=True, name='transforms')
     reports = pe.Node(niu.Merge(2), run_without_submitting=True, name='reports')
@@ -284,25 +327,6 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
                              name='lta_convert')
 
     workflow.connect([
-        (inputnode, mri_coreg, [('subjects_dir', 'subjects_dir'),
-                                ('subject_id', 'subject_id'),
-                                ('in_file', 'source_file')]),
-        (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
-                                 ('subject_id', 'subject_id'),
-                                 ('in_file', 'source_file')]),
-        (mri_coreg, bbregister, [('out_lta_file', 'init_reg_file')]),
-        (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
-        (lta_concat, lta2fsl_fwd, [('out_file', 'in_lta')]),
-        (lta_concat, lta2fsl_inv, [('out_file', 'in_lta')]),
-        # Output ITK transforms
-        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
-                                  ('in_file', 'source_file')]),
-        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
-                                  ('t1_brain', 'source_file')]),
-        (lta2fsl_fwd, fsl2itk_fwd, [('out_fsl', 'transform_file')]),
-        (lta2fsl_inv, fsl2itk_inv, [('out_fsl', 'transform_file')]),
-        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
-        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (bbregister, transforms, [('out_lta_file', 'in1')]),
         (mri_coreg, transforms, [('out_lta_file', 'in2')]),
         # Compare transforms
@@ -313,6 +337,7 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         (transforms, select_transform, [('out', 'inlist')]),
         (compare_transforms, select_transform, [('out', 'index')]),
         (select_transform, lta_concat, [('out', 'in_lta1')]),
+        # Select output report
         (bbregister, reports, [('out_report', 'in1')]),
         (mri_coreg, reports, [('out_report', 'in2')]),
         (reports, select_report, [('out', 'inlist')]),
