@@ -185,7 +185,7 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     return workflow
 
 
-def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
+def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     """
     This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
     a T1-weighted structural image.
@@ -198,11 +198,14 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_bbreg_wf
-        wf = init_bbreg_wf(bold2t1w_dof=9, omp_nthreads=1)
+        wf = init_bbreg_wf(use_bbr=True, bold2t1w_dof=9, omp_nthreads=1)
 
 
     Parameters
 
+        use_bbr : bool or None
+            Enable/disable boundary-based registration refinement.
+            If ``None``, test BBR result for distortion before accepting.
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
         name : str, optional
@@ -322,7 +325,7 @@ def init_bbreg_wf(bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     return workflow
 
 
-def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
+def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
     """
     This workflow uses FSL FLIRT to register a BOLD image to a T1-weighted
     structural image, using a boundary-based registration (BBR) cost function.
@@ -335,11 +338,14 @@ def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_fsl_bbr_wf
-        wf = init_fsl_bbr_wf(bold2t1w_dof=9)
+        wf = init_fsl_bbr_wf(use_bbr=True, bold2t1w_dof=9)
 
 
     Parameters
 
+        use_bbr : bool or None
+            Enable/disable boundary-based registration refinement.
+            If ``None``, test BBR result for distortion before accepting.
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
         name : str, optional

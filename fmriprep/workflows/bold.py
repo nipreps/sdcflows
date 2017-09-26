@@ -65,7 +65,7 @@ LOGGER = logging.getLogger('workflow')
 
 
 def init_func_preproc_wf(bold_file, ignore, freesurfer,
-                         bold2t1w_dof, reportlets_dir,
+                         use_bbr, bold2t1w_dof, reportlets_dir,
                          output_spaces, template, output_dir, omp_nthreads,
                          fmap_bspline, fmap_demean, use_syn, force_syn,
                          use_aroma, ignore_aroma_err, medial_surface_nan,
@@ -88,6 +88,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                   output_spaces=['T1w', 'fsnative',
                                                  'template', 'fsaverage5'],
                                   debug=False,
+                                  use_bbr=True,
                                   bold2t1w_dof=9,
                                   fmap_bspline=True,
                                   fmap_demean=True,
@@ -108,6 +109,9 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         freesurfer : bool
             Enable FreeSurfer functional registration (bbregister) and resampling
             BOLD series to FreeSurfer surface meshes.
+        use_bbr : bool or None
+            Enable/disable boundary-based registration refinement.
+            If ``None``, test BBR result for distortion before accepting.
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
         reportlets_dir : str
@@ -308,6 +312,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     # mean BOLD registration to T1w
     bold_reg_wf = init_bold_reg_wf(name='bold_reg_wf',
                                    freesurfer=freesurfer,
+                                   use_bbr=use_bbr,
                                    bold2t1w_dof=bold2t1w_dof,
                                    bold_file_size_gb=bold_file_size_gb,
                                    omp_nthreads=omp_nthreads,
@@ -800,7 +805,7 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
     return workflow
 
 
-def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
+def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
                      name='bold_reg_wf', use_compression=True,
                      use_fieldwarp=False):
     """
@@ -821,12 +826,16 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         wf = init_bold_reg_wf(freesurfer=True,
                               bold_file_size_gb=3,
                               omp_nthreads=1,
+                              use_bbr=True,
                               bold2t1w_dof=9)
 
     Parameters
 
         freesurfer : bool
             Enable FreeSurfer functional registration (bbregister)
+        use_bbr : bool or None
+            Enable/disable boundary-based registration refinement.
+            If ``None``, test BBR result for distortion before accepting.
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
         bold_file_size_gb : float
@@ -905,9 +914,10 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     )
 
     if freesurfer:
-        bbr_wf = init_bbreg_wf(bold2t1w_dof, omp_nthreads=omp_nthreads)
+        bbr_wf = init_bbreg_wf(use_bbr=use_bbr, bold2t1w_dof=bold2t1w_dof,
+                               omp_nthreads=omp_nthreads)
     else:
-        bbr_wf = init_fsl_bbr_wf(bold2t1w_dof)
+        bbr_wf = init_fsl_bbr_wf(use_bbr=use_bbr, bold2t1w_dof=bold2t1w_dof)
 
     workflow.connect([
         (inputnode, bbr_wf, [
