@@ -235,7 +235,7 @@ class Conform(SimpleInterface):
         zooms = np.array(reoriented.header.get_zooms()[:3])
         shape = np.array(reoriented.shape[:3])
 
-        # Reconstruct transform from orig to img
+        # Reconstruct transform from orig to reoriented image
         ornt_xfm = nb.orientations.inv_ornt_aff(
             nb.io_orientation(orig_img.affine), orig_img.shape)
         # Identity unless proven otherwise
@@ -297,6 +297,7 @@ class ReorientInputSpec(BaseInterfaceInputSpec):
 
 class ReorientOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='Reoriented T1w image')
+    transform = File(exists=True, desc='Reorientation transform')
 
 
 class Reorient(SimpleInterface):
@@ -310,6 +311,10 @@ class Reorient(SimpleInterface):
         orig_img = nb.load(fname)
         reoriented = nb.as_closest_canonical(orig_img)
 
+        # Reconstruct transform from orig to reoriented image
+        ornt_xfm = nb.orientations.inv_ornt_aff(
+            nb.io_orientation(orig_img.affine), orig_img.shape)
+
         # Image may be reoriented
         if reoriented is not orig_img:
             out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
@@ -317,7 +322,11 @@ class Reorient(SimpleInterface):
         else:
             out_name = fname
 
+        mat_name = fname_presuffix(fname, suffix='.mat', newpath=runtime.cwd, use_ext=False)
+        np.savetxt(mat_name, ornt_xfm, fmt='%.08f')
+
         self._results['out_file'] = out_name
+        self._results['transform'] = mat_name
 
         return runtime
 
