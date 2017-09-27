@@ -198,7 +198,7 @@ class TemplateDimensions(SimpleInterface):
 
 
 class ConformInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc='Input T1w image')
+    in_file = File(exists=True, mandatory=True, desc='Input image')
     target_zooms = traits.Tuple(traits.Float, traits.Float, traits.Float,
                                 desc='Target zoom information')
     target_shape = traits.Tuple(traits.Int, traits.Int, traits.Int,
@@ -206,7 +206,8 @@ class ConformInputSpec(BaseInterfaceInputSpec):
 
 
 class ConformOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Conformed T1w image')
+    out_file = File(exists=True, desc='Conformed image')
+    transform = File(exists=True, desc='Conformation transform')
 
 
 class Conform(SimpleInterface):
@@ -234,6 +235,13 @@ class Conform(SimpleInterface):
         zooms = np.array(reoriented.header.get_zooms()[:3])
         shape = np.array(reoriented.shape[:3])
 
+        # Reconstruct transform from orig to img
+        ornt_xfm = nb.orientations.inv_ornt_aff(
+            nb.io_orientation(orig_img.affine), orig_img.shape)
+        # Identity unless proven otherwise
+        target_affine = reoriented.affine.copy()
+        conform_xfm = np.eye(4)
+
         xyz_unit = reoriented.header.get_xyzt_units()[0]
         if xyz_unit == 'unknown':
             # Common assumption; if we're wrong, unlikely to be the only thing that breaks
@@ -247,12 +255,9 @@ class Conform(SimpleInterface):
         rescale = not np.allclose(zooms, target_zooms, atol=atol)
         resize = not np.all(shape == target_shape)
         if rescale or resize:
-            target_affine = np.eye(4, dtype=reoriented.affine.dtype)
             if rescale:
                 scale_factor = target_zooms / zooms
                 target_affine[:3, :3] = reoriented.affine[:3, :3].dot(np.diag(scale_factor))
-            else:
-                target_affine[:3, :3] = reoriented.affine[:3, :3]
 
             if resize:
                 # The shift is applied after scaling.
@@ -261,10 +266,9 @@ class Conform(SimpleInterface):
                 # Use integer shifts to avoid unnecessary interpolation
                 offset = (reoriented.affine[:3, 3] * size_factor - reoriented.affine[:3, 3])
                 target_affine[:3, 3] = reoriented.affine[:3, 3] + offset.astype(int)
-            else:
-                target_affine[:3, 3] = reoriented.affine[:3, 3]
 
             data = nli.resample_img(reoriented, target_affine, target_shape).get_data()
+            conform_xfm = np.linalg.inv(reoriented.affine).dot(target_affine)
             reoriented = reoriented.__class__(data, target_affine, reoriented.header)
 
         # Image may be reoriented, rescaled, and/or resized
@@ -274,7 +278,14 @@ class Conform(SimpleInterface):
         else:
             out_name = fname
 
+        transform = ornt_xfm.dot(conform_xfm)
+        assert np.allclose(orig_img.affine.dot(transform), target_affine)
+
+        mat_name = fname_presuffix(fname, suffix='.mat', newpath=runtime.cwd, use_ext=False)
+        np.savetxt(mat_name, transform, fmt='%.08f')
+
         self._results['out_file'] = out_name
+        self._results['transform'] = mat_name
 
         return runtime
 
