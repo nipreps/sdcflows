@@ -192,7 +192,7 @@ def _tpm2roi(t1_tpm, t1_mask, bold_mask, mask_erosion_mm=0, erosion_mm=0, pthres
         eroded_mask_file = os.path.abspath("eroded_mask.nii.gz")
 
         mask_img = nb.load(t1_mask)
-        iter_n = int(mask_erosion_mm / max(mask_img.header.get_zooms()))
+        iter_n = max(int(mask_erosion_mm / max(mask_img.header.get_zooms())), 1)
         mask_data = nd.binary_erosion(mask_img.get_data().astype(np.uint8), iterations=iter_n)
 
         # Resample to BOLD and save
@@ -206,7 +206,7 @@ def _tpm2roi(t1_tpm, t1_mask, bold_mask, mask_erosion_mm=0, erosion_mm=0, pthres
 
     # shrinking
     if erosion_mm:
-        iter_n = int(erosion_mm / max(tpm_img.header.get_zooms()))
+        iter_n = max(int(erosion_mm / max(tpm_img.header.get_zooms())), 1)
         probability_map_data = nd.binary_erosion(probability_map_data, iterations=iter_n)
 
     # Create image to resample
