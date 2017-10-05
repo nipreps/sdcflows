@@ -173,7 +173,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             FreeSurfer SUBJECTS_DIR
         subject_id
             FreeSurfer subject ID
-        fs_2_t1_transform
+        t1_2_fsnative_reverse_transform
             Affine transform from FreeSurfer subject space to T1w space
 
 
@@ -245,7 +245,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_file', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
                 't1_2_mni_forward_transform', 't1_2_mni_reverse_transform',
-                'subjects_dir', 'subject_id', 'fs_2_t1_transform']),
+                'subjects_dir', 'subject_id', 't1_2_fsnative_reverse_transform']),
         name='inputnode')
     inputnode.inputs.bold_file = bold_file
 
@@ -320,16 +320,17 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         (inputnode, bold_reference_wf, [('bold_file', 'inputnode.bold_file')]),
         (bold_reference_wf, bold_hmc_wf, [
             ('outputnode.raw_ref_image', 'inputnode.raw_ref_image')]),
-        (inputnode, bold_reg_wf, [('bold_file', 'inputnode.name_source'),
-                                  ('t1_preproc', 'inputnode.t1_preproc'),
-                                  ('t1_brain', 'inputnode.t1_brain'),
-                                  ('t1_mask', 'inputnode.t1_mask'),
-                                  ('t1_seg', 'inputnode.t1_seg'),
-                                  # Undefined if --no-freesurfer, but this is safe
-                                  ('subjects_dir', 'inputnode.subjects_dir'),
-                                  ('subject_id', 'inputnode.subject_id'),
-                                  ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform')
-                                  ]),
+        (inputnode, bold_reg_wf, [
+            ('bold_file', 'inputnode.name_source'),
+            ('t1_preproc', 'inputnode.t1_preproc'),
+            ('t1_brain', 'inputnode.t1_brain'),
+            ('t1_mask', 'inputnode.t1_mask'),
+            ('t1_seg', 'inputnode.t1_seg'),
+            # Undefined if --no-freesurfer, but this is safe
+            ('subjects_dir', 'inputnode.subjects_dir'),
+            ('subject_id', 'inputnode.subject_id'),
+            ('t1_2_fsnative_reverse_transform', 'inputnode.t1_2_fsnative_reverse_transform')
+            ]),
         (inputnode, bold_confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
                                         ('t1_mask', 'inputnode.t1_mask')]),
         (bold_hmc_wf, bold_reg_wf, [('outputnode.bold_split', 'inputnode.bold_split'),
@@ -859,7 +860,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
             FreeSurfer SUBJECTS_DIR
         subject_id
             FreeSurfer subject ID
-        fs_2_t1_transform
+        t1_2_fsnative_reverse_transform
             Affine transform from FreeSurfer subject space to T1w space
         fieldwarp
             a :abbr:`DFM (displacements field map)` in ITK format
@@ -880,11 +881,11 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['name_source', 'ref_bold_brain', 'ref_bold_mask',
-                                      't1_preproc', 't1_brain', 't1_mask',
-                                      't1_seg', 'bold_split', 'hmc_xforms',
-                                      'subjects_dir', 'subject_id', 'fs_2_t1_transform',
-                                      'fieldwarp']),
+        niu.IdentityInterface(
+            fields=['name_source', 'ref_bold_brain', 'ref_bold_mask',
+                    't1_preproc', 't1_brain', 't1_mask',
+                    't1_seg', 'bold_split', 'hmc_xforms',
+                    'subjects_dir', 'subject_id', 't1_2_fsnative_reverse_transform', 'fieldwarp']),
         name='inputnode'
     )
     outputnode = pe.Node(
@@ -911,12 +912,13 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
-        (inputnode, bbr_wf, [('ref_bold_brain', 'inputnode.in_file'),
-                             ('fs_2_t1_transform', 'inputnode.fs_2_t1_transform'),
-                             ('subjects_dir', 'inputnode.subjects_dir'),
-                             ('subject_id', 'inputnode.subject_id'),
-                             ('t1_seg', 'inputnode.t1_seg'),
-                             ('t1_brain', 'inputnode.t1_brain')]),
+        (inputnode, bbr_wf, [
+            ('ref_bold_brain', 'inputnode.in_file'),
+            ('t1_2_fsnative_reverse_transform', 'inputnode.t1_2_fsnative_reverse_transform'),
+            ('subjects_dir', 'inputnode.subjects_dir'),
+            ('subject_id', 'inputnode.subject_id'),
+            ('t1_seg', 'inputnode.t1_seg'),
+            ('t1_brain', 'inputnode.t1_brain')]),
         (inputnode, fsl2itk_fwd, [('t1_preproc', 'reference_file'),
                                   ('ref_bold_brain', 'source_file')]),
         (inputnode, fsl2itk_inv, [('ref_bold_brain', 'reference_file'),

@@ -200,7 +200,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
         in_file
             Reference BOLD image to be registered
-        fs_2_t1_transform
+        t1_2_fsnative_reverse_transform
             FSL-style affine matrix translating from FreeSurfer T1.mgz to T1w
         subjects_dir
             FreeSurfer SUBJECTS_DIR
@@ -225,9 +225,10 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(['in_file',
-                               'fs_2_t1_transform', 'subjects_dir', 'subject_id',  # BBRegister
-                               't1_seg', 't1_brain']),  # FLIRT BBR
+        niu.IdentityInterface([
+            'in_file',
+            't1_2_fsnative_reverse_transform', 'subjects_dir', 'subject_id',  # BBRegister
+            't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
@@ -271,7 +272,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
     if reregister:
         workflow.connect([
-            (inputnode, transformer, [('fs_2_t1_transform', 'fs_2_t1_transform')]),
+            (inputnode, transformer, [('t1_2_fsnative_reverse_transform', 'fs_2_t1_transform')]),
             (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
             (transformer, outputnode, [('out', 'out_matrix_file')]),
             ])
@@ -321,7 +322,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             Skull-stripped T1-weighted structural image
         t1_seg
             FAST segmentation of ``t1_brain``
-        fs_2_t1_transform
+        t1_2_fsnative_reverse_transform
             Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
         subjects_dir
             Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
@@ -342,9 +343,10 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(['in_file',
-                               'fs_2_t1_transform', 'subjects_dir', 'subject_id',  # BBRegister
-                               't1_seg', 't1_brain']),  # FLIRT BBR
+        niu.IdentityInterface([
+            'in_file',
+            't1_2_fsnative_reverse_transform', 'subjects_dir', 'subject_id',  # BBRegister
+            't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
