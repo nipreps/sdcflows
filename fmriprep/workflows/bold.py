@@ -866,10 +866,6 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
 
     Outputs
 
-        mat_bold_to_t1
-            Affine transform from ``ref_bold_brain`` to T1 space (FSL format)
-        mat_t1_to_bold
-            Affine transform from T1 space to BOLD space (FSL format)
         itk_bold_to_t1
             Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
         itk_t1_to_bold
@@ -892,8 +888,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         name='inputnode'
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['mat_bold_to_t1', 'mat_t1_to_bold',
-                                      'itk_bold_to_t1', 'itk_t1_to_bold',
+        niu.IdentityInterface(fields=['itk_bold_to_t1', 'itk_t1_to_bold',
                                       'bold_t1', 'bold_mask_t1',
                                       'out_report']),
         name='outputnode'
@@ -929,9 +924,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         (bbr_wf, invt_bbr, [('outputnode.out_matrix_file', 'in_file')]),
         (bbr_wf, fsl2itk_fwd, [('outputnode.out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
-        (bbr_wf, outputnode, [('outputnode.out_matrix_file', 'mat_bold_to_t1'),
-                              ('outputnode.out_report', 'out_report')]),
-        (invt_bbr, outputnode, [('out_file', 'mat_t1_to_bold')]),
+        (bbr_wf, outputnode, [('outputnode.out_report', 'out_report')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
     ])
