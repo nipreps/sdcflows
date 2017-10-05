@@ -28,4 +28,4 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - niworkflows>=0.1.7
+    - git+https://github.com/effigies/niworkflows.git@335e878aeedd9d2614770477aeea8b640c1ed7f3#egg=niworkflows-0.1.8-dev
