@@ -216,8 +216,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
         out_matrix_file
             FSL-style registration matrix
-        out_reg_file
-            FreeSurfer-style registration matrix (.dat)
         final_cost
             Value of cost function at final registration
         out_report
@@ -232,7 +230,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
                                't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
         name='outputnode')
 
     _BBRegister = BBRegisterRPT if report else fs.BBRegister
@@ -268,7 +266,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
         (bbregister, get_cost, [('min_cost_file', 'in_file')]),
-        (bbregister, outputnode, [('out_reg_file', 'out_reg_file')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
         ])
 
@@ -336,8 +333,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
 
         out_matrix_file
             FSL-style registration matrix
-        out_reg_file
-            Unused (see :py:func:`~fmriprep.workflows.util.init_bbreg_wf`)
         final_cost
             Value of cost function at final registration
         out_report
@@ -352,7 +347,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                                't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_reg_file', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')

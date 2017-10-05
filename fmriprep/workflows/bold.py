@@ -878,8 +878,6 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
             Motion-corrected BOLD series in T1 space
         bold_mask_t1
             BOLD mask in T1 space
-        fs_reg_file
-            Affine transform from ``ref_bold_brain`` to T1 space (FreeSurfer ``reg`` format)
         out_report
             Reportlet visualizing quality of registration
 
@@ -896,7 +894,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     outputnode = pe.Node(
         niu.IdentityInterface(fields=['mat_bold_to_t1', 'mat_t1_to_bold',
                                       'itk_bold_to_t1', 'itk_t1_to_bold',
-                                      'bold_t1', 'bold_mask_t1', 'fs_reg_file',
+                                      'bold_t1', 'bold_mask_t1',
                                       'out_report']),
         name='outputnode'
     )
@@ -932,7 +930,6 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         (bbr_wf, fsl2itk_fwd, [('outputnode.out_matrix_file', 'transform_file')]),
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (bbr_wf, outputnode, [('outputnode.out_matrix_file', 'mat_bold_to_t1'),
-                              ('outputnode.out_reg_file', 'fs_reg_file'),
                               ('outputnode.out_report', 'out_report')]),
         (invt_bbr, outputnode, [('out_file', 'mat_t1_to_bold')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
