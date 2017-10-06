@@ -238,10 +238,9 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
         name='outputnode')
 
-    _BBRegister = BBRegisterRPT if report else fs.BBRegister
     bbregister = pe.Node(
-        _BBRegister(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
-                    registered_file=True, out_lta_file=True),
+        BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
+                      registered_file=True, out_lta_file=True, generate_report=report),
         name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
@@ -260,6 +259,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
         (bbregister, get_cost, [('min_cost_file', 'in_file')]),
+        (bbregister, outputnode, [('out_report', 'out_report')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
         (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
         (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
@@ -277,10 +277,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             (bbregister, lta2itk_fwd, [('out_lta_file', 'in_lta')]),
             (bbregister, lta2itk_inv, [('out_lta_file', 'in_lta')]),
             ])
-
-    if report:
-        bbregister.inputs.generate_report = True
-        workflow.connect([(bbregister, outputnode, [('out_report', 'out_report')])])
 
     return workflow
 
@@ -352,9 +348,9 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
-    _FLIRT = FLIRTRPT if report else fsl.FLIRT
-    flt_bbr_init = pe.Node(fsl.FLIRT(dof=6), name='flt_bbr_init')
-    flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof, save_log=True), name='flt_bbr')
+    flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=False), name='flt_bbr_init')
+    flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, save_log=True,
+                               generate_report=report), name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -401,11 +397,8 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (flt_bbr, get_cost, [('out_log', 'in_file')]),
+        (flt_bbr, outputnode, [('out_report', 'out_report')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
         ])
-
-    if report:
-        flt_bbr.inputs.generate_report = True
-        workflow.connect([(flt_bbr, outputnode, [('out_report', 'out_report')])])
 
     return workflow
