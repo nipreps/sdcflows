@@ -36,13 +36,14 @@ import pkg_resources as pkgr
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import split_filename
 from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import ants, afni, c3, fsl
-from niworkflows.nipype.interfaces import utility as niu
-from niworkflows.nipype.interfaces import freesurfer as fs
+from niworkflows.nipype.interfaces import afni, c3, fsl, utility as niu, freesurfer as fs
+from niworkflows.nipype.interfaces.ants import Registration
 
 import niworkflows.data as nid
 from niworkflows.interfaces.registration import EstimateReferenceImage
+from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
+
 
 from ..interfaces import (
     DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
@@ -943,8 +944,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
                       mem_gb=0.3)  # 256x256x256 * 64 / 8 ~ 150MB
 
     mask_t1w_tfm = pe.Node(
-        ants.ApplyTransforms(interpolation='NearestNeighbor',
-                             float=True),
+        ApplyTransforms(interpolation='NearestNeighbor', float=True),
         name='mask_t1w_tfm', mem_gb=0.1
     )
 
@@ -1213,8 +1213,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     gen_ref.inputs.fixed_image = op.join(nid.get_dataset(template_str), '1mm_T1.nii.gz')
 
     mask_mni_tfm = pe.Node(
-        ants.ApplyTransforms(interpolation='NearestNeighbor',
-                             float=True),
+        ApplyTransforms(interpolation='NearestNeighbor', float=True),
         name='mask_mni_tfm',
         mem_gb=0.1
     )
@@ -1365,10 +1364,9 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     invert_t1w = pe.Node(InvertT1w(), name='invert_t1w',
                          mem_gb=0.3)
 
-    ref_2_t1 = pe.Node(ants.Registration(from_file=affine_transform, num_threads=omp_nthreads),
+    ref_2_t1 = pe.Node(Registration(from_file=affine_transform, num_threads=omp_nthreads),
                        name='ref_2_t1', n_procs=omp_nthreads)
-    t1_2_ref = pe.Node(ants.ApplyTransforms(invert_transform_flags=[True],
-                                            num_threads=omp_nthreads),
+    t1_2_ref = pe.Node(ApplyTransforms(invert_transform_flags=[True], num_threads=omp_nthreads),
                        name='t1_2_ref', n_procs=omp_nthreads)
 
     # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
@@ -1380,8 +1378,8 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     #
     # ATLAS -> MNI -> T1 -> BOLD
     atlas_2_ref = pe.Node(
-        ants.ApplyTransforms(invert_transform_flags=[True, False, False],
-                             num_threads=omp_nthreads),
+        ApplyTransforms(invert_transform_flags=[True, False, False],
+                        num_threads=omp_nthreads),
         name='atlas_2_ref', n_procs=omp_nthreads,
         mem_gb=0.3)
     atlas_2_ref.inputs.input_image = atlas_img
@@ -1404,17 +1402,17 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     restrict_j = [[0, 1, 0], [0, 1, 0]]
 
     syn_i = pe.Node(
-        ants.Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                          restrict_deformation=restrict_i),
+        Registration(from_file=syn_transform, num_threads=omp_nthreads,
+                     restrict_deformation=restrict_i),
         name='syn_i', n_procs=omp_nthreads)
     syn_j = pe.Node(
-        ants.Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                          restrict_deformation=restrict_j),
+        Registration(from_file=syn_transform, num_threads=omp_nthreads,
+                     restrict_deformation=restrict_j),
         name='syn_j', n_procs=omp_nthreads)
 
     seg_2_ref = pe.Node(
-        ants.ApplyTransforms(interpolation='NearestNeighbor', float=True,
-                             invert_transform_flags=[True], num_threads=omp_nthreads),
+        ApplyTransforms(interpolation='NearestNeighbor', float=True,
+                        invert_transform_flags=[True], num_threads=omp_nthreads),
         name='seg_2_ref', n_procs=omp_nthreads, mem_gb=0.3)
     sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
                      mem_gb=DEFAULT_MEMORY_MIN_GB)
@@ -1552,7 +1550,7 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
         fields=['in_pre', 'in_post', 'in_seg', 'in_xfm',
                 'name_source']), name='inputnode')
 
-    map_seg = pe.Node(ants.ApplyTransforms(
+    map_seg = pe.Node(ApplyTransforms(
         dimension=3, float=True, interpolation='NearestNeighbor'),
         name='map_seg', mem_gb=0.3)
 

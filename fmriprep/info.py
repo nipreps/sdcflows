@@ -71,10 +71,12 @@ REQUIRES = [
     'statsmodels',
     'nipype',
     'seaborn',
-    'joblib',
 ]
 
-LINKS_REQUIRES = []
+LINKS_REQUIRES = [
+    'git+https://github.com/oesteban/niworkflows.git@'
+    '3e28bf29ec001fd768fed60f88be8b611057d039#egg=niworkflows-0.1.8-dev',
+]
 
 TESTS_REQUIRES = [
     "mock",
