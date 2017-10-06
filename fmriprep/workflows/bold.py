@@ -36,7 +36,7 @@ import pkg_resources as pkgr
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import split_filename
 from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import ants, afni, c3, fsl
+from niworkflows.nipype.interfaces import ants, afni, fsl
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.nipype.interfaces import freesurfer as fs
 
@@ -900,17 +900,6 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     else:
         bbr_wf = init_fsl_bbr_wf(bold2t1w_dof, report=True)
 
-    # make equivalent warp fields
-    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
-                       mem_gb=DEFAULT_MEMORY_MIN_GB)
-
-    #  BOLD to T1 transform matrix is from fsl, using c3 tools to convert to
-    #  something ANTs will like.
-    fsl2itk_fwd = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                          name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
-    fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
-                          name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
-
     workflow.connect([
         (inputnode, bbr_wf, [
             ('ref_bold_brain', 'inputnode.in_file'),
@@ -919,16 +908,9 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
             ('subject_id', 'inputnode.subject_id'),
             ('t1_seg', 'inputnode.t1_seg'),
             ('t1_brain', 'inputnode.t1_brain')]),
-        (inputnode, fsl2itk_fwd, [('t1_preproc', 'reference_file'),
-                                  ('ref_bold_brain', 'source_file')]),
-        (inputnode, fsl2itk_inv, [('ref_bold_brain', 'reference_file'),
-                                  ('t1_preproc', 'source_file')]),
-        (bbr_wf, invt_bbr, [('outputnode.out_matrix_file', 'in_file')]),
-        (bbr_wf, fsl2itk_fwd, [('outputnode.out_matrix_file', 'transform_file')]),
-        (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
-        (bbr_wf, outputnode, [('outputnode.out_report', 'out_report')]),
-        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
-        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
+        (bbr_wf, outputnode, [('outputnode.itk_bold_to_t1', 'itk_bold_to_t1'),
+                              ('outputnode.itk_t1_to_bold', 'itk_t1_to_bold'),
+                              ('outputnode.out_report', 'out_report')]),
     ])
 
     gen_ref = pe.Node(GenerateSamplingReference(), name='gen_ref',
@@ -944,7 +926,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         (inputnode, gen_ref, [('ref_bold_brain', 'moving_image'),
                               ('t1_brain', 'fixed_image')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
-        (fsl2itk_fwd, mask_t1w_tfm, [('itk_transform', 'transforms')]),
+        (bbr_wf, mask_t1w_tfm, [('outputnode.itk_bold_to_t1', 'transforms')]),
         (inputnode, mask_t1w_tfm, [('ref_bold_mask', 'input_image')]),
         (mask_t1w_tfm, outputnode, [('output_image', 'bold_mask_t1')])
     ])
@@ -969,7 +951,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
     workflow.connect([
-        (fsl2itk_fwd, merge_xforms, [('itk_transform', 'in1')]),
+        (bbr_wf, merge_xforms, [('outputnode.itk_bold_to_t1', 'in1')]),
         (merge_xforms, bold_to_t1w_transform, [('out', 'transforms')]),
         (inputnode, merge, [('name_source', 'header_source')]),
         (merge, outputnode, [('out_file', 'bold_t1')]),

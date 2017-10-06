@@ -16,11 +16,13 @@ import os.path as op
 
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu
-from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
+from niworkflows.nipype.interfaces import fsl, afni, c3, ants, freesurfer as fs
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
 from ..interfaces.images import extract_wm
+
+DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
@@ -214,8 +216,10 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
     Outputs
 
-        out_matrix_file
-            FSL-style registration matrix
+        itk_bold_to_t1
+            Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
+        itk_t1_to_bold
+            Affine transform from T1 space to BOLD space (ITK format)
         final_cost
             Value of cost function at final registration
         out_report
@@ -231,29 +235,18 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
         name='outputnode')
 
     _BBRegister = BBRegisterRPT if report else fs.BBRegister
     bbregister = pe.Node(
         _BBRegister(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
-                    registered_file=True, out_fsl_file=True),
+                    registered_file=True, out_lta_file=True),
         name='bbregister')
 
-    def apply_fs_transform(fs_2_t1_transform, bbreg_transform):
-        import os
-        import numpy as np
-        out_file = os.path.abspath('transform.mat')
-        fs_xfm = np.loadtxt(fs_2_t1_transform)
-        bbrxfm = np.loadtxt(bbreg_transform)
-        out_xfm = fs_xfm.dot(bbrxfm)
-        assert np.allclose(out_xfm[3], [0, 0, 0, 1])
-        out_xfm[3] = [0, 0, 0, 1]
-        np.savetxt(out_file, out_xfm, fmt=str('%.12g'))
-        return out_file
-
-    transformer = pe.Node(niu.Function(function=apply_fs_transform),
-                          name='transformer')
+    lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
+    lta2itk_fwd = pe.Node(fs.utils.LTAConvert(out_itk=True), name='lta2itk_fwd')
+    lta2itk_inv = pe.Node(fs.utils.LTAConvert(out_itk=True, invert=True), name='lta2itk_inv')
 
     def get_final_cost(in_file):
         import numpy as np
@@ -268,17 +261,21 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
                                  ('in_file', 'source_file')]),
         (bbregister, get_cost, [('min_cost_file', 'in_file')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
+        (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
+        (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
         ])
 
     if reregister:
         workflow.connect([
-            (inputnode, transformer, [('t1_2_fsnative_reverse_transform', 'fs_2_t1_transform')]),
-            (bbregister, transformer, [('out_fsl_file', 'bbreg_transform')]),
-            (transformer, outputnode, [('out', 'out_matrix_file')]),
+            (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
+            (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
+            (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
+            (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
             ])
     else:
         workflow.connect([
-            (bbregister, outputnode, [('out_fsl_file', 'out_matrix_file')]),
+            (bbregister, lta2itk_fwd, [('out_lta_file', 'in_lta')]),
+            (bbregister, lta2itk_inv, [('out_lta_file', 'in_lta')]),
             ])
 
     if report:
@@ -332,8 +329,10 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
 
     Outputs
 
-        out_matrix_file
-            FSL-style registration matrix
+        itk_bold_to_t1
+            Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
+        itk_t1_to_bold
+            Affine transform from T1 space to BOLD space (ITK format)
         final_cost
             Value of cost function at final registration
         out_report
@@ -349,7 +348,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_matrix_file', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
@@ -358,6 +357,17 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
     flt_bbr = pe.Node(_FLIRT(cost_func='bbr', dof=bold2t1w_dof, save_log=True), name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
+
+    # make equivalent warp fields
+    invt_bbr = pe.Node(fsl.ConvertXFM(invert_xfm=True), name='invt_bbr',
+                       mem_gb=DEFAULT_MEMORY_MIN_GB)
+
+    #  BOLD to T1 transform matrix is from fsl, using c3 tools to convert to
+    #  something ANTs will like.
+    fsl2itk_fwd = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
+    fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     def get_final_cost(in_file):
         from niworkflows.nipype import logging
@@ -381,7 +391,15 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         (inputnode, flt_bbr, [('in_file', 'in_file'),
                               ('t1_brain', 'reference')]),
         (wm_mask, flt_bbr, [('out', 'wm_seg')]),
-        (flt_bbr, outputnode, [('out_matrix_file', 'out_matrix_file')]),
+        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+                                  ('in_file', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
+                                  ('t1_brain', 'source_file')]),
+        (flt_bbr, invt_bbr, [('out_matrix_file', 'in_file')]),
+        (flt_bbr, fsl2itk_fwd, [('out_matrix_file', 'transform_file')]),
+        (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (flt_bbr, get_cost, [('out_log', 'in_file')]),
         (get_cost, outputnode, [('out', 'final_cost')]),
         ])
