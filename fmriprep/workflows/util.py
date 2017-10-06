@@ -169,7 +169,7 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     return workflow
 
 
-def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
+def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
     """
     This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
     a T1-weighted structural image.
@@ -189,11 +189,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
-        report : bool
-            Generate visual report of registration quality
-        rereigster : bool, optional
-            Update affine registration matrix with FreeSurfer-T1w transform
-            (default: True)
         name : str, optional
             Workflow name (default: bbreg_wf)
 
@@ -238,7 +233,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
 
     bbregister = pe.Node(
         BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
-                      registered_file=True, out_lta_file=True, generate_report=report),
+                      registered_file=True, out_lta_file=True, generate_report=True),
         name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
@@ -252,25 +247,16 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         (bbregister, outputnode, [('out_report', 'out_report')]),
         (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
         (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
+        (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
+        (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
+        (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
+        (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
         ])
-
-    if reregister:
-        workflow.connect([
-            (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
-            (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
-            (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
-            (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
-            ])
-    else:
-        workflow.connect([
-            (bbregister, lta2itk_fwd, [('out_lta_file', 'in_lta')]),
-            (bbregister, lta2itk_inv, [('out_lta_file', 'in_lta')]),
-            ])
 
     return workflow
 
 
-def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
+def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
     """
     This workflow uses FSL FLIRT to register a BOLD image to a T1-weighted
     structural image, using a boundary-based registration (BBR) cost function.
@@ -283,15 +269,13 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_fsl_bbr_wf
-        wf = init_fsl_bbr_wf(bold2t1w_dof=9, report=False)
+        wf = init_fsl_bbr_wf(bold2t1w_dof=9)
 
 
     Parameters
 
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
-        report : bool
-            Generate visual report of registration quality
         name : str, optional
             Workflow name (default: fsl_bbr_wf)
 
@@ -337,7 +321,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
     flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=False), name='flt_bbr_init')
     flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, save_log=True,
-                               generate_report=report), name='flt_bbr')
+                               generate_report=True), name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
