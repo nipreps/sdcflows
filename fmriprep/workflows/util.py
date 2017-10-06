@@ -220,8 +220,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
-        final_cost
-            Value of cost function at final registration
         out_report
             reportlet for assessing registration quality
 
@@ -235,7 +233,7 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
     bbregister = pe.Node(
@@ -247,20 +245,11 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
     lta2itk_fwd = pe.Node(fs.utils.LTAConvert(out_itk=True), name='lta2itk_fwd')
     lta2itk_inv = pe.Node(fs.utils.LTAConvert(out_itk=True, invert=True), name='lta2itk_inv')
 
-    def get_final_cost(in_file):
-        import numpy as np
-        return np.loadtxt(in_file, usecols=[0])
-
-    get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost')
-
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
-        (bbregister, get_cost, [('min_cost_file', 'in_file')]),
         (bbregister, outputnode, [('out_report', 'out_report')]),
-        (get_cost, outputnode, [('out', 'final_cost')]),
         (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
         (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
         ])
@@ -329,8 +318,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
-        final_cost
-            Value of cost function at final registration
         out_report
             reportlet for assessing registration quality
 
@@ -344,7 +331,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
@@ -365,20 +352,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
-    def get_final_cost(in_file):
-        from niworkflows.nipype import logging
-        with open(in_file, 'r') as fobj:
-            for line in fobj:
-                if line.startswith(' >> print U:1'):
-                    costs = next(fobj).split()
-                    return float(costs[0])
-        logger = logging.getLogger('interface')
-        logger.error('No cost report found in log file. Please report this '
-                     'issue, with contents of {}'.format(in_file))
-
-    get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost')
-
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
         (inputnode, flt_bbr_init, [('in_file', 'in_file'),
@@ -396,9 +369,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
-        (flt_bbr, get_cost, [('out_log', 'in_file')]),
         (flt_bbr, outputnode, [('out_report', 'out_report')]),
-        (get_cost, outputnode, [('out', 'final_cost')]),
         ])
 
     return workflow
