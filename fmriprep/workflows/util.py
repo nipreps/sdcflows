@@ -17,6 +17,7 @@ import os.path as op
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.nipype.interfaces import fsl, afni, ants, freesurfer as fs
+from niworkflows.interfaces.utils import CopyXForm
 from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
@@ -79,10 +80,13 @@ def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
                             name='combine_masks')
     apply_mask = pe.Node(fsl.ApplyMask(),
                          name='apply_mask')
+    copy_xform = pe.Node(CopyXForm(), name='copy_xform',
+                         mem_gb=0.1, run_without_submitting=True)
     mask_reportlet = pe.Node(SimpleShowMaskRPT(), name='mask_reportlet')
 
     workflow.connect([
         (inputnode, n4_correct, [('in_file', 'input_image')]),
+        (inputnode, copy_xform, [('in_file', 'hdr_file')]),
         (n4_correct, skullstrip_first_pass, [('output_image', 'in_file')]),
         (skullstrip_first_pass, unifize, [('out_file', 'in_file')]),
         (unifize, skullstrip_second_pass, [('out_file', 'in_file')]),
@@ -94,9 +98,10 @@ def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
         (combine_masks, mask_reportlet, [('out_file', 'mask_file')]),
         (combine_masks, outputnode, [('out_file', 'mask_file')]),
         (mask_reportlet, outputnode, [('out_report', 'out_report')]),
-        (apply_mask, outputnode, [('out_file', 'skull_stripped_file')]),
+        (apply_mask, copy_xform, [('out_file', 'in_file')]),
+        (copy_xform, outputnode, [('out_file', 'skull_stripped_file')]),
         (n4_correct, outputnode, [('output_image', 'bias_corrected_file')]),
-        ])
+    ])
 
     return workflow
 

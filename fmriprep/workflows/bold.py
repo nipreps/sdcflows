@@ -37,11 +37,11 @@ from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import split_filename
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import afni, c3, fsl, utility as niu, freesurfer as fs
-from niworkflows.nipype.interfaces.ants import Registration
 
 import niworkflows.data as nid
 from niworkflows.interfaces.registration import EstimateReferenceImage
-from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
+from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
+                                          FixHeaderRegistration as Registration)
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 
