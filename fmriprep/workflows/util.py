@@ -182,7 +182,7 @@ def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_bbreg_wf
-        wf = init_bbreg_wf(bold2t1w_dof=9, report=False)
+        wf = init_bbreg_wf(bold2t1w_dof=9)
 
 
     Parameters
