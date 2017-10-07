@@ -9,11 +9,10 @@ ITK files handling
 
 """
 import os
-import numpy as np
-import nibabel as nb
-
 from mimetypes import guess_type
 from tempfile import TemporaryDirectory
+import numpy as np
+import nibabel as nb
 
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import fname_presuffix
@@ -33,8 +32,8 @@ class MCFLIRT2ITKInputSpec(BaseInterfaceInputSpec):
                         desc='input image for spatial reference')
     in_source = File(exists=True, mandatory=True,
                      desc='input image for spatial source')
-    nprocs = traits.Int(1, usedefault=True, nohash=True,
-                        desc='number of parallel processes')
+    n_procs = traits.Int(1, usedefault=True, nohash=True,
+                         desc='number of parallel processes')
 
 
 class MCFLIRT2ITKOutputSpec(TraitedSpec):
@@ -50,11 +49,26 @@ class MCFLIRT2ITK(SimpleInterface):
     output_spec = MCFLIRT2ITKOutputSpec
 
     def _run_interface(self, runtime):
-        parallel = Parallel(n_jobs=self.inputs.nprocs)
+        nprocs = self.inputs.n_procs
+        if nprocs < 1:
+            nprocs = None
+
         with TemporaryDirectory() as tmp_folder:
-            itk_outs = parallel(delayed(_mat2itk)(
-                in_mat, self.inputs.in_reference, self.inputs.in_source, i,
-                tmp_folder) for i, in_mat in enumerate(self.inputs.in_files))
+            # Inputs are ready to run in parallel
+            if nprocs is None or nprocs > 1:
+                from multiprocessing import Pool
+                pool = Pool(processes=nprocs, maxtasksperchild=100)
+                itk_outs = pool.map(_mat2itk, [
+                    (in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder)
+                    for i, in_mat in enumerate(self.inputs.in_files)]
+                )
+                pool.close()
+                pool.join()
+            else:
+                itk_outs = [_mat2itk((
+                    in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder))
+                    for i, in_mat in enumerate(self.inputs.in_files)
+                ]
 
         # Compose the collated ITK transform file and write
         tfms = '#Insight Transform File V1.0\n' + ''.join(

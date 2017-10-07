@@ -768,7 +768,7 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
     mcflirt = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                       name='mcflirt', mem_gb=bold_file_size_gb * 3)
 
-    fsl2itk = pe.Node(MCFLIRT2ITK(nprocs=omp_nthreads), name='fsl2itk',
+    fsl2itk = pe.Node(MCFLIRT2ITK(n_procs=omp_nthreads), name='fsl2itk',
                       mem_gb=0.05, n_procs=omp_nthreads)
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
