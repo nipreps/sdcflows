@@ -224,10 +224,11 @@ class FUGUEvsm2ANTSwarp(SimpleInterface):
         return runtime
 
 
-def _mat2itk(in_file, in_ref, in_src, index=0, newpath=None):
+def _mat2itk(args):
     from niworkflows.nipype.interfaces.c3 import C3dAffineTool
     from niworkflows.nipype.utils.filemanip import fname_presuffix
 
+    in_file, in_ref, in_src, index, newpath = args
     # Generate a temporal file name
     out_file = fname_presuffix(in_file, suffix='_itk-%05d.txt' % index,
                                newpath=newpath)
