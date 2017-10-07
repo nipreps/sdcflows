@@ -1756,15 +1756,11 @@ def init_func_derivatives_wf(output_dir, output_spaces, template, freesurfer,
 
 def _get_series_len(bold_fname):
     import nibabel as nb
-    from niworkflows.nipype.algorithms.confounds import is_outlier
+    from niworkflows.interfaces.registration import _get_vols_to_discard
     img = nb.load(bold_fname)
     if len(img.shape) < 4:
         return 1
 
-    # Replicate work done in EstimateReferenceImage to have access to
-    # skip_vols at workflow creation time
-    data_slice = img.dataobj[:, :, :, :50]
-    global_signal = data_slice.mean(axis=0).mean(axis=0).mean(axis=0)
-    skip_vols = is_outlier(global_signal)
+    skip_vols = _get_vols_to_discard(img)
 
     return img.shape[3] - skip_vols
