@@ -227,6 +227,18 @@ def normalize_surfs(in_file, transform_file):
 
 
 def load_transform(fname):
+    """Load affine transform from file
+
+    Parameters
+    ----------
+    fname : str or None
+        Filename of an LTA or FSL-style MAT transform file.
+        If ``None``, return an identity transform
+
+    Returns
+    -------
+    affine : (4, 4) numpy.ndarray
+    """
     if fname is None:
         return np.eye(4)
 
