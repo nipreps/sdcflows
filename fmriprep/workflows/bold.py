@@ -1243,8 +1243,8 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     return workflow
 
 
-def init_nonlinear_sdc_wf(bold_file, bold_pe, freesurfer, bold2t1w_dof,
-                          template, omp_nthreads,
+def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
+                          template, omp_nthreads, bold_pe='j',
                           atlas_threshold=3, name='nonlinear_sdc_wf'):
     """
     This workflow takes a skull-stripped T1w image and reference BOLD image and
@@ -1321,6 +1321,10 @@ def init_nonlinear_sdc_wf(bold_file, bold_pe, freesurfer, bold2t1w_dof,
                                'out_warp_report', 'out_mask_report']),
         name='outputnode')
 
+    if bold_pe is None or bold_pe not in ['i', 'j']:
+        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior')
+        bold_pe = 'j'
+
     # Collect predefined data
     # Atlas image and registration affine
     atlas_img = pkgr.resource_filename('fmriprep', 'data/fmap_atlas.nii.gz')
@@ -1363,12 +1367,10 @@ def init_nonlinear_sdc_wf(bold_file, bold_pe, freesurfer, bold2t1w_dof,
                                 mem_gb=DEFAULT_MEMORY_MIN_GB)
     fixed_image_masks.inputs.in1 = 'NULL'
 
-    restrict_i = [[1, 0, 0], [1, 0, 0]]
-    restrict_j = [[0, 1, 0], [0, 1, 0]]
-
+    restrict = [[int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), 0]] * 2
     syn = pe.Node(
         ants.Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                          restrict_deformation=restrict_i if bold_pe[0] == 'i' else restrict_j),
+                          restrict_deformation=restrict),
         name='syn', n_procs=omp_nthreads)
 
     seg_2_ref = pe.Node(
