@@ -12,7 +12,6 @@ import os
 import numpy as np
 import nibabel as nb
 
-from joblib import Parallel, delayed
 from mimetypes import guess_type
 from tempfile import TemporaryDirectory
 
