@@ -174,7 +174,7 @@ def init_skullstrip_bold_wf(name='skullstrip_bold_wf'):
     return workflow
 
 
-def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
+def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
     """
     This workflow uses FreeSurfer's ``bbregister`` to register a BOLD image to
     a T1-weighted structural image.
@@ -187,18 +187,13 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_bbreg_wf
-        wf = init_bbreg_wf(bold2t1w_dof=9, report=False)
+        wf = init_bbreg_wf(bold2t1w_dof=9)
 
 
     Parameters
 
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
-        report : bool
-            Generate visual report of registration quality
-        rereigster : bool, optional
-            Update affine registration matrix with FreeSurfer-T1w transform
-            (default: True)
         name : str, optional
             Workflow name (default: bbreg_wf)
 
@@ -225,8 +220,6 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
-        final_cost
-            Value of cost function at final registration
         out_report
             reportlet for assessing registration quality
 
@@ -240,53 +233,35 @@ def init_bbreg_wf(bold2t1w_dof, report, reregister=True, name='bbreg_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
     bbregister = pe.Node(
         BBRegisterRPT(dof=bold2t1w_dof, contrast_type='t2', init='coreg',
-                      registered_file=True, out_lta_file=True, generate_report=report),
+                      registered_file=True, out_lta_file=True, generate_report=True),
         name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
     lta2itk_fwd = pe.Node(fs.utils.LTAConvert(out_itk=True), name='lta2itk_fwd')
     lta2itk_inv = pe.Node(fs.utils.LTAConvert(out_itk=True, invert=True), name='lta2itk_inv')
 
-    def get_final_cost(in_file):
-        import numpy as np
-        return np.loadtxt(in_file, usecols=[0])
-
-    get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost')
-
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
-        (bbregister, get_cost, [('min_cost_file', 'in_file')]),
         (bbregister, outputnode, [('out_report', 'out_report')]),
-        (get_cost, outputnode, [('out', 'final_cost')]),
         (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
         (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
+        (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
+        (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
+        (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
+        (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
         ])
-
-    if reregister:
-        workflow.connect([
-            (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
-            (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
-            (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
-            (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
-            ])
-    else:
-        workflow.connect([
-            (bbregister, lta2itk_fwd, [('out_lta_file', 'in_lta')]),
-            (bbregister, lta2itk_inv, [('out_lta_file', 'in_lta')]),
-            ])
 
     return workflow
 
 
-def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
+def init_fsl_bbr_wf(bold2t1w_dof, name='fsl_bbr_wf'):
     """
     This workflow uses FSL FLIRT to register a BOLD image to a T1-weighted
     structural image, using a boundary-based registration (BBR) cost function.
@@ -299,15 +274,13 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.util import init_fsl_bbr_wf
-        wf = init_fsl_bbr_wf(bold2t1w_dof=9, report=False)
+        wf = init_fsl_bbr_wf(bold2t1w_dof=9)
 
 
     Parameters
 
         bold2t1w_dof : 6, 9 or 12
             Degrees-of-freedom for BOLD-T1w registration
-        report : bool
-            Generate visual report of registration quality
         name : str, optional
             Workflow name (default: fsl_bbr_wf)
 
@@ -334,8 +307,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             Affine transform from ``ref_bold_brain`` to T1 space (ITK format)
         itk_t1_to_bold
             Affine transform from T1 space to BOLD space (ITK format)
-        final_cost
-            Value of cost function at final registration
         out_report
             reportlet for assessing registration quality
 
@@ -349,13 +320,13 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
             't1_seg', 't1_brain']),  # FLIRT BBR
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report', 'final_cost']),
+        niu.IdentityInterface(['itk_bold_to_t1', 'itk_t1_to_bold', 'out_report']),
         name='outputnode')
 
     wm_mask = pe.Node(niu.Function(function=extract_wm), name='wm_mask')
     flt_bbr_init = pe.Node(FLIRTRPT(dof=6, generate_report=False), name='flt_bbr_init')
     flt_bbr = pe.Node(FLIRTRPT(cost_func='bbr', dof=bold2t1w_dof, save_log=True,
-                               generate_report=report), name='flt_bbr')
+                               generate_report=True), name='flt_bbr')
     flt_bbr.inputs.schedule = op.join(os.getenv('FSLDIR'),
                                       'etc/flirtsch/bbr.sch')
 
@@ -369,20 +340,6 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
                           name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
     fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
                           name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
-
-    def get_final_cost(in_file):
-        from niworkflows.nipype import logging
-        with open(in_file, 'r') as fobj:
-            for line in fobj:
-                if line.startswith(' >> print U:1'):
-                    costs = next(fobj).split()
-                    return float(costs[0])
-        logger = logging.getLogger('interface')
-        logger.error('No cost report found in log file. Please report this '
-                     'issue, with contents of {}'.format(in_file))
-
-    get_cost = pe.Node(niu.Function(function=get_final_cost),
-                       name='get_cost')
 
     workflow.connect([
         (inputnode, wm_mask, [('t1_seg', 'in_seg')]),
@@ -401,9 +358,7 @@ def init_fsl_bbr_wf(bold2t1w_dof, report, name='fsl_bbr_wf'):
         (invt_bbr, fsl2itk_inv, [('out_file', 'transform_file')]),
         (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
         (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
-        (flt_bbr, get_cost, [('out_log', 'in_file')]),
         (flt_bbr, outputnode, [('out_report', 'out_report')]),
-        (get_cost, outputnode, [('out', 'final_cost')]),
         ])
 
     return workflow

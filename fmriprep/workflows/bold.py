@@ -223,6 +223,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz'
         }]
         run_stc = True
+        bold_pe = 'j'
     else:
         metadata = layout.get_metadata(bold_file)
         # Find fieldmaps. Options: (phase1|phase2|phasediff|epi|fieldmap)
@@ -233,6 +234,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
         run_stc = ("SliceTiming" in metadata and
                    'slicetiming' not in ignore and
                    (_get_series_len(bold_file) > 4 or "TooShort"))
+        bold_pe = metadata.get("PhaseEncodingDirection")
 
     # TODO: To be removed (supported fieldmaps):
     if not set([fmap['type'] for fmap in fmaps]).intersection(['phasediff', 'fieldmap', 'epi']):
@@ -255,7 +257,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                 'aroma_noise_ics', 'melodic_mix', 'nonaggr_denoised_file']),
         name='outputnode')
 
-    summary = pe.Node(FunctionalSummary(output_spaces=output_spaces), name='summary',
+    summary = pe.Node(FunctionalSummary(output_spaces=output_spaces,
+                                        pe_direction=bold_pe), name='summary',
                       mem_gb=0.05)
     summary.inputs.slice_timing = run_stc
     summary.inputs.registration = 'bbregister' if freesurfer else 'FLIRT'
@@ -463,16 +466,14 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     if use_syn:
         nonlinear_sdc_wf = init_nonlinear_sdc_wf(
-            bold_file=bold_file, layout=layout, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
+            bold_file=bold_file, bold_pe=bold_pe, freesurfer=freesurfer, bold2t1w_dof=bold2t1w_dof,
             template=template, omp_nthreads=omp_nthreads)
 
         workflow.connect([
             (inputnode, nonlinear_sdc_wf, [
                 ('t1_brain', 'inputnode.t1_brain'),
                 ('t1_seg', 'inputnode.t1_seg'),
-                ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
-                ('subjects_dir', 'inputnode.subjects_dir'),
-                ('subject_id', 'inputnode.subject_id')]),
+                ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform')]),
             (bold_reference_wf, nonlinear_sdc_wf, [
                 ('outputnode.ref_image_brain', 'inputnode.bold_ref')]),
             (nonlinear_sdc_wf, func_reports_wf, [
@@ -897,9 +898,9 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
     )
 
     if freesurfer:
-        bbr_wf = init_bbreg_wf(bold2t1w_dof, report=True)
+        bbr_wf = init_bbreg_wf(bold2t1w_dof)
     else:
-        bbr_wf = init_fsl_bbr_wf(bold2t1w_dof, report=True)
+        bbr_wf = init_fsl_bbr_wf(bold2t1w_dof)
 
     workflow.connect([
         (inputnode, bbr_wf, [
@@ -1241,8 +1242,8 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     return workflow
 
 
-def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
-                          template, omp_nthreads,
+def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
+                          template, omp_nthreads, bold_pe='j',
                           atlas_threshold=3, name='nonlinear_sdc_wf'):
     """
     This workflow takes a skull-stripped T1w image and reference BOLD image and
@@ -1250,11 +1251,8 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     normalization (SyN) and the average fieldmap atlas described in
     [Treiber2016]_.
 
-    If the phase-encoding (PE) direction is known, the SyN deformation is
-    restricted to that direction; otherwise, deformation fields are calculated
-    for both the right-left and anterior-posterior directions, and selected
-    based on the unwarped file that can be aligned to the T1w image with the
-    lowest boundary-based registration (BBR) cost.
+    SyN deformation is restricted to the phase-encoding (PE) direction.
+    If no PE direction is specified, anterior-posterior PE is assumed.
 
     SyN deformation is also restricted to regions that are expected to have a
     >3mm (approximately 1 voxel) warp, based on the fieldmap atlas.
@@ -1269,7 +1267,7 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         from fmriprep.workflows.bold import init_nonlinear_sdc_wf
         wf = init_nonlinear_sdc_wf(
             bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
-            layout=None,
+            bold_pe='j',
             freesurfer=True,
             bold2t1w_dof=9,
             template='MNI152NLin2009cAsym',
@@ -1285,10 +1283,6 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
             FAST segmentation white and gray matter, in native T1w space
         t1_2_mni_reverse_transform
             inverse registration transform of T1w image to MNI template
-        subjects_dir
-            FreeSurfer subjects directory (if applicable)
-        subject_id
-            FreeSurfer subject_id (if applicable)
 
     Outputs
 
@@ -1319,12 +1313,16 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(['t1_brain', 'bold_ref', 't1_2_mni_reverse_transform',
-                               'subjects_dir', 'subject_id', 't1_seg']),  # BBR requirements
+                               't1_seg']),
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference_brain', 'out_mask', 'out_warp',
                                'out_warp_report', 'out_mask_report']),
         name='outputnode')
+
+    if bold_pe is None or bold_pe not in ['i', 'j']:
+        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior')
+        bold_pe = 'j'
 
     # Collect predefined data
     # Atlas image and registration affine
@@ -1367,22 +1365,11 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
                                 mem_gb=DEFAULT_MEMORY_MIN_GB)
     fixed_image_masks.inputs.in1 = 'NULL'
 
-    if layout is None:
-        bold_pe = None
-    else:
-        bold_pe = layout.get_metadata(bold_file).get("PhaseEncodingDirection")
-
-    restrict_i = [[1, 0, 0], [1, 0, 0]]
-    restrict_j = [[0, 1, 0], [0, 1, 0]]
-
-    syn_i = pe.Node(
+    restrict = [[int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), 0]] * 2
+    syn = pe.Node(
         Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                     restrict_deformation=restrict_i),
-        name='syn_i', n_procs=omp_nthreads)
-    syn_j = pe.Node(
-        Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                     restrict_deformation=restrict_j),
-        name='syn_j', n_procs=omp_nthreads)
+                     restrict_deformation=restrict),
+        name='syn', n_procs=omp_nthreads)
 
     seg_2_ref = pe.Node(
         ApplyTransforms(interpolation='NearestNeighbor', float=True,
@@ -1409,79 +1396,23 @@ def init_nonlinear_sdc_wf(bold_file, layout, freesurfer, bold2t1w_dof,
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
         (threshold_atlas, fixed_image_masks, [('out_file', 'in2')]),
-    ])
-
-    if bold_pe is None:
-        if freesurfer:
-            bbr_i_wf = init_bbreg_wf(bold2t1w_dof, report=False, reregister=False, name='bbr_i_wf')
-            bbr_j_wf = init_bbreg_wf(bold2t1w_dof, report=False, reregister=False, name='bbr_j_wf')
-        else:
-            bbr_i_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_i_wf')
-            bbr_j_wf = init_fsl_bbr_wf(bold2t1w_dof, report=False, name='bbr_j_wf')
-
-        def select_outputs(cost_i, warped_image_i, forward_transforms_i,
-                           cost_j, warped_image_j, forward_transforms_j):
-            if cost_i < cost_j:
-                return warped_image_i, forward_transforms_i
-            else:
-                return warped_image_j, forward_transforms_j
-
-        pe_chooser = pe.Node(
-            niu.Function(function=select_outputs,
-                         output_names=['warped_image', 'forward_transforms']),
-            name='pe_chooser', mem_gb=DEFAULT_MEMORY_MIN_GB)
-
-        workflow.connect([(inputnode, syn_i, [('bold_ref', 'moving_image')]),
-                          (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
-                          (fixed_image_masks, syn_i, [('out', 'fixed_image_masks')]),
-                          (inputnode, syn_j, [('bold_ref', 'moving_image')]),
-                          (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
-                          (fixed_image_masks, syn_j, [('out', 'fixed_image_masks')]),
-                          (inputnode, bbr_i_wf, [('subjects_dir', 'inputnode.subjects_dir'),
-                                                 ('subject_id', 'inputnode.subject_id'),
-                                                 ('t1_seg', 'inputnode.t1_seg'),
-                                                 ('t1_brain', 'inputnode.t1_brain')]),
-                          (inputnode, bbr_j_wf, [('subjects_dir', 'inputnode.subjects_dir'),
-                                                 ('subject_id', 'inputnode.subject_id'),
-                                                 ('t1_seg', 'inputnode.t1_seg'),
-                                                 ('t1_brain', 'inputnode.t1_brain')]),
-                          (syn_i, bbr_i_wf, [('warped_image', 'inputnode.in_file')]),
-                          (syn_j, bbr_j_wf, [('warped_image', 'inputnode.in_file')]),
-                          (bbr_i_wf, pe_chooser, [('outputnode.final_cost', 'cost_i')]),
-                          (bbr_j_wf, pe_chooser, [('outputnode.final_cost', 'cost_j')]),
-                          (syn_i, pe_chooser, [('warped_image', 'warped_image_i'),
-                                               ('forward_transforms', 'forward_transforms_i')]),
-                          (syn_j, pe_chooser, [('warped_image', 'warped_image_j'),
-                                               ('forward_transforms', 'forward_transforms_j')]),
-                          ])
-        syn_out = pe_chooser
-    elif bold_pe[0] == 'i':
-        workflow.connect([(inputnode, syn_i, [('bold_ref', 'moving_image')]),
-                          (t1_2_ref, syn_i, [('output_image', 'fixed_image')]),
-                          (fixed_image_masks, syn_i, [('out', 'fixed_image_masks')]),
-                          ])
-        syn_out = syn_i
-    elif bold_pe[0] == 'j':
-        workflow.connect([(inputnode, syn_j, [('bold_ref', 'moving_image')]),
-                          (t1_2_ref, syn_j, [('output_image', 'fixed_image')]),
-                          (fixed_image_masks, syn_j, [('out', 'fixed_image_masks')]),
-                          ])
-        syn_out = syn_j
-
-    workflow.connect([(inputnode, seg_2_ref, [('t1_seg', 'input_image')]),
-                      (ref_2_t1, seg_2_ref, [('forward_transforms', 'transforms')]),
-                      (syn_out, seg_2_ref, [('warped_image', 'reference_image')]),
-                      (seg_2_ref, sel_wm, [('output_image', 'in_seg')]),
-                      (inputnode, syn_rpt, [('bold_ref', 'before')]),
-                      (syn_out, syn_rpt, [('warped_image', 'after')]),
-                      (sel_wm, syn_rpt, [('out', 'wm_seg')]),
-                      (syn_out, skullstrip_bold_wf, [('warped_image', 'inputnode.in_file')]),
-                      (syn_out, outputnode, [('forward_transforms', 'out_warp')]),
-                      (skullstrip_bold_wf, outputnode, [
-                          ('outputnode.skull_stripped_file', 'out_reference_brain'),
-                          ('outputnode.mask_file', 'out_mask'),
-                          ('outputnode.out_report', 'out_mask_report')]),
-                      (syn_rpt, outputnode, [('out_report', 'out_warp_report')])])
+        (inputnode, syn, [('bold_ref', 'moving_image')]),
+        (t1_2_ref, syn, [('output_image', 'fixed_image')]),
+        (fixed_image_masks, syn, [('out', 'fixed_image_masks')]),
+        (inputnode, seg_2_ref, [('t1_seg', 'input_image')]),
+        (ref_2_t1, seg_2_ref, [('forward_transforms', 'transforms')]),
+        (syn, seg_2_ref, [('warped_image', 'reference_image')]),
+        (seg_2_ref, sel_wm, [('output_image', 'in_seg')]),
+        (inputnode, syn_rpt, [('bold_ref', 'before')]),
+        (syn, syn_rpt, [('warped_image', 'after')]),
+        (sel_wm, syn_rpt, [('out', 'wm_seg')]),
+        (syn, skullstrip_bold_wf, [('warped_image', 'inputnode.in_file')]),
+        (syn, outputnode, [('forward_transforms', 'out_warp')]),
+        (skullstrip_bold_wf, outputnode, [
+            ('outputnode.skull_stripped_file', 'out_reference_brain'),
+            ('outputnode.mask_file', 'out_mask'),
+            ('outputnode.out_report', 'out_mask_report')]),
+        (syn_rpt, outputnode, [('out_report', 'out_warp_report')])])
 
     return workflow
 
