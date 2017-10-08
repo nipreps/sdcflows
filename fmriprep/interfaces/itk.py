@@ -110,6 +110,7 @@ class MultiApplyTransforms(SimpleInterface):
 
         # Get number of parallel jobs
         nprocs = ifargs.pop('nprocs')
+        save_cmd = ifargs.pop('save_cmd')
 
         # Remove certain keys
         for key in ['environ', 'ignore_exception', 'num_threads',
@@ -150,7 +151,7 @@ class MultiApplyTransforms(SimpleInterface):
         # Collect output file names, after sorting by index
         self._results['out_files'] = [el[0] for el in out_files]
 
-        if self.inputs.save_cmd:
+        if save_cmd:
             with open('command.txt', 'w') as cmdfile:
                 print('\n-------\n'.join([el[1] for el in out_files]),
                       file=cmdfile)
