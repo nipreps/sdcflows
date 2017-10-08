@@ -85,7 +85,8 @@ TESTS_REQUIRES = [
 EXTRA_REQUIRES = {
     'doc': ['sphinx>=1.5.3', 'pydotplus', 'pydot>=1.2.3', 'sphinx_rtd_theme', 'sphinx-argparse'],
     'tests': TESTS_REQUIRES,
-    'duecredit': ['duecredit']
+    'duecredit': ['duecredit'],
+    'datalad': ['datalad'],
 }
 
 # Enable a handle to install all extra dependencies at once
