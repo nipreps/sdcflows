@@ -1321,7 +1321,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
                                'out_warp_report', 'out_mask_report']),
         name='outputnode')
 
-    if bold_pe is None or bold_pe not in ['i', 'j']:
+    if bold_pe is None or bold_pe[0] not in ['i', 'j']:
         LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior')
         bold_pe = 'j'
 
