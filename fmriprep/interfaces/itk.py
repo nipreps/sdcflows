@@ -87,13 +87,13 @@ class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
                                       ' through the fourth dimension')
     nprocs = traits.Int(1, usedefault=True, nohash=True,
                         desc='number of parallel processes')
-    # save_cmds = traits.Bool(True, usedefault=True,
-    #                         desc='write a log of applied command lines')
+    save_cmd = traits.Bool(True, usedefault=True,
+                           desc='write a log of command lines that were applied')
 
 
 class MultiApplyTransformsOutputSpec(TraitedSpec):
     out_files = OutputMultiPath(File(), desc='the output ITKTransform file')
-    # log_cmdline = File(desc='a list of command lines used to apply transforms')
+    log_cmdline = File(desc='a list of command lines used to apply transforms')
 
 
 class MultiApplyTransforms(SimpleInterface):
@@ -133,7 +133,7 @@ class MultiApplyTransforms(SimpleInterface):
 
         if nprocs == 1:
             out_files = [_applytfms((
-                in_file, in_xfm, ifargs, i, runtime.cwd))
+                in_file, in_xfm, ifargs, runtime.cwd))
                 for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))
             ]
         else:
@@ -148,13 +148,13 @@ class MultiApplyTransforms(SimpleInterface):
         tmp_folder.cleanup()
 
         # Collect output file names, after sorting by index
-        self._results['out_files'] = [el[1] for el in sorted(out_files)]
+        self._results['out_files'] = [el[0] for el in out_files]
 
-        # if self.inputs.save_cmds:
-        #     with open('command.txt', 'w') as cmdfile:
-        #         print('\n-------\n'.join([el[2] for el in sorted(out_files)]),
-        #               file=cmdfile)
-        #     self._results['log_cmdline'] = os.path.abspath('command.txt')
+        if self.inputs.save_cmd:
+            with open('command.txt', 'w') as cmdfile:
+                print('\n-------\n'.join([el[1] for el in out_files]),
+                      file=cmdfile)
+            self._results['log_cmdline'] = os.path.abspath('command.txt')
         return runtime
 
 
@@ -244,18 +244,22 @@ def _mat2itk(args):
 
 
 def _applytfms(args):
+    """
+    Applies ANTs' antsApplyTransforms to the input image.
+    All inputs are zipped in one tuple to make it digestible by
+    multiprocessing's map
+    """
     from niworkflows.nipype.utils.filemanip import fname_presuffix
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
     in_file, in_xform, ifargs, index, newpath = args
     out_file = fname_presuffix(in_file, suffix='_xform-%05d' % index,
                                newpath=newpath, use_ext=True)
-    ApplyTransforms(
-        input_image=in_file, transforms=in_xform, output_image=out_file, **ifargs).run()
-    # xfm.terminal_output = 'allatonce'
-    # result = xfm.run()
-    # text = 'Command:\n%s\n\nOutput:\n%s' % (xfm.cmdline, result.runtime.merged)
-    return (index, out_file)
+    xfm = ApplyTransforms(
+        input_image=in_file, transforms=in_xform, output_image=out_file, **ifargs)
+    xfm.terminal_output = 'allatonce'
+    runtime = xfm.run().runtime
+    return (out_file, runtime.merged)
 
 
 def _arrange_xfms(transforms, num_files, tmp_folder):
