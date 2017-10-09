@@ -42,6 +42,7 @@ import niworkflows.data as nid
 from niworkflows.interfaces.registration import EstimateReferenceImage
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
+from niworkflows.interfaces.utils import GenerateSamplingReference
 from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 
@@ -49,7 +50,7 @@ from ..interfaces import (
     DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
     MCFLIRT2ITK, MultiApplyTransforms
 )
-from ..interfaces.images import GenerateSamplingReference, extract_wm
+from ..interfaces.images import extract_wm
 from ..interfaces.nilearn import Merge
 from ..interfaces.reports import FunctionalSummary
 from ..workflows import confounds
