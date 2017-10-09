@@ -110,9 +110,8 @@ def init_enhance_and_skullstrip_bold_wf(name='enhance_and_skullstrip_bold_wf',
                                                        'bias_corrected_file',
                                                        'out_report']),
                          name='outputnode')
-    n4_correct = pe.Node(
-        ants.N4BiasFieldCorrection(dimension=3, copy_header=True, num_threads=omp_nthreads),
-        name='n4_correct', n_procs=omp_nthreads)
+    n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
+                         name='n4_correct', n_procs=omp_nthreads)
     skullstrip_first_pass = pe.Node(fsl.BET(frac=0.2, mask=True),
                                     name='skullstrip_first_pass')
     unifize = pe.Node(afni.Unifize(t2=True, outputtype='NIFTI_GZ',
