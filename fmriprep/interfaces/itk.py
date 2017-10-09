@@ -108,19 +108,18 @@ class MultiApplyTransforms(SimpleInterface):
         # Get all inputs from the ApplyTransforms object
         ifargs = self.inputs.get()
 
+        # Extract number of input images and transforms
+        in_files = ifargs.pop('input_image')
+        num_files = len(in_files)
+        transforms = ifargs.pop('transforms')
         # Get number of parallel jobs
         num_threads = ifargs.pop('num_threads')
         save_cmd = ifargs.pop('save_cmd')
 
         # Remove certain keys
-        for key in ['environ', 'ignore_exception', 'num_threads',
+        for key in ['environ', 'ignore_exception',
                     'terminal_output', 'output_image']:
-            ifargs.pop(key)
-
-        # Extract number of input images and transforms
-        in_files = ifargs.pop('input_image')
-        num_files = len(in_files)
-        transforms = ifargs.pop('transforms')
+            ifargs.pop(key, None)
 
         # Get a temp folder ready
         tmp_folder = TemporaryDirectory()
