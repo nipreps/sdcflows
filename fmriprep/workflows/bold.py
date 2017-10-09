@@ -770,7 +770,7 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
     mcflirt = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                       name='mcflirt', mem_gb=bold_file_size_gb * 3)
 
-    fsl2itk = pe.Node(MCFLIRT2ITK(n_procs=omp_nthreads), name='fsl2itk',
+    fsl2itk = pe.Node(MCFLIRT2ITK(num_threads=omp_nthreads), name='fsl2itk',
                       mem_gb=0.05, n_procs=omp_nthreads)
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
@@ -947,7 +947,7 @@ def init_bold_reg_wf(freesurfer, bold2t1w_dof, bold_file_size_gb, omp_nthreads,
         ])
 
     bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, nprocs=omp_nthreads),
+        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads),
         name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
     # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
@@ -1216,7 +1216,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     ])
 
     bold_to_mni_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, nprocs=omp_nthreads),
+        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads),
         name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
     # bold_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(Merge(compress=use_compression), name='merge',
