@@ -32,8 +32,8 @@ class MCFLIRT2ITKInputSpec(BaseInterfaceInputSpec):
                         desc='input image for spatial reference')
     in_source = File(exists=True, mandatory=True,
                      desc='input image for spatial source')
-    n_procs = traits.Int(1, usedefault=True, nohash=True,
-                         desc='number of parallel processes')
+    num_threads = traits.Int(1, usedefault=True, nohash=True,
+                             desc='number of parallel processes')
 
 
 class MCFLIRT2ITKOutputSpec(TraitedSpec):
@@ -49,15 +49,15 @@ class MCFLIRT2ITK(SimpleInterface):
     output_spec = MCFLIRT2ITKOutputSpec
 
     def _run_interface(self, runtime):
-        nprocs = self.inputs.n_procs
-        if nprocs < 1:
-            nprocs = None
+        num_threads = self.inputs.num_threads
+        if num_threads < 1:
+            num_threads = None
 
         with TemporaryDirectory() as tmp_folder:
             # Inputs are ready to run in parallel
-            if nprocs is None or nprocs > 1:
+            if num_threads is None or num_threads > 1:
                 from multiprocessing import Pool
-                pool = Pool(processes=nprocs, maxtasksperchild=100)
+                pool = Pool(processes=num_threads, maxtasksperchild=100)
                 itk_outs = pool.map(_mat2itk, [
                     (in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder)
                     for i, in_mat in enumerate(self.inputs.in_files)]
@@ -85,8 +85,8 @@ class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
     input_image = InputMultiPath(File(exists=True), mandatory=True,
                                  desc='input time-series as a list of volumes after splitting'
                                       ' through the fourth dimension')
-    nprocs = traits.Int(1, usedefault=True, nohash=True,
-                        desc='number of parallel processes')
+    num_threads = traits.Int(1, usedefault=True, nohash=True,
+                             desc='number of parallel processes')
     save_cmd = traits.Bool(True, usedefault=True,
                            desc='write a log of command lines that were applied')
 
@@ -109,7 +109,7 @@ class MultiApplyTransforms(SimpleInterface):
         ifargs = self.inputs.get()
 
         # Get number of parallel jobs
-        nprocs = ifargs.pop('nprocs')
+        num_threads = ifargs.pop('num_threads')
         save_cmd = ifargs.pop('save_cmd')
 
         # Remove certain keys
@@ -129,17 +129,17 @@ class MultiApplyTransforms(SimpleInterface):
         assert len(xfms_list) == num_files
 
         # Inputs are ready to run in parallel
-        if nprocs < 1:
-            nprocs = None
+        if num_threads < 1:
+            num_threads = None
 
-        if nprocs == 1:
+        if num_threads == 1:
             out_files = [_applytfms((
                 in_file, in_xfm, ifargs, runtime.cwd))
                 for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))
             ]
         else:
             from multiprocessing import Pool
-            pool = Pool(processes=nprocs, maxtasksperchild=100)
+            pool = Pool(processes=num_threads, maxtasksperchild=100)
             out_files = pool.map(
                 _applytfms, [(in_file, in_xfm, ifargs, i, runtime.cwd)
                              for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))]
