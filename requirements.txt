@@ -1,1 +1,1 @@
-git+https://github.com/oesteban/niworkflows.git@11921d5b4e66a375eac68e274bebd4732079c342#egg=niworkflows-0.1.8-dev
+git+https://github.com/oesteban/niworkflows.git@510881813e331c7febe3b1ca43113a999cf3ac70#egg=niworkflows-0.1.8-dev
