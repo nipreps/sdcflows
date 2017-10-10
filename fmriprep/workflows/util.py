@@ -242,20 +242,32 @@ def init_bbreg_wf(bold2t1w_dof, name='bbreg_wf'):
         name='bbregister')
 
     lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
-    lta2itk_fwd = pe.Node(fs.utils.LTAConvert(out_itk=True), name='lta2itk_fwd')
-    lta2itk_inv = pe.Node(fs.utils.LTAConvert(out_itk=True, invert=True), name='lta2itk_inv')
+    # XXX LTA-FSL-ITK may ultimately be able to be replaced with a straightforward
+    # LTA-ITK transform, but right now the translation parameters are off.
+    lta2fsl_fwd = pe.Node(fs.utils.LTAConvert(out_fsl=True), name='lta2fsl_fwd')
+    lta2fsl_inv = pe.Node(fs.utils.LTAConvert(out_fsl=True, invert=True), name='lta2fsl_inv')
+    fsl2itk_fwd = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_fwd', mem_gb=DEFAULT_MEMORY_MIN_GB)
+    fsl2itk_inv = pe.Node(c3.C3dAffineTool(fsl2ras=True, itk_transform=True),
+                          name='fsl2itk_inv', mem_gb=DEFAULT_MEMORY_MIN_GB)
 
     workflow.connect([
         (inputnode, bbregister, [('subjects_dir', 'subjects_dir'),
                                  ('subject_id', 'subject_id'),
                                  ('in_file', 'source_file')]),
         (bbregister, outputnode, [('out_report', 'out_report')]),
-        (lta2itk_fwd, outputnode, [('out_itk', 'itk_bold_to_t1')]),
-        (lta2itk_inv, outputnode, [('out_itk', 'itk_t1_to_bold')]),
+        (fsl2itk_fwd, outputnode, [('itk_transform', 'itk_bold_to_t1')]),
+        (fsl2itk_inv, outputnode, [('itk_transform', 'itk_t1_to_bold')]),
         (inputnode, lta_concat, [('t1_2_fsnative_reverse_transform', 'in_lta2')]),
         (bbregister, lta_concat, [('out_lta_file', 'in_lta1')]),
-        (lta_concat, lta2itk_fwd, [('out_file', 'in_lta')]),
-        (lta_concat, lta2itk_inv, [('out_file', 'in_lta')]),
+        (lta_concat, lta2fsl_fwd, [('out_file', 'in_lta')]),
+        (lta_concat, lta2fsl_inv, [('out_file', 'in_lta')]),
+        (inputnode, fsl2itk_fwd, [('t1_brain', 'reference_file'),
+                                  ('in_file', 'source_file')]),
+        (inputnode, fsl2itk_inv, [('in_file', 'reference_file'),
+                                  ('t1_brain', 'source_file')]),
+        (lta2fsl_fwd, fsl2itk_fwd, [('out_fsl', 'transform_file')]),
+        (lta2fsl_inv, fsl2itk_inv, [('out_fsl', 'transform_file')]),
         ])
 
     return workflow
