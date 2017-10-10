@@ -17,10 +17,9 @@ import nibabel as nb
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
-    traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath)
-
+    traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath,
+    SimpleInterface)
 from niworkflows.nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
-from niworkflows.interfaces.base import SimpleInterface
 
 LOGGER = logging.getLogger('interface')
 

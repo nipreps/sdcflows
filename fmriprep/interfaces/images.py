@@ -20,8 +20,7 @@ from niworkflows.nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec,
     File, InputMultiPath, OutputMultiPath)
 from niworkflows.nipype.interfaces import fsl
-from niworkflows.interfaces.base import SimpleInterface
-
+from niworkflows.nipype.interfaces.base import SimpleInterface
 
 LOGGER = logging.getLogger('interface')
 
