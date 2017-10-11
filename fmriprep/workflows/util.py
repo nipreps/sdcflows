@@ -27,19 +27,11 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def compare_xforms(lta_list, norm_threshold=15):
-    import numpy as np
+    from fmriprep.interfaces.surf import load_transform
     from niworkflows.nipype.algorithms.rapidart import _calc_norm_affine
 
-    def read_lta(fname):
-        with open(fname, 'rb') as fobj:
-            for line in fobj:
-                if line.strip() == b'1 4 4':
-                    break
-            lines = fobj.readlines()[:4]
-        return np.genfromtxt(lines)
-
-    bbr_affine = read_lta(lta_list[0])
-    fallback_affine = read_lta(lta_list[1])
+    bbr_affine = load_transform(lta_list[0])
+    fallback_affine = load_transform(lta_list[1])
 
     norm, _ = _calc_norm_affine([fallback_affine, bbr_affine], use_differences=True)
 
