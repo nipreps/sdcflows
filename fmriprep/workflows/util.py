@@ -27,6 +27,37 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def compare_xforms(lta_list, norm_threshold=15):
+    """
+    Computes a normalized displacement between two affine transforms as the
+    maximum overall displacement of the midpoints of the faces of a cube, when
+    each transform is applied to the cube.
+    This combines displacement resulting from scaling, translation and rotation.
+
+    Although the norm is in mm, in a scaling context, it is not necessarily
+    equivalent to that distance in translation.
+
+    We choose a default threshold of 15mm as a rough heuristic.
+    Normalized displacement above 20mm showed clear signs of distortion, while
+    "good" BBR refinements were frequently below 10mm displaced from the rigid
+    transform.
+    The 10-20mm range was more ambiguous, and 15mm chosen as a compromise.
+    This is open to revisiting in either direction.
+
+    See discussion in
+    `GitHub issue #681`_ <https://github.com/poldracklab/fmriprep/issues/681>`_
+    and the `underlying implementation
+    <https://github.com/nipy/nipype/blob/56b7c81eedeeae884ba47c80096a5f66bd9f8116/nipype/algorithms/rapidart.py#L108-L159>`_.
+
+    Parameters
+    ----------
+
+      lta_list : list or tuple of str
+          the two given affines in LTA format
+      norm_threshold : float (default: 15)
+          the upper bound limit to the normalized displacement caused by the
+          second transform relative to the first
+
+    """
     from fmriprep.interfaces.surf import load_transform
     from niworkflows.nipype.algorithms.rapidart import _calc_norm_affine
 
@@ -194,6 +225,16 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
     It is a counterpart to :py:func:`~fmriprep.workflows.util.init_fsl_bbr_wf`,
     which performs the same task using FSL's FLIRT with a BBR cost function.
 
+    The ``use_bbr`` option permits a high degree of control over registration.
+    If ``False``, standard, affine coregistration will be performed using
+    FreeSurfer's ``mri_coreg`` tool.
+    If ``True``, ``bbregister`` will be seeded with the initial transform found
+    by ``mri_coreg`` (equivalent to running ``bbregister --init-coreg``).
+    If ``None``, after ``bbregister`` is run, the resulting affine transform
+    will be compared to the initial transform found by ``mri_coreg``.
+    Excessive deviation will result in rejecting the BBR refinement and
+    accepting the original, affine registration.
+
     .. workflow ::
         :graph2use: orig
         :simple_form: yes
@@ -355,6 +396,15 @@ def init_fsl_bbr_wf(use_bbr, bold2t1w_dof, name='fsl_bbr_wf'):
 
     It is a counterpart to :py:func:`~fmriprep.workflows.util.init_bbreg_wf`,
     which performs the same task using FreeSurfer's ``bbregister``.
+
+    The ``use_bbr`` option permits a high degree of control over registration.
+    If ``False``, standard, rigid coregistration will be performed by FLIRT.
+    If ``True``, FLIRT-BBR will be seeded with the initial transform found by
+    the rigid coregistration.
+    If ``None``, after FLIRT-BBR is run, the resulting affine transform
+    will be compared to the initial transform found by FLIRT.
+    Excessive deviation will result in rejecting the BBR refinement and
+    accepting the original, affine registration.
 
     .. workflow ::
         :graph2use: orig
