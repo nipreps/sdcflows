@@ -268,7 +268,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_file', 't1_preproc', 't1_brain', 't1_mask', 't1_seg', 't1_tpms',
                 't1_2_mni_forward_transform', 't1_2_mni_reverse_transform',
-                'subjects_dir', 'subject_id', 't1_2_fsnative_reverse_transform']),
+                'subjects_dir', 'subject_id', 't1_2_fsnative_forward_transform',
+                't1_2_fsnative_reverse_transform']),
         name='inputnode')
     inputnode.inputs.bold_file = bold_file
 
@@ -572,8 +573,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                          medial_surface_nan=medial_surface_nan,
                                          name='bold_surf_wf')
         workflow.connect([
-            (inputnode, bold_surf_wf, [('subjects_dir', 'inputnode.subjects_dir'),
-                                       ('subject_id', 'inputnode.subject_id')]),
+            (inputnode, bold_surf_wf, [
+                ('subjects_dir', 'inputnode.subjects_dir'),
+                ('subject_id', 'inputnode.subject_id'),
+                ('t1_2_fsnative_forward_transform', 'inputnode.t1_2_fsnative_forward_transform')]),
             (bold_reg_wf, bold_surf_wf, [('outputnode.bold_t1', 'inputnode.source_file')]),
             (bold_surf_wf, outputnode, [('outputnode.surfaces', 'surfaces')]),
         ])
@@ -1054,7 +1057,8 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir']),
+        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir',
+                                      't1_2_fsnative_forward_transform']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(fields=['surfaces']), name='outputnode')
@@ -1078,8 +1082,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
 
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
-                           sampling_units='frac', reg_header=True,
-                           interp_method='trilinear', cortex_mask=True,
+                           sampling_units='frac', interp_method='trilinear', cortex_mask=True,
                            out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
@@ -1122,7 +1125,8 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
         (inputnode, targets, [('subject_id', 'subject_id')]),
         (inputnode, rename_src, [('source_file', 'in_file')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
-                              ('subject_id', 'subject_id')]),
+                              ('subject_id', 'subject_id'),
+                              ('t1_2_fsnative_forward_transform', 'reg_file')]),
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (merger, update_metadata, [('out', 'in_file')]),
