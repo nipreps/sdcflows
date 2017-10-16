@@ -574,6 +574,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
                                          name='bold_surf_wf')
         workflow.connect([
             (inputnode, bold_surf_wf, [
+                ('t1_preproc', 'inputnode.t1_preproc'),
                 ('subjects_dir', 'inputnode.subjects_dir'),
                 ('subject_id', 'inputnode.subject_id'),
                 ('t1_2_fsnative_forward_transform', 'inputnode.t1_2_fsnative_forward_transform')]),
@@ -1057,7 +1058,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=['source_file', 'subject_id', 'subjects_dir',
+        niu.IdentityInterface(fields=['source_file', 't1_preproc', 'subject_id', 'subjects_dir',
                                       't1_2_fsnative_forward_transform']),
         name='inputnode')
 
@@ -1080,10 +1081,14 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
                             mem_gb=DEFAULT_MEMORY_MIN_GB)
     rename_src.inputs.subject = spaces
 
+    resampling_xfm = pe.Node(fs.utils.LTAConvert(in_lta='identity.nofile', out_lta=True),
+                             name='resampling_xfm')
+    set_xfm_source = pe.Node(fs.ConcatenateLTA(out_type='RAS2RAS'), name='set_xfm_source')
+
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),
                            sampling_units='frac', interp_method='trilinear', cortex_mask=True,
-                           out_type='gii'),
+                           override_reg_subj=True, out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
         name='sampler')
@@ -1124,9 +1129,13 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
     workflow.connect([
         (inputnode, targets, [('subject_id', 'subject_id')]),
         (inputnode, rename_src, [('source_file', 'in_file')]),
+        (inputnode, resampling_xfm, [('source_file', 'source_file'),
+                                     ('t1_preproc', 'target_file')]),
+        (inputnode, set_xfm_source, [('t1_2_fsnative_forward_transform', 'in_lta2')]),
+        (resampling_xfm, set_xfm_source, [('out_lta', 'in_lta1')]),
         (inputnode, sampler, [('subjects_dir', 'subjects_dir'),
-                              ('subject_id', 'subject_id'),
-                              ('t1_2_fsnative_forward_transform', 'reg_file')]),
+                              ('subject_id', 'subject_id')]),
+        (set_xfm_source, sampler, [('out_file', 'reg_file')]),
         (targets, sampler, [('out', 'target_subject')]),
         (rename_src, sampler, [('out_file', 'source_file')]),
         (merger, update_metadata, [('out', 'in_file')]),
