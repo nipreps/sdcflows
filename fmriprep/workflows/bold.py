@@ -179,8 +179,10 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             FreeSurfer SUBJECTS_DIR
         subject_id
             FreeSurfer subject ID
+        t1_2_fsnative_forward_transform
+            LTA-style affine matrix translating from T1w to FreeSurfer-conformed subject space
         t1_2_fsnative_reverse_transform
-            Affine transform from FreeSurfer subject space to T1w space
+            LTA-style affine matrix translating from FreeSurfer-conformed subject space to T1w
 
 
     **Outputs**
@@ -901,7 +903,7 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
         subject_id
             FreeSurfer subject ID
         t1_2_fsnative_reverse_transform
-            Affine transform from FreeSurfer subject space to T1w space
+            LTA-style affine matrix translating from FreeSurfer-conformed subject space to T1w
         fieldwarp
             a :abbr:`DFM (displacements field map)` in ITK format
 
@@ -1045,10 +1047,14 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
 
         source_file
             Motion-corrected BOLD series in T1 space
+        t1_preproc
+            Bias-corrected structural template image
         subjects_dir
             FreeSurfer SUBJECTS_DIR
         subject_id
             FreeSurfer subject ID
+        t1_2_fsnative_forward_transform
+            LTA-style affine matrix translating from T1w to FreeSurfer-conformed subject space
 
     **Outputs**
 
