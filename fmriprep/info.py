@@ -5,7 +5,7 @@
 Base module variables
 """
 
-__version__ = '1.0.0-rc6-dev'
+__version__ = '1.0.0-rc7-dev'
 __author__ = 'The CRN developers'
 __copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski',
@@ -74,6 +74,8 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
+    'git+https://github.com/poldracklab/niworkflows.git@'
+    'cad7fb7cec09b4ac6ad39757697d71a8b1a8b144#egg=niworkflows-0.1.9-dev',
 ]
 
 TESTS_REQUIRES = [
