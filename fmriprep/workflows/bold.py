@@ -997,7 +997,7 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
 
     bold_to_t1w_transform = pe.Node(
         MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
+        name='bold_to_t1w_transform', mem_gb=8, n_procs=omp_nthreads)
     # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
@@ -1097,7 +1097,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
                            override_reg_subj=True, out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
-        name='sampler')
+        name='sampler', mem_gb=3)
 
     def medial_wall_to_nan(in_file, subjects_dir, target_subject):
         """ Convert values on medial wall to NaNs
@@ -1253,7 +1253,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     mask_mni_tfm = pe.Node(
         ApplyTransforms(interpolation='NearestNeighbor', float=True),
         name='mask_mni_tfm',
-        mem_gb=0.1
+        mem_gb=3
     )
 
     # Write corrected file in the designated output dir
@@ -1279,7 +1279,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
 
     bold_to_mni_transform = pe.Node(
         MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
+        name='bold_to_mni_transform', mem_gb=8, n_procs=omp_nthreads)
     # bold_to_mni_transform.terminal_output = 'file'
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
