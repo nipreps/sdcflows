@@ -31,6 +31,9 @@ from niworkflows.nipype.interfaces.base import (
 )
 from niworkflows.nipype.interfaces import freesurfer as fs
 from niworkflows.nipype.interfaces.base import SimpleInterface
+from niworkflows.nipype.interfaces.freesurfer.base import FSCommand
+from niworkflows.nipype.interfaces.freesurfer.preprocess import (
+    ConcatenateLTAOutputSpec, ConcatenateLTAInputSpec)
 
 
 class StructuralReference(fs.RobustTemplate):
@@ -159,6 +162,34 @@ class FSDetectInputs(SimpleInterface):
 
         if self._results['hires']:
             self._results['mris_inflate'] = mris_inflate
+
+        return runtime
+
+
+class ConcatenateLTA(FSCommand):
+    _cmd = 'mri_concatenate_lta'
+    input_spec = ConcatenateLTAInputSpec
+    output_spec = ConcatenateLTAOutputSpec
+
+    def _run_interface(self, runtime, correct_return_codes=(0,)):
+        runtime = super(ConcatenateLTA, self)._run_interface(
+            runtime, correct_return_codes)
+
+        with open(self.inputs.out_file, 'r') as f:
+            lines = f.readlines()
+
+        fixed = False
+        newfile = []
+        for line in lines:
+            if line.startswith('filename = ') and len(line.strip("\n")) >= 255:
+                fixed = True
+                newfile.append('filename = path_too_long\n')
+            else:
+                newfile.append(line)
+
+        if fixed:
+            with open(self.inputs.out_file, 'w') as f:
+                f.write(''.join(newfile))
 
         return runtime
 
