@@ -165,6 +165,15 @@ class FSDetectInputs(SimpleInterface):
 
 
 class PatchedConcatenateLTA(ConcatenateLTA):
+    """
+    A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
+    `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
+    in FreeSurfer, that was
+    `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`_.
+
+    The original FMRIPREP's issue is found
+    `here <https://github.com/poldracklab/fmriprep/issues/768>`_.
+    """
 
     def _run_interface(self, runtime, correct_return_codes=(0,)):
         runtime = super(ConcatenateLTA, self)._run_interface(
