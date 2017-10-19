@@ -50,6 +50,10 @@ from ..interfaces import (
     DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
     MCFLIRT2ITK, MultiApplyTransforms
 )
+
+# See https://github.com/poldracklab/fmriprep/issues/768
+from ..interfaces.freesurfer import PatchedConcatenateLTA as ConcatenateLTA
+
 from ..interfaces.images import extract_wm
 from ..interfaces.nilearn import Merge
 from ..interfaces.reports import FunctionalSummary
@@ -1089,7 +1093,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
 
     resampling_xfm = pe.Node(fs.utils.LTAConvert(in_lta='identity.nofile', out_lta=True),
                              name='resampling_xfm')
-    set_xfm_source = pe.Node(fs.ConcatenateLTA(out_type='RAS2RAS'), name='set_xfm_source')
+    set_xfm_source = pe.Node(ConcatenateLTA(out_type='RAS2RAS'), name='set_xfm_source')
 
     sampler = pe.MapNode(
         fs.SampleToSurface(sampling_method='average', sampling_range=(0, 1, 0.2),

@@ -22,6 +22,8 @@ from niworkflows.interfaces.registration import FLIRTRPT, BBRegisterRPT, MRICore
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
 from ..interfaces.images import extract_wm
+# See https://github.com/poldracklab/fmriprep/issues/768
+from ..interfaces.freesurfer import PatchedConcatenateLTA as ConcatenateLTA
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 
@@ -299,7 +301,7 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
                     num_threads=omp_nthreads, generate_report=not use_bbr),
         name='mri_coreg', n_procs=omp_nthreads)
 
-    lta_concat = pe.Node(fs.ConcatenateLTA(out_file='out.lta'), name='lta_concat')
+    lta_concat = pe.Node(ConcatenateLTA(out_file='out.lta'), name='lta_concat')
     # XXX LTA-FSL-ITK may ultimately be able to be replaced with a straightforward
     # LTA-ITK transform, but right now the translation parameters are off.
     lta2fsl_fwd = pe.Node(fs.utils.LTAConvert(out_fsl=True), name='lta2fsl_fwd')
