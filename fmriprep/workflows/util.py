@@ -23,7 +23,7 @@ from niworkflows.interfaces.masks import SimpleShowMaskRPT
 
 from ..interfaces.images import extract_wm
 # See https://github.com/poldracklab/fmriprep/issues/768
-from ..interfaces.freesurfer import ConcatenateLTA
+from ..interfaces.freesurfer import PatchedConcatenateLTA as ConcatenateLTA
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 

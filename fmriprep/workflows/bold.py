@@ -52,7 +52,7 @@ from ..interfaces import (
 )
 
 # See https://github.com/poldracklab/fmriprep/issues/768
-from ..interfaces.freesurfer import ConcatenateLTA
+from ..interfaces.freesurfer import PatchedConcatenateLTA as ConcatenateLTA
 
 from ..interfaces.images import extract_wm
 from ..interfaces.nilearn import Merge

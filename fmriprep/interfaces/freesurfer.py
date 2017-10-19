@@ -31,9 +31,7 @@ from niworkflows.nipype.interfaces.base import (
 )
 from niworkflows.nipype.interfaces import freesurfer as fs
 from niworkflows.nipype.interfaces.base import SimpleInterface
-from niworkflows.nipype.interfaces.freesurfer.base import FSCommand
-from niworkflows.nipype.interfaces.freesurfer.preprocess import (
-    ConcatenateLTAOutputSpec, ConcatenateLTAInputSpec)
+from niworkflows.nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
 
 
 class StructuralReference(fs.RobustTemplate):
@@ -166,20 +164,7 @@ class FSDetectInputs(SimpleInterface):
         return runtime
 
 
-class ConcatenateLTA(FSCommand):
-    _cmd = 'mri_concatenate_lta'
-    input_spec = ConcatenateLTAInputSpec
-    output_spec = ConcatenateLTAOutputSpec
-
-    def _format_arg(self, name, spec, value):
-        if name == 'out_type':
-            value = {'VOX2VOX': 0, 'RAS2RAS': 1}[value]
-        return super(ConcatenateLTA, self)._format_arg(name, spec, value)
-
-    def _list_outputs(self):
-        outputs = self.output_spec().get()
-        outputs['out_file'] = op.abspath(self.inputs.out_file)
-        return outputs
+class PatchedConcatenateLTA(ConcatenateLTA):
 
     def _run_interface(self, runtime, correct_return_codes=(0,)):
         runtime = super(ConcatenateLTA, self)._run_interface(
