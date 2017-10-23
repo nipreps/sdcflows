@@ -677,7 +677,7 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
             ('outputnode.mask_file', 'bold_mask'),
             ('outputnode.out_report', 'bold_mask_report'),
             ('outputnode.skull_stripped_file', 'ref_image_brain')]),
-        ])
+    ])
 
     return workflow
 
@@ -979,7 +979,8 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
 
     workflow.connect([
         (inputnode, gen_ref, [('ref_bold_brain', 'moving_image'),
-                              ('t1_brain', 'fixed_image')]),
+                              ('t1_brain', 'fixed_image'),
+                              ('t1_mask', 'fov_mask')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (bbr_wf, mask_t1w_tfm, [('outputnode.itk_bold_to_t1', 'transforms')]),
         (inputnode, mask_t1w_tfm, [('ref_bold_mask', 'input_image')]),
