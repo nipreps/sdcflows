@@ -88,6 +88,8 @@ class MultiApplyTransformsInputSpec(ApplyTransformsInputSpec):
                              desc='number of parallel processes')
     save_cmd = traits.Bool(True, usedefault=True,
                            desc='write a log of command lines that were applied')
+    copy_dtype = traits.Bool(False, usedefault=True,
+                             desc='copy dtype from inputs to outputs')
 
 
 class MultiApplyTransformsOutputSpec(TraitedSpec):
@@ -248,16 +250,29 @@ def _applytfms(args):
     All inputs are zipped in one tuple to make it digestible by
     multiprocessing's map
     """
+    import nibabel as nb
     from niworkflows.nipype.utils.filemanip import fname_presuffix
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
     in_file, in_xform, ifargs, index, newpath = args
     out_file = fname_presuffix(in_file, suffix='_xform-%05d' % index,
                                newpath=newpath, use_ext=True)
+
+    copy_dtype = ifargs.pop('copy_dtype', False)
     xfm = ApplyTransforms(
         input_image=in_file, transforms=in_xform, output_image=out_file, **ifargs)
     xfm.terminal_output = 'allatonce'
     runtime = xfm.run().runtime
+
+    if copy_dtype:
+        nii = nb.load(out_file)
+        in_dtype = nb.load(in_file).get_data_dtype()
+
+        # Overwrite only iff dtypes don't match
+        if in_dtype != nii.get_data_dtype():
+            nii.set_data_dtype(in_dtype)
+            nii.to_filename(out_file)
+
     return (out_file, runtime.merged)
 
 

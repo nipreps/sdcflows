@@ -47,7 +47,8 @@ from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
+    DerivativesDataSink, InvertT1w, ValidateImage,
+    GiftiNameSource, GiftiSetAnatomicalStructure,
     MCFLIRT2ITK, MultiApplyTransforms
 )
 
@@ -660,6 +661,7 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 
     validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
                        run_without_submitting=True)
+
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
                       mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
     enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
@@ -1001,9 +1003,10 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
         ])
 
     bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads),
+        interpolation="LanczosWindowedSinc", float=True, copy_dtype=True,
+        num_threads=omp_nthreads),
         name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
-    # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
+
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
     workflow.connect([
@@ -1283,9 +1286,8 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     ])
 
     bold_to_mni_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads),
-        name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
-    # bold_to_mni_transform.terminal_output = 'file'
+        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads,
+        copy_dtype=True), name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
 
