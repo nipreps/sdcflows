@@ -55,7 +55,8 @@ case ${CIRCLE_NODE_INDEX} in
     rm -r $HOME/ds054/out/fmriprep/sub-100185/log
     ;;
   1)
-    fmriprep-docker --fs-license /tmp/fslicense -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
+    # Do not use --fs-license to exercise using the env variable
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
     find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -not -name "*.mat" -not -name "*.lta" -type f -delete
     ;;
 esac
