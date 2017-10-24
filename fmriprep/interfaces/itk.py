@@ -273,7 +273,7 @@ def _applytfms(args):
             nii.set_data_dtype(in_dtype)
             nii.to_filename(out_file)
 
-    return (out_file, runtime.merged)
+    return (out_file, runtime.cmdline)
 
 
 def _arrange_xfms(transforms, num_files, tmp_folder):
