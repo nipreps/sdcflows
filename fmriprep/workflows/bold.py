@@ -47,7 +47,8 @@ from niworkflows.interfaces import SimpleBeforeAfter, NormalizeMotionParams
 
 
 from ..interfaces import (
-    DerivativesDataSink, InvertT1w, ValidateImage, GiftiNameSource, GiftiSetAnatomicalStructure,
+    DerivativesDataSink, InvertT1w, ValidateImage,
+    GiftiNameSource, GiftiSetAnatomicalStructure,
     MCFLIRT2ITK, MultiApplyTransforms
 )
 
@@ -660,6 +661,7 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
 
     validate = pe.Node(ValidateImage(), name='validate', mem_gb=DEFAULT_MEMORY_MIN_GB,
                        run_without_submitting=True)
+
     gen_ref = pe.Node(EstimateReferenceImage(), name="gen_ref",
                       mem_gb=1)  # OE: 128x128x128x50 * 64 / 8 ~ 900MB.
     enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
@@ -677,7 +679,7 @@ def init_bold_reference_wf(omp_nthreads, bold_file=None, name='bold_reference_wf
             ('outputnode.mask_file', 'bold_mask'),
             ('outputnode.out_report', 'bold_mask_report'),
             ('outputnode.skull_stripped_file', 'ref_image_brain')]),
-        ])
+    ])
 
     return workflow
 
@@ -979,7 +981,8 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
 
     workflow.connect([
         (inputnode, gen_ref, [('ref_bold_brain', 'moving_image'),
-                              ('t1_brain', 'fixed_image')]),
+                              ('t1_brain', 'fixed_image'),
+                              ('t1_mask', 'fov_mask')]),
         (gen_ref, mask_t1w_tfm, [('out_file', 'reference_image')]),
         (bbr_wf, mask_t1w_tfm, [('outputnode.itk_bold_to_t1', 'transforms')]),
         (inputnode, mask_t1w_tfm, [('ref_bold_mask', 'input_image')]),
@@ -999,10 +1002,11 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
             (inputnode, merge_xforms, [('fieldwarp', 'in2')])
         ])
 
-    bold_to_t1w_transform = pe.Node(
-        MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_t1w_transform', mem_gb=8, n_procs=omp_nthreads)
-    # bold_to_t1w_transform.terminal_output = 'file'  # OE: why this?
+    bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True, copy_dtype=True,
+        num_threads=omp_nthreads),
+        name='bold_to_t1w_transform', mem_gb=bold_file_size_gb * 3, n_procs=omp_nthreads)
+
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
     workflow.connect([
@@ -1281,10 +1285,16 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
+<<<<<<< HEAD
     bold_to_mni_transform = pe.Node(
         MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True),
         name='bold_to_mni_transform', mem_gb=8, n_procs=omp_nthreads)
     # bold_to_mni_transform.terminal_output = 'file'
+=======
+    bold_to_mni_transform = pe.Node(MultiApplyTransforms(
+        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads,
+        copy_dtype=True), name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
+>>>>>>> fix/766
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
 
