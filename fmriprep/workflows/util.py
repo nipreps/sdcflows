@@ -297,7 +297,7 @@ def init_bbreg_wf(use_bbr, bold2t1w_dof, omp_nthreads, name='bbreg_wf'):
 
     mri_coreg = pe.Node(
         MRICoregRPT(dof=bold2t1w_dof, sep=[4], ftol=0.0001, linmintol=0.01,
-                    num_threads=omp_nthreads, generate_report=not use_bbr),
+                    generate_report=not use_bbr),
         name='mri_coreg', n_procs=omp_nthreads, mem_gb=32)
 
     lta_concat = pe.Node(ConcatenateLTA(out_file='out.lta'), name='lta_concat')
