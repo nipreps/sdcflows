@@ -1285,16 +1285,11 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
-<<<<<<< HEAD
-    bold_to_mni_transform = pe.Node(
-        MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True),
-        name='bold_to_mni_transform', mem_gb=8, n_procs=omp_nthreads)
-    # bold_to_mni_transform.terminal_output = 'file'
-=======
     bold_to_mni_transform = pe.Node(MultiApplyTransforms(
         interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads,
-        copy_dtype=True), name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
->>>>>>> fix/766
+        copy_dtype=True), name='bold_to_mni_transform', mem_gb=bold_file_size_gb * 3,
+        n_procs=omp_nthreads)
+
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
 
