@@ -56,7 +56,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
 
     # de-gradient the fields ("bias/illumination artifact")
     n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
-                         n_procs=omp_nthreads, name='n4_correct')
+                         name='n4_correct', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
     ds_fmap_mask = pe.Node(DerivativesDataSink(
