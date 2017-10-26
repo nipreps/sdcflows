@@ -365,7 +365,7 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
             ('subjects_dir', 'inputnode.subjects_dir'),
             ('subject_id', 'inputnode.subject_id'),
             ('t1_2_fsnative_reverse_transform', 'inputnode.t1_2_fsnative_reverse_transform')
-            ]),
+        ]),
         (inputnode, bold_confounds_wf, [('t1_tpms', 'inputnode.t1_tpms'),
                                         ('t1_mask', 'inputnode.t1_mask')]),
         (bold_hmc_wf, bold_reg_wf, [('outputnode.bold_split', 'inputnode.bold_split'),
