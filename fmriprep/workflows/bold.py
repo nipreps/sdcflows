@@ -811,7 +811,7 @@ def init_bold_hmc_wf(bold_file_size_gb, omp_nthreads, name='bold_hmc_wf'):
     mcflirt = pe.Node(fsl.MCFLIRT(save_mats=True, save_plots=True),
                       name='mcflirt', mem_gb=bold_file_size_gb * 3)
 
-    fsl2itk = pe.Node(MCFLIRT2ITK(num_threads=omp_nthreads), name='fsl2itk',
+    fsl2itk = pe.Node(MCFLIRT2ITK(), name='fsl2itk',
                       mem_gb=0.05, n_procs=omp_nthreads)
 
     normalize_motion = pe.Node(NormalizeMotionParams(format='FSL'),
@@ -1002,10 +1002,9 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
             (inputnode, merge_xforms, [('fieldwarp', 'in2')])
         ])
 
-    bold_to_t1w_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, copy_dtype=True,
-        num_threads=omp_nthreads),
-        name='bold_to_t1w_transform', mem_gb=0.1, n_procs=omp_nthreads)
+    bold_to_t1w_transform = pe.Node(
+        MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True, copy_dtype=True),
+        name='bold_to_t1w_transform', mem_gb=bold_file_size_gb * 3, n_procs=omp_nthreads)
 
     merge = pe.Node(Merge(compress=use_compression), name='merge', mem_gb=bold_file_size_gb * 3)
 
@@ -1105,7 +1104,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
                            override_reg_subj=True, out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
-        name='sampler')
+        name='sampler', mem_gb=3)
 
     def medial_wall_to_nan(in_file, subjects_dir, target_subject):
         """ Convert values on medial wall to NaNs
@@ -1261,7 +1260,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     mask_mni_tfm = pe.Node(
         ApplyTransforms(interpolation='NearestNeighbor', float=True),
         name='mask_mni_tfm',
-        mem_gb=0.1
+        mem_gb=3
     )
 
     # Write corrected file in the designated output dir
@@ -1285,9 +1284,10 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
         (inputnode, mask_mni_tfm, [('bold_mask', 'input_image')])
     ])
 
-    bold_to_mni_transform = pe.Node(MultiApplyTransforms(
-        interpolation="LanczosWindowedSinc", float=True, num_threads=omp_nthreads,
-        copy_dtype=True), name='bold_to_mni_transform', mem_gb=0.1, n_procs=omp_nthreads)
+    bold_to_mni_transform = pe.Node(
+        MultiApplyTransforms(interpolation="LanczosWindowedSinc", float=True, copy_dtype=True),
+        name='bold_to_mni_transform', mem_gb=bold_file_size_gb * 3, n_procs=omp_nthreads)
+
     merge = pe.Node(Merge(compress=use_compression), name='merge',
                     mem_gb=bold_file_size_gb * 3)
 
@@ -1406,9 +1406,9 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
     invert_t1w = pe.Node(InvertT1w(), name='invert_t1w',
                          mem_gb=0.3)
 
-    ref_2_t1 = pe.Node(Registration(from_file=affine_transform, num_threads=omp_nthreads),
+    ref_2_t1 = pe.Node(Registration(from_file=affine_transform),
                        name='ref_2_t1', n_procs=omp_nthreads)
-    t1_2_ref = pe.Node(ApplyTransforms(invert_transform_flags=[True], num_threads=omp_nthreads),
+    t1_2_ref = pe.Node(ApplyTransforms(invert_transform_flags=[True]),
                        name='t1_2_ref', n_procs=omp_nthreads)
 
     # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
@@ -1420,8 +1420,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
     #
     # ATLAS -> MNI -> T1 -> BOLD
     atlas_2_ref = pe.Node(
-        ApplyTransforms(invert_transform_flags=[True, False, False],
-                        num_threads=omp_nthreads),
+        ApplyTransforms(invert_transform_flags=[True, False, False]),
         name='atlas_2_ref', n_procs=omp_nthreads,
         mem_gb=0.3)
     atlas_2_ref.inputs.input_image = atlas_img
@@ -1437,13 +1436,12 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
 
     restrict = [[int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), 0]] * 2
     syn = pe.Node(
-        Registration(from_file=syn_transform, num_threads=omp_nthreads,
-                     restrict_deformation=restrict),
+        Registration(from_file=syn_transform, restrict_deformation=restrict),
         name='syn', n_procs=omp_nthreads)
 
     seg_2_ref = pe.Node(
         ApplyTransforms(interpolation='NearestNeighbor', float=True,
-                        invert_transform_flags=[True], num_threads=omp_nthreads),
+                        invert_transform_flags=[True]),
         name='seg_2_ref', n_procs=omp_nthreads, mem_gb=0.3)
     sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
                      mem_gb=DEFAULT_MEMORY_MIN_GB)
