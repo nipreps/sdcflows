@@ -576,7 +576,8 @@ def init_func_preproc_wf(bold_file, ignore, freesurfer,
 
     if freesurfer and any(space.startswith('fs') for space in output_spaces):
         LOGGER.info('Creating BOLD surface-sampling workflow.')
-        bold_surf_wf = init_bold_surf_wf(output_spaces=output_spaces,
+        bold_surf_wf = init_bold_surf_wf(bold_file_size_gb=bold_file_size_gb,
+                                         output_spaces=output_spaces,
                                          medial_surface_nan=medial_surface_nan,
                                          name='bold_surf_wf')
         workflow.connect([
@@ -1021,7 +1022,7 @@ def init_bold_reg_wf(freesurfer, use_bbr, bold2t1w_dof, bold_file_size_gb, omp_n
     return workflow
 
 
-def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
+def init_bold_surf_wf(bold_file_size_gb, output_spaces, medial_surface_nan, name='bold_surf_wf'):
     """
     This workflow samples functional images to FreeSurfer surfaces
 
@@ -1035,7 +1036,8 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.bold import init_bold_surf_wf
-        wf = init_bold_surf_wf(output_spaces=['T1w', 'fsnative',
+        wf = init_bold_surf_wf(bold_file_size_gb=0.1,
+                               output_spaces=['T1w', 'fsnative',
                                              'template', 'fsaverage5'],
                                medial_surface_nan=False)
 
@@ -1104,7 +1106,7 @@ def init_bold_surf_wf(output_spaces, medial_surface_nan, name='bold_surf_wf'):
                            override_reg_subj=True, out_type='gii'),
         iterfield=['source_file', 'target_subject'],
         iterables=('hemi', ['lh', 'rh']),
-        name='sampler', mem_gb=3)
+        name='sampler', mem_gb=bold_file_size_gb * 3)
 
     def medial_wall_to_nan(in_file, subjects_dir, target_subject):
         """ Convert values on medial wall to NaNs
@@ -1260,7 +1262,7 @@ def init_bold_mni_trans_wf(template, bold_file_size_gb, omp_nthreads,
     mask_mni_tfm = pe.Node(
         ApplyTransforms(interpolation='NearestNeighbor', float=True),
         name='mask_mni_tfm',
-        mem_gb=3
+        mem_gb=bold_file_size_gb * 3
     )
 
     # Write corrected file in the designated output dir
