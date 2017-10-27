@@ -39,14 +39,14 @@ case ${CIRCLE_NODE_INDEX} in
         | tee $HOME/docs/builddocs.log
     cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
     fmriprep-docker -i poldracklab/fmriprep:latest --help
-    fmriprep-docker --fs-license /tmp/fslicense -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
     # Place mock crash log and rebuild report
     UUID="$(date '+%Y%m%d-%H%M%S_')$(uuidgen)"
     mkdir -p $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     cp fmriprep/data/tests/crash_files/*.txt $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     # Expect one error
     set +e
-    fmriprep-docker --fs-license /tmp/fslicense -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
     RET=$?
     set -e
     [[ "$RET" -eq "1" ]]
@@ -55,8 +55,15 @@ case ${CIRCLE_NODE_INDEX} in
     rm -r $HOME/ds054/out/fmriprep/sub-100185/log
     ;;
   1)
-    # Do not use --fs-license to exercise using the env variable
+    # Do not use --fs-license-file to exercise using the env variable
     fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
     find ~/ds005/scratch -not -name "*.svg" -not -name "*.html" -not -name "*.rst" -not -name "*.mat" -not -name "*.lta" -type f -delete
+    # Check for --fs-license-file not defined
+    set +e
+    unset FS_LICENSE
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds005/scratch $HOME/data/ds005 $HOME/ds005/out participant --debug --write-graph --use-syn-sdc --use-aroma --ignore-aroma-denoising-errors
+    RET=$?
+    set -e
+    [[ "$RET" -eq "1" ]]
     ;;
 esac
