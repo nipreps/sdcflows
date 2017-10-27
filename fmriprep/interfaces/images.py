@@ -240,7 +240,7 @@ class Conform(SimpleInterface):
             xyz_unit = 'mm'
 
         # Set a 0.05mm threshold to performing rescaling
-        atol = {'meter': 5e-5, 'mm': 0.05, 'micron': 50}[xyz_unit]
+        atol = {'meter': 1e-5, 'mm': 0.01, 'micron': 10}[xyz_unit]
 
         # Rescale => change zooms
         # Resize => update image dimensions
