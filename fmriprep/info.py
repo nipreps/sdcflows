@@ -65,7 +65,7 @@ REQUIRES = [
     'nibabel>=2.1.0',
     'pandas',
     'grabbit',
-    'pybids>=0.3',
+    'pybids',
     'nitime',
     'niworkflows>=0.1.8',
     'statsmodels',
@@ -77,6 +77,8 @@ REQUIRES = [
 LINKS_REQUIRES = [
     'git+https://github.com/poldracklab/niworkflows.git'
     '@e77c3c103b76f6eddce94625ba6171c13248d7d5#egg=niworkflows-0.1.9-dev',
+    'git+https://github.com/oesteban/pybids.git'
+    '@448e926c6a2cbad4a9520fdd79c3f8c8893f1ac2#egg=pybids-0.3.1-dev',
 ]
 
 TESTS_REQUIRES = [
