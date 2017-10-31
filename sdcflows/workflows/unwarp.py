@@ -26,7 +26,7 @@ from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
 from ...interfaces import itk, ReadSidecarJSON, StructuralReference, DerivativesDataSink
-from ...workflows.util import init_enhance_and_skullstrip_bold_wf
+from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
 def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
