@@ -11,13 +11,14 @@ Fieldmap-less SDC
 import pkg_resources as pkgr
 
 from niworkflows.nipype import logging
-from niworkflows.nipype.engine import pipeline as pe
+from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import fsl, utility as niu
+from niworkflows.interfaces import SimpleBeforeAfter
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
-
-from ..interfaces import InvertT1w
-from ..workflows.util import init_skullstrip_bold_wf
+from ...interfaces import InvertT1w
+from ...interfaces.images import extract_wm
+from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('workflow')
@@ -45,7 +46,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.bold import init_nonlinear_sdc_wf
+        from fmriprep.workflows.fieldmap.syn import init_nonlinear_sdc_wf
         wf = init_nonlinear_sdc_wf(
             bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
             bold_pe='j',

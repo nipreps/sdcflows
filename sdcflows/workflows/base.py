@@ -97,13 +97,13 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
 
     """
 
-    from niworkflows.nipype.engine import pipeline as pe
+    from niworkflows.nipype.pipeline import engine as pe
     from niworkflows.nipype.interfaces import utility as niu
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
     from niworkflows.interfaces import SimpleBeforeAfter
-    from ..interfaces.images import extract_wm
-    from ..interfaces import DerivativesDataSink
+    from ...interfaces.images import extract_wm
+    from ...interfaces import DerivativesDataSink
 
     DEFAULT_MEMORY_MIN_GB = 0.01
 
