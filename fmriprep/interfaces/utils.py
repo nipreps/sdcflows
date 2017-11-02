@@ -8,11 +8,9 @@ Miscellaneous utilities
 
 """
 
-import os
 import numpy as np
 import nibabel as nb
 import scipy.ndimage as nd
-from nilearn.image import resample_to_img
 
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import fname_presuffix
