@@ -85,7 +85,7 @@ class TPM2ROI(SimpleInterface):
 
 class AddTPMsInputSpec(BaseInterfaceInputSpec):
     in_files = InputMultiPath(File(exists=True), mandatory=True, desc='input list of ROIs')
-    indexes = traits.List(traits.Int, desc='select specific maps')
+    indices = traits.List(traits.Int, desc='select specific maps')
 
 
 class AddTPMsOutputSpec(TraitedSpec):
@@ -93,34 +93,29 @@ class AddTPMsOutputSpec(TraitedSpec):
 
 
 class AddTPMs(SimpleInterface):
-    """Generate the union (logical or) of a series of ROI masks"""
+    """Calculate the union of several :abbr:`TPMs (tissue-probability map)`"""
     input_spec = AddTPMsInputSpec
     output_spec = AddTPMsOutputSpec
 
     def _run_interface(self, runtime):
         in_files = self.inputs.in_files
 
-        indexes = list(range(len(in_files)))
-        if isdefined(self.inputs.indexes):
-            indexes = self.inputs.indexes
+        indices = list(range(len(in_files)))
+        if isdefined(self.inputs.indices):
+            indices = self.inputs.indices
 
         if len(self.inputs.in_files) < 2:
             self._results['out_file'] = in_files[0]
             return runtime
 
-        first_fname = in_files[indexes[0]]
-        if len(indexes) == 1:
+        first_fname = in_files[indices[0]]
+        if len(indices) == 1:
             self._results['out_file'] = first_fname
             return runtime
 
-        im = nb.load(first_fname)
-        data = im.get_data()
-
-        for idx in indexes[1:]:
-            data += nb.load(in_files[idx]).get_data()
-
-        data[data > 1] = 1.0
-        data[data < 0] = 0.0
+        im = nb.concat_images([in_files[i] for i in indices])
+        data = im.get_data().sum(axis=3)
+        data = np.clip(data, a_min=0.0, a_max=1.0)
 
         out_file = fname_presuffix(first_fname, suffix='_tpmsum')
         im.__class__(data, im.affine, im.header).to_filename(out_file)
