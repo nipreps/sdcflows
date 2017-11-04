@@ -88,6 +88,7 @@ EXTRA_REQUIRES = {
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
     'datalad': ['datalad'],
+    'resmon': ['psutil>=5.4.0'],
 }
 
 # Enable a handle to install all extra dependencies at once
