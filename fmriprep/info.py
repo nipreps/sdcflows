@@ -5,7 +5,7 @@
 Base module variables
 """
 
-__version__ = '1.0.0-rc7-dev'
+__version__ = '1.0.0-rc10-dev'
 __author__ = 'The CRN developers'
 __copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski',
@@ -65,9 +65,9 @@ REQUIRES = [
     'nibabel>=2.1.0',
     'pandas',
     'grabbit',
-    'pybids',
+    'pybids>=0.4.0',
     'nitime',
-    'niworkflows>=0.1.8',
+    'niworkflows>=0.1.9',
     'statsmodels',
     'nipype',
     'seaborn',
@@ -75,10 +75,6 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
-    'git+https://github.com/poldracklab/niworkflows.git'
-    '@66c0aed97a7694e9fdba58a4438f23f89f151606#egg=niworkflows-0.1.9-dev',
-    'git+https://github.com/oesteban/pybids.git'
-    '@448e926c6a2cbad4a9520fdd79c3f8c8893f1ac2#egg=pybids-0.3.1-dev',
 ]
 
 TESTS_REQUIRES = [
