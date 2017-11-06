@@ -71,7 +71,7 @@ REQUIRES = [
     'statsmodels',
     'nipype',
     'seaborn',
-    'indexed_gzip>=0.6.1',
+    'indexed_gzip>=0.7.0',
 ]
 
 LINKS_REQUIRES = [
