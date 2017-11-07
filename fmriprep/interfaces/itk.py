@@ -55,14 +55,12 @@ class MCFLIRT2ITK(SimpleInterface):
         with TemporaryDirectory(prefix='tmp-', dir=runtime.cwd) as tmp_folder:
             # Inputs are ready to run in parallel
             if num_threads is None or num_threads > 1:
-                from multiprocessing.dummy import Pool
-                pool = Pool(num_threads)
-                itk_outs = pool.map(_mat2itk, [
-                    (in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder)
-                    for i, in_mat in enumerate(self.inputs.in_files)]
-                )
-                pool.close()
-                pool.join()
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=num_threads) as pool:
+                    itk_outs = list(pool.map(_mat2itk, [
+                        (in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder)
+                        for i, in_mat in enumerate(self.inputs.in_files)]
+                    ))
             else:
                 itk_outs = [_mat2itk((
                     in_mat, self.inputs.in_reference, self.inputs.in_source, i, tmp_folder))
@@ -138,14 +136,12 @@ class MultiApplyTransforms(SimpleInterface):
                 for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))
             ]
         else:
-            from multiprocessing.dummy import Pool
-            pool = Pool(num_threads)
-            out_files = pool.map(
-                _applytfms, [(in_file, in_xfm, ifargs, i, runtime.cwd)
-                             for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))]
-            )
-            pool.close()
-            pool.join()
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=num_threads) as pool:
+                out_files = list(pool.map(_applytfms, [
+                    (in_file, in_xfm, ifargs, i, runtime.cwd)
+                    for i, (in_file, in_xfm) in enumerate(zip(in_files, xfms_list))]
+                ))
         tmp_folder.cleanup()
 
         # Collect output file names, after sorting by index
