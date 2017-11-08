@@ -318,28 +318,12 @@ class Reorient(SimpleInterface):
         ornt_xfm = nb.orientations.inv_ornt_aff(
             nb.io_orientation(orig_img.affine), orig_img.shape)
 
-        save_file = reoriented is not orig_img
-
-        # Always set valid sform/qform for consistency
-        # Normalize transform to be qform compatible
-        # Use code 2 to indicate valid, not aligned to template, and
-        # not necessarily preserving scanner original coordinates
-        xform = reoriented.affine.copy()
-        xform[:3, :3] = nb.quaternions.quat2mat(nb.quaternions.mat2quat(xform[:3, :3]))
-        xform_code = 2
-        qform, qform_code = reoriented.get_qform(coded=True)
-        sform, sform_code = reoriented.get_sform(coded=True)
-        if not np.allclose(qform, xform) or int(qform_code) != xform_code:
-            save_file = True
-            reoriented.set_qform(xform, xform_code)
-        if not np.allclose(sform, xform) or int(sform_code) != xform_code:
-            save_file = True
-            reoriented.set_sform(xform, xform_code)
+        normalized = normalize_xform(reoriented)
 
         # Image may be reoriented
-        if save_file:
+        if normalized is not orig_img:
             out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-            reoriented.to_filename(out_name)
+            normalized.to_filename(out_name)
         else:
             out_name = fname
 
@@ -496,3 +480,36 @@ def extract_wm(in_seg, wm_label=3):
     hdr.set_data_dtype(np.uint8)
     nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
     return op.abspath('wm.nii.gz')
+
+
+def normalize_xform(img):
+    """ Set identical, valid qform and sform matrices in an image
+
+    Selects the best available affine (sform > qform > shape-based), and
+    coerces it to be qform-compatible (no shears).
+
+    The resulting image represents this same affine as both qform and sform,
+    and is marked as NIFTI_XFORM_ALIGNED_ANAT, indicating that it is valid,
+    not aligned to template, and not necessarily preserving the original
+    coordinates.
+
+    If header would be unchanged, returns input image.
+    """
+    # Let nibabel convert from affine to quaternions, and recover xform
+    tmp_header = img.header.copy()
+    tmp_header.set_qform(img.affine)
+    xform = tmp_header.get_qform()
+    xform_code = 2
+
+    # Check desired codes
+    qform, qform_code = img.get_qform(coded=True)
+    sform, sform_code = img.get_sform(coded=True)
+    if all((np.allclose(qform, xform), np.allclose(sform, xform),
+            int(qform_code) == xform_code, int(sform_code) == xform_code)):
+        return img
+
+    new_img = img.__class__(img.get_data(), xform, img.header)
+    # Unconditionally set sform/qform
+    new_img.set_sform(xform, xform_code)
+    new_img.set_qform(xform, xform_code)
+    return new_img
