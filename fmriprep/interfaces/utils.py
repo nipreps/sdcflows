@@ -8,6 +8,7 @@ Miscellaneous utilities
 
 """
 
+import os
 import numpy as np
 import nibabel as nb
 import scipy.ndimage as nd
@@ -15,9 +16,10 @@ import scipy.ndimage as nd
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import fname_presuffix
 from niworkflows.nipype.interfaces.base import (
-    traits, isdefined, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath,
-    SimpleInterface
+    traits, isdefined, File, InputMultiPath,
+    TraitedSpec, DynamicTraitedSpec, BaseInterfaceInputSpec, SimpleInterface
 )
+from niworkflows.nipype.interfaces.io import add_traits
 
 IFLOGGER = logging.getLogger('interfaces')
 
@@ -187,6 +189,44 @@ class AddTSVHeader(SimpleInterface):
         return runtime
 
 
+class ConcatAffinesInputSpec(DynamicTraitedSpec, BaseInterfaceInputSpec):
+    invert = traits.Bool(False, usedefault=True, desc='Invert output transform')
+
+
+class ConcatAffinesOutputSpec(TraitedSpec):
+    out_mat = File(exists=True, desc='Output transform')
+
+
+class ConcatAffines(SimpleInterface):
+    input_spec = ConcatAffinesInputSpec
+    output_spec = ConcatAffinesOutputSpec
+
+    def __init__(self, num_affines=0, *args, **kwargs):
+        super(ConcatAffines, self).__init__(*args, **kwargs)
+        self._num_affines = num_affines
+        trait_type = File(exists=True)
+        if num_affines == 0:
+            add_traits(self.inputs, ['mat_list'], trait_type)
+        elif num_affines < 26:
+            add_traits(self.inputs, self._get_names(num_affines), trait_type)
+
+    @staticmethod
+    def _get_names(num_affines):
+        A = ord('A') - 1
+        return ['mat_{}to{}'.format(chr(X), chr(X + 1))
+                for X in range(A + num_affines, A, -1)]
+
+    def _run_interface(self, runtime):
+        out_mat = os.path.join(runtime.cwd, 'concat.mat')
+        in_list = [self.inputs.get()[name] for name in self._get_names(self._num_affines)]
+
+        out_xfm = _concat_xfms(in_list, invert=self.inputs.invert)
+        np.savetxt(out_mat, out_xfm, fmt=str('%.12g'))
+
+        self._results['out_mat'] = out_mat
+        return runtime
+
+
 def _tpm2roi(in_tpm, in_mask, mask_erosion_mm=None, erosion_mm=None,
              mask_erosion_prop=None, erosion_prop=None, pthres=0.95):
     """
@@ -237,3 +277,15 @@ def _tpm2roi(in_tpm, in_mask, mask_erosion_mm=None, erosion_mm=None,
     roi_img.set_data_dtype(np.uint8)
     roi_img.to_filename(roi_fname)
     return roi_fname, eroded_mask_file or in_mask
+
+
+def _concat_xfms(in_list, invert):
+    transforms = [np.loadtxt(in_mat) for in_mat in in_list]
+    out_xfm = transforms.pop(0)
+    for xfm in transforms:
+        out_xfm = out_xfm.dot(xfm)
+
+    if invert:
+        out_xfm = np.linalg.inv(out_xfm)
+
+    return out_xfm
