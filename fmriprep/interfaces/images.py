@@ -301,7 +301,10 @@ class ReorientOutputSpec(TraitedSpec):
 
 
 class Reorient(SimpleInterface):
-    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)"""
+    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)
+
+    Syncs qform and sform codes for consistent treatment by all software
+    """
     input_spec = ReorientInputSpec
     output_spec = ReorientOutputSpec
 
@@ -315,8 +318,26 @@ class Reorient(SimpleInterface):
         ornt_xfm = nb.orientations.inv_ornt_aff(
             nb.io_orientation(orig_img.affine), orig_img.shape)
 
+        save_file = reoriented is not orig_img
+
+        # Always set valid sform/qform for consistency
+        # Normalize transform to be qform compatible
+        # Use code 2 to indicate valid, not aligned to template, and
+        # not necessarily preserving scanner original coordinates
+        xform = reoriented.affine.copy()
+        xform[:3, :3] = nb.quaternions.quat2mat(nb.quaternions.mat2quat(xform[:3, :3]))
+        xform_code = 2
+        qform, qform_code = reoriented.get_qform(coded=True)
+        sform, sform_code = reoriented.get_sform(coded=True)
+        if not np.allclose(qform, xform) or int(qform_code) != xform_code:
+            save_file = True
+            reoriented.set_qform(xform, xform_code)
+        if not np.allclose(sform, xform) or int(sform_code) != xform_code:
+            save_file = True
+            reoriented.set_sform(xform, xform_code)
+
         # Image may be reoriented
-        if reoriented is not orig_img:
+        if save_file:
             out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
             reoriented.to_filename(out_name)
         else:
