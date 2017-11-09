@@ -21,6 +21,8 @@ from niworkflows.nipype.interfaces.base import (
     SimpleInterface)
 from niworkflows.nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
 
+from .images import normalize_xform
+
 LOGGER = logging.getLogger('interface')
 
 
@@ -258,15 +260,26 @@ def _applytfms(args):
     out_file = fname_presuffix(in_file, suffix='_xform-%05d' % index,
                                newpath=newpath, use_ext=True)
 
+    # Synchronize qform and sform so that transforms calculated on the reference
+    # image may be safely applied
+    in_img = nb.load(in_file)
+    norm_img = normalize_xform(in_img)
+    if norm_img is not in_img:
+        sync_file = fname_presuffix(in_file, suffix='_sync-%05d' % index,
+                                    newpath=newpath, use_ext=True)
+        norm_img.to_filename(sync_file)
+    else:
+        sync_file = in_file
+
     copy_dtype = ifargs.pop('copy_dtype', False)
     xfm = ApplyTransforms(
-        input_image=in_file, transforms=in_xform, output_image=out_file, **ifargs)
+        input_image=sync_file, transforms=in_xform, output_image=out_file, **ifargs)
     xfm.terminal_output = 'allatonce'
     runtime = xfm.run().runtime
 
     if copy_dtype:
         nii = nb.load(out_file)
-        in_dtype = nb.load(in_file).get_data_dtype()
+        in_dtype = in_img.get_data_dtype()
 
         # Overwrite only iff dtypes don't match
         if in_dtype != nii.get_data_dtype():

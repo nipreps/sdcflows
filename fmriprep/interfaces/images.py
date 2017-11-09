@@ -345,6 +345,9 @@ class NormalizeXformOutputSpec(TraitedSpec):
 
 
 class NormalizeXform(SimpleInterface):
+    input_spec= NormalizeXformInputSpec
+    output_spec= NormalizeXformOutputSpec
+
     def _run_interface(self, runtime):
         img = nb.load(self.inputs.in_file)
         normalized = normalize_xform(img)
