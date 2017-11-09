@@ -336,6 +336,28 @@ class Reorient(SimpleInterface):
         return runtime
 
 
+class NormalizeXformInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input image')
+
+
+class NormalizeXformOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='validated image')
+
+
+class NormalizeXform(SimpleInterface):
+    def _run_interface(self, runtime):
+        img = nb.load(self.inputs.in_file)
+        normalized = normalize_xform(img)
+        if normalized is not img:
+            out_fname = fname_presuffix(self.inputs.in_file, suffix='_norm', newpath=runtime.cwd)
+            normalized.to_filename(out_fname)
+        else:
+            out_fname = self.inputs.in_file
+
+        self._results['out_file'] = out_fname
+        return runtime
+
+
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
 
