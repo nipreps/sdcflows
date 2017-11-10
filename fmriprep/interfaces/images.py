@@ -504,7 +504,8 @@ def normalize_xform(img):
     # Check desired codes
     qform, qform_code = img.get_qform(coded=True)
     sform, sform_code = img.get_sform(coded=True)
-    if all((np.allclose(qform, xform), np.allclose(sform, xform),
+    if all((qform is not None and np.allclose(qform, xform),
+            sform is not None and np.allclose(sform, xform),
             int(qform_code) == xform_code, int(sform_code) == xform_code)):
         return img
 
