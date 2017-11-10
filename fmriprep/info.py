@@ -71,7 +71,7 @@ REQUIRES = [
     'statsmodels',
     'nipype',
     'seaborn',
-    'indexed_gzip>=0.6.1',
+    'indexed_gzip>=0.7.0',
 ]
 
 LINKS_REQUIRES = [
@@ -88,6 +88,7 @@ EXTRA_REQUIRES = {
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
     'datalad': ['datalad'],
+    'resmon': ['psutil>=5.4.0'],
 }
 
 # Enable a handle to install all extra dependencies at once
