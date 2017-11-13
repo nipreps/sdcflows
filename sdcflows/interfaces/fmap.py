@@ -183,7 +183,7 @@ def _unwrap(fmap_data, mag_file, mask=None):
     return unwrapped
 
 
-def get_ees(in_meta, in_file=None):
+def get_ees(in_meta, pe_dir=1, in_file=None):
     """
     Calculate the *effective echo spacing* for an input
     :abbr:`EPI (echo-planar imaging)` scan.
@@ -195,7 +195,7 @@ def get_ees(in_meta, in_file=None):
 
     >>> epi_file = nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
     ...     'epi.nii.gz')
-    >>> meta = {'EffectiveEchoSpacing': 0.00059, epi_file}
+    >>> meta = {'EffectiveEchoSpacing': 0.00059}
     >>> get_ees(meta)
     0.00059
 
@@ -204,17 +204,20 @@ def get_ees(in_meta, in_file=None):
     of voxels along the readout direction and the parallel acceleration
     factor of the EPI:
 
-    >>> meta = {'TotalReadoutTime': 0.026255,
+    >>> meta = {'TotalReadoutTime': 0.02596,
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_ees(meta, epi_file)
     0.00059
 
-    Some vendors, like Philips, store different parameter names:
+    Some vendors, like Philips, store different parameter names
+    (see http://dbic.dartmouth.edu/pipermail/mrusers/attachments/\
+20141112/eb1d20e6/attachment.pdf):
 
-    >>> meta = {'WaterFatShift': 0.31968,
+    >>> meta = {'WaterFatShift': 8.129,
+    ...         'MagneticFieldStrength': 3,
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_ees(meta, epi_file)
-    0.000359551
+    0.00041602630141921826
 
     """
 
@@ -225,19 +228,82 @@ def get_ees(in_meta, in_file=None):
 
     # All other cases require the parallel acc and npe (N vox in PE dir)
     acc = float(in_meta.get('ParallelReductionFactorInPlane', 1.0))
-    npe = nb.load(in_file).shape[2]
-    etl = (npe - 1) / acc
+    npe = nb.load(in_file).shape[pe_dir]
+    etl = npe // acc
 
     # Use case 2: TRT is defined
     trt = in_meta.get('TotalReadoutTime', None)
     if trt is not None:
-        return trt / etl
+        return trt / (etl - 1)
 
     # Use case 3 (philips scans)
     wfs = in_meta.get('WaterFatShift', None)
     if wfs is not None:
         fstrength = in_meta['MagneticFieldStrength']
-        bw = 0.074 * fstrength * npe / wfs
-        return etl / bw
+        wfd_ppm = 3.4  # water-fat diff in ppm
+        g_ration_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
+        wfs_hz = fstrength * wfd_ppm * g_ration_mhz_t
+        return wfs / (wfs_hz * etl)
+
+    raise NotImplementedError('Unknown EES specification')
+
+
+def get_trt(in_meta, pe_dir=1, in_file=None):
+    """
+    Calculate the *total readout time* for an input
+    :abbr:`EPI (echo-planar imaging)` scan.
+
+
+    There are several procedures to calculate the total
+    readout time. The basic one is that a ``TotalReadoutTime``
+    field is set in the JSON sidecar:
+
+    >>> meta = {'TotalReadoutTime': 0.02596}
+    >>> get_trt(meta)
+    0.02596
+
+    If the ``EffectiveEchoSpacing`` field is provided, then the
+    total readout time can be calculated reading the number
+    of voxels along the readout direction and the parallel acceleration
+    factor of the EPI:
+
+    >>> epi_file = nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
+    ...     'epi.nii.gz')
+    >>> meta = {'EffectiveEchoSpacing': 0.00059}
+    >>> get_trt(meta, epi_file)
+    0.02596
+
+    Some vendors, like Philips, store different parameter names:
+
+    >>> meta = {'WaterFatShift': 0.31968,
+    ...         'ParallelReductionFactorInPlane': 2}
+    >>> get_trt(meta, epi_file)
+    0.018721183563864822
+
+    """
+
+    # Use case 1: TRT is defined
+    trt = in_meta.get('TotalReadoutTime', None)
+    if trt is not None:
+        return trt
+
+    # All other cases require the parallel acc and npe (N vox in PE dir)
+    acc = float(in_meta.get('ParallelReductionFactorInPlane', 1.0))
+    npe = nb.load(in_file).shape[pe_dir]
+    etl = npe // acc
+
+    # Use case 2: TRT is defined
+    ees = in_meta.get('EffectiveEchoSpacing', None)
+    if ees is not None:
+        return ees * (etl - 1)
+
+    # Use case 3 (philips scans)
+    wfs = in_meta.get('WaterFatShift', None)
+    if wfs is not None:
+        fstrength = in_meta['MagneticFieldStrength']
+        wfd_ppm = 3.4  # water-fat diff in ppm
+        g_ration_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
+        wfs_hz = fstrength * wfd_ppm * g_ration_mhz_t
+        return wfs / wfs_hz
 
     raise NotImplementedError('Unknown EES specification')
