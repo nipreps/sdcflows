@@ -181,3 +181,63 @@ def _unwrap(fmap_data, mag_file, mask=None):
 
     unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax / pi)
     return unwrapped
+
+
+def get_ees(in_meta, in_file=None):
+    """
+    Calculate the *effective echo spacing* for an input
+    :abbr:`EPI (echo-planar imaging)` scan.
+
+
+    There are several procedures to calculate the effective
+    echo spacing. The basic one is that an ``EffectiveEchoSpacing``
+    field is set in the JSON sidecar:
+
+    >>> epi_file = nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
+    ...     'epi.nii.gz')
+    >>> meta = {'EffectiveEchoSpacing': 0.00059, epi_file}
+    >>> get_ees(meta)
+    0.00059
+
+    If the ``TotalReadoutTime`` field is provided, then the
+    effective echo spacing can be calculated reading the number
+    of voxels along the readout direction and the parallel acceleration
+    factor of the EPI:
+
+    >>> meta = {'TotalReadoutTime': 0.026255,
+    ...         'ParallelReductionFactorInPlane': 2}
+    >>> get_ees(meta, epi_file)
+    0.00059
+
+    Some vendors, like Philips, store different parameter names:
+
+    >>> meta = {'WaterFatShift': 0.31968,
+    ...         'ParallelReductionFactorInPlane': 2}
+    >>> get_ees(meta, epi_file)
+    0.000359551
+
+    """
+
+    # Use case 1: EES is defined
+    ees = in_meta.get('EffectiveEchoSpacing', None)
+    if ees is not None:
+        return ees
+
+    # All other cases require the parallel acc and npe (N vox in PE dir)
+    acc = float(in_meta.get('ParallelReductionFactorInPlane', 1.0))
+    npe = nb.load(in_file).shape[2]
+    etl = (npe - 1) / acc
+
+    # Use case 2: TRT is defined
+    trt = in_meta.get('TotalReadoutTime', None)
+    if trt is not None:
+        return trt / etl
+
+    # Use case 3 (philips scans)
+    wfs = in_meta.get('WaterFatShift', None)
+    if wfs is not None:
+        fstrength = in_meta['MagneticFieldStrength']
+        bw = 0.074 * fstrength * npe / wfs
+        return etl / bw
+
+    raise NotImplementedError('Unknown EES specification')
