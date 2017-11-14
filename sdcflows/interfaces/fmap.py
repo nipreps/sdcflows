@@ -5,6 +5,14 @@
 """
 Interfaces to deal with the various types of fieldmap sources
 
+    .. testsetup::
+
+        >>> tmpdir = getfixture('tmpdir')
+        >>> tmp = tmpdir.chdir() # changing to a temporary directory
+        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
+        ...     tmpdir.join('epi.nii.gz').strpath)
+
+
 """
 
 import numpy as np
@@ -191,10 +199,10 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
 
     There are several procedures to calculate the effective
     echo spacing. The basic one is that an ``EffectiveEchoSpacing``
-    field is set in the JSON sidecar:
+    field is set in the JSON sidecar. The following examples
+    use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
+    j-axis encoding direction (``pe_dir=1``).
 
-    >>> epi_file = nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-    ...     'epi.nii.gz')
     >>> meta = {'EffectiveEchoSpacing': 0.00059}
     >>> get_ees(meta)
     0.00059
@@ -206,7 +214,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
 
     >>> meta = {'TotalReadoutTime': 0.02596,
     ...         'ParallelReductionFactorInPlane': 2}
-    >>> get_ees(meta, epi_file)
+    >>> get_ees(meta, in_file='epi.nii.gz')
     0.00059
 
     Some vendors, like Philips, store different parameter names
@@ -216,7 +224,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
     >>> meta = {'WaterFatShift': 8.129,
     ...         'MagneticFieldStrength': 3,
     ...         'ParallelReductionFactorInPlane': 2}
-    >>> get_ees(meta, epi_file)
+    >>> get_ees(meta, in_file='epi.nii.gz')
     0.00041602630141921826
 
     """
@@ -256,7 +264,9 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
 
     There are several procedures to calculate the total
     readout time. The basic one is that a ``TotalReadoutTime``
-    field is set in the JSON sidecar:
+    field is set in the JSON sidecar. The following examples
+    use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
+    j-axis encoding direction (``pe_dir=1``).
 
     >>> meta = {'TotalReadoutTime': 0.02596}
     >>> get_trt(meta)
@@ -267,17 +277,17 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
     of voxels along the readout direction and the parallel acceleration
     factor of the EPI:
 
-    >>> epi_file = nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-    ...     'epi.nii.gz')
-    >>> meta = {'EffectiveEchoSpacing': 0.00059}
-    >>> get_trt(meta, epi_file)
+    >>> meta = {'EffectiveEchoSpacing': 0.00059,
+    ...         'ParallelReductionFactorInPlane': 2}
+    >>> get_trt(meta, in_file='epi.nii.gz')
     0.02596
 
     Some vendors, like Philips, store different parameter names:
 
-    >>> meta = {'WaterFatShift': 0.31968,
+    >>> meta = {'WaterFatShift': 8.129,
+    ...         'MagneticFieldStrength': 3,
     ...         'ParallelReductionFactorInPlane': 2}
-    >>> get_trt(meta, epi_file)
+    >>> get_trt(meta, in_file='epi.nii.gz')
     0.018721183563864822
 
     """
