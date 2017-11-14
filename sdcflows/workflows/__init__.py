@@ -57,6 +57,28 @@ Additionally, FMRIPREP now experimentally supports displacement field estimation
 in the absence of fieldmaps. See :ref:`fieldmapless_estimation` for
 further details.
 
+Calculating the effective echo-spacing and total-readout time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Displacement along the phase-encoding direction (:math:`d_y(x, y, z)`) is
+proportional to the slice readout time (:math:`T_\\text{ro}`)
+and the field inhomogeneity (:math:`\\Delta B_0(x, y, z)`)
+as follows [Hutton2002]_:
+
+  .. math ::
+
+      d_y(x, y, z) = \\gamma \\Delta B_0(x, y, z) T_\\text{ro}
+
+where :math:`\\gamma` is the gyromagnetic ratio.
+
+
+FMRIPREP extracts :math:`T_\\text{ro}` and :math:`t_\\text{ees}` using
+the following two functions:
+
+.. autofunction:: fmriprep.interfaces.fmap.get_ees
+
+.. autofunction:: fmriprep.interfaces.fmap.get_trt
+
 """
 
 from .base import init_fmap_estimator_wf, init_fmap_unwarp_report_wf

@@ -208,10 +208,20 @@ def get_ees(in_meta, in_file=None):
     >>> get_ees(meta)
     0.00059
 
-    If the ``TotalReadoutTime`` field is provided, then the
-    effective echo spacing can be calculated reading the number
-    of voxels along the readout direction and the parallel acceleration
-    factor of the EPI:
+    If the *total readout time* :math:`T_\\text{ro}` (``TotalReadoutTime``
+    BIDS field) is provided, then the effective echo spacing can be
+    calculated reading the number of voxels :math:`N_\\text{PE}` along the
+    readout direction and the parallel acceleration
+    factor of the EPI
+
+      .. math ::
+
+          t_\\text{ees} =  T_\\text{ro} \\,  (N_\\text{PE} / f_\\text{acc} - 1)^{-1}
+
+    where :math:`N_y` is the number of pixels along the phase-encoding direction
+    :math:`y`, and :math:`f_\\text{acc}` is the parallel imaging acceleration factor
+    (:abbr:`GRAPPA (GeneRalized Autocalibrating Partial Parallel Acquisition)`,
+    :abbr:`ARC (Autocalibrating Reconstruction for Cartesian imaging)`, etc.).
 
     >>> meta = {'TotalReadoutTime': 0.02596,
     ...         'PhaseEncodingDirection': 'j-',
@@ -275,10 +285,15 @@ def get_trt(in_meta, in_file=None):
     >>> get_trt(meta)
     0.02596
 
-    If the ``EffectiveEchoSpacing`` field is provided, then the
+    If the *effective echo spacing* :math:`t_\\text{ees}`
+    (``EffectiveEchoSpacing`` BIDS field) is provided, then the
     total readout time can be calculated reading the number
-    of voxels along the readout direction and the parallel acceleration
-    factor of the EPI:
+    of voxels along the readout direction :math:`T_\\text{ro}`
+    and the parallel acceleration factor of the EPI :math:`f_\\text{acc}`.
+
+      .. math ::
+
+          T_\\text{ro} = t_\\text{ees} \\, (N_\\text{PE} / f_\\text{acc} - 1)
 
     >>> meta = {'EffectiveEchoSpacing': 0.00059,
     ...         'PhaseEncodingDirection': 'j-',
