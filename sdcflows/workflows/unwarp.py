@@ -26,7 +26,7 @@ from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
 from ...interfaces import itk, ReadSidecarJSON, StructuralReference, DerivativesDataSink
-from ...interfaces.fmap import get_ees
+from ...interfaces.fmap import get_ees as _get_ees
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
@@ -127,9 +127,9 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
     torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
 
-    ees = pe.Node(niu.Function(
-        function=get_ees, input_names=['in_meta', 'in_file'],
-        out_names=['ees']), name='get_ees', run_without_submitting=True)
+    get_ees = pe.Node(niu.Function(
+        function=_get_ees, input_names=['in_meta', 'in_file'],
+        output_names=['ees']), name='get_ees', run_without_submitting=True)
 
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
     # Convert the VSM into a DFM (displacements field map)
@@ -172,9 +172,9 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
         (inputnode, fmap_mask2ref_apply, [('fmap_mask', 'input_image')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
-        (meta, ees, [('out_dict', 'in_meta')]),
-        (inputnode, ees, [('name_source', 'in_file')]),
-        (ees, gen_vsm, [('ees', 'dwell_time')]),
+        (meta, get_ees, [('out_dict', 'in_meta')]),
+        (inputnode, get_ees, [('name_source', 'in_file')]),
+        (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
         (torads, gen_vsm, [('out', 'fmap_in_file')]),
