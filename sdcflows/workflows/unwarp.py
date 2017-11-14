@@ -128,7 +128,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
 
     ees = pe.Node(niu.Function(
-        function=get_ees, input_names=['meta', 'in_file'],
+        function=get_ees, input_names=['in_meta', 'in_file'],
         out_names=['ees']), name='get_ees', run_without_submitting=True)
 
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
@@ -172,7 +172,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
         (inputnode, fmap_mask2ref_apply, [('fmap_mask', 'input_image')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
-        (meta, ees, [('out_dict', 'meta')]),
+        (meta, ees, [('out_dict', 'in_meta')]),
         (inputnode, ees, [('name_source', 'in_file')]),
         (ees, gen_vsm, [('ees', 'dwell_time')]),
         (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
