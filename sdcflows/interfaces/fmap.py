@@ -193,8 +193,8 @@ def _unwrap(fmap_data, mag_file, mask=None):
 
 def get_ees(in_meta, in_file=None):
     """
-    Calculate the *effective echo spacing* for an input
-    :abbr:`EPI (echo-planar imaging)` scan.
+    Calculate the *effective echo spacing* :math:`t_\\text{ees}`
+    for an input :abbr:`EPI (echo-planar imaging)` scan.
 
 
     There are several procedures to calculate the effective
@@ -216,7 +216,7 @@ def get_ees(in_meta, in_file=None):
 
       .. math ::
 
-          t_\\text{ees} =  T_\\text{ro} \\,  (N_\\text{PE} / f_\\text{acc} - 1)^{-1}
+           =  T_\\text{ro} \\,  (N_\\text{PE} / f_\\text{acc} - 1)^{-1}
 
     where :math:`N_y` is the number of pixels along the phase-encoding direction
     :math:`y`, and :math:`f_\\text{acc}` is the parallel imaging acceleration factor
@@ -262,11 +262,11 @@ def get_ees(in_meta, in_file=None):
     if wfs is not None:
         fstrength = in_meta['MagneticFieldStrength']
         wfd_ppm = 3.4  # water-fat diff in ppm
-        g_ration_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
-        wfs_hz = fstrength * wfd_ppm * g_ration_mhz_t
+        g_ratio_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
+        wfs_hz = fstrength * wfd_ppm * g_ratio_mhz_t
         return wfs / (wfs_hz * etl)
 
-    raise NotImplementedError('Unknown EES specification')
+    raise ValueError('Unknown effective echo-spacing specification')
 
 
 def get_trt(in_meta, in_file=None):
@@ -332,11 +332,11 @@ def get_trt(in_meta, in_file=None):
     if wfs is not None:
         fstrength = in_meta['MagneticFieldStrength']
         wfd_ppm = 3.4  # water-fat diff in ppm
-        g_ration_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
-        wfs_hz = fstrength * wfd_ppm * g_ration_mhz_t
+        g_ratio_mhz_t = 42.57  # gyromagnetic ratio for proton (1H) in MHz/T
+        wfs_hz = fstrength * wfd_ppm * g_ratio_mhz_t
         return wfs / wfs_hz
 
-    raise NotImplementedError('Unknown EES specification')
+    raise ValueError('Unknown total-readout time specification')
 
 
 def _get_pe_index(meta):
