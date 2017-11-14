@@ -191,7 +191,7 @@ def _unwrap(fmap_data, mag_file, mask=None):
     return unwrapped
 
 
-def get_ees(in_meta, pe_dir=1, in_file=None):
+def get_ees(in_meta, in_file=None):
     """
     Calculate the *effective echo spacing* for an input
     :abbr:`EPI (echo-planar imaging)` scan.
@@ -203,7 +203,8 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
     use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
     j-axis encoding direction (``pe_dir=1``).
 
-    >>> meta = {'EffectiveEchoSpacing': 0.00059}
+    >>> meta = {'EffectiveEchoSpacing': 0.00059,
+    ...         'PhaseEncodingDirection': 'j-'}
     >>> get_ees(meta)
     0.00059
 
@@ -213,6 +214,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
     factor of the EPI:
 
     >>> meta = {'TotalReadoutTime': 0.02596,
+    ...         'PhaseEncodingDirection': 'j-',
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_ees(meta, in_file='epi.nii.gz')
     0.00059
@@ -223,6 +225,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
 
     >>> meta = {'WaterFatShift': 8.129,
     ...         'MagneticFieldStrength': 3,
+    ...         'PhaseEncodingDirection': 'j-',
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_ees(meta, in_file='epi.nii.gz')
     0.00041602630141921826
@@ -236,7 +239,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
 
     # All other cases require the parallel acc and npe (N vox in PE dir)
     acc = float(in_meta.get('ParallelReductionFactorInPlane', 1.0))
-    npe = nb.load(in_file).shape[pe_dir]
+    npe = nb.load(in_file).shape[_get_pe_index(in_meta)]
     etl = npe // acc
 
     # Use case 2: TRT is defined
@@ -256,7 +259,7 @@ def get_ees(in_meta, pe_dir=1, in_file=None):
     raise NotImplementedError('Unknown EES specification')
 
 
-def get_trt(in_meta, pe_dir=1, in_file=None):
+def get_trt(in_meta, in_file=None):
     """
     Calculate the *total readout time* for an input
     :abbr:`EPI (echo-planar imaging)` scan.
@@ -278,6 +281,7 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
     factor of the EPI:
 
     >>> meta = {'EffectiveEchoSpacing': 0.00059,
+    ...         'PhaseEncodingDirection': 'j-',
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_trt(meta, in_file='epi.nii.gz')
     0.02596
@@ -286,6 +290,7 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
 
     >>> meta = {'WaterFatShift': 8.129,
     ...         'MagneticFieldStrength': 3,
+    ...         'PhaseEncodingDirection': 'j-',
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_trt(meta, in_file='epi.nii.gz')
     0.018721183563864822
@@ -299,7 +304,7 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
 
     # All other cases require the parallel acc and npe (N vox in PE dir)
     acc = float(in_meta.get('ParallelReductionFactorInPlane', 1.0))
-    npe = nb.load(in_file).shape[pe_dir]
+    npe = nb.load(in_file).shape[_get_pe_index(in_meta)]
     etl = npe // acc
 
     # Use case 2: TRT is defined
@@ -317,3 +322,11 @@ def get_trt(in_meta, pe_dir=1, in_file=None):
         return wfs / wfs_hz
 
     raise NotImplementedError('Unknown EES specification')
+
+
+def _get_pe_index(meta):
+    pe = meta['PhaseEncodingDirection']
+    try:
+        return {'i': 0, 'j': 1, 'k': 2}[pe[0]]
+    except KeyError:
+        raise RuntimeError('"%s" is an invalid PE string' % pe)
