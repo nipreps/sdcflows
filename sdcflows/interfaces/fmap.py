@@ -201,7 +201,7 @@ def get_ees(in_meta, in_file=None):
     echo spacing. The basic one is that an ``EffectiveEchoSpacing``
     field is set in the JSON sidecar. The following examples
     use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
-    j-axis encoding direction (``pe_dir=1``).
+    j-axis encoding direction.
 
     >>> meta = {'EffectiveEchoSpacing': 0.00059,
     ...         'PhaseEncodingDirection': 'j-'}
@@ -269,7 +269,7 @@ def get_trt(in_meta, in_file=None):
     readout time. The basic one is that a ``TotalReadoutTime``
     field is set in the JSON sidecar. The following examples
     use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
-    j-axis encoding direction (``pe_dir=1``).
+    j-axis encoding direction.
 
     >>> meta = {'TotalReadoutTime': 0.02596}
     >>> get_trt(meta)
