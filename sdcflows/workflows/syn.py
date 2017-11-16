@@ -2,10 +2,25 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-Fieldmap-less SDC
-+++++++++++++++++
+.. _sdc_fieldmapless :
 
-.. autofunction:: init_nonlinear_sdc_wf
+Fieldmap-less estimation (experimental)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the absence of direct measurements of fieldmap data, we provide an (experimental)
+option to estimate the susceptibility distortion based on the ANTs symmetric
+normalization (SyN) technique.
+This feature may be enabled, using the ``--use-syn-sdc`` flag, and will only be
+applied if fieldmaps are unavailable.
+
+During the evaluation phase, the ``--force-syn`` flag will cause this estimation to
+be performed *in addition to* fieldmap-based estimation, to permit the direct
+comparison of the results of each technique.
+Note that, even if ``--force-syn`` is given, the functional outputs of FMRIPREP will
+be corrected using the fieldmap-based estimates.
+
+Feedback will be enthusiastically received.
+
 
 """
 import pkg_resources as pkgr
@@ -78,19 +93,6 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
         out_mask_report
             reportlet for the skullstripping
 
-    .. [Huntenburg2014] Huntenburg, J. M. (2014) Evaluating Nonlinear
-                        Coregistration of BOLD EPI and T1w Images. Berlin: Master
-                        Thesis, Freie Universität. `PDF
-                        <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`_.
-    .. [Treiber2016] Treiber, J. M. et al. (2016) Characterization and Correction
-                     of Geometric Distortions in 814 Diffusion Weighted Images,
-                     PLoS ONE 11(3): e0152472. doi:`10.1371/journal.pone.0152472
-                     <https://doi.org/10.1371/journal.pone.0152472>`_.
-    .. [Wang2017] Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
-                  Registration Methods for Correction of Susceptibility Artifacts
-                  in Diffusion MRI. Front. Neuroinform. 11:17.
-                  doi:`10.3389/fninf.2017.00017
-                  <https://doi.org/10.3389/fninf.2017.00017>`_.
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
