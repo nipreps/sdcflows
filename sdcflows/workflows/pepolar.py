@@ -154,8 +154,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
                       mem_gb=0.01)
 
-    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp',
-                         mem_gb=0.01, run_without_submitting=True)
+    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp', mem_gb=0.01)
 
     unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
                                                       generate_report=False,
