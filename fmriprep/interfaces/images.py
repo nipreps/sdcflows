@@ -429,45 +429,6 @@ def reorient(in_file, out_file=None):
     return out_file
 
 
-def _flatten_split_merge(in_files):
-    if isinstance(in_files, str):
-        in_files = [in_files]
-
-    nfiles = len(in_files)
-
-    all_nii = []
-    for fname in in_files:
-        nii = nb.squeeze_image(nb.load(fname))
-
-        if nii.get_data().ndim > 3:
-            all_nii += nb.four_to_three(nii)
-        else:
-            all_nii.append(nii)
-
-    if len(all_nii) == 1:
-        LOGGER.warning('File %s cannot be split', all_nii[0])
-        return in_files[0], in_files
-
-    if len(all_nii) == nfiles:
-        flat_split = in_files
-    else:
-        splitname = fname_presuffix(in_files[0], suffix='_split%04d', newpath=os.getcwd())
-        flat_split = []
-        for i, nii in enumerate(all_nii):
-            flat_split.append(splitname % i)
-            nii.to_filename(flat_split[-1])
-
-    # Only one 4D file was supplied
-    if nfiles == 1:
-        merged = in_files[0]
-    else:
-        # More that one in_files - need merge
-        merged = fname_presuffix(in_files[0], suffix='_merged', newpath=os.getcwd())
-        nb.concat_images(all_nii).to_filename(merged)
-
-    return merged, flat_split
-
-
 def extract_wm(in_seg, wm_label=3):
     import os.path as op
     import nibabel as nb
