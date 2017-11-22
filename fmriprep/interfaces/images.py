@@ -354,35 +354,40 @@ class ValidateImage(SimpleInterface):
         img = nb.load(self.inputs.in_file)
         out_report = os.path.abspath('report.html')
 
+        # Retrieve xform codes
+        sform_code = img.header._structarr['sform_code']
+        qform_code = img.header._structarr['qform_code']
+
         # Check qform is valid
         valid_qform = True
         try:
             img.get_qform()
         except ValueError:
-            # Copy sform into qform
-            img.set_qform(img.get_sform())
             valid_qform = False
+            # if not valid, qform will be overwritten with sform
+            # if sform_code is 0, we want to fix the code
+            qform_code = sform_code
 
-        qform_code = img.header._structarr['qform_code']
-        sform_code = img.header._structarr['sform_code']
+        # Check affine information is valid
+        valid_codes = (qform_code, sform_code) != (0, 0)
 
-        # Valid affine information
-        if valid_qform and (qform_code, sform_code) != (0, 0):
+        # Both okay -> do nothing, empty report
+        if valid_qform and valid_codes:
             self._results['out_file'] = self.inputs.in_file
             open(out_report, 'w').close()
             self._results['out_report'] = out_report
             return runtime
 
+        snippet = ''
         out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid', newpath=runtime.cwd)
-
-        # Nibabel derives a default LAS affine from the shape and zooms
-        # Use scanner xform code to indicate no alignment has been done
-        img.set_sform(img.affine, nb.nifti1.xform_codes['scanner'])
-
-        img.to_filename(out_fname)
         self._results['out_file'] = out_fname
 
-        snippet = """\
+        # Fix sform if needed
+        if not valid_codes:
+            # Nibabel derives a default LAS affine from the shape and zooms
+            # Use scanner xform code to indicate no alignment has been done
+            img.set_sform(img.affine, nb.nifti1.xform_codes['scanner'])
+            snippet += """\
 <h3 class="elem-title">WARNING - Invalid header</h3>
 <p class="elem-desc">Input file does not have valid qform or sform matrix.
   A default, LAS-oriented affine has been constructed.
@@ -391,14 +396,20 @@ class ValidateImage(SimpleInterface):
 </p>
 """
         if not valid_qform:
+            # Copy sform into qform
+            img.set_qform(img.get_sform(),
+                          int(img.header._structarr['sform_code']))
+
             snippet = """\
 <h3 class="elem-title">WARNING - Invalid q-form matrix</h3>
 <p class="elem-desc">Input file does not have a valid qform matrix.
   To fix the q-form matrix, FMRIPREP copied the s-form matrix over.
   Analyses of this dataset MAY BE INVALID.
 </p>
-""" + snippet
+"""
 
+        # Store new file and report
+        img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
             fobj.write(indent(snippet, '\t' * 3))
 
