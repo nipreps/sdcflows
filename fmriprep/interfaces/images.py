@@ -13,6 +13,7 @@ import os
 import numpy as np
 import nibabel as nb
 import nilearn.image as nli
+from textwrap import indent
 
 from niworkflows.nipype import logging
 from niworkflows.nipype.utils.filemanip import fname_presuffix
@@ -353,11 +354,20 @@ class ValidateImage(SimpleInterface):
         img = nb.load(self.inputs.in_file)
         out_report = os.path.abspath('report.html')
 
+        # Check qform is valid
+        valid_qform = True
+        try:
+            img.get_qform()
+        except ValueError:
+            # Copy sform into qform
+            img.set_qform(img.get_sform())
+            valid_qform = False
+
         qform_code = img.header._structarr['qform_code']
         sform_code = img.header._structarr['sform_code']
 
         # Valid affine information
-        if (qform_code, sform_code) != (0, 0):
+        if valid_qform and (qform_code, sform_code) != (0, 0):
             self._results['out_file'] = self.inputs.in_file
             open(out_report, 'w').close()
             self._results['out_report'] = out_report
@@ -372,15 +382,25 @@ class ValidateImage(SimpleInterface):
         img.to_filename(out_fname)
         self._results['out_file'] = out_fname
 
-        snippet = (r'<h3 class="elem-title">WARNING - Invalid header</h3>',
-                   r'<p class="elem-desc">Input file does not have valid qform or sform matrix.',
-                   r'A default, LAS-oriented affine has been constructed.',
-                   r'A left-right flip may have occurred.',
-                   r'Analyses of this dataset MAY BE INVALID.</p>')
+        snippet = """\
+<h3 class="elem-title">WARNING - Invalid header</h3>
+<p class="elem-desc">Input file does not have valid qform or sform matrix.
+  A default, LAS-oriented affine has been constructed.
+  A left-right flip may have occurred.
+  Analyses of this dataset MAY BE INVALID.
+</p>
+"""
+        if not valid_qform:
+            snippet = """\
+<h3 class="elem-title">WARNING - Invalid q-form matrix</h3>
+<p class="elem-desc">Input file does not have a valid qform matrix.
+  To fix the q-form matrix, FMRIPREP copied the s-form matrix over.
+  Analyses of this dataset MAY BE INVALID.
+</p>
+""" + snippet
 
         with open(out_report, 'w') as fobj:
-            fobj.write('\n'.join('\t' * 3 + line for line in snippet))
-            fobj.write('\n')
+            fobj.write(indent(snippet, '\t' * 3))
 
         self._results['out_report'] = out_report
         return runtime
