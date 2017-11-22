@@ -400,7 +400,7 @@ class ValidateImage(SimpleInterface):
             img.set_qform(img.get_sform(),
                           int(img.header._structarr['sform_code']))
 
-            snippet = """\
+            snippet += """\
 <h3 class="elem-title">WARNING - Invalid q-form matrix</h3>
 <p class="elem-desc">Input file does not have a valid qform matrix.
   To fix the q-form matrix, FMRIPREP copied the s-form matrix over.
