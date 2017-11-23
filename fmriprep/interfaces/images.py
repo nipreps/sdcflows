@@ -412,7 +412,6 @@ class ValidateImage(SimpleInterface):
 </p>
 """ % extra_msg
 
-
         # Store new file and report
         img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
