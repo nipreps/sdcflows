@@ -360,13 +360,12 @@ class ValidateImage(SimpleInterface):
 
         # Check qform is valid
         valid_qform = True
+        old_qform_code = int(qform_code)
         try:
             img.get_qform()
         except ValueError:
             valid_qform = False
-            # if not valid, qform will be overwritten with sform
-            # if sform_code is 0, we want to fix the code
-            qform_code = sform_code
+            qform_code = nb.nifti1.xform_codes['unknown']
 
         # Check affine information is valid
         valid_codes = (qform_code, sform_code) != (0, 0)
@@ -397,16 +396,22 @@ class ValidateImage(SimpleInterface):
 """
         if not valid_qform:
             # Copy sform into qform
-            img.set_qform(img.get_sform(),
-                          int(img.header._structarr['sform_code']))
+            img.set_qform(img.get_sform(), nb.nifti1.xform_codes['aligned'])
+
+            extra_msg = ''
+            if old_qform_code == nb.nifti1.xform_codes['unknown']:
+                extra_msg = ('Additionally, please note that the original q-form code '
+                             'was 0 (unknown), which is potentially problematic.')
 
             snippet += """\
 <h3 class="elem-title">WARNING - Invalid q-form matrix</h3>
 <p class="elem-desc">Input file does not have a valid qform matrix.
-  To fix the q-form matrix, FMRIPREP copied the s-form matrix over.
+  To fix the q-form matrix, FMRIPREP copied the s-form matrix over, and
+  set 2 (aligned) as the q-form code. %s
   Analyses of this dataset MAY BE INVALID.
 </p>
-"""
+""" % extra_msg
+
 
         # Store new file and report
         img.to_filename(out_fname)
