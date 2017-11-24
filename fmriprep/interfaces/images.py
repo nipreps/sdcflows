@@ -396,7 +396,7 @@ class ValidateImage(SimpleInterface):
 """
         if not valid_qform:
             # Copy sform into qform
-            img.set_qform(img.get_sform(), nb.nifti1.xform_codes['aligned'])
+            img.set_qform(img.get_sform(), nb.nifti1.xform_codes['scanner'])
 
             extra_msg = ''
             if old_qform_code == nb.nifti1.xform_codes['unknown']:
