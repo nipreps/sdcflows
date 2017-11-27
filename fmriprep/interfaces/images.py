@@ -371,7 +371,7 @@ class ValidateImage(SimpleInterface):
         valid_codes = (qform_code, sform_code) != (0, 0)
 
         # Matching affines
-        matching_affines = np.allclose(img.get_qform(), img.get_sform())
+        matching_affines = valid_qform and np.allclose(img.get_qform(), img.get_sform())
 
         # Both okay -> do nothing, empty report
         if valid_qform and valid_codes and matching_affines:
@@ -408,7 +408,7 @@ class ValidateImage(SimpleInterface):
 <p class="elem-desc">Input file does not have a valid qform matrix.</p>
 """
 
-        if not (valid_qform and matching_affines):
+        if not matching_affines:  # Guaranteed if not valid_qform
             if not warning:
                 warning_txt = 'Mismatched qform/sform matrices'
             description += '<p class="elem-desc">qform matrix synced to sform.</p>\n'
