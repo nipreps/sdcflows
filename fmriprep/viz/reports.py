@@ -223,3 +223,24 @@ def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     out_filename = 'sub-{}.html'.format(subject_label)
     report = Report(reportlet_path, config, out_dir, run_uuid, out_filename)
     return report.generate_report()
+
+
+def generate_reports(subject_list, output_dir, work_dir, run_uuid):
+    """
+    A wrapper to run_reports on a given ``subject_list``
+    """
+    reports_dir = os.path.join(work_dir, 'reportlets')
+    report_errors = [
+        run_reports(reports_dir, output_dir, subject_label, run_uuid=run_uuid)
+        for subject_label in subject_list
+    ]
+
+    errno = sum(report_errors)
+    if errno:
+        import logging
+        logger = logging.getLogger('cli')
+        logger.warning(
+            'Errors occurred while generating reports for participants: %s.',
+            ', '.join(['%s (%d)' % (subid, err)
+                       for subid, err in zip(subject_list, report_errors)]))
+    return errno
