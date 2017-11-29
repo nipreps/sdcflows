@@ -127,9 +127,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
     torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
 
-    get_ees = pe.Node(niu.Function(
-        function=_get_ees, output_names=['ees']),
-        name='get_ees', run_without_submitting=True)
+    get_ees = pe.Node(niu.Function(function=_get_ees, output_names=['ees']), name='get_ees')
 
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
     # Convert the VSM into a DFM (displacements field map)
