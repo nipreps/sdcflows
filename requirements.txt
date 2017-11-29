@@ -1,1 +1,1 @@
-niworkflows>=0.1.10
+niworkflows>=0.1.11
