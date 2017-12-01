@@ -5,7 +5,7 @@
 Creating a T2*-map with mutli-echo BOLD data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: create_last_echo_mask
+.. autofunction:: echo_sampling_mask
 .. autofunction:: init_bold_t2s_map_wf
 
 """
@@ -21,7 +21,38 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('workflow')
 
 
-def create_last_echo_mask(echo_list):
+def unmask(data, mask):
+    """
+    Unmasks `data` using non-zero entries of `mask`
+
+    **Inputs**
+    data
+        Masked array of shape (nx*ny*nz[, Ne[, nt]])
+    mask
+        Boolean array of shape (nx, ny, nz)
+
+    **Outputs**
+    ndarray
+        Array of shape (nx, ny, nz[, Ne[, nt]])
+    """
+
+    M = (mask != 0).ravel()
+    Nm = M.sum()
+
+    nx, ny, nz = mask.shape
+
+    if len(data.shape) > 1:
+        nt = data.shape[1]
+    else:
+        nt = 1
+
+    out = np.zeros((nx * ny * nz, nt), dtype=data.dtype)
+    out[M, :] = np.reshape(data, (Nm, nt))
+
+    return np.squeeze(np.reshape(out, (nx, ny, nz, nt)))
+
+
+def echo_sampling_mask(echo_list):
     """
     Make a map of longest echo that a voxel can be sampled with,
     with minimum value of map as X value of voxel that has median
@@ -35,6 +66,9 @@ def create_last_echo_mask(echo_list):
         last_echo_mask
             numpy array whose values correspond to which
             echo a voxel can last be sampled with
+        two_echo_mask
+            boolean array of voxels that can be sampled
+            with at least two echos
     """
     # First, load each echo and average over time
     echos = []
@@ -43,87 +77,114 @@ def create_last_echo_mask(echo_list):
 
     # In the first echo, find the 33rd percentile and the voxel(s)
     # whose average activity is equal to that value
-    med_val = np.percentile(echos[0][np.nonzero(echos[0])],
+    perc33  = np.percentile(echos[0][echos[0].nonzero()],
                             33, interpolation="higher")
-    vox = echos[0] == med_val
+    med_vox = (echos[0] == perc33)
 
     # For each (averaged) echo, extract the max signal in the
     # identified voxels and divide it by 3-- save as a threshold
-    thrs = np.empty(len(echos))
-    for echo in echos:
-        np.append(thrs, np.max(echo[vox]) / 3)
+    thrs = np.hstack([np.max(echo[med_vox]) / 3 for echo in echos])
 
     # Let's stack the arrays to make this next bit easier
-    echo_means = np.stack(echos, axis=-1)
+    emeans = np.stack(echos, axis=-1)
 
     # Now, we want to find all voxels (in each echo) that show
     # absolute signal greater than our echo-specific threshold
-    mthr = np.ones(echo_means.shape)
-    for i in range(echo_means.shape[-1]):
+    mthr = np.ones(emeans.shape)
+    for i in range(emeans.shape[-1]):
         mthr[:, :, :, i] *= thrs[i]
-    voxels = np.abs(echo_means) > mthr
+    voxels = np.abs(emeans) > mthr
 
     # We save those voxel indices out to an array
-    last_echo_mask = np.array(voxels, dtype=np.int).sum(-1)
+    last_emask = np.array(voxels, dtype=np.int).sum(-1)
+    # Save a mask of voxels sampled by at least two echos
+    two_emask = (last_emask != 0)
 
-    return last_echo_mask
+    return last_emask, two_emask
 
 
-def create_t2s_map(echo_list, last_echo_mask, tes):
+def t2s_map(echo_list, last_emask, two_emask, tes):
     """
     **Inputs**
         echo_list
             List of file names for all echos
-        last_echo_mask
+        last_emask
             numpy array where voxel values correspond to which
             echo a voxel can last be sampled with
         tes
 
+        two_emask
+            boolean array of voxels that can be sampled
+            with at least two echos
     **Outputs**
         t2s_map
+
     """
+    ############## UNRELATED ##############
     echos = []
+    tes = [13.6, 29.79, 46.59]
     for e in echo_list:
         echos.append(nib.load(e).get_data())
-    echo_data = np.stack(echos, axis=-2)
-    nx, ny, nz, Ne, nt = echo_data.shape
-    N = nx * ny * nz
+    echo_stack = np.stack(echos, axis=-2)
+    ############ END UNRELATED ############
 
-    Nm = echo_data[np.nonzero(echo_data)].shape[0]
+    # get some basic shape information
+    nx, ny, nz, necho, nt = echo_stack.shape
+    nvox = nx * ny * nz
 
-    t2ss = np.zeros([nx, ny, nz, Ne-1])
+    # create empty arrays to fill later
+    t2ss = np.zeros([nx, ny, nz, necho - 1])
     s0vs = t2ss.copy()
 
-    for ne in range(2, Ne + 1):
+    # consider only those voxels sampled by at least two echos
+    two_edata = echo_stack[two_emask.nonzero()]
+    two_echo_nvox = two_edata.shape[0]
 
-        #Do Log Linear fit
-        B = np.reshape(np.abs(echo_data[:, :ne])+1, (Nm, ne * nt)).transpose()
+    # for the second echo on, do log linear fit
+    for echo in range(2, necho + 1):
+
+        # why?
+        neg_tes = [-1 * te for te in tes[:echo]]
+
+        # Create coefficient matrix
+        a = np.array([np.ones(echo), neg_tes])
+        A = np.tile(a, (1, nt))
+        A = np.sort(A)[:, ::-1].transpose()
+
+        # Create log-scale dependent-var matrix
+        B = np.reshape(np.abs(two_edata[:, :echo, :]) + 1,
+                       (two_echo_nvox, echo * nt)).transpose()
         B = np.log(B)
-        neg_tes = [-1 * te for te in tes[:ne]]
-        x = np.array([np.ones(ne), neg_tes])
-        X = np.tile(x, (1, nt))
-        X = np.sort(X)[:, ::-1].transpose()
 
-        beta, res, rank, sing = np.linalg.lstsq(X,B)
-        t2s = 1 / beta[1, :].transpose()
-        s0  = np.exp(beta[0, :]).transpose()
+        # find the least squares solution for the echo
+        X, res, rank, sing = np.linalg.lstsq(A, B)
 
+        # scale the echo-coefficients (t2s), intercept (s0)
+        t2s = 1 / X[1, :].transpose()
+        s0  = np.exp(X[0, :]).transpose()
+
+        # fix any non-numerical values
         t2s[np.isinf(t2s)] = 500.
         s0[np.isnan(s0)] = 0.
 
-        t2ss[:, :, :, ne-2] = np.squeeze(unmask(t2s,mask))
-        s0vs[:, :, :, ne-2] = np.squeeze(unmask(s0,mask))
+        # reshape into arrays for mapping
+        t2ss[:, :, :, echo - 2] = unmask(t2s, two_emask)
+        s0vs[:, :, :, echo - 2] = unmask(s0, two_emask)
 
-    #Limited T2* and S0 maps
-    fl = np.zeros([nx,ny,nz,len(tes)-2+1])
-    for ne in range(Ne-1):
-        fl_ = np.squeeze(fl[:,:,:,ne])
-        fl_[masksum==ne+2] = True
-        fl[:,:,:,ne] = fl_
-    fl = np.array(fl,dtype=bool)
-    t2sa = np.squeeze(unmask(t2ss[fl],masksum>1))
+    # limited T2* and S0 maps
+    fl = np.zeros([nx, ny, nz, necho - 1])
+    for echo in range(necho - 1):
+        fl_ = fl[:, :, :, echo]
+        fl_[last_emask == echo + 2] = True
+        fl[:, :, :, echo] = fl_
 
-    return t2sa
+    fl   = np.array(fl, dtype=bool)
+    t2s_map = np.squeeze(unmask(t2ss[fl], last_emask > 1))
+
+    t2s_map[np.isnan(t2s_map)] = 0
+    t2s_map[t2s_map < 0] = 0
+
+    return t2s_map
 
 
 def init_bold_t2s_map_wf(metadata, name='bold_t2s_map_wf'):
