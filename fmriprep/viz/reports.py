@@ -112,9 +112,10 @@ class Report(object):
         self.index()
 
     def index(self):
+        fig_dir = 'figures'
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        svg_dir = os.path.join(self.out_dir, 'fmriprep', subject, 'svg')
+        svg_dir = os.path.join(self.out_dir, 'fmriprep', subject, fig_dir)
         os.makedirs(svg_dir, exist_ok=True)
 
         for root, directories, filenames in os.walk(self.root):
@@ -133,7 +134,7 @@ class Report(object):
                                 shutil.copy(f, newf)
                                 content = """\
 <object type="image/svg+xml" data="./{0}" class="reportlet">filename:{0}</object>\
-""".format(os.path.join(subject, 'svg', fbase))
+""".format(os.path.join(subject, fig_dir, fbase))
                             element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()
