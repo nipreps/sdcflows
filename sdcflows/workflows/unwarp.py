@@ -79,8 +79,6 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
             the jacobian of the field (for drop-out alleviation)
         out_mask
             mask of the unwarped input file
-        out_mask_report
-            reportled for the skullstripping
 
     """
 
@@ -90,7 +88,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask',
-                'out_jacobian', 'out_mask_report']), name='outputnode')
+                'out_jacobian']), name='outputnode')
 
     meta = pe.Node(ReadSidecarJSON(), name='meta',
                    mem_gb=0.01, run_without_submitting=True)
@@ -191,7 +189,6 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (apply_fov_mask, outputnode, [('out_file', 'out_reference')]),
         (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
     ])

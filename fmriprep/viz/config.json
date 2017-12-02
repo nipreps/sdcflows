@@ -22,8 +22,8 @@
                 "raw": true
             },
             {
-                "name": "skullstrip_ants/t1_skull_strip",
-                "file_pattern": "anat/.*skull_strip",
+                "name": "anat_preproc/t1_brain_seg",
+                "file_pattern": "anat/.*seg_brainmask",
                 "title": "Skull stripped T1",
                 "description": "Stripped T1 placed over an image of the unstripped T1"
             },

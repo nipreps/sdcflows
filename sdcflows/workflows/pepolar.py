@@ -79,8 +79,6 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
             ANTs
         out_mask
             mask of the unwarped input file
-        out_mask_report
-            reportlet for the skullstripping
 
     """
     if not bold_file_pe:
@@ -117,8 +115,7 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source']), name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask',
-                'out_mask_report']),
+        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),
         name='outputnode')
 
     prepare_epi_opposite_wf = init_prepare_epi_wf(omp_nthreads=omp_nthreads,
@@ -176,7 +173,6 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
         (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.out_report', 'out_mask_report'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (to_ants, outputnode, [('out', 'out_warp')]),
     ])
