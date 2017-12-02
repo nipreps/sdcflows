@@ -67,7 +67,7 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.4.2',
     'nitime',
-    'niworkflows>=0.2.0',
+    'niworkflows',
     'statsmodels',
     'nipype',
     'seaborn',
@@ -75,6 +75,8 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
+    'git+https://github.com/oesteban/niworkflows.git'
+    '@6807e36b48f10de72fa9f5f629230a59f9a5a02c#egg=niworkflows-0.2.1-dev',
 ]
 
 TESTS_REQUIRES = [
