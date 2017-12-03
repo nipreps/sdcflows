@@ -13,6 +13,7 @@ import json
 import re
 import os
 import html
+import shutil
 
 import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
@@ -111,21 +112,33 @@ class Report(object):
         self.index()
 
     def index(self):
+        fig_dir = 'figures'
+        subject_dir = self.root.split('/')[-1]
+        subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
+        svg_dir = os.path.join(self.out_dir, 'fmriprep', subject, fig_dir)
+        os.makedirs(svg_dir, exist_ok=True)
+
         for root, directories, filenames in os.walk(self.root):
             for f in filenames:
                 f = os.path.join(root, f)
                 for sub_report in self.sub_reports:
                     for element in sub_report.elements:
                         ext = f.split('.')[-1]
-                        if element.file_pattern.search(f) and (ext == 'svg' or ext == 'html'):
-                            with open(f) as fp:
-                                content = fp.read()
-                                element.files_contents.append((f, content))
+                        if element.file_pattern.search(f) and ext in ('svg', 'html'):
+                            if ext == 'html':
+                                with open(f) as fp:
+                                    content = fp.read()
+                            else:
+                                fbase = f.replace('/', '_')
+                                newf = os.path.join(svg_dir, fbase)
+                                shutil.copy(f, newf)
+                                content = """\
+<object type="image/svg+xml" data="./{0}" class="reportlet">filename:{0}</object>\
+""".format(os.path.join(subject, fig_dir, fbase))
+                            element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()
 
-        subject_dir = self.root.split('/')[-1]
-        subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
         error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log', self.run_uuid)
         if os.path.isdir(error_dir):
             self.index_error_dir(error_dir)
