@@ -2,7 +2,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
-Creating a T2*-map with mutli-echo BOLD data
+Creating a T2*-map with multi-echo BOLD data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: echo_sampling_mask
@@ -26,14 +26,17 @@ def unmask(data, mask):
     Unmasks `data` using non-zero entries of `mask`
 
     **Inputs**
+
     data
         Masked array of shape (nx*ny*nz[, Ne[, nt]])
     mask
         Boolean array of shape (nx, ny, nz)
 
     **Outputs**
+
     ndarray
         Array of shape (nx, ny, nz[, Ne[, nt]])
+
     """
 
     M = (mask != 0).ravel()
@@ -59,16 +62,19 @@ def echo_sampling_mask(echo_list):
     value in the 1st echo. N.B. larger factor leads to bias to lower TEs
 
     **Inputs**
+
         echo_list
             List of file names for all echos
 
     **Outputs**
+
         last_echo_mask
             numpy array whose values correspond to which
             echo a voxel can last be sampled with
         two_echo_mask
             boolean array of voxels that can be sampled
             with at least two echos
+
     """
     # First, load each echo and average over time
     echos = []
@@ -105,7 +111,9 @@ def echo_sampling_mask(echo_list):
 
 def t2s_map(echo_list, last_emask, two_emask, tes):
     """
+
     **Inputs**
+
         echo_list
             List of file names for all echos
         last_emask
@@ -116,7 +124,9 @@ def t2s_map(echo_list, last_emask, two_emask, tes):
         two_emask
             boolean array of voxels that can be sampled
             with at least two echos
+
     **Outputs**
+
         t2s_map
 
     """
@@ -143,7 +153,7 @@ def t2s_map(echo_list, last_emask, two_emask, tes):
     # for the second echo on, do log linear fit
     for echo in range(2, necho + 1):
 
-        # why?
+        # ΔS/S = ΔS0/S0 − ΔR2 * TE, so take neg TEs
         neg_tes = [-1 * te for te in tes[:echo]]
 
         # Create coefficient matrix
@@ -159,16 +169,16 @@ def t2s_map(echo_list, last_emask, two_emask, tes):
         # find the least squares solution for the echo
         X, res, rank, sing = np.linalg.lstsq(A, B)
 
-        # scale the echo-coefficients (t2s), intercept (s0)
-        t2s = 1 / X[1, :].transpose()
+        # scale the echo-coefficients (ΔR2), intercept (s0)
+        r2 = 1 / X[1, :].transpose()
         s0  = np.exp(X[0, :]).transpose()
 
         # fix any non-numerical values
-        t2s[np.isinf(t2s)] = 500.
+        r2[np.isinf(r2)] = 500.
         s0[np.isnan(s0)] = 0.
 
         # reshape into arrays for mapping
-        t2ss[:, :, :, echo - 2] = unmask(t2s, two_emask)
+        t2s[:, :, :, echo - 2] = unmask(r2, two_emask)
         s0vs[:, :, :, echo - 2] = unmask(s0, two_emask)
 
     # limited T2* and S0 maps
@@ -179,10 +189,8 @@ def t2s_map(echo_list, last_emask, two_emask, tes):
         fl[:, :, :, echo] = fl_
 
     fl   = np.array(fl, dtype=bool)
-    t2s_map = np.squeeze(unmask(t2ss[fl], last_emask > 1))
-
-    t2s_map[np.isnan(t2s_map)] = 0
-    t2s_map[t2s_map < 0] = 0
+    t2s_map = np.squeeze(unmask(t2s[fl], last_emask > 1))
+    t2s_map[np.logical_or(np.isnan(t2s_map), t2s_map < 0)] = 0
 
     return t2s_map
 
@@ -221,4 +229,65 @@ def init_bold_t2s_map_wf(metadata, name='bold_t2s_map_wf'):
 
     LOGGER.log(25, 'Generating a T2*-map.')
 
-    pass
+    # inputnode = pe.Node(niu.IdentityInterface(fields=['t2svol', 'anat']),
+    #                     name='inputnode')
+    #
+    # outputnode = pe.Node(niu.IdentityInterface(fields=['coreg_params']),
+    #                      name='outputnode')
+
+    get_thr = pe.Node(fsl.ImageStats(op_string='-P 50'),
+                      name='get_thr')
+
+    def format_expr(val):
+        """
+        Generates string for use as `expr`
+        input in afni.Calc()
+
+        Parameters
+        ----------
+        val: float
+            Threshold generated from fsl.ImageStats()
+
+        Outputs
+        ----------
+        expr_string
+            Expression to be applyed with afni.Calc()
+        """
+        expr_string = 'a*isnegative(a-2*{})'.format(val)
+        return expr_string
+
+    fmt_expr = pe.Node(name='fmt_expr',
+                       interface=Function(input_names=['val'],
+                                          output_names=['expr_string'],
+                                          function=format_expr))
+
+    apply_thr = pe.Node(afni.Calc(), name='apply_thr')
+
+    t1_seg = pe.Node(fsl.FAST(use_priors=True,
+                              probability_maps=True), name='t1_seg')
+
+    align = pe.Node(afni.Allineate(out_file='mepi_al.nii.gz',
+                                   out_matrix='mepi_al_mat.1D',
+                                   source_automask=2,
+                                   warp_type='affine_general',
+                                   args='-weight_frac 1.0 -lpc'
+                                        '-maxshf 30 -maxrot 30'
+                                        '-maxscl 1.01'),
+                    name='align')
+
+    workflow.connect([
+                    (inputnode, get_thr, [('t2svol', 'in_file')]),
+                    (inputnode, align, [('anat', 'in_file'),
+                                        ('anat', 'master')]),
+                    (get_thr, fmt_expr, [('out_stat', 'val')]),
+                    (inputnode, apply_thr, [('t2svol', 'in_file_a')]),
+                    (fmt_expr, apply_thr, [('expr_string', 'expr')]),
+                    (apply_thr, t1_seg, [('out_file', 'in_files')]),
+                    (apply_thr, align, [('out_file', 'reference')]),
+                    (t1_seg, align, [('tissue_class_map', 'weight_file')]),
+                    (align, outputnode, [('matrix', 'coreg_params')])
+                    ])
+
+    workflow.write_graph(graph2use='colored', simple_form=True)
+
+    return workflow
