@@ -67,16 +67,16 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.4.2',
     'nitime',
-    'niworkflows',
+    'niworkflows>=0.2.1',
     'statsmodels',
     'nipype',
     'seaborn',
     'indexed_gzip>=0.7.0',
 ]
 
-LINKS_REQUIRES = [
-    'git+https://github.com/poldracklab/niworkflows.git'
-    '@7e7a76ced74789932e71298634e2d14fe7c291c3#egg=niworkflows-0.2.1-dev',
+LINKS_REQUIRES = [  # Left here for convenience
+#    'git+https://github.com/poldracklab/niworkflows.git'
+#    '@7e7a76ced74789932e71298634e2d14fe7c291c3#egg=niworkflows-0.2.1-dev',
 ]
 
 TESTS_REQUIRES = [
