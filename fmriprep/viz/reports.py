@@ -129,7 +129,7 @@ class Report(object):
                                 with open(f) as fp:
                                     content = fp.read()
                             else:
-                                fbase = f.replace('/', '_')
+                                fbase = os.path.basename(f)
                                 newf = os.path.join(svg_dir, fbase)
                                 shutil.copy(f, newf)
                                 content = """\

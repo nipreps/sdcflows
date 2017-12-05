@@ -90,8 +90,6 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
             ANTs
         out_mask
             mask of the unwarped input file
-        out_mask_report
-            reportlet for the skullstripping
 
     """
     workflow = pe.Workflow(name=name)
@@ -100,8 +98,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
                                't1_seg']),
         name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_reference_brain', 'out_mask', 'out_warp',
-                               'out_warp_report', 'out_mask_report']),
+        niu.IdentityInterface(['out_reference_brain', 'out_mask', 'out_warp', 'out_warp_report']),
         name='outputnode')
 
     if bold_pe is None or bold_pe[0] not in ['i', 'j']:
@@ -192,8 +189,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
         (syn, outputnode, [('forward_transforms', 'out_warp')]),
         (skullstrip_bold_wf, outputnode, [
             ('outputnode.skull_stripped_file', 'out_reference_brain'),
-            ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.out_report', 'out_mask_report')]),
+            ('outputnode.mask_file', 'out_mask')]),
         (syn_rpt, outputnode, [('out_report', 'out_warp_report')])])
 
     return workflow
