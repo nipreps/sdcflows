@@ -74,9 +74,7 @@ REQUIRES = [
     'indexed_gzip>=0.7.0',
 ]
 
-LINKS_REQUIRES = [  # Left here for convenience
-#    'git+https://github.com/poldracklab/niworkflows.git'
-#    '@7e7a76ced74789932e71298634e2d14fe7c291c3#egg=niworkflows-0.2.1-dev',
+LINKS_REQUIRES = [
 ]
 
 TESTS_REQUIRES = [
