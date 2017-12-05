@@ -450,10 +450,9 @@ class ValidateImage(SimpleInterface):
     MAY BE INVALID.
 </p>
 """
-        img.to_filename(out_fname)
         snippet = '<h3 class="elem-title">%s</h3>\n%s\n' % (warning_txt, description)
-
         # Store new file and report
+        img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
             fobj.write(indent(snippet, '\t' * 3))
 
