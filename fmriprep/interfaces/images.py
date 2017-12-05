@@ -428,7 +428,7 @@ class ValidateImage(SimpleInterface):
         # Note: if qform is not valid, matching_affines is False
         elif sform_code > 0 and (not matching_affines or qform_code == 0):
             img.set_qform(img.get_sform(), sform_code)
-            warning_txt = 'Note on orientation: qform matrix set'
+            warning_txt = 'Note on orientation: qform matrix overwritten'
             description = """\
 <p class="elem-desc">The qform has been copied from sform.</p>
 """
