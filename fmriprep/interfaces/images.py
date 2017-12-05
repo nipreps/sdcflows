@@ -447,7 +447,7 @@ class ValidateImage(SimpleInterface):
             affine = img.affine
             img.set_sform(affine, nb.nifti1.xform_codes['scanner'])
             img.set_qform(affine, nb.nifti1.xform_codes['scanner'])
-            warning_txt = 'WARNING - Resetted both xform matrices'
+            warning_txt = 'WARNING - Missing orientation information'
             description = """\
 <p class="elem-desc">
     FMRIPREP could not retrieve orientation information from the image header.
