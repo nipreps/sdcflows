@@ -37,7 +37,7 @@
                 "name": "anat_preproc/reconall",
                 "file_pattern": "anat/.*reconall",
                 "title": "Surface reconstruction",
-                "description": "Surfaces (white and pial) reconstructed with FreeSurfer (<code>recon-all</code) overlaid on the participant's T1w template."
+                "description": "Surfaces (white and pial) reconstructed with FreeSurfer (<code>recon-all</code>) overlaid on the participant's T1w template."
             }
 
         ]
@@ -96,7 +96,7 @@
                 "name": "epi/rois",
                 "file_pattern": "func/.*bold_rois",
                 "title": "ROIs in BOLD space",
-                "description": "Brain mask calculated on the BOLD signal (red contour), along with the masks used for a/tCompCor.<br />The aCompCor mask (yellow contour) is a conservative CSF and white-matter mask for extracting physiological and movement confounds. <br />The fCompCor mask (blue contour) contains the top 5% most variable voxels within a heavily-eroded brain-mask."
+                "description": "Brain mask calculated on the BOLD signal (red contour), along with the masks used for a/tCompCor.<br />The aCompCor mask (magenta contour) is a conservative CSF and white-matter mask for extracting physiological and movement confounds. <br />The fCompCor mask (blue contour) contains the top 5% most variable voxels within a heavily-eroded brain-mask."
             },
             {
                 "name": "epi_mean_t1_registration/flirt",
