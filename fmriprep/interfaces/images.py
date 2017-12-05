@@ -420,34 +420,39 @@ class ValidateImage(SimpleInterface):
         # Row 2:
         if valid_qform and qform_code > 0 and sform_code == 0:
             img.set_sform(img.get_qform(), qform_code)
-            warning_txt = 'Resetted sform matrix'
+            warning_txt = 'Note on orientation: sform matrix overwritten'
             description = """\
-<p class="elem-desc">
-    The code of the sform matrix is "unknown", but code and matrix of qform are valid.
-    The sform- matrix and code have been replaced with the qform- matrix and code.
-</p>
+<p class="elem-desc">The sform has been copied from qform.</p>
 """
         # Rows 3-4:
-        elif (not matching_affines and sform_code > 0) or (qform_code == 0 and sform_code > 0):
+        # Note: if qform is not valid, matching_affines is False
+        elif sform_code > 0 and (not matching_affines or qform_code == 0):
             img.set_qform(img.get_sform(), sform_code)
-            warning_txt = 'Resetted qform matrix'
+            warning_txt = 'Note on orientation: qform matrix overwritten'
             description = """\
+<p class="elem-desc">The qform has been copied from sform.</p>
+"""
+            if not valid_qform and qform_code == 0:
+                warning_txt = 'WARNING - Invalid qform information'
+                description = """\
 <p class="elem-desc">
-    The sform matrix and code were valid, but the qform matrix did not match the sform matrix
-    or its code was "unknown". The qform- matrix and code have been replaced with the
-    sform- matrix and code.
+    The qform matrix found in the file header is invalid.
+    The qform has been copied from sform.
+    Checking the original qform information from the data produced
+    by the scanner is advised.
 </p>
 """
         # Rows 5-6:
         else:
-            img.set_sform(img.affine, nb.nifti1.xform_codes['scanner'])
-            img.set_qform(img.affine, nb.nifti1.xform_codes['scanner'])
+            affine = img.affine
+            img.set_sform(affine, nb.nifti1.xform_codes['scanner'])
+            img.set_qform(affine, nb.nifti1.xform_codes['scanner'])
             warning_txt = 'WARNING - Resetted both xform matrices'
             description = """\
 <p class="elem-desc">
-    FMRIPREP could not retrieve reliable information from xforms and their codes.
-    Both have been resetted to a default, LAS-oriented affine. Analyses of this dataset
-    MAY BE INVALID.
+    FMRIPREP could not retrieve orientation information from the image header.
+    The qform and sform matrices have been set to a default, LAS-oriented affine.
+    Analyses of this dataset MAY BE INVALID.
 </p>
 """
         snippet = '<h3 class="elem-title">%s</h3>\n%s\n' % (warning_txt, description)
