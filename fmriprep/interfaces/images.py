@@ -424,7 +424,7 @@ class ValidateImage(SimpleInterface):
             description = """\
 <p class="elem-desc">
     The code of the sform matrix is "unknown", but code and matrix of qform are valid.
-    The sform matrix and code have been replaced with the qform matrix and code.
+    The sform- matrix and code have been replaced with the qform- matrix and code.
 </p>
 """
         # Rows 3-4:
@@ -434,8 +434,8 @@ class ValidateImage(SimpleInterface):
             description = """\
 <p class="elem-desc">
     The sform matrix and code were valid, but the qform matrix did not match the sform matrix
-    or its code was "unknown". The qform matrix and sform matrix have been replaced with the
-    sform matrix and code.
+    or its code was "unknown". The qform- matrix and code have been replaced with the
+    sform- matrix and code.
 </p>
 """
         # Rows 5-6:
