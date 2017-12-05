@@ -347,6 +347,43 @@ class ValidateImageOutputSpec(TraitedSpec):
 
 
 class ValidateImage(SimpleInterface):
+    """
+    Check the correctness of x-form headers (matrix and code)
+
+    This interface implements the `following logic
+    <https://github.com/poldracklab/fmriprep/issues/873#issuecomment-349394544>`_:
+
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | valid quaternions | `qform_code > 0` | `sform_code > 0` | `qform == sform` \
+| actions                                        |
+    +===================+==================+==================+==================\
++================================================+
+    | True              | True             | True             | True             \
+| None                                           |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | True              | True             | False            | *                \
+| sform, scode <- qform, qcode                   |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | *                 | *                | True             | False            \
+| qform, qcode <- sform, scode                   |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | *                 | False            | True             | *                \
+| qform, qcode <- sform, scode                   |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | *                 | False            | False            | *                \
+| sform, qform <- best affine; scode, qcode <- 1 |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    | False             | *                | False            | *                \
+| sform, qform <- best affine; scode, qcode <- 1 |
+    +-------------------+------------------+------------------+------------------\
++------------------------------------------------+
+    """
     input_spec = ValidateImageInputSpec
     output_spec = ValidateImageOutputSpec
 
@@ -355,70 +392,70 @@ class ValidateImage(SimpleInterface):
         out_report = os.path.abspath('report.html')
 
         # Retrieve xform codes
-        sform_code = img.header._structarr['sform_code']
-        qform_code = img.header._structarr['qform_code']
+        sform_code = int(img.header._structarr['sform_code'])
+        qform_code = int(img.header._structarr['qform_code'])
 
         # Check qform is valid
-        valid_qform = True
-        old_qform_code = int(qform_code)
+        valid_qform = False
         try:
             img.get_qform()
+            valid_qform = True
         except ValueError:
-            valid_qform = False
-            qform_code = nb.nifti1.xform_codes['unknown']
-
-        # Check affine information is valid
-        valid_codes = (qform_code, sform_code) != (0, 0)
+            pass
 
         # Matching affines
         matching_affines = valid_qform and np.allclose(img.get_qform(), img.get_sform())
 
-        # Both okay -> do nothing, empty report
-        if valid_qform and valid_codes and matching_affines:
+        # Both match, qform valid (implicit with match), codes okay -> do nothing, empty report
+        if matching_affines and qform_code > 0 and sform_code > 0:
             self._results['out_file'] = self.inputs.in_file
             open(out_report, 'w').close()
             self._results['out_report'] = out_report
             return runtime
 
+        # A new file will be written
         out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid', newpath=runtime.cwd)
         self._results['out_file'] = out_fname
 
-        warning = False
-        warning_txt = ''
-        description = ''
-        # Fix sform if needed
-        if not valid_codes:
-            # Nibabel derives a default LAS affine from the shape and zooms
-            # Use scanner xform code to indicate no alignment has been done
-            img.set_sform(img.affine, nb.nifti1.xform_codes['scanner'])
-            warning = True
-            warning_txt = 'Invalid header'
-            description += """\
-<p class="elem-desc">Input file does not have valid qform or sform matrix.
-  A default, LAS-oriented affine has been constructed.
-  A left-right flip may have occurred.
-  Analyses of this dataset MAY BE INVALID.
+        # Row 2:
+        if valid_qform and qform_code > 0 and sform_code == 0:
+            img.set_sform(img.get_qform(), qform_code)
+            warning_txt = 'Note on orientation: sform matrix set'
+            description = """\
+<p class="elem-desc">The sform has been copied from qform.</p>
+"""
+        # Rows 3-4:
+        # Note: if qform is not valid, matching_affines is False
+        elif sform_code > 0 and (not matching_affines or qform_code == 0):
+            img.set_qform(img.get_sform(), sform_code)
+            warning_txt = 'Note on orientation: qform matrix overwritten'
+            description = """\
+<p class="elem-desc">The qform has been copied from sform.</p>
+"""
+            if not valid_qform and qform_code > 0:
+                warning_txt = 'WARNING - Invalid qform information'
+                description = """\
+<p class="elem-desc">
+    The qform matrix found in the file header is invalid.
+    The qform has been copied from sform.
+    Checking the original qform information from the data produced
+    by the scanner is advised.
 </p>
 """
-        if not valid_qform and old_qform_code != 0:
-            if not warning:
-                warning = True
-                warning_txt = 'Invalid qform'
-            description += """\
-<p class="elem-desc">Input file does not have a valid qform matrix.</p>
+        # Rows 5-6:
+        else:
+            affine = img.affine
+            img.set_sform(affine, nb.nifti1.xform_codes['scanner'])
+            img.set_qform(affine, nb.nifti1.xform_codes['scanner'])
+            warning_txt = 'WARNING - Missing orientation information'
+            description = """\
+<p class="elem-desc">
+    FMRIPREP could not retrieve orientation information from the image header.
+    The qform and sform matrices have been set to a default, LAS-oriented affine.
+    Analyses of this dataset MAY BE INVALID.
+</p>
 """
-
-        if not matching_affines:  # Guaranteed if not valid_qform
-            if not warning:
-                warning_txt = 'Mismatched qform/sform matrices'
-            description += '<p class="elem-desc">qform matrix synced to sform.</p>\n'
-            sform, sform_code = img.get_sform(coded=True)
-            # Copy sform into qform
-            img.set_qform(sform, int(sform_code))
-
-        snippet = '<h3 class="elem-title">%s%s</h3>\n%s\n' % ('WARNING - ' if warning else '',
-                                                              warning_txt, description)
-
+        snippet = '<h3 class="elem-title">%s</h3>\n%s\n' % (warning_txt, description)
         # Store new file and report
         img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
