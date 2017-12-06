@@ -21,6 +21,19 @@ be used:
   4. :ref:`sdc_fieldmapless`
 
 
+Table of behavior (fieldmap use-cases):
+
+=============== =========== ============= ===============
+Fieldmaps found ``use_syn`` ``force_syn``     Action
+=============== =========== ============= ===============
+True            *           True          Fieldmaps + SyN
+True            *           False         Fieldmaps
+False           *           True          SyN
+False           True        False         SyN
+False           False       False         HMC only
+=============== =========== ============= ===============
+
+
 """
 
 
