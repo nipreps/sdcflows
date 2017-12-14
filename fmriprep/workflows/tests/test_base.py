@@ -19,6 +19,7 @@ class TestBase(TestWorkflow):
                                          low_mem=False,
                                          anat_only=False,
                                          longitudinal=False,
+                                         t2s_coreg=False,
                                          omp_nthreads=1,
                                          skull_strip_template='OASIS',
                                          reportlets_dir='.',
