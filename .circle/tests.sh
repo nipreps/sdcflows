@@ -39,14 +39,14 @@ case ${CIRCLE_NODE_INDEX} in
         | tee $HOME/docs/builddocs.log
     cat $HOME/docs/builddocs.log && if grep -q "ERROR" $HOME/docs/builddocs.log; then false; else true; fi
     fmriprep-docker -i poldracklab/fmriprep:latest --help
-    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --fs-no-reconall --debug --write-graph --force-syn
     # Place mock crash log and rebuild report
     UUID="$(date '+%Y%m%d-%H%M%S_')$(uuidgen)"
     mkdir -p $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     cp fmriprep/data/tests/crash_files/*.txt $HOME/ds054/out/fmriprep/sub-100185/log/$UUID/
     # Expect one error
     set +e
-    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --no-freesurfer --debug --write-graph --force-syn --reports-only --run-uuid $UUID
+    fmriprep-docker -i poldracklab/fmriprep:latest --config $HOME/nipype.cfg -w $HOME/ds054/scratch $HOME/data/ds054 $HOME/ds054/out participant --fs-no-reconall --debug --write-graph --force-syn --reports-only --run-uuid $UUID
     RET=$?
     set -e
     [[ "$RET" -eq "1" ]]

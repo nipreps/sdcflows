@@ -25,7 +25,7 @@ class TestBase(TestWorkflow):
                                          reportlets_dir='.',
                                          output_dir='.',
                                          bids_dir='.',
-                                         freesurfer=False,
+                                         reconall=False,
                                          output_spaces=['T1w'],
                                          template='MNI152NLin2009cAsym',
                                          medial_surface_nan=False,
