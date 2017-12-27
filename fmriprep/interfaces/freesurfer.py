@@ -313,17 +313,14 @@ def refine_aseg(aseg, ball_size=4):
     return newmask.astype(np.uint8)
 
 
-def grow_mask(anat_file, aseg_file, ww=7, zval=2.0, bw=4):
+def grow_mask(anat, aseg, ww=7, zval=2.0, bw=4):
     """
     Grow mask including pixels that have a high likelihood.
     GM tissue parameters are sampled in image patches of ``ww`` size.
     """
     selem = sim.ball(bw)
 
-    aseg = nb.load(aseg_file).get_data().astype(np.uint8)
     aseg[aseg == 42] = 3  # Collapse both hemispheres
-
-    anat = nb.load(anat_file).get_data()
     gm = anat.copy()
     gm[aseg != 3] = 0
 
