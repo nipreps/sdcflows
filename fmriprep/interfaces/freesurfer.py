@@ -20,7 +20,6 @@ Disable warnings:
 
 """
 
-import os
 import os.path as op
 import nibabel as nb
 import numpy as np
@@ -230,6 +229,22 @@ class RefineBrainMask(SimpleInterface):
     input_spec = RefineBrainMaskInputSpec
     output_spec = RefineBrainMaskOutputSpec
 
+    def _run_interface(self, runtime):
+
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.in_anat, suffix='_rbrainmask', newpath=runtime.cwd)
+
+        anatnii = nb.load(self.inputs.in_anat)
+        msknii = nb.Nifti1Image(
+            grow_mask(anatnii.get_data(), nb.load(self.inputs.in_aseg).get_data()),
+            anatnii.affine,
+            anatnii.header
+        )
+        msknii.set_data_dtype(np.uint8)
+        msknii.to_filename(self._results['out_file'])
+
+        return runtime
+
 
 def inject_skullstripped(subjects_dir, subject_id, skullstripped):
     mridir = op.join(subjects_dir, subject_id, 'mri')
@@ -268,7 +283,7 @@ def detect_inputs(t1w_list, t2w_list=None, hires_enabled=True):
     return (t2w, hires, mris_inflate)
 
 
-def refine_aseg(in_file, ball_size=4):
+def refine_aseg(aseg, ball_size=4):
     """
     First step to reconcile ANTs' and FreeSurfer's brain masks.
 
@@ -285,12 +300,10 @@ def refine_aseg(in_file, ball_size=4):
 
 
     """
-    # Load input image
-    aseg = nb.load(in_file)
-
     # Read aseg data
-    bmask = aseg.get_data()
+    bmask = aseg.copy()
     bmask[bmask > 0] = 1
+    bmask = bmask.astype(np.uint8)
 
     # Morphological operations
     selem = sim.ball(ball_size)
@@ -299,22 +312,22 @@ def refine_aseg(in_file, ball_size=4):
 
     return newmask.astype(np.uint8)
 
-def grow_mask(anat_file, aseg_file, refined_file, ww=7, sf=2.0, bw=4):
 
+def grow_mask(anat_file, aseg_file, ww=7, zval=2.0, bw=4):
+    """
+    Grow mask including pixels that have a high likelihood.
+    GM tissue parameters are sampled in image patches of ``ww`` size.
+    """
     selem = sim.ball(bw)
 
-    asegnii = nb.load(aseg_file)
-    refnii = nb.load(refined_file)
-
-    refined = refnii.get_data().astype(np.uint8).copy()
-
-    aseg = asegnii.get_data().astype(np.uint8)
+    aseg = nb.load(aseg_file).get_data().astype(np.uint8)
     aseg[aseg == 42] = 3  # Collapse both hemispheres
 
     anat = nb.load(anat_file).get_data()
     gm = anat.copy()
     gm[aseg != 3] = 0
 
+    refined = refine_aseg(aseg)
     newrefmask = sim.binary_dilation(refined, selem) - refined
     indices = np.argwhere(newrefmask > 0)
     for pixel in indices:
@@ -324,10 +337,8 @@ def grow_mask(anat_file, aseg_file, refined_file, ww=7, sf=2.0, bw=4):
             pixel[2] - ww:pixel[2] + ww
         ]
         if np.any(window > 0):
-            lmean = window[window > 0].mean()
-            lstd = sf * window[window > 0].std()
-            refined[tuple(pixel)] = int((lmean - lstd) <= anat[tuple(pixel)] <= (lmean + lstd))
+            zstat = abs(anat[tuple(pixel)] - window[window > 0].mean()) / window[window > 0].std()
+            refined[tuple(pixel)] = int(zstat < zval)
 
     refined = sim.binary_opening(refined, selem)
-    refined[refnii.get_data() > 0] = 1
     return refined
