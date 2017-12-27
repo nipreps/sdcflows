@@ -240,8 +240,7 @@ class RefineBrainMask(SimpleInterface):
         msknii = nb.Nifti1Image(
             grow_mask(anatnii.get_data(),
                       nb.load(self.inputs.in_aseg).get_data(),
-                      nb.load(self.inputs.in_ants).get_data(),
-            ),
+                      nb.load(self.inputs.in_ants).get_data()),
             anatnii.affine,
             anatnii.header
         )
