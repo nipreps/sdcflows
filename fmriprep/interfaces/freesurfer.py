@@ -20,12 +20,16 @@ Disable warnings:
 
 """
 
+import os
 import os.path as op
 import nibabel as nb
+import numpy as np
 
+from skimage import morphology as sim
+from scipy.ndimage.morphology import binary_fill_holes
 from nilearn.image import resample_to_img, new_img_like
 
-from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list
+from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     isdefined, InputMultiPath, BaseInterfaceInputSpec, TraitedSpec, File, traits, Directory
 )
@@ -211,6 +215,22 @@ class PatchedConcatenateLTA(ConcatenateLTA):
         return outputs
 
 
+class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
+    in_anat = File(exists=True, mandatory=True,
+                   desc='input anatomical reference (INU corrected)')
+    in_aseg = File(exists=True, mandatory=True,
+                   desc='input ``aseg`` file, in NifTi format.')
+
+
+class RefineBrainMaskOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='new mask')
+
+
+class RefineBrainMask(SimpleInterface):
+    input_spec = RefineBrainMaskInputSpec
+    output_spec = RefineBrainMaskOutputSpec
+
+
 def inject_skullstripped(subjects_dir, subject_id, skullstripped):
     mridir = op.join(subjects_dir, subject_id, 'mri')
     t1 = op.join(mridir, 'T1.mgz')
@@ -246,3 +266,68 @@ def detect_inputs(t1w_list, t2w_list=None, hires_enabled=True):
     # https://surfer.nmr.mgh.harvard.edu/fswiki/SubmillimeterRecon
     mris_inflate = '-n 50' if hires else None
     return (t2w, hires, mris_inflate)
+
+
+def refine_aseg(in_file, ball_size=4):
+    """
+    First step to reconcile ANTs' and FreeSurfer's brain masks.
+
+    Here, the ``aseg.mgz`` mask from FreeSurfer is refined in two
+    steps, using binary morphological operations:
+
+      1. With a binary closing operation the sulci are included
+         into the mask. This results in a smoother brain mask
+         that does not exclude deep, wide sulci.
+
+      2. Fill any holes (typically, there could be a hole next to
+         the pineal gland and the corpora quadrigemina if the great
+         cerebral brain is segmented out).
+
+
+    """
+    # Load input image
+    aseg = nb.load(in_file)
+
+    # Read aseg data
+    bmask = aseg.get_data()
+    bmask[bmask > 0] = 1
+
+    # Morphological operations
+    selem = sim.ball(ball_size)
+    newmask = sim.binary_closing(bmask, selem)
+    newmask = binary_fill_holes(newmask.astype(np.uint8), selem).astype(np.uint8)
+
+    return newmask.astype(np.uint8)
+
+def grow_mask(anat_file, aseg_file, refined_file, ww=7, sf=2.0, bw=4):
+
+    selem = sim.ball(bw)
+
+    asegnii = nb.load(aseg_file)
+    refnii = nb.load(refined_file)
+
+    refined = refnii.get_data().astype(np.uint8).copy()
+
+    aseg = asegnii.get_data().astype(np.uint8)
+    aseg[aseg == 42] = 3  # Collapse both hemispheres
+
+    anat = nb.load(anat_file).get_data()
+    gm = anat.copy()
+    gm[aseg != 3] = 0
+
+    newrefmask = sim.binary_dilation(refined, selem) - refined
+    indices = np.argwhere(newrefmask > 0)
+    for pixel in indices:
+        window = gm[
+            pixel[0] - ww:pixel[0] + ww,
+            pixel[1] - ww:pixel[1] + ww,
+            pixel[2] - ww:pixel[2] + ww
+        ]
+        if np.any(window > 0):
+            lmean = window[window > 0].mean()
+            lstd = sf * window[window > 0].std()
+            refined[tuple(pixel)] = int((lmean - lstd) <= anat[tuple(pixel)] <= (lmean + lstd))
+
+    refined = sim.binary_opening(refined, selem)
+    refined[refnii.get_data() > 0] = 1
+    return refined
