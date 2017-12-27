@@ -337,7 +337,7 @@ def grow_mask(anat, aseg, ants_segs, ww=7, zval=2.0, bw=4):
     indices = np.argwhere(newrefmask > 0)
     for pixel in indices:
         # When ATROPOS identified the pixel as GM, set and carry on
-        if ants_segs[tuple(pixel)] == 3:
+        if ants_segs[tuple(pixel)] == 2:
             refined[tuple(pixel)] = 1
             continue
 
