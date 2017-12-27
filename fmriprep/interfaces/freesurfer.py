@@ -219,6 +219,8 @@ class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
                    desc='input anatomical reference (INU corrected)')
     in_aseg = File(exists=True, mandatory=True,
                    desc='input ``aseg`` file, in NifTi format.')
+    in_ants = File(exists=True, mandatory=True,
+                   desc='brain tissue segmentation generated with antsBrainExtraction.sh')
 
 
 class RefineBrainMaskOutputSpec(TraitedSpec):
@@ -236,7 +238,10 @@ class RefineBrainMask(SimpleInterface):
 
         anatnii = nb.load(self.inputs.in_anat)
         msknii = nb.Nifti1Image(
-            grow_mask(anatnii.get_data(), nb.load(self.inputs.in_aseg).get_data()),
+            grow_mask(anatnii.get_data(),
+                      nb.load(self.inputs.in_aseg).get_data(),
+                      nb.load(self.inputs.in_ants).get_data(),
+            ),
             anatnii.affine,
             anatnii.header
         )
@@ -313,10 +318,14 @@ def refine_aseg(aseg, ball_size=4):
     return newmask.astype(np.uint8)
 
 
-def grow_mask(anat, aseg, ww=7, zval=2.0, bw=4):
+def grow_mask(anat, aseg, ants_segs, ww=7, zval=2.0, bw=4):
     """
     Grow mask including pixels that have a high likelihood.
     GM tissue parameters are sampled in image patches of ``ww`` size.
+
+    This is inspired on mindboggle's solution to the problem:
+    https://github.com/nipy/mindboggle/blob/master/mindboggle/guts/segment.py#L1660
+
     """
     selem = sim.ball(bw)
 
@@ -328,6 +337,11 @@ def grow_mask(anat, aseg, ww=7, zval=2.0, bw=4):
     newrefmask = sim.binary_dilation(refined, selem) - refined
     indices = np.argwhere(newrefmask > 0)
     for pixel in indices:
+        # When ATROPOS identified the pixel as GM, set and carry on
+        if ants_segs[tuple(pixel)] == 3:
+            refined[tuple(pixel)] = 1
+            continue
+
         window = gm[
             pixel[0] - ww:pixel[0] + ww,
             pixel[1] - ww:pixel[1] + ww,
