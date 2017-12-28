@@ -228,6 +228,12 @@ class RefineBrainMaskOutputSpec(TraitedSpec):
 
 
 class RefineBrainMask(SimpleInterface):
+    """
+    Refine the brain mask implicit in the ``aseg.mgz``
+    file to include possibly missing gray-matter voxels
+    and deep, wide sulci.
+    """
+
     input_spec = RefineBrainMaskInputSpec
     output_spec = RefineBrainMaskOutputSpec
 
