@@ -194,7 +194,7 @@ class PatchedConcatenateLTA(ConcatenateLTA):
     """
 
     def _list_outputs(self):
-        outputs = super(ConcatenateLTA, self)._list_outputs()
+        outputs = super(PatchedConcatenateLTA, self)._list_outputs()
 
         with open(outputs['out_file'], 'r') as f:
             lines = f.readlines()
