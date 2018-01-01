@@ -55,8 +55,13 @@ class NormalizeSurf(SimpleInterface):
     In principle, this should apply safely to any other surface, although it is
     less relevant to surfaces that don't describe an anatomical structure.
 
-    .. _AlgorithmSurfaceApplyAffine: https://github.com/Washington-University/workbench/blob/1b79e56/src/Algorithms/AlgorithmSurfaceApplyAffine.cxx#L73-L91
-    .. _FreeSurfer2CaretConvertAndRegisterNonlinear: https://github.com/Washington-University/Pipelines/blob/ae69b9a/PostFreeSurfer/scripts/FreeSurfer2CaretConvertAndRegisterNonlinear.sh#L147-154
+    .. _AlgorithmSurfaceApplyAffine: https://github.com/Washington-University/workbench\
+/blob/1b79e56/src/Algorithms/AlgorithmSurfaceApplyAffine.cxx#L73-L91
+
+    .. _FreeSurfer2CaretConvertAndRegisterNonlinear: https://github.com/Washington-University/\
+Pipelines/blob/ae69b9a/PostFreeSurfer/scripts/FreeSurfer2CaretConvertAndRegisterNonlinear.sh\
+#L147-154
+
     """
     input_spec = NormalizeSurfInputSpec
     output_spec = NormalizeSurfOutputSpec

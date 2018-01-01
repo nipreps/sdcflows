@@ -72,6 +72,7 @@ REQUIRES = [
     'nipype',
     'seaborn',
     'indexed_gzip>=0.7.0',
+    'scikit-image',
 ]
 
 LINKS_REQUIRES = [
