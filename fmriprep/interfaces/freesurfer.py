@@ -22,10 +22,13 @@ Disable warnings:
 
 import os.path as op
 import nibabel as nb
+import numpy as np
 
+from skimage import morphology as sim
+from scipy.ndimage.morphology import binary_fill_holes
 from nilearn.image import resample_to_img, new_img_like
 
-from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list
+from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
 from niworkflows.nipype.interfaces.base import (
     isdefined, InputMultiPath, BaseInterfaceInputSpec, TraitedSpec, File, traits, Directory
 )
@@ -191,7 +194,7 @@ class PatchedConcatenateLTA(ConcatenateLTA):
     """
 
     def _list_outputs(self):
-        outputs = super(ConcatenateLTA, self)._list_outputs()
+        outputs = super(PatchedConcatenateLTA, self)._list_outputs()
 
         with open(outputs['out_file'], 'r') as f:
             lines = f.readlines()
@@ -209,6 +212,48 @@ class PatchedConcatenateLTA(ConcatenateLTA):
             with open(outputs['out_file'], 'w') as f:
                 f.write(''.join(newfile))
         return outputs
+
+
+class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
+    in_anat = File(exists=True, mandatory=True,
+                   desc='input anatomical reference (INU corrected)')
+    in_aseg = File(exists=True, mandatory=True,
+                   desc='input ``aseg`` file, in NifTi format.')
+    in_ants = File(exists=True, mandatory=True,
+                   desc='brain tissue segmentation generated with antsBrainExtraction.sh')
+
+
+class RefineBrainMaskOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='new mask')
+
+
+class RefineBrainMask(SimpleInterface):
+    """
+    Refine the brain mask implicit in the ``aseg.mgz``
+    file to include possibly missing gray-matter voxels
+    and deep, wide sulci.
+    """
+
+    input_spec = RefineBrainMaskInputSpec
+    output_spec = RefineBrainMaskOutputSpec
+
+    def _run_interface(self, runtime):
+
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.in_anat, suffix='_rbrainmask', newpath=runtime.cwd)
+
+        anatnii = nb.load(self.inputs.in_anat)
+        msknii = nb.Nifti1Image(
+            grow_mask(anatnii.get_data(),
+                      nb.load(self.inputs.in_aseg).get_data(),
+                      nb.load(self.inputs.in_ants).get_data()),
+            anatnii.affine,
+            anatnii.header
+        )
+        msknii.set_data_dtype(np.uint8)
+        msknii.to_filename(self._results['out_file'])
+
+        return runtime
 
 
 def inject_skullstripped(subjects_dir, subject_id, skullstripped):
@@ -246,3 +291,73 @@ def detect_inputs(t1w_list, t2w_list=None, hires_enabled=True):
     # https://surfer.nmr.mgh.harvard.edu/fswiki/SubmillimeterRecon
     mris_inflate = '-n 50' if hires else None
     return (t2w, hires, mris_inflate)
+
+
+def refine_aseg(aseg, ball_size=4):
+    """
+    First step to reconcile ANTs' and FreeSurfer's brain masks.
+
+    Here, the ``aseg.mgz`` mask from FreeSurfer is refined in two
+    steps, using binary morphological operations:
+
+      1. With a binary closing operation the sulci are included
+         into the mask. This results in a smoother brain mask
+         that does not exclude deep, wide sulci.
+
+      2. Fill any holes (typically, there could be a hole next to
+         the pineal gland and the corpora quadrigemina if the great
+         cerebral brain is segmented out).
+
+
+    """
+    # Read aseg data
+    bmask = aseg.copy()
+    bmask[bmask > 0] = 1
+    bmask = bmask.astype(np.uint8)
+
+    # Morphological operations
+    selem = sim.ball(ball_size)
+    newmask = sim.binary_closing(bmask, selem)
+    newmask = binary_fill_holes(newmask.astype(np.uint8), selem).astype(np.uint8)
+
+    return newmask.astype(np.uint8)
+
+
+def grow_mask(anat, aseg, ants_segs=None, ww=7, zval=2.0, bw=4):
+    """
+    Grow mask including pixels that have a high likelihood.
+    GM tissue parameters are sampled in image patches of ``ww`` size.
+
+    This is inspired on mindboggle's solution to the problem:
+    https://github.com/nipy/mindboggle/blob/master/mindboggle/guts/segment.py#L1660
+
+    """
+    selem = sim.ball(bw)
+
+    if ants_segs is None:
+        ants_segs = np.zeros_like(aseg, dtype=np.uint8)
+
+    aseg[aseg == 42] = 3  # Collapse both hemispheres
+    gm = anat.copy()
+    gm[aseg != 3] = 0
+
+    refined = refine_aseg(aseg)
+    newrefmask = sim.binary_dilation(refined, selem) - refined
+    indices = np.argwhere(newrefmask > 0)
+    for pixel in indices:
+        # When ATROPOS identified the pixel as GM, set and carry on
+        if ants_segs[tuple(pixel)] == 2:
+            refined[tuple(pixel)] = 1
+            continue
+
+        window = gm[
+            pixel[0] - ww:pixel[0] + ww,
+            pixel[1] - ww:pixel[1] + ww,
+            pixel[2] - ww:pixel[2] + ww
+        ]
+        if np.any(window > 0):
+            zstat = abs(anat[tuple(pixel)] - window[window > 0].mean()) / window[window > 0].std()
+            refined[tuple(pixel)] = int(zstat < zval)
+
+    refined = sim.binary_opening(refined, selem)
+    return refined
