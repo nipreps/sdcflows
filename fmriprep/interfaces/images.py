@@ -176,8 +176,8 @@ class TemplateDimensions(SimpleInterface):
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
         # Ignore dropped images
-        valid_fnames = in_names[valid]
-        self._results['t1w_valid_list'] = valid_fnames.tolist()
+        valid_fnames = np.atleast_1d(in_names[valid]).tolist()
+        self._results['t1w_valid_list'] = valid_fnames
 
         # Set target shape information
         target_zooms = all_zooms[valid].min(axis=0)
