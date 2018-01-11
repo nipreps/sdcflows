@@ -356,7 +356,9 @@ def grow_mask(anat, aseg, ants_segs=None, ww=7, zval=2.0, bw=4):
             pixel[2] - ww:pixel[2] + ww
         ]
         if np.any(window > 0):
-            zstat = abs(anat[tuple(pixel)] - window[window > 0].mean()) / window[window > 0].std()
+            mu = window[window > 0].mean()
+            sigma = min(window[window > 0].std(), 1.e-5)
+            zstat = abs(anat[tuple(pixel)] - mu) / sigma
             refined[tuple(pixel)] = int(zstat < zval)
 
     refined = sim.binary_opening(refined, selem)
