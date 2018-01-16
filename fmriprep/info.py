@@ -5,7 +5,7 @@
 Base module variables
 """
 
-__version__ = '1.0.4-dev'
+__version__ = '1.0.4'
 __author__ = 'The CRN developers'
 __copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski',
@@ -67,7 +67,7 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.4.2',
     'nitime',
-    'niworkflows>=0.2.5',
+    'niworkflows>=0.2.6',
     'statsmodels',
     'nipype',
     'seaborn',
