@@ -357,7 +357,7 @@ def grow_mask(anat, aseg, ants_segs=None, ww=7, zval=2.0, bw=4):
         ]
         if np.any(window > 0):
             mu = window[window > 0].mean()
-            sigma = min(window[window > 0].std(), 1.e-5)
+            sigma = max(window[window > 0].std(), 1.e-5)
             zstat = abs(anat[tuple(pixel)] - mu) / sigma
             refined[tuple(pixel)] = int(zstat < zval)
 
