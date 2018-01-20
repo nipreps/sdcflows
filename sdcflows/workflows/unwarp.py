@@ -26,7 +26,13 @@ from niworkflows.nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
 from ...interfaces import itk, ReadSidecarJSON, DerivativesDataSink
-from ...interfaces.fmap import get_ees as _get_ees
+from ...interfaces.fmap import (
+    get_ees as _get_ees,
+    FieldToRadS,
+)
+from ...interfaces.images import (
+    DemeanImage, FilledImageLike
+)
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
@@ -123,7 +129,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         mem_gb=0.01, run_without_submitting=True)
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
-    torads = pe.Node(niu.Function(function=_hz2rads), name='torads')
+    torads = pe.Node(FieldToRadS(fmap_range=0.5), name='torads')
 
     get_ees = pe.Node(niu.Function(function=_get_ees, output_names=['ees']), name='get_ees')
 
@@ -140,7 +146,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
                                                       interpolation='LanczosWindowedSinc'),
                                name='unwarp_reference')
 
-    fieldmap_fov_mask = pe.Node(niu.Function(function=_fill_with_ones), name='fieldmap_fov_mask')
+    fieldmap_fov_mask = pe.Node(FilledImageLike(dtype='uint8'), name='fieldmap_fov_mask')
 
     fmap_fov2ref_apply = pe.Node(ANTSApplyTransformsRPT(
         generate_report=False, dimension=3, interpolation='NearestNeighbor',
@@ -173,7 +179,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
-        (torads, gen_vsm, [('out', 'fmap_in_file')]),
+        (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
         (vsm2dfm, unwarp_reference, [('out_file', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
         (inputnode, unwarp_reference, [('in_reference', 'input_image')]),
@@ -200,7 +206,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
     if fmap_demean:
         # Demean within mask
-        demean = pe.Node(niu.Function(function=_demean), name='demean')
+        demean = pe.Node(DemeanImage(), name='demean')
 
         workflow.connect([
             (gen_vsm, demean, [('shift_out_file', 'in_file')]),
@@ -308,51 +314,3 @@ def _get_pedir_bids(in_dict):
 
 def _get_pedir_fugue(in_dict):
     return in_dict['PhaseEncodingDirection'].replace('i', 'x').replace('j', 'y').replace('k', 'z')
-
-
-def _hz2rads(in_file, out_file=None):
-    """Transform a fieldmap in Hz into rad/s"""
-    import os
-    from math import pi
-    import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
-    if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='_rads',
-                                   newpath=os.getcwd())
-    nii = nb.load(in_file)
-    data = nii.get_data() * 2.0 * pi
-    nb.Nifti1Image(data, nii.get_affine(),
-                   nii.get_header()).to_filename(out_file)
-    return out_file
-
-
-def _demean(in_file, in_mask, out_file=None):
-    import os
-    import numpy as np
-    import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
-
-    if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='_demeaned',
-                                   newpath=os.getcwd())
-    nii = nb.load(in_file)
-    msk = nb.load(in_mask).get_data()
-    data = nii.get_data()
-    data -= np.median(data[msk > 0])
-    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(
-        out_file)
-    return out_file
-
-
-def _fill_with_ones(in_file):
-    import nibabel as nb
-    import numpy as np
-    import os
-
-    nii = nb.load(in_file)
-    data = np.ones(nii.shape)
-
-    out_name = os.path.abspath("out.nii.gz")
-    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_name)
-
-    return out_name

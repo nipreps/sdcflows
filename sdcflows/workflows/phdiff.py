@@ -25,7 +25,10 @@ from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_ima
     cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import ReadSidecarJSON, IntraModalMerge, DerivativesDataSink
+from ...interfaces import (
+    ReadSidecarJSON, IntraModalMerge, DerivativesDataSink,
+    Phasediff2Fieldmap
+)
 
 
 def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
@@ -63,7 +66,6 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
 
     # Read phasediff echo times
     meta = pe.Node(ReadSidecarJSON(), name='meta', mem_gb=0.01, run_without_submitting=True)
-    dte = pe.Node(niu.Function(function=_delta_te), name='dte', mem_gb=0.01)
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -93,7 +95,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
 
     cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
 
-    compfmap = pe.Node(niu.Function(function=phdiff2fmap), name='compfmap')
+    compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
     # The phdiff2fmap interface is equivalent to:
     # rad2rsec (using rads2radsec from nipype.workflows.dmri.fsl.utils)
@@ -110,8 +112,7 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
         (bet, prelude, [('mask_file', 'mask_file')]),
         (inputnode, pha2rads, [('phasediff', 'in_file')]),
         (pha2rads, prelude, [('out', 'phase_file')]),
-        (meta, dte, [('out_dict', 'in_values')]),
-        (dte, compfmap, [('out', 'delta_te')]),
+        (meta, compfmap, [('out_dict', 'metadata')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
@@ -125,72 +126,3 @@ def init_phdiff_wf(reportlets_dir, omp_nthreads, name='phdiff_wf'):
     ])
 
     return workflow
-
-
-# ------------------------------------------------------
-# Helper functions
-# ------------------------------------------------------
-
-def phdiff2fmap(in_file, delta_te, out_file=None):
-    r"""
-    Converts the input phase-difference map into a fieldmap in Hz,
-    using the eq. (1) of [Hutton2002]_:
-
-    .. math::
-
-        \Delta B_0 (\text{T}^{-1}) = \frac{\Delta \Theta}{2\pi\gamma \Delta\text{TE}}
-
-
-    In this case, we do not take into account the gyromagnetic ratio of the
-    proton (:math:`\gamma`), since it will be applied inside TOPUP:
-
-    .. math::
-
-        \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi \Delta\text{TE}}
-
-    """
-    import numpy as np
-    import nibabel as nb
-    import os.path as op
-    import math
-
-    #  GYROMAG_RATIO_H_PROTON_MHZ = 42.576
-
-    if out_file is None:
-        fname, fext = op.splitext(op.basename(in_file))
-        if fext == '.gz':
-            fname, _ = op.splitext(fname)
-        out_file = op.abspath('./%s_fmap.nii.gz' % fname)
-
-    image = nb.load(in_file)
-    data = (image.get_data().astype(np.float32) / (2. * math.pi * delta_te))
-
-    nb.Nifti1Image(data, image.affine, image.header).to_filename(out_file)
-    return out_file
-
-
-def _delta_te(in_values, te1=None, te2=None):
-    if isinstance(in_values, float):
-        te2 = in_values
-        te1 = 0.
-
-    if isinstance(in_values, dict):
-        te1 = in_values.get('EchoTime1')
-        te2 = in_values.get('EchoTime2')
-
-        if not all((te1, te2)):
-            te2 = in_values.get('EchoTimeDifference')
-            te1 = 0
-
-    if isinstance(in_values, list):
-        te2, te1 = in_values
-        if isinstance(te1, list):
-            te1 = te1[1]
-        if isinstance(te2, list):
-            te2 = te2[1]
-
-    if te1 is None or te2 is None:
-        raise RuntimeError(
-            'No echo time information found')
-
-    return abs(float(te2) - float(te1))
