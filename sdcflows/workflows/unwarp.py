@@ -186,7 +186,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (vsm2dfm, outputnode, [('out_file', 'out_warp')]),
         (vsm2dfm, jac_dfm, [('out_file', 'deformationField')]),
         (inputnode, fieldmap_fov_mask, [('fmap_ref', 'in_file')]),
-        (fieldmap_fov_mask, fmap_fov2ref_apply, [('out', 'input_image')]),
+        (fieldmap_fov_mask, fmap_fov2ref_apply, [('out_file', 'input_image')]),
         (inputnode, fmap_fov2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap_fov2ref_apply, [('composite_transform', 'transforms')]),
         (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
@@ -211,7 +211,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         workflow.connect([
             (gen_vsm, demean, [('shift_out_file', 'in_file')]),
             (fmap_mask2ref_apply, demean, [('output_image', 'in_mask')]),
-            (demean, vsm2dfm, [('out', 'in_file')]),
+            (demean, vsm2dfm, [('out_file', 'in_file')]),
         ])
 
     else:
