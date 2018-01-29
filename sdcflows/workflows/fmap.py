@@ -113,7 +113,7 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
             (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
             (tohz, denoise, [('out_file', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
-            (demean, cleanup_wf, [('out_file', 'inputnode.in_file')]),
+            (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
             (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
             (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
             (bet, applymsk, [('mask_file', 'mask_file')]),
