@@ -314,6 +314,8 @@ def get_ees(in_meta, in_file=None):
 
     """
 
+    import nibabel as nb
+
     # Use case 1: EES is defined
     ees = in_meta.get('EffectiveEchoSpacing', None)
     if ees is not None:
