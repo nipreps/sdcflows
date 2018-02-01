@@ -256,6 +256,32 @@ class RefineBrainMask(SimpleInterface):
         return runtime
 
 
+class MedialNaNsInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input surface file')
+    target_subject = traits.Str(mandatory=True, desc='target subject ID')
+    subjects_dir = Directory(mandatory=True, desc='FreeSurfer SUBJECTS_DIR')
+
+
+class MedialNaNsOutputSpec(TraitedSpec):
+    out_file = File(desc='the output surface file')
+
+
+class MedialNaNs(SimpleInterface):
+    """
+    The MedialNaNs converts from arbitrary units to rad/s
+    """
+    input_spec = MedialNaNsInputSpec
+    output_spec = MedialNaNsOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = medial_wall_to_nan(
+            self.inputs.in_file,
+            self.inputs.subjects_dir,
+            self.inputs.target_subject,
+            newpath=runtime.cwd)
+        return runtime
+
+
 def inject_skullstripped(subjects_dir, subject_id, skullstripped):
     mridir = op.join(subjects_dir, subject_id, 'mri')
     t1 = op.join(mridir, 'T1.mgz')
@@ -356,8 +382,33 @@ def grow_mask(anat, aseg, ants_segs=None, ww=7, zval=2.0, bw=4):
             pixel[2] - ww:pixel[2] + ww
         ]
         if np.any(window > 0):
-            zstat = abs(anat[tuple(pixel)] - window[window > 0].mean()) / window[window > 0].std()
+            mu = window[window > 0].mean()
+            sigma = max(window[window > 0].std(), 1.e-5)
+            zstat = abs(anat[tuple(pixel)] - mu) / sigma
             refined[tuple(pixel)] = int(zstat < zval)
 
     refined = sim.binary_opening(refined, selem)
     return refined
+
+
+def medial_wall_to_nan(in_file, subjects_dir, target_subject, newpath=None):
+    """ Convert values on medial wall to NaNs
+    """
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    fn = os.path.basename(in_file)
+    if not target_subject.startswith('fs'):
+        return in_file
+
+    cortex = nb.freesurfer.read_label(os.path.join(
+        subjects_dir, target_subject, 'label', '{}.cortex.label'.format(fn[:2])))
+    func = nb.load(in_file)
+    medial = np.delete(np.arange(len(func.darrays[0].data)), cortex)
+    for darray in func.darrays:
+        darray.data[medial] = np.nan
+
+    out_file = os.path.join(newpath or os.getcwd(), fn)
+    func.to_filename(out_file)
+    return out_file

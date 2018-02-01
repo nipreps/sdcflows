@@ -71,7 +71,7 @@ class MCFLIRT2ITK(SimpleInterface):
         tfms = '#Insight Transform File V1.0\n' + ''.join(
             [el[1] for el in sorted(itk_outs)])
 
-        self._results['out_file'] = os.path.abspath('mat2itk.txt')
+        self._results['out_file'] = os.path.join(runtime.cwd, 'mat2itk.txt')
         with open(self._results['out_file'], 'w') as f:
             f.write(tfms)
 
@@ -148,10 +148,10 @@ class MultiApplyTransforms(SimpleInterface):
         self._results['out_files'] = [el[0] for el in out_files]
 
         if save_cmd:
-            with open('command.txt', 'w') as cmdfile:
+            self._results['log_cmdline'] = os.path.join(runtime.cwd, 'command.txt')
+            with open(self._results['log_cmdline'], 'w') as cmdfile:
                 print('\n-------\n'.join([el[1] for el in out_files]),
                       file=cmdfile)
-            self._results['log_cmdline'] = os.path.abspath('command.txt')
         return runtime
 
 

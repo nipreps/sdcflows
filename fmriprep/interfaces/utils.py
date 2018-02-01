@@ -78,7 +78,8 @@ class TPM2ROI(SimpleInterface):
             erode_mm,
             mask_erode_prop,
             erode_prop,
-            self.inputs.prob_thresh
+            self.inputs.prob_thresh,
+            newpath=runtime.cwd,
         )
         self._results['roi_file'] = roi_file
         self._results['eroded_mask'] = eroded_mask
@@ -235,7 +236,8 @@ class ConcatAffines(SimpleInterface):
 
 
 def _tpm2roi(in_tpm, in_mask, mask_erosion_mm=None, erosion_mm=None,
-             mask_erosion_prop=None, erosion_prop=None, pthres=0.95):
+             mask_erosion_prop=None, erosion_prop=None, pthres=0.95,
+             newpath=None):
     """
     Generate a mask from a tissue probability map
     """
@@ -247,7 +249,7 @@ def _tpm2roi(in_tpm, in_mask, mask_erosion_mm=None, erosion_mm=None,
                 mask_erosion_prop is not None and mask_erosion_prop < 1)
     if erode_in:
         eroded_mask_file = fname_presuffix(in_mask, suffix='_eroded',
-                                           newpath=os.getcwd())
+                                           newpath=newpath)
         mask_img = nb.load(in_mask)
         mask_data = mask_img.get_data().astype(np.uint8)
         if mask_erosion_mm:
@@ -280,8 +282,7 @@ def _tpm2roi(in_tpm, in_mask, mask_erosion_mm=None, erosion_mm=None,
                 roi_mask = nd.binary_erosion(roi_mask, iterations=1)
 
     # Create image to resample
-    roi_fname = fname_presuffix(in_tpm, suffix='_roi',
-                                newpath=os.getcwd())
+    roi_fname = fname_presuffix(in_tpm, suffix='_roi', newpath=newpath)
     roi_img = nb.Nifti1Image(roi_mask, tpm_img.affine, tpm_img.header)
     roi_img.set_data_dtype(np.uint8)
     roi_img.to_filename(roi_fname)

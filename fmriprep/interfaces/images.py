@@ -55,7 +55,8 @@ class IntraModalMerge(SimpleInterface):
                                                    suffix='_avg', newpath=runtime.cwd)
 
         if self.inputs.to_ras:
-            in_files = [reorient(inf) for inf in in_files]
+            in_files = [reorient(inf, newpath=runtime.cwd)
+                        for inf in in_files]
 
         if len(in_files) == 1:
             filenii = nb.load(in_files[0])
@@ -176,8 +177,8 @@ class TemplateDimensions(SimpleInterface):
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
         # Ignore dropped images
-        valid_fnames = in_names[valid]
-        self._results['t1w_valid_list'] = valid_fnames.tolist()
+        valid_fnames = np.atleast_1d(in_names[valid]).tolist()
+        self._results['t1w_valid_list'] = valid_fnames
 
         # Set target shape information
         target_zooms = all_zooms[valid].min(axis=0)
@@ -389,7 +390,7 @@ class ValidateImage(SimpleInterface):
 
     def _run_interface(self, runtime):
         img = nb.load(self.inputs.in_file)
-        out_report = os.path.abspath('report.html')
+        out_report = os.path.join(runtime.cwd, 'report.html')
 
         # Retrieve xform codes
         sform_code = int(img.header._structarr['sform_code'])
@@ -500,26 +501,79 @@ class InvertT1w(SimpleInterface):
         return runtime
 
 
-def reorient(in_file, out_file=None):
+class DemeanImageInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='image to be demeaned')
+    in_mask = File(exists=True, mandatory=True,
+                   desc='mask where median will be calculated')
+    only_mask = traits.Bool(False, usedefault=True,
+                            desc='demean only within mask')
+
+
+class DemeanImageOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='demeaned image')
+
+
+class DemeanImage(SimpleInterface):
+    input_spec = DemeanImageInputSpec
+    output_spec = DemeanImageOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = demean(
+            self.inputs.in_file,
+            self.inputs.in_mask,
+            only_mask=self.inputs.only_mask,
+            newpath=runtime.cwd)
+        return runtime
+
+
+class FilledImageLikeInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='image to be demeaned')
+    fill_value = traits.Float(1.0, usedefault=True,
+                              desc='value to fill')
+    dtype = traits.Enum('float32', 'uint8', usedefault=True,
+                        desc='force output data type')
+
+
+class FilledImageLikeOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='demeaned image')
+
+
+class FilledImageLike(SimpleInterface):
+    input_spec = FilledImageLikeInputSpec
+    output_spec = FilledImageLikeOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = nii_ones_like(
+            self.inputs.in_file,
+            self.inputs.fill_value,
+            self.inputs.dtype,
+            newpath=runtime.cwd)
+        return runtime
+
+
+def reorient(in_file, newpath=None):
     """Reorient Nifti files to RAS"""
-    if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='_ras', newpath=os.getcwd())
+    out_file = fname_presuffix(in_file, suffix='_ras', newpath=newpath)
     nb.as_closest_canonical(nb.load(in_file)).to_filename(out_file)
     return out_file
 
 
-def extract_wm(in_seg, wm_label=3):
-    import os.path as op
+def extract_wm(in_seg, wm_label=3, newpath=None):
     import nibabel as nb
     import numpy as np
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_seg)
     data = np.zeros(nii.shape, dtype=np.uint8)
     data[nii.get_data() == wm_label] = 1
-    hdr = nii.header.copy()
-    hdr.set_data_dtype(np.uint8)
-    nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
-    return op.abspath('wm.nii.gz')
+
+    out_file = fname_presuffix(in_seg, suffix='_wm', newpath=newpath)
+    new = nb.Nifti1Image(data, nii.affine, nii.header)
+    new.set_data_dtype(np.uint8)
+    new.to_filename(out_file)
+    return out_file
 
 
 def normalize_xform(img):
@@ -554,3 +608,41 @@ def normalize_xform(img):
     new_img.set_sform(xform, xform_code)
     new_img.set_qform(xform, xform_code)
     return new_img
+
+
+def demean(in_file, in_mask, only_mask=False, newpath=None):
+    """Demean ``in_file`` within the mask defined by ``in_mask``"""
+    import os
+    import numpy as np
+    import nibabel as nb
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+
+    out_file = fname_presuffix(in_file, suffix='_demeaned',
+                               newpath=os.getcwd())
+    nii = nb.load(in_file)
+    msk = nb.load(in_mask).get_data()
+    data = nii.get_data()
+    if only_mask:
+        data[msk > 0] -= np.median(data[msk > 0])
+    else:
+        data -= np.median(data[msk > 0])
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(
+        out_file)
+    return out_file
+
+
+def nii_ones_like(in_file, value, dtype, newpath=None):
+    """Create a NIfTI file filled with ``value``, matching properties of ``in_file``"""
+    import os
+    import numpy as np
+    import nibabel as nb
+
+    nii = nb.load(in_file)
+    data = np.ones(nii.shape, dtype=float) * value
+
+    out_file = os.path.join(newpath or os.getcwd(), "filled.nii.gz")
+    nii = nb.Nifti1Image(data, nii.affine, nii.header)
+    nii.set_data_dtype(dtype)
+    nii.to_filename(out_file)
+
+    return out_file

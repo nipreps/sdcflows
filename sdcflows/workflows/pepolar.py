@@ -260,17 +260,15 @@ def init_prepare_epi_wf(omp_nthreads, name="prepare_epi_wf"):
     return workflow
 
 
-def _fix_hdr(in_file):
+def _fix_hdr(in_file, newpath=None):
     import nibabel as nb
-    import os
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
     hdr = nii.header.copy()
     hdr.set_data_dtype('<f4')
     hdr.set_intent('vector', (), '')
-
-    out_file = os.path.abspath("warpfield.nii.gz")
-
-    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(out_file)
-
+    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
+    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(
+        out_file)
     return out_file

@@ -135,6 +135,78 @@ class FieldEnhance(SimpleInterface):
         return runtime
 
 
+class FieldToRadSInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input fieldmap')
+    fmap_range = traits.Float(desc='range of input field map')
+
+
+class FieldToRadSOutputSpec(TraitedSpec):
+    out_file = File(desc='the output fieldmap')
+    fmap_range = traits.Float(desc='range of input field map')
+
+
+class FieldToRadS(SimpleInterface):
+    """
+    The FieldToRadS converts from arbitrary units to rad/s
+    """
+    input_spec = FieldToRadSInputSpec
+    output_spec = FieldToRadSOutputSpec
+
+    def _run_interface(self, runtime):
+        fmap_range = None
+        if isdefined(self.inputs.fmap_range):
+            fmap_range = self.inputs.fmap_range
+        self._results['out_file'], self._results['fmap_range'] = _torads(
+            self.inputs.in_file, fmap_range, newpath=runtime.cwd)
+        return runtime
+
+
+class FieldToHzInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input fieldmap')
+    range_hz = traits.Float(mandatory=True, desc='range of input field map')
+
+
+class FieldToHzOutputSpec(TraitedSpec):
+    out_file = File(desc='the output fieldmap')
+
+
+class FieldToHz(SimpleInterface):
+    """
+    The FieldToHz converts from arbitrary units to Hz
+    """
+    input_spec = FieldToHzInputSpec
+    output_spec = FieldToHzOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = _tohz(
+            self.inputs.in_file, self.inputs.range_hz, newpath=runtime.cwd)
+        return runtime
+
+
+class Phasediff2FieldmapInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input fieldmap')
+    metadata = traits.Dict(mandatory=True, desc='BIDS metadata dictionary')
+
+
+class Phasediff2FieldmapOutputSpec(TraitedSpec):
+    out_file = File(desc='the output fieldmap')
+
+
+class Phasediff2Fieldmap(SimpleInterface):
+    """
+    Convert a phase difference map into a fieldmap in Hz
+    """
+    input_spec = Phasediff2FieldmapInputSpec
+    output_spec = Phasediff2FieldmapOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = phdiff2fmap(
+            self.inputs.in_file,
+            _delta_te(self.inputs.metadata),
+            newpath=runtime.cwd)
+        return runtime
+
+
 def _despike2d(data, thres, neigh=None):
     """
     despiking as done in FSL fugue
@@ -242,6 +314,8 @@ def get_ees(in_meta, in_file=None):
 
     """
 
+    import nibabel as nb
+
     # Use case 1: EES is defined
     ees = in_meta.get('EffectiveEchoSpacing', None)
     if ees is not None:
@@ -345,3 +419,106 @@ def _get_pe_index(meta):
         return {'i': 0, 'j': 1, 'k': 2}[pe[0]]
     except KeyError:
         raise RuntimeError('"%s" is an invalid PE string' % pe)
+
+
+def _torads(in_file, fmap_range=None, newpath=None):
+    """
+    Convert a field map to rad/s units
+
+    If fmap_range is None, the range of the fieldmap
+    will be automatically calculated.
+
+    Use fmap_range=0.5 to convert from Hz to rad/s
+    """
+    from math import pi
+    import nibabel as nb
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+
+    out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
+    fmapnii = nb.load(in_file)
+    fmapdata = fmapnii.get_data()
+
+    if fmap_range is None:
+        fmap_range = max(abs(fmapdata.min()), fmapdata.max())
+    fmapdata = fmapdata * (pi / fmap_range)
+    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+    out_img.set_data_dtype('float32')
+    out_img.to_filename(out_file)
+    return out_file, fmap_range
+
+
+def _tohz(in_file, range_hz, newpath=None):
+    """Convert a field map to Hz units"""
+    from math import pi
+    import nibabel as nb
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+
+    out_file = fname_presuffix(in_file, suffix='_hz', newpath=newpath)
+    fmapnii = nb.load(in_file)
+    fmapdata = fmapnii.get_data()
+    fmapdata = fmapdata * (range_hz / pi)
+    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+    out_img.set_data_dtype('float32')
+    out_img.to_filename(out_file)
+    return out_file
+
+
+def phdiff2fmap(in_file, delta_te, newpath=None):
+    r"""
+    Converts the input phase-difference map into a fieldmap in Hz,
+    using the eq. (1) of [Hutton2002]_:
+
+    .. math::
+
+        \Delta B_0 (\text{T}^{-1}) = \frac{\Delta \Theta}{2\pi\gamma \Delta\text{TE}}
+
+
+    In this case, we do not take into account the gyromagnetic ratio of the
+    proton (:math:`\gamma`), since it will be applied inside TOPUP:
+
+    .. math::
+
+        \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi \Delta\text{TE}}
+
+    """
+    import math
+    import numpy as np
+    import nibabel as nb
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    #  GYROMAG_RATIO_H_PROTON_MHZ = 42.576
+
+    out_file = fname_presuffix(in_file, suffix='_fmap', newpath=newpath)
+    image = nb.load(in_file)
+    data = (image.get_data().astype(np.float32) / (2. * math.pi * delta_te))
+    nii = nb.Nifti1Image(data, image.affine, image.header)
+    nii.set_data_dtype(np.float32)
+    nii.to_filename(out_file)
+    return out_file
+
+
+def _delta_te(in_values, te1=None, te2=None):
+    """Read :math:`\Delta_\text{TE}` from BIDS metadata dict"""
+    if isinstance(in_values, float):
+        te2 = in_values
+        te1 = 0.
+
+    if isinstance(in_values, dict):
+        te1 = in_values.get('EchoTime1')
+        te2 = in_values.get('EchoTime2')
+
+        if not all((te1, te2)):
+            te2 = in_values.get('EchoTimeDifference')
+            te1 = 0
+
+    if isinstance(in_values, list):
+        te2, te1 = in_values
+        if isinstance(te1, list):
+            te1 = te1[1]
+        if isinstance(te2, list):
+            te2 = te2[1]
+
+    if te1 is None or te2 is None:
+        raise RuntimeError(
+            'No echo time information found')
+
+    return abs(float(te2) - float(te1))
