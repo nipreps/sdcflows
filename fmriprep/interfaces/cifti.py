@@ -20,6 +20,8 @@ from niworkflows.nipype.interfaces.base import (
     SimpleInterface, Directory
 )
 
+from niworkflows.nipype.utils.filemanip import split_filename
+
 # CITFI structures with corresponding FS labels
 CIFTI_STRUCT_WITH_LABELS = {
     # SURFACES
@@ -64,8 +66,8 @@ class GenerateCiftiInputSpec(BaseInterfaceInputSpec):
     bold_file = File(mandatory=True, exists=True, desc="input BOLD file")
     volume_target = traits.Enum("MNI152NLin2009cAsym", mandatory=True, usedefault=True,
                                 desc="CIFTI volumetric output space")
-    surface_target = traits.Enum("fsaverage5", mandatory=True, usedefault=True,
-                                 desc="CIFTI surface target space")
+    surface_target = traits.Enum("fsaverage5", "fsaverage6", "fsaverage", mandatory=True,
+                                 usedefault=True, desc="CIFTI surface target space")
     subjects_dir = Directory(mandatory=True, desc="FreeSurfer SUBJECTS_DIR")
     TR = traits.Float(mandatory=True, desc="repetition time")
     gifti_files = traits.List(File(exists=True), mandatory=True,
@@ -84,20 +86,29 @@ class GenerateCifti(SimpleInterface):
     output_spec = GenerateCiftiOutputSpec
 
     def _run_interface(self, runtime):
-
+        self.annotation_files, self.label_file = self._fetch_data()
         self._results["out_file"] = create_cifti_image(
             self.bold_file,
             self.label_file,
             self.annotation_files,
-            self.gii_files,
+            self.gifti_files,
             self.volume_target,
             self.surface_target,
             self.TR)
+
         return runtime
 
     def _fetch_data(self):
-        """TODO: annotations from SUBJECTS_DIR, label_file"""
-        pass
+        """Converts inputspec to files"""
+        if self.surface_target == "fsnative":
+            raise NotImplementedError
+
+        annotation_files = sorted(glob(os.path.join(self.subjects_dir,
+                                                    self.surface_target,
+                                                    'label',
+                                                    '*h.aparc.annot')))
+        # TODO: fetch label_file
+        return annotation_files
 
 
 def create_cifti_image(bold_file, label_file, annotation_files,
@@ -132,17 +143,17 @@ def create_cifti_image(bold_file, label_file, annotation_files,
             # use the corresponding annotation
             hemi = structure.split('_')[-1][0]
             annots = [fl for fl in annotation_files if ".aparc.annot" in fl]
-            annot = annots[0] if hemi == "LEFT" else annots[1]
+            annot = (nb.freesurfer.read_annot(annots[0]) if hemi == "LEFT"
+                     else nb.freesurfer.read_annot(annots[1]))
             # currently only supports L/R cortex
-            gii_data = (nb.load(gii_files[0]) if hemi == "LEFT"
-                        else nb.load(gii_files[1]))
+            gii = (nb.load(gii_files[0]) if hemi == "LEFT"
+                   else nb.load(gii_files[1]))
             # calculate total number of vertices
-            info = nb.freesurfer.read_annot(annot)
-            surf_verts = len(info[0])
+            surf_verts = len(annot[0])
             # remove medial wall for CIFTI format
-            vert_idx = np.nonzero(info[0] != info[2].index(b'unknown'))[0]
+            vert_idx = np.nonzero(annot[0] != annot[2].index(b'unknown'))[0]
             # extract values across volumes
-            ts = np.array([tarr.data[vert_idx] for tarr in gii_data.darrays])
+            ts = np.array([tsarr.data[vert_idx] for tsarr in gii.darrays])
 
             vert_idx = ci.Cifti2VertexIndices(vert_idx)
             bm = ci.Cifti2BrainModel(index_offset=idx_offset,
@@ -202,5 +213,7 @@ def create_cifti_image(bold_file, label_file, annotation_files,
     matrix.metadata = ci.Cifti2MetaData(meta)
     hdr = ci.Cifti2Header(matrix)
     img = ci.Cifti2Image(bm_ts, hdr)
-    ci.save(img, "test.dtseries.nii")
-    return img
+
+    _, out_file, _ = split_filename(bold_file)
+    ci.save(img, "{}.dtseries.nii".format(out_file))
+    return out_file
