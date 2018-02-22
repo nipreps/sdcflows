@@ -71,7 +71,7 @@ class GenerateCiftiInputSpec(BaseInterfaceInputSpec):
     subjects_dir = Directory(mandatory=True, desc="FreeSurfer SUBJECTS_DIR")
     TR = traits.Float(mandatory=True, desc="repetition time")
     gifti_files = traits.List(File(exists=True), mandatory=True,
-                              desc="surface geometry files")
+                              desc="list of surface geometry files (length 2 with order [L,R])")
 
 
 class GenerateCiftiOutputSpec(TraitedSpec):
@@ -86,27 +86,32 @@ class GenerateCifti(SimpleInterface):
     output_spec = GenerateCiftiOutputSpec
 
     def _run_interface(self, runtime):
-        self.annotation_files, self.label_file = self._fetch_data()
+        annotation_files, label_file = self._fetch_data()
         self._results["out_file"] = create_cifti_image(
-            self.bold_file,
-            self.label_file,
-            self.annotation_files,
-            self.gifti_files,
-            self.volume_target,
-            self.surface_target,
-            self.TR)
+            self.inputs.bold_file,
+            label_file,
+            annotation_files,
+            self.inputs.gifti_files,
+            self.inputs.volume_target,
+            self.inputs.surface_target,
+            self.inputs.TR)
 
         return runtime
 
     def _fetch_data(self):
         """Converts inputspec to files"""
-        if self.surface_target == "fsnative":
+        if self.inputs.surface_target == "fsnative":
             raise NotImplementedError
 
-        annotation_files = sorted(glob(os.path.join(self.subjects_dir,
-                                                    self.surface_target,
+        annotation_files = sorted(glob(os.path.join(self.inputs.subjects_dir,
+                                                    self.inputs.surface_target,
                                                     'label',
                                                     '*h.aparc.annot')))
+        if not annotation_files:
+            raise IOError(
+                "Freesurfer annotations for {} not found in {}".format(self.inputs.surface_target,
+                                                                       self.inputs.subjects_dir))
+
         # TODO: fetch label_file
         return annotation_files
 
@@ -142,12 +147,9 @@ def create_cifti_image(bold_file, label_file, annotation_files,
             model_type = "CIFTI_MODEL_TYPE_SURFACE"
             # use the corresponding annotation
             hemi = structure.split('_')[-1][0]
-            annots = [fl for fl in annotation_files if ".aparc.annot" in fl]
-            annot = (nb.freesurfer.read_annot(annots[0]) if hemi == "LEFT"
-                     else nb.freesurfer.read_annot(annots[1]))
+            annot = nb.freesurfer.read_annot(annotation_files[hemi == "RIGHT"])
             # currently only supports L/R cortex
-            gii = (nb.load(gii_files[0]) if hemi == "LEFT"
-                   else nb.load(gii_files[1]))
+            gii = nb.load(gii_files[hemi == "RIGHT"])
             # calculate total number of vertices
             surf_verts = len(annot[0])
             # remove medial wall for CIFTI format
