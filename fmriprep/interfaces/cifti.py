@@ -116,7 +116,6 @@ class GenerateCifti(SimpleInterface):
                                        getters.OSF_RESOURCES[label_space][0])
         return annotation_files, label_file, download_link
 
-
 def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
                        volume_target, surface_target, tr, download_link=None):
     """
