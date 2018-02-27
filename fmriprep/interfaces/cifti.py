@@ -19,7 +19,7 @@ from niworkflows.nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, traits, isdefined,
     SimpleInterface, Directory
 )
-
+from niworkflows.data import getters
 from niworkflows.nipype.utils.filemanip import split_filename
 
 # CITFI structures with corresponding FS labels
@@ -27,32 +27,21 @@ CIFTI_STRUCT_WITH_LABELS = {
     # SURFACES
     'CIFTI_STRUCTURE_CORTEX_LEFT': [],
     'CIFTI_STRUCTURE_CORTEX_RIGHT': [],
-    # 'CIFTI_STRUCTURE_CORTEX': [],
-    # 'CIFTI_STRUCTURE_CEREBRAL_WHITE_MATTER_LEFT': [],
-    # 'CIFTI_STRUCTURE_CEREBRAL_WHITE_MATTER_RIGHT': [],
 
     # SUBCORTICAL
     'CIFTI_STRUCTURE_ACCUMBENS_LEFT': [26],
     'CIFTI_STRUCTURE_ACCUMBENS_RIGHT': [58],
-    # 'CIFTI_STRUCTURE_ALL_WHITE_MATTER': [],
-    # 'CIFTI_STRUCTURE_ALL_GREY_MATTER': [],
     'CIFTI_STRUCTURE_AMYGDALA_LEFT': [18],
     'CIFTI_STRUCTURE_AMYGDALA_RIGHT': [54],
     'CIFTI_STRUCTURE_BRAIN_STEM': [16],
     'CIFTI_STRUCTURE_CAUDATE_LEFT': [11],
     'CIFTI_STRUCTURE_CAUDATE_RIGHT': [50],
-    'CIFTI_STRUCTURE_CEREBELLAR_WHITE_MATTER_LEFT': [7],
-    'CIFTI_STRUCTURE_CEREBELLAR_WHITE_MATTER_RIGHT': [46],
-    # 'CIFTI_STRUCTURE_CEREBELLUM': [],
     'CIFTI_STRUCTURE_CEREBELLUM_LEFT': [6],
     'CIFTI_STRUCTURE_CEREBELLUM_RIGHT': [45],
     'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT': [28],
     'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT': [60],
     'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT': [17],
     'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT': [53],
-    # 'CIFTI_STRUCTURE_OTHER': [],
-    # 'CIFTI_STRUCTURE_OTHER_GREY_MATTER': [],
-    # 'CIFTI_STRUCTURE_OTHER_WHITE_MATTER': [],
     'CIFTI_STRUCTURE_PALLIDUM_LEFT': [13],
     'CIFTI_STRUCTURE_PALLIDUM_RIGHT': [52],
     'CIFTI_STRUCTURE_PUTAMEN_LEFT': [12],
@@ -80,13 +69,16 @@ class GenerateCiftiOutputSpec(TraitedSpec):
 
 class GenerateCifti(SimpleInterface):
     """
-    Generate CIFTI image from BOLD file in target space
+    Generate CIFTI image from BOLD file in target spaces. Currently supported
+
+    * target surfaces: fsaverage5, fsaverage6, fsaverage (not recommended)
+    * target volumes: OASIS-TRT-20_DKT31 labels in MNI152NLin2009cAsym
     """
     input_spec = GenerateCiftiInputSpec
     output_spec = GenerateCiftiOutputSpec
 
     def _run_interface(self, runtime):
-        annotation_files, label_file = self._fetch_data()
+        annotation_files, label_file, download_link = self._fetch_data()
         self._results["out_file"] = create_cifti_image(
             self.inputs.bold_file,
             label_file,
@@ -94,13 +86,16 @@ class GenerateCifti(SimpleInterface):
             self.inputs.gifti_files,
             self.inputs.volume_target,
             self.inputs.surface_target,
-            self.inputs.TR)
+            self.inputs.TR,
+            download_link)
 
         return runtime
 
     def _fetch_data(self):
         """Converts inputspec to files"""
-        if self.inputs.surface_target == "fsnative":
+        if (self.inputs.surface_target == "fsnative"
+            or self.inputs.volume_target != "MNI152NLin2009cAsym"):
+            # subject space is not support yet
             raise NotImplementedError
 
         annotation_files = sorted(glob(os.path.join(self.inputs.subjects_dir,
@@ -108,16 +103,22 @@ class GenerateCifti(SimpleInterface):
                                                     'label',
                                                     '*h.aparc.annot')))
         if not annotation_files:
-            raise IOError(
-                "Freesurfer annotations for {} not found in {}".format(self.inputs.surface_target,
-                                                                       self.inputs.subjects_dir))
+            raise IOError("Freesurfer annotations for %s not found in %s" % (
+                          self.inputs.surface_target, self.inputs.subjects_dir))
 
-        # TODO: fetch label_file
-        return annotation_files
+        label_space = 'oasis_dtk31_mni152'
+        label_template = getters.get_dataset(label_space)
+        label_file = os.path.join(label_template,
+                                  ('OASIS-TRT-20_jointfusion_DKT31_CMA_labels'
+                                   '_in_MNI152NLin2009cAsym_2mm_v2.nii.gz'))
+
+        download_link = '{}/{}'.format(getters.OSF_PROJECT_URL,
+                                       getters.OSF_RESOURCES[label_space][0])
+        return annotation_files, label_file, download_link
 
 
-def create_cifti_image(bold_file, label_file, annotation_files,
-                       gii_files, volume_target, surface_target, tr):
+def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
+                       volume_target, surface_target, tr, download_link=None):
     """
     Generate CIFTI image in target space
     """
@@ -191,8 +192,7 @@ def create_cifti_image(bold_file, label_file, annotation_files,
 
     volume = ci.Cifti2Volume(
         bold_img.shape[:3],
-        ci.Cifti2TransformationMatrixVoxelIndicesIJKtoXYZ(-3, bold_img.affine)
-    )
+        ci.Cifti2TransformationMatrixVoxelIndicesIJKtoXYZ(-3, bold_img.affine))
     brainmodels.append(volume)
 
     # create CIFTI geometry based on brainmodels
@@ -203,11 +203,8 @@ def create_cifti_image(bold_file, label_file, annotation_files,
     meta = {
         "target_surface": surface_target,
         "target_volume": volume_target,
-        "download_links": [
-            "TODO: link",
-            "TODO: link",
-        ]}
-
+        "download_link": download_link,
+    }
     # generate and save CIFTI image
     matrix = ci.Cifti2Matrix()
     matrix.append(series_map)
@@ -215,6 +212,7 @@ def create_cifti_image(bold_file, label_file, annotation_files,
     matrix.metadata = ci.Cifti2MetaData(meta)
     hdr = ci.Cifti2Header(matrix)
     img = ci.Cifti2Image(bm_ts, hdr)
+    img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
 
     _, out_file, _ = split_filename(bold_file)
     ci.save(img, "{}.dtseries.nii".format(out_file))
