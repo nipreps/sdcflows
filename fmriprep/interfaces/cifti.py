@@ -16,7 +16,7 @@ from nibabel import cifti2 as ci
 import numpy as np
 
 from niworkflows.nipype.interfaces.base import (
-    BaseInterfaceInputSpec, TraitedSpec, File, traits, isdefined,
+    BaseInterfaceInputSpec, TraitedSpec, File, traits,
     SimpleInterface, Directory
 )
 from niworkflows.data import getters
@@ -93,8 +93,8 @@ class GenerateCifti(SimpleInterface):
 
     def _fetch_data(self):
         """Converts inputspec to files"""
-        if (self.inputs.surface_target == "fsnative"
-            or self.inputs.volume_target != "MNI152NLin2009cAsym"):
+        if (self.inputs.surface_target == "fsnative" or
+                self.inputs.volume_target != "MNI152NLin2009cAsym"):
             # subject space is not support yet
             raise NotImplementedError
 
@@ -115,6 +115,7 @@ class GenerateCifti(SimpleInterface):
         download_link = '{}/{}'.format(getters.OSF_PROJECT_URL,
                                        getters.OSF_RESOURCES[label_space][0])
         return annotation_files, label_file, download_link
+
 
 def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
                        volume_target, surface_target, tr, download_link=None):
