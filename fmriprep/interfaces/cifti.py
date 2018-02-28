@@ -106,7 +106,7 @@ class GenerateCifti(SimpleInterface):
             raise IOError("Freesurfer annotations for %s not found in %s" % (
                           self.inputs.surface_target, self.inputs.subjects_dir))
 
-        label_space = 'oasis_dtk31_mni152'
+        label_space = 'oasis_dkt31_mni152'
         label_template = getters.get_dataset(label_space)
         label_file = os.path.join(label_template,
                                   ('OASIS-TRT-20_jointfusion_DKT31_CMA_labels'
@@ -121,6 +121,19 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
                        volume_target, surface_target, tr, download_link=None):
     """
     Generate CIFTI image in target space
+
+    Parameters
+        bold_file : 4D BOLD timeseries
+        label_file : label atlas
+        annotation_files : FreeSurfer annotations
+        gii_files : 4D BOLD surface timeseries in GIFTI format
+        volume_target : label atlas space
+        surface_target : gii_files space
+        tr : repetition timeseries
+        download_link : URL to download label_file
+
+    Returns
+        out_file : BOLD data as CIFTI dtseries
     """
 
     # grab image information
