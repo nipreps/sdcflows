@@ -107,13 +107,13 @@ class GenerateCifti(SimpleInterface):
                           self.inputs.surface_target, self.inputs.subjects_dir))
 
         label_space = 'oasis_dkt31_mni152'
-        label_template = getters.get_dataset(label_space)
+        label_template = os.path.dirname(getters.get_dataset(label_space))
         label_file = os.path.join(label_template,
+                                  'oasis_trt20_DKT31-MNI152NLin',
                                   ('OASIS-TRT-20_jointfusion_DKT31_CMA_labels'
                                    '_in_MNI152NLin2009cAsym_2mm_v2.nii.gz'))
 
-        download_link = '{}/{}'.format(getters.OSF_PROJECT_URL,
-                                       getters.OSF_RESOURCES[label_space][0])
+        download_link = getters.OSF_PROJECT_URL + getters.OSF_RESOURCES[label_space][0])
         return annotation_files, label_file, download_link
 
 
