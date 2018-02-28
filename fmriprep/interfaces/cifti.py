@@ -113,7 +113,7 @@ class GenerateCifti(SimpleInterface):
                                   ('OASIS-TRT-20_jointfusion_DKT31_CMA_labels'
                                    '_in_MNI152NLin2009cAsym_2mm_v2.nii.gz'))
 
-        download_link = getters.OSF_PROJECT_URL + getters.OSF_RESOURCES[label_space][0])
+        download_link = getters.OSF_PROJECT_URL + getters.OSF_RESOURCES[label_space][0]
         return annotation_files, label_file, download_link
 
 
