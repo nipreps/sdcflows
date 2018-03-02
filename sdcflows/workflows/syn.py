@@ -39,9 +39,8 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('workflow')
 
 
-def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
-                          template, omp_nthreads, bold_pe='j',
-                          atlas_threshold=3, name='nonlinear_sdc_wf'):
+def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
+                    atlas_threshold=3, name='syn_sdc_wf'):
     """
     This workflow takes a skull-stripped T1w image and reference BOLD image and
     estimates a susceptibility distortion correction warp, using ANTs symmetric
@@ -61,12 +60,9 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fieldmap.syn import init_nonlinear_sdc_wf
-        wf = init_nonlinear_sdc_wf(
-            bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
+        from fmriprep.workflows.fieldmap.syn import init_syn_sdc_wf
+        wf = init_syn_sdc_wf(
             bold_pe='j',
-            freesurfer=True,
-            bold2t1w_dof=9,
             template='MNI152NLin2009cAsym',
             omp_nthreads=8)
 
@@ -102,7 +98,7 @@ def init_nonlinear_sdc_wf(bold_file, freesurfer, bold2t1w_dof,
         name='outputnode')
 
     if bold_pe is None or bold_pe[0] not in ['i', 'j']:
-        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior')
+        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior).')
         bold_pe = 'j'
 
     # Collect predefined data
