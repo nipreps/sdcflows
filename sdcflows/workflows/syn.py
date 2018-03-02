@@ -144,6 +144,10 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         Registration(from_file=syn_transform, restrict_deformation=restrict),
         name='syn', n_procs=omp_nthreads)
 
+    unwarp_ref = pe.Node(ApplyTransforms(
+        dimension=3, float=True, interpolation='LanczosWindowedSinc'),
+        name='unwarp_ref')
+
     skullstrip_bold_wf = init_skullstrip_bold_wf()
 
     workflow.connect([
@@ -163,9 +167,13 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         (inputnode, syn, [('bold_ref', 'moving_image')]),
         (t1_2_ref, syn, [('output_image', 'fixed_image')]),
         (fixed_image_masks, syn, [('out', 'fixed_image_masks')]),
-        (syn, skullstrip_bold_wf, [('warped_image', 'inputnode.in_file')]),
-        (syn, outputnode, [('forward_transforms', 'out_warp'),
-                           ('warped_image', 'out_reference')]),
+        (syn, outputnode, [('forward_transforms', 'out_warp')]),
+        (syn, unwarp_ref, [('forward_transforms', 'transforms')]),
+        (inputnode, unwarp_ref, [('bold_ref', 'reference_image'),
+                                 ('bold_ref', 'input_image')]),
+        (unwarp_ref, skullstrip_bold_wf, [
+            ('output_image', 'inputnode.in_file')]),
+        (unwarp_ref, outputnode, [('output_image', 'out_reference')]),
         (skullstrip_bold_wf, outputnode, [
             ('outputnode.skull_stripped_file', 'out_reference_brain'),
             ('outputnode.mask_file', 'out_mask')]),
