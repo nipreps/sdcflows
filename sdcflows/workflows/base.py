@@ -213,7 +213,10 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
 
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [
-                ('name_source', 'inputnode.name_source')]),
+                ('name_source', 'inputnode.name_source'),
+                ('bold_ref', 'inputnode.in_reference'),
+                ('bold_ref_brain', 'inputnode.in_reference_brain'),
+                ('bold_mask', 'inputnode.in_mask')]),
             (fmap_estimator_wf, sdc_unwarp_wf, [
                 ('outputnode.fmap', 'inputnode.fmap'),
                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
