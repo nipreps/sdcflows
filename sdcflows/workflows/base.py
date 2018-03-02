@@ -45,8 +45,6 @@ from .pepolar import init_pepolar_unwarp_wf
 from .syn import init_syn_sdc_wf
 from .unwarp import init_sdc_unwarp_wf
 
-from ...interfaces import DerivativesDataSink
-
 LOGGER = logging.getLogger('workflow')
 FMAP_PRIORITY = {
     'epi': 0,
@@ -57,7 +55,7 @@ FMAP_PRIORITY = {
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
+def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
                 debug=False, fmap_bspline=False, fmap_demean=False):
     """
     This workflow implements the heuristics to choose a
@@ -94,8 +92,6 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
         ])
         return workflow
 
-    bold_meta = layout.get_metadata(bold_file)
-
     # In case there are multiple fieldmaps prefer EPI
     fmaps.sort(key=lambda fmap: FMAP_PRIORITY[fmap['type']])
     fmap = fmaps[0]
@@ -103,11 +99,12 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
     # PEPOLAR path
     if fmap['type'] == 'epi':
         setattr(workflow, 'sdc_method', 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)')
-        epi_fmaps = [fmap_['epi'] for fmap_ in fmaps if fmap_['type'] == 'epi']
+        # Get EPI polarities and their metadata
+        epi_fmaps = [(fmap_['epi'], fmap_['metadata']["PhaseEncodingDirection"])
+                     for fmap_ in fmaps if fmap_['type'] == 'epi']
         sdc_unwarp_wf = init_pepolar_unwarp_wf(
             bold_meta=bold_meta,
-            epi_fmaps=[(epi, layout.get_metadata(epi)["PhaseEncodingDirection"])
-                       for epi in epi_fmaps],
+            epi_fmaps=epi_fmaps,
             omp_nthreads=omp_nthreads,
             name='pepolar_unwarp_wf')
 
