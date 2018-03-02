@@ -72,15 +72,15 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
             skull-stripped, bias-corrected structural image
         bold_ref
             skull-stripped reference image
-        t1_seg
-            FAST segmentation white and gray matter, in native T1w space
         t1_2_mni_reverse_transform
             inverse registration transform of T1w image to MNI template
 
     **Outputs**
 
-        out_reference_brain
+        out_reference
             the ``bold_ref`` image after unwarping
+        out_reference_brain
+            the ``bold_ref_brain`` image after unwarping
         out_warp
             the corresponding :abbr:`DFM (displacements field map)` compatible with
             ANTs
@@ -90,8 +90,8 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(['bold_ref', 't1_brain', 't1_seg',
-                               't1_2_mni_reverse_transform']), name='inputnode')
+        niu.IdentityInterface(['bold_ref', 't1_brain', 't1_2_mni_reverse_transform']),
+                              name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
                                'out_mask', 'out_warp', 'out_warp_report']),
@@ -146,15 +146,6 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         Registration(from_file=syn_transform, restrict_deformation=restrict),
         name='syn', n_procs=omp_nthreads)
 
-    seg_2_ref = pe.Node(
-        ApplyTransforms(interpolation='NearestNeighbor', float=True,
-                        invert_transform_flags=[True]),
-        name='seg_2_ref', n_procs=omp_nthreads, mem_gb=0.3)
-    sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
-                     mem_gb=DEFAULT_MEMORY_MIN_GB)
-    syn_rpt = pe.Node(SimpleBeforeAfter(), name='syn_rpt',
-                      mem_gb=0.1)
-
     skullstrip_bold_wf = init_skullstrip_bold_wf()
 
     workflow.connect([
@@ -174,19 +165,12 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         (inputnode, syn, [('bold_ref', 'moving_image')]),
         (t1_2_ref, syn, [('output_image', 'fixed_image')]),
         (fixed_image_masks, syn, [('out', 'fixed_image_masks')]),
-        (inputnode, seg_2_ref, [('t1_seg', 'input_image')]),
-        (ref_2_t1, seg_2_ref, [('forward_transforms', 'transforms')]),
-        (syn, seg_2_ref, [('warped_image', 'reference_image')]),
-        (seg_2_ref, sel_wm, [('output_image', 'in_seg')]),
-        (inputnode, syn_rpt, [('bold_ref', 'before')]),
-        (syn, syn_rpt, [('warped_image', 'after')]),
-        (sel_wm, syn_rpt, [('out', 'wm_seg')]),
         (syn, skullstrip_bold_wf, [('warped_image', 'inputnode.in_file')]),
         (syn, outputnode, [('forward_transforms', 'out_warp'),
                            ('warped_image', 'out_reference')]),
         (skullstrip_bold_wf, outputnode, [
             ('outputnode.skull_stripped_file', 'out_reference_brain'),
             ('outputnode.mask_file', 'out_mask')]),
-        (syn_rpt, outputnode, [('out_report', 'out_warp_report')])])
+    ])
 
     return workflow

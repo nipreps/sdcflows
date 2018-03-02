@@ -43,7 +43,7 @@ from niworkflows.nipype import logging
 # Fieldmap workflows
 from .pepolar import init_pepolar_unwarp_wf
 from .syn import init_syn_sdc_wf
-from .unwarp import init_sdc_unwarp_wf, init_fmap_unwarp_report_wf
+from .unwarp import init_sdc_unwarp_wf
 
 from ...interfaces import DerivativesDataSink
 
@@ -76,13 +76,13 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
     workflow = pe.Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['name_source', 'bold_ref', 'bold_ref_brain', 'bold_mask',
-                'fmap', 'fmap_ref', 'fmap_mask', 't1_brain', 't1_seg',
-                't1_2_mni_reverse_transform', 'itk_t1_to_bold']),
+                'fmap', 'fmap_ref', 'fmap_mask', 't1_brain',
+                't1_2_mni_reverse_transform']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_ref', 'bold_mask', 'bold_ref_brain',
-                'out_warp', 'out_report', 'syn_sdc_report']),
+                'out_warp', 'out_report', 'syn_bold_ref']),
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
@@ -159,7 +159,6 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
         workflow.connect([
             (inputnode, syn_sdc_wf, [
                 ('t1_brain', 'inputnode.t1_brain'),
-                ('t1_seg', 'inputnode.t1_seg'),
                 ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
                 ('bold_ref_brain', 'inputnode.bold_ref')]),
         ])
@@ -169,12 +168,9 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
             setattr(workflow, 'sdc_method', 'FLB ("fieldmap-less" based) - SyN')
             sdc_unwarp_wf = syn_sdc_wf
         else:
-            ds_syn_sdc_report = pe.Node(
-                DerivativesDataSink(suffix='syn_sdc'), name='ds_report_sdc_syn',
-                run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
             workflow.connect([
-                (syn_sdc_wf, ds_syn_sdc_report, [
-                    ('outputnode.out_warp_report', 'in_file')]),
+                (syn_sdc_wf, outputnode, [
+                    ('outputnode.out_warp_report', 'syn_bold_ref')]),
             ])
 
     workflow.connect([
@@ -185,14 +181,4 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
             ('outputnode.out_mask', 'bold_mask')]),
     ])
 
-    # Report on BOLD correction
-    fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf')
-    workflow.connect([
-        (inputnode, fmap_unwarp_report_wf, [
-            ('t1_seg', 'inputnode.in_seg'),
-            ('bold_ref', 'inputnode.in_pre'),
-            ('itk_t1_to_bold', 'inputnode.in_xfm')]),
-        (sdc_unwarp_wf, fmap_unwarp_report_wf, [
-            ('outputnode.out_reference', 'inputnode.in_post')]),
-    ])
     return workflow

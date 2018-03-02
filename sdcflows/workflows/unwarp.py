@@ -213,7 +213,7 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
     return workflow
 
 
-def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf'):
+def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmcsdc_preproc'):
     """
     This workflow generates and saves a reportlet showing the effect of fieldmap
     unwarping a BOLD image.
@@ -229,6 +229,8 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf'):
 
         name : str, optional
             Workflow name (default: fmap_unwarp_report_wf)
+        suffix : str, optional
+            Suffix to be appended to this reportlet
 
     **Inputs**
 
@@ -269,9 +271,10 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf'):
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
     ds_report_sdc = pe.Node(
-        DerivativesDataSink(suffix='variant-hmcsdc_preproc'), name='ds_report_sdc',
+        DerivativesDataSink(suffix=suffix), name='ds_report_sdc',
         mem_gb=DEFAULT_MEMORY_MIN_GB, run_without_submitting=True
     )
+
     workflow.connect([
         (inputnode, bold_rpt, [('in_post', 'after'),
                                ('in_pre', 'before')]),
