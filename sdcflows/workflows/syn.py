@@ -92,7 +92,7 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
-                               'out_mask', 'out_warp', 'out_warp_report']),
+                               'out_mask', 'out_warp']),
         name='outputnode')
 
     if bold_pe is None or bold_pe[0] not in ['i', 'j']:

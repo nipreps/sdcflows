@@ -244,7 +244,7 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
         else:
             workflow.connect([
                 (syn_sdc_wf, outputnode, [
-                    ('outputnode.out_warp_report', 'syn_bold_ref')]),
+                    ('outputnode.out_reference', 'syn_bold_ref')]),
             ])
 
     workflow.connect([
