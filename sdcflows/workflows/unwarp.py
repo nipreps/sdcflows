@@ -36,8 +36,7 @@ from ...interfaces.images import (
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
-def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
-                       fmap_demean, debug, name='sdc_unwarp_wf'):
+def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
@@ -51,7 +50,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
-        wf = init_sdc_unwarp_wf(reportlets_dir='.', omp_nthreads=8,
+        wf = init_sdc_unwarp_wf(omp_nthreads=8,
                                 fmap_demean=True,
                                 debug=False)
 
@@ -110,9 +109,8 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
                             output_inverse_warped_image=True, output_warped_image=True),
         name='fmap2ref_reg', n_procs=omp_nthreads)
 
-    ds_reg = pe.Node(DerivativesDataSink(
-        base_directory=reportlets_dir, suffix='fmap_reg'), name='ds_reg',
-        mem_gb=0.01, run_without_submitting=True)
+    ds_reg = pe.Node(DerivativesDataSink(suffix='fmap_reg'), name='ds_report_reg',
+                     mem_gb=0.01, run_without_submitting=True)
 
     # Map the VSM into the EPI space
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
@@ -124,9 +122,8 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
         float=True),
         name='fmap_mask2ref_apply')
 
-    ds_reg_vsm = pe.Node(DerivativesDataSink(
-        base_directory=reportlets_dir, suffix='fmap_reg_vsm'), name='ds_reg_vsm',
-        mem_gb=0.01, run_without_submitting=True)
+    ds_reg_vsm = pe.Node(DerivativesDataSink(suffix='fmap_reg_vsm'), name='ds_report_vsm',
+                         mem_gb=0.01, run_without_submitting=True)
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
     torads = pe.Node(FieldToRadS(fmap_range=0.5), name='torads')
@@ -166,17 +163,15 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
         (inputnode, fmap_mask2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap_mask2ref_apply, [
             ('composite_transform', 'transforms')]),
-        (inputnode, ds_reg_vsm, [('name_source', 'source_file')]),
         (fmap2ref_apply, ds_reg_vsm, [('out_report', 'in_file')]),
         (inputnode, fmap2ref_reg, [('in_reference_brain', 'fixed_image')]),
-        (inputnode, ds_reg, [('name_source', 'source_file')]),
         (fmap2ref_reg, ds_reg, [('out_report', 'in_file')]),
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
         (inputnode, fmap_mask2ref_apply, [('fmap_mask', 'input_image')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
         (meta, get_ees, [('out_dict', 'in_meta')]),
         (inputnode, get_ees, [('name_source', 'in_file')]),
-        (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')])
+        (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')]),
         (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
@@ -218,7 +213,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
     return workflow
 
 
-def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
+def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf'):
     """
     This workflow generates and saves a reportlet showing the effect of fieldmap
     unwarping a BOLD image.
@@ -228,12 +223,10 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.unwarp import init_fmap_unwarp_report_wf
-        wf = init_fmap_unwarp_report_wf(reportlets_dir='.')
+        wf = init_fmap_unwarp_report_wf()
 
     **Parameters**
 
-        reportlets_dir : str
-            Directory in which to save reportlets
         name : str, optional
             Workflow name (default: fmap_unwarp_report_wf)
 
@@ -248,9 +241,6 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
             gray-matter (GM), white-matter (WM) and cerebrospinal fluid (CSF)
         in_xfm
             Affine transform from T1 space to BOLD space (ITK format)
-        name_source
-            BOLD series NIfTI file
-            Used to recover original information lost during processing
 
     """
 
@@ -267,8 +257,7 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
     workflow = pe.Workflow(name=name)
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_pre', 'in_post', 'in_seg', 'in_xfm',
-                'name_source']), name='inputnode')
+        fields=['in_pre', 'in_post', 'in_seg', 'in_xfm']), name='inputnode')
 
     map_seg = pe.Node(ApplyTransforms(
         dimension=3, float=True, interpolation='MultiLabel'),
@@ -279,17 +268,14 @@ def init_fmap_unwarp_report_wf(reportlets_dir, name='fmap_unwarp_report_wf'):
 
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
-    bold_rpt_ds = pe.Node(
-        DerivativesDataSink(base_directory=reportlets_dir,
-                            suffix='variant-hmcsdc_preproc'), name='bold_rpt_ds',
-        mem_gb=DEFAULT_MEMORY_MIN_GB,
-        run_without_submitting=True
+    ds_report_sdc = pe.Node(
+        DerivativesDataSink(suffix='variant-hmcsdc_preproc'), name='ds_report_sdc',
+        mem_gb=DEFAULT_MEMORY_MIN_GB, run_without_submitting=True
     )
     workflow.connect([
         (inputnode, bold_rpt, [('in_post', 'after'),
                                ('in_pre', 'before')]),
-        (inputnode, bold_rpt_ds, [('name_source', 'source_file')]),
-        (bold_rpt, bold_rpt_ds, [('out_report', 'in_file')]),
+        (bold_rpt, ds_report_sdc, [('out_report', 'in_file')]),
         (inputnode, map_seg, [('in_post', 'reference_image'),
                               ('in_seg', 'input_image'),
                               ('in_xfm', 'transforms')]),

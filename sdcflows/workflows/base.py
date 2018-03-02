@@ -38,15 +38,15 @@ False           False       False         HMC only
 
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu
+from niworkflows.nipype import logging
 
 # Fieldmap workflows
-from . import (
-    init_pepolar_unwarp_wf,
-    init_syn_sdc_wf,
-    init_fmap_unwarp_report_wf
-)
+from .pepolar import init_pepolar_unwarp_wf
+from .syn import init_syn_sdc_wf
+from .unwarp import init_sdc_unwarp_wf, init_fmap_unwarp_report_wf
 
-from niworkflows.nipype import logging
+from ...interfaces import DerivativesDataSink
+
 LOGGER = logging.getLogger('workflow')
 FMAP_PRIORITY = {
     'epi': 0,
@@ -54,9 +54,11 @@ FMAP_PRIORITY = {
     'phasediff': 2,
     'syn': 3
 }
+DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
+def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1,
+                debug=False, fmap_bspline=False, fmap_demean=False):
     """
     This workflow implements the heuristics to choose a
     :abbr:`susceptibility distortion correction (SDC)` strategy.
@@ -114,12 +116,9 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
         setattr(workflow, 'sdc_method', 'FMB (%s-based)' % fmap['type'])
         # Import specific workflows here, so we don't break everything with one
         # unused workflow.
-        from ..fieldmap import init_sdc_unwarp_wf
-
         if fmap['type'] == 'fieldmap':
             from .fmap import init_fmap_wf
             fmap_estimator_wf = init_fmap_wf(
-                reportlets_dir=reportlets_dir,
                 omp_nthreads=omp_nthreads,
                 fmap_bspline=fmap_bspline)
             # set inputs
@@ -128,9 +127,7 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
 
         if fmap['type'] == 'phasediff':
             from .phdiff import init_phdiff_wf
-            fmap_estimator_wf = init_phdiff_wf(
-                reportlets_dir=reportlets_dir,
-                omp_nthreads=omp_nthreads)
+            fmap_estimator_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
             # set inputs
             fmap_estimator_wf.inputs.inputnode.phasediff = fmap['phasediff']
             fmap_estimator_wf.inputs.inputnode.magnitude = [
@@ -139,13 +136,13 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
             ]
 
         sdc_unwarp_wf = init_sdc_unwarp_wf(
-            reportlets_dir=reportlets_dir,
             omp_nthreads=omp_nthreads,
             fmap_demean=fmap_demean,
             debug=debug,
             name='sdc_unwarp_wf')
 
         workflow.connect([
+            (inputnode, sdc_unwarp_wf, [('name_source', 'name_source')]),
             (fmap_estimator_wf, sdc_unwarp_wf, [
                 ('outputnode.fmap', 'inputnode.fmap'),
                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
@@ -169,31 +166,33 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
 
         # XXX Eliminate branch when forcing isn't an option
         if len(fmaps) == 1:  # --force-syn was called
-            setattr(workflow, 'sdc_method', 'FLB (fieldmap-less SyN)')
+            setattr(workflow, 'sdc_method', 'FLB ("fieldmap-less" based) - SyN')
             sdc_unwarp_wf = syn_sdc_wf
         else:
+            ds_syn_sdc_report = pe.Node(
+                DerivativesDataSink(suffix='syn_sdc'), name='ds_report_sdc_syn',
+                run_without_submitting=True, mem_gb=DEFAULT_MEMORY_MIN_GB)
             workflow.connect([
-                (syn_sdc_wf, outputnode, [
-                    ('outputnode.out_warp_report', 'syn_sdc_report')]),
+                (syn_sdc_wf, ds_syn_sdc_report, [
+                    ('outputnode.out_warp_report', 'in_file')]),
             ])
 
-    sdc_unwarp_wf.connect([
-        (syn_sdc_wf, outputnode, [
-            ('outputnode.out_warp', 'inputnode.out_warp'),
-            ('outputnode.out_reference_brain', 'inputnode.ref_bold_brain'),
-            ('outputnode.out_mask', 'inputnode.ref_bold_mask')]),
+    workflow.connect([
+        (sdc_unwarp_wf, outputnode, [
+            ('outputnode.out_warp', 'out_warp'),
+            ('outputnode.out_reference', 'bold_ref'),
+            ('outputnode.out_reference_brain', 'bold_ref_brain'),
+            ('outputnode.out_mask', 'bold_mask')]),
     ])
 
     # Report on BOLD correction
-    fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(
-        reportlets_dir=reportlets_dir,
-        name='fmap_unwarp_report_wf')
+    fmap_unwarp_report_wf = init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf')
     workflow.connect([
         (inputnode, fmap_unwarp_report_wf, [
             ('t1_seg', 'inputnode.in_seg'),
-            ('name_source', 'inputnode.name_source'),
             ('bold_ref', 'inputnode.in_pre'),
             ('itk_t1_to_bold', 'inputnode.in_xfm')]),
         (sdc_unwarp_wf, fmap_unwarp_report_wf, [
             ('outputnode.out_reference', 'inputnode.in_post')]),
     ])
+    return workflow

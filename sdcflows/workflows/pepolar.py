@@ -63,8 +63,6 @@ def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
             the reference image skullstripped
         in_mask
             a brain mask corresponding to ``in_reference``
-        name_source
-            not used, kept for signature compatibility with ``init_sdc_unwarp_wf``
 
     Outputs
 
@@ -104,7 +102,7 @@ def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source']), name='inputnode')
+        fields=['in_reference', 'in_reference_brain', 'in_mask']), name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),

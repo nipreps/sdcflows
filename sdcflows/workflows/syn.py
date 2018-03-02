@@ -90,11 +90,11 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(['t1_brain', 'bold_ref', 't1_2_mni_reverse_transform',
-                               't1_seg']),
-        name='inputnode')
+        niu.IdentityInterface(['bold_ref', 't1_brain', 't1_seg',
+                               't1_2_mni_reverse_transform']), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(['out_reference_brain', 'out_mask', 'out_warp', 'out_warp_report']),
+        niu.IdentityInterface(['out_reference', 'out_reference_brain',
+                               'out_mask', 'out_warp', 'out_warp_report']),
         name='outputnode')
 
     if bold_pe is None or bold_pe[0] not in ['i', 'j']:
@@ -182,7 +182,8 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         (syn, syn_rpt, [('warped_image', 'after')]),
         (sel_wm, syn_rpt, [('out', 'wm_seg')]),
         (syn, skullstrip_bold_wf, [('warped_image', 'inputnode.in_file')]),
-        (syn, outputnode, [('forward_transforms', 'out_warp')]),
+        (syn, outputnode, [('forward_transforms', 'out_warp'),
+                           ('warped_image', 'out_reference')]),
         (skullstrip_bold_wf, outputnode, [
             ('outputnode.skull_stripped_file', 'out_reference_brain'),
             ('outputnode.mask_file', 'out_mask')]),
