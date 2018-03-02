@@ -128,14 +128,16 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
 
     **Outputs**
         bold_ref
-
+            An unwarped BOLD reference
         bold_mask
-
+            The corresponding new mask after unwarping
         bold_ref_brain
-
+            Brain-extracted, unwarped BOLD reference
         out_warp
-
+            The deformation field to unwarp the susceptibility distortions
         syn_bold_ref
+            If ``--force-syn``, an unwarped BOLD reference with this
+            method (for reporting purposes)
 
     """
 
