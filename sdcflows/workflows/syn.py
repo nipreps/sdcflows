@@ -28,11 +28,9 @@ import pkg_resources as pkgr
 from niworkflows.nipype import logging
 from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import fsl, utility as niu
-from niworkflows.interfaces import SimpleBeforeAfter
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
 from ...interfaces import InvertT1w
-from ...interfaces.images import extract_wm
 from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
@@ -91,7 +89,7 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(['bold_ref', 't1_brain', 't1_2_mni_reverse_transform']),
-                              name='inputnode')
+        name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
                                'out_mask', 'out_warp', 'out_warp_report']),
