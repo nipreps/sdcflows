@@ -141,7 +141,6 @@ def init_sdc_wf(layout, fmaps, template=None, bold_file=None, omp_nthreads=1):
         sdc_unwarp_wf = init_sdc_unwarp_wf(
             reportlets_dir=reportlets_dir,
             omp_nthreads=omp_nthreads,
-            fmap_bspline=fmap_bspline,
             fmap_demean=fmap_demean,
             debug=debug,
             name='sdc_unwarp_wf')

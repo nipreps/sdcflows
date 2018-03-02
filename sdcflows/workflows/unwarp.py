@@ -36,7 +36,7 @@ from ...interfaces.images import (
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
-def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
+def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads,
                        fmap_demean, debug, name='sdc_unwarp_wf'):
     """
     This workflow takes in a displacements fieldmap and calculates the corresponding
@@ -52,7 +52,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
 
         from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(reportlets_dir='.', omp_nthreads=8,
-                                fmap_bspline=False, fmap_demean=True,
+                                fmap_demean=True,
                                 debug=False)
 
 
@@ -176,6 +176,7 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
         (meta, get_ees, [('out_dict', 'in_meta')]),
         (inputnode, get_ees, [('name_source', 'in_file')]),
+        (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')])
         (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
         (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
@@ -198,11 +199,6 @@ def init_sdc_unwarp_wf(reportlets_dir, omp_nthreads, fmap_bspline,
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
     ])
-
-    if not fmap_bspline:
-        workflow.connect([
-            (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')])
-        ])
 
     if fmap_demean:
         # Demean within mask
