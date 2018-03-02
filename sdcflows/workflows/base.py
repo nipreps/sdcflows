@@ -74,7 +74,7 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fielmap import init_sdc_wf
+        from fmriprep.workflows.fieldmap import init_sdc_wf
         wf = init_sdc_wf(
             fmaps=[{
                 'type': 'phasediff',
