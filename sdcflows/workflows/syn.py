@@ -88,7 +88,8 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(['bold_ref', 't1_brain', 't1_2_mni_reverse_transform']),
+        niu.IdentityInterface(['bold_ref', 'bold_ref_brain',
+                               't1_brain', 't1_2_mni_reverse_transform']),
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
@@ -153,7 +154,7 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     workflow.connect([
         (inputnode, invert_t1w, [('t1_brain', 'in_file'),
                                  ('bold_ref', 'ref_file')]),
-        (inputnode, ref_2_t1, [('bold_ref', 'moving_image')]),
+        (inputnode, ref_2_t1, [('bold_ref_brain', 'moving_image')]),
         (invert_t1w, ref_2_t1, [('out_file', 'fixed_image')]),
         (inputnode, t1_2_ref, [('bold_ref', 'reference_image')]),
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
@@ -164,7 +165,7 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
         (threshold_atlas, fixed_image_masks, [('out_file', 'in2')]),
-        (inputnode, syn, [('bold_ref', 'moving_image')]),
+        (inputnode, syn, [('bold_ref_brain', 'moving_image')]),
         (t1_2_ref, syn, [('output_image', 'fixed_image')]),
         (fixed_image_masks, syn, [('out', 'fixed_image_masks')]),
         (syn, outputnode, [('forward_transforms', 'out_warp')]),

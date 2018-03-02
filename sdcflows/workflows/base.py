@@ -234,7 +234,8 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
             (inputnode, syn_sdc_wf, [
                 ('t1_brain', 'inputnode.t1_brain'),
                 ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
-                ('bold_ref_brain', 'inputnode.bold_ref')]),
+                ('bold_ref', 'inputnode.bold_ref'),
+                ('bold_ref_brain', 'inputnode.bold_ref_brain')]),
         ])
 
         # XXX Eliminate branch when forcing isn't an option
