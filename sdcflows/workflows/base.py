@@ -56,14 +56,86 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
-                debug=False, fmap_bspline=False, fmap_demean=False):
+                debug=False, fmap_bspline=False, fmap_demean=True):
     """
     This workflow implements the heuristics to choose a
-    :abbr:`susceptibility distortion correction (SDC)` strategy.
-    When no field map information is present in the BIDS inputs,
+    :abbr:`SDC (susceptibility distortion correction)` strategy.
+    When no field map information is present within the BIDS inputs,
     the EXPERIMENTAL "fieldmap-less SyN" can be performed, using
-    the ``--use-syn`` and ``--force-syn`` flags.
+    the ``--use-syn`` argument. When ``--force-syn`` is specified,
+    then the "fieldmap-less SyN" is always executed and reported
+    despite of other fieldmaps available with higher priority.
+    In the latter case (some sort of fieldmap(s) is available and
+    ``--force-syn`` is requested), then the :abbr:`SDC (susceptibility
+    distortion correction)` method applied is that with the
+    highest priority.
 
+    .. workflow::
+        :graph2use: orig
+        :simple_form: yes
+
+        from fmriprep.workflows.fielmap import init_sdc_wf
+        wf = init_sdc_wf(
+            fmaps=[{
+                'type': 'phasediff',
+                'phasediff': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_phasediff.nii.gz',
+                'magnitude1': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude1.nii.gz',
+                'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz',
+            }],
+            bold_meta={
+                'RepetitionTime': 2.0,
+                'SliceTiming': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+                'PhaseEncodingDirection': 'j',
+            },
+            template='MNI152NLin2009cAsym'
+        )
+
+    **Parameters**
+
+        fmaps : list of pybids dicts
+            A list of dictionaries with the available fieldmaps
+            (and their metadata using the key ``'metadata'`` for the
+            case of *epi* fieldmaps)
+        bold_meta : dict
+            BIDS metadata dictionary corresponding to the BOLD run
+        template : str
+            Name of template targeted by `'template'` output space
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        fmap_bspline : bool
+            **Experimental**: Fit B-Spline field using least-squares
+        fmap_demean : bool
+            Demean voxel-shift map during unwarp
+        debug : bool
+            Enable debugging outputs
+
+    **Inputs**
+        name_source
+            Original BOLD run filename to fetch metadata (TODO: should
+            be replaced with the ``bold_meta`` and ``fmaps`` input)
+        bold_ref
+            A BOLD reference calculated at a previous stage
+        bold_ref_brain
+            Same as above, but brain-masked
+        bold_mask
+            Brain mask for the BOLD run
+        t1_brain
+            T1w image, brain-masked, for the fieldmap-less SyN method
+        t1_2_mni_reverse_transform
+            MNI-to-T1w transform to map prior knowledge to the T1w
+            fo the fieldmap-less SyN method
+
+
+    **Outputs**
+        bold_ref
+
+        bold_mask
+
+        bold_ref_brain
+
+        out_warp
+
+        syn_bold_ref
 
     """
 
@@ -74,13 +146,12 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
     workflow = pe.Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['name_source', 'bold_ref', 'bold_ref_brain', 'bold_mask',
-                'fmap', 'fmap_ref', 'fmap_mask', 't1_brain',
-                't1_2_mni_reverse_transform']),
+                't1_brain', 't1_2_mni_reverse_transform']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_ref', 'bold_mask', 'bold_ref_brain',
-                'out_warp', 'out_report', 'syn_bold_ref']),
+                'out_warp', 'syn_bold_ref']),
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
