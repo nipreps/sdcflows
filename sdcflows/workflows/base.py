@@ -137,8 +137,8 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
 
     """
 
-    # TODO: To be removed (supported fieldmaps):
-    fmaps = list(set([fmap['type'] for fmap in fmaps]).intersection(FMAP_PRIORITY))
+    # TODO: To be removed (filter out unsupported fieldmaps):
+    fmaps = [fmap for fmap in fmaps if fmap['type'] in FMAP_PRIORITY]
 
     workflow = pe.Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
@@ -220,7 +220,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
         ])
 
     # FIELDMAP-less path
-    if fmaps[-1]['type'] == 'syn':
+    if any(fm['type'] == 'syn' for fm in fmaps):
         syn_sdc_wf = init_syn_sdc_wf(
             bold_pe=bold_meta.get('PhaseEncodingDirection', None),
             omp_nthreads=omp_nthreads)
