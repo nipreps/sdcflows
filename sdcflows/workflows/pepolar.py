@@ -88,7 +88,6 @@ def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
     usable_fieldmaps_matching_pe = []
     usable_fieldmaps_opposite_pe = []
     for fmap, fmap_pe in epi_fmaps:
-        fmap_pe = fmap_pe
         if fmap_pe == bold_file_pe:
             usable_fieldmaps_matching_pe.append(fmap)
         elif fmap_pe[0] == bold_file_pe[0]:
