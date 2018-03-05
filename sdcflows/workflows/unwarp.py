@@ -25,7 +25,7 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ...interfaces import itk, ReadSidecarJSON, DerivativesDataSink
+from ...interfaces import itk, DerivativesDataSink
 from ...interfaces.fmap import (
     get_ees as _get_ees,
     FieldToRadS,
