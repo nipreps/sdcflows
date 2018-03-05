@@ -25,6 +25,7 @@ from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_ima
     cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
+from ...engine import Workflow
 from ...interfaces import (
     ReadSidecarJSON, IntraModalMerge, DerivativesDataSink,
     Phasediff2Fieldmap
@@ -101,7 +102,7 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
     # rsec2hz (divide by 2pi)
 
-    workflow = pe.Workflow(name=name)
+    workflow = Workflow(name=name)
     workflow.connect([
         (inputnode, meta, [('phasediff', 'in_file')]),
         (inputnode, magmrg, [('magnitude', 'in_files')]),

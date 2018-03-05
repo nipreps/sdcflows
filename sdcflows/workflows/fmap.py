@@ -26,6 +26,7 @@ from niworkflows.nipype.interfaces import utility as niu, fsl, ants
 from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
+from ...engine import Workflow
 from ...interfaces import (
     IntraModalMerge, DerivativesDataSink,
     FieldEnhance, FieldToRadS, FieldToHz
@@ -47,7 +48,7 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
 
     """
 
-    workflow = pe.Workflow(name=name)
+    workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['magnitude', 'fieldmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['fmap', 'fmap_ref', 'fmap_mask']),

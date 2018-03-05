@@ -40,6 +40,8 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import utility as niu
 from niworkflows.nipype import logging
 
+from ...engine import Workflow
+
 # Fieldmap workflows
 from .pepolar import init_pepolar_unwarp_wf
 from .syn import init_syn_sdc_wf
@@ -140,7 +142,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
     # TODO: To be removed (filter out unsupported fieldmaps):
     fmaps = [fmap for fmap in fmaps if fmap['type'] in FMAP_PRIORITY]
 
-    workflow = pe.Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
+    workflow = Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_ref', 'bold_ref_brain', 'bold_mask',
                 't1_brain', 't1_2_mni_reverse_transform', 'template']),
