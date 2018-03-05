@@ -148,7 +148,7 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
     workflow = pe.Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['name_source', 'bold_ref', 'bold_ref_brain', 'bold_mask',
-                't1_brain', 't1_2_mni_reverse_transform']),
+                't1_brain', 't1_2_mni_reverse_transform', 'template']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
@@ -235,7 +235,8 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
                 ('t1_brain', 'inputnode.t1_brain'),
                 ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
                 ('bold_ref', 'inputnode.bold_ref'),
-                ('bold_ref_brain', 'inputnode.bold_ref_brain')]),
+                ('bold_ref_brain', 'inputnode.bold_ref_brain'),
+                ('template', 'inputnode.template')]),
         ])
 
         # XXX Eliminate branch when forcing isn't an option
