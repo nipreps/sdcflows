@@ -55,7 +55,7 @@ FMAP_PRIORITY = {
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
+def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
                 debug=False, fmap_bspline=False, fmap_demean=True):
     """
     This workflow implements the heuristics to choose a
@@ -87,7 +87,6 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
                 'SliceTiming': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
                 'PhaseEncodingDirection': 'j',
             },
-            template='MNI152NLin2009cAsym'
         )
 
     **Parameters**
@@ -98,8 +97,6 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
             case of *epi* fieldmaps)
         bold_meta : dict
             BIDS metadata dictionary corresponding to the BOLD run
-        template : str
-            Name of template targeted by `'template'` output space
         omp_nthreads : int
             Maximum number of threads an individual process may use
         fmap_bspline : bool
@@ -124,6 +121,8 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
         t1_2_mni_reverse_transform
             MNI-to-T1w transform to map prior knowledge to the T1w
             fo the fieldmap-less SyN method
+        template : str
+            Name of template targeted by `'template'` output space
 
 
     **Outputs**
@@ -226,7 +225,6 @@ def init_sdc_wf(fmaps, bold_meta, template=None, omp_nthreads=1,
     # FIELDMAP-less path
     if fmaps[-1]['type'] == 'syn':
         syn_sdc_wf = init_syn_sdc_wf(
-            template=template,
             bold_pe=bold_meta.get('PhaseEncodingDirection', None),
             omp_nthreads=omp_nthreads)
 
