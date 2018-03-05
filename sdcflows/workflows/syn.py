@@ -37,7 +37,7 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('workflow')
 
 
-def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
+def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
                     atlas_threshold=3, name='syn_sdc_wf'):
     """
     This workflow takes a skull-stripped T1w image and reference BOLD image and
@@ -61,15 +61,18 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         from fmriprep.workflows.fieldmap.syn import init_syn_sdc_wf
         wf = init_syn_sdc_wf(
             bold_pe='j',
-            template='MNI152NLin2009cAsym',
             omp_nthreads=8)
 
     **Inputs**
 
+        bold_ref
+            reference image
+        bold_ref_brain
+            skull-stripped reference image
+        template : str
+            Name of template targeted by `'template'` output space
         t1_brain
             skull-stripped, bias-corrected structural image
-        bold_ref
-            skull-stripped reference image
         t1_2_mni_reverse_transform
             inverse registration transform of T1w image to MNI template
 
@@ -88,7 +91,7 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     """
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(['bold_ref', 'bold_ref_brain',
+        niu.IdentityInterface(['bold_ref', 'bold_ref_brain', 'template',
                                't1_brain', 't1_2_mni_reverse_transform']),
         name='inputnode')
     outputnode = pe.Node(
@@ -103,8 +106,6 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     # Collect predefined data
     # Atlas image and registration affine
     atlas_img = pkgr.resource_filename('fmriprep', 'data/fmap_atlas.nii.gz')
-    atlas_2_template_affine = pkgr.resource_filename(
-        'fmriprep', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
     # Registration specifications
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
@@ -120,7 +121,6 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
     transform_list = pe.Node(niu.Merge(3), name='transform_list',
                              mem_gb=DEFAULT_MEMORY_MIN_GB)
-    transform_list.inputs.in3 = atlas_2_template_affine
 
     # Inverting (1), then applying in reverse order:
     #
@@ -160,7 +160,9 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (ref_2_t1, transform_list, [('forward_transforms', 'in1')]),
-        (inputnode, transform_list, [('t1_2_mni_reverse_transform', 'in2')]),
+        (inputnode, transform_list, [
+            ('t1_2_mni_reverse_transform', 'in2'),
+            (('template', _prior_path), 'in3')]),
         (inputnode, atlas_2_ref, [('bold_ref', 'reference_image')]),
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
@@ -181,3 +183,8 @@ def init_syn_sdc_wf(template, omp_nthreads, bold_pe=None,
     ])
 
     return workflow
+
+def _prior_path(template):
+    from pkg_resources import resource_filename
+    return resource_filename(
+        'fmriprep', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
