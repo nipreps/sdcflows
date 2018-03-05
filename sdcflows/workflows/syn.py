@@ -184,6 +184,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
 
     return workflow
 
+
 def _prior_path(template):
     from pkg_resources import resource_filename
     return resource_filename(

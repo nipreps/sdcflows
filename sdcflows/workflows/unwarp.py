@@ -25,7 +25,7 @@ from niworkflows.nipype.pipeline import engine as pe
 from niworkflows.nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ...interfaces import itk, ReadSidecarJSON, DerivativesDataSink
+from ...interfaces import itk, DerivativesDataSink
 from ...interfaces.fmap import (
     get_ees as _get_ees,
     FieldToRadS,
@@ -59,10 +59,12 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
         in_reference
             the reference image
+        in_reference_brain
+            the reference image (skull-stripped)
         in_mask
             a brain mask corresponding to ``in_reference``
-        name_source
-            path to the original _bold file being unwarped
+        metadata
+            metadata associated to the ``in_reference`` EPI input
         fmap
             the fieldmap in Hz
         fmap_ref
@@ -89,14 +91,11 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source',
+        fields=['in_reference', 'in_reference_brain', 'in_mask', 'metadata',
                 'fmap_ref', 'fmap_mask', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask',
                 'out_jacobian']), name='outputnode')
-
-    meta = pe.Node(ReadSidecarJSON(), name='meta',
-                   mem_gb=0.01, run_without_submitting=True)
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -155,7 +154,6 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
     enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
 
     workflow.connect([
-        (inputnode, meta, [('name_source', 'in_file')]),
         (inputnode, fmap2ref_reg, [('fmap_ref', 'moving_image')]),
         (inputnode, fmap2ref_apply, [('in_reference', 'reference_image')]),
         (fmap2ref_reg, fmap2ref_apply, [
@@ -169,12 +167,12 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
         (inputnode, fmap2ref_apply, [('fmap', 'input_image')]),
         (inputnode, fmap_mask2ref_apply, [('fmap_mask', 'input_image')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
-        (meta, get_ees, [('out_dict', 'in_meta')]),
-        (inputnode, get_ees, [('name_source', 'in_file')]),
+        (inputnode, get_ees, [('in_reference', 'in_file'),
+                              ('metadata', 'in_meta')]),
         (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')]),
         (get_ees, gen_vsm, [('ees', 'dwell_time')]),
-        (meta, gen_vsm, [(('out_dict', _get_pedir_fugue), 'unwarp_direction')]),
-        (meta, vsm2dfm, [(('out_dict', _get_pedir_bids), 'pe_dir')]),
+        (inputnode, gen_vsm, [(('metadata', _get_pedir_fugue), 'unwarp_direction')]),
+        (inputnode, vsm2dfm, [(('metadata', _get_pedir_bids), 'pe_dir')]),
         (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
         (vsm2dfm, unwarp_reference, [('out_file', 'transforms')]),
         (inputnode, unwarp_reference, [('in_reference', 'reference_image')]),
