@@ -142,7 +142,7 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
     if not bold_img.shape[:3] == label_img.shape:
         # we need these images to have the same resolution
         bold_img = resample_to_img(bold_img, label_img, interpolation="nearest")
-        assert bold_img.shape[:3] == label.img.shape
+        assert bold_img.shape[:3] == label_img.shape
 
     bold_data = bold_img.get_data()
     timepoints = bold_img.shape[3]
