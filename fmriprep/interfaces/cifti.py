@@ -56,7 +56,7 @@ class GenerateCiftiInputSpec(BaseInterfaceInputSpec):
     bold_file = File(mandatory=True, exists=True, desc="input BOLD file")
     volume_target = traits.Enum("MNI152NLin2009cAsym", mandatory=True, usedefault=True,
                                 desc="CIFTI volumetric output space")
-    surface_target = traits.Enum("fsaverage5", "fsaverage6", "fsaverage", mandatory=True,
+    surface_target = traits.Enum("fsaverage5", "fsaverage6", mandatory=True,
                                  usedefault=True, desc="CIFTI surface target space")
     subjects_dir = Directory(mandatory=True, desc="FreeSurfer SUBJECTS_DIR")
     TR = traits.Float(mandatory=True, desc="repetition time")
@@ -233,6 +233,7 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
     img = ci.Cifti2Image(bm_ts, hdr)
     img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SERIES')
 
-    _, out_file, _ = split_filename(bold_file)
-    ci.save(img, "{}.dtseries.nii".format(out_file))
-    return out_file
+    _, out_base, _ = split_filename(bold_file)
+    out_file = "{}.dtseries.nii".format(out_base)
+    ci.save(img, out_file)
+    return os.path.join(os.getcwd(), out_file)
