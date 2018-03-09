@@ -162,6 +162,8 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     source_file = File(exists=False, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
+    force_uncompress = traits.Bool(False, usedefault=True,
+                                   desc="save as uncompressed nifti")
 
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
@@ -202,7 +204,7 @@ class DerivativesDataSink(SimpleInterface):
         src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
         compress = ext == '.nii'
-        if compress:
+        if compress and not self.inputs.force_uncompress:
             ext = '.nii.gz'
 
         m = BIDS_NAME.search(src_fname)
