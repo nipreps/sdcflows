@@ -14,6 +14,7 @@ from glob import glob
 import nibabel as nb
 from nibabel import cifti2 as ci
 import numpy as np
+from nilearn.image import resample_to_img
 
 from niworkflows.nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, traits,
@@ -136,11 +137,16 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
         out_file : BOLD data as CIFTI dtseries
     """
 
-    # grab image information
     bold_img = nb.load(bold_file)
+    label_img = nb.load(label_file)
+    if not bold_img.shape[:3] == label_img.shape:
+        # we need these images to have the same resolution
+        bold_img = resample_to_img(bold_img, label_img, interpolation="nearest")
+        assert bold_img.shape[:3] == label.img.shape
+
     bold_data = bold_img.get_data()
     timepoints = bold_img.shape[3]
-    label_data = nb.load(label_file).get_data()
+    label_data = label_img.get_data()
 
     # set up CIFTI information
     model_type = "CIFTI_MODEL_TYPE_VOXELS"
