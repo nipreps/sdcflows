@@ -26,8 +26,8 @@ from niworkflows.nipype.utils.filemanip import split_filename
 # CITFI structures with corresponding FS labels
 CIFTI_STRUCT_WITH_LABELS = {
     # SURFACES
-    'CIFTI_STRUCTURE_CORTEX_LEFT': [],
-    'CIFTI_STRUCTURE_CORTEX_RIGHT': [],
+    'CIFTI_STRUCTURE_CORTEX_LEFT': None,
+    'CIFTI_STRUCTURE_CORTEX_RIGHT': None,
 
     # SUBCORTICAL
     'CIFTI_STRUCTURE_ACCUMBENS_LEFT': [26],
@@ -163,7 +163,7 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
     bm_ts = np.empty((timepoints, 0))
 
     for structure, labels in CIFTI_STRUCT_WITH_LABELS.items():
-        if not labels:  # surface model
+        if labels is None:  # surface model
             model_type = "CIFTI_MODEL_TYPE_SURFACE"
             # use the corresponding annotation
             hemi = structure.split('_')[-1][0]
@@ -190,14 +190,14 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
             brainmodels.append(bm)
         else:
             vox = []
-            ts = []
+            ts = None
             for label in labels:
                 ijk = np.nonzero(label_data == label)
-                ts.append(bold_data[ijk])
+                ts = (bold_data[ijk] if ts is None
+                      else np.concatenate((ts, bold_data[ijk])))
                 vox += [[ijk[0][ix], ijk[1][ix], ijk[2][ix]]
                         for ix, row in enumerate(ts)]
 
-            # ATM will not total ts across multiple labels
             bm_ts = np.column_stack((bm_ts, ts.T))
 
             vox = ci.Cifti2VoxelIndicesIJK(vox)
