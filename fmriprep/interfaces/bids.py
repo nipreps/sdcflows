@@ -248,7 +248,7 @@ class DerivativesDataSink(SimpleInterface):
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
-            if self.inputs.compress:
+            if ext.endswith('.gz'):
                 with open(fname, 'rb') as f_in:
                     with gzip.open(out_file, 'wb') as f_out:
                         copyfileobj(f_in, f_out)
