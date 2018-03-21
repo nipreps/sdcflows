@@ -204,10 +204,10 @@ class DerivativesDataSink(SimpleInterface):
     def _run_interface(self, runtime):
         src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
-        if self.inputs.compress is True:
-            ext = '.nii.gz'
-        elif self.inputs.compress is False:
-            ext = '.nii'
+        if self.inputs.compress is True and not ext.endswith('.gz'):
+            ext += '.gz'
+        elif self.inputs.compress is False and ext.endswith('.gz'):
+            ext = ext[:-3]
 
         m = BIDS_NAME.search(src_fname)
 
