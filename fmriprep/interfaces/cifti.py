@@ -149,7 +149,6 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
     label_data = label_img.get_data()
 
     # set up CIFTI information
-    model_type = "CIFTI_MODEL_TYPE_VOXELS"
     series_map = ci.Cifti2MatrixIndicesMap((0, ),
                                            'CIFTI_INDEX_TYPE_SERIES',
                                            number_of_series_points=timepoints,
@@ -182,13 +181,13 @@ def create_cifti_image(bold_file, label_file, annotation_files, gii_files,
                                      index_count=len(vert_idx),
                                      model_type=model_type,
                                      brain_structure=structure,
-                                     vertex_indices=vert_idx)
-            bm.surface_number_of_vertices = surf_verts
-
+                                     vertex_indices=vert_idx,
+                                     n_surface_vertices=surf_verts)
             bm_ts = np.column_stack((bm_ts, ts))
             idx_offset += len(vert_idx)
             brainmodels.append(bm)
         else:
+            model_type = "CIFTI_MODEL_TYPE_VOXELS"
             vox = []
             ts = None
             for label in labels:
