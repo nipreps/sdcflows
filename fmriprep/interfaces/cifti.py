@@ -279,3 +279,4 @@ class CiftiNameSource(SimpleInterface):
         if 'hcp' in self.inputs.variant:
             suffix = 'space-hcp_preproc.dtseries'
         self._results['out_name'] = suffix
+        return runtime
