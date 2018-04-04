@@ -38,7 +38,7 @@ class TestBase(TestWorkflow):
                                          ignore_aroma_err=False,
                                          use_syn=True,
                                          force_syn=True,
-                                         output_grid_ref=None)
+                                         output_grid_ref='native')
         wfbasic.write_graph()
         self._assert_mandatory_inputs_set(wfbasic)
 
