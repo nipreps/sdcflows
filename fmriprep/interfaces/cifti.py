@@ -10,6 +10,7 @@ Combines FreeSurfer surfaces with subcortical volumes
 """
 import os
 from glob import glob
+import json
 
 import nibabel as nb
 from nibabel import cifti2 as ci
@@ -67,6 +68,7 @@ class GenerateCiftiInputSpec(BaseInterfaceInputSpec):
 class GenerateCiftiOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc="generated CIFTI file")
     variant = traits.Str(desc="combination of target spaces label")
+    variant_key = File(exists=True, desc='file storing variant space information')
 
 
 class GenerateCifti(SimpleInterface):
@@ -80,7 +82,7 @@ class GenerateCifti(SimpleInterface):
     output_spec = GenerateCiftiOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["variant"] = self._define_variant()
+        self._results["variant_key"], self._results["variant"] = self._define_variant()
         annotation_files, label_file, download_link = self._fetch_data()
         self._results["out_file"] = self._create_cifti_image(
             self.inputs.bold_file,
@@ -105,10 +107,13 @@ class GenerateCifti(SimpleInterface):
             if all(target in targets for target in
                     [self.inputs.surface_target, self.inputs.volume_target]):
                 space = sp
-
         if space is None:
             raise NotImplementedError
-        return space
+
+        variant_key = os.path.abspath('dtseries_variant.json')
+        with open(variant_key, 'w') as fp:
+            json.dump({space: variants[space]}, fp)
+        return variant_key, space
 
     def _fetch_data(self):
         """Converts inputspec to files"""
