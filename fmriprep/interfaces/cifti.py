@@ -160,12 +160,8 @@ class GenerateCifti(SimpleInterface):
             out_file : BOLD data as CIFTI dtseries
         """
 
-        bold_img = nb.load(bold_file)
         label_img = nb.load(label_file)
-        if not bold_img.shape[:3] == label_img.shape:
-            # we need these images to have the same resolution
-            bold_img = resample_to_img(bold_img, label_img, interpolation="nearest")
-            assert bold_img.shape[:3] == label_img.shape
+        bold_img = resample_to_img(bold_file, label_img)
 
         bold_data = bold_img.get_data()
         timepoints = bold_img.shape[3]
