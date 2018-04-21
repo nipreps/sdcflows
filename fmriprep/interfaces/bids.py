@@ -163,6 +163,8 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     source_file = File(exists=False, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
+    compress = traits.Bool(desc="force compression (True) or uncompression (False)"
+                                " of the output file (default: same as input)")
 
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
@@ -202,9 +204,10 @@ class DerivativesDataSink(SimpleInterface):
     def _run_interface(self, runtime):
         src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
-        compress = ext == '.nii'
-        if compress:
-            ext = '.nii.gz'
+        if self.inputs.compress is True and not ext.endswith('.gz'):
+            ext += '.gz'
+        elif self.inputs.compress is False and ext.endswith('.gz'):
+            ext = ext[:-3]
 
         m = BIDS_NAME.search(src_fname)
 
@@ -246,7 +249,7 @@ class DerivativesDataSink(SimpleInterface):
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
-            if compress:
+            if ext.endswith('.gz'):
                 with open(fname, 'rb') as f_in:
                     with gzip.open(out_file, 'wb') as f_out:
                         copyfileobj(f_in, f_out)
