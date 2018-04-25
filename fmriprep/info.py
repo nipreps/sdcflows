@@ -96,15 +96,19 @@ EXTRA_REQUIRES = {
         'pydotplus',
         'pydot>=1.2.3',
         'packaging',
+        'nbsphinx',
     ],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
     'datalad': ['datalad'],
     'resmon': ['psutil>=5.4.0'],
 }
+EXTRA_REQUIRES['docs'] = EXTRA_REQUIRES['doc']
 
 # Enable a handle to install all extra dependencies at once
-EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
+EXTRA_REQUIRES['all'] = list(
+    set([val for _, val in list(EXTRA_REQUIRES.items())]))
+
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Science/Research',
