@@ -409,7 +409,7 @@ class ValidateImage(SimpleInterface):
         else:
             RZS = sform[:3, :3]
             zooms = np.sqrt(np.sum(RZS * RZS, axis=0))
-            valid_sform = np.allclose(zooms, img.get_zooms()[:3])
+            valid_sform = np.allclose(zooms, img.header.get_zooms()[:3])
 
         # Matching affines
         matching_affines = valid_qform and np.allclose(qform, sform)
