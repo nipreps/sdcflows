@@ -19,8 +19,7 @@ def fix_multi_T1w_source_name(in_files):
     """
     import os
     from niworkflows.nipype.utils.filemanip import filename_to_list
-    in_files = filename_to_list(in_files)
-    base, in_file = os.path.split(in_files[0])
+    base, in_file = os.path.split(filename_to_list(in_files)[0])
     subject_label = in_file.split("_", 1)[0].split("-")[1]
     return os.path.join(base, "sub-%s_T1w.nii.gz" % subject_label)
 
