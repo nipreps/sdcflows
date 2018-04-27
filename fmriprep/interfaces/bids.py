@@ -422,7 +422,7 @@ def _copy_any(src, dst):
     src_isgz = src.endswith('.gz')
     dst_isgz = dst.endswith('.gz')
     if src_isgz == dst_isgz:
-        copyfile(src, dst, use_hardlink=True)
+        copyfile(src, dst, copy=True, use_hardlink=True)
     src_open = gzip.open if src_isgz else open
     dst_open = gzip.open if dst_isgz else open
     with src_open(src, 'rb') as f_in:
