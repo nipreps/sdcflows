@@ -106,7 +106,8 @@ EXTRA_REQUIRES = {
 EXTRA_REQUIRES['docs'] = EXTRA_REQUIRES['doc']
 
 # Enable a handle to install all extra dependencies at once
-EXTRA_REQUIRES['all'] = list(set(list(EXTRA_REQUIRES.values())))
+EXTRA_REQUIRES['all'] = list(set([
+    v for deps in EXTRA_REQUIRES.values() for v in deps]))
 
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
