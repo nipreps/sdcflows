@@ -70,7 +70,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         bold_ref_brain
             skull-stripped reference image
         template : str
-            Name of template targeted by `'template'` output space
+            Name of template targeted by ``template`` output space
         t1_brain
             skull-stripped, bias-corrected structural image
         t1_2_mni_reverse_transform

@@ -119,7 +119,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
             MNI-to-T1w transform to map prior knowledge to the T1w
             fo the fieldmap-less SyN method
         template : str
-            Name of template targeted by `'template'` output space
+            Name of template targeted by ``template`` output space
 
 
     **Outputs**
