@@ -423,8 +423,11 @@ def _copy_any(src, dst):
     dst_isgz = dst.endswith('.gz')
     if src_isgz == dst_isgz:
         copyfile(src, dst, copy=True, use_hardlink=True)
+        return True
+
     src_open = gzip.open if src_isgz else open
     dst_open = gzip.open if dst_isgz else open
     with src_open(src, 'rb') as f_in:
         with dst_open(dst, 'wb') as f_out:
             copyfileobj(f_in, f_out)
+    return True
