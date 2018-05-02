@@ -170,7 +170,7 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
-    compression = traits.List(
+    compression = OutputMultiPath(
         traits.Bool, desc='whether ``in_file`` was compressed/uncompressed '
                           'or `it was copied directly.')
 
@@ -255,6 +255,9 @@ class DerivativesDataSink(SimpleInterface):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
             self._results['compression'].append(_copy_any(fname, out_file))
+
+        if len(self._results['compression']) == 1:
+            self._results['compression'] = self._results['compression'][0]
 
         return runtime
 
@@ -427,7 +430,11 @@ def _copy_any(src, dst):
     dst_isgz = dst.endswith('.gz')
     if src_isgz == dst_isgz:
         copyfile(src, dst, copy=True, use_hardlink=True)
-        return False
+        return False  # Make sure we do not reuse the hardlink later
+
+    # Unlink target (should not exist)
+    if os.path.exists(dst):
+        os.unlink(dst)
 
     src_open = gzip.open if src_isgz else open
     dst_open = gzip.open if dst_isgz else open
