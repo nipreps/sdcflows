@@ -70,7 +70,7 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.5.1',
     'nitime',
-    'niworkflows>=0.3.8',
+    'niworkflows>=0.3.10',
     'statsmodels',
     'nipype',
     'seaborn',
@@ -96,6 +96,7 @@ EXTRA_REQUIRES = {
         'pydotplus',
         'pydot>=1.2.3',
         'packaging',
+        'nbsphinx',
     ],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
@@ -103,9 +104,12 @@ EXTRA_REQUIRES = {
     'resmon': ['psutil>=5.4.0'],
     'sentry': ['raven'],
 }
+EXTRA_REQUIRES['docs'] = EXTRA_REQUIRES['doc']
 
 # Enable a handle to install all extra dependencies at once
-EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
+EXTRA_REQUIRES['all'] = list(set([
+    v for deps in EXTRA_REQUIRES.values() for v in deps]))
+
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Science/Research',
