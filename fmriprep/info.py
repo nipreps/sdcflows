@@ -80,6 +80,8 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
+    'git+https://github.com/effigies/niworkflows.git@'
+    '153fe6f3b7ae6286249b661c526fe11f2d9f1a01#egg=niworkflows-0.3.12-dev',
 ]
 
 TESTS_REQUIRES = [
