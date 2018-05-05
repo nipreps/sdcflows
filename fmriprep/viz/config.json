@@ -123,6 +123,12 @@
                 "description": "bbregister was used to generate transformations from EPI space to T1 Space"
             },
             {
+                "name": "epi/carpetplot",
+                "file_pattern": "func/.*carpetplot",
+                "title": "Confounds and carpetplot",
+                "description": "The figure shows on top several confounds estimated for the BOLD series: global signals ('GlobalSignal', 'WM', 'GM'), standardized DVARS ('stdDVARS'), and framewise-displacement ('FramewiseDisplacement').<br />At the bottom, a 'carpetplot' summarizing the BOLD series. The colormap on the left-side of the carpetplot denotes signals located in cortical gray matter regions (blue), subcortical gray matter (orange), cerebellum (green) and the union of white-matter and CSF compartments (red)."
+            },
+            {
                 "name": "ica_aroma",
                 "file_pattern": "func/.*ica_aroma",
                 "title": "ICA AROMA",
