@@ -125,8 +125,8 @@
             {
                 "name": "epi/carpetplot",
                 "file_pattern": "func/.*carpetplot",
-                "title": "Confounds and carpetplot",
-                "description": "The figure shows on top several confounds estimated for the BOLD series: global signals ('GlobalSignal', 'WM', 'GM'), standardized DVARS ('stdDVARS'), and framewise-displacement ('FramewiseDisplacement').<br />At the bottom, a 'carpetplot' summarizing the BOLD series. The colormap on the left-side of the carpetplot denotes signals located in cortical gray matter regions (blue), subcortical gray matter (orange), cerebellum (green) and the union of white-matter and CSF compartments (red)."
+                "title": "BOLD Summary",
+                "description": "Summary statistics are plotted, which may reveal trends or artifacts in the BOLD data. Global signals calculated within the whole-brain (GS), within the white-matter (WM) and within cerebro-spinal fluid (CSF) show the mean BOLD signal in their corresponding masks. DVARS and FD show the standardized DVARS and framewise-displacement measures for each time point.<br />A carpet plot shows the time series for all voxels within the brain mask. Voxels are grouped into cortical (blue), and subcortical (orange) gray matter, cerebellum (green) and white matter and CSF (red), indicated by the color map on the left-hand side."
             },
             {
                 "name": "ica_aroma",
