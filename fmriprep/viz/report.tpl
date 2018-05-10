@@ -11,10 +11,19 @@
 <style type="text/css">
 .sub-report-title {}
 .run-title {}
-.elem-title {}
+.elem-title {
+    padding-top: 25px;
+}
 .elem-desc {}
 .elem-filename {}
-.elem-image svg {
+
+div.elem-image {
+  width: 100%;
+  page-break-before:always;
+  padding: 5px 0;
+}
+
+.elem-image object.svg-reportlet {
     width: 100%;   
 }
 body { 
@@ -74,9 +83,11 @@ body {
                         {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
                         {% for image in elem.files_contents %}
                             {% if elem.raw %}{{ image.1 }}{% else %}
-                            <div class="elem-image">{{ image.1 }}</div><br>
+                            <div class="elem-image">
+                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ image.1 }}">filename:{{ image.1 }}</object>
+                            </div>
                             <div class="elem-filename">
-                                Filename: {{ image.0 }}
+                                Get figure file: <a href="./{{ image.1 }}" target="_blank">{{ image.1 }}</a>
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -91,10 +102,12 @@ body {
                 {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
                 {% for image in elem.files_contents %}
                     {% if elem.raw %}{{ image.1 }}{% else %}
-                    <div class="elem-image">{{ image.1 }}</div><br>
-                    <div class="elem-filename">
-                        Filename: {{ image.0 }}
-                    </div>
+                        <div class="elem-image">
+                        <object class="svg-reportlet" type="image/svg+xml" data="./{{ image.1 }}">filename:{{ image.1 }}</object>
+                        </div>
+                        <div class="elem-filename">
+                            Get figure file: <a href="./{{ image.1 }}" target="_blank">{{ image.1 }}</a>
+                        </div>
                     {% endif %}
                 {% endfor %}
             {% endif %}

@@ -132,9 +132,7 @@ class Report(object):
                                 fbase = os.path.basename(f)
                                 newf = os.path.join(svg_dir, fbase)
                                 shutil.copy(f, newf)
-                                content = """\
-<object type="image/svg+xml" data="./{0}" class="reportlet">filename:{0}</object>\
-""".format(os.path.join(subject, fig_dir, fbase))
+                                content = os.path.join(subject, fig_dir, fbase)
                             element.files_contents.append((f, content))
         for sub_report in self.sub_reports:
             sub_report.order_by_run()
