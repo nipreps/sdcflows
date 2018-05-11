@@ -24,10 +24,10 @@ div.elem-image {
 }
 
 .elem-image object.svg-reportlet {
-    width: 100%;   
+    width: 100%;
 }
-body { 
-    padding-top: 65px; 
+body {
+    padding-top: 65px;
 }
 </style>
 </head>
@@ -37,14 +37,14 @@ body {
 <div class="container collapse navbar-collapse">
     <ul class="nav navbar-nav">
         {% for sub_report in sub_reports %}
-            {% if sub_report.run_reports %}
+            {% if sub_report.isnested %}
                 <li class="dropdown">
                     <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
                         {{ sub_report.name }}
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                    {% for run_report in sub_report.run_reports %}
+                    {% for run_report in sub_report.reportlets %}
                         <li><a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a></li>
                     {% endfor %}
                     </ul>
@@ -73,21 +73,21 @@ body {
 {% for sub_report in sub_reports %}
     <div id="{{ sub_report.name }}">
     <h1 class="sub-report-title">{{ sub_report.name }}</h1>
-    {% if sub_report.run_reports %}
-        {% for run_report in sub_report.run_reports %}
+    {% if sub_report.isnested %}
+        {% for run_report in sub_report.reportlets %}
             <div id="{{run_report.name}}">
                 <h2 class="run-title">Reports for {{ run_report.title }}</h2>
-                {% for elem in run_report.elements %}
-                    {% if elem.files_contents %}
+                {% for elem in run_report.reportlets %}
+                    {% if elem.contents %}
                         {% if elem.title %}<h3 class="elem-title">{{ elem.title }}</h3>{% endif %}
-                        {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
-                        {% for image in elem.files_contents %}
-                            {% if elem.raw %}{{ image.1 }}{% else %}
+                        {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p>{% endif %}
+                        {% for content in elem.contents %}
+                            {% if elem.raw %}{{ content }}{% else %}
                             <div class="elem-image">
-                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ image.1 }}">filename:{{ image.1 }}</object>
+                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">filename:{{ content }}</object>
                             </div>
                             <div class="elem-filename">
-                                Get figure file: <a href="./{{ image.1 }}" target="_blank">{{ image.1 }}</a>
+                                Get figure file: <a href="./{{ content }}" target="_blank">{{ content }}</a>
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -96,17 +96,17 @@ body {
             </div>
         {% endfor %}
     {% else %}
-        {% for elem in sub_report.elements %}
-            {% if elem.files_contents %}
+        {% for elem in sub_report.reportlets %}
+            {% if elem.contents %}
                 {% if elem.title %}<h3 class="elem-title">{{ elem.title }}</h3>{% endif %}
                 {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
-                {% for image in elem.files_contents %}
-                    {% if elem.raw %}{{ image.1 }}{% else %}
+                {% for content in elem.contents %}
+                    {% if elem.raw %}{{ content }}{% else %}
                         <div class="elem-image">
-                        <object class="svg-reportlet" type="image/svg+xml" data="./{{ image.1 }}">filename:{{ image.1 }}</object>
+                        <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">filename:{{ content }}</object>
                         </div>
                         <div class="elem-filename">
-                            Get figure file: <a href="./{{ image.1 }}" target="_blank">{{ image.1 }}</a>
+                            Get figure file: <a href="./{{ content }}" target="_blank">{{ content }}</a>
                         </div>
                     {% endif %}
                 {% endfor %}

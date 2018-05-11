@@ -9,9 +9,11 @@ fMRIprep reports builder
 
 """
 
+import os
+from pathlib import Path
 import json
 import re
-import os
+
 import html
 import shutil
 
@@ -19,74 +21,94 @@ import jinja2
 from niworkflows.nipype.utils.filemanip import loadcrash
 from pkg_resources import resource_filename as pkgrf
 
-
 class Element(object):
-    def __init__(self, name, file_pattern, title=None, description=None, raw=False):
+    def __init__(self, name, title=None):
+        self.name = name
+        self.title = title
+
+
+class Reportlet(Element):
+    def __init__(self, name, file_pattern=None, title=None, description=None, raw=False):
         self.name = name
         self.file_pattern = re.compile(file_pattern)
         self.title = title
         self.description = description
-        self.files_contents = []
+        self.source_files = []
+        self.contents = []
         self.raw = raw
 
 
-class SubReport(object):
-    def __init__(self, name, elements, title=''):
+class SubReport(Element):
+    def __init__(self, name, reportlets=None, title=''):
         self.name = name
         self.title = title
-        self.run_reports = []
-        self.elements = [Element(**e) for e in elements]
+        self.reportlets = []
+        if reportlets:
+            self.reportlets += reportlets
+        self.isnested = False
 
-    def order_by_run(self):
-        run_reps = {}
-        for element in self.elements:
-            for index in range(len(element.files_contents) - 1, -1, -1):
-                filename = element.files_contents[index][0]
-                file_contents = element.files_contents[index][1]
-                name, title = self.generate_name_title(filename)
-                if not name:
-                    continue
-                new_elem = {'name': element.name, 'file_pattern': element.file_pattern,
-                            'title': element.title, 'description': element.description,
-                            'raw': element.raw}
-                try:
-                    new_element = Element(**new_elem)
-                    run_reps[name].elements.append(new_element)
-                    run_reps[name].elements[-1].files_contents.append((filename, file_contents))
-                except KeyError:
-                    run_reps[name] = SubReport(name, [new_elem], title=title)
-                    run_reps[name].elements[0].files_contents.append((filename, file_contents))
-        keys = list(run_reps.keys())
-        keys.sort()
+
+def order_by_run(subreport):
+    ordered = []
+    run_reps = {}
+
+    for element in subreport.reportlets:
+        if len(element.source_files) == 1 and element.source_files[0]:
+            ordered.append(element)
+            continue
+
+        for filename, file_contents in zip(element.source_files, element.contents):
+            name, title = generate_name_title(filename)
+            if not filename or not name:
+                continue
+
+            new_element = Reportlet(
+                name=element.name, title=element.title, file_pattern=element.file_pattern,
+                description=element.description, raw=element.raw)
+            new_element.contents.append(file_contents)
+            new_element.source_files.append(filename)
+
+            if name not in run_reps:
+                run_reps[name] = SubReport(name, title=title)
+
+            run_reps[name].reportlets.append(new_element)
+
+    if run_reps:
+        keys = list(sorted(run_reps.keys()))
         for key in keys:
-            self.run_reports.append(run_reps[key])
+            ordered.append(run_reps[key])
+        subreport.isnested = True
 
-    def generate_name_title(self, filename):
-        fname = os.path.basename(filename)
-        expr = re.compile('^sub-(?P<subject_id>[a-zA-Z0-9]+)(_ses-(?P<session_id>[a-zA-Z0-9]+))?'
-                          '(_task-(?P<task_id>[a-zA-Z0-9]+))?(_acq-(?P<acq_id>[a-zA-Z0-9]+))?'
-                          '(_rec-(?P<rec_id>[a-zA-Z0-9]+))?(_run-(?P<run_id>[a-zA-Z0-9]+))?')
-        outputs = expr.search(fname)
-        if outputs:
-            outputs = outputs.groupdict()
-        else:
-            return None, None
+    subreport.reportlets = ordered
+    return subreport
 
-        name = '{session}{task}{acq}{rec}{run}'.format(
-            session="_ses-" + outputs['session_id'] if outputs['session_id'] else '',
-            task="_task-" + outputs['task_id'] if outputs['task_id'] else '',
-            acq="_acq-" + outputs['acq_id'] if outputs['acq_id'] else '',
-            rec="_rec-" + outputs['rec_id'] if outputs['rec_id'] else '',
-            run="_run-" + outputs['run_id'] if outputs['run_id'] else ''
-        )
-        title = '{session}{task}{acq}{rec}{run}'.format(
-            session=" Session: " + outputs['session_id'] if outputs['session_id'] else '',
-            task=" Task: " + outputs['task_id'] if outputs['task_id'] else '',
-            acq=" Acquisition: " + outputs['acq_id'] if outputs['acq_id'] else '',
-            rec=" Reconstruction: " + outputs['rec_id'] if outputs['rec_id'] else '',
-            run=" Run: " + outputs['run_id'] if outputs['run_id'] else ''
-        )
-        return name, title
+
+def generate_name_title(filename):
+    fname = os.path.basename(filename)
+    expr = re.compile('^sub-(?P<subject_id>[a-zA-Z0-9]+)(_ses-(?P<session_id>[a-zA-Z0-9]+))?'
+                      '(_task-(?P<task_id>[a-zA-Z0-9]+))?(_acq-(?P<acq_id>[a-zA-Z0-9]+))?'
+                      '(_rec-(?P<rec_id>[a-zA-Z0-9]+))?(_run-(?P<run_id>[a-zA-Z0-9]+))?')
+    outputs = expr.search(fname)
+    if outputs:
+        outputs = outputs.groupdict()
+    else:
+        return None, None
+
+    name = '{session}{task}{acq}{rec}{run}'.format(
+        session="_ses-" + outputs['session_id'] if outputs['session_id'] else '',
+        task="_task-" + outputs['task_id'] if outputs['task_id'] else '',
+        acq="_acq-" + outputs['acq_id'] if outputs['acq_id'] else '',
+        rec="_rec-" + outputs['rec_id'] if outputs['rec_id'] else '',
+        run="_run-" + outputs['run_id'] if outputs['run_id'] else ''
+    )
+    title = '{session}{task}{acq}{rec}{run}'.format(
+        session=" Session: " + outputs['session_id'] if outputs['session_id'] else '',
+        task=" Task: " + outputs['task_id'] if outputs['task_id'] else '',
+        acq=" Acquisition: " + outputs['acq_id'] if outputs['acq_id'] else '',
+        rec=" Reconstruction: " + outputs['rec_id'] if outputs['rec_id'] else '',
+        run=" Run: " + outputs['run_id'] if outputs['run_id'] else ''
+    )
+    return name.strip('_'), title
 
 
 class Report(object):
@@ -105,37 +127,46 @@ class Report(object):
         with open(config, 'r') as configfh:
             config = json.load(configfh)
 
-        for e in config['sub_reports']:
-            sub_report = SubReport(**e)
-            self.sub_reports.append(sub_report)
+        self.index(config['sub_reports'])
 
-        self.index()
-
-    def index(self):
+    def index(self, config):
         fig_dir = 'figures'
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
         svg_dir = os.path.join(self.out_dir, 'fmriprep', subject, fig_dir)
         os.makedirs(svg_dir, exist_ok=True)
 
-        for root, directories, filenames in os.walk(self.root):
-            for f in filenames:
-                f = os.path.join(root, f)
-                for sub_report in self.sub_reports:
-                    for element in sub_report.elements:
-                        ext = f.split('.')[-1]
-                        if element.file_pattern.search(f) and ext in ('svg', 'html'):
-                            if ext == 'html':
-                                with open(f) as fp:
-                                    content = fp.read()
-                            else:
-                                fbase = os.path.basename(f)
-                                newf = os.path.join(svg_dir, fbase)
-                                shutil.copy(f, newf)
-                                content = os.path.join(subject, fig_dir, fbase)
-                            element.files_contents.append((f, content))
-        for sub_report in self.sub_reports:
-            sub_report.order_by_run()
+        reportlet_list = list(sorted([str(f) for f in Path(self.root).glob('**/*.*')]))
+
+        for subrep_cfg in config:
+            reportlets = []
+            for reportlet_cfg in subrep_cfg['reportlets']:
+                rlet = Reportlet(**reportlet_cfg)
+                for f in reportlet_list:
+                    ext = f.split('.')[-1]
+                    if rlet.file_pattern.search(f):
+                        contents = None
+                        if ext == 'html':
+                            with open(f) as fp:
+                                contents = fp.read().strip()
+                        elif ext == 'svg':
+                            fbase = os.path.basename(f)
+                            newf = os.path.join(svg_dir, fbase)
+                            shutil.copy(f, newf)
+                            contents = os.path.join(subject, fig_dir, fbase)
+
+                        if contents:
+                            rlet.source_files.append(f)
+                            rlet.contents.append(contents)
+
+                if rlet.source_files:
+                    reportlets.append(rlet)
+
+            if reportlets:
+                sub_report = SubReport(
+                    subrep_cfg['name'], reportlets=reportlets,
+                    title=subrep_cfg.get('title'))
+                self.sub_reports.append(order_by_run(sub_report))
 
         error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log', self.run_uuid)
         if os.path.isdir(error_dir):
@@ -196,10 +227,12 @@ class Report(object):
         )
         report_tpl = env.get_template('viz/report.tpl')
         # Ignore subreports with no children
-        sub_reports = [sub_report for sub_report in self.sub_reports
-                       if len(sub_report.run_reports) > 0 or
-                       any(elem.files_contents for elem in sub_report.elements)]
-        report_render = report_tpl.render(sub_reports=sub_reports, errors=self.errors)
+        # for subrep in self.sub_reports:
+
+        # sub_reports = [sub_report for sub_report in self.sub_reports
+        #                if sub_report.run_reports or
+        #                any(elem.contents for elem in sub_report.reportlets)]
+        report_render = report_tpl.render(sub_reports=self.sub_reports, errors=self.errors)
         with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return len(self.errors)
