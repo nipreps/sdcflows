@@ -11,23 +11,25 @@
 <style type="text/css">
 .sub-report-title {}
 .run-title {}
-.elem-title {
-    padding-top: 25px;
-}
+
+h1 { padding-top: 35px; }
+h2 { padding-top: 20px; }
+h3 { padding-top: 15px; }
+
 .elem-desc {}
 .elem-filename {}
 
 div.elem-image {
   width: 100%;
   page-break-before:always;
-  padding: 5px 0;
 }
 
 .elem-image object.svg-reportlet {
     width: 100%;
+    padding-bottom: 5px;
 }
 body {
-    padding-top: 65px;
+    padding: 65px 10px 10px;
 }
 </style>
 </head>
@@ -36,7 +38,7 @@ body {
 <nav class="navbar navbar-default navbar-fixed-top">
 <div class="container collapse navbar-collapse">
     <ul class="nav navbar-nav">
-        {% for sub_report in sub_reports %}
+        {% for sub_report in sections %}
             {% if sub_report.isnested %}
                 <li class="dropdown">
                     <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
@@ -70,7 +72,7 @@ body {
     <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
 </noscript>
 
-{% for sub_report in sub_reports %}
+{% for sub_report in sections %}
     <div id="{{ sub_report.name }}">
     <h1 class="sub-report-title">{{ sub_report.name }}</h1>
     {% if sub_report.isnested %}
@@ -84,7 +86,8 @@ body {
                         {% for content in elem.contents %}
                             {% if elem.raw %}{{ content }}{% else %}
                             <div class="elem-image">
-                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">filename:{{ content }}</object>
+                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">
+                            Problem loading figure {{ content }}. If the link below works, please try reloading the report in your browser.</object>
                             </div>
                             <div class="elem-filename">
                                 Get figure file: <a href="./{{ content }}" target="_blank">{{ content }}</a>
