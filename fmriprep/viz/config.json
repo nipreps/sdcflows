@@ -102,31 +102,31 @@
                 "name": "epi_mean_t1_registration/flirt",
                 "file_pattern": "func/.*_bold_flirt",
                 "title": "EPI to T1 registration",
-                "description": "FLIRT was used to generate transformations from EPI space to T1 Space - BBR refinement rejected"
+                "description": "FSL <code>flirt</code> was used to generate transformations from EPI space to T1 Space - BBR refinement rejected"
             },
             {
                 "name": "epi_mean_t1_registration/coreg",
                 "file_pattern": "func/.*_bold_coreg",
                 "title": "EPI to T1 registration",
-                "description": "mri_coreg (FreeSurfer) was used to generate transformations from EPI space to T1 Space - bbregister refinement rejected"
+                "description": "<code>mri_coreg</code> (FreeSurfer) was used to generate transformations from EPI space to T1 Space - <code>bbregister</code> refinement rejected"
             },
             {
                 "name": "epi_mean_t1_registration/flt_bbr",
                 "file_pattern": "func/.*_bold_flt_bbr",
                 "title": "EPI to T1 registration",
-                "description": "FLIRT was used to generate transformations from EPI space to T1 Space - FAST segmentation used for BBR"
+                "description": "FSL <code>flirt</code> was used to generate transformations from EPI-space to T1w-space - The white matter mask calculated with FSL <code>fast</code> (brain tissue segmentation) was used for BBR"
             },
             {
                 "name": "epi_mean_t1_registration/bbr",
                 "file_pattern": "func/.*_bold_bbr",
                 "title": "EPI to T1 registration",
-                "description": "bbregister was used to generate transformations from EPI space to T1 Space"
+                "description": "<code>bbregister</code> was used to generate transformations from EPI-space to T1w-space"
             },
             {
                 "name": "ica_aroma",
                 "file_pattern": "func/.*ica_aroma",
                 "title": "ICA AROMA",
-                "description": "Maps created with maximum intensity projection (glass brain) with a black brain outline. Right hand side of each map: time series (top in seconds), frequency spectrum (bottom in Hertz). Components classified as signal in green; noise in red."
+                "description": "Maps created with maximum intensity projection (glass brain) with a black brain outline. Right hand side of each map: time series (top in seconds), frequency spectrum (bottom in Hertz). Components classified as signal are plotted in green; noise components in red."
             }
         ]
     },
