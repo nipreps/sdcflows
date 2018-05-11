@@ -1,9 +1,9 @@
 {
-"sub_reports":
+"sections":
 [
     {
         "name": "Summary",
-        "elements":
+        "reportlets":
         [
             {
                 "name": "anat/summary",
@@ -14,7 +14,7 @@
     },
     {
         "name": "Anatomical",
-        "elements":
+        "reportlets":
         [
             {
                 "name": "anat/conform",
@@ -44,7 +44,7 @@
     },
     {
         "name": "Fieldmaps",
-        "elements":
+        "reportlets":
         [
             {
                 "name": "fmap/magnitude_mask",
@@ -56,7 +56,7 @@
     },
     {
         "name": "Functional",
-        "elements":
+        "reportlets":
         [
             {
                 "name": "epi/summary",
@@ -123,6 +123,12 @@
                 "description": "bbregister was used to generate transformations from EPI space to T1 Space"
             },
             {
+                "name": "epi/carpetplot",
+                "file_pattern": "func/.*carpetplot",
+                "title": "BOLD Summary",
+                "description": "Summary statistics are plotted, which may reveal trends or artifacts in the BOLD data. Global signals calculated within the whole-brain (GS), within the white-matter (WM) and within cerebro-spinal fluid (CSF) show the mean BOLD signal in their corresponding masks. DVARS and FD show the standardized DVARS and framewise-displacement measures for each time point.<br />A carpet plot shows the time series for all voxels within the brain mask. Voxels are grouped into cortical (blue), and subcortical (orange) gray matter, cerebellum (green) and white matter and CSF (red), indicated by the color map on the left-hand side."
+            },
+            {
                 "name": "ica_aroma",
                 "file_pattern": "func/.*ica_aroma",
                 "title": "ICA AROMA",
@@ -132,7 +138,7 @@
     },
     {
         "name": "About",
-        "elements":
+        "reportlets":
         [
             {
                 "name": "anat/about",
