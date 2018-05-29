@@ -17,9 +17,9 @@ Interfaces to deal with the various types of fieldmap sources
 
 import numpy as np
 import nibabel as nb
-from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
-from niworkflows.nipype.interfaces.base import (
+from nipype import logging
+from nipype.utils.filemanip import fname_presuffix
+from nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, isdefined, traits,
     SimpleInterface)
 
@@ -241,7 +241,7 @@ def _despike2d(data, thres, neigh=None):
 
 def _unwrap(fmap_data, mag_file, mask=None):
     from math import pi
-    from niworkflows.nipype.interfaces.fsl import PRELUDE
+    from nipype.interfaces.fsl import PRELUDE
     magnii = nb.load(mag_file)
 
     if mask is None:
@@ -433,7 +433,7 @@ def _torads(in_file, fmap_range=None, newpath=None):
     """
     from math import pi
     import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
 
     out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
     fmapnii = nb.load(in_file)
@@ -452,7 +452,7 @@ def _tohz(in_file, range_hz, newpath=None):
     """Convert a field map to Hz units"""
     from math import pi
     import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
 
     out_file = fname_presuffix(in_file, suffix='_hz', newpath=newpath)
     fmapnii = nb.load(in_file)
@@ -485,7 +485,7 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
     import math
     import numpy as np
     import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
     #  GYROMAG_RATIO_H_PROTON_MHZ = 42.576
 
     out_file = fname_presuffix(in_file, suffix='_fmap', newpath=newpath)

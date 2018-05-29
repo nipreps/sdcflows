@@ -17,12 +17,12 @@ from nibabel import cifti2 as ci
 import numpy as np
 from nilearn.image import resample_to_img
 
-from niworkflows.nipype.interfaces.base import (
+from nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, traits,
     SimpleInterface, Directory
 )
 from niworkflows.data import getters
-from niworkflows.nipype.utils.filemanip import split_filename
+from nipype.utils.filemanip import split_filename
 
 # CITFI structures with corresponding FS labels
 CIFTI_STRUCT_WITH_LABELS = {

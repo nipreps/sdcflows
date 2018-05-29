@@ -15,12 +15,12 @@ import nibabel as nb
 import nilearn.image as nli
 from textwrap import indent
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
-from niworkflows.nipype.interfaces.base import (
+from nipype import logging
+from nipype.utils.filemanip import fname_presuffix
+from nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, SimpleInterface,
     File, InputMultiPath, OutputMultiPath)
-from niworkflows.nipype.interfaces import fsl
+from nipype.interfaces import fsl
 
 LOGGER = logging.getLogger('interface')
 
@@ -570,7 +570,7 @@ def reorient(in_file, newpath=None):
 def extract_wm(in_seg, wm_label=3, newpath=None):
     import nibabel as nb
     import numpy as np
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_seg)
     data = np.zeros(nii.shape, dtype=np.uint8)
@@ -622,7 +622,7 @@ def demean(in_file, in_mask, only_mask=False, newpath=None):
     import os
     import numpy as np
     import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
 
     out_file = fname_presuffix(in_file, suffix='_demeaned',
                                newpath=os.getcwd())
