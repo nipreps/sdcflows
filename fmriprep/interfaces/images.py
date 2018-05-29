@@ -291,52 +291,6 @@ class Conform(SimpleInterface):
         return runtime
 
 
-class ReorientInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True,
-                   desc='Input T1w image')
-
-
-class ReorientOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Reoriented T1w image')
-    transform = File(exists=True, desc='Reorientation transform')
-
-
-class Reorient(SimpleInterface):
-    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)
-
-    Syncs qform and sform codes for consistent treatment by all software
-    """
-    input_spec = ReorientInputSpec
-    output_spec = ReorientOutputSpec
-
-    def _run_interface(self, runtime):
-        # Load image, orient as RAS
-        fname = self.inputs.in_file
-        orig_img = nb.load(fname)
-        reoriented = nb.as_closest_canonical(orig_img)
-
-        # Reconstruct transform from orig to reoriented image
-        ornt_xfm = nb.orientations.inv_ornt_aff(
-            nb.io_orientation(orig_img.affine), orig_img.shape)
-
-        normalized = normalize_xform(reoriented)
-
-        # Image may be reoriented
-        if normalized is not orig_img:
-            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-            normalized.to_filename(out_name)
-        else:
-            out_name = fname
-
-        mat_name = fname_presuffix(fname, suffix='.mat', newpath=runtime.cwd, use_ext=False)
-        np.savetxt(mat_name, ornt_xfm, fmt='%.08f')
-
-        self._results['out_file'] = out_name
-        self._results['transform'] = mat_name
-
-        return runtime
-
-
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
 
