@@ -14,7 +14,7 @@ Fetch some example data:
 
 Disable warnings:
 
-    >>> import nipype import logging
+    >>> from nipype import logging
     >>> logging.getLogger('interface').setLevel('ERROR')
 
 """
