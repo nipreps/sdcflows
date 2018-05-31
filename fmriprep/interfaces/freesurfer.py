@@ -15,8 +15,8 @@ Fetch some example data:
 
 Disable warnings:
 
-    >>> import niworkflows.nipype as nn
-    >>> nn.logging.getLogger('interface').setLevel('ERROR')
+    >>> from nipype import logging
+    >>> logging.getLogger('interface').setLevel('ERROR')
 
 """
 
@@ -28,13 +28,13 @@ from skimage import morphology as sim
 from scipy.ndimage.morphology import binary_fill_holes
 from nilearn.image import resample_to_img, new_img_like
 
-from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
-from niworkflows.nipype.interfaces.base import (
+from nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
+from nipype.interfaces.base import (
     isdefined, InputMultiPath, BaseInterfaceInputSpec, TraitedSpec, File, traits, Directory
 )
-from niworkflows.nipype.interfaces import freesurfer as fs
-from niworkflows.nipype.interfaces.base import SimpleInterface
-from niworkflows.nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
+from nipype.interfaces import freesurfer as fs
+from nipype.interfaces.base import SimpleInterface
+from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
 
 
 class StructuralReference(fs.RobustTemplate):

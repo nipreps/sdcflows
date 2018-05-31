@@ -17,7 +17,7 @@ import re
 import html
 
 import jinja2
-from niworkflows.nipype.utils.filemanip import loadcrash, copyfile
+from nipype.utils.filemanip import loadcrash, copyfile
 from pkg_resources import resource_filename as pkgrf
 
 

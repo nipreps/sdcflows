@@ -20,10 +20,9 @@ of the BIDS specification.
 
 """
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import utility as niu, fsl, ants
-# Note that deman_image imports from nipype
-from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu, fsl, ants
+from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
 from ...interfaces import (

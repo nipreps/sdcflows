@@ -14,8 +14,8 @@ Fetch some example data:
 
 Disable warnings:
 
-    >>> import niworkflows.nipype as nn
-    >>> nn.logging.getLogger('interface').setLevel('ERROR')
+    >>> from nipype import logging
+    >>> logging.getLogger('interface').setLevel('ERROR')
 
 """
 
@@ -26,13 +26,13 @@ import simplejson as json
 import gzip
 from shutil import copytree, rmtree, copyfileobj
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.interfaces.base import (
+from nipype import logging
+from nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterfaceInputSpec,
     File, Directory, InputMultiPath, OutputMultiPath, Str,
     SimpleInterface
 )
-from niworkflows.nipype.utils.filemanip import copyfile
+from nipype.utils.filemanip import copyfile
 
 LOGGER = logging.getLogger('interface')
 BIDS_NAME = re.compile(

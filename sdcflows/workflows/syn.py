@@ -25,9 +25,9 @@ Feedback will be enthusiastically received.
 """
 import pkg_resources as pkgr
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import fsl, utility as niu
+from nipype import logging
+from nipype.pipeline import engine as pe
+from nipype.interfaces import fsl, utility as niu
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
 from ...interfaces import InvertT1w
