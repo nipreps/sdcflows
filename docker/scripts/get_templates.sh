@@ -8,6 +8,8 @@ OASIS_TEMPLATE="https://files.osf.io/v1/resources/fvuh8/providers/osfstorage/584
 OASIS_SHA256="d87300e91346c16f55baf6f54f5f990bc020b61e8d5df9bcc3abb0cc4b943113"
 NKI_TEMPLATE="https://files.osf.io/v1/resources/fvuh8/providers/osfstorage/59cd90f46c613b02b3d79782"
 NKI_SHA256="4bba067f6675d15be96b205cb227e18a540673fd7e4577e13feedcef3a6f0ec5"
+OASIS_DKT31_TEMPLATE="https://files.osf.io/v1/resources/fvuh8/providers/osfstorage/5b16f17aeca4a80012bd7542"
+OASIS_DKT31_SHA256="623fa7141712b1a7263331dba16eb069a4443e9640f52556c89d461611478145"
 
 GET(){
     URL=$1; SHA256=$2;
@@ -32,4 +34,6 @@ echo "Getting OASIS template"
 GET "$OASIS_TEMPLATE" "$OASIS_SHA256"
 echo "Getting NKI template"
 GET "$NKI_TEMPLATE" "$NKI_SHA256"
+echo "Getting OASIS DKT31 template"
+GET "$OASIS_DKT31_TEMPLATE" "$OASIS_DKT31_SHA256"
 echo "Done!"
