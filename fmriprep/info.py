@@ -68,7 +68,7 @@ REQUIRES = [
     'nibabel>=2.2.1',
     'pandas',
     'grabbit',
-    'pybids>=0.5.1',
+    'pybids>=0.6.3',
     'nitime',
     'nipype>=1.0.4',
     'niworkflows>=0.4.1',
