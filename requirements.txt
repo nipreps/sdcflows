@@ -1,3 +1,2 @@
 niworkflows>=0.4.1
 versioneer
-git+https://github.com/nipy/nipype.git@4b576d802aaf8b928769a3fb173055121d5fed7a#egg=nipype

@@ -70,10 +70,9 @@ REQUIRES = [
     'grabbit',
     'pybids>=0.5.1',
     'nitime',
-    'nipype>=1.0.4',
+    'nipype>=1.1.0',
     'niworkflows>=0.4.1',
     'statsmodels',
-    'nipype',
     'seaborn',
     'indexed_gzip>=0.8.2',
     'scikit-image',
@@ -81,8 +80,6 @@ REQUIRES = [
 ]
 
 LINKS_REQUIRES = [
-    'git+https://github.com/effigies/nipype.git@'
-    '4b576d802aaf8b928769a3fb173055121d5fed7a#egg=nipype',
 ]
 
 TESTS_REQUIRES = [
