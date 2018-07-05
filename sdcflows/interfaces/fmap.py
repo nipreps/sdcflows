@@ -23,7 +23,7 @@ from nipype.interfaces.base import (
     BaseInterfaceInputSpec, TraitedSpec, File, isdefined, traits,
     SimpleInterface)
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class FieldEnhanceInputSpec(BaseInterfaceInputSpec):

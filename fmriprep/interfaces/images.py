@@ -22,7 +22,7 @@ from nipype.interfaces.base import (
     File, InputMultiPath, OutputMultiPath)
 from nipype.interfaces import fsl
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
