@@ -21,7 +21,7 @@ from nipype.interfaces.base import (
     SimpleInterface)
 from nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class MCFLIRT2ITKInputSpec(BaseInterfaceInputSpec):

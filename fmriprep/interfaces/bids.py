@@ -15,7 +15,7 @@ Fetch some example data:
 Disable warnings:
 
     >>> from nipype import logging
-    >>> logging.getLogger('interface').setLevel('ERROR')
+    >>> logging.getLogger('nipype.interface').setLevel('ERROR')
 
 """
 
@@ -34,7 +34,7 @@ from nipype.interfaces.base import (
 )
 from nipype.utils.filemanip import copyfile
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 BIDS_NAME = re.compile(
     '^(.*\/)?(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<session_id>ses-[a-zA-Z0-9]+))?'
     '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'

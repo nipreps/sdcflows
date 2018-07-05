@@ -21,7 +21,7 @@ from nipype.interfaces.base import (
 )
 from nipype.interfaces.io import add_traits
 
-IFLOGGER = logging.getLogger('interfaces')
+IFLOGGER = logging.getLogger('nipype.interfaces')
 
 
 class TPM2ROIInputSpec(BaseInterfaceInputSpec):

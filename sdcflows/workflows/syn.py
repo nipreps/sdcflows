@@ -34,7 +34,7 @@ from ...interfaces import InvertT1w
 from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
-LOGGER = logging.getLogger('workflow')
+LOGGER = logging.getLogger('nipype.workflow')
 
 
 def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
