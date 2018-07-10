@@ -13,7 +13,7 @@ When the fieldmap is directly measured with a prescribed sequence (such as
 :abbr:`SE (spiral echo)`), we only need to calculate the corresponding B-Spline
 coefficients to adapt the fieldmap to the TOPUP tool.
 This procedure is described with more detail `here <https://cni.stanford.edu/\
-wiki/GE_Processing#Fieldmaps>`_.
+wiki/GE_Processing#Fieldmaps>`__.
 
 This corresponds to the section 8.9.3 --fieldmap image (and one magnitude image)--
 of the BIDS specification.
