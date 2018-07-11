@@ -22,7 +22,7 @@ from nipype.interfaces.base import (
     File, InputMultiPath, OutputMultiPath)
 from nipype.interfaces import fsl
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
@@ -424,41 +424,6 @@ class ValidateImage(SimpleInterface):
             fobj.write(indent(snippet, '\t' * 3))
 
         self._results['out_report'] = out_report
-        return runtime
-
-
-class InvertT1wInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True,
-                   desc='Skull-stripped T1w structural image')
-    ref_file = File(exists=True, mandatory=True,
-                    desc='Skull-stripped reference image')
-
-
-class InvertT1wOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Inverted T1w structural image')
-
-
-class InvertT1w(SimpleInterface):
-    input_spec = InvertT1wInputSpec
-    output_spec = InvertT1wOutputSpec
-
-    def _run_interface(self, runtime):
-        t1_img = nli.load_img(self.inputs.in_file)
-        t1_data = t1_img.get_data()
-        epi_data = nli.load_img(self.inputs.ref_file).get_data()
-
-        # We assume the image is already masked
-        mask = t1_data > 0
-
-        t1_min, t1_max = np.unique(t1_data)[[1, -1]]
-        epi_min, epi_max = np.unique(epi_data)[[1, -1]]
-        scale_factor = (epi_max - epi_min) / (t1_max - t1_min)
-
-        inv_data = mask * ((t1_max - t1_data) * scale_factor + epi_min)
-
-        out_file = fname_presuffix(self.inputs.in_file, suffix='_inv', newpath=runtime.cwd)
-        nli.new_img_like(t1_img, inv_data, copy_header=True).to_filename(out_file)
-        self._results['out_file'] = out_file
         return runtime
 
 

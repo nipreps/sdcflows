@@ -28,13 +28,13 @@ import pkg_resources as pkgr
 from nipype import logging
 from nipype.pipeline import engine as pe
 from nipype.interfaces import fsl, utility as niu
+from nipype.interfaces.image import Rescale
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
-from ...interfaces import InvertT1w
 from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
-LOGGER = logging.getLogger('workflow')
+LOGGER = logging.getLogger('nipype.workflow')
 
 
 def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
@@ -110,7 +110,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
 
-    invert_t1w = pe.Node(InvertT1w(), name='invert_t1w',
+    invert_t1w = pe.Node(Rescale(invert=True), name='invert_t1w',
                          mem_gb=0.3)
 
     ref_2_t1 = pe.Node(Registration(from_file=affine_transform),
