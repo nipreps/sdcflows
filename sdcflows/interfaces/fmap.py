@@ -525,7 +525,7 @@ def _delta_te(in_values, te1=None, te2=None):
     if te1 is None:
         raise RuntimeError(
             'EchoTime1 metadata field not found. Please consult the BIDS specification.')
-    if te1 is None:
+    if te2 is None:
         raise RuntimeError(
             'EchoTime2 metadata field not found. Please consult the BIDS specification.')
 
