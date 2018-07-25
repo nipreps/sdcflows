@@ -8,7 +8,7 @@ Supercharging Nipype's workflow engine
 Add special features to the Nipype's vanilla workflows
 """
 import networkx as nx
-from niworkflows.nipype.pipeline import engine as pe
+from nipype.pipeline import engine as pe
 
 
 class LiterateWorkflow(pe.Workflow):
