@@ -609,6 +609,13 @@ class SignalExtractionOutputSpec(TraitedSpec):
 
 
 class SignalExtraction(SimpleInterface):
+    """ Extract mean signals from a time series within a set of ROIs
+
+    This interface is intended to be a memory-efficient alternative to
+    nipype.interfaces.nilearn.SignalExtraction.
+    Not all features of nilearn.SignalExtraction are implemented at
+    this time.
+    """
     input_spec = SignalExtractionInputSpec
     output_spec = SignalExtractionOutputSpec
 
