@@ -8,15 +8,15 @@ import pytest
 
 
 @pytest.mark.parametrize('nvols, nmasks, ext, factor', [
-    (1000, 10, '.nii', 2),
-    (1000, 10, '.nii.gz', 5),
+    (500, 10, '.nii', 2),
+    (500, 10, '.nii.gz', 5),
     (200, 3, '.nii', 1.1),
     (200, 3, '.nii.gz', 2),
     (200, 10, '.nii', 1.1),
     (200, 10, '.nii.gz', 2),
     ])
 def test_signal_extraction_equivalence(tmpdir, nvols, nmasks, ext, factor):
-    orig_dir = tmpdir.chdir()
+    tmpdir.chdir()
 
     vol_shape = (64, 64, 40)
 
