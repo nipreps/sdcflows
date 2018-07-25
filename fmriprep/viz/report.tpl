@@ -11,14 +11,25 @@
 <style type="text/css">
 .sub-report-title {}
 .run-title {}
-.elem-title {}
+
+h1 { padding-top: 35px; }
+h2 { padding-top: 20px; }
+h3 { padding-top: 15px; }
+
 .elem-desc {}
 .elem-filename {}
-.elem-image svg {
-    width: 100%;   
+
+div.elem-image {
+  width: 100%;
+  page-break-before:always;
 }
-body { 
-    padding-top: 65px; 
+
+.elem-image object.svg-reportlet {
+    width: 100%;
+    padding-bottom: 5px;
+}
+body {
+    padding: 65px 10px 10px;
 }
 </style>
 </head>
@@ -27,15 +38,15 @@ body {
 <nav class="navbar navbar-default navbar-fixed-top">
 <div class="container collapse navbar-collapse">
     <ul class="nav navbar-nav">
-        {% for sub_report in sub_reports %}
-            {% if sub_report.run_reports %}
+        {% for sub_report in sections %}
+            {% if sub_report.isnested %}
                 <li class="dropdown">
                     <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
                         {{ sub_report.name }}
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                    {% for run_report in sub_report.run_reports %}
+                    {% for run_report in sub_report.reportlets %}
                         <li><a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a></li>
                     {% endfor %}
                     </ul>
@@ -61,22 +72,25 @@ body {
     <h1 class="text-danger"> The navigation menu uses Javascript. Without it this report might not work as expected </h1>
 </noscript>
 
-{% for sub_report in sub_reports %}
+{% for sub_report in sections %}
     <div id="{{ sub_report.name }}">
     <h1 class="sub-report-title">{{ sub_report.name }}</h1>
-    {% if sub_report.run_reports %}
-        {% for run_report in sub_report.run_reports %}
+    {% if sub_report.isnested %}
+        {% for run_report in sub_report.reportlets %}
             <div id="{{run_report.name}}">
                 <h2 class="run-title">Reports for {{ run_report.title }}</h2>
-                {% for elem in run_report.elements %}
-                    {% if elem.files_contents %}
+                {% for elem in run_report.reportlets %}
+                    {% if elem.contents %}
                         {% if elem.title %}<h3 class="elem-title">{{ elem.title }}</h3>{% endif %}
-                        {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
-                        {% for image in elem.files_contents %}
-                            {% if elem.raw %}{{ image.1 }}{% else %}
-                            <div class="elem-image">{{ image.1 }}</div><br>
+                        {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p>{% endif %}
+                        {% for content in elem.contents %}
+                            {% if elem.raw %}{{ content }}{% else %}
+                            <div class="elem-image">
+                            <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">
+                            Problem loading figure {{ content }}. If the link below works, please try reloading the report in your browser.</object>
+                            </div>
                             <div class="elem-filename">
-                                Filename: {{ image.0 }}
+                                Get figure file: <a href="./{{ content }}" target="_blank">{{ content }}</a>
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -85,16 +99,18 @@ body {
             </div>
         {% endfor %}
     {% else %}
-        {% for elem in sub_report.elements %}
-            {% if elem.files_contents %}
+        {% for elem in sub_report.reportlets %}
+            {% if elem.contents %}
                 {% if elem.title %}<h3 class="elem-title">{{ elem.title }}</h3>{% endif %}
                 {% if elem.description %}<p class="elem-desc">{{ elem.description }}<p><br />{% endif %}
-                {% for image in elem.files_contents %}
-                    {% if elem.raw %}{{ image.1 }}{% else %}
-                    <div class="elem-image">{{ image.1 }}</div><br>
-                    <div class="elem-filename">
-                        Filename: {{ image.0 }}
-                    </div>
+                {% for content in elem.contents %}
+                    {% if elem.raw %}{{ content }}{% else %}
+                        <div class="elem-image">
+                        <object class="svg-reportlet" type="image/svg+xml" data="./{{ content }}">filename:{{ content }}</object>
+                        </div>
+                        <div class="elem-filename">
+                            Get figure file: <a href="./{{ content }}" target="_blank">{{ content }}</a>
+                        </div>
                     {% endif %}
                 {% endfor %}
             {% endif %}

@@ -21,8 +21,8 @@ Unwarping
 
 import pkg_resources as pkgr
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import ants, fsl, utility as niu
+from nipype.pipeline import engine as pe
+from nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
 from ...engine import Workflow
@@ -245,8 +245,8 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmc
 
     """
 
-    from niworkflows.nipype.pipeline import engine as pe
-    from niworkflows.nipype.interfaces import utility as niu
+    from nipype.pipeline import engine as pe
+    from nipype.interfaces import utility as niu
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
     from niworkflows.interfaces import SimpleBeforeAfter

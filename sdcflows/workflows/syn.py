@@ -25,17 +25,17 @@ Feedback will be enthusiastically received.
 """
 import pkg_resources as pkgr
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import fsl, utility as niu
+from nipype import logging
+from nipype.pipeline import engine as pe
+from nipype.interfaces import fsl, utility as niu
+from nipype.interfaces.image import Rescale
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
 from ...engine import Workflow
-from ...interfaces import InvertT1w
 from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
-LOGGER = logging.getLogger('workflow')
+LOGGER = logging.getLogger('nipype.workflow')
 
 
 def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
@@ -71,7 +71,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         bold_ref_brain
             skull-stripped reference image
         template : str
-            Name of template targeted by `'template'` output space
+            Name of template targeted by ``template`` output space
         t1_brain
             skull-stripped, bias-corrected structural image
         t1_2_mni_reverse_transform
@@ -118,7 +118,7 @@ antsRegistration (ANTs).
     affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
     syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
 
-    invert_t1w = pe.Node(InvertT1w(), name='invert_t1w',
+    invert_t1w = pe.Node(Rescale(invert=True), name='invert_t1w',
                          mem_gb=0.3)
 
     ref_2_t1 = pe.Node(Registration(from_file=affine_transform),

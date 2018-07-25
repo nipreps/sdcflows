@@ -14,8 +14,8 @@ Fetch some example data:
 
 Disable warnings:
 
-    >>> import niworkflows.nipype as nn
-    >>> nn.logging.getLogger('interface').setLevel('ERROR')
+    >>> from nipype import logging
+    >>> logging.getLogger('nipype.interface').setLevel('ERROR')
 
 """
 
@@ -24,16 +24,17 @@ import os.path as op
 import re
 import simplejson as json
 import gzip
-from shutil import copy, copytree, rmtree, copyfileobj
+from shutil import copytree, rmtree, copyfileobj
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.interfaces.base import (
+from nipype import logging
+from nipype.interfaces.base import (
     traits, isdefined, TraitedSpec, BaseInterfaceInputSpec,
     File, Directory, InputMultiPath, OutputMultiPath, Str,
     SimpleInterface
 )
+from nipype.utils.filemanip import copyfile
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 BIDS_NAME = re.compile(
     '^(.*\/)?(?P<subject_id>sub-[a-zA-Z0-9]+)(_(?P<session_id>ses-[a-zA-Z0-9]+))?'
     '(_(?P<task_id>task-[a-zA-Z0-9]+))?(_(?P<acq_id>acq-[a-zA-Z0-9]+))?'
@@ -104,6 +105,7 @@ class BIDSDataGrabberOutputSpec(TraitedSpec):
     bold = OutputMultiPath(desc='output functional images')
     sbref = OutputMultiPath(desc='output sbrefs')
     t1w = OutputMultiPath(desc='output T1w images')
+    roi = OutputMultiPath(desc='output ROI images')
     t2w = OutputMultiPath(desc='output T2w images')
     flair = OutputMultiPath(desc='output FLAIR images')
 
@@ -147,7 +149,7 @@ class BIDSDataGrabber(SimpleInterface):
             raise FileNotFoundError('No functional images found for subject sub-{}'.format(
                 self.inputs.subject_id))
 
-        for imtype in ['bold', 't2w', 'flair', 'fmap', 'sbref']:
+        for imtype in ['bold', 't2w', 'flair', 'fmap', 'sbref', 'roi']:
             if not bids_dict[imtype]:
                 LOGGER.warn('No \'{}\' images found for sub-{}'.format(
                     imtype, self.inputs.subject_id))
@@ -163,10 +165,15 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     source_file = File(exists=False, mandatory=True, desc='the input func file')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
+    compress = traits.Bool(desc="force compression (True) or uncompression (False)"
+                                " of the output file (default: same as input)")
 
 
 class DerivativesDataSinkOutputSpec(TraitedSpec):
     out_file = OutputMultiPath(File(exists=True, desc='written file path'))
+    compression = OutputMultiPath(
+        traits.Bool, desc='whether ``in_file`` was compressed/uncompressed '
+                          'or `it was copied directly.')
 
 
 class DerivativesDataSink(SimpleInterface):
@@ -202,9 +209,10 @@ class DerivativesDataSink(SimpleInterface):
     def _run_interface(self, runtime):
         src_fname, _ = _splitext(self.inputs.source_file)
         _, ext = _splitext(self.inputs.in_file[0])
-        compress = ext == '.nii'
-        if compress:
-            ext = '.nii.gz'
+        if self.inputs.compress is True and not ext.endswith('.gz'):
+            ext += '.gz'
+        elif self.inputs.compress is False and ext.endswith('.gz'):
+            ext = ext[:-3]
 
         m = BIDS_NAME.search(src_fname)
 
@@ -237,6 +245,7 @@ class DerivativesDataSink(SimpleInterface):
         if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
             formatstr = '{bname}_{suffix}{i:04d}{ext}'
 
+        self._results['compression'] = []
         for i, fname in enumerate(self.inputs.in_file):
             out_file = formatstr.format(
                 bname=base_fname,
@@ -246,13 +255,7 @@ class DerivativesDataSink(SimpleInterface):
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
             self._results['out_file'].append(out_file)
-            if compress:
-                with open(fname, 'rb') as f_in:
-                    with gzip.open(out_file, 'wb') as f_out:
-                        copyfileobj(f_in, f_out)
-            else:
-                copy(fname, out_file)
-
+            self._results['compression'].append(_copy_any(fname, out_file))
         return runtime
 
 
@@ -417,3 +420,22 @@ def _splitext(fname):
         fname, ext2 = op.splitext(fname)
         ext = ext2 + ext
     return fname, ext
+
+
+def _copy_any(src, dst):
+    src_isgz = src.endswith('.gz')
+    dst_isgz = dst.endswith('.gz')
+    if src_isgz == dst_isgz:
+        copyfile(src, dst, copy=True, use_hardlink=True)
+        return False  # Make sure we do not reuse the hardlink later
+
+    # Unlink target (should not exist)
+    if os.path.exists(dst):
+        os.unlink(dst)
+
+    src_open = gzip.open if src_isgz else open
+    dst_open = gzip.open if dst_isgz else open
+    with src_open(src, 'rb') as f_in:
+        with dst_open(dst, 'wb') as f_out:
+            copyfileobj(f_in, f_out)
+    return True

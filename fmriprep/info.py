@@ -62,19 +62,19 @@ REQUIRES = [
     'lockfile',
     'future',
     'scikit-learn',
-    'matplotlib',
+    'matplotlib>=2.2.0',
     'nilearn',
     'sklearn',
-    'nibabel>=2.1.0',
+    'nibabel>=2.2.1',
     'pandas',
     'grabbit',
-    'pybids>=0.5',
+    'pybids>=0.6.3',
     'nitime',
-    'niworkflows>=0.3.4',
+    'nipype>=1.1.0',
+    'niworkflows>=0.4.2',
     'statsmodels',
-    'nipype',
     'seaborn',
-    'indexed_gzip>=0.7.0',
+    'indexed_gzip>=0.8.2',
     'scikit-image',
     'versioneer',
 ]
@@ -96,15 +96,20 @@ EXTRA_REQUIRES = {
         'pydotplus',
         'pydot>=1.2.3',
         'packaging',
+        'nbsphinx',
     ],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
     'datalad': ['datalad'],
     'resmon': ['psutil>=5.4.0'],
+    'sentry': ['raven'],
 }
+EXTRA_REQUIRES['docs'] = EXTRA_REQUIRES['doc']
 
 # Enable a handle to install all extra dependencies at once
-EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
+EXTRA_REQUIRES['all'] = list(set([
+    v for deps in EXTRA_REQUIRES.values() for v in deps]))
+
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Science/Research',

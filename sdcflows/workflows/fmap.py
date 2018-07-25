@@ -13,17 +13,16 @@ When the fieldmap is directly measured with a prescribed sequence (such as
 :abbr:`SE (spiral echo)`), we only need to calculate the corresponding B-Spline
 coefficients to adapt the fieldmap to the TOPUP tool.
 This procedure is described with more detail `here <https://cni.stanford.edu/\
-wiki/GE_Processing#Fieldmaps>`_.
+wiki/GE_Processing#Fieldmaps>`__.
 
 This corresponds to the section 8.9.3 --fieldmap image (and one magnitude image)--
 of the BIDS specification.
 
 """
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import utility as niu, fsl, ants
-# Note that deman_image imports from nipype
-from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu, fsl, ants
+from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
 from ...engine import Workflow
