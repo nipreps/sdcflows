@@ -55,6 +55,14 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
 
     """
 
+    workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+A deformation field to correct for susceptibility distortions was estimated
+based on a field map that was co-registered to the BOLD reference,
+using a custom workflow of *fMRIPrep* derived from the `epiunwarp.fsl`
+script of FSL.
+"""
+
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
                         name='inputnode')
 
@@ -101,7 +109,6 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
     # rsec2hz (divide by 2pi)
 
-    workflow = Workflow(name=name)
     workflow.connect([
         (inputnode, meta, [('phasediff', 'in_file')]),
         (inputnode, magmrg, [('magnitude', 'in_files')]),

@@ -101,6 +101,12 @@ def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
                         "skip distortion correction step.")
 
     workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+A deformation field to correct for susceptibility distortions was estimated
+based on two echo-planar imaging (EPI) references with opposing phase-encoding
+directions, using `3dQwarp` @afni (AFNI {afni_ver}).
+""".format(''.join(afni.QwarpPlusMinus().version))
+
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['in_reference', 'in_reference_brain', 'in_mask']), name='inputnode')
 

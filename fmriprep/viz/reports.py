@@ -135,7 +135,7 @@ class Report(object):
     def _read_pkl(fname):
         crash_data = loadcrash(fname)
         data = {'file': fname,
-                'traceback': ''.join(crash_data['traceback']).replace("\\n", "<br \>")}
+                'traceback': ''.join(crash_data['traceback']).replace("\\n", "<br />")}
         if 'node' in crash_data:
             data['node'] = crash_data['node']
             if data['node'].base_dir:
@@ -168,13 +168,20 @@ class Report(object):
         return data
 
     def generate_report(self):
+        boilerplate = None
+        boiler_file = os.path.join(self.out_dir, "fmriprep", 'logs', 'CITATION.md')
+        if os.path.exists(boiler_file):
+            with open(boiler_file) as f:
+                boilerplate = f.read()
+
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(searchpath=searchpath),
             trim_blocks=True, lstrip_blocks=True
         )
         report_tpl = env.get_template('viz/report.tpl')
-        report_render = report_tpl.render(sections=self.sections, errors=self.errors)
+        report_render = report_tpl.render(sections=self.sections, errors=self.errors,
+                                          boilerplate=boilerplate)
         with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
             fp.write(report_render)
         return len(self.errors)

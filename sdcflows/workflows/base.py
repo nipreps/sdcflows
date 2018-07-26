@@ -163,6 +163,12 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
         ])
         return workflow
 
+    workflow.__postdesc__ = """\
+Based on the estimated susceptibility distortion, an
+unwarped BOLD reference was calculated for a more accurate
+co-registration with the anatomical reference.
+"""
+
     # In case there are multiple fieldmaps prefer EPI
     fmaps.sort(key=lambda fmap: FMAP_PRIORITY[fmap['type']])
     fmap = fmaps[0]
@@ -248,6 +254,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
             outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
             sdc_unwarp_wf = syn_sdc_wf
         else:  # --force-syn was called when other fieldmap was present
+            sdc_unwarp_wf.__desc__ = None
             workflow.connect([
                 (syn_sdc_wf, outputnode, [
                     ('outputnode.out_reference', 'syn_bold_ref')]),

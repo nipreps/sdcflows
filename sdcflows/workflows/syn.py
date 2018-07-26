@@ -97,11 +97,16 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
-"Fieldmap-less" distortion correction was performed by co-registering the \
-functional image to the same-subject T1w image with intensity inverted [12,13] \
-constrained with an average fieldmap template [14], implemented with \
-antsRegistration (ANTs).
-"""
+A deformation field to correct for susceptibility distortions was estimated
+based on *fMRIPrep*'s *fieldmap-less* approach.
+The deformation field is that resulting from co-registering the BOLD reference
+to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
+@fieldmapless2].
+Registration is performed with `antsRegistration` (ANTs {ants_ver}), and
+the process regularized by constraining deformation to be nonzero only
+along the phase-encoding direction, and modulated with an average fieldmap
+template @fieldmapless3.
+""".format(ants_ver=Registration().version)
     inputnode = pe.Node(
         niu.IdentityInterface(['bold_ref', 'bold_ref_brain', 'template',
                                't1_brain', 't1_2_mni_reverse_transform']),
