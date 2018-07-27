@@ -172,11 +172,14 @@ class Report(object):
         boilerplate = None
         logs_path = Path(self.out_dir) / 'fmriprep' / 'logs'
         if (logs_path / 'CITATION.md').exists():
-            boiler_html = check_call([
-                'pandoc', '-s', '--bibliography',
-                pkgrf('fmriprep', 'data/boilerplate.bib'),
-                '--filter', 'pandoc-citeproc', '-o',
-                str(logs_path / 'CITATION.html')])
+            try:
+                boiler_html = check_call([
+                    'pandoc', '-s', '--bibliography',
+                    pkgrf('fmriprep', 'data/boilerplate.bib'),
+                    '--filter', 'pandoc-citeproc', '-o',
+                    str(logs_path / 'CITATION.html')])
+            except FileNotFoundError:
+                boiler_html = False
 
             if boiler_html:
                 with (logs_path / 'CITATION.html').open() as htmlf:
@@ -184,6 +187,9 @@ class Report(object):
                 boilerplate = re.compile(
                     '<body>(.*?)</body>',
                     re.DOTALL | re.IGNORECASE).findall(boilerplate)
+            else:
+                with (logs_path / 'CITATION.md').open() as mdf:
+                    boilerplate = '<pre>\n%s\n</pre>' % mdf.read()
 
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
