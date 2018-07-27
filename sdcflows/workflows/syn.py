@@ -106,7 +106,7 @@ Registration is performed with `antsRegistration` (ANTs {ants_ver}), and
 the process regularized by constraining deformation to be nonzero only
 along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
-""".format(ants_ver=Registration().version)
+""".format(ants_ver=Registration().version or '<ver>')
     inputnode = pe.Node(
         niu.IdentityInterface(['bold_ref', 'bold_ref_brain', 'template',
                                't1_brain', 't1_2_mni_reverse_transform']),
