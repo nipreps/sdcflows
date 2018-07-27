@@ -18,10 +18,9 @@ Fieldmap preprocessing workflow for fieldmap data structure
 
 """
 
-from niworkflows.nipype.interfaces import ants, fsl, utility as niu
-from niworkflows.nipype.pipeline import engine as pe
-# Note that demean_image imports from nipype
-from niworkflows.nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
+from nipype.interfaces import ants, fsl, utility as niu
+from nipype.pipeline import engine as pe
+from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 

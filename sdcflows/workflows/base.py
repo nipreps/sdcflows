@@ -36,16 +36,16 @@ False           False       False         HMC only
 
 """
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import utility as niu
-from niworkflows.nipype import logging
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
+from nipype import logging
 
 # Fieldmap workflows
 from .pepolar import init_pepolar_unwarp_wf
 from .syn import init_syn_sdc_wf
 from .unwarp import init_sdc_unwarp_wf
 
-LOGGER = logging.getLogger('workflow')
+LOGGER = logging.getLogger('nipype.workflow')
 FMAP_PRIORITY = {
     'epi': 0,
     'fieldmap': 1,
@@ -119,7 +119,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
             MNI-to-T1w transform to map prior knowledge to the T1w
             fo the fieldmap-less SyN method
         template : str
-            Name of template targeted by `'template'` output space
+            Name of template targeted by ``template`` output space
 
 
     **Outputs**
@@ -176,6 +176,13 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
             epi_fmaps=epi_fmaps,
             omp_nthreads=omp_nthreads,
             name='pepolar_unwarp_wf')
+
+        workflow.connect([
+            (inputnode, sdc_unwarp_wf, [
+                ('bold_ref', 'inputnode.in_reference'),
+                ('bold_mask', 'inputnode.in_mask'),
+                ('bold_ref_brain', 'inputnode.in_reference_brain')]),
+        ])
 
     # FIELDMAP path
     if fmap['type'] in ['fieldmap', 'phasediff']:

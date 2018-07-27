@@ -18,10 +18,9 @@ def fix_multi_T1w_source_name(in_files):
 
     """
     import os
-    if not isinstance(in_files, list):
-        return in_files
-    subject_label = in_files[0].split(os.sep)[-1].split("_")[0].split("-")[-1]
-    base, _ = os.path.split(in_files[0])
+    from nipype.utils.filemanip import filename_to_list
+    base, in_file = os.path.split(filename_to_list(in_files)[0])
+    subject_label = in_file.split("_", 1)[0].split("-")[1]
     return os.path.join(base, "sub-%s_T1w.nii.gz" % subject_label)
 
 
@@ -36,7 +35,7 @@ def add_suffix(in_files, suffix):
 
     """
     import os.path as op
-    from niworkflows.nipype.utils.filemanip import fname_presuffix, filename_to_list
+    from nipype.utils.filemanip import fname_presuffix, filename_to_list
     return op.basename(fname_presuffix(filename_to_list(in_files)[0],
                                        suffix=suffix))
 
