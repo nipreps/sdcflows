@@ -122,7 +122,7 @@ class Report(object):
         Crawl subjects crash directory for the corresponding run and return text for
         .pklz crash file found.
         """
-        for crashfile in error_dir.glob('crash*'):
+        for crashfile in error_dir.glob('crash*.*'):
             if crashfile.suffix == '.pklz':
                 self.errors.append(self._read_pkl(crashfile))
             elif crashfile.suffix == '.txt':
@@ -167,10 +167,11 @@ class Report(object):
         boilerplate = None
         logs_path = self.out_dir / 'fmriprep' / 'logs'
         if (logs_path / 'CITATION.html').exists():
-            boilerplate = (logs_path / 'CITATION.html').read_text().strip()
+            boilerplate = (logs_path / 'CITATION.html').read_text()
             boilerplate = re.compile(
                 '<body>(.*?)</body>',
-                re.DOTALL | re.IGNORECASE).findall(boilerplate)
+                re.DOTALL | re.IGNORECASE).findall(boilerplate)[0].strip()
+            boilerplate = '<div id="boiler-text">%s</div>' % boilerplate
 
         elif (logs_path / 'CITATION.md').exists():
             boilerplate = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()

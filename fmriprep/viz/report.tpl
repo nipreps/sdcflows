@@ -31,6 +31,13 @@ div.elem-image {
 body {
     padding: 65px 10px 10px;
 }
+
+div.boiler-text {
+    font-family: "Bitstream Charter", "Georgia", Times;
+    border: 1px solid gray;
+    margin: 20px 70px;
+    padding: 10px;
+}
 </style>
 </head>
 <body>
