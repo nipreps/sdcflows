@@ -572,3 +572,77 @@ def nii_ones_like(in_file, value, dtype, newpath=None):
     nii.to_filename(out_file)
 
     return out_file
+
+
+class SignalExtractionInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='4-D fMRI nii file')
+    label_files = InputMultiPath(
+        File(exists=True),
+        mandatory=True,
+        desc='a 3-D label image, with 0 denoting '
+        'background, or a list of 3-D probability '
+        'maps (one per label) or the equivalent 4D '
+        'file.')
+    class_labels = traits.List(
+        mandatory=True,
+        desc='Human-readable labels for each segment '
+        'in the label file, in order. The length of '
+        'class_labels must be equal to the number of '
+        'segments (background excluded). This list '
+        'corresponds to the class labels in label_file '
+        'in ascending order')
+    out_file = File(
+        'signals.tsv',
+        usedefault=True,
+        exists=False,
+        desc='The name of the file to output to. '
+        'signals.tsv by default')
+
+
+class SignalExtractionOutputSpec(TraitedSpec):
+    out_file = File(
+        exists=True,
+        desc='tsv file containing the computed '
+        'signals, with as many columns as there are labels and as '
+        'many rows as there are timepoints in in_file, plus a '
+        'header row with values from class_labels')
+
+
+class SignalExtraction(SimpleInterface):
+    """ Extract mean signals from a time series within a set of ROIs
+
+    This interface is intended to be a memory-efficient alternative to
+    nipype.interfaces.nilearn.SignalExtraction.
+    Not all features of nilearn.SignalExtraction are implemented at
+    this time.
+    """
+    input_spec = SignalExtractionInputSpec
+    output_spec = SignalExtractionOutputSpec
+
+    def _run_interface(self, runtime):
+        mask_imgs = [nb.load(fname) for fname in self.inputs.label_files]
+        if len(mask_imgs) == 1:
+            mask_imgs = nb.four_to_three(mask_imgs[0])
+
+        masks = [mask_img.get_data().astype(np.bool) for mask_img in mask_imgs]
+
+        n_masks = len(masks)
+
+        if n_masks != len(self.inputs.class_labels):
+            raise ValueError("Number of masks must match number of labels")
+
+        img = nb.load(self.inputs.in_file)
+
+        series = np.zeros((img.shape[3], n_masks))
+
+        data = img.get_data()
+        for j in range(n_masks):
+            series[:, j] = data[masks[j], :].mean(axis=0)
+
+        output = np.vstack((self.inputs.class_labels, series.astype(str)))
+        self._results['out_file'] = os.path.join(runtime.cwd,
+                                                 self.inputs.out_file)
+        np.savetxt(
+            self._results['out_file'], output, fmt=b'%s', delimiter='\t')
+
+        return runtime
