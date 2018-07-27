@@ -11,7 +11,6 @@ fMRIprep reports builder
 
 import os
 from pathlib import Path
-from subprocess import check_call, CalledProcessError, TimeoutExpired
 import json
 import re
 
@@ -171,22 +170,14 @@ class Report(object):
     def generate_report(self):
         boilerplate = None
         logs_path = Path(self.out_dir) / 'fmriprep' / 'logs'
-        if (logs_path / 'CITATION.md').exists():
-            try:
-                boilerplate = check_call([
-                    'pandoc', '-s', '--bibliography',
-                    pkgrf('fmriprep', 'data/boilerplate.bib'),
-                    '--natbib', str(logs_path / 'CITATION.md'),
-                    '-o', str(logs_path / 'CITATION.html')], timeout=10)
-            except (FileNotFoundError, CalledProcessError, TimeoutExpired):
-                with (logs_path / 'CITATION.md').open() as mdf:
-                    boilerplate = '<pre>\n%s\n</pre>' % mdf.read()
-            else:
-                with (logs_path / 'CITATION.html').open() as htmlf:
-                    boilerplate = htmlf.read()
-                boilerplate = re.compile(
-                    '<body>(.*?)</body>',
-                    re.DOTALL | re.IGNORECASE).findall(boilerplate)
+        if (logs_path / 'CITATION.html').exists():
+            boilerplate = (logs_path / 'CITATION.html').read_text()
+            boilerplate = re.compile(
+                '<body>(.*?)</body>',
+                re.DOTALL | re.IGNORECASE).findall(boilerplate)
+
+        elif (logs_path / 'CITATION.md').exists():
+            boilerplate = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()
 
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
