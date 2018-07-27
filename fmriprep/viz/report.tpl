@@ -122,9 +122,7 @@ body {
 <div id="boilerplate">
     <h1 class="sub-report-title">Citation boilerplate</h1>
     {% if boilerplate %}
-    <pre>
         {{ boilerplate }}
-    </pre>
     {% else %}
     <p class="text-danger">Failed to generate the boilerplate</p>
     {% endif %}

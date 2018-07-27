@@ -11,6 +11,7 @@ fMRIprep reports builder
 
 import os
 from pathlib import Path
+from subprocess import check_call
 import json
 import re
 
@@ -169,10 +170,20 @@ class Report(object):
 
     def generate_report(self):
         boilerplate = None
-        boiler_file = os.path.join(self.out_dir, "fmriprep", 'logs', 'CITATION.md')
-        if os.path.exists(boiler_file):
-            with open(boiler_file) as f:
-                boilerplate = f.read()
+        logs_path = Path(self.out_dir) / 'fmriprep' / 'logs'
+        if (logs_path / 'CITATION.md').exists():
+            boiler_html = check_call([
+                'pandoc', '-s', '--bibliography',
+                pkgrf('fmriprep', 'data/boilerplate.bib'),
+                '--filter', 'pandoc-citeproc', '-o',
+                str(logs_path / 'CITATION.html')])
+
+            if boiler_html:
+                with (logs_path / 'CITATION.html').open() as htmlf:
+                    boilerplate = htmlf.read()
+                boilerplate = re.compile(
+                    '<body>(.*?)</body>',
+                    re.DOTALL | re.IGNORECASE).findall(boilerplate)
 
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(
