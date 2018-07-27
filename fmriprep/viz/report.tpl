@@ -64,15 +64,6 @@ div.boiler-text {
         {% endfor %}
         <li><a class="dropdown-item" href="#boilerplate">Methods</a></li>
         <li><a class="dropdown-item" href="#errors">Errors</a></li>
-        <li class="dropdown">
-            <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
-            About<span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="http://fmriprep.readthedocs.io/en/latest/citing.html">Citing FMRIPREP</a></li>
-                <li><a class="dropdown-item" href="http://fmriprep.org">About fMRIprep</a></li>
-            </ul>
-        </li>
     </ul>
 </div>
 </nav>
@@ -129,11 +120,14 @@ div.boiler-text {
 
 <div id="boilerplate">
     <h1 class="sub-report-title">Methods</h1>
+    <p>We kindly ask to report results preprocessed with fMRIPrep using the following
+       boilerplate</p>
     {% if boilerplate %}
         {{ boilerplate }}
     {% else %}
     <p class="text-danger">Failed to generate the boilerplate</p>
     {% endif %}
+    <p>Alternatively, an interactive <a href="http://fmriprep.readthedocs.io/en/latest/citing.html">boilerplate generator</a> is available in the <a href="https://fmriprep.org">documentation website</a>.</p>
 </div>
 
 <div id="errors">
