@@ -62,6 +62,7 @@ div.boiler-text {
                 <li><a href="#{{sub_report.name}}">{{ sub_report.name }}</a></li>
             {% endif %}
         {% endfor %}
+        <li><a class="dropdown-item" href="#boilerplate">Methods</a></li>
         <li><a class="dropdown-item" href="#errors">Errors</a></li>
         <li class="dropdown">
             <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
@@ -127,7 +128,7 @@ div.boiler-text {
 {% endfor %}
 
 <div id="boilerplate">
-    <h1 class="sub-report-title">Citation boilerplate</h1>
+    <h1 class="sub-report-title">Methods</h1>
     {% if boilerplate %}
         {{ boilerplate }}
     {% else %}
