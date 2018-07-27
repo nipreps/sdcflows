@@ -171,7 +171,7 @@ class Report(object):
             boilerplate = re.compile(
                 '<body>(.*?)</body>',
                 re.DOTALL | re.IGNORECASE).findall(boilerplate)[0].strip()
-            boilerplate = '<div id="boiler-text">%s</div>' % boilerplate
+            boilerplate = '<div class="boiler-text">%s</div>' % boilerplate
 
         elif (logs_path / 'CITATION.md').exists():
             boilerplate = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()
