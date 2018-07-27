@@ -8,8 +8,6 @@ fMRIprep reports builder
 
 
 """
-
-import os
 from pathlib import Path
 import json
 import re
@@ -65,7 +63,7 @@ class Report(object):
         self.root = path
         self.sections = []
         self.errors = []
-        self.out_dir = out_dir
+        self.out_dir = Path(out_dir)
         self.out_filename = out_filename
         self.run_uuid = run_uuid
 
@@ -81,9 +79,8 @@ class Report(object):
         fig_dir = 'figures'
         subject_dir = self.root.split('/')[-1]
         subject = re.search('^(?P<subject_id>sub-[a-zA-Z0-9]+)$', subject_dir).group()
-        svg_dir = os.path.join(self.out_dir, 'fmriprep', subject, fig_dir)
-        os.makedirs(svg_dir, exist_ok=True)
-
+        svg_dir = self.out_dir / 'fmriprep' / subject / fig_dir
+        svg_dir.mkdir(parents=True, exist_ok=True)
         reportlet_list = list(sorted([str(f) for f in Path(self.root).glob('**/*.*')]))
 
         for subrep_cfg in config:
@@ -98,10 +95,10 @@ class Report(object):
                             with open(src) as fp:
                                 contents = fp.read().strip()
                         elif ext == 'svg':
-                            fbase = os.path.basename(src)
-                            copyfile(src, os.path.join(svg_dir, fbase),
+                            fbase = Path(src).name
+                            copyfile(src, str(svg_dir / fbase),
                                      copy=True, use_hardlink=True)
-                            contents = os.path.join(subject, fig_dir, fbase)
+                            contents = str(Path(subject) / fig_dir / fbase)
 
                         if contents:
                             rlet.source_files.append(src)
@@ -116,23 +113,24 @@ class Report(object):
                     title=subrep_cfg.get('title'))
                 self.sections.append(order_by_run(sub_report))
 
-        error_dir = os.path.join(self.out_dir, "fmriprep", subject, 'log', self.run_uuid)
-        if os.path.isdir(error_dir):
+        error_dir = self.out_dir / "fmriprep" / subject / 'log' / self.run_uuid
+        if error_dir.is_dir():
             self.index_error_dir(error_dir)
 
     def index_error_dir(self, error_dir):
-        ''' Crawl subjects crash directory for the corresponding run and return text for
-            .pklz crash file found. '''
-        for root, directories, filenames in os.walk(error_dir):
-            for f in filenames:
-                crashtype = os.path.splitext(f)[1]
-                if f[:5] == 'crash' and crashtype == '.pklz':
-                    self.errors.append(self._read_pkl(os.path.join(root, f)))
-                elif f[:5] == 'crash' and crashtype == '.txt':
-                    self.errors.append(self._read_txt(os.path.join(root, f)))
+        """
+        Crawl subjects crash directory for the corresponding run and return text for
+        .pklz crash file found.
+        """
+        for crashfile in error_dir.glob('crash*'):
+            if crashfile.suffix == '.pklz':
+                self.errors.append(self._read_pkl(crashfile))
+            elif crashfile.suffix == '.txt':
+                self.errors.append(self._read_txt(crashfile))
 
     @staticmethod
-    def _read_pkl(fname):
+    def _read_pkl(path):
+        fname = str(path)
         crash_data = loadcrash(fname)
         data = {'file': fname,
                 'traceback': ''.join(crash_data['traceback']).replace("\\n", "<br />")}
@@ -146,11 +144,9 @@ class Report(object):
         return data
 
     @staticmethod
-    def _read_txt(fname):
-        with open(fname, 'r') as fobj:
-            crash_data = fobj.read()
-        lines = crash_data.splitlines()
-        data = {'file': fname}
+    def _read_txt(path):
+        lines = path.read_text().splitlines()
+        data = {'file': str(path)}
         traceback_start = 0
         if lines[0].startswith('Node'):
             data['node'] = lines[0].split(': ', 1)[1]
@@ -169,9 +165,9 @@ class Report(object):
 
     def generate_report(self):
         boilerplate = None
-        logs_path = Path(self.out_dir) / 'fmriprep' / 'logs'
+        logs_path = self.out_dir / 'fmriprep' / 'logs'
         if (logs_path / 'CITATION.html').exists():
-            boilerplate = (logs_path / 'CITATION.html').read_text()
+            boilerplate = (logs_path / 'CITATION.html').read_text().strip()
             boilerplate = re.compile(
                 '<body>(.*?)</body>',
                 re.DOTALL | re.IGNORECASE).findall(boilerplate)
@@ -187,8 +183,9 @@ class Report(object):
         report_tpl = env.get_template('viz/report.tpl')
         report_render = report_tpl.render(sections=self.sections, errors=self.errors,
                                           boilerplate=boilerplate)
-        with open(os.path.join(self.out_dir, "fmriprep", self.out_filename), 'w') as fp:
-            fp.write(report_render)
+
+        # Write out report
+        (self.out_dir / 'fmriprep' / self.out_filename).write_text(report_render)
         return len(self.errors)
 
 
@@ -228,7 +225,7 @@ def order_by_run(subreport):
 
 
 def generate_name_title(filename):
-    fname = os.path.basename(filename)
+    fname = Path(filename).name
     expr = re.compile('^sub-(?P<subject_id>[a-zA-Z0-9]+)(_ses-(?P<session_id>[a-zA-Z0-9]+))?'
                       '(_task-(?P<task_id>[a-zA-Z0-9]+))?(_acq-(?P<acq_id>[a-zA-Z0-9]+))?'
                       '(_rec-(?P<rec_id>[a-zA-Z0-9]+))?(_run-(?P<run_id>[a-zA-Z0-9]+))?')
@@ -278,7 +275,7 @@ def run_reports(reportlets_dir, out_dir, subject_label, run_uuid):
     >>> tmpdir.cleanup()
 
     """
-    reportlet_path = os.path.join(reportlets_dir, 'fmriprep', "sub-" + subject_label)
+    reportlet_path = str(Path(reportlets_dir) / 'fmriprep' / ("sub-%s" % subject_label))
     config = pkgrf('fmriprep', 'viz/config.json')
 
     out_filename = 'sub-{}.html'.format(subject_label)
@@ -290,7 +287,7 @@ def generate_reports(subject_list, output_dir, work_dir, run_uuid):
     """
     A wrapper to run_reports on a given ``subject_list``
     """
-    reports_dir = os.path.join(work_dir, 'reportlets')
+    reports_dir = str(Path(work_dir) / 'reportlets')
     report_errors = [
         run_reports(reports_dir, output_dir, subject_label, run_uuid=run_uuid)
         for subject_label in subject_list
