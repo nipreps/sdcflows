@@ -77,7 +77,6 @@ REQUIRES = [
     'indexed_gzip>=0.8.2',
     'scikit-image',
     'versioneer',
-    'pandoc',
 ]
 
 LINKS_REQUIRES = [
