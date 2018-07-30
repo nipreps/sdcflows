@@ -79,7 +79,8 @@ REQUIRES = [
     'versioneer',
 ]
 
-LINKS_REQUIRES = []
+LINKS_REQUIRES = [
+]
 
 TESTS_REQUIRES = [
     "mock",
