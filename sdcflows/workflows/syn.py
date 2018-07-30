@@ -31,6 +31,7 @@ from nipype.interfaces import fsl, utility as niu
 from nipype.interfaces.image import Rescale
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
+from ...engine import Workflow
 from ..bold.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
@@ -89,7 +90,23 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
             mask of the unwarped input file
 
     """
-    workflow = pe.Workflow(name=name)
+
+    if bold_pe is None or bold_pe[0] not in ['i', 'j']:
+        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior).')
+        bold_pe = 'j'
+
+    workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+A deformation field to correct for susceptibility distortions was estimated
+based on *fMRIPrep*'s *fieldmap-less* approach.
+The deformation field is that resulting from co-registering the BOLD reference
+to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
+@fieldmapless2].
+Registration is performed with `antsRegistration` (ANTs {ants_ver}), and
+the process regularized by constraining deformation to be nonzero only
+along the phase-encoding direction, and modulated with an average fieldmap
+template [@fieldmapless3].
+""".format(ants_ver=Registration().version or '<ver>')
     inputnode = pe.Node(
         niu.IdentityInterface(['bold_ref', 'bold_ref_brain', 'template',
                                't1_brain', 't1_2_mni_reverse_transform']),
@@ -98,10 +115,6 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
                                'out_mask', 'out_warp']),
         name='outputnode')
-
-    if bold_pe is None or bold_pe[0] not in ['i', 'j']:
-        LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior).')
-        bold_pe = 'j'
 
     # Collect predefined data
     # Atlas image and registration affine
