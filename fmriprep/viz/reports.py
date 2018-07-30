@@ -164,17 +164,32 @@ class Report(object):
         return data
 
     def generate_report(self):
-        boilerplate = None
         logs_path = self.out_dir / 'fmriprep' / 'logs'
-        if (logs_path / 'CITATION.html').exists():
-            boilerplate = (logs_path / 'CITATION.html').read_text()
-            boilerplate = re.compile(
-                '<body>(.*?)</body>',
-                re.DOTALL | re.IGNORECASE).findall(boilerplate)[0].strip()
-            boilerplate = '<div class="boiler-text">%s</div>' % boilerplate
 
-        elif (logs_path / 'CITATION.md').exists():
-            boilerplate = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()
+        boilerplate = []
+        boiler_idx = 0
+
+        if (logs_path / 'CITATION.html').exists():
+            text = (logs_path / 'CITATION.html').read_text()
+            text = re.compile(
+                '<body>(.*?)</body>',
+                re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
+            text = '<div class="boiler-text">%s</div>' % text
+            boilerplate.append((boiler_idx, 'HTML', text))
+            boiler_idx += 1
+
+        if (logs_path / 'CITATION.md').exists():
+            text = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()
+            boilerplate.append((boiler_idx, 'Markdown', text))
+            boiler_idx += 1
+
+        if (logs_path / 'CITATION.tex').exists():
+            text = '<pre>%s</pre>\n' % (logs_path / 'CITATION.tex').read_text()
+            text += '<h3>Bibliography</h3>\n'
+            text += '<pre>%s</pre>' % Path(
+                pkgrf('fmriprep', 'data/boilerplate.bib')).read_text()
+            boilerplate.append((boiler_idx, 'LaTeX', text))
+            boiler_idx += 1
 
         searchpath = pkgrf('fmriprep', '/')
         env = jinja2.Environment(

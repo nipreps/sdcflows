@@ -120,10 +120,21 @@ div.boiler-text {
 
 <div id="boilerplate">
     <h1 class="sub-report-title">Methods</h1>
+    {% if boilerplate %}
     <p>We kindly ask to report results preprocessed with fMRIPrep using the following
        boilerplate</p>
-    {% if boilerplate %}
-        {{ boilerplate }}
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        {% for b in boilerplate %}
+        <li class="nav-item">
+            <a class="nav-link {% if b[0] == 0 %}active{% endif %}" id="{{ b[1] }}-tab" data-toggle="tab" href="#{{ b[1] }}" role="tab" aria-controls="{{ b[1] }}" aria-selected="true">{{ b[1] }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      {% for b in boilerplate %}
+      <div class="tab-pane fade {% if b[0] == 0 %}show active{% endif %}" id="{{ b[1] }}" role="tabpanel" aria-labelledby="{{ b[1] }}-tab">{{ b[2] }}</div>
+      {% endfor %}
+    </div>
     {% else %}
     <p class="text-danger">Failed to generate the boilerplate</p>
     {% endif %}
