@@ -171,7 +171,7 @@ class Report(object):
 
         if (logs_path / 'CITATION.html').exists():
             text = (logs_path / 'CITATION.html').read_text()
-            text = re.compile(
+            text = '<div class="boiler-html">%s</div>' % re.compile(
                 '<body>(.*?)</body>',
                 re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
             boilerplate.append((boiler_idx, 'HTML', text))

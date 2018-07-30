@@ -32,45 +32,43 @@ body {
     padding: 65px 10px 10px;
 }
 
-div#HTML {
+.boiler-html {
     font-family: "Bitstream Charter", "Georgia", Times;
-    border: 1px solid gray;
-    /*margin: 20px 70px;*/
-    padding: 10px 20px;
+    margin: 20px 25px;
+    padding: 10px;
+    background-color: #F8F9FA;
 }
 
-div.pre {
-    font-family: "Lucida Console", Monaco, monospace;
-    border: 1px solid gray;
-    padding: 10px 20px;
+div#boilerplate pre {
+    margin: 20px 25px;
+    padding: 10px;
+    background-color: #F8F9FA;
 }
 
 </style>
 </head>
 <body>
 
-<nav class="navbar navbar-default navbar-fixed-top">
-<div class="container collapse navbar-collapse">
-    <ul class="nav navbar-nav">
-        {% for sub_report in sections %}
-            {% if sub_report.isnested %}
-                <li class="dropdown">
-                    <a class="nav-item  nav-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="">
-                        {{ sub_report.name }}
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                    {% for run_report in sub_report.reportlets %}
-                        <li><a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a></li>
-                    {% endfor %}
-                    </ul>
-                </li>
-            {% else %}
-                <li><a href="#{{sub_report.name}}">{{ sub_report.name }}</a></li>
-            {% endif %}
-        {% endfor %}
-        <li><a class="dropdown-item" href="#boilerplate">Methods</a></li>
-        <li><a class="dropdown-item" href="#errors">Errors</a></li>
+
+<nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+<div class="collapse navbar-collapse">
+    <ul class="navbar-nav">
+    {% for sub_report in sections %}
+        {% if sub_report.isnested %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="navbar{{ sub_report.name }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">{{ sub_report.name }}</a>
+            <div class="dropdown-menu" aria-labelledby="navbar{{ sub_report.name }}">
+                {% for run_report in sub_report.reportlets %}
+                <a class="dropdown-item" href="#{{run_report.name}}">{{run_report.title}}</a>
+                {% endfor %}
+            </div>
+        </li>
+        {% else %}
+        <li class="nav-item"><a class="nav-link" href="#{{sub_report.name}}">{{sub_report.name}}</a></li>
+        {% endif %}
+    {% endfor %}
+        <li class="nav-item"><a class="nav-link" href="#boilerplate">Methods</a></li>
+        <li class="nav-item"><a class="nav-link" href="#errors">Errors</a></li>
     </ul>
 </div>
 </nav>
