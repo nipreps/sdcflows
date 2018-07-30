@@ -59,8 +59,9 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     workflow.__desc__ = """\
 A deformation field to correct for susceptibility distortions was estimated
 based on a field map that was co-registered to the BOLD reference,
-using a custom workflow of *fMRIPrep* derived from the `epiunwarp.fsl`
-script of FSL.
+using a custom workflow of *fMRIPrep* derived from D. Greve's `epidewarp.fsl`
+[script](http://www.nmr.mgh.harvard.edu/~greve/fbirn/b0/epidewarp.fsl) and
+further improvements of HCP Pipelines.
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
