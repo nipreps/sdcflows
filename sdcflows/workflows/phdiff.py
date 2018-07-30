@@ -61,7 +61,7 @@ A deformation field to correct for susceptibility distortions was estimated
 based on a field map that was co-registered to the BOLD reference,
 using a custom workflow of *fMRIPrep* derived from D. Greve's `epidewarp.fsl`
 [script](http://www.nmr.mgh.harvard.edu/~greve/fbirn/b0/epidewarp.fsl) and
-further improvements of HCP Pipelines.
+further improvements of HCP Pipelines [@hcppipelines].
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
