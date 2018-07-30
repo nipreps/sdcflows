@@ -32,12 +32,19 @@ body {
     padding: 65px 10px 10px;
 }
 
-div.boiler-text {
+div#HTML {
     font-family: "Bitstream Charter", "Georgia", Times;
     border: 1px solid gray;
-    margin: 20px 70px;
-    padding: 10px;
+    /*margin: 20px 70px;*/
+    padding: 10px 20px;
 }
+
+div.pre {
+    font-family: "Lucida Console", Monaco, monospace;
+    border: 1px solid gray;
+    padding: 10px 20px;
+}
+
 </style>
 </head>
 <body>
@@ -126,13 +133,13 @@ div.boiler-text {
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         {% for b in boilerplate %}
         <li class="nav-item">
-            <a class="nav-link {% if b[0] == 0 %}active{% endif %}" id="{{ b[1] }}-tab" data-toggle="tab" href="#{{ b[1] }}" role="tab" aria-controls="{{ b[1] }}" aria-selected="true">{{ b[1] }}</a>
+            <a class="nav-link {% if b[0] == 0 %}active{% endif %}" id="{{ b[1] }}-tab" data-toggle="tab" href="#{{ b[1] }}" role="tab" aria-controls="{{ b[1] }}" aria-selected="{% if b[0] == 0 %}true{%else%}false{% endif %}">{{ b[1] }}</a>
         </li>
         {% endfor %}
     </ul>
     <div class="tab-content" id="myTabContent">
       {% for b in boilerplate %}
-      <div class="tab-pane fade {% if b[0] == 0 %}show active{% endif %}" id="{{ b[1] }}" role="tabpanel" aria-labelledby="{{ b[1] }}-tab">{{ b[2] }}</div>
+      <div class="tab-pane fade {% if b[0] == 0 %}active show{% endif %}" id="{{ b[1] }}" role="tabpanel" aria-labelledby="{{ b[1] }}-tab">{{ b[2] }}</div>
       {% endfor %}
     </div>
     {% else %}

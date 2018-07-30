@@ -174,19 +174,22 @@ class Report(object):
             text = re.compile(
                 '<body>(.*?)</body>',
                 re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
-            text = '<div class="boiler-text">%s</div>' % text
             boilerplate.append((boiler_idx, 'HTML', text))
             boiler_idx += 1
 
         if (logs_path / 'CITATION.md').exists():
-            text = '<pre>%s</pre>' % (logs_path / 'CITATION.md').read_text()
+            text = '<div class="pre">%s</div>\n' % (logs_path / 'CITATION.md').read_text()
             boilerplate.append((boiler_idx, 'Markdown', text))
             boiler_idx += 1
 
         if (logs_path / 'CITATION.tex').exists():
-            text = '<pre>%s</pre>\n' % (logs_path / 'CITATION.tex').read_text()
+            text = (logs_path / 'CITATION.tex').read_text()
+            text = re.compile(
+                r'\\begin{document}(.*?)\\end{document}',
+                re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
+            text = '<div class="pre">%s</div>\n' % text
             text += '<h3>Bibliography</h3>\n'
-            text += '<pre>%s</pre>' % Path(
+            text += '<div class="pre">%s</div>\n' % Path(
                 pkgrf('fmriprep', 'data/boilerplate.bib')).read_text()
             boilerplate.append((boiler_idx, 'LaTeX', text))
             boiler_idx += 1
