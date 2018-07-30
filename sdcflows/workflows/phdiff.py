@@ -24,6 +24,7 @@ from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
+from ...engine import Workflow
 from ...interfaces import (
     ReadSidecarJSON, IntraModalMerge, DerivativesDataSink,
     Phasediff2Fieldmap
@@ -53,6 +54,15 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
 
 
     """
+
+    workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+A deformation field to correct for susceptibility distortions was estimated
+based on a field map that was co-registered to the BOLD reference,
+using a custom workflow of *fMRIPrep* derived from D. Greve's `epidewarp.fsl`
+[script](http://www.nmr.mgh.harvard.edu/~greve/fbirn/b0/epidewarp.fsl) and
+further improvements of HCP Pipelines [@hcppipelines].
+"""
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
                         name='inputnode')
@@ -100,7 +110,6 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
     # rsec2hz (divide by 2pi)
 
-    workflow = pe.Workflow(name=name)
     workflow.connect([
         (inputnode, meta, [('phasediff', 'in_file')]),
         (inputnode, magmrg, [('magnitude', 'in_files')]),

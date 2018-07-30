@@ -195,10 +195,10 @@ class PatchedConcatenateLTA(ConcatenateLTA):
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
     `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
     in FreeSurfer, that was
-    `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`_.
+    `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`__.
 
     The original FMRIPREP's issue is found
-    `here <https://github.com/poldracklab/fmriprep/issues/768>`_.
+    `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
     """
 
     def _list_outputs(self):
