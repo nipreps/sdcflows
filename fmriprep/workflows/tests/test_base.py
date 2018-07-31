@@ -22,6 +22,7 @@ class TestBase(TestWorkflow):
                                          t2s_coreg=False,
                                          omp_nthreads=1,
                                          skull_strip_template='OASIS',
+                                         skull_strip_fixed_seed=False,
                                          reportlets_dir='.',
                                          output_dir='.',
                                          bids_dir='.',
