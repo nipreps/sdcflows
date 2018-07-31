@@ -24,27 +24,26 @@ __description__ = ("fMRIprep is a functional magnetic resonance image pre-proces
                    "that is robust to differences in scan acquisition protocols and that requires "
                    "minimal user input, while providing easily interpretable and comprehensive "
                    "error and output reporting.")
-__longdesc__ = ("This package is a functional magnetic resonance image preprocessing pipeline "
-                "that is designed to provide an easily accessible, state-of-the-art interface "
-                "that is robust to differences in scan acquisition protocols and that requires "
-                "minimal user input, while providing easily interpretable and comprehensive error "
-                "and output reporting. This open-source neuroimaging data processing tool is "
-                "being developed as a part of the MRI image analysis and reproducibility platform "
-                "offered by the CRN. This pipeline is heavily influenced by the `Human Connectome "
-                "Project analysis pipelines "
-                "<https://github.com/Washington-University/Pipelines>`_ and, as such, the "
-                "backbone of this pipeline is a python reimplementation of the HCP "
-                "`GenericfMRIVolumeProcessingPipeline.sh` script. However, a major difference is "
-                "that this pipeline is executed using a `nipype workflow framework "
-                "<http://nipype.readthedocs.io/en/latest/>`_. This allows for each call to a "
-                "software module or binary to be controlled within the workflows, which removes "
-                "the need for manual curation at every stage, while still providing all the "
-                "output and error information that would be necessary for debugging and "
-                "interpretation purposes. The fmriprep pipeline primarily utilizes FSL tools, but "
-                "also utilizes ANTs tools at several stages such as skull stripping and template "
-                "registration. This pipeline was designed to provide the best software "
-                "implementation for each state of preprocessing, and will be updated as newer and "
-                "better neuroimaging software become available.")
+__longdesc__ = """\
+Preprocessing of functional MRI (fMRI) involves numerous steps to clean and standardize
+data before statistical analysis. Generally, researchers create ad hoc preprocessing
+workflows for each new dataset, building upon a large inventory of tools available for
+each step. The complexity of these workflows has snowballed with rapid advances in MR data
+acquisition and image processing techniques. We introduce fMRIPrep, an analysis-agnostic
+tool that addresses the challenge of robust and reproducible preprocessing for task-based
+and resting fMRI data. FMRIPrep automatically adapts a best-in-breed workflow to the
+idiosyncrasies of virtually any dataset, ensuring high-quality preprocessing with no
+manual intervention. By introducing visual assessment checkpoints into an iterative
+integration framework for software-testing, we show that fMRIPrep robustly produces
+high-quality results on a diverse fMRI data collection comprising participants from
+54 different studies in the OpenfMRI repository. We review the distinctive features of
+fMRIPrep in a qualitative comparison to other preprocessing workflows. FMRIPrep achieves
+higher spatial accuracy as it introduces less uncontrolled spatial smoothness than commonly
+used preprocessing tools. FMRIPrep has the potential to transform fMRI research by equipping
+neuroscientists with a high-quality, robust, easy-to-use and transparent preprocessing workflow
+which can help ensure the validity of inference and the interpretability of their results.
+
+[Pre-print https://doi.org/10.1101/306951]"""
 
 DOWNLOAD_URL = (
     'https://github.com/poldracklab/{name}/archive/{ver}.tar.gz'.format(
