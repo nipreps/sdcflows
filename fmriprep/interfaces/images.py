@@ -15,15 +15,14 @@ import nibabel as nb
 import nilearn.image as nli
 from textwrap import indent
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
-from niworkflows.nipype.interfaces.base import (
-    traits, TraitedSpec, BaseInterfaceInputSpec,
+from nipype import logging
+from nipype.utils.filemanip import fname_presuffix
+from nipype.interfaces.base import (
+    traits, TraitedSpec, BaseInterfaceInputSpec, SimpleInterface,
     File, InputMultiPath, OutputMultiPath)
-from niworkflows.nipype.interfaces import fsl
-from niworkflows.nipype.interfaces.base import SimpleInterface
+from nipype.interfaces import fsl
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class IntraModalMergeInputSpec(BaseInterfaceInputSpec):
@@ -55,7 +54,8 @@ class IntraModalMerge(SimpleInterface):
                                                    suffix='_avg', newpath=runtime.cwd)
 
         if self.inputs.to_ras:
-            in_files = [reorient(inf) for inf in in_files]
+            in_files = [reorient(inf, newpath=runtime.cwd)
+                        for inf in in_files]
 
         if len(in_files) == 1:
             filenii = nb.load(in_files[0])
@@ -176,8 +176,8 @@ class TemplateDimensions(SimpleInterface):
             valid[valid] ^= np.any(scales == scales.max(), axis=1)
 
         # Ignore dropped images
-        valid_fnames = in_names[valid]
-        self._results['t1w_valid_list'] = valid_fnames.tolist()
+        valid_fnames = np.atleast_1d(in_names[valid]).tolist()
+        self._results['t1w_valid_list'] = valid_fnames
 
         # Set target shape information
         target_zooms = all_zooms[valid].min(axis=0)
@@ -291,52 +291,6 @@ class Conform(SimpleInterface):
         return runtime
 
 
-class ReorientInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True,
-                   desc='Input T1w image')
-
-
-class ReorientOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Reoriented T1w image')
-    transform = File(exists=True, desc='Reorientation transform')
-
-
-class Reorient(SimpleInterface):
-    """Reorient a T1w image to RAS (left-right, posterior-anterior, inferior-superior)
-
-    Syncs qform and sform codes for consistent treatment by all software
-    """
-    input_spec = ReorientInputSpec
-    output_spec = ReorientOutputSpec
-
-    def _run_interface(self, runtime):
-        # Load image, orient as RAS
-        fname = self.inputs.in_file
-        orig_img = nb.load(fname)
-        reoriented = nb.as_closest_canonical(orig_img)
-
-        # Reconstruct transform from orig to reoriented image
-        ornt_xfm = nb.orientations.inv_ornt_aff(
-            nb.io_orientation(orig_img.affine), orig_img.shape)
-
-        normalized = normalize_xform(reoriented)
-
-        # Image may be reoriented
-        if normalized is not orig_img:
-            out_name = fname_presuffix(fname, suffix='_ras', newpath=runtime.cwd)
-            normalized.to_filename(out_name)
-        else:
-            out_name = fname
-
-        mat_name = fname_presuffix(fname, suffix='.mat', newpath=runtime.cwd, use_ext=False)
-        np.savetxt(mat_name, ornt_xfm, fmt='%.08f')
-
-        self._results['out_file'] = out_name
-        self._results['transform'] = mat_name
-
-        return runtime
-
-
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
 
@@ -389,7 +343,7 @@ class ValidateImage(SimpleInterface):
 
     def _run_interface(self, runtime):
         img = nb.load(self.inputs.in_file)
-        out_report = os.path.abspath('report.html')
+        out_report = os.path.join(runtime.cwd, 'report.html')
 
         # Retrieve xform codes
         sform_code = int(img.header._structarr['sform_code'])
@@ -398,13 +352,21 @@ class ValidateImage(SimpleInterface):
         # Check qform is valid
         valid_qform = False
         try:
-            img.get_qform()
+            qform = img.get_qform()
             valid_qform = True
         except ValueError:
             pass
 
+        sform = img.get_sform()
+        if np.linalg.det(sform) == 0:
+            valid_sform = False
+        else:
+            RZS = sform[:3, :3]
+            zooms = np.sqrt(np.sum(RZS * RZS, axis=0))
+            valid_sform = np.allclose(zooms, img.header.get_zooms()[:3])
+
         # Matching affines
-        matching_affines = valid_qform and np.allclose(img.get_qform(), img.get_sform())
+        matching_affines = valid_qform and np.allclose(qform, sform)
 
         # Both match, qform valid (implicit with match), codes okay -> do nothing, empty report
         if matching_affines and qform_code > 0 and sform_code > 0:
@@ -418,15 +380,15 @@ class ValidateImage(SimpleInterface):
         self._results['out_file'] = out_fname
 
         # Row 2:
-        if valid_qform and qform_code > 0 and sform_code == 0:
-            img.set_sform(img.get_qform(), qform_code)
+        if valid_qform and qform_code > 0 and (sform_code == 0 or not valid_sform):
+            img.set_sform(qform, qform_code)
             warning_txt = 'Note on orientation: sform matrix set'
             description = """\
 <p class="elem-desc">The sform has been copied from qform.</p>
 """
         # Rows 3-4:
         # Note: if qform is not valid, matching_affines is False
-        elif sform_code > 0 and (not matching_affines or qform_code == 0):
+        elif (valid_sform and sform_code > 0) and (not matching_affines or qform_code == 0):
             img.set_qform(img.get_sform(), sform_code)
             warning_txt = 'Note on orientation: qform matrix overwritten'
             description = """\
@@ -444,7 +406,7 @@ class ValidateImage(SimpleInterface):
 """
         # Rows 5-6:
         else:
-            affine = img.affine
+            affine = img.header.get_base_affine()
             img.set_sform(affine, nb.nifti1.xform_codes['scanner'])
             img.set_qform(affine, nb.nifti1.xform_codes['scanner'])
             warning_txt = 'WARNING - Missing orientation information'
@@ -465,61 +427,79 @@ class ValidateImage(SimpleInterface):
         return runtime
 
 
-class InvertT1wInputSpec(BaseInterfaceInputSpec):
+class DemeanImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True,
-                   desc='Skull-stripped T1w structural image')
-    ref_file = File(exists=True, mandatory=True,
-                    desc='Skull-stripped reference image')
+                   desc='image to be demeaned')
+    in_mask = File(exists=True, mandatory=True,
+                   desc='mask where median will be calculated')
+    only_mask = traits.Bool(False, usedefault=True,
+                            desc='demean only within mask')
 
 
-class InvertT1wOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Inverted T1w structural image')
+class DemeanImageOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='demeaned image')
 
 
-class InvertT1w(SimpleInterface):
-    input_spec = InvertT1wInputSpec
-    output_spec = InvertT1wOutputSpec
+class DemeanImage(SimpleInterface):
+    input_spec = DemeanImageInputSpec
+    output_spec = DemeanImageOutputSpec
 
     def _run_interface(self, runtime):
-        t1_img = nli.load_img(self.inputs.in_file)
-        t1_data = t1_img.get_data()
-        epi_data = nli.load_img(self.inputs.ref_file).get_data()
-
-        # We assume the image is already masked
-        mask = t1_data > 0
-
-        t1_min, t1_max = np.unique(t1_data)[[1, -1]]
-        epi_min, epi_max = np.unique(epi_data)[[1, -1]]
-        scale_factor = (epi_max - epi_min) / (t1_max - t1_min)
-
-        inv_data = mask * ((t1_max - t1_data) * scale_factor + epi_min)
-
-        out_file = fname_presuffix(self.inputs.in_file, suffix='_inv', newpath=runtime.cwd)
-        nli.new_img_like(t1_img, inv_data, copy_header=True).to_filename(out_file)
-        self._results['out_file'] = out_file
+        self._results['out_file'] = demean(
+            self.inputs.in_file,
+            self.inputs.in_mask,
+            only_mask=self.inputs.only_mask,
+            newpath=runtime.cwd)
         return runtime
 
 
-def reorient(in_file, out_file=None):
+class FilledImageLikeInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='image to be demeaned')
+    fill_value = traits.Float(1.0, usedefault=True,
+                              desc='value to fill')
+    dtype = traits.Enum('float32', 'uint8', usedefault=True,
+                        desc='force output data type')
+
+
+class FilledImageLikeOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='demeaned image')
+
+
+class FilledImageLike(SimpleInterface):
+    input_spec = FilledImageLikeInputSpec
+    output_spec = FilledImageLikeOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = nii_ones_like(
+            self.inputs.in_file,
+            self.inputs.fill_value,
+            self.inputs.dtype,
+            newpath=runtime.cwd)
+        return runtime
+
+
+def reorient(in_file, newpath=None):
     """Reorient Nifti files to RAS"""
-    if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='_ras', newpath=os.getcwd())
+    out_file = fname_presuffix(in_file, suffix='_ras', newpath=newpath)
     nb.as_closest_canonical(nb.load(in_file)).to_filename(out_file)
     return out_file
 
 
-def extract_wm(in_seg, wm_label=3):
-    import os.path as op
+def extract_wm(in_seg, wm_label=3, newpath=None):
     import nibabel as nb
     import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_seg)
     data = np.zeros(nii.shape, dtype=np.uint8)
     data[nii.get_data() == wm_label] = 1
-    hdr = nii.header.copy()
-    hdr.set_data_dtype(np.uint8)
-    nb.Nifti1Image(data, nii.affine, hdr).to_filename('wm.nii.gz')
-    return op.abspath('wm.nii.gz')
+
+    out_file = fname_presuffix(in_seg, suffix='_wm', newpath=newpath)
+    new = nb.Nifti1Image(data, nii.affine, nii.header)
+    new.set_data_dtype(np.uint8)
+    new.to_filename(out_file)
+    return out_file
 
 
 def normalize_xform(img):
@@ -554,3 +534,115 @@ def normalize_xform(img):
     new_img.set_sform(xform, xform_code)
     new_img.set_qform(xform, xform_code)
     return new_img
+
+
+def demean(in_file, in_mask, only_mask=False, newpath=None):
+    """Demean ``in_file`` within the mask defined by ``in_mask``"""
+    import os
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    out_file = fname_presuffix(in_file, suffix='_demeaned',
+                               newpath=os.getcwd())
+    nii = nb.load(in_file)
+    msk = nb.load(in_mask).get_data()
+    data = nii.get_data()
+    if only_mask:
+        data[msk > 0] -= np.median(data[msk > 0])
+    else:
+        data -= np.median(data[msk > 0])
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(
+        out_file)
+    return out_file
+
+
+def nii_ones_like(in_file, value, dtype, newpath=None):
+    """Create a NIfTI file filled with ``value``, matching properties of ``in_file``"""
+    import os
+    import numpy as np
+    import nibabel as nb
+
+    nii = nb.load(in_file)
+    data = np.ones(nii.shape, dtype=float) * value
+
+    out_file = os.path.join(newpath or os.getcwd(), "filled.nii.gz")
+    nii = nb.Nifti1Image(data, nii.affine, nii.header)
+    nii.set_data_dtype(dtype)
+    nii.to_filename(out_file)
+
+    return out_file
+
+
+class SignalExtractionInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='4-D fMRI nii file')
+    label_files = InputMultiPath(
+        File(exists=True),
+        mandatory=True,
+        desc='a 3-D label image, with 0 denoting '
+        'background, or a list of 3-D probability '
+        'maps (one per label) or the equivalent 4D '
+        'file.')
+    class_labels = traits.List(
+        mandatory=True,
+        desc='Human-readable labels for each segment '
+        'in the label file, in order. The length of '
+        'class_labels must be equal to the number of '
+        'segments (background excluded). This list '
+        'corresponds to the class labels in label_file '
+        'in ascending order')
+    out_file = File(
+        'signals.tsv',
+        usedefault=True,
+        exists=False,
+        desc='The name of the file to output to. '
+        'signals.tsv by default')
+
+
+class SignalExtractionOutputSpec(TraitedSpec):
+    out_file = File(
+        exists=True,
+        desc='tsv file containing the computed '
+        'signals, with as many columns as there are labels and as '
+        'many rows as there are timepoints in in_file, plus a '
+        'header row with values from class_labels')
+
+
+class SignalExtraction(SimpleInterface):
+    """ Extract mean signals from a time series within a set of ROIs
+
+    This interface is intended to be a memory-efficient alternative to
+    nipype.interfaces.nilearn.SignalExtraction.
+    Not all features of nilearn.SignalExtraction are implemented at
+    this time.
+    """
+    input_spec = SignalExtractionInputSpec
+    output_spec = SignalExtractionOutputSpec
+
+    def _run_interface(self, runtime):
+        mask_imgs = [nb.load(fname) for fname in self.inputs.label_files]
+        if len(mask_imgs) == 1:
+            mask_imgs = nb.four_to_three(mask_imgs[0])
+
+        masks = [mask_img.get_data().astype(np.bool) for mask_img in mask_imgs]
+
+        n_masks = len(masks)
+
+        if n_masks != len(self.inputs.class_labels):
+            raise ValueError("Number of masks must match number of labels")
+
+        img = nb.load(self.inputs.in_file)
+
+        series = np.zeros((img.shape[3], n_masks))
+
+        data = img.get_data()
+        for j in range(n_masks):
+            series[:, j] = data[masks[j], :].mean(axis=0)
+
+        output = np.vstack((self.inputs.class_labels, series.astype(str)))
+        self._results['out_file'] = os.path.join(runtime.cwd,
+                                                 self.inputs.out_file)
+        np.savetxt(
+            self._results['out_file'], output, fmt=b'%s', delimiter='\t')
+
+        return runtime

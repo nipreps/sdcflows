@@ -15,8 +15,8 @@ Fetch some example data:
 
 Disable warnings:
 
-    >>> import niworkflows.nipype as nn
-    >>> nn.logging.getLogger('interface').setLevel('ERROR')
+    >>> from nipype import logging
+    >>> logging.getLogger('nipype.interface').setLevel('ERROR')
 
 """
 
@@ -28,13 +28,13 @@ from skimage import morphology as sim
 from scipy.ndimage.morphology import binary_fill_holes
 from nilearn.image import resample_to_img, new_img_like
 
-from niworkflows.nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
-from niworkflows.nipype.interfaces.base import (
+from nipype.utils.filemanip import copyfile, filename_to_list, fname_presuffix
+from nipype.interfaces.base import (
     isdefined, InputMultiPath, BaseInterfaceInputSpec, TraitedSpec, File, traits, Directory
 )
-from niworkflows.nipype.interfaces import freesurfer as fs
-from niworkflows.nipype.interfaces.base import SimpleInterface
-from niworkflows.nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
+from nipype.interfaces import freesurfer as fs
+from nipype.interfaces.base import SimpleInterface
+from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
 
 
 class StructuralReference(fs.RobustTemplate):
@@ -152,12 +152,15 @@ class FSDetectInputsInputSpec(BaseInterfaceInputSpec):
     t1w_list = InputMultiPath(File(exists=True), mandatory=True,
                               desc='input file, part of a BIDS tree')
     t2w_list = InputMultiPath(File(exists=True), desc='input file, part of a BIDS tree')
+    flair_list = InputMultiPath(File(exists=True), desc='input file, part of a BIDS tree')
     hires_enabled = traits.Bool(True, usedefault=True, desc='enable hi-resolution processing')
 
 
 class FSDetectInputsOutputSpec(TraitedSpec):
     t2w = File(desc='reference T2w image')
     use_t2w = traits.Bool(desc='enable use of T2w downstream computation')
+    flair = File(desc='reference FLAIR image')
+    use_flair = traits.Bool(desc='enable use of FLAIR downstream computation')
     hires = traits.Bool(desc='enable hi-res processing')
     mris_inflate = traits.Str(desc='mris_inflate argument')
 
@@ -167,14 +170,19 @@ class FSDetectInputs(SimpleInterface):
     output_spec = FSDetectInputsOutputSpec
 
     def _run_interface(self, runtime):
-        t2w, self._results['hires'], mris_inflate = detect_inputs(
+        t2w, flair, self._results['hires'], mris_inflate = detect_inputs(
             self.inputs.t1w_list,
-            hires_enabled=self.inputs.hires_enabled,
-            t2w_list=self.inputs.t2w_list if isdefined(self.inputs.t2w_list) else None)
+            t2w_list=self.inputs.t2w_list if isdefined(self.inputs.t2w_list) else None,
+            flair_list=self.inputs.flair_list if isdefined(self.inputs.flair_list) else None,
+            hires_enabled=self.inputs.hires_enabled)
 
         self._results['use_t2w'] = t2w is not None
         if self._results['use_t2w']:
             self._results['t2w'] = t2w
+
+        self._results['use_flair'] = flair is not None
+        if self._results['use_flair']:
+            self._results['flair'] = flair
 
         if self._results['hires']:
             self._results['mris_inflate'] = mris_inflate
@@ -187,10 +195,10 @@ class PatchedConcatenateLTA(ConcatenateLTA):
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
     `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
     in FreeSurfer, that was
-    `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`_.
+    `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`__.
 
     The original FMRIPREP's issue is found
-    `here <https://github.com/poldracklab/fmriprep/issues/768>`_.
+    `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
     """
 
     def _list_outputs(self):
@@ -256,6 +264,32 @@ class RefineBrainMask(SimpleInterface):
         return runtime
 
 
+class MedialNaNsInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input surface file')
+    target_subject = traits.Str(mandatory=True, desc='target subject ID')
+    subjects_dir = Directory(mandatory=True, desc='FreeSurfer SUBJECTS_DIR')
+
+
+class MedialNaNsOutputSpec(TraitedSpec):
+    out_file = File(desc='the output surface file')
+
+
+class MedialNaNs(SimpleInterface):
+    """
+    The MedialNaNs converts from arbitrary units to rad/s
+    """
+    input_spec = MedialNaNsInputSpec
+    output_spec = MedialNaNsOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = medial_wall_to_nan(
+            self.inputs.in_file,
+            self.inputs.subjects_dir,
+            self.inputs.target_subject,
+            newpath=runtime.cwd)
+        return runtime
+
+
 def inject_skullstripped(subjects_dir, subject_id, skullstripped):
     mridir = op.join(subjects_dir, subject_id, 'mri')
     t1 = op.join(mridir, 'T1.mgz')
@@ -276,9 +310,10 @@ def inject_skullstripped(subjects_dir, subject_id, skullstripped):
     return subjects_dir, subject_id
 
 
-def detect_inputs(t1w_list, t2w_list=None, hires_enabled=True):
+def detect_inputs(t1w_list, t2w_list=None, flair_list=None, hires_enabled=True):
     t1w_list = filename_to_list(t1w_list)
     t2w_list = filename_to_list(t2w_list) if t2w_list is not None else []
+    flair_list = filename_to_list(flair_list) if flair_list is not None else []
     t1w_ref = nb.load(t1w_list[0])
     # Use high resolution preprocessing if voxel size < 1.0mm
     # Tolerance of 0.05mm requires that rounds down to 0.9mm or lower
@@ -288,9 +323,14 @@ def detect_inputs(t1w_list, t2w_list=None, hires_enabled=True):
     if t2w_list and max(nb.load(t2w_list[0]).header.get_zooms()) < 1.2:
         t2w = t2w_list[0]
 
+    # Prefer T2w to FLAIR if both present and T2w satisfies
+    flair = None
+    if flair_list and not t2w and max(nb.load(flair_list[0]).header.get_zooms()) < 1.2:
+        flair = flair_list[0]
+
     # https://surfer.nmr.mgh.harvard.edu/fswiki/SubmillimeterRecon
     mris_inflate = '-n 50' if hires else None
-    return (t2w, hires, mris_inflate)
+    return (t2w, flair, hires, mris_inflate)
 
 
 def refine_aseg(aseg, ball_size=4):
@@ -356,8 +396,33 @@ def grow_mask(anat, aseg, ants_segs=None, ww=7, zval=2.0, bw=4):
             pixel[2] - ww:pixel[2] + ww
         ]
         if np.any(window > 0):
-            zstat = abs(anat[tuple(pixel)] - window[window > 0].mean()) / window[window > 0].std()
+            mu = window[window > 0].mean()
+            sigma = max(window[window > 0].std(), 1.e-5)
+            zstat = abs(anat[tuple(pixel)] - mu) / sigma
             refined[tuple(pixel)] = int(zstat < zval)
 
     refined = sim.binary_opening(refined, selem)
     return refined
+
+
+def medial_wall_to_nan(in_file, subjects_dir, target_subject, newpath=None):
+    """ Convert values on medial wall to NaNs
+    """
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    fn = os.path.basename(in_file)
+    if not target_subject.startswith('fs'):
+        return in_file
+
+    cortex = nb.freesurfer.read_label(os.path.join(
+        subjects_dir, target_subject, 'label', '{}.cortex.label'.format(fn[:2])))
+    func = nb.load(in_file)
+    medial = np.delete(np.arange(len(func.darrays[0].data)), cortex)
+    for darray in func.darrays:
+        darray.data[medial] = np.nan
+
+    out_file = os.path.join(newpath or os.getcwd(), fn)
+    func.to_filename(out_file)
+    return out_file

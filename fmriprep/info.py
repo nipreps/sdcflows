@@ -5,9 +5,12 @@
 Base module variables
 """
 
-__version__ = '1.0.3-dev'
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 __author__ = 'The CRN developers'
-__copyright__ = 'Copyright 2017, Center for Reproducible Neuroscience, Stanford University'
+__copyright__ = 'Copyright 2018, Center for Reproducible Neuroscience, Stanford University'
 __credits__ = ['Craig Moodie', 'Ross Blair', 'Oscar Esteban', 'Chris Gorgolewski',
                'Shoshana Berleant', 'Christopher J. Markiewicz', 'Russell A. Poldrack']
 __license__ = '3-clause BSD'
@@ -59,20 +62,21 @@ REQUIRES = [
     'lockfile',
     'future',
     'scikit-learn',
-    'matplotlib',
+    'matplotlib>=2.2.0',
     'nilearn',
     'sklearn',
-    'nibabel>=2.1.0',
+    'nibabel>=2.2.1',
     'pandas',
     'grabbit',
-    'pybids>=0.4.2',
+    'pybids>=0.6.3',
     'nitime',
-    'niworkflows>=0.2.3',
+    'nipype>=1.1.1',
+    'niworkflows>=0.4.2',
     'statsmodels',
-    'nipype',
     'seaborn',
-    'indexed_gzip>=0.7.0',
+    'indexed_gzip>=0.8.2',
     'scikit-image',
+    'versioneer',
 ]
 
 LINKS_REQUIRES = [
@@ -85,15 +89,27 @@ TESTS_REQUIRES = [
 ]
 
 EXTRA_REQUIRES = {
-    'doc': ['sphinx>=1.5.3', 'pydotplus', 'pydot>=1.2.3', 'sphinx_rtd_theme', 'sphinx-argparse'],
+    'doc': [
+        'sphinx>=1.5.3',
+        'sphinx_rtd_theme',
+        'sphinx-argparse',
+        'pydotplus',
+        'pydot>=1.2.3',
+        'packaging',
+        'nbsphinx',
+    ],
     'tests': TESTS_REQUIRES,
     'duecredit': ['duecredit'],
     'datalad': ['datalad'],
     'resmon': ['psutil>=5.4.0'],
+    'sentry': ['raven'],
 }
+EXTRA_REQUIRES['docs'] = EXTRA_REQUIRES['doc']
 
 # Enable a handle to install all extra dependencies at once
-EXTRA_REQUIRES['all'] = [val for _, val in list(EXTRA_REQUIRES.items())]
+EXTRA_REQUIRES['all'] = list(set([
+    v for deps in EXTRA_REQUIRES.values() for v in deps]))
+
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Science/Research',

@@ -29,16 +29,18 @@ class TestBase(TestWorkflow):
                                          output_spaces=['T1w'],
                                          template='MNI152NLin2009cAsym',
                                          medial_surface_nan=False,
+                                         cifti_output=False,
                                          hires=False,
                                          use_bbr=None,
                                          bold2t1w_dof=9,
                                          fmap_bspline=True,
                                          fmap_demean=True,
                                          use_aroma=False,
+                                         aroma_melodic_dim=70,
                                          ignore_aroma_err=False,
                                          use_syn=True,
                                          force_syn=True,
-                                         output_grid_ref=None)
+                                         template_out_grid='native')
         wfbasic.write_graph()
         self._assert_mandatory_inputs_set(wfbasic)
 

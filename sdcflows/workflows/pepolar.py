@@ -12,17 +12,17 @@ Phase Encoding POLARity (*PEPOLAR*) techniques
 
 import pkg_resources as pkgr
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import afni, ants, fsl, utility as niu
+from nipype.pipeline import engine as pe
+from nipype.interfaces import afni, ants, fsl, utility as niu
 from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 
+from ...engine import Workflow
 from ...interfaces import StructuralReference
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
-def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
-                           fmaps_pes=None, bold_file_pe=None,
+def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
                            name="pepolar_unwarp_wf"):
     """
     This workflow takes in a set of EPI files with opposite phase encoding
@@ -50,11 +50,10 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.pepolar import init_pepolar_unwarp_wf
-        wf = init_pepolar_unwarp_wf(fmaps=['/dataset/sub-01/fmap/sub-01_epi.nii.gz'],
-                                    fmaps_pes=['j-'],
-                                    bold_file='/dataset/sub-01/func/sub-01_task-rest_bold.nii.gz',
-                                    bold_file_pe='j',
-                                    omp_nthreads=8)
+        wf = init_pepolar_unwarp_wf(
+            bold_meta={'PhaseEncodingDirection': 'j'},
+            epi_fmaps=[('/dataset/sub-01/fmap/sub-01_epi.nii.gz', 'j-')],
+            omp_nthreads=8)
 
 
     Inputs
@@ -65,8 +64,6 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
             the reference image skullstripped
         in_mask
             a brain mask corresponding to ``in_reference``
-        name_source
-            not used, kept for signature compatibility with ``init_sdc_unwarp_wf``
 
     Outputs
 
@@ -81,28 +78,21 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
             mask of the unwarped input file
 
     """
-    if not bold_file_pe:
-        bold_file_pe = layout.get_metadata(bold_file)["PhaseEncodingDirection"]
+    bold_file_pe = bold_meta["PhaseEncodingDirection"]
 
-    usable_fieldmaps_matching_pe = []
-    usable_fieldmaps_opposite_pe = []
     args = '-noXdis -noYdis -noZdis'
     rm_arg = {'i': '-noXdis',
               'j': '-noYdis',
               'k': '-noZdis'}[bold_file_pe[0]]
     args = args.replace(rm_arg, '')
 
-    for i, fmap in enumerate(fmaps):
-        if fmaps_pes:
-            fmap_pe = fmaps_pes[i]
-        else:
-            fmap_pe = layout.get_metadata(fmap)["PhaseEncodingDirection"]
-        if fmap_pe[0] == bold_file_pe[0]:
-            if len(fmap_pe) != len(bold_file_pe):
-                add_list = usable_fieldmaps_opposite_pe
-            else:
-                add_list = usable_fieldmaps_matching_pe
-            add_list.append(fmap)
+    usable_fieldmaps_matching_pe = []
+    usable_fieldmaps_opposite_pe = []
+    for fmap, fmap_pe in epi_fmaps:
+        if fmap_pe == bold_file_pe:
+            usable_fieldmaps_matching_pe.append(fmap)
+        elif fmap_pe[0] == bold_file_pe[0]:
+            usable_fieldmaps_opposite_pe.append(fmap)
 
     if not usable_fieldmaps_opposite_pe:
         raise Exception("None of the discovered fieldmaps has the right "
@@ -110,9 +100,15 @@ def init_pepolar_unwarp_wf(fmaps, bold_file, omp_nthreads, layout=None,
                         "metadata. If not, rerun with '--ignore fieldmaps' to "
                         "skip distortion correction step.")
 
-    workflow = pe.Workflow(name=name)
+    workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+A deformation field to correct for susceptibility distortions was estimated
+based on two echo-planar imaging (EPI) references with opposing phase-encoding
+directions, using `3dQwarp` @afni (AFNI {afni_ver}).
+""".format(afni_ver=''.join(list(afni.QwarpPlusMinus().version or '<ver>')))
+
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_reference', 'in_reference_brain', 'in_mask', 'name_source']), name='inputnode')
+        fields=['in_reference', 'in_reference_brain', 'in_mask']), name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),
@@ -241,10 +237,10 @@ def init_prepare_epi_wf(omp_nthreads, name="prepare_epi_wf"):
                                              output_warped_image=True),
                            name='fmap2ref_reg', n_procs=omp_nthreads)
 
-    workflow = pe.Workflow(name=name)
+    workflow = Workflow(name=name)
 
     def _flatten(l):
-        from niworkflows.nipype.utils.filemanip import filename_to_list
+        from nipype.utils.filemanip import filename_to_list
         return [item for sublist in l for item in filename_to_list(sublist)]
 
     workflow.connect([
@@ -260,17 +256,15 @@ def init_prepare_epi_wf(omp_nthreads, name="prepare_epi_wf"):
     return workflow
 
 
-def _fix_hdr(in_file):
+def _fix_hdr(in_file, newpath=None):
     import nibabel as nb
-    import os
+    from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
     hdr = nii.header.copy()
     hdr.set_data_dtype('<f4')
     hdr.set_intent('vector', (), '')
-
-    out_file = os.path.abspath("warpfield.nii.gz")
-
-    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(out_file)
-
+    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
+    nb.Nifti1Image(nii.get_data().astype('<f4'), nii.affine, hdr).to_filename(
+        out_file)
     return out_file

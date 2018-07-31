@@ -13,23 +13,26 @@ When the fieldmap is directly measured with a prescribed sequence (such as
 :abbr:`SE (spiral echo)`), we only need to calculate the corresponding B-Spline
 coefficients to adapt the fieldmap to the TOPUP tool.
 This procedure is described with more detail `here <https://cni.stanford.edu/\
-wiki/GE_Processing#Fieldmaps>`_.
+wiki/GE_Processing#Fieldmaps>`__.
 
 This corresponds to the section 8.9.3 --fieldmap image (and one magnitude image)--
 of the BIDS specification.
 
 """
 
-from niworkflows.nipype.pipeline import engine as pe
-from niworkflows.nipype.interfaces import utility as niu, fsl, ants
-# Note that deman_image imports from nipype
-from niworkflows.nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu, fsl, ants
+from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import IntraModalMerge, DerivativesDataSink, FieldEnhance
+from ...engine import Workflow
+from ...interfaces import (
+    IntraModalMerge, DerivativesDataSink,
+    FieldEnhance, FieldToRadS, FieldToHz
+)
 
 
-def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
+def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Fieldmap workflow - when we have a sequence that directly measures the fieldmap
     we just need to mask it (using the corresponding magnitude image) to remove the
@@ -40,12 +43,11 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         :simple_form: yes
 
         from fmriprep.workflows.fieldmap.fmap import init_fmap_wf
-        wf = init_fmap_wf(reportlets_dir='.', omp_nthreads=6,
-                          fmap_bspline=False)
+        wf = init_fmap_wf(omp_nthreads=6, fmap_bspline=False)
 
     """
 
-    workflow = pe.Workflow(name=name)
+    workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['magnitude', 'fieldmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['fmap', 'fmap_ref', 'fmap_mask']),
@@ -62,9 +64,8 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
                          name='n4_correct', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_fmap_mask = pe.Node(DerivativesDataSink(
-        base_directory=reportlets_dir, suffix='fmap_mask'),
-        name='ds_fmap_mask', run_without_submitting=True)
+    ds_fmap_mask = pe.Node(DerivativesDataSink(suffix='fmap_mask'),
+                           name='ds_report_fmap_mask', run_without_submitting=True)
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
@@ -90,10 +91,9 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         ])
 
     else:
-        torads = pe.Node(niu.Function(output_names=['out_file', 'cutoff_hz'],
-                                      function=_torads), name='torads')
+        torads = pe.Node(FieldToRadS(), name='torads')
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(niu.Function(function=_tohz), name='tohz')
+        tohz = pe.Node(FieldToHz(), name='tohz')
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=3), name='denoise')
@@ -106,10 +106,10 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
             (bet, prelude, [('mask_file', 'mask_file'),
                             ('out_file', 'magnitude_file')]),
             (fmapmrg, torads, [('out_file', 'in_file')]),
-            (torads, tohz, [('cutoff_hz', 'cutoff_hz')]),
+            (torads, tohz, [('fmap_range', 'range_hz')]),
             (torads, prelude, [('out_file', 'phase_file')]),
             (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
-            (tohz, denoise, [('out', 'in_file')]),
+            (tohz, denoise, [('out_file', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
             (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
             (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
@@ -119,42 +119,3 @@ def init_fmap_wf(reportlets_dir, omp_nthreads, fmap_bspline, name='fmap_wf'):
         ])
 
     return workflow
-
-
-def _torads(in_file, out_file=None):
-    import os
-    from math import pi
-    import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
-
-    if out_file is None:
-        out_file = fname_presuffix(
-            in_file, suffix='_rad', newpath=os.getcwd())
-
-    fmapnii = nb.load(in_file)
-    fmapdata = fmapnii.get_data()
-    cutoff = max(abs(fmapdata.min()), fmapdata.max())
-    fmapdata = fmapdata * (pi / cutoff)
-    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
-    out_img.set_data_dtype('float32')
-    out_img.to_filename(out_file)
-    return out_file, cutoff
-
-
-def _tohz(in_file, cutoff_hz, out_file=None):
-    import os
-    from math import pi
-    import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
-
-    if out_file is None:
-        out_file = fname_presuffix(in_file, suffix='_hz',
-                                   newpath=os.getcwd())
-
-    fmapnii = nb.load(in_file)
-    fmapdata = fmapnii.get_data()
-    fmapdata = fmapdata * (cutoff_hz / pi)
-    out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
-    out_img.set_data_dtype('float32')
-    out_img.to_filename(out_file)
-    return out_file

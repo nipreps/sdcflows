@@ -14,14 +14,14 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import nibabel as nb
 
-from niworkflows.nipype import logging
-from niworkflows.nipype.utils.filemanip import fname_presuffix
-from niworkflows.nipype.interfaces.base import (
+from nipype import logging
+from nipype.utils.filemanip import fname_presuffix
+from nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, File, InputMultiPath, OutputMultiPath,
     SimpleInterface)
-from niworkflows.nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
+from nipype.interfaces.ants.resampling import ApplyTransformsInputSpec
 
-LOGGER = logging.getLogger('interface')
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class MCFLIRT2ITKInputSpec(BaseInterfaceInputSpec):
@@ -71,7 +71,7 @@ class MCFLIRT2ITK(SimpleInterface):
         tfms = '#Insight Transform File V1.0\n' + ''.join(
             [el[1] for el in sorted(itk_outs)])
 
-        self._results['out_file'] = os.path.abspath('mat2itk.txt')
+        self._results['out_file'] = os.path.join(runtime.cwd, 'mat2itk.txt')
         with open(self._results['out_file'], 'w') as f:
             f.write(tfms)
 
@@ -148,10 +148,10 @@ class MultiApplyTransforms(SimpleInterface):
         self._results['out_files'] = [el[0] for el in out_files]
 
         if save_cmd:
-            with open('command.txt', 'w') as cmdfile:
+            self._results['log_cmdline'] = os.path.join(runtime.cwd, 'command.txt')
+            with open(self._results['log_cmdline'], 'w') as cmdfile:
                 print('\n-------\n'.join([el[1] for el in out_files]),
                       file=cmdfile)
-            self._results['log_cmdline'] = os.path.abspath('command.txt')
         return runtime
 
 
@@ -222,8 +222,8 @@ class FUGUEvsm2ANTSwarp(SimpleInterface):
 
 
 def _mat2itk(args):
-    from niworkflows.nipype.interfaces.c3 import C3dAffineTool
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.interfaces.c3 import C3dAffineTool
+    from nipype.utils.filemanip import fname_presuffix
 
     in_file, in_ref, in_src, index, newpath = args
     # Generate a temporal file name
@@ -247,7 +247,7 @@ def _applytfms(args):
     multiprocessing's map
     """
     import nibabel as nb
-    from niworkflows.nipype.utils.filemanip import fname_presuffix
+    from nipype.utils.filemanip import fname_presuffix
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
     in_file, in_xform, ifargs, index, newpath = args
