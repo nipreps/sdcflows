@@ -36,6 +36,8 @@ from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.base import SimpleInterface
 from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
 
+from niworkflows.interfaces.registration import BBRegisterRPT, MRICoregRPT
+
 
 class StructuralReference(fs.RobustTemplate):
     """ Variation on RobustTemplate that simply copies the source if a single
@@ -190,6 +192,46 @@ class FSDetectInputs(SimpleInterface):
         return runtime
 
 
+class TruncateLTA(object):
+    # Use a tuple in case some object produces multiple transforms
+    lta_outputs = ('out_lta_file',)
+
+    def _post_run_hook(self, runtime):
+        print('ENTERING post_run Truncatae RRR')
+
+        outputs = self.aggregate_outputs(runtime=runtime)
+        print(outputs)
+        outputs = self._list_outputs()
+
+        for lta_name in self.lta_outputs:
+            lta_file = outputs[lta_name]
+            if not isdefined(lta_file):
+                continue
+
+            print('CHANGING FILE')
+
+            with open(outputs['out_lta_file'], 'r') as f:
+                lines = f.readlines()
+
+            fixed = False
+            newfile = []
+
+            for line in lines:
+                if line.startswith('filename = ') and len(line.strip("\n")) >= 255:
+                    fixed = True
+                    newfile.append('filename = path_too_long\n')
+                else:
+                    newfile.append(line)
+
+            if fixed:
+                with open(outputs['out_lta_file'], 'w') as f:
+                    f.write(''.join(newfile))
+
+        runtime = super(TruncateLTA, self)._post_run_hook(runtime)
+
+        return runtime
+
+
 class PatchedConcatenateLTA(ConcatenateLTA):
     """
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
@@ -220,6 +262,14 @@ class PatchedConcatenateLTA(ConcatenateLTA):
             with open(outputs['out_file'], 'w') as f:
                 f.write(''.join(newfile))
         return outputs
+
+
+class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
+    lta_outputs = ['out_lta_file']
+
+
+class PatchedMRICoregRPT(TruncateLTA, MRICoregRPT):
+    lta_outputs = ['out_lta_file']
 
 
 class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
