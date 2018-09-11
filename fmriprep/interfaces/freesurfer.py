@@ -239,7 +239,7 @@ class PatchedConcatenateLTA(TruncateLTA, ConcatenateLTA):
     The original FMRIPREP's issue is found
     `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
     """
-    ltao_outputs = ['out_file']
+    lta_outputs = ['out_file']
 
 
 class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
