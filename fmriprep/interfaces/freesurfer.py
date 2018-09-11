@@ -198,8 +198,6 @@ class TruncateLTA(object):
 
     def _post_run_hook(self, runtime):
 
-        outputs = self.aggregate_outputs(runtime=runtime)
-        print(outputs)
         outputs = self._list_outputs()
 
         for lta_name in self.lta_outputs:
