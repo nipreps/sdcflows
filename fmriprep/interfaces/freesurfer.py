@@ -207,7 +207,7 @@ class TruncateLTA(object):
             if not isdefined(lta_file):
                 continue
 
-            with open(outputs['out_lta_file'], 'r') as f:
+            with open(lta_file, 'r') as f:
                 lines = f.readlines()
 
             fixed = False
@@ -221,7 +221,7 @@ class TruncateLTA(object):
                     newfile.append(line)
 
             if fixed:
-                with open(outputs['out_lta_file'], 'w') as f:
+                with open(lta_file, 'w') as f:
                     f.write(''.join(newfile))
 
         runtime = super(TruncateLTA, self)._post_run_hook(runtime)
