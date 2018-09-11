@@ -197,7 +197,6 @@ class TruncateLTA(object):
     lta_outputs = ('out_lta_file',)
 
     def _post_run_hook(self, runtime):
-        print('ENTERING post_run Truncatae RRR')
 
         outputs = self.aggregate_outputs(runtime=runtime)
         print(outputs)
@@ -207,8 +206,6 @@ class TruncateLTA(object):
             lta_file = outputs[lta_name]
             if not isdefined(lta_file):
                 continue
-
-            print('CHANGING FILE')
 
             with open(outputs['out_lta_file'], 'r') as f:
                 lines = f.readlines()
@@ -232,7 +229,7 @@ class TruncateLTA(object):
         return runtime
 
 
-class PatchedConcatenateLTA(ConcatenateLTA):
+class PatchedConcatenateLTA(TruncateLTA, ConcatenateLTA):
     """
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
     `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
@@ -242,34 +239,15 @@ class PatchedConcatenateLTA(ConcatenateLTA):
     The original FMRIPREP's issue is found
     `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
     """
-
-    def _list_outputs(self):
-        outputs = super(PatchedConcatenateLTA, self)._list_outputs()
-
-        with open(outputs['out_file'], 'r') as f:
-            lines = f.readlines()
-
-        fixed = False
-        newfile = []
-        for line in lines:
-            if line.startswith('filename = ') and len(line.strip("\n")) >= 255:
-                fixed = True
-                newfile.append('filename = path_too_long\n')
-            else:
-                newfile.append(line)
-
-        if fixed:
-            with open(outputs['out_file'], 'w') as f:
-                f.write(''.join(newfile))
-        return outputs
+    ltao_outputs = ['out_file']
 
 
 class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
-    lta_outputs = ['out_lta_file']
+    pass
 
 
 class PatchedMRICoregRPT(TruncateLTA, MRICoregRPT):
-    lta_outputs = ['out_lta_file']
+    pass
 
 
 class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
