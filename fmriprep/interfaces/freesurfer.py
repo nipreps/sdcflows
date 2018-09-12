@@ -35,7 +35,7 @@ from nipype.interfaces.base import (
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.base import SimpleInterface
 from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
-
+from nipype.interfaces.freesurfer.utils import LTAConvert
 from niworkflows.interfaces.registration import BBRegisterRPT, MRICoregRPT
 
 
@@ -198,6 +198,10 @@ class TruncateLTA(object):
 
     def _post_run_hook(self, runtime):
 
+        outputs = self.aggregate_outputs(runtime)
+        print(outputs)
+        print(type(outputs))
+        # I will modify this as soon as I understand what is the right syntax to use it
         outputs = self._list_outputs()
 
         for lta_name in self.lta_outputs:
@@ -227,17 +231,25 @@ class TruncateLTA(object):
         return runtime
 
 
-class PatchedConcatenateLTA(TruncateLTA, ConcatenateLTA):
+class PatchedConcatenateLTA(ConcatenateLTA):
     """
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
     `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
     in FreeSurfer, that was
     `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`__.
-
     The original FMRIPREP's issue is found
     `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
+
+    this is no more useful, since we now change the lta file after their creation by
+    patching LTAconvert directly
+    we can remove it and the reference to it
     """
-    lta_outputs = ['out_file']
+    pass
+
+
+class PatchedLTAconvert(TruncateLTA, LTAConvert):
+    lta_outputs = ('out_lta',)
+    pass
 
 
 class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
