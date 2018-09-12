@@ -249,7 +249,6 @@ class PatchedConcatenateLTA(ConcatenateLTA):
 
 class PatchedLTAconvert(TruncateLTA, LTAConvert):
     lta_outputs = ('out_lta',)
-    pass
 
 
 class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
