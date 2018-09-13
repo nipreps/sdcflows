@@ -293,6 +293,7 @@ class Conform(SimpleInterface):
 
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
+    deoblique = traits.Bool(False, usedefault=True)
 
 
 class ValidateImageOutputSpec(TraitedSpec):
@@ -342,6 +343,15 @@ class ValidateImage(SimpleInterface):
     output_spec = ValidateImageOutputSpec
 
     def _run_interface(self, runtime):
+
+        def deoblique(img):
+            import os
+            import nibabel as nb
+            import numpy as np
+            affine = img.affine
+            affine[:3, :3] = np.diag(np.diag(affine[:3, :3]))
+            return nb.Nifti1Image(np.asanyarray(img.dataobj), affine, img.header)
+
         img = nb.load(self.inputs.in_file)
         out_report = os.path.join(runtime.cwd, 'report.html')
 
@@ -370,7 +380,13 @@ class ValidateImage(SimpleInterface):
 
         # Both match, qform valid (implicit with match), codes okay -> do nothing, empty report
         if matching_affines and qform_code > 0 and sform_code > 0:
-            self._results['out_file'] = self.inputs.in_file
+            if self.inputs.deoblique:
+                out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid', newpath=runtime.cwd)
+                img = deoblique(img)
+                img.to_filename(out_fname)
+                self._results['out_file'] = out_fname
+            else:
+                self._results['out_file'] = self.inputs.in_file
             open(out_report, 'w').close()
             self._results['out_report'] = out_report
             return runtime
@@ -418,6 +434,9 @@ class ValidateImage(SimpleInterface):
 </p>
 """
         snippet = '<h3 class="elem-title">%s</h3>\n%s\n' % (warning_txt, description)
+
+        if self.inputs.deoblique:
+            img = deoblique(img)
         # Store new file and report
         img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
