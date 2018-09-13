@@ -33,7 +33,7 @@ def meepi_optimal_comb_source_name(in_files):
     ...     'sub-01_run-01_echo-1_bold.nii.gz',
     ...     'sub-01_run-01_echo-2_bold.nii.gz',
     ...     'sub-01_run-01_echo-3_bold.nii.gz',])
-    sub-01_run-01_bold.nii.gz'
+    'sub-01_run-01_bold.nii.gz'
 
     """
     import os
