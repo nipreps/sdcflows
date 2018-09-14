@@ -14,9 +14,9 @@ def split_and_deoblique_func(in_file):
     import numpy as np
     out_files = []
     for i, img in enumerate(iter_img(in_file)):
-        out_file = os.path.abspath('vol%04d.nii.gz'%i)
+        out_file = os.path.abspath('vol%04d.nii.gz' % i)
         affine = img.affine
-        affine[:3,:3] = np.diag(np.diag(affine[:3, :3]))
+        affine[:3, :3] = np.diag(np.diag(affine[:3, :3]))
         nb.Nifti1Image(np.asanyarray(img.dataobj), affine, img.header).to_filename(out_file)
         out_files.append(out_file)
     return out_files
@@ -24,8 +24,7 @@ def split_and_deoblique_func(in_file):
 
 def afni2itk_func(in_file):
     import os
-    from scipy.io import loadmat, savemat
-    from numpy import loadtxt, around, hstack, vstack, zeros, float64
+    from numpy import loadtxt, hstack, vstack, zeros, float64
 
     def read_afni_affine(input_file, debug=False):
         orig_afni_mat = loadtxt(input_file)
@@ -34,13 +33,13 @@ def afni2itk_func(in_file):
 
         output = []
         for i in range(orig_afni_mat.shape[0]):
-            output.append(vstack((orig_afni_mat[i,:].reshape(3, 4, order='C'), [0, 0, 0, 1])))
+            output.append(vstack((orig_afni_mat[i, :].reshape(3, 4, order='C'), [0, 0, 0, 1])))
         return output
 
     def get_ants_dict(affine, debug=False):
         out_dict = {}
-        out_dict['AffineTransform_double_3_3'] = hstack(
-            (affine[:3, :3].reshape(1, -1), affine[:3, 3].reshape(1, -1))).reshape(-1, 1).astype(float64)
+        ants_affine_2d = hstack((affine[:3, :3].reshape(1, -1), affine[:3, 3].reshape(1, -1)))
+        out_dict['AffineTransform_double_3_3'] = ants_affine_2d.reshape(-1, 1).astype(float64)
         out_dict['fixed'] = zeros((3, 1))
         if debug:
             print(out_dict)
@@ -51,11 +50,18 @@ def afni2itk_func(in_file):
     with open(out_file, 'w') as fp:
         fp.write("#Insight Transform File V1.0\n")
         for i, affine in enumerate(read_afni_affine(in_file)):
-            fp.write("#Transform %d\n"%i)
+            fp.write("#Transform %d\n" % i)
             fp.write("Transform: AffineTransform_double_3_3\n")
             trans_dict = get_ants_dict(affine)
-            fp.write("Parameters: " + ' '.join(["%g"%i for i in list(trans_dict['AffineTransform_double_3_3'])]) + "\n")
-            fp.write("FixedParameters: " + ' '.join(["%g"%i for i in list(trans_dict['fixed'])]) + "\n")
+
+            params_list = ["%g" % i for i in list(trans_dict['AffineTransform_double_3_3'])]
+            params_str = ' '.join(params_list)
+            fp.write("Parameters: " + params_str + "\n")
+
+            fixed_params_list = ["%g" % i for i in list(trans_dict['fixed'])]
+            fixed_params_str = ' '.join(fixed_params_list)
+            fp.write("FixedParameters: " + ' '.join(fixed_params_str) + "\n")
+
     return out_file
 
 

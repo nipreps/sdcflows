@@ -345,7 +345,6 @@ class ValidateImage(SimpleInterface):
     def _run_interface(self, runtime):
 
         def deoblique(img):
-            import os
             import nibabel as nb
             import numpy as np
             affine = img.affine
@@ -381,7 +380,8 @@ class ValidateImage(SimpleInterface):
         # Both match, qform valid (implicit with match), codes okay -> do nothing, empty report
         if matching_affines and qform_code > 0 and sform_code > 0:
             if self.inputs.deoblique:
-                out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid', newpath=runtime.cwd)
+                out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid',
+                                            newpath=runtime.cwd)
                 img = deoblique(img)
                 img.to_filename(out_fname)
                 self._results['out_file'] = out_fname
