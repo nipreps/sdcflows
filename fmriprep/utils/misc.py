@@ -19,6 +19,7 @@ def remove_rotation_and_shear(img):
 def split_and_rm_rotshear_func(in_file):
     import os
     from nilearn.image import iter_img
+    from fmriprep.utils.misc import remove_rotation_and_shear
     out_files = []
     for i, img in enumerate(iter_img(in_file)):
         out_file = os.path.abspath('vol%04d.nii.gz' % i)
