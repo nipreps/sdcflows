@@ -7,17 +7,23 @@ Miscellaneous utilities
 """
 
 
-def split_and_deoblique_func(in_file):
+def remove_rotation_and_shear(img):
+    from transforms3d.affines import decompose, compose
+    import numpy as np
+
+    T, _, Z, _ = decompose(img.affine)
+    affine = compose(T=T, R=np.diag([1, 1, 1]), Z=Z)
+    return img.__class__(np.asanyarray(img.dataobj), affine, img.header)
+
+
+def split_and_rm_rotshear_func(in_file):
     import os
     from nilearn.image import iter_img
-    import nibabel as nb
-    import numpy as np
     out_files = []
     for i, img in enumerate(iter_img(in_file)):
         out_file = os.path.abspath('vol%04d.nii.gz' % i)
-        affine = img.affine
-        affine[:3, :3] = np.diag(np.diag(affine[:3, :3]))
-        nb.Nifti1Image(np.asanyarray(img.dataobj), affine, img.header).to_filename(out_file)
+        img = remove_rotation_and_shear(img)
+        img.to_filename(out_file)
         out_files.append(out_file)
     return out_files
 
