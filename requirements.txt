@@ -1,4 +1,4 @@
-git+https://github.com/chrisfilo/niworkflows.git@0ec5f3da07809610f4426aa27f24500ec8613df1#egg=niworkflows
+git+https://github.com/poldracklab/niworkflows.git@fdf20103b9dedd4632bb8e26a5eb3b896e349fd2#egg=niworkflows
 grabbit==0.2.3
 pybids==0.6.5
 versioneer
