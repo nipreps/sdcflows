@@ -34,7 +34,7 @@ from nipype.interfaces.base import (
 )
 from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.base import SimpleInterface
-from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA
+from nipype.interfaces.freesurfer.preprocess import ConcatenateLTA, RobustRegister
 from nipype.interfaces.freesurfer.utils import LTAConvert
 from niworkflows.interfaces.registration import BBRegisterRPT, MRICoregRPT
 
@@ -193,15 +193,23 @@ class FSDetectInputs(SimpleInterface):
 
 
 class TruncateLTA(object):
+    """Mixin to ensure that LTA files do not store overly long paths,
+    which lead to segmentation faults when read by FreeSurfer tools.
+
+    See the following issues for discussion:
+
+    * https://github.com/freesurfer/freesurfer/pull/180
+    * https://github.com/poldracklab/fmriprep/issues/768
+    * https://github.com/poldracklab/fmriprep/pull/778
+    * https://github.com/poldracklab/fmriprep/issues/1268
+    * https://github.com/poldracklab/fmriprep/pull/1274
+    """
+
     # Use a tuple in case some object produces multiple transforms
     lta_outputs = ('out_lta_file',)
 
     def _post_run_hook(self, runtime):
 
-        outputs = self.aggregate_outputs(runtime)
-        print(outputs)
-        print(type(outputs))
-        # I will modify this as soon as I understand what is the right syntax to use it
         outputs = self._list_outputs()
 
         for lta_name in self.lta_outputs:
@@ -231,23 +239,26 @@ class TruncateLTA(object):
         return runtime
 
 
-class PatchedConcatenateLTA(ConcatenateLTA):
+class PatchedConcatenateLTA(TruncateLTA, ConcatenateLTA):
     """
     A temporarily patched version of ``fs.ConcatenateLTA`` to recover from
     `this bug <https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg55520.html>`_
     in FreeSurfer, that was
     `fixed here <https://github.com/freesurfer/freesurfer/pull/180>`__.
+
     The original FMRIPREP's issue is found
     `here <https://github.com/poldracklab/fmriprep/issues/768>`__.
 
-    this is no more useful, since we now change the lta file after their creation by
-    patching LTAconvert directly
-    we can remove it and the reference to it
+    the fix is now done through mixin with TruncateLTA
     """
-    pass
+    lta_outputs = ['out_file']
 
 
-class PatchedLTAconvert(TruncateLTA, LTAConvert):
+class PatchedLTAConvert(TruncateLTA, LTAConvert):
+    """
+    LTAconvert is producing a lta file refer as out_lta
+    truncate filename through mixin TruncateLTA
+    """
     lta_outputs = ('out_lta',)
 
 
@@ -257,6 +268,10 @@ class PatchedBBRegisterRPT(TruncateLTA, BBRegisterRPT):
 
 class PatchedMRICoregRPT(TruncateLTA, MRICoregRPT):
     pass
+
+
+class PatchedRobustRegister(TruncateLTA, RobustRegister):
+    lta_outputs = ('out_reg_file', 'half_source_xfm', 'half_targ_xfm')
 
 
 class RefineBrainMaskInputSpec(BaseInterfaceInputSpec):
