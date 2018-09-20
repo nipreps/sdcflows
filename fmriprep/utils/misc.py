@@ -39,9 +39,9 @@ def meepi_optimal_comb_source_name(in_files):
     import os
     from nipype.utils.filemanip import filename_to_list
     base, in_file = os.path.split(filename_to_list(in_files)[0])
-    keys_pre_echo = in_file.split("_")[:-2]
-    file_label = "_".join(keys_pre_echo)
-    return os.path.join(base, "%s_bold.nii.gz" % file_label)
+    entities = [ent for ent in in_file.split('_') if not ent.startswith('echo-')]
+    basename = '_'.join(entities)
+    return os.path.join(base, basename)
 
 
 def add_suffix(in_files, suffix):
