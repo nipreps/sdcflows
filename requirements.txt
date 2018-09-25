@@ -2,3 +2,4 @@ niworkflows>=0.4.3
 grabbit==0.2.3
 pybids==0.6.5
 versioneer
+git+https://github.com/me-ica/tedana.git@cb01d725d05f0102e2da89ad50c32905c68a79fd#egg=tedana
