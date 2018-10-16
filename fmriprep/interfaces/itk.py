@@ -99,8 +99,7 @@ class Volreg2ITK(SimpleInterface):
     def _run_interface(self, runtime):
         # Load AFNI mat entries and append (0, 0, 0, 1) for homogeneous coordinates
         orig_afni_mat = np.loadtxt(self.inputs.in_file)
-        afni_affines = [np.vstack((orig_afni_mat[i, :].reshape(3, 4, order='C'), [0, 0, 0, 1]))
-                        for i in range(orig_afni_mat.shape[0])]
+        afni_affines = [mat.reshape(3, 4, order='C') for mat in orig_afni_mat]
 
         out_file = Path(fname_presuffix(self.inputs.in_file,
                         suffix='_mc4d_itk.txt', newpath=runtime.cwd))
@@ -111,8 +110,9 @@ class Volreg2ITK(SimpleInterface):
             lines.append("#Transform %d" % i)
             lines.append("Transform: AffineTransform_double_3_3")
 
-            ants_affine_2d = np.hstack((affine[:3, :3].reshape(1, -1), affine[:3, 3].reshape(1, -1)))
-            params = ants_affine_2d.reshape(-1, 1).astype('float64')
+            ants_affine_2d = np.hstack((affine[:3, :3].reshape(1, -1),
+                                        affine[:3, 3].reshape(1, -1)))
+            params = ants_affine_2d.reshape(-1).astype('float64')
             params_list = ["%g" % i for i in params.tolist()]
             lines.append("Parameters: %s" % ' '.join(params_list))
             lines.append(fixed_params)
