@@ -29,49 +29,6 @@ def split_and_rm_rotshear_func(in_file):
     return out_files
 
 
-def afni2itk_func(in_file):
-    import os
-    from numpy import loadtxt, hstack, vstack, zeros, float64
-
-    def read_afni_affine(input_file, debug=False):
-        orig_afni_mat = loadtxt(input_file)
-        if debug:
-            print(orig_afni_mat)
-
-        output = []
-        for i in range(orig_afni_mat.shape[0]):
-            output.append(vstack((orig_afni_mat[i, :].reshape(3, 4, order='C'), [0, 0, 0, 1])))
-        return output
-
-    def get_ants_dict(affine, debug=False):
-        out_dict = {}
-        ants_affine_2d = hstack((affine[:3, :3].reshape(1, -1), affine[:3, 3].reshape(1, -1)))
-        out_dict['AffineTransform_double_3_3'] = ants_affine_2d.reshape(-1, 1).astype(float64)
-        out_dict['fixed'] = zeros((3, 1))
-        if debug:
-            print(out_dict)
-
-        return out_dict
-
-    out_file = os.path.abspath('mc4d.txt')
-    with open(out_file, 'w') as fp:
-        fp.write("#Insight Transform File V1.0\n")
-        for i, affine in enumerate(read_afni_affine(in_file)):
-            fp.write("#Transform %d\n" % i)
-            fp.write("Transform: AffineTransform_double_3_3\n")
-            trans_dict = get_ants_dict(affine)
-
-            params_list = ["%g" % i for i in list(trans_dict['AffineTransform_double_3_3'])]
-            params_str = ' '.join(params_list)
-            fp.write("Parameters: " + params_str + "\n")
-
-            fixed_params_list = ["%g" % i for i in list(trans_dict['fixed'])]
-            fixed_params_str = ' '.join(fixed_params_list)
-            fp.write("FixedParameters: " + ' '.join(fixed_params_str) + "\n")
-
-    return out_file
-
-
 def fix_multi_T1w_source_name(in_files):
     """
     Make up a generic source name when there are multiple T1s
