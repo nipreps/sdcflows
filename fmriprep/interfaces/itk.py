@@ -97,7 +97,7 @@ class Volreg2ITK(SimpleInterface):
     output_spec = Volreg2ITKOutputSpec
 
     def _run_interface(self, runtime):
-        # Load AFNI mat entries and append (0, 0, 0, 1) for homogeneous coordinates
+        # Load AFNI mat entries and reshape appropriately
         orig_afni_mat = np.loadtxt(self.inputs.in_file)
         afni_affines = [mat.reshape(3, 4, order='C') for mat in orig_afni_mat]
 
