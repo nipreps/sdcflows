@@ -100,7 +100,7 @@
             },
             {
                 "name": "epi_mean_t1_registration/flirt",
-                "file_pattern": "func/.*_flirt",
+                "file_pattern": "func/.*_flirtnobbr",
                 "title": "EPI to T1 registration",
                 "description": "FSL <code>flirt</code> was used to generate transformations from EPI space to T1 Space - BBR refinement rejected"
             },
