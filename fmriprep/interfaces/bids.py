@@ -163,6 +163,8 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     in_file = InputMultiPath(File(exists=True), mandatory=True,
                              desc='the object to be saved')
     source_file = File(exists=False, mandatory=True, desc='the input func file')
+    space = traits.Str(desc='Label for space field')
+    desc = traits.Str(desc='Label for description field')
     keep_dtype = traits.Bool(False, usedefault=True, desc='keep datatype suffix')
     suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
@@ -244,14 +246,19 @@ class DerivativesDataSink(SimpleInterface):
 
         base_fname = op.join(out_path, src_fname)
 
-        formatstr = '{bname}_{suffix}{dtype}{ext}'
+        formatstr = '{bname}_{space}{desc}{suffix}{dtype}{ext}'
         if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
-            formatstr = '{bname}_{suffix}{i:04d}{dtype}{ext}'
+            formatstr = '{bname}_{space}{desc}{suffix}{i:04d}{dtype}{ext}'
+
+        space = 'space-{space}'.format(self.inputs.space) if self.inputs.space else ''
+        desc = 'desc-{desc}'.format(self.inputs.desc) if self.inputs.desc else ''
 
         self._results['compression'] = []
         for i, fname in enumerate(self.inputs.in_file):
             out_file = formatstr.format(
                 bname=base_fname,
+                space=space,
+                desc=desc,
                 suffix=self.inputs.suffix,
                 i=i,
                 dtype='' if not self.inputs.keep_dtype else ('_%s' % dtype),
