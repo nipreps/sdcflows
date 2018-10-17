@@ -101,7 +101,7 @@ class Volreg2ITK(SimpleInterface):
         orig_afni_mat = np.loadtxt(self.inputs.in_file)
         afni_affines = [mat.reshape(3, 4, order='C') for mat in orig_afni_mat]
 
-        out_file = Path(fname_presuffix(self.inputs.in_file,
+        out_file = Path(fname_presuffix(self.inputs.in_file, use_ext=False,
                         suffix='_mc4d_itk.txt', newpath=runtime.cwd))
 
         fixed_params = 'FixedParameters: 0 0 0'  # Center of rotation does not change
