@@ -163,10 +163,10 @@ class DerivativesDataSinkInputSpec(BaseInterfaceInputSpec):
     in_file = InputMultiPath(File(exists=True), mandatory=True,
                              desc='the object to be saved')
     source_file = File(exists=False, mandatory=True, desc='the input func file')
-    space = traits.Str(desc='Label for space field')
-    desc = traits.Str(desc='Label for description field')
+    space = traits.Str('', usedefault=True, desc='Label for space field')
+    desc = traits.Str('', usedefault=True, desc='Label for description field')
+    suffix = traits.Str('', usedefault=True, desc='suffix appended to source_file')
     keep_dtype = traits.Bool(False, usedefault=True, desc='keep datatype suffix')
-    suffix = traits.Str('', mandatory=True, desc='suffix appended to source_file')
     extra_values = traits.List(traits.Str)
     compress = traits.Bool(desc="force compression (True) or uncompression (False)"
                                 " of the output file (default: same as input)")
@@ -252,6 +252,8 @@ class DerivativesDataSink(SimpleInterface):
 
         space = '_space-{}'.format(self.inputs.space) if self.inputs.space else ''
         desc = '_desc-{}'.format(self.inputs.desc) if self.inputs.desc else ''
+        suffix = '_{}'.format(self.inputs.suffix) if self.inputs.suffix else ''
+        dtype = '' if not self.inputs.keep_dtype else ('_%s' % dtype)
 
         self._results['compression'] = []
         for i, fname in enumerate(self.inputs.in_file):
@@ -259,9 +261,9 @@ class DerivativesDataSink(SimpleInterface):
                 bname=base_fname,
                 space=space,
                 desc=desc,
-                suffix=('_%s' % self.inputs.suffix) if self.inputs.suffix else '',
+                suffix=suffix,
                 i=i,
-                dtype='' if not self.inputs.keep_dtype else ('_%s' % dtype),
+                dtype=dtype,
                 ext=ext)
             if isdefined(self.inputs.extra_values):
                 out_file = out_file.format(extra_value=self.inputs.extra_values[i])
