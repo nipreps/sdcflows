@@ -273,8 +273,8 @@ class CiftiNameSource(SimpleInterface):
     output_spec = CiftiNameSourceOutputSpec
 
     def _run_interface(self, runtime):
-        suffix = 'space-cifti_variant-{}_preproc.dtseries'.format(self.inputs.variant)
+        suffix = '.dtseries'
         if 'hcp' in self.inputs.variant:
-            suffix = 'space-hcp_preproc.dtseries'
+            suffix = 'space-hcp.dtseries'
         self._results['out_name'] = suffix
         return runtime
