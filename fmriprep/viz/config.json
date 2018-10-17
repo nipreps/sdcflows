@@ -82,43 +82,43 @@
             },
             {
                 "name": "epi/unwarp",
-                "file_pattern": "func/.*bold_sdc_.*\\.",
+                "file_pattern": "func/.*_sdc_.*\\.",
                 "title": "Susceptibility distortion correction",
                 "description": "Results of performing susceptibility distortion correction (SDC) on the EPI"
             },
             {
                 "name": "epi/sdc_syn",
-                "file_pattern": "func/.*bold_forcedsyn",
+                "file_pattern": "func/.*_forcedsyn",
                 "title": "Experimental fieldmap-less susceptibility distortion correction",
                 "description": "The dataset contained some fieldmap information, but the argument <code>--force-syn</code> was used. The higher-priority SDC method was used. Here, we show the results of performing SyN-based SDC on the EPI for comparison."
             },
             {
                 "name": "epi/rois",
-                "file_pattern": "func/.*bold_rois",
+                "file_pattern": "func/.*_rois",
                 "title": "ROIs in BOLD space",
                 "description": "Brain mask calculated on the BOLD signal (red contour), along with the masks used for a/tCompCor.<br />The aCompCor mask (magenta contour) is a conservative CSF and white-matter mask for extracting physiological and movement confounds. <br />The fCompCor mask (blue contour) contains the top 5% most variable voxels within a heavily-eroded brain-mask."
             },
             {
                 "name": "epi_mean_t1_registration/flirt",
-                "file_pattern": "func/.*_bold_flirt",
+                "file_pattern": "func/.*_flirt",
                 "title": "EPI to T1 registration",
                 "description": "FSL <code>flirt</code> was used to generate transformations from EPI space to T1 Space - BBR refinement rejected"
             },
             {
                 "name": "epi_mean_t1_registration/coreg",
-                "file_pattern": "func/.*_bold_coreg",
+                "file_pattern": "func/.*_coreg",
                 "title": "EPI to T1 registration",
                 "description": "<code>mri_coreg</code> (FreeSurfer) was used to generate transformations from EPI space to T1 Space - <code>bbregister</code> refinement rejected"
             },
             {
                 "name": "epi_mean_t1_registration/flt_bbr",
-                "file_pattern": "func/.*_bold_flt_bbr",
+                "file_pattern": "func/.*_flt_bbr",
                 "title": "EPI to T1 registration",
                 "description": "FSL <code>flirt</code> was used to generate transformations from EPI-space to T1w-space - The white matter mask calculated with FSL <code>fast</code> (brain tissue segmentation) was used for BBR"
             },
             {
                 "name": "epi_mean_t1_registration/bbr",
-                "file_pattern": "func/.*_bold_bbr",
+                "file_pattern": "func/.*_bbr",
                 "title": "EPI to T1 registration",
                 "description": "<code>bbregister</code> was used to generate transformations from EPI-space to T1w-space"
             },
