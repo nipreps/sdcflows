@@ -246,12 +246,12 @@ class DerivativesDataSink(SimpleInterface):
 
         base_fname = op.join(out_path, src_fname)
 
-        formatstr = '{bname}_{space}{desc}{suffix}{dtype}{ext}'
+        formatstr = '{bname}{space}{desc}{suffix}{dtype}{ext}'
         if len(self.inputs.in_file) > 1 and not isdefined(self.inputs.extra_values):
-            formatstr = '{bname}_{space}{desc}{suffix}{i:04d}{dtype}{ext}'
+            formatstr = '{bname}{space}{desc}{suffix}{i:04d}{dtype}{ext}'
 
-        space = 'space-{space}'.format(self.inputs.space) if self.inputs.space else ''
-        desc = 'desc-{desc}'.format(self.inputs.desc) if self.inputs.desc else ''
+        space = '_space-{}'.format(self.inputs.space) if self.inputs.space else ''
+        desc = '_desc-{}'.format(self.inputs.desc) if self.inputs.desc else ''
 
         self._results['compression'] = []
         for i, fname in enumerate(self.inputs.in_file):
@@ -259,7 +259,7 @@ class DerivativesDataSink(SimpleInterface):
                 bname=base_fname,
                 space=space,
                 desc=desc,
-                suffix=self.inputs.suffix,
+                suffix=('_%s' % self.inputs.suffix) if self.inputs.suffix else '',
                 i=i,
                 dtype='' if not self.inputs.keep_dtype else ('_%s' % dtype),
                 ext=ext)
