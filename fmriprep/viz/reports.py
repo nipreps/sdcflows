@@ -145,7 +145,7 @@ class Report(object):
 
     @staticmethod
     def _read_txt(path):
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding='UTF-8').splitlines()
         data = {'file': str(path)}
         traceback_start = 0
         if lines[0].startswith('Node'):
@@ -170,7 +170,7 @@ class Report(object):
         boiler_idx = 0
 
         if (logs_path / 'CITATION.html').exists():
-            text = (logs_path / 'CITATION.html').read_text()
+            text = (logs_path / 'CITATION.html').read_text(encoding='UTF-8')
             text = '<div class="boiler-html">%s</div>' % re.compile(
                 '<body>(.*?)</body>',
                 re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
@@ -178,19 +178,19 @@ class Report(object):
             boiler_idx += 1
 
         if (logs_path / 'CITATION.md').exists():
-            text = '<pre>%s</pre>\n' % (logs_path / 'CITATION.md').read_text()
+            text = '<pre>%s</pre>\n' % (logs_path / 'CITATION.md').read_text(encoding='UTF-8')
             boilerplate.append((boiler_idx, 'Markdown', text))
             boiler_idx += 1
 
         if (logs_path / 'CITATION.tex').exists():
-            text = (logs_path / 'CITATION.tex').read_text()
+            text = (logs_path / 'CITATION.tex').read_text(encoding='UTF-8')
             text = re.compile(
                 r'\\begin{document}(.*?)\\end{document}',
                 re.DOTALL | re.IGNORECASE).findall(text)[0].strip()
             text = '<pre>%s</pre>\n' % text
             text += '<h3>Bibliography</h3>\n'
             text += '<pre>%s</pre>\n' % Path(
-                pkgrf('fmriprep', 'data/boilerplate.bib')).read_text()
+                pkgrf('fmriprep', 'data/boilerplate.bib')).read_text(encoding='UTF-8')
             boilerplate.append((boiler_idx, 'LaTeX', text))
             boiler_idx += 1
 
@@ -204,7 +204,7 @@ class Report(object):
                                           boilerplate=boilerplate)
 
         # Write out report
-        (self.out_dir / 'fmriprep' / self.out_filename).write_text(report_render)
+        (self.out_dir / 'fmriprep' / self.out_filename).write_text(report_render, encoding='UTF-8')
         return len(self.errors)
 
 
