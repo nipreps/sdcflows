@@ -21,7 +21,8 @@ def split_and_rm_rotshear_func(in_file):
     import nibabel as nb
     from fmriprep.utils.misc import remove_rotation_and_shear
     out_files = []
-    for i, img in enumerate(iter_img(in_file)):
+    imgs = nb.four_to_three(nb.load(in_file))
+    for i, img in enumerate(imgs):
         out_file = os.path.abspath('vol%04d.nii.gz' % i)
         img = remove_rotation_and_shear(img)
         img.to_filename(out_file)
