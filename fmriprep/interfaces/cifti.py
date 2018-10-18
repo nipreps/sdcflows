@@ -130,10 +130,9 @@ class GenerateCifti(SimpleInterface):
             raise IOError("Freesurfer annotations for %s not found in %s" % (
                           self.inputs.surface_target, self.inputs.subjects_dir))
 
-        label_space = 'tpl-OASISTRT20'
-        label_dir = getters.get_oasis_dkt31_mni152()
-        label_file = os.path.join(label_dir,
-                                  'tpl-OASISTRT20_variant-DKT31_space-MNI152NLin2009cAsym.nii.gz')
+        label_space = 'OASISTRT20'
+        label_file = str(getters.get_template(label_space) /
+                         'tpl-OASISTRT20_variant-DKT31_space-MNI152NLin2009cAsym.nii.gz')
 
         download_link = getters.OSF_PROJECT_URL + getters.OSF_RESOURCES[label_space][0]
         return annotation_files, label_file, download_link
