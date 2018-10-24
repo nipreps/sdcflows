@@ -479,6 +479,51 @@ class FilledImageLike(SimpleInterface):
         return runtime
 
 
+class MatchHeaderInputSpec(BaseInterfaceInputSpec):
+    reference = File(exists=True, mandatory=True,
+                     desc='NIfTI file with reference header')
+    in_file = File(exists=True, mandatory=True,
+                   desc='NIfTI file which header will be checked')
+
+
+class MatchHeaderOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='NIfTI file with fixed header')
+
+
+class MatchHeader(SimpleInterface):
+    input_spec = MatchHeaderInputSpec
+    output_spec = MatchHeaderOutputSpec
+
+    def _run_interface(self, runtime):
+        refhdr = nb.load(self.inputs.reference).header.copy()
+        imgnii = nb.load(self.inputs.in_file)
+        imghdr = imgnii.header.copy()
+
+        imghdr['dim_info'] = refhdr['dim_info']  # dim_info is lost sometimes
+
+        # Set qform
+        qform, qcode = refhdr.get_qform(coded=True)
+        if not np.allclose(qform, imghdr.get_qform()):
+            LOGGER.warning(
+                'q-forms of reference and mask are substantially different')
+        imghdr.set_qform(qform, int(qcode))
+
+        # Set sform
+        sform, scode = refhdr.get_sform(coded=True)
+        if not np.allclose(sform, imghdr.get_sform()):
+            LOGGER.warning(
+                's-forms of reference and mask are substantially different')
+        imghdr.set_sform(sform, int(scode))
+
+        out_file = fname_presuffix(self.inputs.in_file, suffix='_hdr',
+                                   newpath=runtime.cwd)
+
+        imgnii.__class__(imgnii.get_data(), imgnii.affine, imghdr).to_filename(
+            out_file)
+        self._results['out_file'] = out_file
+        return runtime
+
+
 def reorient(in_file, newpath=None):
     """Reorient Nifti files to RAS"""
     out_file = fname_presuffix(in_file, suffix='_ras', newpath=newpath)
