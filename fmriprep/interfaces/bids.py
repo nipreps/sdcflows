@@ -221,15 +221,7 @@ class DerivativesDataSink(SimpleInterface):
 
         m = BIDS_NAME.search(src_fname)
 
-        # TODO this quick and dirty modality detection needs to be implemented
-        # correctly
-        mod = 'func'
-        if 'anat' in op.dirname(self.inputs.source_file):
-            mod = 'anat'
-        elif 'dwi' in op.dirname(self.inputs.source_file):
-            mod = 'dwi'
-        elif 'fmap' in op.dirname(self.inputs.source_file):
-            mod = 'fmap'
+        mod = op.basename(op.dirname(self.inputs.source_file))
 
         base_directory = runtime.cwd
         if isdefined(self.inputs.base_directory):
