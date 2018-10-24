@@ -502,24 +502,26 @@ class MatchHeader(SimpleInterface):
         imghdr['dim_info'] = refhdr['dim_info']  # dim_info is lost sometimes
 
         # Set qform
-        qform, qcode = refhdr.get_qform(coded=True)
+        qform = refhdr.get_qform()
+        qcode = int(refhdr['qform_code'])
         if not np.allclose(qform, imghdr.get_qform()):
             LOGGER.warning(
                 'q-forms of reference and mask are substantially different')
-        imghdr.set_qform(qform, int(qcode))
+        imghdr.set_qform(qform, qcode)
 
         # Set sform
-        sform, scode = refhdr.get_sform(coded=True)
+        sform = refhdr.get_sform()
+        scode = int(refhdr['sform_code'])
         if not np.allclose(sform, imghdr.get_sform()):
             LOGGER.warning(
                 's-forms of reference and mask are substantially different')
-        imghdr.set_sform(sform, int(scode))
+        imghdr.set_sform(sform, scode)
 
         out_file = fname_presuffix(self.inputs.in_file, suffix='_hdr',
                                    newpath=runtime.cwd)
 
-        imgnii.__class__(imgnii.get_data(), imgnii.affine, imghdr).to_filename(
-            out_file)
+        imgnii.__class__(imgnii.get_data(), imghdr.get_best_affine(),
+                         imghdr).to_filename(out_file)
         self._results['out_file'] = out_file
         return runtime
 
