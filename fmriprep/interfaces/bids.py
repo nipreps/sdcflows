@@ -184,19 +184,34 @@ class DerivativesDataSink(SimpleInterface):
     Saves the `in_file` into a BIDS-Derivatives folder provided
     by `base_directory`, given the input reference `source_file`.
 
+    >>> from pathlib import Path
     >>> import tempfile
     >>> from fmriprep.utils.bids import collect_data
-    >>> tmpdir = tempfile.mkdtemp()
-    >>> tmpfile = os.path.join(tmpdir, 'a_temp_file.nii.gz')
-    >>> open(tmpfile, 'w').close()  # "touch" the file
-    >>> dsink = DerivativesDataSink(base_directory=tmpdir)
-    >>> dsink.inputs.in_file = tmpfile
+    >>> tmpdir = Path(tempfile.mkdtemp())
+    >>> tmpfile = tmpdir / 'a_temp_file.nii.gz'
+    >>> tmpfile.open('w').close()  # "touch" the file
+    >>> dsink = DerivativesDataSink(base_directory=str(tmpdir))
+    >>> dsink.inputs.in_file = str(tmpfile)
     >>> dsink.inputs.source_file = collect_data('ds114', '01')[0]['t1w'][0]
     >>> dsink.inputs.keep_dtype = True
     >>> dsink.inputs.suffix = 'target-mni'
     >>> res = dsink.run()
     >>> res.outputs.out_file  # doctest: +ELLIPSIS
     '.../fmriprep/sub-01/ses-retest/anat/sub-01_ses-retest_target-mni_T1w.nii.gz'
+
+    >>> bids_dir = tmpdir / 'bidsroot' / 'sub-02' / 'ses-noanat' / 'func'
+    >>> bids_dir.mkdir(parents=True, exist_ok=True)
+    >>> tricky_source = bids_dir / 'sub-02_ses-noanat_task-rest_run-01_bold.nii.gz'
+    >>> tricky_source.open('w').close()
+    >>> dsink = DerivativesDataSink(base_directory=str(tmpdir))
+    >>> dsink.inputs.in_file = str(tmpfile)
+    >>> dsink.inputs.source_file = str(tricky_source)
+    >>> dsink.inputs.keep_dtype = True
+    >>> dsink.inputs.desc = 'preproc'
+    >>> res = dsink.run()
+    >>> res.outputs.out_file  # doctest: +ELLIPSIS
+    '.../fmriprep/sub-02/ses-noanat/func/sub-02_ses-noanat_task-rest_run-01_\
+desc-preproc_bold.nii.gz'
 
     """
     input_spec = DerivativesDataSinkInputSpec
@@ -221,15 +236,7 @@ class DerivativesDataSink(SimpleInterface):
 
         m = BIDS_NAME.search(src_fname)
 
-        # TODO this quick and dirty modality detection needs to be implemented
-        # correctly
-        mod = 'func'
-        if 'anat' in op.dirname(self.inputs.source_file):
-            mod = 'anat'
-        elif 'dwi' in op.dirname(self.inputs.source_file):
-            mod = 'dwi'
-        elif 'fmap' in op.dirname(self.inputs.source_file):
-            mod = 'fmap'
+        mod = op.basename(op.dirname(self.inputs.source_file))
 
         base_directory = runtime.cwd
         if isdefined(self.inputs.base_directory):
