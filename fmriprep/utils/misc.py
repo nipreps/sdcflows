@@ -24,7 +24,8 @@ def split_and_rm_rotshear_func(in_file):
     imgs = nb.four_to_three(nb.load(in_file))
     for i, img in enumerate(imgs):
         out_file = os.path.abspath('vol%04d.nii.gz' % i)
-        img = remove_rotation_and_shear(img)
+        img = remove_rotation_and_shear(
+            nb.as_closest_canonical(img))
         img.to_filename(out_file)
         out_files.append(out_file)
     return out_files
