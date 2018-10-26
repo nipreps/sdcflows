@@ -152,7 +152,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
     apply_fov_mask = pe.Node(fsl.ApplyMask(), name="apply_fov_mask")
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads)
+    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads,
+                                                                         pre_mask=True)
 
     workflow.connect([
         (inputnode, fmap2ref_reg, [('fmap_ref', 'moving_image')]),
@@ -187,6 +188,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
         (fmap_fov2ref_apply, apply_fov_mask, [('output_image', 'mask_file')]),
         (unwarp_reference, apply_fov_mask, [('output_image', 'in_file')]),
         (apply_fov_mask, enhance_and_skullstrip_bold_wf, [('out_file', 'inputnode.in_file')]),
+        (fmap_mask2ref_apply, enhance_and_skullstrip_bold_wf,
+            [('output_image', 'inputnode.pre_mask')]),
         (apply_fov_mask, outputnode, [('out_file', 'out_reference')]),
         (enhance_and_skullstrip_bold_wf, outputnode, [
             ('outputnode.mask_file', 'out_mask'),
