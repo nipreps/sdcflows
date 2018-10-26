@@ -7,6 +7,30 @@ Miscellaneous utilities
 """
 
 
+def remove_rotation_and_shear(img):
+    from transforms3d.affines import decompose, compose
+    import numpy as np
+
+    T, _, Z, _ = decompose(img.affine)
+    affine = compose(T=T, R=np.diag([1, 1, 1]), Z=Z)
+    return img.__class__(np.asanyarray(img.dataobj), affine, img.header)
+
+
+def split_and_rm_rotshear_func(in_file):
+    import os
+    import nibabel as nb
+    from fmriprep.utils.misc import remove_rotation_and_shear
+    out_files = []
+    imgs = nb.four_to_three(nb.load(in_file))
+    for i, img in enumerate(imgs):
+        out_file = os.path.abspath('vol%04d.nii.gz' % i)
+        img = remove_rotation_and_shear(
+            nb.as_closest_canonical(img))
+        img.to_filename(out_file)
+        out_files.append(out_file)
+    return out_files
+
+
 def fix_multi_T1w_source_name(in_files):
     """
     Make up a generic source name when there are multiple T1s
