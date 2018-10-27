@@ -21,7 +21,6 @@ from nipype.interfaces.base import (
     traits, TraitedSpec, BaseInterfaceInputSpec, SimpleInterface,
     File, InputMultiPath, OutputMultiPath)
 from nipype.interfaces import fsl
-from fmriprep.utils.misc import remove_rotation_and_shear
 
 LOGGER = logging.getLogger('nipype.interface')
 
@@ -294,7 +293,6 @@ class Conform(SimpleInterface):
 
 class ValidateImageInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input image')
-    remove_rotation_and_shear = traits.Bool(False, usedefault=True)
 
 
 class ValidateImageOutputSpec(TraitedSpec):
@@ -344,7 +342,6 @@ class ValidateImage(SimpleInterface):
     output_spec = ValidateImageOutputSpec
 
     def _run_interface(self, runtime):
-
         img = nb.load(self.inputs.in_file)
         out_report = os.path.join(runtime.cwd, 'report.html')
 
@@ -373,14 +370,7 @@ class ValidateImage(SimpleInterface):
 
         # Both match, qform valid (implicit with match), codes okay -> do nothing, empty report
         if matching_affines and qform_code > 0 and sform_code > 0:
-            if self.inputs.remove_rotation_and_shear:
-                out_fname = fname_presuffix(self.inputs.in_file, suffix='_valid',
-                                            newpath=runtime.cwd)
-                img = remove_rotation_and_shear(img)
-                img.to_filename(out_fname)
-                self._results['out_file'] = out_fname
-            else:
-                self._results['out_file'] = self.inputs.in_file
+            self._results['out_file'] = self.inputs.in_file
             open(out_report, 'w').close()
             self._results['out_report'] = out_report
             return runtime
@@ -428,9 +418,6 @@ class ValidateImage(SimpleInterface):
 </p>
 """
         snippet = '<h3 class="elem-title">%s</h3>\n%s\n' % (warning_txt, description)
-
-        if self.inputs.remove_rotation_and_shear:
-            img = remove_rotation_and_shear(img)
         # Store new file and report
         img.to_filename(out_fname)
         with open(out_report, 'w') as fobj:
