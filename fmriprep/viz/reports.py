@@ -150,7 +150,7 @@ class Report(object):
                     message = node_name + ': ' + gist + '\n\n' + exception_text
 
                     # remove file paths
-                    fingerprint = re.sub(r"(/[^/ ]*)+/?",'', message)
+                    fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
                     # remove words containing numbers
                     fingerprint = re.sub(r"([a-zA-Z]*[0-9]+[a-zA-Z]*)+", '', fingerprint)
                     # adding the return code if it exists
