@@ -208,7 +208,7 @@ class ConformInputSpec(BaseInterfaceInputSpec):
 
 class ConformOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='Conformed image')
-    transform = File(exists=True, desc='Conformation transform')
+    transform = File(exists=True, desc='Conformation transform (voxel-to-voxel)')
 
 
 class Conform(SimpleInterface):
@@ -218,6 +218,9 @@ class Conform(SimpleInterface):
 
     #. Orient to RAS (left-right, posterior-anterior, inferior-superior)
     #. Resample to target zooms (voxel sizes) and shape (number of voxels)
+
+    Note that the output transforms are voxel-to-voxel; the RAS-to-RAS
+    transform is the identity transform.
     """
     input_spec = ConformInputSpec
     output_spec = ConformOutputSpec
