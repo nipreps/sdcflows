@@ -144,7 +144,6 @@ class Report(object):
 
                     chunk_size = 16384
 
-                    crash_info['traceback'] = crash_info['traceback']*100
                     for k, v in crash_info.items():
                         if k == 'inputs':
                             scope.set_extra(k, dict(v))
