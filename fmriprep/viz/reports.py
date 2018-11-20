@@ -141,13 +141,23 @@ class Report(object):
                                      exception_text_start:])
 
                     scope.set_tag("node_name", node_name)
+
+                    chunk_size = 16384
+
+                    crash_info['traceback'] = crash_info['traceback']*100
                     for k, v in crash_info.items():
                         if k == 'inputs':
                             scope.set_extra(k, dict(v))
+                        elif isinstance(v, str) and len(v) > chunk_size:
+                            chunks = [v[i:i + chunk_size] for i in range(0, len(v), chunk_size)]
+                            for i, chunk in enumerate(chunks):
+                                scope.set_extra(k+'_%02d' % i, chunk)
                         else:
                             scope.set_extra(k, v)
                     scope.level = 'fatal'
-                    message = node_name + ': ' + gist + '\n\n' + exception_text
+                    message = node_name + ': ' + gist + '\n\n'
+                    # 8192 is the message size limit - the important info is probably at the end
+                    message += exception_text[-(8192-len(message)):]
 
                     # remove file paths
                     fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
