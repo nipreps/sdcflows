@@ -69,7 +69,7 @@ class IntraModalMerge(SimpleInterface):
                 else:
                     in_files = [fname_presuffix(in_files[0], suffix='_squeezed',
                                                 newpath=runtime.cwd)]
-                    nb.Nifti1Image(sqdata, filenii.get_affine(),
+                    nb.Nifti1Image(sqdata, filenii.affine,
                                    filenii.get_header()).to_filename(in_files[0])
 
             if np.squeeze(nb.load(in_files[0]).get_data()).ndim < 4:
@@ -94,7 +94,7 @@ class IntraModalMerge(SimpleInterface):
             hmcdat -= hmcdat.min()
 
         nb.Nifti1Image(
-            hmcdat, hmcnii.get_affine(), hmcnii.get_header()).to_filename(
+            hmcdat, hmcnii.affine, hmcnii.get_header()).to_filename(
             self._results['out_avg'])
 
         return runtime
