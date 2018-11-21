@@ -141,9 +141,16 @@ class Report(object):
                                      exception_text_start:])
 
                     scope.set_tag("node_name", node_name)
+
+                    chunk_size = 16384
+
                     for k, v in crash_info.items():
                         if k == 'inputs':
                             scope.set_extra(k, dict(v))
+                        elif isinstance(v, str) and len(v) > chunk_size:
+                            chunks = [v[i:i + chunk_size] for i in range(0, len(v), chunk_size)]
+                            for i, chunk in enumerate(chunks):
+                                scope.set_extra('%s_%02d' % (k, i), chunk)
                         else:
                             scope.set_extra(k, v)
                     scope.level = 'fatal'
@@ -171,7 +178,7 @@ class Report(object):
                         if fingerprint:
                             break
 
-                    message = issue_title + '\n\n' + exception_text
+                    message = issue_title + '\n\n' + exception_text[-(8192-len(message)):]
                     if not fingerprint:
                         # remove file paths
                         fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
