@@ -178,7 +178,8 @@ class Report(object):
                         if fingerprint:
                             break
 
-                    message = issue_title + '\n\n' + exception_text[-(8192-len(message)):]
+                    message = issue_title + '\n\n'
+                    message += exception_text[-(8192-len(message)):]
                     if not fingerprint:
                         # remove file paths
                         fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
