@@ -150,7 +150,7 @@ class Report(object):
                         elif isinstance(v, str) and len(v) > chunk_size:
                             chunks = [v[i:i + chunk_size] for i in range(0, len(v), chunk_size)]
                             for i, chunk in enumerate(chunks):
-                                scope.set_extra(k+'_%02d' % i, chunk)
+                                scope.set_extra('%s_%02d' % (k, i), chunk)
                         else:
                             scope.set_extra(k, v)
                     scope.level = 'fatal'
