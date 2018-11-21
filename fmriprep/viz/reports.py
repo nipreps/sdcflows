@@ -147,17 +147,40 @@ class Report(object):
                         else:
                             scope.set_extra(k, v)
                     scope.level = 'fatal'
-                    message = node_name + ': ' + gist + '\n\n' + exception_text
 
-                    # remove file paths
-                    fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
-                    # remove words containing numbers
-                    fingerprint = re.sub(r"([a-zA-Z]*[0-9]+[a-zA-Z]*)+", '', fingerprint)
-                    # adding the return code if it exists
-                    for line in message.split('\n'):
-                        if line.startswith("Return code"):
-                            fingerprint += line
+                    # Group common events with pre specified fingerprints
+                    fingerprint_dict = {'permission-denied': ["PermissionError: [Errno 13] "
+                                                              "Permission denied"],
+                                        'memory-error': ["MemoryError", "Cannot allocate memory"],
+                                        'reconall-already-running': ["ERROR: it appears that "
+                                                                     "recon-all is already running"],
+                                        'no-disk-space': ["OSError: [Errno 28] No space left on "
+                                                          "device", "[Errno 122] Disk quota "
+                                                                    "exceeded"],
+                                        'sigkill': ["Return code: 137"]}
+
+                    fingerprint = ''
+                    issue_title = node_name + ': ' + gist
+                    for new_fingerprint, error_snippets in fingerprint_dict.items():
+                        for error_snippet in error_snippets:
+                            if error_snippet in crash_info['traceback']:
+                                fingerprint = new_fingerprint
+                                issue_title = new_fingerprint
+                                break
+                        if fingerprint:
                             break
+
+                    message = issue_title + '\n\n' + exception_text
+                    if not fingerprint:
+                        # remove file paths
+                        fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
+                        # remove words containing numbers
+                        fingerprint = re.sub(r"([a-zA-Z]*[0-9]+[a-zA-Z]*)+", '', fingerprint)
+                        # adding the return code if it exists
+                        for line in message.split('\n'):
+                            if line.startswith("Return code"):
+                                fingerprint += line
+                                break
 
                     scope.fingerprint = [fingerprint]
                     self.sentry_sdk.capture_message(message, 'fatal')
