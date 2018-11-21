@@ -154,7 +154,7 @@ class Report(object):
                         else:
                             scope.set_extra(k, v)
                     scope.level = 'fatal'
-                    message = node_name + ': ' + gist + '\n\n'
+                    message = '%s: %s\n\n' % (node_name, gist)
                     # 8192 is the message size limit - the important info is probably at the end
                     message += exception_text[-(8192-len(message)):]
 
