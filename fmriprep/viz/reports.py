@@ -156,15 +156,14 @@ class Report(object):
                     scope.level = 'fatal'
 
                     # Group common events with pre specified fingerprints
-                    fingerprint_dict = {'permission-denied': ["PermissionError: [Errno 13] "
-                                                              "Permission denied"],
+                    fingerprint_dict = {'permission-denied': [
+                                            "PermissionError: [Errno 13] Permission denied"],
                                         'memory-error': ["MemoryError", "Cannot allocate memory"],
-                                        'reconall-already-running': ["ERROR: it appears that "
-                                                                     "recon-all is already "
-                                                                     "running"],
-                                        'no-disk-space': ["OSError: [Errno 28] No space left on "
-                                                          "device", "[Errno 122] Disk quota "
-                                                                    "exceeded"],
+                                        'reconall-already-running': [
+                                            "ERROR: it appears that recon-all is already running"],
+                                        'no-disk-space': [
+                                            "OSError: [Errno 28] No space left on device",
+                                            "[Errno 122] Disk quota exceeded"],
                                         'sigkill': ["Return code: 137"],
                                         'keyboard-interrupt': ["KeyboardInterrupt"]}
 
@@ -181,7 +180,9 @@ class Report(object):
 
                     message = issue_title + '\n\n'
                     message += exception_text[-(8192-len(message)):]
-                    if not fingerprint:
+                    if fingerprint:
+                        self.sentry_sdk.add_breadcrumb(fingerprint, 'fatal')
+                    else:
                         # remove file paths
                         fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
                         # remove words containing numbers
