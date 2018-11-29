@@ -30,3 +30,4 @@ dependencies:
     - nitime
     - nilearn
     - niworkflows==0.5.1
+    - tedana>=0.0.5
