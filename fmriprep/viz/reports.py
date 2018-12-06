@@ -352,8 +352,8 @@ def generate_reports(subject_list, output_dir, work_dir, run_uuid, sentry_sdk=No
     if errno:
         import logging
         logger = logging.getLogger('cli')
-        error_list = ', '.join(['%s (%d)' % (subid, err) for subid, err in zip(subject_list,
-                                                                               report_errors)])
+        error_list = ', '.join('%s (%d)' % (subid, err)
+                               for subid, err in zip(subject_list, report_errors) if err)
         logger.error('Preprocessing did not finish successfully. Errors occurred while processing '
                      'data from participants: %s. Check the HTML reports for details.' %
                      error_list)
