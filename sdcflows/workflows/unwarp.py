@@ -243,9 +243,6 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmc
             Affine transform from T1 space to BOLD space (ITK format)
 
     """
-
-    from nipype.pipeline import engine as pe
-    from nipype.interfaces import utility as niu
     from niworkflows.interfaces import SimpleBeforeAfter
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
     from niworkflows.interfaces.images import extract_wm
