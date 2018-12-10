@@ -41,59 +41,6 @@ BIDS_NAME = re.compile(
     '(_(?P<rec_id>rec-[a-zA-Z0-9]+))?(_(?P<run_id>run-[a-zA-Z0-9]+))?')
 
 
-class FileNotFoundError(IOError):
-    pass
-
-
-class BIDSInfoInputSpec(BaseInterfaceInputSpec):
-    in_file = File(mandatory=True, desc='input file, part of a BIDS tree')
-
-
-class BIDSInfoOutputSpec(TraitedSpec):
-    subject_id = traits.Str()
-    session_id = traits.Str()
-    task_id = traits.Str()
-    acq_id = traits.Str()
-    rec_id = traits.Str()
-    run_id = traits.Str()
-
-
-class BIDSInfo(SimpleInterface):
-    """
-    Extract metadata from a BIDS-conforming filename
-
-    This interface uses only the basename, not the path, to determine the
-    subject, session, task, run, acquisition or reconstruction.
-
-    >>> from fmriprep.interfaces import BIDSInfo
-    >>> from fmriprep.utils.bids import collect_data
-    >>> bids_info = BIDSInfo()
-    >>> bids_info.inputs.in_file = collect_data('ds114', '01')[0]['bold'][0]
-    >>> bids_info.inputs.in_file  # doctest: +ELLIPSIS
-    '.../ds114/sub-01/ses-retest/func/sub-01_ses-retest_task-covertverbgeneration_bold.nii.gz'
-    >>> res = bids_info.run()
-    >>> res.outputs
-    <BLANKLINE>
-    acq_id = <undefined>
-    rec_id = <undefined>
-    run_id = <undefined>
-    session_id = ses-retest
-    subject_id = sub-01
-    task_id = task-covertverbgeneration
-    <BLANKLINE>
-
-    """
-    input_spec = BIDSInfoInputSpec
-    output_spec = BIDSInfoOutputSpec
-
-    def _run_interface(self, runtime):
-        match = BIDS_NAME.search(self.inputs.in_file)
-        params = match.groupdict() if match is not None else {}
-        self._results = {key: val for key, val in list(params.items())
-                         if val is not None}
-        return runtime
-
-
 class BIDSDataGrabberInputSpec(BaseInterfaceInputSpec):
     subject_data = traits.Dict(Str, traits.Any)
     subject_id = Str()
