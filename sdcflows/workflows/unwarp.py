@@ -23,9 +23,9 @@ import pkg_resources as pkgr
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants, fsl, utility as niu
+from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ...engine import Workflow
 from ...interfaces import itk, DerivativesDataSink
 from ...interfaces.fmap import (
     get_ees as _get_ees,

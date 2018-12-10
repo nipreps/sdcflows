@@ -22,9 +22,9 @@ from nipype.interfaces import ants, fsl, utility as niu
 from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
+from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.masks import BETRPT
 
-from ...engine import Workflow
 from ...interfaces import (
     ReadSidecarJSON, IntraModalMerge, DerivativesDataSink,
     Phasediff2Fieldmap
