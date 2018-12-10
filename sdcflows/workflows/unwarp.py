@@ -24,16 +24,12 @@ import pkg_resources as pkgr
 from nipype.pipeline import engine as pe
 from nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from niworkflows.interfaces import itk
+from niworkflows.interfaces.bids import DerivativesDataSink
+from niworkflows.interfaces.images import DemeanImage, FilledImageLike
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ...interfaces import itk, DerivativesDataSink
-from ...interfaces.fmap import (
-    get_ees as _get_ees,
-    FieldToRadS,
-)
-from ...interfaces.images import (
-    DemeanImage, FilledImageLike
-)
+from ...interfaces.fmap import get_ees as _get_ees, FieldToRadS
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
@@ -250,11 +246,10 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmc
 
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-
     from niworkflows.interfaces import SimpleBeforeAfter
-    from ...interfaces.images import extract_wm
-    from ...interfaces import DerivativesDataSink
+    from niworkflows.interfaces.bids import DerivativesDataSink
+    from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
+    from niworkflows.interfaces.images import extract_wm
 
     DEFAULT_MEMORY_MIN_GB = 0.01
 

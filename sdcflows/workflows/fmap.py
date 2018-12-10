@@ -24,10 +24,11 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl, ants
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from niworkflows.interfaces.bids import DerivativesDataSink
+from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
 from ...interfaces import (
-    IntraModalMerge, DerivativesDataSink,
     FieldEnhance, FieldToRadS, FieldToHz
 )
 
