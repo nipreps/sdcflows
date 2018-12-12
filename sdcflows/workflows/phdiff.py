@@ -23,11 +23,11 @@ from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.bids import DerivativesDataSink, ReadSidecarJSON
+from niworkflows.interfaces.bids import ReadSidecarJSON
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import Phasediff2Fieldmap
+from ...interfaces import Phasediff2Fieldmap, DerivativesDataSink
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
