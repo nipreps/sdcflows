@@ -31,3 +31,4 @@ dependencies:
     - nilearn
     - niworkflows>=0.5.1,<0.5.2
     - tedana>=0.0.5
+    - git+https://github.com/effigies/nipype.git@16af71ec3ca85ba55893f6b74cb5366ec8aa7fef#egg=nipype
