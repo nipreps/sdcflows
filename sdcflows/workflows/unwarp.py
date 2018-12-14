@@ -25,10 +25,10 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces import itk
-from niworkflows.interfaces.bids import DerivativesDataSink
 from niworkflows.interfaces.images import DemeanImage, FilledImageLike
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
+from ...interfaces import DerivativesDataSink
 from ...interfaces.fmap import get_ees as _get_ees, FieldToRadS
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 

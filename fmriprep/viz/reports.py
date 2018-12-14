@@ -181,7 +181,7 @@ class Report(object):
                     message = issue_title + '\n\n'
                     message += exception_text[-(8192-len(message)):]
                     if fingerprint:
-                        self.sentry_sdk.add_breadcrumb([fingerprint], 'fatal')
+                        self.sentry_sdk.add_breadcrumb(message=fingerprint, level='fatal')
                     else:
                         # remove file paths
                         fingerprint = re.sub(r"(/[^/ ]*)+/?", '', message)
