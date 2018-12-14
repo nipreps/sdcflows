@@ -28,5 +28,5 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - niworkflows>=0.5.2.post2,<0.5.3
+    - niworkflows>=0.5.2.post4,<0.5.3
     - tedana>=0.0.5
