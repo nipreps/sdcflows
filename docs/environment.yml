@@ -21,7 +21,7 @@ dependencies:
 - python-dateutil
 - pydot>=1.2.3
 - cython
-- nipype>=1.1.6
+- nipype>=1.1.7
 
 - pip:
     - sphinx-argparse
@@ -31,4 +31,3 @@ dependencies:
     - nilearn
     - niworkflows>=0.5.1,<0.5.2
     - tedana>=0.0.5
-    - git+https://github.com/effigies/nipype.git@16af71ec3ca85ba55893f6b74cb5366ec8aa7fef#egg=nipype
