@@ -28,5 +28,5 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - git+https://github.com/effigies/niworkflows.git@fdfced118f7bbae69c3f01bc0a0924f4b6803eb3#egg=niworkflows
+    - git+https://github.com/poldracklab/niworkflows.git@master#egg=niworkflows
     - tedana>=0.0.5
