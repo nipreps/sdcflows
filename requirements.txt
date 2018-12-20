@@ -1,3 +1,3 @@
 grabbit==0.2.3
 pybids==0.6.5
-git+https://github.com/effigies/niworkflows.git@1ebbed8e36a1b2971f3f7b9a32079d8d7667ce3d#egg=niworkflows
+git+https://github.com/effigies/niworkflows.git@fdfced118f7bbae69c3f01bc0a0924f4b6803eb3#egg=niworkflows
