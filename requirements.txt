@@ -1,5 +1,5 @@
 grabbit==0.2.3
 pybids==0.6.5
 niworkflows>=0.6.1,<0.7
-git+https://github.com/poldracklab/smriprep.git@master#egg=smriprep
+smriprep>=0.0.4,<1.0.0
 templateflow>=0.0.4
