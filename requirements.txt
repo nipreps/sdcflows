@@ -1,5 +1,5 @@
 grabbit==0.2.3
 pybids==0.6.5
-niworkflows>=0.6,1,<0.7
+niworkflows>=0.6.1,<0.7
 smriprep<1.0.0
 templateflow>=0.0.4
