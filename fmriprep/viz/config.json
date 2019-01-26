@@ -133,6 +133,18 @@
                 "file_pattern": "func/.*ica_aroma",
                 "title": "ICA AROMA",
                 "description": "Maps created with maximum intensity projection (glass brain) with a black brain outline. Right hand side of each map: time series (top in seconds), frequency spectrum (bottom in Hertz). Components classified as signal are plotted in green; noise components in red."
+            },
+            {
+                "name": "compcor",
+                "file_pattern": "func/.*compcor",
+                "title": "CompCor",
+                "description": "The cumulative variance explained by the first k components of the t/aCompCor decomposition, for all values of k. The number of components that must be included in the model in order to explain some fraction of variance in the decomposition mask can be used as a feature selection criterion for confound regression."
+            },
+            {
+                "name": "confounds_correlation",
+                "file_pattern": "func/.*confounds_correlation",
+                "title": "Correlations among nuisance regressors",
+                "description": "Left: Heatmap summarising the correlation structure among confound variables. (Cosine bases and PCA-derived CompCor components are orthogonal.) Right: magnitude of the correlation between each confound time series and the mean global signal. Strong correlations might be indicative of partial volume effects and can inform decisions about feature orthogonalisation prior to confound regression."
             }
         ]
     },
