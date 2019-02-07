@@ -1,4 +1,4 @@
 pybids>=0.7.0,<0.8.0a0
 niworkflows>=0.7.0,<0.8.0a0
-git+https://github.com/oesteban/smriprep.git@2ad4639b308a5d13183819e13bcb3ca6d4d93eac#smriprep-0.0.4
+smriprep>=0.0.5,<0.1.0a0
 templateflow>=0.0.4
