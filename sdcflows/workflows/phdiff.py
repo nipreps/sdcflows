@@ -73,8 +73,7 @@ further improvements of HCP Pipelines [@hcppipelines].
         return inlist[0]
 
     # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(bids_validate=False), name='meta',
-                   mem_gb=0.01, run_without_submitting=True)
+    meta = pe.Node(ReadSidecarJSON(bids_validate=False), name='meta', mem_gb=0.01)
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
