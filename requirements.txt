@@ -1,4 +1,5 @@
 pybids>=0.7.0,<0.8.0a0
-git+https://github.com/poldracklab/niworkflows.git@b97787ee2f1b93cafb104664b60fa0c4fd81253a#egg=niworkflows-0.7.1
+git+https://github.com/rciric/nipype.git@a742c9ce7c57ce5547910e0aceacde9b185c48df#egg=nipype
+niworkflows>=0.7.2,<0.8.0a0
 smriprep>=0.0.5,<0.1.0a0
 templateflow>=0.0.4
