@@ -1,2 +1,2 @@
-git+https://github.com/oesteban/niworkflows.git@627d5810350127e5806c62dda8296cfa1177b202#egg=niworkflows-0.8.0
-git+https://github.com/oesteban/smriprep.git@3b4f62661c10603f3e48197bc4b27341e72cbad9#egg=smriprep-0.1.0
+git+https://github.com/poldracklab/niworkflows.git@93eb80e1b920d1dfbfee42cbec3b2fc2fc31b2d0#egg=niworkflows-0.8.0
+git+https://github.com/oesteban/smriprep.git@be809a79d87d906c513730634d51cb196a01297b#egg=smriprep-0.1.0
