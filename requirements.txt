@@ -1,2 +1,3 @@
-smriprep<0.2.0a0,>=0.1.0
-templateflow<0.2.0a0,>=0.1.2
+niworkflows<0.9.0a0,>=0.8.1
+git+https://github.com/poldracklab/smriprep.git@423bcc43ab7300177eb3b98da62817b2cad8eb87#egg=smriprep-0.1.0
+templateflow<0.2.0a0,>=0.1.3

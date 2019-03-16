@@ -28,6 +28,6 @@ dependencies:
     - svgutils
     - nitime
     - nilearn
-    - niworkflows>=0.7.2,<0.8.0a0
-    - smriprep>=0.0.4,<0.1.0a0
+    - niworkflows<0.9.0a0,>=0.8.1
+    - smriprep
     - tedana>=0.0.5
