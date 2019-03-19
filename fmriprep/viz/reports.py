@@ -354,7 +354,13 @@ def generate_reports(subject_list, output_dir, work_dir, run_uuid, sentry_sdk=No
         logger = logging.getLogger('cli')
         error_list = ', '.join('%s (%d)' % (subid, err)
                                for subid, err in zip(subject_list, report_errors) if err)
-        logger.error('Preprocessing did not finish successfully. Errors occurred while processing '
-                     'data from participants: %s. Check the HTML reports for details.' %
-                     error_list)
+
+        err_msg = 'Preprocessing did not finish successfully. Errors occurred while processing ' \
+                  'data from participants: %s. Check the HTML reports for details.' % error_list
+        if sentry_sdk:
+            with sentry_sdk.push_scope() as scope:
+                scope.fingerprint = ['fMRIPrep finished with errors']
+                logger.error(err_msg)
+        else:
+            logger.error(err_msg)
     return errno
