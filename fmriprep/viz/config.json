@@ -102,25 +102,25 @@
                 "name": "epi_mean_t1_registration/flirt",
                 "file_pattern": "func/.*_flirtnobbr",
                 "title": "EPI to T1 registration",
-                "description": "FSL <code>flirt</code> was used to generate transformations from EPI space to T1 Space - BBR refinement rejected"
+                "description": "FSL <code>flirt</code> was used to generate transformations from EPI space to T1 Space - BBR refinement rejected. Note that Nearest Neighbor interpolation is used in the reportlets in order to highlight potential spin-history and other artifacts, whereas final images are resampled using Lanczos interpolation."
             },
             {
                 "name": "epi_mean_t1_registration/coreg",
                 "file_pattern": "func/.*_coreg",
                 "title": "EPI to T1 registration",
-                "description": "<code>mri_coreg</code> (FreeSurfer) was used to generate transformations from EPI space to T1 Space - <code>bbregister</code> refinement rejected"
+                "description": "<code>mri_coreg</code> (FreeSurfer) was used to generate transformations from EPI space to T1 Space - <code>bbregister</code> refinement rejected. Note that Nearest Neighbor interpolation is used in the reportlets in order to highlight potential spin-history and other artifacts, whereas final images are resampled using Lanczos interpolation."
             },
             {
                 "name": "epi_mean_t1_registration/flirtbbr",
                 "file_pattern": "func/.*_flirtbbr",
                 "title": "EPI to T1 registration",
-                "description": "FSL <code>flirt</code> was used to generate transformations from EPI-space to T1w-space - The white matter mask calculated with FSL <code>fast</code> (brain tissue segmentation) was used for BBR"
+                "description": "FSL <code>flirt</code> was used to generate transformations from EPI-space to T1w-space - The white matter mask calculated with FSL <code>fast</code> (brain tissue segmentation) was used for BBR. Note that Nearest Neighbor interpolation is used in the reportlets in order to highlight potential spin-history and other artifacts, whereas final images are resampled using Lanczos interpolation."
             },
             {
                 "name": "epi_mean_t1_registration/bbregister",
                 "file_pattern": "func/.*_bbregister",
                 "title": "EPI to T1 registration",
-                "description": "<code>bbregister</code> was used to generate transformations from EPI-space to T1w-space"
+                "description": "<code>bbregister</code> was used to generate transformations from EPI-space to T1w-space. Note that Nearest Neighbor interpolation is used in the reportlets in order to highlight potential spin-history and other artifacts, whereas final images are resampled using Lanczos interpolation."
             },
             {
                 "name": "epi/carpetplot",
