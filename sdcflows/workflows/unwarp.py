@@ -105,7 +105,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
                             output_inverse_warped_image=True, output_warped_image=True),
         name='fmap2ref_reg', n_procs=omp_nthreads)
 
-    ds_reg = pe.Node(DerivativesDataSink(suffix='fmap_reg'), name='ds_report_reg',
+    ds_reg = pe.Node(DerivativesDataSink(keep_dtype=True, desc='magnitude'),
+                     name='ds_report_reg',
                      mem_gb=0.01, run_without_submitting=True)
 
     # Map the VSM into the EPI space
@@ -118,7 +119,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
         float=True),
         name='fmap_mask2ref_apply')
 
-    ds_reg_vsm = pe.Node(DerivativesDataSink(suffix='fmap_reg_vsm'), name='ds_report_vsm',
+    ds_reg_vsm = pe.Node(DerivativesDataSink(keep_dtype=True, desc='fieldmap'),
+                         name='ds_report_vsm',
                          mem_gb=0.01, run_without_submitting=True)
 
     # Fieldmap to rads and then to voxels (VSM - voxel shift map)
@@ -211,7 +213,7 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
     return workflow
 
 
-def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmcsdc_preproc'):
+def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='sdc'):
     """
     This workflow generates and saves a reportlet showing the effect of fieldmap
     unwarping a BOLD image.
@@ -228,7 +230,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmc
         name : str, optional
             Workflow name (default: fmap_unwarp_report_wf)
         suffix : str, optional
-            Suffix to be appended to this reportlet
+            Desc field to be inserted in the final name of this reportlet.
 
     **Inputs**
 
@@ -264,7 +266,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', suffix='variant-hmc
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
     ds_report_sdc = pe.Node(
-        DerivativesDataSink(suffix=suffix), name='ds_report_sdc',
+        DerivativesDataSink(desc=suffix, keep_dtype=True), name='ds_report_sdc',
         mem_gb=DEFAULT_MEMORY_MIN_GB, run_without_submitting=True
     )
 

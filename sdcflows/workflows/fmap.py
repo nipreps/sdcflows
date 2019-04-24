@@ -64,7 +64,7 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
                          name='n4_correct', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_fmap_mask = pe.Node(DerivativesDataSink(suffix='fmap_mask'),
+    ds_fmap_mask = pe.Node(DerivativesDataSink(desc='magnitude', suffix='bold'),
                            name='ds_report_fmap_mask', run_without_submitting=True)
 
     workflow.connect([
