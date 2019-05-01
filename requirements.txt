@@ -1,4 +1,4 @@
 nilearn!=0.5.0,!=0.5.1
-git+https://github.com/poldracklab/niworkflows.git@b7d111c8fd36a099c74be5e7671677eedb175533#egg=niworkflows
-git+https://github.com/poldracklab/smriprep.git@423bcc43ab7300177eb3b98da62817b2cad8eb87#egg=smriprep-0.1.0
+git+https://github.com/poldracklab/niworkflows.git@076aed98962b10d107c83110c05e42466a89bbc4#egg=niworkflows
+git+https://github.com/poldracklab/smriprep.git@f1cfc37bcdc346549dbf1d037cdade3a3b32d5de#egg=smriprep-0.1.0
 templateflow<0.2.0a0,>=0.1.3
