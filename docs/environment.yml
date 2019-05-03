@@ -30,5 +30,5 @@ dependencies:
     - nilearn!=0.5.0,!=0.5.1
     - tedana>=0.0.5
     - git+https://github.com/effigies/niworkflows.git@e6a277ee5e47be5f8148b136b7201c9beb8e70a3#egg=niworkflows
-    - git+https://github.com/poldracklab/smriprep.git@f1cfc37bcdc346549dbf1d037cdade3a3b32d5de#egg=smriprep
+    - smriprep<0.3.0a0,>=0.2.0
     - templateflow<0.2.0a0,>=0.1.3
