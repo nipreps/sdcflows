@@ -1,4 +1,5 @@
 nilearn!=0.5.0,!=0.5.1
-git+https://github.com/poldracklab/niworkflows.git@e8f677a0407fc312b7f3d87a4c47726ceb8cd975#egg=niworkflows
+git+https://github.com/nipy/nipype.git@d353f0d879826031334b09d33e9443b8c9b3e7fe#egg=nipype
+niworkflows<0.10.0a0,>=0.9.1.post1
 smriprep<0.3.0a0,>=0.2.0
 templateflow<0.2.0a0,>=0.1.3
