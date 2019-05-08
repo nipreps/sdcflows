@@ -41,6 +41,7 @@ from nipype.interfaces import utility as niu
 from nipype import logging
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from niworkflows.interfaces.utility import KeySelect
 
 # Fieldmap workflows
 from .pepolar import init_pepolar_unwarp_wf
@@ -117,11 +118,16 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
             Brain mask for the BOLD run
         t1_brain
             T1w image, brain-masked, for the fieldmap-less SyN method
-        t1_2_mni_reverse_transform
-            MNI-to-T1w transform to map prior knowledge to the T1w
-            fo the fieldmap-less SyN method
+        std2anat_xfm
+            List of standard-to-T1w transforms generated during spatial
+            normalization (only for the fieldmap-less SyN method).
         template : str
-            Name of template targeted by ``template`` output space
+            Name of template from which prior knowledge will be mapped
+            into the subject's T1w reference
+            (only for the fieldmap-less SyN method)
+        templates : str
+            Name of templates that index the ``std2anat_xfm`` input list
+            (only for the fieldmap-less SyN method).
 
 
     **Outputs**
@@ -145,7 +151,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
     workflow = Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_ref', 'bold_ref_brain', 'bold_mask',
-                't1_brain', 't1_2_mni_reverse_transform', 'template']),
+                't1_brain', 'std2anat_xfm', 'template', 'templates']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
@@ -236,14 +242,24 @@ co-registration with the anatomical reference.
 
     # FIELDMAP-less path
     if any(fm['suffix'] == 'syn' for fm in fmaps):
+        # Select template
+        sdc_select_std = pe.Node(KeySelect(
+            fields=['std2anat_xfm']),
+            name='sdc_select_std', run_without_submitting=True)
+
         syn_sdc_wf = init_syn_sdc_wf(
             bold_pe=bold_meta.get('PhaseEncodingDirection', None),
             omp_nthreads=omp_nthreads)
 
         workflow.connect([
+            (inputnode, sdc_select_std, [
+                ('template', 'key'),
+                ('templates', 'keys'),
+                ('std2anat_xfm', 'std2anat_xfm')]),
+            (sdc_select_std, syn_sdc_wf, [
+                ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
             (inputnode, syn_sdc_wf, [
                 ('t1_brain', 'inputnode.t1_brain'),
-                ('t1_2_mni_reverse_transform', 'inputnode.t1_2_mni_reverse_transform'),
                 ('bold_ref', 'inputnode.bold_ref'),
                 ('bold_ref_brain', 'inputnode.bold_ref_brain'),
                 ('template', 'inputnode.template')]),

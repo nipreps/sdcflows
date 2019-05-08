@@ -83,8 +83,9 @@ further improvements of HCP Pipelines [@hcppipelines].
                  name='n4', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_fmap_mask = pe.Node(DerivativesDataSink(suffix='fmap_mask'), name='ds_report_fmap_mask',
-                           mem_gb=0.01, run_without_submitting=True)
+    ds_report_fmap_mask = pe.Node(DerivativesDataSink(
+        desc='brain', suffix='mask'), name='ds_report_fmap_mask',
+        mem_gb=0.01, run_without_submitting=True)
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -127,8 +128,8 @@ further improvements of HCP Pipelines [@hcppipelines].
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
-        (inputnode, ds_fmap_mask, [('phasediff', 'source_file')]),
-        (bet, ds_fmap_mask, [('out_report', 'in_file')]),
+        (inputnode, ds_report_fmap_mask, [('phasediff', 'source_file')]),
+        (bet, ds_report_fmap_mask, [('out_report', 'in_file')]),
     ])
 
     return workflow
