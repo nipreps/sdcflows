@@ -48,9 +48,21 @@
       "type": "Researcher"
     },
     {
-      "affiliation": "McGovern Institute for Brain Research (MIT), and Department of Otolaryngology (Harvard Medical School), MA, USA",
-      "name": "Ghosh, Satrajit S.",
-      "orcid": "0000-0002-5312-6729",
+      "name": "Cieslak, Matthew",
+      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
+      "orcid": "0000-0002-1931-4734",
+      "type": "Researcher"
+    },
+    {
+      "name": "Adebimpe, Azeez",
+      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
+      "orcid": "0000-0001-9049-0135",
+      "type": "Researcher"
+    },
+    {
+      "name": "Satterthwaite, Theodore",
+      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
+      "orcid": "0000-0001-7072-9399",
       "type": "Researcher"
     }
   ],
