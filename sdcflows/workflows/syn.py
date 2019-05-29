@@ -60,7 +60,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fieldmap.syn import init_syn_sdc_wf
+        from sdcflows.workflows.fieldmap.syn import init_syn_sdc_wf
         wf = init_syn_sdc_wf(
             bold_pe='j',
             omp_nthreads=8)
@@ -119,10 +119,10 @@ template [@fieldmapless3].
 
     # Collect predefined data
     # Atlas image and registration affine
-    atlas_img = pkgr.resource_filename('fmriprep', 'data/fmap_atlas.nii.gz')
+    atlas_img = pkgr.resource_filename('sdcflows', 'data/fmap_atlas.nii.gz')
     # Registration specifications
-    affine_transform = pkgr.resource_filename('fmriprep', 'data/affine.json')
-    syn_transform = pkgr.resource_filename('fmriprep', 'data/susceptibility_syn.json')
+    affine_transform = pkgr.resource_filename('sdcflows', 'data/affine.json')
+    syn_transform = pkgr.resource_filename('sdcflows', 'data/susceptibility_syn.json')
 
     invert_t1w = pe.Node(Rescale(invert=True), name='invert_t1w',
                          mem_gb=0.3)
@@ -203,4 +203,4 @@ def _prior_path(template):
     """Selects an appropriate input xform, based on template"""
     from pkg_resources import resource_filename
     return resource_filename(
-        'fmriprep', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
+        'sdcflows', 'data/fmap_atlas_2_{}_affine.mat'.format(template))

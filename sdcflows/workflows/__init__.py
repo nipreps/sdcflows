@@ -10,32 +10,32 @@ Fieldmap estimation and unwarping workflows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. automodule:: fmriprep.workflows.fieldmap.base
+.. automodule:: sdcflows.workflows.fieldmap.base
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: fmriprep.workflows.fieldmap.fmap
+.. automodule:: sdcflows.workflows.fieldmap.fmap
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: fmriprep.workflows.fieldmap.phdiff
+.. automodule:: sdcflows.workflows.fieldmap.phdiff
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: fmriprep.workflows.fieldmap.pepolar
+.. automodule:: sdcflows.workflows.fieldmap.pepolar
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: fmriprep.workflows.fieldmap.syn
+.. automodule:: sdcflows.workflows.fieldmap.syn
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: fmriprep.workflows.fieldmap.unwarp
+.. automodule:: sdcflows.workflows.fieldmap.unwarp
     :members:
     :undoc-members:
     :show-inheritance:

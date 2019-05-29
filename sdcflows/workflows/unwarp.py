@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
@@ -28,8 +27,8 @@ from niworkflows.interfaces import itk
 from niworkflows.interfaces.images import DemeanImage, FilledImageLike
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ...interfaces import DerivativesDataSink
-from ...interfaces.fmap import get_ees as _get_ees, FieldToRadS
+from ..interfaces import DerivativesDataSink
+from ..interfaces.fmap import get_ees as _get_ees, FieldToRadS
 from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
@@ -46,7 +45,7 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
+        from sdcflows.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(omp_nthreads=8,
                                 fmap_demean=True,
                                 debug=False)
@@ -96,10 +95,10 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
-    ants_settings = pkgr.resource_filename('fmriprep', 'data/fmap-any_registration.json')
+    ants_settings = pkgr.resource_filename('sdcflows', 'data/fmap-any_registration.json')
     if debug:
         ants_settings = pkgr.resource_filename(
-            'fmriprep', 'data/fmap-any_registration_testing.json')
+            'sdcflows', 'data/fmap-any_registration_testing.json')
     fmap2ref_reg = pe.Node(
         ANTSRegistrationRPT(generate_report=True, from_file=ants_settings,
                             output_inverse_warped_image=True, output_warped_image=True),
@@ -222,7 +221,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', forcedsyn=False):
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fieldmap.unwarp import init_fmap_unwarp_report_wf
+        from sdcflows.workflows.fieldmap.unwarp import init_fmap_unwarp_report_wf
         wf = init_fmap_unwarp_report_wf()
 
     **Parameters**

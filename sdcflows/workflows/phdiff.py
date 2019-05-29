@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
@@ -27,7 +26,7 @@ from niworkflows.interfaces.bids import ReadSidecarJSON
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ...interfaces import Phasediff2Fieldmap, DerivativesDataSink
+from ..interfaces.fmap import Phasediff2Fieldmap, DerivativesDataSink
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
@@ -41,7 +40,7 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from fmriprep.workflows.fieldmap.phdiff import init_phdiff_wf
+        from sdcflows.workflows.fieldmap.phdiff import init_phdiff_wf
         wf = init_phdiff_wf(omp_nthreads=1)
 
 
