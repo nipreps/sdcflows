@@ -1,0 +1,79 @@
+{
+  "title": "SDCflows: Susceptibility Distortion Correction workFLOWS.",
+  "description": "<p>Nipype-based neuroimaging workflows for susceptibility distortion correction (SDC) of echo-planar MRI images.</p>",
+  "creators": [
+    {
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Esteban, Oscar",
+      "orcid": "0000-0001-8435-6191"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Markiewicz, Christopher J.",
+      "orcid": "0000-0002-6533-164X"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Blair, Ross W.",
+      "orcid": "0000-0003-3007-1056"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Poldrack, Russell A.",
+      "orcid": "0000-0001-6755-0259"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Gorgolewski, Krzysztof J.",
+      "orcid": "0000-0003-3321-7583"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Kent, James D.",
+      "affiliation": "Neuroscience Program, University of Iowa, IA, USA",
+      "orcid": "0000-0002-4892-2659",
+      "type": "Researcher"
+    },
+    {
+      "name": "Sitek, Kevin R.",
+      "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University, MA, USA",
+      "orcid": "0000-0002-2172-5786",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "Cyceron, UMS 3408 (CNRS - UCBN), France",
+      "name": "Naveau, Mikaël",
+      "orcid": "0000-0001-6948-9068",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "McGovern Institute for Brain Research (MIT), and Department of Otolaryngology (Harvard Medical School), MA, USA",
+      "name": "Ghosh, Satrajit S.",
+      "orcid": "0000-0002-5312-6729",
+      "type": "Researcher"
+    }
+  ],
+  "keywords": [
+    "neuroimaging",
+    "workflow",
+    "pipeline",
+    "preprocessing",
+    "MRI",
+    "BIDS"
+  ],
+  "license": "apache-2.0",
+  "related_identifiers": [
+    {
+      "identifier": "https://fmriprep.org",
+      "relation": "isPartOf",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.1038/s41592-018-0235-4",
+      "relation": "isPartOf",
+      "scheme": "doi"
+    }
+  ],
+  "upload_type": "software"
+}
