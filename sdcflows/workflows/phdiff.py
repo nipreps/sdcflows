@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -22,11 +21,11 @@ from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.bids import ReadSidecarJSON
+from niworkflows.interfaces.bids import ReadSidecarJSON, DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces.fmap import Phasediff2Fieldmap, DerivativesDataSink
+from ..interfaces.fmap import Phasediff2Fieldmap
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
@@ -40,7 +39,7 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.phdiff import init_phdiff_wf
+        from sdcflows.workflows.phdiff import init_phdiff_wf
         wf = init_phdiff_wf(omp_nthreads=1)
 
 

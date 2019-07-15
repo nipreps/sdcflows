@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -10,32 +8,32 @@ Fieldmap estimation and unwarping workflows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. automodule:: sdcflows.workflows.fieldmap.base
+.. automodule:: sdcflows.workflows.base
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: sdcflows.workflows.fieldmap.fmap
+.. automodule:: sdcflows.workflows.fmap
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: sdcflows.workflows.fieldmap.phdiff
+.. automodule:: sdcflows.workflows.phdiff
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: sdcflows.workflows.fieldmap.pepolar
+.. automodule:: sdcflows.workflows.pepolar
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: sdcflows.workflows.fieldmap.syn
+.. automodule:: sdcflows.workflows.syn
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: sdcflows.workflows.fieldmap.unwarp
+.. automodule:: sdcflows.workflows.unwarp
     :members:
     :undoc-members:
     :show-inheritance:

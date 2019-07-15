@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -18,7 +17,7 @@ from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.freesurfer import StructuralReference
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 
-from ..bold.util import init_enhance_and_skullstrip_bold_wf
+from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 
 
 def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
@@ -48,7 +47,7 @@ def init_pepolar_unwarp_wf(bold_meta, epi_fmaps, omp_nthreads=1,
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.pepolar import init_pepolar_unwarp_wf
+        from sdcflows.workflows.pepolar import init_pepolar_unwarp_wf
         wf = init_pepolar_unwarp_wf(
             bold_meta={'PhaseEncodingDirection': 'j'},
             epi_fmaps=[('/dataset/sub-01/fmap/sub-01_epi.nii.gz', 'j-')],
@@ -190,7 +189,7 @@ def init_prepare_epi_wf(omp_nthreads, name="prepare_epi_wf"):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.pepolar import init_prepare_epi_wf
+        from sdcflows.workflows.pepolar import init_prepare_epi_wf
         wf = init_prepare_epi_wf(omp_nthreads=8)
 
 

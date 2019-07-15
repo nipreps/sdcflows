@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -33,7 +32,7 @@ from nipype.interfaces.image import Rescale
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.fixes import (FixHeaderApplyTransforms as ApplyTransforms,
                                           FixHeaderRegistration as Registration)
-from ..bold.util import init_skullstrip_bold_wf
+from niworkflows.func.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('nipype.workflow')
@@ -60,7 +59,7 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.syn import init_syn_sdc_wf
+        from sdcflows.workflows.syn import init_syn_sdc_wf
         wf = init_syn_sdc_wf(
             bold_pe='j',
             omp_nthreads=8)

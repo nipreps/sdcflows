@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -76,7 +75,7 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap import init_sdc_wf
+        from sdcflows.workflows.base import init_sdc_wf
         wf = init_sdc_wf(
             fmaps=[{
                 'suffix': 'phasediff',

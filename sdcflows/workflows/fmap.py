@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -23,10 +22,10 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl, ants
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from niworkflows.interfaces.bids import DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces import DerivativesDataSink
 from ..interfaces.fmap import (
     FieldEnhance, FieldToRadS, FieldToHz
 )
@@ -42,7 +41,7 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.fmap import init_fmap_wf
+        from sdcflows.workflows.fmap import init_fmap_wf
         wf = init_fmap_wf(omp_nthreads=6, fmap_bspline=False)
 
     """

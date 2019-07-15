@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
@@ -26,14 +25,16 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces import itk
 from niworkflows.interfaces.images import DemeanImage, FilledImageLike
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
+from niworkflows.interfaces.bids import DerivativesDataSink
+from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 
-from ..interfaces import DerivativesDataSink
 from ..interfaces.fmap import get_ees as _get_ees, FieldToRadS
-from ..bold.util import init_enhance_and_skullstrip_bold_wf
 
 
 def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
     """
+    Apply the warping given by a displacements fieldmap.
+
     This workflow takes in a displacements fieldmap and calculates the corresponding
     displacements field (in other words, an ANTs-compatible warp file).
 
@@ -45,7 +46,7 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.unwarp import init_sdc_unwarp_wf
+        from sdcflows.workflows.unwarp import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(omp_nthreads=8,
                                 fmap_demean=True,
                                 debug=False)
@@ -84,7 +85,6 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
             mask of the unwarped input file
 
     """
-
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['in_reference', 'in_reference_brain', 'in_mask', 'metadata',
@@ -214,6 +214,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
 def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', forcedsyn=False):
     """
+    Save a reportlet showing how SDC unwarping performed.
+
     This workflow generates and saves a reportlet showing the effect of fieldmap
     unwarping a BOLD image.
 
@@ -221,7 +223,7 @@ def init_fmap_unwarp_report_wf(name='fmap_unwarp_report_wf', forcedsyn=False):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.fieldmap.unwarp import init_fmap_unwarp_report_wf
+        from sdcflows.workflows.unwarp import init_fmap_unwarp_report_wf
         wf = init_fmap_unwarp_report_wf()
 
     **Parameters**
