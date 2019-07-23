@@ -111,6 +111,7 @@ jobs:
             virtualenv --python=python build
             source build/bin/activate
             pip install --upgrade "pip>=19.1" numpy
+            pip uninstall -y versioneer
             echo "${CIRCLE_TAG:-$THISVERSION}" > sdcflows/VERSION
             python setup.py sdist
       - store_artifacts:
@@ -126,6 +127,7 @@ jobs:
             virtualenv --python=python sdist
             source sdist/bin/activate
             pip install --upgrade "pip>=19.1" numpy
+            pip uninstall -y versioneer
             pip install dist/sdcflows*.tar.gz
             which sdcflows | grep sdist\\/bin
             INSTALLED_VERSION=$(sdcflows --version)
