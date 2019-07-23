@@ -142,7 +142,7 @@ jobs:
             INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "$THISVERSION"
+            test "$INSTALLED_VERSION" = "v$THISVERSION"
 
   deploy_pypi:
     machine:
@@ -192,7 +192,7 @@ jobs:
             INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "$THISVERSION"
+            test "$INSTALLED_VERSION" = "v$THISVERSION"
       - run:
           name: Upload packages to PyPI
           command: |
