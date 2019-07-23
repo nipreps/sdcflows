@@ -94,6 +94,56 @@ jobs:
               docker push poldracklab/sdcflows:$CIRCLE_TAG
             fi
 
+  test_package:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/sdcflows
+    steps:
+      - checkout
+      - run:
+          name: Setup Python environment with virtualenvs
+          command: |
+            pyenv global 3.5.2
+            python3 -m pip install --upgrade virtualenv
+      - run:
+          name: Prepare build environment
+          command: |
+            virtualenv --python=python3 /tmp/build
+            source /tmp/build/bin/activate
+            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1" twine docutils
+      - run:
+          name: Prepare install environment
+          command: |
+            virtualenv --python=python3 /tmp/install
+            source /tmp/install/bin/activate
+            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
+      - run:
+          name: Build SDCflows in build environment
+          command: |
+            source /tmp/build/bin/activate
+            python setup.py sdist
+      - store_artifacts:
+          path: /tmp/src/sdcflows/dist
+      - run:
+          name: Check sdist package in build environment
+          command: |
+            source /tmp/build/bin/activate
+            twine check dist/sdcflows*.tar.gz
+      - run:
+          name: Install sdist package into install environment and check version
+          command: |
+            source /tmp/install/bin/activate
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            pip install dist/sdcflows*.tar.gz
+            which sdcflows | grep install\\/bin
+            INSTALLED_VERSION=$(sdcflows --version)
+            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
+            echo "VERSION: \"$THISVERSION\""
+            echo "INSTALLED: \"$INSTALLED_VERSION\""
+            test "$INSTALLED_VERSION" = "v$THISVERSION"
+
   deploy_pypi:
     machine:
       image: circleci/classic:201711-01
@@ -101,46 +151,52 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Build SDCflows
+          name: Setup Python environment with virtualenvs
           command: |
-            pyenv local 3.5.2
-            pip install twine  # For use in checking distributions
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            virtualenv --python=python build
-            source build/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
-            pip uninstall -y versioneer
-            echo "${CIRCLE_TAG:-$THISVERSION}" > sdcflows/VERSION
+            pyenv global 3.5.2
+            python3 -m pip install --upgrade virtualenv
+      - run:
+          name: Prepare build environment
+          command: |
+            virtualenv --python=python3 /tmp/build
+            source /tmp/build/bin/activate
+            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1" twine docutils
+      - run:
+          name: Prepare install environment
+          command: |
+            virtualenv --python=python3 /tmp/install
+            source /tmp/install/bin/activate
+            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
+      - run:
+          name: Build SDCflows in build environment
+          command: |
+            source /tmp/build/bin/activate
             python setup.py sdist
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
       - run:
-          name: Check sdist distribution
+          name: Check sdist package in build environment
           command: |
-            pyenv local 3.5.2
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            source /tmp/build/bin/activate
             twine check dist/sdcflows*.tar.gz
-            virtualenv --python=python sdist
-            source sdist/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
-            pip uninstall -y versioneer
+      - run:
+          name: Install sdist package into install environment and check version
+          command: |
+            source /tmp/install/bin/activate
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             pip install dist/sdcflows*.tar.gz
-            which sdcflows | grep sdist\\/bin
+            which sdcflows | grep install\\/bin
             INSTALLED_VERSION=$(sdcflows --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
             INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
             echo "VERSION: \"$THISVERSION\""
             echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "$THISVERSION"
+            test "$INSTALLED_VERSION" = "v$THISVERSION"
       - run:
           name: Upload packages to PyPI
           command: |
-            pyenv local 3.5.2
-            pip install twine
+            source /tmp/build/bin/activate
             twine upload dist/sdcflows*
 
 workflows:
@@ -151,10 +207,15 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - test_package:
+          filters:
+            tags:
+              only: /.*/
 
       - deploy_pypi:
           requires:
             - build
+            - test_package
           filters:
             branches:
               ignore: /.*/

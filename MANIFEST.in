@@ -1,0 +1,8 @@
+include CHANGES.rst
+include LICENSE
+
+recursive-include sdcflows/data *
+
+# versioneer
+include versioneer.py
+include sdcflows/_version.py
