@@ -5,4 +5,4 @@ recursive-include sdcflows/data *
 
 # versioneer
 include versioneer.py
-include fmriprep/_version.py
+include sdcflows/_version.py
