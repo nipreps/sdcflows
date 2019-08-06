@@ -1,6 +1,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+Phase-difference B0 estimation.
+
 .. _sdc_phasediff :
 
 Phase-difference B0 estimation
@@ -21,7 +23,6 @@ from nipype.pipeline import engine as pe
 from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
     cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.bids import ReadSidecarJSON, DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
@@ -30,6 +31,8 @@ from ..interfaces.fmap import Phasediff2Fieldmap
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     """
+    Distortion correction of EPI sequences using phase-difference maps.
+
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
     acquisitions. The `original code was taken from nipype
@@ -42,16 +45,30 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
         from sdcflows.workflows.phdiff import init_phdiff_wf
         wf = init_phdiff_wf(omp_nthreads=1)
 
+    **Parameters**:
 
-    Outputs::
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
 
-      outputnode.fmap_ref - The average magnitude image, skull-stripped
-      outputnode.fmap_mask - The brain mask applied to the fieldmap
-      outputnode.fmap - The estimated fieldmap in Hz
+    **Inputs**:
 
+        magnitude : pathlike
+            Path to the corresponding magnitude path(s).
+        phasediff : pathlike
+            Path to the corresponding phase-difference file.
+        metadata : dict
+            Metadata dictionary corresponding to the phasediff input
+
+    **Outputs**:
+
+        fmap_ref : pathlike
+            The average magnitude image, skull-stripped
+        fmap_mask : pathlike
+            The brain mask applied to the fieldmap
+        fmap : pathlike
+            The estimated fieldmap in Hz
 
     """
-
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
 A deformation field to correct for susceptibility distortions was estimated
@@ -61,17 +78,11 @@ using a custom workflow of *fMRIPrep* derived from D. Greve's `epidewarp.fsl`
 further improvements of HCP Pipelines [@hcppipelines].
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff', 'metadata']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
-
-    def _pick1st(inlist):
-        return inlist[0]
-
-    # Read phasediff echo times
-    meta = pe.Node(ReadSidecarJSON(bids_validate=False), name='meta', mem_gb=0.01)
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -81,9 +92,7 @@ further improvements of HCP Pipelines [@hcppipelines].
                  name='n4', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_report_fmap_mask = pe.Node(DerivativesDataSink(
-        desc='brain', suffix='mask'), name='ds_report_fmap_mask',
-        mem_gb=0.01, run_without_submitting=True)
+
     # uses mask from bet; outputs a mask
     # dilate = pe.Node(fsl.maths.MathsCommand(
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
@@ -109,7 +118,7 @@ further improvements of HCP Pipelines [@hcppipelines].
     # rsec2hz (divide by 2pi)
 
     workflow.connect([
-        (inputnode, meta, [('phasediff', 'in_file')]),
+        (inputnode, compfmap, [('metadata', 'metadata')]),
         (inputnode, magmrg, [('magnitude', 'in_files')]),
         (magmrg, n4, [('out_avg', 'input_image')]),
         (n4, prelude, [('output_image', 'magnitude_file')]),
@@ -117,7 +126,6 @@ further improvements of HCP Pipelines [@hcppipelines].
         (bet, prelude, [('mask_file', 'mask_file')]),
         (inputnode, pha2rads, [('phasediff', 'in_file')]),
         (pha2rads, prelude, [('out', 'phase_file')]),
-        (meta, compfmap, [('out_dict', 'metadata')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
@@ -126,8 +134,6 @@ further improvements of HCP Pipelines [@hcppipelines].
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref')]),
-        (inputnode, ds_report_fmap_mask, [('phasediff', 'source_file')]),
-        (bet, ds_report_fmap_mask, [('out_report', 'in_file')]),
     ])
 
     return workflow
