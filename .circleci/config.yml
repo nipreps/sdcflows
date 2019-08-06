@@ -65,6 +65,100 @@ jobs:
          paths:
             - /tmp/cache/docker.tar.gz
 
+  cache_test_data:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/data
+    steps:
+      - restore_cache:
+          keys:
+            - data-v0-{{ .Branch }}-
+            - data-v0-master-
+            - data-v0-
+      - run:
+          name: Setup git-annex
+          command: |
+            mkdir -p /tmp/cache
+            if [[ ! -e "/tmp/cache/git-annex-standalone.tar.gz" ]]; then
+              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+              sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+              sudo apt update && sudo apt-get install -y --no-install-recommends git-annex-standalone
+              mkdir -p /tmp/cache
+              tar czvf /tmp/cache/git-annex-standalone.tar.gz /usr/bin/git-annex /usr/bin/git-annex-shell /usr/lib/git-annex.linux
+            else
+              sudo tar xzfv /tmp/cache/git-annex-standalone.tar.gz -C /
+            fi
+            git config --global user.name 'CRN'
+            git config --global user.email 'crn.poldracklab@gmail.com'
+
+      - run:
+          name: Setup DataLad
+          command: |
+            pyenv global 3.5.2
+            virtualenv venv
+            pip install --no-cache-dir -U pip
+            pip install --no-cache-dir -U datalad
+      - run:
+          name: Install ds001600
+          command: |
+            datalad install -r https://github.com/OpenNeuroDatasets/ds001600.git
+            datalad update ds001600/
+            datalad get -r ds001600/sub-1/fmap/*
+      - run:
+          name: Get testdata
+          command: |
+            if [[ ! -d /tmp/data/testdata ]]; then
+              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
+                  -O testdata.zip "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip="
+              unzip testdata.zip -d /tmp/data/testdata
+            fi
+
+      - save_cache:
+         key: data-v0-{{ .Branch }}-{{ .BuildNum }}
+         paths:
+            - "/opt/circleci/.pyenv/versions/3.5.2"
+            - /tmp/data
+            - /tmp/cache
+
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - data
+
+  test_sdcflows:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/tests
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout:
+          path: /tmp/src/sdcflows
+      - run:
+          name: Load Docker image layer cache
+          no_output_timeout: 30m
+          command: |
+            docker info
+            set +o pipefail
+            if [ -f /tmp/cache/docker.tar.gz ]; then
+              sudo apt update && sudo apt -y install pigz
+              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+              docker images
+            fi
+      - run:
+          name: Run tests
+          command: |
+            docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
+                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out -w /src/sdcflows \
+                   poldracklab/sdcflows:latest \
+                   pytest -n auto --junit-xml=/out/pytest.xml sdcflows
+
+      - store_artifacts:
+          path: /tmp/tests
+
+      - store_test_results:
+          path: /tmp/tests
+
   deploy_docker:
     machine:
       image: circleci/classic:201711-01
@@ -207,6 +301,20 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - cache_test_data:
+          filters:
+            tags:
+              only: /.*/
+
+      - test_sdcflows:
+          requires:
+            - build
+            - cache_test_data
+          filters:
+            tags:
+              only: /.*/
+
+
       - test_package:
           filters:
             tags:
