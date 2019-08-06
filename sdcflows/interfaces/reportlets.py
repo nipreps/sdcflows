@@ -12,6 +12,8 @@ class FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
     reference = File(exists=True, mandatory=True, desc='input reference')
     fieldmap = File(exists=True, mandatory=True, desc='input fieldmap')
     mask = File(exists=True, desc='brain mask')
+    out_report = File('report.svg', usedefault=True,
+                      desc='filename for the visual report')
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -31,6 +33,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
     def _generate_report(self):
         """Generate a reportlet."""
+        import numpy as np
         NIWORKFLOWS_LOG.info('Generating visual report')
 
         refnii = load_img(self.inputs.reference)
@@ -38,6 +41,9 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         contour_nii = load_img(self.inputs.mask) if isdefined(self.inputs.mask) else None
         mask_nii = threshold_img(refnii, 1e-3)
         cuts = cuts_from_bbox(contour_nii or mask_nii, cuts=self._n_cuts)
+        fmapdata = fmapnii.get_fdata()
+        vmax = max(fmapdata.max(), abs(fmapdata.min()))
+        thres = np.percentile(fmapdata[fmapdata > 0], 5)
 
         # Call composer
         compose_view(
@@ -53,7 +59,9 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
                               label='fieldmap (Hz)',
                               contour=contour_nii,
                               compress=False,
-                              plot_params={'cmap': 'coolwarm'}),
+                              plot_params={'cmap': 'coolwarm', 
+                                           'vmax': vmax, 
+                                           'vmin': -vmax}),
             out_file=self._out_report
         )
 
