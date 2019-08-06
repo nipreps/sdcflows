@@ -30,10 +30,8 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset):
     phdiff_wf.inputs.inputnode.metadata = phdiff_file.get_metadata()
 
     if output_path:
-        from niworkflows.interfaces.registration import SimpleBeforeAfterRPT
-        rep = pe.Node(SimpleBeforeAfterRPT(), 'simple_report')
-        rep.interface._fixed_image_label = 'magnitude'
-        rep.interface._moving_image_label = 'fieldmap'
+        from ...interfaces.reportlets import FieldmapReportlet
+        rep = pe.Node(FieldmapReportlet(), 'simple_report')
 
         dsink = pe.Node(DerivativesDataSink(
             base_directory=str(output_path), keep_dtype=True), name='dsink')
@@ -42,9 +40,9 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset):
 
         wf.connect([
             (phdiff_wf, rep, [
-                ('outputnode.fmap', 'after'),
-                ('outputnode.fmap_ref', 'before'),
-                ('outputnode.fmap_mask', 'wm_seg')]),
+                ('outputnode.fmap', 'fieldmap'),
+                ('outputnode.fmap_ref', 'reference'),
+                ('outputnode.fmap_mask', 'mask')]),
             (rep, dsink, [('out_report', 'in_file')]),
         ])
     else:
