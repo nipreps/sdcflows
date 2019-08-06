@@ -197,7 +197,6 @@ jobs:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
             - /tmp/cache/git-annex-standalone.tar.gz
-
       - persist_to_workspace:
           root: /tmp
           paths:
