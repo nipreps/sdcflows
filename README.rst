@@ -1,3 +1,14 @@
+SDCflows
+--------
+
+.. image:: https://circleci.com/gh/poldracklab/sdcflows.svg?style=svg
+    :target: https://circleci.com/gh/poldracklab/sdcflows
+
+.. image:: https://img.shields.io/pypi/v/sdcflows.svg
+  :target: https://pypi.python.org/pypi/sdcflows/
+  :alt: Latest Version
+
+
 SDCflows (susceptibility distortion correction workflows) is a library of workflows
 to correct for distortions typically remaining after reconstruction in images
 acquired with EPI (echo-planar imaging) MR schemes.
