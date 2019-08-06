@@ -31,10 +31,16 @@ def get_parser():
     # Options that affect how pyBIDS is configured
     g_bids = parser.add_argument_group('Options for filtering BIDS queries')
     g_bids.add_argument('--participant-label', action='store', type=str,
-                        nargs='*', help='process only particular subjects')
+                        nargs='*', dest='subject', help='process only particular subjects')
     g_bids.add_argument('--task', action='store', type=str, nargs='*',
                         help='select a specific task to be processed')
+    g_bids.add_argument('--dir', action='store', type=str, nargs='*',
+                        help='select a specific direction entity to be processed')
+    g_bids.add_argument('--acq', action='store', type=str, nargs='*', dest='acquisition',
+                        help='select a specific acquisition entity to be processed')
     g_bids.add_argument('--run', action='store', type=int, nargs='*',
+                        help='select a specific run identifier to be processed')
+    g_bids.add_argument('--suffix', action='store', type=str, nargs='*', default='bold',
                         help='select a specific run identifier to be processed')
 
     g_perfm = parser.add_argument_group('Options to handle performance')
@@ -58,6 +64,7 @@ def main():
     from multiprocessing import set_start_method
     from bids.layout import BIDSLayout
     from nipype import logging as nlogging
+    from ..workflows.base import init_sdc_wf
     set_start_method('forkserver')
 
     opts = get_parser().parse_args()
@@ -88,21 +95,18 @@ def main():
     if not nthreads or nthreads < 1:
         nthreads = cpu_count()
 
-    derivatives_dir = opts.derivatives_dir.resolve()
-    bids_dir = opts.bids_dir or derivatives_dir.parent
+    output_dir = opts.output_dir.resolve()
+    bids_dir = opts.bids_dir or output_dir.parent
 
     # Get absolute path to BIDS directory
     bids_dir = opts.bids_dir.resolve()
-    layout = BIDSLayout(str(bids_dir), validate=False, derivatives=str(derivatives_dir))
-    query = {'domains': 'derivatives', 'desc': 'preproc',
-             'suffix': 'bold', 'extensions': ['.nii', '.nii.gz']}
+    layout = BIDSLayout(str(bids_dir), validate=False, derivatives=str(output_dir))
+    query = {'suffix': opts.suffix, 'extension': ['.nii', '.nii.gz']}
 
-    if opts.participant_label:
-        query['subject'] = '|'.join(opts.participant_label)
-    if opts.run:
-        query['run'] = '|'.join(opts.run)
-    if opts.task:
-        query['task'] = '|'.join(opts.task)
+    for entity in ('subject', 'task', 'dir', 'acquisition', 'run'):
+        arg = getattr(opts, entity, None)
+        if arg is not None:
+            query[entity] = arg
 
 
 if __name__ == '__main__':
