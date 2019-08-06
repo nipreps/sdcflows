@@ -64,6 +64,7 @@ def main():
     from multiprocessing import set_start_method
     # from bids.layout import BIDSLayout
     from nipype import logging as nlogging
+    from ..workflows.base import init_sdc_wf
     set_start_method('forkserver')
 
     opts = get_parser().parse_args()
