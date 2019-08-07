@@ -8,7 +8,7 @@ from bids.layout import BIDSLayout
 test_data_env = os.getenv('TEST_DATA_HOME', str(Path.home() / 'sdcflows-tests'))
 test_output_dir = os.getenv('TEST_OUTPUT_DIR')
 
-layouts = {p.name: BIDSLayout(str(p), validate=False)
+layouts = {p.name: BIDSLayout(str(p), validate=False, derivatives=True)
            for p in Path(test_data_env).glob('*') if p.is_dir()}
 
 

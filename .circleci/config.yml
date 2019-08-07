@@ -103,7 +103,7 @@ jobs:
           command: |
             datalad install -r https://github.com/OpenNeuroDatasets/ds001600.git
             datalad update ds001600/
-            datalad get -r ds001600/sub-1/fmap/*
+            datalad get -r ds001600/*
       - run:
           name: Get testdata
           command: |
