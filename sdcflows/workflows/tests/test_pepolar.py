@@ -5,7 +5,7 @@ from niworkflows.interfaces.bids import DerivativesDataSink
 from nipype.pipeline import engine as pe
 
 from ..pepolar import (
-    _check_pes, _split_epi_lists, init_prepare_epi_wf, init_pepolar_unwarp_wf
+    check_pes, _split_epi_lists, init_prepare_epi_wf, init_pepolar_unwarp_wf
 )
 
 
@@ -53,7 +53,7 @@ def test_prepare_epi_wf0(bids_layouts, tmpdir):
                          desc=None, extension=['.nii.gz', '.nii'])
 
     with pytest.raises(ValueError):
-        _check_pes([
+        check_pes([
             (im.path, im.get_metadata()['PhaseEncodingDirection'])
             for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
 
@@ -70,8 +70,8 @@ def test_prepare_epi_wf1(bids_layouts, tmpdir):
                          extension=['.nii.gz', '.nii'])[0]
     epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
 
-    matched_pe = _check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
-                             for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
+    matched_pe = check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
+                            for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
 
     assert matched_pe is True
 
@@ -95,8 +95,8 @@ def test_prepare_epi_wf2(bids_layouts, tmpdir):
     epidata = layout.get(suffix='epi', dir='RL', direction='RL',
                          desc=None, extension=['.nii.gz', '.nii'])
 
-    matched_pe = _check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
-                             for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
+    matched_pe = check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
+                            for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
 
     assert matched_pe is False
 
@@ -126,8 +126,8 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset):
 
     epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
 
-    matched_pe = _check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
-                             for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
+    matched_pe = check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
+                            for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
 
     wf = init_pepolar_unwarp_wf(omp_nthreads=cpu_count(), matched_pe=matched_pe)
     wf.inputs.inputnode.fmaps_epi = [(im.path, im.get_metadata()['PhaseEncodingDirection'])

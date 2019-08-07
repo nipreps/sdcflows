@@ -53,26 +53,49 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
         wf = init_pepolar_unwarp_wf()
 
 
-    Inputs
+    **Parameters**:
 
-        in_reference
-            the baseline reference image (will define the reference PE direction)
-        in_reference_brain
-            the reference image skullstripped
+        matched_pe : bool
+            Whether the input ``fmaps_epi`` will contain images with matched
+            PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
+            to determine whether they exist or not.
+        name : str
+            Name for this workflow
+        omp_nthreads : int
+            Parallelize internal tasks across the number of CPUs given by this option.
+
+    **Inputs**:
+
+        fmaps_epi : list of tuple(pathlike, str)
+            The list of EPI images that will be used in PE-Polar correction, and
+            their corresponding ``PhaseEncodingDirection`` metadata.
+            The workflow will use the ``bold_pe_dir`` input to separate out those
+            EPI acquisitions with opposed PE blips and those with matched PE blips
+            (the latter could be none, and ``in_reference_brain`` would then be
+            used). The workflow raises a ``ValueError`` when no images with
+            opposed PE blips are found.
+        bold_pe_dir : str
+            The baseline PE direction.
+        in_reference : pathlike
+            The baseline reference image (must correspond to ``bold_pe_dir``).
+        in_reference_brain : pathlike
+            The reference image above, but skullstripped.
         in_mask : pathlike
-            (not used) a brain mask corresponding to ``in_reference``
+            Not used, present only for consistency across fieldmap estimation
+            workflows.
 
-    Outputs
 
-        out_reference
-            the ``in_reference`` after unwarping
-        out_reference_brain
-            the ``in_reference`` after unwarping and skullstripping
-        out_warp
-            the corresponding :abbr:`DFM (displacements field map)` compatible with
-            ANTs
-        out_mask
-            mask of the unwarped input file
+    **Outputs**:
+
+        out_reference : pathlike
+            The ``in_reference`` after unwarping
+        out_reference_brain : pathlike
+            The ``in_reference`` after unwarping and skullstripping
+        out_warp : pathlike
+            The corresponding :abbr:`DFM (displacements field map)` compatible with
+            ANTs.
+        out_mask : pathlike
+            Mask of the unwarped input file
 
     """
     workflow = Workflow(name=name)
@@ -160,6 +183,17 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         from sdcflows.workflows.pepolar import init_prepare_epi_wf
         wf = init_prepare_epi_wf(omp_nthreads=8)
 
+
+    **Parameters**:
+
+        matched_pe : bool
+            Whether the input ``fmaps_epi`` will contain images with matched
+            PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
+            to determine whether they exist or not.
+        name : str
+            Name for this workflow
+        omp_nthreads : int
+            Parallelize internal tasks across the number of CPUs given by this option.
 
     **Inputs**:
 
@@ -281,7 +315,8 @@ def _fix_hdr(in_file, newpath=None):
     return out_file
 
 
-def _check_pes(epi_fmaps, pe_dir):
+def check_pes(epi_fmaps, pe_dir):
+    """Check whether there are images with matched PE."""
     opposed_pe = False
     matched_pe = False
 
