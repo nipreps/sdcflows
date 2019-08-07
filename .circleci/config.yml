@@ -116,9 +116,8 @@ jobs:
       - run:
           name: Store FreeSurfer license file
           command: |
-            mkdir -p /tmp/fslicense
-            cd /tmp/fslicense
-            echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IGxpY2Vuc2UudHh0Cg==" | base64 -d | sh
+            mkdir -p /tmp/data/
+            echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/data/fslicense.txt
 
       - run:
           name: Create Nipype config files
@@ -134,7 +133,6 @@ jobs:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
             - /tmp/cache/git-annex-standalone.tar.gz
-            - /tmp/fslicense
 
       - persist_to_workspace:
           root: /tmp
@@ -163,10 +161,11 @@ jobs:
             fi
       - run:
           name: Run tests
+          no_output_timeout: 2h
           command: |
             mkdir -p /tmp/work
             docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
-                   -v /tmp/fslicense/license.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
+                   -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
                    -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/work:/work -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
