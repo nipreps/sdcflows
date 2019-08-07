@@ -1,5 +1,5 @@
 """Test pepolar type of fieldmaps."""
-from os import cpu_count
+from os import cpu_count, getcwd
 import pytest
 from niworkflows.interfaces.bids import DerivativesDataSink
 from nipype.pipeline import engine as pe
@@ -111,10 +111,8 @@ def test_prepare_epi_wf2(bids_layouts, tmpdir):
     'ds001600',
     'testdata',
 ])
-def test_pepolar_wf1(bids_layouts, tmpdir, output_path, dataset):
+def test_pepolar_wf1(bids_layouts, output_path, dataset):
     """Test preparation workflow."""
-    tmpdir.chdir()
-
     layout = bids_layouts[dataset]
 
     if dataset == 'testdata':
@@ -141,7 +139,7 @@ def test_pepolar_wf1(bids_layouts, tmpdir, output_path, dataset):
         from ..pepolar import Workflow
         from ...interfaces.reportlets import FieldmapReportlet
 
-        boiler = Workflow(name='boiler')
+        boiler = Workflow(name='boiler_%s' % dataset)
 
         split_field = pe.Node(niu.Function(function=_split_field), name='split_field')
 
@@ -179,6 +177,7 @@ def test_pepolar_wf1(bids_layouts, tmpdir, output_path, dataset):
             (rep, dsink, [('out_report', 'in_file')]),
         ])
 
+        boiler.base_dir = getcwd()
         boiler.run(plugin='MultiProc', plugin_args={'n_proc': cpu_count()})
 
 
@@ -188,7 +187,7 @@ def _split_field(in_field, pe_dir):
     import nibabel as nb
     axis = 'ijk'.index(pe_dir[0])
     im = nb.load(in_field)
-    data = np.squeeze(im.get_fdata())[...,axis]
+    data = np.squeeze(im.get_fdata())[..., axis]
     dirnii = nb.Nifti1Image(data, im.affine, im.header)
     dirnii.to_filename('fieldmap.nii.gz')
     return abspath('fieldmap.nii.gz')
