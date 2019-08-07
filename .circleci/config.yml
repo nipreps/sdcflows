@@ -101,8 +101,8 @@ jobs:
       - run:
           name: Install ds001600
           command: |
-            datalad install -r https://github.com/OpenNeuroDatasets/ds001600.git
-            datalad update ds001600/
+            datalad install https://github.com/OpenNeuroDatasets/ds001600.git
+            datalad update --merge ds001600/
             datalad get -r ds001600/*
       - run:
           name: Get testdata
@@ -113,12 +113,28 @@ jobs:
               unzip testdata.zip -d /tmp/data/testdata
             fi
 
+      - run:
+          name: Store FreeSurfer license file
+          command: |
+            mkdir -p /tmp/fslicense
+            cd /tmp/fslicense
+            echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IGxpY2Vuc2UudHh0Cg==" | base64 -d | sh
+
+      - run:
+          name: Create Nipype config files
+          command: |
+            printf "[execution]\nstop_on_first_crash = true\n" > /tmp/data/nipype.cfg
+            echo "poll_sleep_duration = 0.01" >> /tmp/data/nipype.cfg
+            echo "hash_method = content" >> /tmp/data/nipype.cfg
+            echo "crashfile_format = txt" >> /tmp/data/nipype.cfg
+
       - save_cache:
          key: data-v0-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
-            - /tmp/cache
+            - /tmp/cache/git-annex-standalone.tar.gz
+            - /tmp/fslicense
 
       - persist_to_workspace:
           root: /tmp
@@ -148,10 +164,13 @@ jobs:
       - run:
           name: Run tests
           command: |
+            mkdir -p /tmp/work
             docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
-                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out -w /src/sdcflows \
-                   poldracklab/sdcflows:latest \
-                   pytest -n auto --junit-xml=/out/pytest.xml sdcflows
+                   -v /tmp/fslicense/license.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
+                   -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
+                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/work:/work -v /tmp/tests:/out \
+                   -w /work poldracklab/sdcflows:latest \
+                   pytest -n auto --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
 
       - store_artifacts:
           path: /tmp/tests
