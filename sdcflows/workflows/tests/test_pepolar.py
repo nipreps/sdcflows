@@ -111,7 +111,7 @@ def test_prepare_epi_wf2(bids_layouts, tmpdir):
     'ds001600',
     'testdata',
 ])
-def test_pepolar_wf1(bids_layouts, output_path, dataset):
+def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
     """Test preparation workflow."""
     layout = bids_layouts[dataset]
 
@@ -177,7 +177,8 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset):
             (rep, dsink, [('out_report', 'in_file')]),
         ])
 
-        boiler.base_dir = getcwd()
+        if workdir:
+            boiler.base_dir = str(workdir)
         boiler.run(plugin='MultiProc', plugin_args={'n_proc': cpu_count()})
 
 
