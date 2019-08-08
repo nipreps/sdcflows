@@ -7,6 +7,7 @@ from bids.layout import BIDSLayout
 
 test_data_env = os.getenv('TEST_DATA_HOME', str(Path.home() / 'sdcflows-tests'))
 test_output_dir = os.getenv('TEST_OUTPUT_DIR')
+test_workdir = os.getenv('TEST_WORK_DIR')
 
 layouts = {p.name: BIDSLayout(str(p), validate=False, derivatives=True)
            for p in Path(test_data_env).glob('*') if p.is_dir()}
@@ -26,6 +27,11 @@ def add_np(doctest_namespace):
     doctest_namespace['Path'] = Path
     for key, val in list(layouts.items()):
         doctest_namespace[key] = Path(val.root)
+
+
+@pytest.fixture
+def workdir():
+    return None if test_workdir is None else Path(test_workdir)
 
 
 @pytest.fixture

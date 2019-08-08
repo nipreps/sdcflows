@@ -148,6 +148,11 @@ jobs:
           at: /tmp
       - checkout:
           path: /tmp/src/sdcflows
+      - restore_cache:
+          keys:
+            - workdir-v0-{{ .Branch }}-
+            - workdir-v0-master-
+            - workdir-v0-
       - run:
           name: Load Docker image layer cache
           no_output_timeout: 30m
@@ -166,16 +171,22 @@ jobs:
             mkdir -p /tmp/work
             docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
                    -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
+                   -v /tmp/work:/work -e TEST_WORK_DIR=/work \
                    -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
-                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/work:/work -v /tmp/tests:/out \
+                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
-                   pytest -n auto --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
+                   pytest -n auto -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
 
       - store_artifacts:
           path: /tmp/tests
-
+      - store_artifacts:
+          path: /tmp/work
       - store_test_results:
           path: /tmp/tests
+      - save_cache:
+         key: workdir-v0-{{ .Branch }}-{{ .BuildNum }}
+         paths:
+            - /tmp/work
 
   deploy_docker:
     machine:
