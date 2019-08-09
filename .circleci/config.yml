@@ -72,9 +72,9 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - data-v0-{{ .Branch }}-
-            - data-v0-master-
-            - data-v0-
+            - data-v1-{{ .Branch }}-
+            - data-v1-master-
+            - data-v1-
       - run:
           name: Setup git-annex
           command: |
@@ -128,7 +128,7 @@ jobs:
             echo "crashfile_format = txt" >> /tmp/data/nipype.cfg
 
       - save_cache:
-         key: data-v0-{{ .Branch }}-{{ .BuildNum }}
+         key: data-v1-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
@@ -150,9 +150,9 @@ jobs:
           path: /tmp/src/sdcflows
       - restore_cache:
           keys:
-            - workdir-v0-{{ .Branch }}-
-            - workdir-v0-master-
-            - workdir-v0-
+            - workdir-v1-{{ .Branch }}-
+            - workdir-v1-master-
+            - workdir-v1-
       - run:
           name: Load Docker image layer cache
           no_output_timeout: 30m
@@ -175,7 +175,7 @@ jobs:
                    -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
-                   pytest -n auto -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
+                   pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
 
       - store_artifacts:
           path: /tmp/tests
@@ -184,7 +184,7 @@ jobs:
       - store_test_results:
           path: /tmp/tests
       - save_cache:
-         key: workdir-v0-{{ .Branch }}-{{ .BuildNum }}
+         key: workdir-v1-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - /tmp/work
 

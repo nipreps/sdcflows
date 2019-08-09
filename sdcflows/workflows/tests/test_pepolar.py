@@ -118,7 +118,7 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
     if dataset == 'testdata':
         bold = layout.get(suffix='bold', dir='LR', direction='LR',
                           extension=['.nii.gz', '.nii'])[0]
-        boldref = layout.get(suffix='boldref', dir='LR', direction='LR',
+        boldref = layout.get(suffix='boldref', dir='LR', direction='LR', desc='brain',
                              extension=['.nii.gz', '.nii'])[0]
     elif dataset == 'ds001600':
         bold = layout.get(suffix='bold', acquisition='AP',
