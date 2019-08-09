@@ -115,7 +115,7 @@ directions, using `3dQwarp` @afni (AFNI {afni_ver}).
 
     prepare_epi_wf = init_prepare_epi_wf(omp_nthreads=omp_nthreads,
                                          matched_pe=matched_pe,
-                                         name="prepare_epi_opposite_wf")
+                                         name="prepare_epi_wf")
 
     qwarp = pe.Node(afni.QwarpPlusMinus(
         pblur=[0.05, 0.05], blur=[-1, -1], noweight=True, minpatch=9, nopadWARP=True,
