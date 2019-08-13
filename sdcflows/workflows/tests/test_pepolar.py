@@ -159,10 +159,10 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
 
         rep = pe.Node(FieldmapReportlet(), 'simple_report')
         dsink = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=False,
-            dtype='fieldmap', desc='pepolar'), name='dsink')
+            base_directory=str(output_path), keep_dtype=True,
+            desc='pepolar', acquisition=None), name='dsink')
         dsink.interface.out_path_base = 'sdcflows'
-        dsink.inputs.source_file = bold.path
+        dsink.inputs.source_file = epidata[0].path
 
         boiler.connect([
             (wf, split_field, [
