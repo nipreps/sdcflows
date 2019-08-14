@@ -72,9 +72,9 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - data-v0-{{ .Branch }}-
-            - data-v0-master-
-            - data-v0-
+            - data-v1-{{ .Branch }}-
+            - data-v1-master-
+            - data-v1-
       - run:
           name: Setup git-annex
           command: |
@@ -101,9 +101,9 @@ jobs:
       - run:
           name: Install ds001600
           command: |
-            datalad install -r https://github.com/OpenNeuroDatasets/ds001600.git
-            datalad update ds001600/
-            datalad get -r ds001600/sub-1/fmap/*
+            datalad install https://github.com/OpenNeuroDatasets/ds001600.git
+            datalad update --merge ds001600/
+            datalad get -r ds001600/*
       - run:
           name: Get testdata
           command: |
@@ -113,12 +113,26 @@ jobs:
               unzip testdata.zip -d /tmp/data/testdata
             fi
 
+      - run:
+          name: Store FreeSurfer license file
+          command: |
+            mkdir -p /tmp/data/
+            echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/data/fslicense.txt
+
+      - run:
+          name: Create Nipype config files
+          command: |
+            printf "[execution]\nstop_on_first_crash = true\n" > /tmp/data/nipype.cfg
+            echo "poll_sleep_duration = 0.01" >> /tmp/data/nipype.cfg
+            echo "hash_method = content" >> /tmp/data/nipype.cfg
+            echo "crashfile_format = txt" >> /tmp/data/nipype.cfg
+
       - save_cache:
-         key: data-v0-{{ .Branch }}-{{ .BuildNum }}
+         key: data-v1-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
-            - /tmp/cache
+            - /tmp/cache/git-annex-standalone.tar.gz
 
       - persist_to_workspace:
           root: /tmp
@@ -134,6 +148,11 @@ jobs:
           at: /tmp
       - checkout:
           path: /tmp/src/sdcflows
+      - restore_cache:
+          keys:
+            - workdir-v1-{{ .Branch }}-
+            - workdir-v1-master-
+            - workdir-v1-
       - run:
           name: Load Docker image layer cache
           no_output_timeout: 30m
@@ -147,17 +166,27 @@ jobs:
             fi
       - run:
           name: Run tests
+          no_output_timeout: 2h
           command: |
+            mkdir -p /tmp/work
             docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
-                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out -w /src/sdcflows \
-                   poldracklab/sdcflows:latest \
-                   pytest -n auto --junit-xml=/out/pytest.xml sdcflows
+                   -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
+                   -v /tmp/work:/work -e TEST_WORK_DIR=/work \
+                   -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
+                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
+                   -w /work poldracklab/sdcflows:latest \
+                   pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
 
       - store_artifacts:
           path: /tmp/tests
-
+      - store_artifacts:
+          path: /tmp/work
       - store_test_results:
           path: /tmp/tests
+      - save_cache:
+         key: workdir-v1-{{ .Branch }}-{{ .BuildNum }}
+         paths:
+            - /tmp/work
 
   deploy_docker:
     machine:
