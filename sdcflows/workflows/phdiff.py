@@ -17,7 +17,7 @@ This corresponds to `this section of the BIDS specification
 
 """
 
-from nipype.interfaces import ants, fsl, utility as niu
+from nipype.interfaces import ants, fsl, afni, utility as niu
 from nipype.pipeline import engine as pe
 from niflow.nipype1.workflows.dmri.fsl.utils import (
     siemens2rads, demean_image, cleanup_edge_pipeline)
@@ -25,7 +25,77 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces.fmap import Phasediff2Fieldmap
+from ..interfaces.fmap import Phasediff2Fieldmap, ProcessPhases
+
+
+def init_calculate_phasediff_wf(omp_nthreads, difference='arctan', name='create_phasediff_fw'):
+    """
+    Create a phasediff image from two phase images.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+
+        from sdcflows.workflows.phdiff import init_create_phasediff_wf
+        wf = init_calculate_phasediff_wf(omp_nthreads=1)
+
+    **Parameters**:
+
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        difference : str
+            either 'arctan' or 'unwrapped_subtraction'
+    **Inputs**:
+
+        phase1 : pathlike
+            Path to one of the phase images.
+        phase2 : pathlike
+            Path to the another phase image.
+        phase1_metadata : dict
+            Metadata dictionary corresponding to the phase1 input
+        phase2_metadata : dict
+            Metadata dictionary corresponding to the phase2 input
+    """
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=['phase1', 'phase2', 'phase1_metadata', 'phase2_metadata']),
+        name='inputnode')
+
+    outputnode = pe.Node(niu.IdentityInterface(
+        fields=['phasediff', 'phasediff_metadata']), name='outputnode')
+
+    workflow = Workflow(name=name)
+
+    # Rescale images and calculate phasediff with arctan
+    process_phases = pe.Node(ProcessPhases(), name='process_phases')
+
+    if difference == 'arctan':
+        workflow.connect([
+            (process_phases, outputnode, [('phasediff', 'phasediff')])
+        ])
+    else:
+        unwrap_phase1 = pe.Node(fsl.PRELUDE(), name='unwrap_phase1')
+        unwrap_phase2 = pe.Node(fsl.PRELUDE(), name='unwrap_phase2')
+        subtract_phases = pe.Node(
+            afni.Calc(outputtype='NIFTI_GZ', expr='b-a'), name='subtract_phases')
+
+        workflow.connect([
+            (process_phases, unwrap_phase1, [('short_te_phase_image', 'phase_file')]),
+            (process_phases, unwrap_phase2, [('long_te_phase_image', 'phase_file')]),
+            (unwrap_phase1, subtract_phases, [('unwrapped_phase_file', 'in_file_a')]),
+            (unwrap_phase2, subtract_phases, [('unwrapped_phase_file', 'in_file_b')]),
+            (subtract_phases, outputnode, [('out_file', 'phasediff')])
+        ])
+
+    workflow.connect([
+        (inputnode, process_phases, [
+            ('phase1', 'phase1_file'),
+            ('phase2', 'phase2_file'),
+            ('phase1_metadata', 'phase1_metadata'),
+            ('phase2_metadata', 'phase2_metadata')]),
+        (process_phases, outputnode, [('phasediff_metadata', 'phasediff_metadata')])
+    ])
+
+    return workflow
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
