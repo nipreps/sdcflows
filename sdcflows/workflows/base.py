@@ -18,7 +18,8 @@ FMAP_PRIORITY = {
     'fieldmap': 1,
     'phasediff': 2,
     'phase1': 3,
-    'syn': 4
+    'phase2': 3,
+    'syn': 4,
 }
 
 DEFAULT_MEMORY_MIN_GB = 0.01
