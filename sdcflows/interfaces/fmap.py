@@ -24,11 +24,138 @@ from nipype.interfaces.base import (
 
 LOGGER = logging.getLogger('nipype.interface')
 
+<<<<<<< HEAD
 class _ProcessPhasesInputSpec(BaseInterfaceInputSpec):
+=======
+class ProcessPhasesInputSpec(BaseInterfaceInputSpec):
+>>>>>>> start workflow for calculating phasediff from phase images
     phase1_file = File(exists=True, mandatory=True, desc='phase1 file')
     phase2_file = File(exists=True, mandatory=True, desc='phase2 file')
     phase1_metadata = traits.Dict(mandatory=True, desc='phase1 metadata dict')
     phase2_metadata = traits.Dict(mandatory=True, desc='phase2 metadata dict')
+<<<<<<< HEAD
+=======
+
+
+class ProcessPhasesOutputSpec(TraitedSpec):
+    short_te_phase_image = File(exists=True, desc='short TE phase image scaled for unwrapping')
+    short_te_phase_metadata = traits.Dict(desc='short TE phase image metadata')
+    long_te_phase_image = File(exists=True, desc='long TE phase image scaled for unwrapping')
+    long_te_phase_metadata = traits.Dict(desc='long TE phase image metadata')
+    phasediff = File(desc='the phasediff image')
+    phasediff_metadata = traits.Dict(desc='the phasediff metadata')
+
+
+class ProcessPhases(SimpleInterface):
+    """
+    Process phase1, phase2 images so they can be unwrapped.
+    """
+    input_spec = ProcessPhasesInputSpec
+    output_spec = ProcessPhasesOutputSpec
+
+    def _run_interface(self, runtime):
+        images = [self.inputs.phase1_file, self.inputs.phase2_file]
+        metadatas = [self.inputs.phase1_metadata, self.inputs.phase2_metadata]
+        echo_times = [meta.get("EchoTime") for meta in metadatas]
+        if None in echo_times or echo_times[0] == echo_times[1]:
+            raise RuntimeError()
+
+        # Order the images by echo time
+        short_echo_index = echo_times.index(min(echo_times))
+        long_echo_index = echo_times.index(max(echo_times))
+        short_echo_image = images[short_echo_index]
+        long_echo_image = images[long_echo_index]
+
+        # Rescale and save the short TE image
+        se_phase_image = nb.load(short_echo_image)
+        se_phase_data = se_phase_image.get_fdata()
+        se_rescaled_data = rescale_phase_image(se_phase_data)
+        se_rescaled_output = fname_presuffix(short_echo_image, suffix='_shortTE_scaled',
+                                             newpath=runtime.cwd)
+        nb.Nifti1Image(se_rescaled_data, se_phase_image.affine, se_phase_image.header
+                       ).to_filename(se_rescaled_output)
+        self._results['short_te_phase_image'] = se_rescaled_data
+        self._results['short_te_phase_metadata'] = metadatas[short_echo_index]
+
+        # Rescale and save the long TE image
+        le_phase_image = nb.load(long_echo_image)
+        le_phase_data = le_phase_image.get_fdata()
+        le_rescaled_data = rescale_phase_image(le_phase_data)
+        le_rescaled_output = fname_presuffix(long_echo_image, suffix='_longTE_scaled',
+                                             newpath=runtime.cwd)
+        nb.Nifti1Image(le_rescaled_data, le_phase_image.affine, le_phase_image.header
+                       ).to_filename(le_rescaled_output)
+        self._results['long_te_phase_image'] = le_rescaled_output
+        self._results['long_te_phase_metadata'] = metadatas[long_echo_index]
+
+        # Calculate the phasediff
+        a = np.cos(se_rescaled_data)
+        b = np.sin(se_rescaled_data)
+        c = np.cos(le_rescaled_data)
+        d = np.sin(le_rescaled_data)
+        phasediff_data = -np.arctan2(b * c - a * d, a * c + b * d)
+        phasediff_file = fname_presuffix(short_echo_image, suffix='_phasediff',
+                                         newpath=runtime.cwd)
+        phasediff_nii = nb.Nifti1Image(phasediff_data, se_phase_data.affine,
+                                       se_phase_image.header)
+        phasediff_nii.set_data_dtype(np.float32)
+        phasediff_nii.to_filename(phasediff_file)
+        self._results['phasediff'] = phasediff_file
+
+        merged_metadata = deepcopy(metadatas[0])
+        del merged_metadata['EchoTime']
+        merged_metadata['EchoTime1'] = float(echo_times[short_echo_index])
+        merged_metadata['EchoTime2'] = float(echo_times[long_echo_index])
+        self._results['phasediff_metadata'] = merged_metadata
+        return runtime
+
+
+def rescale_phase_image(phase_data):
+    """Ensure that phase images are in a usable range for unwrapping.
+    """
+    if np.any(phase_data < -128):
+        # This happens sometimes on 7T fieldmaps
+        LOGGER.info("Found negative values in phase image: rescaling")
+        imax = phase_data.max()
+        imin = phase_data.min()
+        scaled = 2 * ((phase_data - imin) / (imax - imin) - 0.5)
+        return np.pi * scaled
+    mask = phase_data > 0
+    imax = phase_data.max()
+    imin = phase_data.min()
+    max_check = imax - 4096
+    if np.abs(max_check) > 10 or np.abs(imin) > 10:
+        LOGGER.warning("Phase image may be scaled incorrectly: check results")
+    return mask * (phase_data / 2048 * np.pi - np.pi)
+
+
+def phases2fmap(short_echo_image, long_echo_image, metadatas, newpath=None):
+    """Calculates a phasediff from two phase images. Assumes monopolar
+    readout. """
+
+
+
+
+
+    return phasediff_file, merged_metadata
+
+
+class PhaseDiffInputSpec(BaseInterfaceInputSpec):
+    phasediff = File(exists=True, desc='single-volume phasediff image')
+    phase1 = File(exists=True, desc='single-volume phase image')
+    phase2 = File(exists=True, desc='single-volume phase image')
+    metadata = traits.Dict(mandatory=True)
+
+
+class PhaseDiffOutputSpec(TraitedSpec):
+    phasediff = File(exists=True, mandatory=True)
+
+
+class PhaseDiff(SimpleInterface):
+    input_spec = PhaseDiffInputSpec
+    output_spec = PhaseDiffOutputSpec
+
+>>>>>>> start workflow for calculating phasediff from phase images
 
 
 class _ProcessPhasesOutputSpec(TraitedSpec):
