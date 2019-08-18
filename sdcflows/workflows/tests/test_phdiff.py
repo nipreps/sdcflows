@@ -60,7 +60,7 @@ def test_phases_workflow(bids_layouts, tmpdir, output_path):
 
     data = bids_layouts['ds001600']
     wf = Workflow(name='tstphasesworkflow')
-    phdiff_wf = init_phdiff_wf(omp_nthreads=1, fmap_bspline=False, create_phasediff=True)
+    phdiff_wf = init_phdiff_wf(omp_nthreads=1, create_phasediff=True)
     phdiff_wf.inputs.inputnode.magnitude = data.get(
         suffix=['magnitude1', 'magnitude2'],
         acq='v2',

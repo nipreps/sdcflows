@@ -26,7 +26,8 @@ from ..interfaces.fmap import Phasediff2Fieldmap, ProcessPhases
 from .b0 import init_prepare_magnitude_wf, init_fmap_postproc_wf
 
 
-def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
+def init_calculate_phasediff_wf(omp_nthreads, difference='unwrapped_subtraction',
+                                name='create_phasediff_wf'):
     """
     Create a phasediff image from two phase images.
 
@@ -97,7 +98,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     return workflow
 
 
-def init_phdiff_wf(omp_nthreads, fmap_bspline, create_phasediff=False, name='phdiff_wf'):
+def init_phdiff_wf(omp_nthreads, create_phasediff=False, name='phdiff_wf'):
     """
     Distortion correction of EPI sequences using phase-difference maps.
 
@@ -189,10 +190,41 @@ further improvements of HCP Pipelines [@hcppipelines].
         ])
         kernel_size = 5
 
+    preprocessed_phasediff = pe.Node(
+        niu.IdentityInterface(fields=['phasediff', 'phasediff_metadata']),
+        name='preprocessed_phasediff')
+
+    if create_phasediff:
+        calc_phdiff_wf = init_calculate_phasediff_wf(omp_nthreads=omp_nthreads)
+        workflow.connect([
+            (bet, calc_phdiff_wf, [('mask_file', 'inputnode.mask_file')]),
+            (n4, calc_phdiff_wf, [('output_image', 'inputnode.magnitude')]),
+            (inputnode, calc_phdiff_wf, [
+                ('phase1', 'inputnode.phase1'),
+                ('phase2', 'inputnode.phase2'),
+                ('phase1_metadata', 'inputnode.phase1_metadata'),
+                ('phase2_metadata', 'inputnode.phase2_metadata')]),
+            (calc_phdiff_wf, preprocessed_phasediff, [
+                ('outputnode.phasediff', 'phasediff'),
+                ('outputnode.phasediff_metadata', 'phasediff_metadata')])
+        ])
+
     else:
 
         # FSL PRELUDE will perform phase-unwrapping
         prelude = pe.Node(fsl.PRELUDE(), name='prelude')
+
+        # phase diff -> radians
+        pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
+
+        workflow.connect([
+            (n4, prelude, [('output_image', 'magnitude_file')]),
+            (bet, prelude, [('mask_file', 'mask_file')]),
+            (inputnode, pha2rads, [('phasediff', 'in_file')]),
+            (pha2rads, prelude, [('out', 'phase_file')]),
+            (prelude, preprocessed_phasediff, [('unwrapped_phase_file', 'phasediff')]),
+            (inputnode, preprocessed_phasediff, [('metadata', 'phasediff_metadata')]),
+        ])
 
         # phase diff -> radians
         pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
@@ -220,11 +252,14 @@ further improvements of HCP Pipelines [@hcppipelines].
     # rsec2hz (divide by 2pi)
 
     workflow.connect([
-        (inputnode, prepare_magnitude_wf, [('magnitude', 'inputnode.magnitude')]),
-        (preprocessed_phasediff, fmap_postproc_wf, [('phasediff', 'inputnode.fmap')]),
-        (prepare_magnitude_wf, fmap_postproc_wf, [
-            ('outputnode.fmap_mask', 'inputnode.mask_file')]),
-        (fmap_postproc_wf, compfmap, [('outputnode.out_fmap', 'in_file')]),
+        (inputnode, magmrg, [('magnitude', 'in_files')]),
+        (magmrg, n4, [('out_avg', 'input_image')]),
+        (n4, bet, [('output_image', 'in_file')]),
+        (preprocessed_phasediff, denoise, [('phasediff', 'in_file')]),
+        (denoise, demean, [('out_file', 'in_file')]),
+        (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
+        (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+        (cleanup_wf, compfmap, [('outputnode.out_file', 'in_file')]),
         (preprocessed_phasediff, compfmap, [('phasediff_metadata', 'metadata')]),
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (prepare_magnitude_wf, outputnode, [
