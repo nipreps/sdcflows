@@ -101,7 +101,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     return workflow
 
 
-def init_phdiff_wf(omp_nthreads, fmap_bspline, create_phasediff=False, name='phdiff_wf'):
+def init_phdiff_wf(omp_nthreads, create_phasediff=False, name='phdiff_wf'):
     """
     Distortion correction of EPI sequences using phase-difference maps.
 

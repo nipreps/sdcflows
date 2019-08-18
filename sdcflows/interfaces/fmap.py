@@ -107,10 +107,14 @@ class ProcessPhases(SimpleInterface):
         nb.Nifti1Image(se_rescaled_data, se_phase_image.affine, se_phase_image.header
                        ).to_filename(se_rescaled_output)
 <<<<<<< HEAD
+<<<<<<< HEAD
         self._results['short_te_phase_image'] = se_rescaled_output
 =======
         self._results['short_te_phase_image'] = se_rescaled_data
 >>>>>>> start workflow for calculating phasediff from phase images
+=======
+        self._results['short_te_phase_image'] = se_rescaled_output
+>>>>>>> adopted fsl's subtraction for making a phasediff
         self._results['short_te_phase_metadata'] = metadatas[short_echo_index]
 
         # Rescale and save the long TE image
@@ -134,7 +138,7 @@ class ProcessPhases(SimpleInterface):
         phasediff_data = -np.arctan2(b * c - a * d, a * c + b * d)
         phasediff_file = fname_presuffix(short_echo_image, suffix='_phasediff',
                                          newpath=runtime.cwd)
-        phasediff_nii = nb.Nifti1Image(phasediff_data, se_phase_data.affine,
+        phasediff_nii = nb.Nifti1Image(phasediff_data, se_phase_image.affine,
                                        se_phase_image.header)
         phasediff_nii.set_data_dtype(np.float32)
         phasediff_nii.to_filename(phasediff_file)
