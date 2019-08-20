@@ -101,7 +101,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     return workflow
 
 
-def init_phdiff_wf(omp_nthreads, create_phasediff=False, name='phdiff_wf'):
+def init_phdiff_wf(omp_nthreads, fmap_bspline, create_phasediff=False, name='phdiff_wf'):
     """
     Distortion correction of EPI sequences using phase-difference maps.
 
@@ -213,7 +213,6 @@ further improvements of HCP Pipelines [@hcppipelines].
         kernel_size = 3
 
     fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
-                                             fmap_bspline=fmap_bspline,
                                              median_kernel_size=kernel_size)
 
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
