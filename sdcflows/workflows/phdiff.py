@@ -187,6 +187,7 @@ further improvements of HCP Pipelines [@hcppipelines].
                 ('outputnode.phasediff', 'phasediff'),
                 ('outputnode.phasediff_metadata', 'phasediff_metadata')])
         ])
+        kernel_size = 5
 
     else:
 
@@ -205,9 +206,11 @@ further improvements of HCP Pipelines [@hcppipelines].
             (prelude, preprocessed_phasediff, [('unwrapped_phase_file', 'phasediff')]),
             (inputnode, preprocessed_phasediff, [('metadata', 'phasediff_metadata')]),
         ])
+        kernel_size = 3
 
     fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
-                                             fmap_bspline=fmap_bspline)
+                                             fmap_bspline=fmap_bspline,
+                                             median_kernel_size=kernel_size)
 
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
