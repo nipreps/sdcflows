@@ -48,8 +48,7 @@ def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     return workflow
 
 
-def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
-                          name='fmap_postproc_wf'):
+def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, name='fmap_postproc_wf'):
     """Denoise, demean, cleanup edges of a fieldmap.
     """
     workflow = Workflow(name=name)
@@ -73,7 +72,7 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
     else:
 
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
-                                            kernel_size=median_kernel_size), name='denoise')
+                                            kernel_size=3), name='denoise')
         demean = pe.Node(niu.Function(function=demean_image), name='demean')
         cleanup_wf = cleanup_edge_pipeline(name='cleanup_wf')
         applymsk = pe.Node(fsl.ApplyMask(), name='applymsk')
