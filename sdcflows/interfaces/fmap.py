@@ -53,7 +53,7 @@ class ProcessPhases(SimpleInterface):
         metadatas = [self.inputs.phase1_metadata, self.inputs.phase2_metadata]
         echo_times = [meta.get("EchoTime") for meta in metadatas]
         if None in echo_times or echo_times[0] == echo_times[1]:
-            raise RuntimeError()
+            raise ValueError('Echo time metadata are missing or invalid')
 
         # Order the images by echo time
         short_echo_index = echo_times.index(min(echo_times))
