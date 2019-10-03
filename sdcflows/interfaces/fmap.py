@@ -25,10 +25,14 @@ from nipype.interfaces.base import (
 LOGGER = logging.getLogger('nipype.interface')
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class _ProcessPhasesInputSpec(BaseInterfaceInputSpec):
 =======
 class ProcessPhasesInputSpec(BaseInterfaceInputSpec):
 >>>>>>> start workflow for calculating phasediff from phase images
+=======
+class _ProcessPhasesInputSpec(BaseInterfaceInputSpec):
+>>>>>>> Update sdcflows/interfaces/fmap.py
     phase1_file = File(exists=True, mandatory=True, desc='phase1 file')
     phase2_file = File(exists=True, mandatory=True, desc='phase2 file')
     phase1_metadata = traits.Dict(mandatory=True, desc='phase1 metadata dict')
