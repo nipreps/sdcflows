@@ -46,6 +46,7 @@ class ProcessPhases(SimpleInterface):
 
     Steps are taken from https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide
     """
+
     input_spec = _ProcessPhasesInputSpec
     output_spec = _ProcessPhasesOutputSpec
 
