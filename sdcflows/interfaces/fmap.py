@@ -31,7 +31,7 @@ class _ProcessPhasesInputSpec(BaseInterfaceInputSpec):
     phase2_metadata = traits.Dict(mandatory=True, desc='phase2 metadata dict')
 
 
-class ProcessPhasesOutputSpec(TraitedSpec):
+class _ProcessPhasesOutputSpec(TraitedSpec):
     short_te_phase_image = File(exists=True, desc='short TE phase image scaled for unwrapping')
     short_te_phase_metadata = traits.Dict(desc='short TE phase image metadata')
     long_te_phase_image = File(exists=True, desc='long TE phase image scaled for unwrapping')
