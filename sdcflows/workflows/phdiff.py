@@ -29,6 +29,11 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     """
     Create a phasediff image from two phase images.
 
+    Estimates the fieldmap using a phase-difference image and one or more
+    magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
+    acquisitions. The `original code was taken from nipype
+    <https://github.com/nipy/nipype/blob/0.12.1/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
+
     .. workflow ::
         :graph2use: orig
         :simple_form: yes
