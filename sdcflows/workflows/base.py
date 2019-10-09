@@ -52,12 +52,14 @@ FMAP_PRIORITY = {
     'epi': 0,
     'fieldmap': 1,
     'phasediff': 2,
-    'syn': 3
+    'phase1': 3,
+    'syn': 4
 }
+
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
+def init_sdc_wf(distorted_ref, omp_nthreads=1, debug=False, ignore=None):
     """
     This workflow implements the heuristics to choose a
     :abbr:`SDC (susceptibility distortion correction)` strategy.
@@ -92,7 +94,7 @@ def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
 
     **Parameters**
 
-        boldref : pybids.BIDSFile
+        distorted_ref : pybids.BIDSFile
             A BIDSFile object with suffix ``bold``, ``sbref`` or ``dwi``.
         omp_nthreads : int
             Maximum number of threads an individual process may use
@@ -100,12 +102,12 @@ def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
             Enable debugging outputs
 
     **Inputs**
-        bold_ref
-            A BOLD reference calculated at a previous stage
-        bold_ref_brain
+        distorted_ref
+            A reference image calculated at a previous stage
+        ref_brain
             Same as above, but brain-masked
-        bold_mask
-            Brain mask for the BOLD run
+        ref_mask
+            Brain mask for the run
         t1_brain
             T1w image, brain-masked, for the fieldmap-less SyN method
         std2anat_xfm
@@ -121,7 +123,7 @@ def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
 
 
     **Outputs**
-        bold_ref
+        distorted_ref
             An unwarped BOLD reference
         bold_mask
             The corresponding new mask after unwarping
@@ -142,21 +144,19 @@ def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
         ignore = tuple(ignore)
 
     fmaps = defaultdict(list, [])
-    for associated in boldref.get_associations(kind='InformedBy'):
-        if associated.suffix == 'epi':
+    for associated in distorted_ref.get_associations(kind='InformedBy'):
+        if associated['suffix'] in ('epi', 'phasediff', 'fieldmap', 'phase1', 'phase2'):
             fmaps[associated.suffix].append(associated)
-        # elif associated.suffix in ('phase', 'phasediff', 'fieldmap'):
-        #     fmaps['fieldmap'].append(associated)
 
-    workflow = Workflow(name='sdc_wf' if boldref else 'sdc_bypass_wf')
+    workflow = Workflow(name='sdc_wf' if distorted_ref else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['bold_ref', 'bold_ref_brain', 'bold_mask',
+        fields=['distorted_ref', 'ref_brain', 'ref_mask',
                 't1_brain', 'std2anat_xfm', 'template', 'templates']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['bold_ref', 'bold_mask', 'bold_ref_brain',
-                'out_warp', 'syn_bold_ref', 'method']),
+        fields=['output_ref', 'ref_mask', 'ref_brain',
+                'out_warp', 'syn_ref', 'method']),
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
@@ -168,9 +168,9 @@ with metadata, and the experimental SDC-SyN method was not explicitly selected.
 """
         outputnode.inputs.method = 'None'
         workflow.connect([
-            (inputnode, outputnode, [('bold_ref', 'bold_ref'),
-                                     ('bold_mask', 'bold_mask'),
-                                     ('bold_ref_brain', 'bold_ref_brain')]),
+            (inputnode, outputnode, [('distorted_ref', 'output_ref'),
+                                     ('ref_mask', 'ref_mask'),
+                                     ('ref_brain', 'ref_brain')]),
         ])
         return workflow
 
@@ -185,7 +185,7 @@ co-registration with the anatomical reference.
         outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
         # Get EPI polarities and their metadata
         sdc_unwarp_wf = init_pepolar_unwarp_wf(
-            bold_meta=boldref.get_metadata(),
+            bold_meta=distorted_ref.get_metadata(),
             epi_fmaps=[(fmap, fmap.get_metadata()["PhaseEncodingDirection"])
                        for fmap in fmaps['epi']],
             omp_nthreads=omp_nthreads,
@@ -193,7 +193,7 @@ co-registration with the anatomical reference.
 
         workflow.connect([
             (inputnode, sdc_unwarp_wf, [
-                ('bold_ref', 'inputnode.in_reference'),
+                ('distorted_ref', 'inputnode.in_reference'),
                 ('bold_mask', 'inputnode.in_mask'),
                 ('bold_ref_brain', 'inputnode.in_reference_brain')]),
         ])
@@ -232,7 +232,7 @@ co-registration with the anatomical reference.
 
     #     workflow.connect([
     #         (inputnode, sdc_unwarp_wf, [
-    #             ('bold_ref', 'inputnode.in_reference'),
+    #             ('distorted_ref', 'inputnode.in_reference'),
     #             ('bold_ref_brain', 'inputnode.in_reference_brain'),
     #             ('bold_mask', 'inputnode.in_mask')]),
     #         (fmap_estimator_wf, sdc_unwarp_wf, [
@@ -261,7 +261,7 @@ co-registration with the anatomical reference.
     #             ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
     #         (inputnode, syn_sdc_wf, [
     #             ('t1_brain', 'inputnode.t1_brain'),
-    #             ('bold_ref', 'inputnode.bold_ref'),
+    #             ('distorted_ref', 'inputnode.distorted_ref'),
     #             ('bold_ref_brain', 'inputnode.bold_ref_brain'),
     #             ('template', 'inputnode.template')]),
     #     ])
@@ -280,7 +280,7 @@ co-registration with the anatomical reference.
     workflow.connect([
         (sdc_unwarp_wf, outputnode, [
             ('outputnode.out_warp', 'out_warp'),
-            ('outputnode.out_reference', 'bold_ref'),
+            ('outputnode.out_reference', 'distorted_ref'),
             ('outputnode.out_reference_brain', 'bold_ref_brain'),
             ('outputnode.out_mask', 'bold_mask')]),
     ])
