@@ -22,7 +22,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
-from .b0 import init_prepare_magnitude_wf, init_fmap_postproc_wf
+from .gre import init_prepare_magnitude_wf, init_fmap_postproc_wf
 
 from ..interfaces.fmap import FieldToRadS, FieldToHz
 

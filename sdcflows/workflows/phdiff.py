@@ -23,7 +23,7 @@ from niflow.nipype1.workflows.dmri.fsl.utils import siemens2rads
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ..interfaces.fmap import Phasediff2Fieldmap, ProcessPhases
-from .b0 import init_prepare_magnitude_wf, init_fmap_postproc_wf
+from .gre import init_prepare_magnitude_wf, init_fmap_postproc_wf
 
 def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     """

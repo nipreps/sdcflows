@@ -2,6 +2,13 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 
+.. _b0mapping:
+
+Workflows for processing GRE fieldmaps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Workflows for preparing the magnitude image(s) included in GRE fieldmap images and
+cleaning up the fieldmaps created from the phases or phasediff.
 
 """
 
