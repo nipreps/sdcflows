@@ -52,7 +52,7 @@ class ProcessPhases(SimpleInterface):
 
     def _run_interface(self, runtime):
         images = (self.inputs.phase1_file, self.inputs.phase2_file)
-        metadatas = [self.inputs.phase1_metadata, self.inputs.phase2_metadata]
+        metadatas = (self.inputs.phase1_metadata, self.inputs.phase2_metadata)
         echo_times = [meta.get("EchoTime") for meta in metadatas]
         if None in echo_times or echo_times[0] == echo_times[1]:
             raise ValueError('Echo time metadata are missing or invalid')
