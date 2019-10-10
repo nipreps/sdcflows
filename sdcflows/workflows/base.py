@@ -33,6 +33,7 @@ False           False       False         HMC only
 
 
 """
+from collections import defaultdict
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -56,8 +57,7 @@ FMAP_PRIORITY = {
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
-                debug=False, fmap_bspline=False, fmap_demean=True):
+def init_sdc_wf(boldref, omp_nthreads=1, debug=False, ignore=None):
     """
     This workflow implements the heuristics to choose a
     :abbr:`SDC (susceptibility distortion correction)` strategy.
@@ -92,18 +92,10 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
 
     **Parameters**
 
-        fmaps : list of pybids dicts
-            A list of dictionaries with the available fieldmaps
-            (and their metadata using the key ``'metadata'`` for the
-            case of *epi* fieldmaps)
-        bold_meta : dict
-            BIDS metadata dictionary corresponding to the BOLD run
+        boldref : pybids.BIDSFile
+            A BIDSFile object with suffix ``bold``, ``sbref`` or ``dwi``.
         omp_nthreads : int
             Maximum number of threads an individual process may use
-        fmap_bspline : bool
-            **Experimental**: Fit B-Spline field using least-squares
-        fmap_demean : bool
-            Demean voxel-shift map during unwarp
         debug : bool
             Enable debugging outputs
 
@@ -143,10 +135,20 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
 
     """
 
-    # TODO: To be removed (filter out unsupported fieldmaps):
-    fmaps = [fmap for fmap in fmaps if fmap['suffix'] in FMAP_PRIORITY]
+    if ignore is None:
+        ignore = tuple()
 
-    workflow = Workflow(name='sdc_wf' if fmaps else 'sdc_bypass_wf')
+    if not isinstance(ignore, (list, tuple)):
+        ignore = tuple(ignore)
+
+    fmaps = defaultdict(list, [])
+    for associated in boldref.get_associations(kind='InformedBy'):
+        if associated.suffix == 'epi':
+            fmaps[associated.suffix].append(associated)
+        # elif associated.suffix in ('phase', 'phasediff', 'fieldmap'):
+        #     fmaps['fieldmap'].append(associated)
+
+    workflow = Workflow(name='sdc_wf' if boldref else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['bold_ref', 'bold_ref_brain', 'bold_mask',
                 't1_brain', 'std2anat_xfm', 'template', 'templates']),
@@ -158,7 +160,12 @@ def init_sdc_wf(fmaps, bold_meta, omp_nthreads=1,
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
-    if not fmaps:
+    if not fmaps or 'fieldmaps' in ignore:
+        workflow.__postdesc__ = """\
+Susceptibility distortion correction (SDC) has been skipped because the
+dataset does not contain extra field map acquisitions correctly described
+with metadata, and the experimental SDC-SyN method was not explicitly selected.
+"""
         outputnode.inputs.method = 'None'
         workflow.connect([
             (inputnode, outputnode, [('bold_ref', 'bold_ref'),
@@ -173,19 +180,14 @@ unwarped BOLD reference was calculated for a more accurate
 co-registration with the anatomical reference.
 """
 
-    # In case there are multiple fieldmaps prefer EPI
-    fmaps.sort(key=lambda fmap: FMAP_PRIORITY[fmap['suffix']])
-    fmap = fmaps[0]
-
     # PEPOLAR path
-    if fmap['suffix'] == 'epi':
+    if 'epi' in fmaps:
         outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
         # Get EPI polarities and their metadata
-        epi_fmaps = [(fmap_['epi'], fmap_['metadata']["PhaseEncodingDirection"])
-                     for fmap_ in fmaps if fmap_['suffix'] == 'epi']
         sdc_unwarp_wf = init_pepolar_unwarp_wf(
-            bold_meta=bold_meta,
-            epi_fmaps=epi_fmaps,
+            bold_meta=boldref.get_metadata(),
+            epi_fmaps=[(fmap, fmap.get_metadata()["PhaseEncodingDirection"])
+                       for fmap in fmaps['epi']],
             omp_nthreads=omp_nthreads,
             name='pepolar_unwarp_wf')
 
@@ -197,82 +199,83 @@ co-registration with the anatomical reference.
         ])
 
     # FIELDMAP path
-    if fmap['suffix'] in ['fieldmap', 'phasediff']:
-        outputnode.inputs.method = 'FMB (%s-based)' % fmap['suffix']
-        # Import specific workflows here, so we don't break everything with one
-        # unused workflow.
-        if fmap['suffix'] == 'fieldmap':
-            from .fmap import init_fmap_wf
-            fmap_estimator_wf = init_fmap_wf(
-                omp_nthreads=omp_nthreads,
-                fmap_bspline=fmap_bspline)
-            # set inputs
-            fmap_estimator_wf.inputs.inputnode.fieldmap = fmap['fieldmap']
-            fmap_estimator_wf.inputs.inputnode.magnitude = fmap['magnitude']
+    # elif 'fieldmap' in fmaps:
+    #     # Import specific workflows here, so we don't break everything with one
+    #     # unused workflow.
+    #     suffices = {f.suffix for f in fmaps['fieldmap']}
+    #     if 'fieldmap' in suffices:
+    #         from .fmap import init_fmap_wf
+    #         outputnode.inputs.method = 'FMB (fieldmap-based)'
+    #         fmap_estimator_wf = init_fmap_wf(
+    #             omp_nthreads=omp_nthreads,
+    #             fmap_bspline=False)
+    #         # set inputs
+    #         fmap_estimator_wf.inputs.inputnode.fieldmap = fmap['fieldmap']
+    #         fmap_estimator_wf.inputs.inputnode.magnitude = fmap['magnitude']
 
-        if fmap['suffix'] == 'phasediff':
-            from .phdiff import init_phdiff_wf
-            fmap_estimator_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
-            # set inputs
-            fmap_estimator_wf.inputs.inputnode.phasediff = fmap['phasediff']
-            fmap_estimator_wf.inputs.inputnode.magnitude = [
-                fmap_ for key, fmap_ in sorted(fmap.items())
-                if key.startswith("magnitude")
-            ]
+    #     if fmap['suffix'] == 'phasediff':
+    #         from .phdiff import init_phdiff_wf
+    #         fmap_estimator_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
+    #         # set inputs
+    #         fmap_estimator_wf.inputs.inputnode.phasediff = fmap['phasediff']
+    #         fmap_estimator_wf.inputs.inputnode.magnitude = [
+    #             fmap_ for key, fmap_ in sorted(fmap.items())
+    #             if key.startswith("magnitude")
+    #         ]
 
-        sdc_unwarp_wf = init_sdc_unwarp_wf(
-            omp_nthreads=omp_nthreads,
-            fmap_demean=fmap_demean,
-            debug=debug,
-            name='sdc_unwarp_wf')
-        sdc_unwarp_wf.inputs.inputnode.metadata = bold_meta
+    #     sdc_unwarp_wf = init_sdc_unwarp_wf(
+    #         omp_nthreads=omp_nthreads,
+    #         fmap_demean=fmap_demean,
+    #         debug=debug,
+    #         name='sdc_unwarp_wf')
+    #     sdc_unwarp_wf.inputs.inputnode.metadata = bold_meta
 
-        workflow.connect([
-            (inputnode, sdc_unwarp_wf, [
-                ('bold_ref', 'inputnode.in_reference'),
-                ('bold_ref_brain', 'inputnode.in_reference_brain'),
-                ('bold_mask', 'inputnode.in_mask')]),
-            (fmap_estimator_wf, sdc_unwarp_wf, [
-                ('outputnode.fmap', 'inputnode.fmap'),
-                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
-        ])
+    #     workflow.connect([
+    #         (inputnode, sdc_unwarp_wf, [
+    #             ('bold_ref', 'inputnode.in_reference'),
+    #             ('bold_ref_brain', 'inputnode.in_reference_brain'),
+    #             ('bold_mask', 'inputnode.in_mask')]),
+    #         (fmap_estimator_wf, sdc_unwarp_wf, [
+    #             ('outputnode.fmap', 'inputnode.fmap'),
+    #             ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+    #             ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+    #     ])
 
-    # FIELDMAP-less path
-    if any(fm['suffix'] == 'syn' for fm in fmaps):
-        # Select template
-        sdc_select_std = pe.Node(KeySelect(
-            fields=['std2anat_xfm']),
-            name='sdc_select_std', run_without_submitting=True)
+    # # FIELDMAP-less path
+    # if any(fm['suffix'] == 'syn' for fm in fmaps):
+    #     # Select template
+    #     sdc_select_std = pe.Node(KeySelect(
+    #         fields=['std2anat_xfm']),
+    #         name='sdc_select_std', run_without_submitting=True)
 
-        syn_sdc_wf = init_syn_sdc_wf(
-            bold_pe=bold_meta.get('PhaseEncodingDirection', None),
-            omp_nthreads=omp_nthreads)
+    #     syn_sdc_wf = init_syn_sdc_wf(
+    #         bold_pe=bold_meta.get('PhaseEncodingDirection', None),
+    #         omp_nthreads=omp_nthreads)
 
-        workflow.connect([
-            (inputnode, sdc_select_std, [
-                ('template', 'key'),
-                ('templates', 'keys'),
-                ('std2anat_xfm', 'std2anat_xfm')]),
-            (sdc_select_std, syn_sdc_wf, [
-                ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
-            (inputnode, syn_sdc_wf, [
-                ('t1_brain', 'inputnode.t1_brain'),
-                ('bold_ref', 'inputnode.bold_ref'),
-                ('bold_ref_brain', 'inputnode.bold_ref_brain'),
-                ('template', 'inputnode.template')]),
-        ])
+    #     workflow.connect([
+    #         (inputnode, sdc_select_std, [
+    #             ('template', 'key'),
+    #             ('templates', 'keys'),
+    #             ('std2anat_xfm', 'std2anat_xfm')]),
+    #         (sdc_select_std, syn_sdc_wf, [
+    #             ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
+    #         (inputnode, syn_sdc_wf, [
+    #             ('t1_brain', 'inputnode.t1_brain'),
+    #             ('bold_ref', 'inputnode.bold_ref'),
+    #             ('bold_ref_brain', 'inputnode.bold_ref_brain'),
+    #             ('template', 'inputnode.template')]),
+    #     ])
 
-        # XXX Eliminate branch when forcing isn't an option
-        if fmap['suffix'] == 'syn':  # No fieldmaps, but --use-syn
-            outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
-            sdc_unwarp_wf = syn_sdc_wf
-        else:  # --force-syn was called when other fieldmap was present
-            sdc_unwarp_wf.__desc__ = None
-            workflow.connect([
-                (syn_sdc_wf, outputnode, [
-                    ('outputnode.out_reference', 'syn_bold_ref')]),
-            ])
+    #     # XXX Eliminate branch when forcing isn't an option
+    #     if fmap['suffix'] == 'syn':  # No fieldmaps, but --use-syn
+    #         outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
+    #         sdc_unwarp_wf = syn_sdc_wf
+    #     else:  # --force-syn was called when other fieldmap was present
+    #         sdc_unwarp_wf.__desc__ = None
+    #         workflow.connect([
+    #             (syn_sdc_wf, outputnode, [
+    #                 ('outputnode.out_reference', 'syn_bold_ref')]),
+    #         ])
 
     workflow.connect([
         (sdc_unwarp_wf, outputnode, [
