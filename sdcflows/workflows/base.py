@@ -52,8 +52,7 @@ FMAP_PRIORITY = {
     'epi': 0,
     'fieldmap': 1,
     'phasediff': 2,
-    'phase1': 3,
-    'syn': 4
+    'syn': 3,
 }
 
 DEFAULT_MEMORY_MIN_GB = 0.01
@@ -145,7 +144,7 @@ def init_sdc_wf(distorted_ref, omp_nthreads=1, debug=False, ignore=None):
 
     fmaps = defaultdict(list, [])
     for associated in distorted_ref.get_associations(kind='InformedBy'):
-        if associated.suffix in ('epi', 'phasediff', 'fieldmap', 'phase1', 'phase2'):
+        if associated.suffix in list(FMAP_PRIORITY.keys()):
             fmaps[associated.suffix].append(associated)
 
     workflow = Workflow(name='sdc_wf' if distorted_ref else 'sdc_bypass_wf')
