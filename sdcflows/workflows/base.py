@@ -145,7 +145,7 @@ def init_sdc_wf(distorted_ref, omp_nthreads=1, debug=False, ignore=None):
 
     fmaps = defaultdict(list, [])
     for associated in distorted_ref.get_associations(kind='InformedBy'):
-        if associated['suffix'] in ('epi', 'phasediff', 'fieldmap', 'phase1', 'phase2'):
+        if associated.suffix in ('epi', 'phasediff', 'fieldmap', 'phase1', 'phase2'):
             fmaps[associated.suffix].append(associated)
 
     workflow = Workflow(name='sdc_wf' if distorted_ref else 'sdc_bypass_wf')
