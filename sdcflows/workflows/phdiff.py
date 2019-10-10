@@ -18,8 +18,8 @@ Fieldmap preprocessing workflow for fieldmap data structure
 
 from nipype.interfaces import ants, fsl, utility as niu
 from nipype.pipeline import engine as pe
-from nipype.workflows.dmri.fsl.utils import siemens2rads, demean_image, \
-    cleanup_edge_pipeline
+from niflow.nipype1.workflows.dmri.fsl.utils import (
+    siemens2rads, demean_image, cleanup_edge_pipeline)
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.bids import ReadSidecarJSON, DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
@@ -104,7 +104,7 @@ further improvements of HCP Pipelines [@hcppipelines].
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
     # The phdiff2fmap interface is equivalent to:
-    # rad2rsec (using rads2radsec from nipype.workflows.dmri.fsl.utils)
+    # rad2rsec (using rads2radsec from niflow.nipype1.workflows.dmri.fsl.utils)
     # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
     # rsec2hz (divide by 2pi)
 
