@@ -353,6 +353,7 @@ workflows:
           requires:
             - build
             - test_package
+            - test_sdcflows
           filters:
             branches:
               ignore: /.*/
