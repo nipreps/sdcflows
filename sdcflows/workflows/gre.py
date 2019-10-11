@@ -23,7 +23,36 @@ from ..interfaces.fmap import FieldEnhance
 
 
 def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
-    """Merge, bias correct and skull-strip the magnitude image(s)."""
+    """Prepare the magnitude part of GRE fieldmaps.
+    
+    Average (if not done already) the magnitude part of the GRE images, run N4 to
+    correct for B1 field nonuniformity, and skull-strip the preprocessed magnitude.
+
+    **Parameters**:
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        name : str
+            Name of workflow (default: ``magnitude_wf``)
+
+    **Inputs**:
+        magnitude : pathlike
+            Path to the corresponding magnitude path(s).
+        source_file : pathlike
+            Path to the corresponding phase-difference file.
+
+    **Outputs**:
+        fmap_ref : pathlike
+            Path to the fieldmap reference calculated in this workflow.
+        fmap_mask : pathlike
+            Path to a binary brain mask corresponding to the reference above.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+        from sdcflows.workflows.fmap import init_prepare_magnitude_wf
+        wf = init_prepare_magnitude_wf(omp_nthreads=6)
+
+    """
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['magnitude', 'source_file']), name='inputnode')
