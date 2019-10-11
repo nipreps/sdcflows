@@ -2,13 +2,13 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
 
-.. _b0mapping:
+.. _gre-fieldmaps:
 
 Workflows for processing GRE fieldmaps
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Workflows for preparing the magnitude image(s) included in GRE fieldmap images and
-cleaning up the fieldmaps created from the phases or phasediff.
+Workflows for preparing the magnitude part of :abbr:`GRE (gradient recalled echo)` fieldmap
+images and cleaning up the fieldmaps created from the phases or phasediff.
 
 """
 
@@ -27,8 +27,9 @@ def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['magnitude', 'source_file']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['fmap_ref', 'fmap_mask']),
-                         name='outputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['fmap_ref', 'fmap_mask', 'mask_report']),
+        name='outputnode')
 
     # Merge input magnitude images
     magmrg = pe.Node(IntraModalMerge(), name='magmrg')
@@ -38,19 +39,14 @@ def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
                          name='n4_correct', n_procs=omp_nthreads)
     bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
-    ds_report_fmap_mask = pe.Node(
-        DerivativesDataSink(desc='brain', suffix='mask'),
-        name='ds_report_fmap_mask',
-        run_without_submitting=True)
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
         (magmrg, n4_correct, [('out_file', 'input_image')]),
         (n4_correct, bet, [('output_image', 'in_file')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
-                           ('out_file', 'fmap_ref')]),
-        (inputnode, ds_report_fmap_mask, [('source_file', 'source_file')]),
-        (bet, ds_report_fmap_mask, [('out_report', 'in_file')]),
+                           ('out_file', 'fmap_ref'),
+                           ('out_report', 'mask_report')]),
     ])
     return workflow
 
