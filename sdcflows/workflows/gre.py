@@ -82,7 +82,41 @@ def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
 
 def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
                           name='fmap_postproc_wf'):
-    """Denoise, demean, cleanup edges of a fieldmap.
+    """
+    Postprocess a B0 map estimated elsewhere.
+
+    This workflow denoises (mostly via smoothing) a B0 fieldmap.
+
+    **Parameters**:
+        omp_nthreads : int
+            Maximum number of threads an individual process may use
+        fmap_bspline : bool
+            Whether the fieldmap should be smoothed and extrapolated to off-brain regions
+            using B-Spline basis.
+        median_kernel_size : int
+            Size of the kernel when smoothing is done with a median filter.
+        name : str
+            Name of workflow (default: ``fmap_postproc_wf``)
+
+    **Inputs**:
+        mask_file : pathlike
+            A brain binary mask corresponding to this fieldmap.
+        fmap_ref : pathlike
+            A preprocessed magnitude/reference image for the fieldmap.
+        fmap : pathlike
+            A B0 nonuniformity map (aka fieldmap) estimated elsewhere.
+
+    **Outputs**:
+        out_fmap : pathlike
+            Postprocessed fieldmap.
+
+    .. workflow ::
+        :graph2use: orig
+        :simple_form: yes
+        from sdcflows.workflows.fmap import init_fmap_postproc_wf
+        wf = init_fmap_postproc_wf(omp_nthreads=6)
+
+    """
     """
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
