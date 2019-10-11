@@ -46,7 +46,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
         omp_nthreads : int
             Maximum number of threads an individual process may use
         difference : str
-            either 'arctan' or 'unwrapped_subtraction'
+            Either 'arctan' or 'unwrapped_subtraction'
     **Inputs**:
 
         phase1 : pathlike
