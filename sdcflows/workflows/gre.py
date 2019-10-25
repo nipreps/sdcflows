@@ -24,7 +24,7 @@ from ..interfaces.fmap import FieldEnhance
 
 def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     """Prepare the magnitude part of GRE fieldmaps.
-    
+
     Average (if not done already) the magnitude part of the GRE images, run N4 to
     correct for B1 field nonuniformity, and skull-strip the preprocessed magnitude.
 
@@ -116,7 +116,6 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
         from sdcflows.workflows.fmap import init_fmap_postproc_wf
         wf = init_fmap_postproc_wf(omp_nthreads=6)
 
-    """
     """
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(

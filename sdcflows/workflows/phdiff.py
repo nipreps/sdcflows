@@ -21,7 +21,8 @@ from nipype.interfaces import fsl, afni, utility as niu
 from nipype.pipeline import engine as pe
 from niflow.nipype1.workflows.dmri.fsl.utils import siemens2rads
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from ..interfaces.fmap import Phasediff2Fieldmap, ProcessPhases
+
+from ..interfaces.fmap import Phasediff2Fieldmap, ProcessPhases, DiffPhases
 from .gre import init_prepare_magnitude_wf, init_fmap_postproc_wf
 
 
@@ -29,10 +30,9 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     """
     Create a phasediff image from two phase images.
 
-    Estimates the fieldmap using a phase-difference image and one or more
-    magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
-    acquisitions. The `original code was taken from nipype
-    <https://github.com/nipy/nipype/blob/0.12.1/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
+    When two phase images are provided, the images are rescaled to range from 0 to 2*pi,
+    then unwrapped using FSL's PRELUDE. Finally, the short TE phase image is subtracted from
+    the long TE phase image. This workflow is based on the FSL FUGUE user guide.
 
     .. workflow ::
         :graph2use: orig
@@ -72,13 +72,15 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
         fields=['phasediff', 'phasediff_metadata']), name='outputnode')
 
     workflow = Workflow(name=name)
+    workflow.__desc__ = """\
+Individual phase images were unwrapped using FSL's PRELUDE and subtracted to
+create a phasediff image."""
 
     # Scale to radians and unwrap phase1, phase2
     process_phases = pe.Node(ProcessPhases(), name='process_phases')
     unwrap_phase1 = pe.Node(fsl.PRELUDE(), name='unwrap_phase1')
     unwrap_phase2 = pe.Node(fsl.PRELUDE(), name='unwrap_phase2')
-    subtract_phases = pe.Node(
-        afni.Calc(outputtype='NIFTI_GZ', expr='b-a'), name='subtract_phases')
+    subtract_phases = pe.Node(DiffPhases(), name='subtract_phases')
 
     workflow.connect([
         (inputnode, unwrap_phase1, [('magnitude', 'magnitude_file')]),
@@ -87,9 +89,9 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
         (inputnode, unwrap_phase2, [('mask_file', 'mask_file')]),
         (process_phases, unwrap_phase1, [('short_te_phase_image', 'phase_file')]),
         (process_phases, unwrap_phase2, [('long_te_phase_image', 'phase_file')]),
-        (unwrap_phase1, subtract_phases, [('unwrapped_phase_file', 'in_file_a')]),
-        (unwrap_phase2, subtract_phases, [('unwrapped_phase_file', 'in_file_b')]),
-        (subtract_phases, outputnode, [('out_file', 'phasediff')]),
+        (unwrap_phase1, subtract_phases, [('unwrapped_phase_file', 'short_te_phase_image')]),
+        (unwrap_phase2, subtract_phases, [('unwrapped_phase_file', 'long_te_phase_image')]),
+        (subtract_phases, outputnode, [('phasediff_file', 'phasediff')]),
         (inputnode, process_phases, [
             ('phase1', 'phase1_file'),
             ('phase2', 'phase2_file'),
