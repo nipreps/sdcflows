@@ -93,6 +93,32 @@ class ProcessPhases(SimpleInterface):
         return runtime
 
 
+class _DiffPhasesInputSpec(BaseInterfaceInputSpec):
+    long_te_phase_image = File(exists=True, mandatory=True,
+                               desc="Phase image with longest echo time")
+    short_te_phase_image = File(exists=True, mandatory=True,
+                                desc="Phase image with shortest echo time")
+
+
+class _DiffPhasesOutputSpec(TraitedSpec):
+    phasediff_file = File(exists=True)
+
+
+class DiffPhases(SimpleInterface):
+    input_spec = _DiffPhasesInputSpec
+    output_spec = _DiffPhasesOutputSpec
+
+    def _run_interface(self, runtime):
+        # Save the subtraction image
+        phasediff_output = fname_presuffix(self.inputs.long_te_phase_image, suffix='_phasediff',
+                                           newpath=runtime.cwd)
+        phasediff_image = _subtract_phases(short_te_phase_image=self.inputs.short_te_phase_image,
+                                           long_te_phase_image=self.inputs.long_te_phase_image)
+        phasediff_image.to_filename(phasediff_output)
+        self._results['phasediff_file'] = phasediff_output
+        return runtime
+
+
 def rescale_phase_image(phase_data):
     """Ensure that phase images are in a usable range for unwrapping.
 
@@ -114,22 +140,6 @@ def rescale_phase_image(phase_data):
     imin = phase_data.min()
     scaled = (phase_data - imin) / (imax - imin)
     return 2 * np.pi * scaled
-
-
-class PhaseDiffInputSpec(BaseInterfaceInputSpec):
-    phasediff = File(exists=True, desc='single-volume phasediff image')
-    phase1 = File(exists=True, desc='single-volume phase image')
-    phase2 = File(exists=True, desc='single-volume phase image')
-    metadata = traits.Dict(mandatory=True)
-
-
-class PhaseDiffOutputSpec(TraitedSpec):
-    phasediff = File(exists=True, mandatory=True)
-
-
-class PhaseDiff(SimpleInterface):
-    input_spec = PhaseDiffInputSpec
-    output_spec = PhaseDiffOutputSpec
 
 
 class _FieldEnhanceInputSpec(BaseInterfaceInputSpec):
