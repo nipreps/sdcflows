@@ -639,3 +639,13 @@ def _delta_te(in_values, te1=None, te2=None):
             'EchoTime2 metadata field not found. Please consult the BIDS specification.')
 
     return abs(float(te2) - float(te1))
+
+
+def _subtract_phases(short_te_phase_image, long_te_phase_image):
+    "Subtract two unwrapped phase images to produce a phasediff image."
+    short_te_img = nb.load(short_te_phase_image)
+    long_te_img = nb.load(long_te_phase_image)
+    phasediff_data = long_te_img.get_fdata()-short_te_img.get_fdata()
+    phasediff_img = nb.Nifti1Image(phasediff_data, short_te_img.affine,
+                                   header=short_te_img.header)
+    return phasediff_img
