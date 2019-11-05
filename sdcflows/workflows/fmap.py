@@ -31,10 +31,15 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
-    When we have a sequence that directly measures the fieldmap,
-    we just need to mask it (using the corresponding magnitude image)
-    to remove the noise in the surrounding air region, and ensure that
-    units are Hz.
+    When we have a sequence that directly measures the fieldmap
+    we just need to mask it (using the corresponding magnitude image) to remove the
+    noise in the surrounding air region, and ensure that units are Hz.
+
+    This is split into separate workflows. The first prepares the magnitude image(s)
+    by aligning and averaging them, bias-correcting the average and applying
+    a skull-strip. The phase images are unwrapped using PRELUDE, scaled to Hz
+    and cleaned up using a configurable combination of smoothing, BSpline
+    regularization, local median filtering and edge-cleanup.
 
     Workflow Graph
         .. workflow ::
@@ -58,7 +63,8 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     magnitude : str
         Path to the corresponding magnitude image for anatomical reference.
     fieldmap : str
-        Path to the fieldmap acquisition (``*_fieldmap.nii[.gz]`` of BIDS).
+        Path to the fieldmap acquisition, a B0 nonuniformity map (aka fieldmap) estimated
+        elsewhere. (``*_fieldmap.nii[.gz]`` of BIDS).
 
     Outputs
     -------

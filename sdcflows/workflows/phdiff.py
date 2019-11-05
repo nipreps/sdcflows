@@ -38,7 +38,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.phdiff import init_create_phasediff_wf
+        from sdcflows.workflows.phdiff import init_calculate_phasediff_wf
         wf = init_calculate_phasediff_wf(omp_nthreads=1)
 
     **Parameters**:
@@ -47,6 +47,7 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
             Maximum number of threads an individual process may use
         difference : str
             Either 'arctan' or 'unwrapped_subtraction'
+
     **Inputs**:
 
         phase1 : pathlike
@@ -61,6 +62,14 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
             Preprocessed magnitude image
         mask_file : pathlike
             Brain mask image
+
+    **Outputs**:
+        phasediff : pathlike
+            A phasediff image created by subtracting two upwrapped phase images.
+        phasediff_metadata : dict
+            A dictionary containing the metadata for the calculated ``phasediff``.
+            It contains ``Echotime1`` and ``Echotime2`` from the original phase images.
+
     """
     inputnode = pe.Node(
         niu.IdentityInterface(
