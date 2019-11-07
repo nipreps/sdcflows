@@ -62,9 +62,8 @@ def main():
     """Entry point"""
     from os import cpu_count
     from multiprocessing import set_start_method
-    from bids.layout import BIDSLayout
+    # from bids.layout import BIDSLayout
     from nipype import logging as nlogging
-    from ..workflows.base import init_sdc_wf
     set_start_method('forkserver')
 
     opts = get_parser().parse_args()
@@ -95,18 +94,18 @@ def main():
     if not nthreads or nthreads < 1:
         nthreads = cpu_count()
 
-    output_dir = opts.output_dir.resolve()
-    bids_dir = opts.bids_dir or output_dir.parent
+    # output_dir = opts.output_dir.resolve()
+    # bids_dir = opts.bids_dir or output_dir.parent
 
     # Get absolute path to BIDS directory
-    bids_dir = opts.bids_dir.resolve()
-    layout = BIDSLayout(str(bids_dir), validate=False, derivatives=str(output_dir))
-    query = {'suffix': opts.suffix, 'extension': ['.nii', '.nii.gz']}
+    # bids_dir = opts.bids_dir.resolve()
+    # layout = BIDSLayout(str(bids_dir), validate=False, derivatives=str(output_dir))
+    # query = {'suffix': opts.suffix, 'extension': ['.nii', '.nii.gz']}
 
-    for entity in ('subject', 'task', 'dir', 'acquisition', 'run'):
-        arg = getattr(opts, entity, None)
-        if arg is not None:
-            query[entity] = arg
+    # for entity in ('subject', 'task', 'dir', 'acquisition', 'run'):
+    #     arg = getattr(opts, entity, None)
+    #     if arg is not None:
+    #         query[entity] = arg
 
 
 if __name__ == '__main__':

@@ -24,6 +24,8 @@ src/
 
 # git
 .gitignore
+.github/**/*
+.github
 .git/**/*
 .git
 
@@ -34,9 +36,12 @@ out/**/*
 out/
 
 # CI, etc.
-.circleci
 .circleci/**/*
-.zenodo.json
-.travis.yml
+.circleci
+.codecov.yml
+.coveragerc
+.pep8speaks.yml
 .readthedocs.yml
+.travis.yml
+.zenodo.json
 CONTRIBUTING.md

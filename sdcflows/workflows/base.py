@@ -40,12 +40,9 @@ from nipype.interfaces import utility as niu
 from nipype import logging
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.utility import KeySelect
 
 # Fieldmap workflows
 from .pepolar import init_pepolar_unwarp_wf
-from .syn import init_syn_sdc_wf
-from .unwarp import init_sdc_unwarp_wf
 
 LOGGER = logging.getLogger('nipype.workflow')
 FMAP_PRIORITY = {
