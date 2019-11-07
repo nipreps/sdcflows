@@ -1,38 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-.. _sdc_base :
-
-Automatic selection of the appropriate SDC method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the dataset metadata indicate tha more than one field map acquisition is
-``IntendedFor`` (see BIDS Specification section 8.9) the following priority will
-be used:
-
-  1. :ref:`sdc_pepolar` (or **blip-up/blip-down**)
-
-  2. :ref:`sdc_direct_b0`
-
-  3. :ref:`sdc_phasediff`
-
-  4. :ref:`sdc_fieldmapless`
-
-
-Table of behavior (fieldmap use-cases):
-
-=============== =========== ============= ===============
-Fieldmaps found ``use_syn`` ``force_syn``     Action
-=============== =========== ============= ===============
-True            *           True          Fieldmaps + SyN
-True            *           False         Fieldmaps
-False           *           True          SyN
-False           True        False         SyN
-False           False       False         HMC only
-=============== =========== ============= ===============
-
-
-"""
+"""SDC workflows coordination."""
 from collections import defaultdict
 
 from nipype.pipeline import engine as pe
@@ -57,6 +25,8 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 def init_sdc_wf(distorted_ref, omp_nthreads=1, debug=False, ignore=None):
     """
+    Build a :abbr:`SDC (susceptibility distortion correction)` workflow.
+
     This workflow implements the heuristics to choose a
     :abbr:`SDC (susceptibility distortion correction)` strategy.
     When no field map information is present within the BIDS inputs,
@@ -69,70 +39,51 @@ def init_sdc_wf(distorted_ref, omp_nthreads=1, debug=False, ignore=None):
     distortion correction)` method applied is that with the
     highest priority.
 
-    .. workflow::
-        :graph2use: orig
-        :simple_form: yes
+    Parameters
+    ----------
+    distorted_ref : pybids.BIDSFile
+        A BIDSFile object with suffix ``bold``, ``sbref`` or ``dwi``.
+    omp_nthreads : int
+        Maximum number of threads an individual process may use
+    debug : bool
+        Enable debugging outputs
 
-        from sdcflows.workflows.base import init_sdc_wf
-        wf = init_sdc_wf(
-            fmaps=[{
-                'suffix': 'phasediff',
-                'phasediff': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_phasediff.nii.gz',
-                'magnitude1': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude1.nii.gz',
-                'magnitude2': 'sub-03/ses-2/fmap/sub-03_ses-2_run-1_magnitude2.nii.gz',
-            }],
-            bold_meta={
-                'RepetitionTime': 2.0,
-                'SliceTiming': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-                'PhaseEncodingDirection': 'j',
-            },
-        )
+    Inputs
+    ------
+    distorted_ref
+        A reference image calculated at a previous stage
+    ref_brain
+        Same as above, but brain-masked
+    ref_mask
+        Brain mask for the run
+    t1_brain
+        T1w image, brain-masked, for the fieldmap-less SyN method
+    std2anat_xfm
+        List of standard-to-T1w transforms generated during spatial
+        normalization (only for the fieldmap-less SyN method).
+    template : str
+        Name of template from which prior knowledge will be mapped
+        into the subject's T1w reference
+        (only for the fieldmap-less SyN method)
+    templates : str
+        Name of templates that index the ``std2anat_xfm`` input list
+        (only for the fieldmap-less SyN method).
 
-    **Parameters**
-
-        distorted_ref : pybids.BIDSFile
-            A BIDSFile object with suffix ``bold``, ``sbref`` or ``dwi``.
-        omp_nthreads : int
-            Maximum number of threads an individual process may use
-        debug : bool
-            Enable debugging outputs
-
-    **Inputs**
-        distorted_ref
-            A reference image calculated at a previous stage
-        ref_brain
-            Same as above, but brain-masked
-        ref_mask
-            Brain mask for the run
-        t1_brain
-            T1w image, brain-masked, for the fieldmap-less SyN method
-        std2anat_xfm
-            List of standard-to-T1w transforms generated during spatial
-            normalization (only for the fieldmap-less SyN method).
-        template : str
-            Name of template from which prior knowledge will be mapped
-            into the subject's T1w reference
-            (only for the fieldmap-less SyN method)
-        templates : str
-            Name of templates that index the ``std2anat_xfm`` input list
-            (only for the fieldmap-less SyN method).
-
-
-    **Outputs**
-        distorted_ref
-            An unwarped BOLD reference
-        bold_mask
-            The corresponding new mask after unwarping
-        bold_ref_brain
-            Brain-extracted, unwarped BOLD reference
-        out_warp
-            The deformation field to unwarp the susceptibility distortions
-        syn_bold_ref
-            If ``--force-syn``, an unwarped BOLD reference with this
-            method (for reporting purposes)
+    Outputs
+    -------
+    distorted_ref
+        An unwarped BOLD reference
+    bold_mask
+        The corresponding new mask after unwarping
+    bold_ref_brain
+        Brain-extracted, unwarped BOLD reference
+    out_warp
+        The deformation field to unwarp the susceptibility distortions
+    syn_bold_ref
+        If ``--force-syn``, an unwarped BOLD reference with this
+        method (for reporting purposes)
 
     """
-
     if ignore is None:
         ignore = tuple()
 

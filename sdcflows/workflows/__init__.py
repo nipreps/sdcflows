@@ -1,55 +1,36 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+Fieldmap estimation and unwarping workflows.
 
-.. _sdc_estimation :
+.. _sdc_base :
 
-Fieldmap estimation and unwarping workflows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Automatic selection of the appropriate SDC method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the dataset metadata indicate tha more than one field map acquisition is
+``IntendedFor`` (see BIDS Specification section 8.9) the following priority will
+be used:
+
+  1. :ref:`sdc_pepolar` (or **blip-up/blip-down**)
+
+  2. :ref:`sdc_direct_b0`
+
+  3. :ref:`sdc_phasediff`
+
+  4. :ref:`sdc_fieldmapless`
 
 
-.. automodule:: sdcflows.workflows.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
+Table of behavior (fieldmap use-cases):
 
-.. automodule:: sdcflows.workflows.fmap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: sdcflows.workflows.phdiff
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: sdcflows.workflows.pepolar
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: sdcflows.workflows.syn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: sdcflows.workflows.unwarp
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+=============== =========== ============= ===============
+Fieldmaps found ``use_syn`` ``force_syn``     Action
+=============== =========== ============= ===============
+True            *           True          Fieldmaps + SyN
+True            *           False         Fieldmaps
+False           *           True          SyN
+False           True        False         SyN
+False           False       False         HMC only
+=============== =========== ============= ===============
 
 """
-
-from .base import init_sdc_wf
-from .unwarp import init_sdc_unwarp_wf, init_fmap_unwarp_report_wf
-from .pepolar import init_pepolar_unwarp_wf
-from .syn import init_syn_sdc_wf
-
-__all__ = [
-    'init_sdc_wf',
-    'init_sdc_unwarp_wf',
-    'init_fmap_unwarp_report_wf',
-    'init_pepolar_unwarp_wf',
-    'init_syn_sdc_wf',
-]
