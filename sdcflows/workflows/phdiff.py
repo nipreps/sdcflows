@@ -12,9 +12,9 @@ The field inhomogeneity inside the scanner (fieldmap) is proportional to the
 phase drift between two subsequent :abbr:`GRE (gradient recall echo)`
 sequence.
 
+This corresponds to `this section of the BIDS specification
+<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
 
-Fieldmap preprocessing workflow for fieldmap data structure
-8.9.1 in BIDS 1.0.0: one phase diff and at least one magnitude image
 
 """
 
@@ -38,35 +38,36 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     acquisitions. The `original code was taken from nipype
     <https://github.com/nipy/nipype/blob/0.12.1/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.phdiff import init_phdiff_wf
-        wf = init_phdiff_wf(omp_nthreads=1)
+            from sdcflows.workflows.phdiff import init_phdiff_wf
+            wf = init_phdiff_wf(omp_nthreads=1)
 
-    **Parameters**:
+    Parameters
+    ----------
+    omp_nthreads : int
+        Maximum number of threads an individual process may use
 
-        omp_nthreads : int
-            Maximum number of threads an individual process may use
+    Inputs
+    ------
+    magnitude : pathlike
+        Path to the corresponding magnitude path(s).
+    phasediff : pathlike
+        Path to the corresponding phase-difference file.
+    metadata : dict
+        Metadata dictionary corresponding to the phasediff input
 
-    **Inputs**:
-
-        magnitude : pathlike
-            Path to the corresponding magnitude path(s).
-        phasediff : pathlike
-            Path to the corresponding phase-difference file.
-        metadata : dict
-            Metadata dictionary corresponding to the phasediff input
-
-    **Outputs**:
-
-        fmap_ref : pathlike
-            The average magnitude image, skull-stripped
-        fmap_mask : pathlike
-            The brain mask applied to the fieldmap
-        fmap : pathlike
-            The estimated fieldmap in Hz
+    Outputs
+    -------
+    fmap_ref : pathlike
+        The average magnitude image, skull-stripped
+    fmap_mask : pathlike
+        The brain mask applied to the fieldmap
+    fmap : pathlike
+        The estimated fieldmap in Hz
 
     """
     workflow = Workflow(name=name)

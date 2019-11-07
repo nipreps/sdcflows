@@ -1,10 +1,15 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+Datasets with multiple phase encoded directions.
+
 .. _sdc_pepolar :
 
-Phase Encoding POLARity (*PEPOLAR*) techniques
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:abbr:`PEPOLAR (Phase Encoding POLARity)` techniques
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This corresponds to `this section of the BIDS specification
+<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
 
 """
 
@@ -29,73 +34,72 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
     direction than the target file and calculates a displacements field
     (in other words, an ANTs-compatible warp file).
 
-    This procedure works if there is only one '_epi' file is present
+    This procedure works if there is only one ``_epi`` file is present
     (as long as it has the opposite phase encoding direction to the target
     file). The target file will be used to estimate the field distortion.
-    However, if there is another '_epi' file present with a matching
+    However, if there is another ``_epi`` file present with a matching
     phase encoding direction to the target it will be used instead.
 
-    Currently, different phase encoding dimension in the target file and the
-    '_epi' file(s) (for example 'i' and 'j') is not supported.
+    Currently, different phase encoding directions in the target file and the
+    ``_epi`` file(s) (for example, ``i`` and ``j``) is not supported.
 
     The warp field correcting for the distortions is estimated using AFNI's
-    3dQwarp, with displacement estimation limited to the target file phase
+    ``3dQwarp``, with displacement estimation limited to the target file phase
     encoding direction.
 
     It also calculates a new mask for the input dataset that takes into
     account the distortions.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.pepolar import init_pepolar_unwarp_wf
-        wf = init_pepolar_unwarp_wf()
+            from sdcflows.workflows.pepolar import init_pepolar_unwarp_wf
+            wf = init_pepolar_unwarp_wf()
 
+    Parameters
+    ----------
+    matched_pe : bool
+        Whether the input ``fmaps_epi`` will contain images with matched
+        PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
+        to determine whether they exist or not.
+    name : str
+        Name for this workflow
+    omp_nthreads : int
+        Parallelize internal tasks across the number of CPUs given by this option.
 
-    **Parameters**:
+    Inputs
+    ------
+    fmaps_epi : list of tuple(pathlike, str)
+        The list of EPI images that will be used in PE-Polar correction, and
+        their corresponding ``PhaseEncodingDirection`` metadata.
+        The workflow will use the ``bold_pe_dir`` input to separate out those
+        EPI acquisitions with opposed PE blips and those with matched PE blips
+        (the latter could be none, and ``in_reference_brain`` would then be
+        used). The workflow raises a ``ValueError`` when no images with
+        opposed PE blips are found.
+    bold_pe_dir : str
+        The baseline PE direction.
+    in_reference : pathlike
+        The baseline reference image (must correspond to ``bold_pe_dir``).
+    in_reference_brain : pathlike
+        The reference image above, but skullstripped.
+    in_mask : pathlike
+        Not used, present only for consistency across fieldmap estimation
+        workflows.
 
-        matched_pe : bool
-            Whether the input ``fmaps_epi`` will contain images with matched
-            PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
-            to determine whether they exist or not.
-        name : str
-            Name for this workflow
-        omp_nthreads : int
-            Parallelize internal tasks across the number of CPUs given by this option.
-
-    **Inputs**:
-
-        fmaps_epi : list of tuple(pathlike, str)
-            The list of EPI images that will be used in PE-Polar correction, and
-            their corresponding ``PhaseEncodingDirection`` metadata.
-            The workflow will use the ``bold_pe_dir`` input to separate out those
-            EPI acquisitions with opposed PE blips and those with matched PE blips
-            (the latter could be none, and ``in_reference_brain`` would then be
-            used). The workflow raises a ``ValueError`` when no images with
-            opposed PE blips are found.
-        bold_pe_dir : str
-            The baseline PE direction.
-        in_reference : pathlike
-            The baseline reference image (must correspond to ``bold_pe_dir``).
-        in_reference_brain : pathlike
-            The reference image above, but skullstripped.
-        in_mask : pathlike
-            Not used, present only for consistency across fieldmap estimation
-            workflows.
-
-
-    **Outputs**:
-
-        out_reference : pathlike
-            The ``in_reference`` after unwarping
-        out_reference_brain : pathlike
-            The ``in_reference`` after unwarping and skullstripping
-        out_warp : pathlike
-            The corresponding :abbr:`DFM (displacements field map)` compatible with
-            ANTs.
-        out_mask : pathlike
-            Mask of the unwarped input file
+    Outputs
+    -------
+    out_reference : pathlike
+        The ``in_reference`` after unwarping
+    out_reference_brain : pathlike
+        The ``in_reference`` after unwarping and skullstripping
+    out_warp : pathlike
+        The corresponding :abbr:`DFM (displacements field map)` compatible with
+        ANTs.
+    out_mask : pathlike
+        Mask of the unwarped input file
 
     """
     workflow = Workflow(name=name)
@@ -176,41 +180,40 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
     and AFNI ``3dUnifize``, skullstripping using FSL BET and AFNI ``3dAutomask``,
     and rigid coregistration to the reference using ANTs.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.pepolar import init_prepare_epi_wf
-        wf = init_prepare_epi_wf(omp_nthreads=8)
+            from sdcflows.workflows.pepolar import init_prepare_epi_wf
+            wf = init_prepare_epi_wf(omp_nthreads=8)
 
+    Parameters
+    ----------
+    matched_pe : bool
+        Whether the input ``fmaps_epi`` will contain images with matched
+        PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
+        to determine whether they exist or not.
+    name : str
+        Name for this workflow
+    omp_nthreads : int
+        Parallelize internal tasks across the number of CPUs given by this option.
 
-    **Parameters**:
+    Inputs
+    ------
+    epi_pe : str
+        Phase-encoding direction of the EPI image to be corrected.
+    maps_pe : list of tuple(pathlike, str)
+        list of 3D or 4D NIfTI images
+    ref_brain
+        coregistration reference (skullstripped and bias field corrected)
 
-        matched_pe : bool
-            Whether the input ``fmaps_epi`` will contain images with matched
-            PE blips or not. Please use :func:`sdcflows.workflows.pepolar.check_pes`
-            to determine whether they exist or not.
-        name : str
-            Name for this workflow
-        omp_nthreads : int
-            Parallelize internal tasks across the number of CPUs given by this option.
-
-    **Inputs**:
-
-        epi_pe : str
-            Phase-encoding direction of the EPI image to be corrected.
-        maps_pe : list of tuple(pathlike, str)
-            list of 3D or 4D NIfTI images
-        ref_brain
-            coregistration reference (skullstripped and bias field corrected)
-
-    **Outputs**:
-
-        opposed_pe : pathlike
-            single 3D NIfTI file
-        matched_pe : pathlike
-            single 3D NIfTI file
-
+    Outputs
+    -------
+    opposed_pe : pathlike
+        single 3D NIfTI file
+    matched_pe : pathlike
+        single 3D NIfTI file
 
     """
     inputnode = pe.Node(niu.IdentityInterface(fields=['epi_pe', 'maps_pe', 'ref_brain']),
@@ -344,15 +347,15 @@ def _split_epi_lists(in_files, pe_dir, max_trs=50):
     """
     Split input EPIs and generate an output list of PEs.
 
-    **Inputs**:
-
-        in_files : list of ``BIDSFile``s
-            The EPI images that will be pooled into field estimation.
-        pe_dir : str
-            The phase-encoding direction of the IntendedFor EPI scan.
-        max_trs : int
-            Index of frame after which all volumes will be discarded
-            from the input EPI images.
+    Inputs
+    ------
+    in_files : list of ``BIDSFile``s
+        The EPI images that will be pooled into field estimation.
+    pe_dir : str
+        The phase-encoding direction of the IntendedFor EPI scan.
+    max_trs : int
+        Index of frame after which all volumes will be discarded
+        from the input EPI images.
 
     """
     from os import path as op

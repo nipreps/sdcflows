@@ -24,7 +24,7 @@ from nipype.interfaces.base import (
 LOGGER = logging.getLogger('nipype.interface')
 
 
-class FieldEnhanceInputSpec(BaseInterfaceInputSpec):
+class _FieldEnhanceInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     in_mask = File(exists=True, desc='brain mask')
     in_magnitude = File(exists=True, desc='input magnitude')
@@ -36,18 +36,16 @@ class FieldEnhanceInputSpec(BaseInterfaceInputSpec):
     num_threads = traits.Int(1, usedefault=True, nohash=True, desc='number of jobs')
 
 
-class FieldEnhanceOutputSpec(TraitedSpec):
+class _FieldEnhanceOutputSpec(TraitedSpec):
     out_file = File(desc='the output fieldmap')
     out_unwrapped = File(desc='unwrapped fieldmap')
 
 
 class FieldEnhance(SimpleInterface):
-    """
-    The FieldEnhance interface wraps a workflow to massage the input fieldmap
-    and return it masked, despiked, etc.
-    """
-    input_spec = FieldEnhanceInputSpec
-    output_spec = FieldEnhanceOutputSpec
+    """Massage the input fieldmap (masking, despiking, etc.)."""
+
+    input_spec = _FieldEnhanceInputSpec
+    output_spec = _FieldEnhanceOutputSpec
 
     def _run_interface(self, runtime):
         from scipy import ndimage as sim
@@ -133,22 +131,21 @@ class FieldEnhance(SimpleInterface):
         return runtime
 
 
-class FieldToRadSInputSpec(BaseInterfaceInputSpec):
+class _FieldToRadSInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     fmap_range = traits.Float(desc='range of input field map')
 
 
-class FieldToRadSOutputSpec(TraitedSpec):
+class _FieldToRadSOutputSpec(TraitedSpec):
     out_file = File(desc='the output fieldmap')
     fmap_range = traits.Float(desc='range of input field map')
 
 
 class FieldToRadS(SimpleInterface):
-    """
-    The FieldToRadS converts from arbitrary units to rad/s
-    """
-    input_spec = FieldToRadSInputSpec
-    output_spec = FieldToRadSOutputSpec
+    """Convert from arbitrary units to rad/s."""
+
+    input_spec = _FieldToRadSInputSpec
+    output_spec = _FieldToRadSOutputSpec
 
     def _run_interface(self, runtime):
         fmap_range = None
@@ -159,21 +156,20 @@ class FieldToRadS(SimpleInterface):
         return runtime
 
 
-class FieldToHzInputSpec(BaseInterfaceInputSpec):
+class _FieldToHzInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     range_hz = traits.Float(mandatory=True, desc='range of input field map')
 
 
-class FieldToHzOutputSpec(TraitedSpec):
+class _FieldToHzOutputSpec(TraitedSpec):
     out_file = File(desc='the output fieldmap')
 
 
 class FieldToHz(SimpleInterface):
-    """
-    The FieldToHz converts from arbitrary units to Hz
-    """
-    input_spec = FieldToHzInputSpec
-    output_spec = FieldToHzOutputSpec
+    """Convert from arbitrary units to Hz."""
+
+    input_spec = _FieldToHzInputSpec
+    output_spec = _FieldToHzOutputSpec
 
     def _run_interface(self, runtime):
         self._results['out_file'] = _tohz(
@@ -181,21 +177,20 @@ class FieldToHz(SimpleInterface):
         return runtime
 
 
-class Phasediff2FieldmapInputSpec(BaseInterfaceInputSpec):
+class _Phasediff2FieldmapInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     metadata = traits.Dict(mandatory=True, desc='BIDS metadata dictionary')
 
 
-class Phasediff2FieldmapOutputSpec(TraitedSpec):
+class _Phasediff2FieldmapOutputSpec(TraitedSpec):
     out_file = File(desc='the output fieldmap')
 
 
 class Phasediff2Fieldmap(SimpleInterface):
-    """
-    Convert a phase difference map into a fieldmap in Hz
-    """
-    input_spec = Phasediff2FieldmapInputSpec
-    output_spec = Phasediff2FieldmapOutputSpec
+    """Convert a phase difference map into a fieldmap in Hz."""
+
+    input_spec = _Phasediff2FieldmapInputSpec
+    output_spec = _Phasediff2FieldmapOutputSpec
 
     def _run_interface(self, runtime):
         self._results['out_file'] = phdiff2fmap(
@@ -206,10 +201,7 @@ class Phasediff2Fieldmap(SimpleInterface):
 
 
 def _despike2d(data, thres, neigh=None):
-    """
-    despiking as done in FSL fugue
-    """
-
+    """Despike axial slices, as done in FSL's ``epiunwarp``."""
     if neigh is None:
         neigh = [-1, 0, 1]
     nslices = data.shape[-1]
@@ -262,8 +254,10 @@ def _unwrap(fmap_data, mag_file, mask=None):
 
 
 def get_ees(in_meta, in_file=None):
-    """
-    Calculate the *effective echo spacing* :math:`t_\\text{ees}`
+    r"""
+    Extract the *effective echo spacing* :math:`t_\text{ees}` from BIDS.
+
+    Calculate the *effective echo spacing* :math:`t_\text{ees}`
     for an input :abbr:`EPI (echo-planar imaging)` scan.
 
 
@@ -278,18 +272,18 @@ def get_ees(in_meta, in_file=None):
     >>> get_ees(meta)
     0.00059
 
-    If the *total readout time* :math:`T_\\text{ro}` (``TotalReadoutTime``
+    If the *total readout time* :math:`T_\text{ro}` (``TotalReadoutTime``
     BIDS field) is provided, then the effective echo spacing can be
-    calculated reading the number of voxels :math:`N_\\text{PE}` along the
+    calculated reading the number of voxels :math:`N_\text{PE}` along the
     readout direction and the parallel acceleration
     factor of the EPI
 
       .. math ::
 
-           =  T_\\text{ro} \\,  (N_\\text{PE} / f_\\text{acc} - 1)^{-1}
+           =  T_\text{ro} \,  (N_\text{PE} / f_\text{acc} - 1)^{-1}
 
     where :math:`N_y` is the number of pixels along the phase-encoding direction
-    :math:`y`, and :math:`f_\\text{acc}` is the parallel imaging acceleration factor
+    :math:`y`, and :math:`f_\text{acc}` is the parallel imaging acceleration factor
     (:abbr:`GRAPPA (GeneRalized Autocalibrating Partial Parallel Acquisition)`,
     :abbr:`ARC (Autocalibrating Reconstruction for Cartesian imaging)`, etc.).
 
@@ -299,9 +293,9 @@ def get_ees(in_meta, in_file=None):
     >>> get_ees(meta, in_file='epi.nii.gz')
     0.00059
 
-    Some vendors, like Philips, store different parameter names
-    (see http://dbic.dartmouth.edu/pipermail/mrusers/attachments/\
-20141112/eb1d20e6/attachment.pdf):
+    Some vendors, like Philips, store different parameter names (see
+    http://dbic.dartmouth.edu/pipermail/mrusers/attachments/20141112/eb1d20e6/attachment.pdf
+    ):
 
     >>> meta = {'WaterFatShift': 8.129,
     ...         'MagneticFieldStrength': 3,
@@ -343,10 +337,11 @@ def get_ees(in_meta, in_file=None):
 
 
 def get_trt(in_meta, in_file=None):
-    """
+    r"""
+    Extract the *total readout time* :math:`t_\text{RO}` from BIDS.
+
     Calculate the *total readout time* for an input
     :abbr:`EPI (echo-planar imaging)` scan.
-
 
     There are several procedures to calculate the total
     readout time. The basic one is that a ``TotalReadoutTime``
@@ -358,15 +353,15 @@ def get_trt(in_meta, in_file=None):
     >>> get_trt(meta)
     0.02596
 
-    If the *effective echo spacing* :math:`t_\\text{ees}`
+    If the *effective echo spacing* :math:`t_\text{ees}`
     (``EffectiveEchoSpacing`` BIDS field) is provided, then the
     total readout time can be calculated reading the number
-    of voxels along the readout direction :math:`T_\\text{ro}`
-    and the parallel acceleration factor of the EPI :math:`f_\\text{acc}`.
+    of voxels along the readout direction :math:`T_\text{ro}`
+    and the parallel acceleration factor of the EPI :math:`f_\text{acc}`.
 
       .. math ::
 
-          T_\\text{ro} = t_\\text{ees} \\, (N_\\text{PE} / f_\\text{acc} - 1)
+          T_\text{ro} = t_\text{ees} \, (N_\text{PE} / f_\text{acc} - 1)
 
     >>> meta = {'EffectiveEchoSpacing': 0.00059,
     ...         'PhaseEncodingDirection': 'j-',
@@ -384,7 +379,6 @@ def get_trt(in_meta, in_file=None):
     0.018721183563864822
 
     """
-
     # Use case 1: TRT is defined
     trt = in_meta.get('TotalReadoutTime', None)
     if trt is not None:
@@ -422,12 +416,13 @@ def _get_pe_index(meta):
 
 def _torads(in_file, fmap_range=None, newpath=None):
     """
-    Convert a field map to rad/s units
+    Convert a field map to rad/s units.
 
     If fmap_range is None, the range of the fieldmap
     will be automatically calculated.
 
     Use fmap_range=0.5 to convert from Hz to rad/s
+
     """
     from math import pi
     import nibabel as nb
@@ -447,7 +442,7 @@ def _torads(in_file, fmap_range=None, newpath=None):
 
 
 def _tohz(in_file, range_hz, newpath=None):
-    """Convert a field map to Hz units"""
+    """Convert a field map to Hz units."""
     from math import pi
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -464,8 +459,9 @@ def _tohz(in_file, range_hz, newpath=None):
 
 def phdiff2fmap(in_file, delta_te, newpath=None):
     r"""
-    Converts the input phase-difference map into a fieldmap in Hz,
-    using the eq. (1) of [Hutton2002]_:
+    Convert the input phase-difference map into a fieldmap in Hz.
+
+    Uses eq. (1) of [Hutton2002]_:
 
     .. math::
 
@@ -478,6 +474,13 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
     .. math::
 
         \Delta B_0 (\text{Hz}) = \frac{\Delta \Theta}{2\pi \Delta\text{TE}}
+
+    References
+    ----------
+    .. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
+      Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
+      <https://doi.org/10.1006/nimg.2001.1054>`_.
+
 
     """
     import math

@@ -1,6 +1,8 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """
+Estimating the susceptibility distortions without fieldmaps.
+
 .. _sdc_fieldmapless :
 
 Fieldmap-less estimation (experimental)
@@ -41,6 +43,8 @@ LOGGER = logging.getLogger('nipype.workflow')
 def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
                     atlas_threshold=3, name='syn_sdc_wf'):
     """
+    Build the *fieldmap-less* susceptibility-distortion estimation workflow.
+
     This workflow takes a skull-stripped T1w image and reference BOLD image and
     estimates a susceptibility distortion correction warp, using ANTs symmetric
     normalization (SyN) and the average fieldmap atlas described in
@@ -55,42 +59,58 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
     This technique is a variation on those developed in [Huntenburg2014]_ and
     [Wang2017]_.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.syn import init_syn_sdc_wf
-        wf = init_syn_sdc_wf(
-            bold_pe='j',
-            omp_nthreads=8)
+            from sdcflows.workflows.syn import init_syn_sdc_wf
+            wf = init_syn_sdc_wf(
+                bold_pe='j',
+                omp_nthreads=8)
 
-    **Inputs**
+    Inputs
+    ------
+    bold_ref
+        reference image
+    bold_ref_brain
+        skull-stripped reference image
+    template : str
+        Name of template targeted by ``template`` output space
+    t1_brain
+        skull-stripped, bias-corrected structural image
+    std2anat_xfm
+        inverse registration transform of T1w image to MNI template
 
-        bold_ref
-            reference image
-        bold_ref_brain
-            skull-stripped reference image
-        template : str
-            Name of template targeted by ``template`` output space
-        t1_brain
-            skull-stripped, bias-corrected structural image
-        std2anat_xfm
-            inverse registration transform of T1w image to MNI template
+    Outputs
+    -------
+    out_reference
+        the ``bold_ref`` image after unwarping
+    out_reference_brain
+        the ``bold_ref_brain`` image after unwarping
+    out_warp
+        the corresponding :abbr:`DFM (displacements field map)` compatible with
+        ANTs
+    out_mask
+        mask of the unwarped input file
 
-    **Outputs**
-
-        out_reference
-            the ``bold_ref`` image after unwarping
-        out_reference_brain
-            the ``bold_ref_brain`` image after unwarping
-        out_warp
-            the corresponding :abbr:`DFM (displacements field map)` compatible with
-            ANTs
-        out_mask
-            mask of the unwarped input file
+    References
+    ----------
+    .. [Treiber2016] Treiber, J. M. et al. (2016) Characterization and Correction
+        of Geometric Distortions in 814 Diffusion Weighted Images,
+        PLoS ONE 11(3): e0152472. doi:`10.1371/journal.pone.0152472
+        <https://doi.org/10.1371/journal.pone.0152472>`_.
+    .. [Wang2017] Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
+        Registration Methods for Correction of Susceptibility Artifacts
+        in Diffusion MRI. Front. Neuroinform. 11:17.
+        doi:`10.3389/fninf.2017.00017
+        <https://doi.org/10.3389/fninf.2017.00017>`_.
+    .. [Huntenburg2014] Huntenburg, J. M. (2014) Evaluating Nonlinear
+        Coregistration of BOLD EPI and T1w Images. Berlin: Master
+        Thesis, Freie Universität. `PDF
+        <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`_.
 
     """
-
     if bold_pe is None or bold_pe[0] not in ['i', 'j']:
         LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior).')
         bold_pe = 'j'
@@ -199,7 +219,7 @@ template [@fieldmapless3].
 
 
 def _prior_path(template):
-    """Selects an appropriate input xform, based on template"""
+    """Select an appropriate input xform, based on template."""
     from pkg_resources import resource_filename
     return resource_filename(
         'sdcflows', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
