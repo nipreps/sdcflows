@@ -2,68 +2,91 @@ version: 2
 jobs:
 
   build:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/src/sdcflows
     environment:
-      - TZ: "/usr/share/zoneinfo/America/Los_Angeles"
-
-    docker:
-      - image: docker:18.01.0-ce-git
-    working_directory: /tmp/src/
+      TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+      SCRATCH: "/scratch"
     steps:
-      - run:
-          name: Install parallel gzip and python3
-          command: apk add --no-cache pigz python3
       - restore_cache:
           keys:
-            - docker-v1-{{ .Branch }}-{{ epoch }}
-            - docker-v1-{{ .Branch }}-
-            - docker-v1-master-
-            - docker-v1-
+            - build-v1-{{ .Branch }}-{{ epoch }}
+            - build-v1-{{ .Branch }}-
+            - build-v1-master-
+            - build-v1-
           paths:
-            - /tmp/cache/docker.tar.gz
-
-      - checkout
-      - setup_remote_docker
+            - /tmp/docker
       - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
+          name: Set-up a Docker registry
           command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+            docker run -d -p 5000:5000 --restart=always --name=registry \
+                -v /tmp/docker:/var/lib/registry registry:2
+      - run:
+          name: Pull images
+          command: |
+            set +e
+            docker pull localhost:5000/ubuntu
+            success=$?
+            set -e
+            if [[ "$success" = "0" ]]; then
+                echo "Pulling from local registry"
+                docker tag localhost:5000/ubuntu ubuntu:xenial-20191010
+                docker pull localhost:5000/sdcflows
+                docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
+                docker tag localhost:5000/sdcflows poldracklab/sdcflows
+            else
+                echo "Pulling from Docker Hub"
+                docker pull ubuntu:xenial-20191010
+                docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
+                docker push localhost:5000/ubuntu
+                docker pull poldracklab/sdcflows:latest
             fi
-            docker images
+      - checkout
       - run:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
+            export PY3=$(pyenv versions | grep '3\.' |
+                         sed -e 's/.* 3\./3./' -e 's/ .*//')
+            pyenv local $PY3
+            # Get version, update files.
+            THISVERSION=$( python3 get_version.py )
+            if [[ ${THISVERSION:0:1} == "0" ]] ; then
+              echo "WARNING: latest git tag could not be found"
+              echo "Please, make sure you fetch all tags from upstream with"
+              echo "the command ``git fetch --tags --verbose`` and push"
+              echo "them to your fork with ``git push origin --tags``"
+            fi
             # Build docker image
             e=1 && for i in {1..5}; do
-              docker build \
+              docker build --rm \
                 --cache-from=poldracklab/sdcflows \
-                --rm=false \
                 -t poldracklab/sdcflows:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
-                --build-arg VERSION="${CIRCLE_TAG:-unstable}" . \
+                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
       - run:
-          name: Docker save
+          name: Docker push to local registry
           no_output_timeout: 40m
           command: |
-            mkdir -p /tmp/cache
-            docker save ubuntu:xenial-20161213 poldracklab/sdcflows:latest \
-              | pigz -2 -p 3 > /tmp/cache/docker.tar.gz
+            docker tag poldracklab/sdcflows:latest localhost:5000/sdcflows
+            docker push localhost:5000/sdcflows
+      - run:
+          name: Docker registry garbage collection
+          command: |
+            docker exec -it registry /bin/registry garbage-collect --delete-untagged \
+                /etc/docker/registry/config.yml
+      - save_cache:
+         key: build-v1-{{ .Branch }}-{{ epoch }}
+         paths:
+            - /tmp/docker
       - persist_to_workspace:
           root: /tmp
           paths:
-            - cache/docker.tar.gz
-
-      - save_cache:
-         key: docker-v1-{{ .Branch }}-{{ epoch }}
-         paths:
-            - /tmp/cache/docker.tar.gz
+            - src/sdcflows
 
   cache_test_data:
     machine:
@@ -146,24 +169,29 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp
-      - checkout:
-          path: /tmp/src/sdcflows
       - restore_cache:
           keys:
             - workdir-v1-{{ .Branch }}-
             - workdir-v1-master-
             - workdir-v1-
+      - restore_cache:
+          keys:
+            - build-v1-{{ .Branch }}-{{ epoch }}
+            - build-v1-{{ .Branch }}-
+            - build-v1-master-
+            - build-v1-
+          paths:
+            - /tmp/docker
       - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
+          name: Set-up a Docker registry
           command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
+            docker run -d -p 5000:5000 --restart=always --name=registry \
+                -v /tmp/docker:/var/lib/registry registry:2
+      - run:
+          name: Pull images from local registry
+          command: |
+            docker pull localhost:5000/sdcflows
+            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
       - run:
           name: Run tests
           no_output_timeout: 2h
@@ -176,36 +204,38 @@ jobs:
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
-
-      - store_artifacts:
-          path: /tmp/tests
-      - store_artifacts:
-          path: /tmp/work
-      - store_test_results:
-          path: /tmp/tests
       - save_cache:
          key: workdir-v1-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - /tmp/work
+      - store_artifacts:
+          path: /tmp/tests
+      - store_test_results:
+          path: /tmp/tests
 
   deploy_docker:
     machine:
       image: circleci/classic:201711-01
     working_directory: /tmp/src/
     steps:
-      - attach_workspace:
-          at: /tmp
+      - restore_cache:
+          keys:
+            - build-v1-{{ .Branch }}-{{ epoch }}
+            - build-v1-{{ .Branch }}-
+            - build-v1-master-
+            - build-v1-
+          paths:
+            - /tmp/docker
       - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
+          name: Set-up a Docker registry
           command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
+            docker run -d -p 5000:5000 --restart=always --name=registry \
+                -v /tmp/docker:/var/lib/registry registry:2
+      - run:
+          name: Pull images from local registry
+          command: |
+            docker pull localhost:5000/sdcflows
+            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
       - run:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
@@ -328,10 +358,16 @@ workflows:
     jobs:
       - build:
           filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
             tags:
               only: /.*/
       - cache_test_data:
           filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
             tags:
               only: /.*/
 
@@ -340,12 +376,19 @@ workflows:
             - build
             - cache_test_data
           filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
             tags:
               only: /.*/
 
 
       - test_package:
           filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+                - /tests?\/.*/
             tags:
               only: /.*/
 
