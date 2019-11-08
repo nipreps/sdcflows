@@ -1,5 +1,5 @@
 """Test pepolar type of fieldmaps."""
-from os import cpu_count, getcwd
+from os import cpu_count
 import pytest
 from niworkflows.interfaces.bids import DerivativesDataSink
 from nipype.pipeline import engine as pe
