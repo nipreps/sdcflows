@@ -193,9 +193,9 @@ jobs:
           at: /tmp
       - restore_cache:
           keys:
-            - workdir-v1-{{ .Branch }}-
-            - workdir-v1-master-
-            - workdir-v1-
+            - workdir-v2-{{ .Branch }}-
+            - workdir-v2-master-
+            - workdir-v2-
       - restore_cache:
           keys:
             - build-v1-{{ .Branch }}-{{ epoch }}
@@ -227,7 +227,7 @@ jobs:
                    -w /work poldracklab/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
       - save_cache:
-         key: workdir-v1-{{ .Branch }}-{{ .BuildNum }}
+         key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - /tmp/work
       - store_artifacts:
