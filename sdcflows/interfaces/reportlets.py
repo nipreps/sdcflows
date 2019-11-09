@@ -10,7 +10,7 @@ from nipype.interfaces.mixins import reporting
 from ..viz.utils import plot_registration, coolwarm_transparent
 
 
-class FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
+class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
     reference = File(exists=True, mandatory=True, desc='input reference')
     fieldmap = File(exists=True, mandatory=True, desc='input fieldmap')
     mask = File(exists=True, desc='brain mask')
@@ -22,7 +22,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
     """An abstract mixin to registration nipype interfaces."""
 
     _n_cuts = 7
-    input_spec = FieldmapReportletInputSpec
+    input_spec = _FieldmapReportletInputSpec
     output_spec = reporting.ReportCapableOutputSpec
 
     def __init__(self, **kwargs):

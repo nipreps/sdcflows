@@ -1,6 +1,28 @@
+docs_deploy: &docs
+  docker:
+    - image: node:8.10.0
+  steps:
+    - checkout
+    - attach_workspace:
+        at: docs/_build
+    - run:
+        name: Disable jekyll builds
+        command: touch docs/_build/html/.nojekyll
+    - run:
+        name: Install and configure dependencies
+        command: |
+          npm install -g --silent gh-pages@2.0.1
+          git config user.email "crn.poldracklab@gmail.com"
+          git config user.name "ci-build"
+    - add_ssh_keys:
+        fingerprints:
+          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
+    - run:
+        name: Deploy docs to gh-pages branch
+        command: gh-pages --dotfiles --message "doc(update) [skip ci]" --dist docs/_build/html
+
 version: 2
 jobs:
-
   build:
     machine:
       image: circleci/classic:201711-01
@@ -213,6 +235,58 @@ jobs:
       - store_test_results:
           path: /tmp/tests
 
+  build_docs:
+    docker:
+      - image: python:3.7.4
+    environment:
+      - FSLOUTPUTTYPE: NIFTI
+      - SUBJECTS_DIR: /tmp/subjects
+    steps:
+      - restore_cache:
+          keys:
+            - docs-v1-{{ .Branch }}-{{ .Revision }}
+            - docs-v1-{{ .Branch }}-
+            - docs-v1-master
+            - docs-v1-
+          paths:
+            - ./docs/_build/_html
+      - checkout
+      - run:
+          name: Create subjects folder
+          command: mkdir -p $SUBJECTS_DIR
+      - run:
+          name: Install Graphviz
+          command: apt update && apt -y install graphviz
+      - run:
+          name: Install deps
+          command: pip install --no-cache-dir -r docs/requirements.txt
+      - run:
+          name: Build only this commit
+          command: make -C docs SPHINXOPTS="-W" BUILDDIR="_build/no_version_html" html
+      - store_artifacts:
+          path: ./docs/_build/no_version_html
+      - run:
+          name: Generate Versioned Docs
+          command: |
+            set +e
+            force_versioned="$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[docs?[ _]?versions?\]' )"
+            set -e
+            if [[ "x${CIRCLE_TAG}" = "x" && "${CIRCLE_BRANCH}" != "master" && "x${force_versioned}" = "x" ]]; then
+              echo "Not a tag or master branch - skipping versioned docs."
+              circleci step halt
+            else
+              make -f ./docs/Makefile versioned CURBRANCH=${CIRCLE_TAG:-$CIRCLE_BRANCH}
+            fi
+      - save_cache:
+          key: docs-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ./docs/_build/_html
+      - persist_to_workspace:
+          root: docs/_build
+          paths: html
+      - store_artifacts:
+          path: ./docs/_build/html
+
   deploy_docker:
     machine:
       image: circleci/classic:201711-01
@@ -352,6 +426,12 @@ jobs:
             source /tmp/build/bin/activate
             twine upload dist/sdcflows*
 
+  deploy_docs_tag:
+    <<: *docs
+
+  deploy_docs_master:
+    <<: *docs
+
 workflows:
   version: 2
   build_deploy:
@@ -382,7 +462,6 @@ workflows:
             tags:
               only: /.*/
 
-
       - test_package:
           filters:
             branches:
@@ -395,6 +474,7 @@ workflows:
       - deploy_pypi:
           requires:
             - build
+            - build_docs
             - test_package
             - test_sdcflows
           filters:
@@ -405,8 +485,37 @@ workflows:
 
       - deploy_docker:
           requires:
-            - build
             - deploy_pypi
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+
+      - build_docs:
+          filters:
+            branches:
+              ignore:
+                - /tests?\/.*/
+                - /ds005\/.*/
+                - /ds054\/.*/
+            tags:
+              only: /.*/
+
+      - deploy_docs_master:
+          requires:
+            - test_sdcflows
+            - test_package
+            - build_docs
+          filters:
+            branches:
+              only: /master/
+            tags:
+              ignore: /.*/
+
+      - deploy_docs_tag:
+          requires:
+            - deploy_docker
           filters:
             branches:
               ignore: /.*/
