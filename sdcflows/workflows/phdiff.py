@@ -129,7 +129,7 @@ def init_phdiff_wf(omp_nthreads, fmap_bspline, create_phasediff=False, name='phd
             :simple_form: yes
 
             from sdcflows.workflows.phdiff import init_phdiff_wf
-            wf = init_phdiff_wf(omp_nthreads=1)
+            wf = init_phdiff_wf(omp_nthreads=1, fmap_bspline=False)
 
     Parameters
     ----------
@@ -240,7 +240,7 @@ further improvements of HCP Pipelines [@hcppipelines].
         (inputnode, prepare_magnitude_wf, [('magnitude', 'inputnode.magnitude')]),
         (preprocessed_phasediff, fmap_postproc_wf, [('phasediff', 'inputnode.fmap')]),
         (prepare_magnitude_wf, fmap_postproc_wf, [
-            ('outputnode.fmap_mask', 'inputnode.mask_file')]),
+            ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
         (fmap_postproc_wf, compfmap, [('outputnode.out_fmap', 'in_file')]),
         (preprocessed_phasediff, compfmap, [('phasediff_metadata', 'metadata')]),
         (compfmap, outputnode, [('out_file', 'fmap')]),
