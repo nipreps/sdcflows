@@ -14,7 +14,7 @@ images and cleaning up the fieldmaps created from the phases or phasediff.
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl, ants
-from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+from niflow.nipype1.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
@@ -34,6 +34,7 @@ def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
         .. workflow ::
             :graph2use: orig
             :simple_form: yes
+
             from sdcflows.workflows.fmap import init_prepare_magnitude_wf
             wf = init_prepare_magnitude_wf(omp_nthreads=6)
 
@@ -97,8 +98,9 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
         .. workflow ::
             :graph2use: orig
             :simple_form: yes
+
             from sdcflows.workflows.fmap import init_fmap_postproc_wf
-            wf = init_fmap_postproc_wf(omp_nthreads=6)
+            wf = init_fmap_postproc_wf(omp_nthreads=6, fmap_bspline=False)
 
     Parameters
     ----------
@@ -114,7 +116,7 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
 
     Inputs
     ------
-    mask_file : pathlike
+    fmap_mask : pathlike
         A brain binary mask corresponding to this fieldmap.
     fmap_ref : pathlike
         A preprocessed magnitude/reference image for the fieldmap.
@@ -129,7 +131,7 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
     """
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['mask_file', 'fmap_ref', 'fmap']), name='inputnode')
+        fields=['fmap_mask', 'fmap_ref', 'fmap']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_fmap']),
                          name='outputnode')
     if fmap_bspline:
@@ -139,7 +141,7 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
             name='fmapenh', mem_gb=4, n_procs=omp_nthreads)
 
         workflow.connect([
-            (inputnode, fmapenh, [('mask_file', 'in_mask'),
+            (inputnode, fmapenh, [('fmap_mask', 'in_mask'),
                                   ('fmap_ref', 'in_magnitude'),
                                   ('fmap_hz', 'in_file')]),
             (fmapenh, outputnode, [('out_file', 'out_fmap')]),
@@ -156,9 +158,9 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
             (inputnode, denoise, [('fmap', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
             (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
-            (inputnode, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
+            (inputnode, cleanup_wf, [('fmap_mask', 'inputnode.in_mask')]),
             (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
-            (inputnode, applymsk, [('mask_file', 'mask_file')]),
+            (inputnode, applymsk, [('fmap_mask', 'mask_file')]),
             (applymsk, outputnode, [('out_file', 'out_fmap')]),
         ])
 

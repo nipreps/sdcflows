@@ -599,17 +599,21 @@ def rescale_phase_image(phase_data):
     From the `FUGUE User guide
     <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide>`__:
 
-        If you have separate phase volumes that are in integer format then do:
-        ::
+        | If you have separate phase volumes that are in integer format then do:
+
+        .. code-block:: shell
+
             fslmaths orig_phase0 -mul 3.14159 -div 2048 phase0_rad -odt float
             fslmaths orig_phase1 -mul 3.14159 -div 2048 phase1_rad -odt float
 
-        Note that the value of 2048 needs to be adjusted for each different
-        site/scanner/sequence in order to be correct. The final range of the
-        phase0_rad image should be approximately 0 to 6.28. If this is not the
-        case then this scaling is wrong. If you have separate phase volumes are
-        not in integer format, you must still check that the units are in radians,
-        and if not scale them appropriately using fslmaths.
+        | Note that the value of 2048 needs to be adjusted for each different
+        | site/scanner/sequence in order to be correct. The final range of the
+        | phase0_rad image should be approximately 0 to 6.28. If this is not the
+        | case then this scaling is wrong. If you have separate phase volumes are
+        | not in integer format, you must still check that the units are in radians,
+        | and if not scale them appropriately using fslmaths.
+
+    ..
 
     """
     imax = phase_data.max()

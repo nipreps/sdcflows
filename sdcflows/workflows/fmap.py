@@ -96,14 +96,14 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     workflow.connect([
         (inputnode, prepare_magnitude_wf, [
             ('magnitude', 'inputnode.magnitude'),
-            ('fieldmap', 'source_file')]),
+            ('fieldmap', 'inputnode.source_file')]),
         (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
         (prepare_magnitude_wf, outputnode, [
-            ('outputnode.mask_file', 'fmap_mask'),
+            ('outputnode.fmap_mask', 'fmap_mask'),
             ('outputnode.fmap_ref', 'fmap_ref')]),
         (prepare_magnitude_wf, fmap_postproc_wf, [
-            ('outputnode.mask_file', 'fmap_mask'),
-            ('outputnode.fmap_ref', 'fmap_ref')]),
+            ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
+            ('outputnode.fmap_ref', 'inputnode.fmap_ref')]),
     ])
 
     if fmap_bspline:
@@ -117,7 +117,7 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
         tohz = pe.Node(FieldToHz(), name='tohz')
         workflow.connect([
             (prepare_magnitude_wf, prelude, [
-                ('outputnode.mask_file', 'mask_file'),
+                ('outputnode.fmap_mask', 'mask_file'),
                 ('outputnode.fmap_ref', 'magnitude_file')]),
             (fmapmrg, torads, [('out_file', 'in_file')]),
             (torads, tohz, [('fmap_range', 'range_hz')]),
