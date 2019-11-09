@@ -7,7 +7,6 @@ Phase-difference B0 estimation.
 
 Phase-difference B0 estimation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 The field inhomogeneity inside the scanner (fieldmap) is proportional to the
 phase drift between two subsequent :abbr:`GRE (gradient recall echo)`
 sequence.

@@ -7,7 +7,6 @@ Fieldmap-based estimation of susceptibility distortions.
 
 Direct B0 mapping sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 When the fieldmap is directly measured with a prescribed sequence (such as
 :abbr:`SE (spiral echo)`), we only need to calculate the corresponding B-Spline
 coefficients to adapt the fieldmap to the TOPUP tool.

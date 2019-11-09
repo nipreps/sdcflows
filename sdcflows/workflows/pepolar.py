@@ -7,7 +7,6 @@ Datasets with multiple phase encoded directions.
 
 :abbr:`PEPOLAR (Phase Encoding POLARity)` techniques
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
 
