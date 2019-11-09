@@ -34,41 +34,43 @@ def init_calculate_phasediff_wf(omp_nthreads, name='create_phasediff_wf'):
     then unwrapped using FSL's PRELUDE. Finally, the short TE phase image is subtracted from
     the long TE phase image. This workflow is based on the FSL FUGUE user guide.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.phdiff import init_calculate_phasediff_wf
-        wf = init_calculate_phasediff_wf(omp_nthreads=1)
+            from sdcflows.workflows.phdiff import init_calculate_phasediff_wf
+            wf = init_calculate_phasediff_wf(omp_nthreads=1)
 
-    **Parameters**:
+    Parameters
+    ----------
+    omp_nthreads : int
+        Maximum number of threads an individual process may use
+    difference : str
+        Either 'arctan' or 'unwrapped_subtraction'
 
-        omp_nthreads : int
-            Maximum number of threads an individual process may use
-        difference : str
-            Either 'arctan' or 'unwrapped_subtraction'
+    Inputs
+    ------
+    phase1 : pathlike
+        Path to one of the phase images.
+    phase2 : pathlike
+        Path to the another phase image.
+    phase1_metadata : dict
+        Metadata dictionary corresponding to the phase1 input
+    phase2_metadata : dict
+        Metadata dictionary corresponding to the phase2 input
+    magnitude : pathlike
+        Preprocessed magnitude image
+    mask_file : pathlike
+        Brain mask image
 
-    **Inputs**:
-
-        phase1 : pathlike
-            Path to one of the phase images.
-        phase2 : pathlike
-            Path to the another phase image.
-        phase1_metadata : dict
-            Metadata dictionary corresponding to the phase1 input
-        phase2_metadata : dict
-            Metadata dictionary corresponding to the phase2 input
-        magnitude : pathlike
-            Preprocessed magnitude image
-        mask_file : pathlike
-            Brain mask image
-
-    **Outputs**:
-        phasediff : pathlike
-            A phasediff image created by subtracting two upwrapped phase images.
-        phasediff_metadata : dict
-            A dictionary containing the metadata for the calculated ``phasediff``.
-            It contains ``Echotime1`` and ``Echotime2`` from the original phase images.
+    Outputs
+    -------
+    phasediff : pathlike
+        A phasediff image created by subtracting two upwrapped phase images.
+    phasediff_metadata : dict
+        A dictionary containing the metadata for the calculated ``phasediff``.
+        It contains ``Echotime1`` and ``Echotime2`` from the original phase images.
 
     """
     inputnode = pe.Node(
@@ -224,6 +226,7 @@ further improvements of HCP Pipelines [@hcppipelines].
         kernel_size = 3
 
     fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
+                                             fmap_bspline=fmap_bspline,
                                              median_kernel_size=kernel_size)
 
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')

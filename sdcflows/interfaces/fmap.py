@@ -3,19 +3,17 @@
 """
 Interfaces to deal with the various types of fieldmap sources.
 
-    .. testsetup::
+.. testsetup::
 
-        >>> tmpdir = getfixture('tmpdir')
-        >>> tmp = tmpdir.chdir() # changing to a temporary directory
-        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-        ...     tmpdir.join('epi.nii.gz').strpath)
-
+    >>> tmpdir = getfixture('tmpdir')
+    >>> tmp = tmpdir.chdir() # changing to a temporary directory
+    >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
+    ...     tmpdir.join('epi.nii.gz').strpath)
 
 """
-
+from copy import deepcopy
 import numpy as np
 import nibabel as nb
-from copy import deepcopy
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
 from nipype.interfaces.base import (
@@ -45,6 +43,7 @@ class ProcessPhases(SimpleInterface):
     Process phase1, phase2 images so they can be unwrapped.
 
     Steps are taken from https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide
+
     """
 
     input_spec = _ProcessPhasesInputSpec
@@ -105,6 +104,7 @@ class _DiffPhasesOutputSpec(TraitedSpec):
 
 
 class DiffPhases(SimpleInterface):
+    """Substract two input phase maps."""
     input_spec = _DiffPhasesInputSpec
     output_spec = _DiffPhasesOutputSpec
 
@@ -117,29 +117,6 @@ class DiffPhases(SimpleInterface):
         phasediff_image.to_filename(phasediff_output)
         self._results['phasediff_file'] = phasediff_output
         return runtime
-
-
-def rescale_phase_image(phase_data):
-    """Ensure that phase images are in a usable range for unwrapping.
-
-    From the FUGUE User guide::
-
-        If you have seperate phase volumes that are in integer format then do:
-
-        fslmaths orig_phase0 -mul 3.14159 -div 2048 phase0_rad -odt float
-        fslmaths orig_phase1 -mul 3.14159 -div 2048 phase1_rad -odt float
-
-        Note that the value of 2048 needs to be adjusted for each different
-        site/scanner/sequence in order to be correct. The final range of the
-        phase0_rad image should be approximately 0 to 6.28. If this is not the
-        case then this scaling is wrong. If you have separate phase volumes are
-        not in integer format, you must still check that the units are in radians,
-        and if not scale them appropriately using fslmaths.
-    """
-    imax = phase_data.max()
-    imin = phase_data.min()
-    scaled = (phase_data - imin) / (imax - imin)
-    return 2 * np.pi * scaled
 
 
 class _FieldEnhanceInputSpec(BaseInterfaceInputSpec):
@@ -601,7 +578,6 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
 
 
     """
-    import math
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -609,11 +585,37 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
 
     out_file = fname_presuffix(in_file, suffix='_fmap', newpath=newpath)
     image = nb.load(in_file)
-    data = (image.get_data().astype(np.float32) / (2. * math.pi * delta_te))
+    data = (image.get_data().astype(np.float32) / (2. * np.pi * delta_te))
     nii = nb.Nifti1Image(data, image.affine, image.header)
     nii.set_data_dtype(np.float32)
     nii.to_filename(out_file)
     return out_file
+
+
+def rescale_phase_image(phase_data):
+    """
+    Ensure that phase images are in a usable range for unwrapping.
+
+    From the `FUGUE User guide
+    <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide>`__:
+
+        If you have separate phase volumes that are in integer format then do:
+        ::
+            fslmaths orig_phase0 -mul 3.14159 -div 2048 phase0_rad -odt float
+            fslmaths orig_phase1 -mul 3.14159 -div 2048 phase1_rad -odt float
+
+        Note that the value of 2048 needs to be adjusted for each different
+        site/scanner/sequence in order to be correct. The final range of the
+        phase0_rad image should be approximately 0 to 6.28. If this is not the
+        case then this scaling is wrong. If you have separate phase volumes are
+        not in integer format, you must still check that the units are in radians,
+        and if not scale them appropriately using fslmaths.
+
+    """
+    imax = phase_data.max()
+    imin = phase_data.min()
+    scaled = (phase_data - imin) / (imax - imin)
+    return 2 * np.pi * scaled
 
 
 def _delta_te(in_values, te1=None, te2=None):
@@ -652,10 +654,10 @@ def _delta_te(in_values, te1=None, te2=None):
 
 
 def _subtract_phases(short_te_phase_image, long_te_phase_image):
-    "Subtract two unwrapped phase images to produce a phasediff image."
+    """Subtract two unwrapped phase images to produce a phasediff image."""
     short_te_img = nb.load(short_te_phase_image)
     long_te_img = nb.load(long_te_phase_image)
-    phasediff_data = long_te_img.get_fdata()-short_te_img.get_fdata()
+    phasediff_data = long_te_img.get_fdata() - short_te_img.get_fdata()
     phasediff_img = nb.Nifti1Image(phasediff_data, short_te_img.affine,
                                    header=short_te_img.header)
     return phasediff_img

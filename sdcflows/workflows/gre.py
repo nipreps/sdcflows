@@ -1,11 +1,11 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
+"""Processing phase-difference (aka :abbr:`GRE (gradient recalled echo)`) fieldmaps.
 
 .. _gre-fieldmaps:
 
-Workflows for processing GRE fieldmaps
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Workflows for processing :abbr:`GRE (gradient recalled echo)` fieldmaps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Workflows for preparing the magnitude part of :abbr:`GRE (gradient recalled echo)` fieldmap
 images and cleaning up the fieldmaps created from the phases or phasediff.
@@ -16,41 +16,47 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl, ants
 from nipype.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.bids import DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 from ..interfaces.fmap import FieldEnhance
 
 
 def init_prepare_magnitude_wf(omp_nthreads, name='magnitude_wf'):
-    """Prepare the magnitude part of GRE fieldmaps.
+    """
+    Prepare the magnitude part of :abbr:`GRE (gradient recalled echo)` fieldmaps.
 
-    Average (if not done already) the magnitude part of the GRE images, run N4 to
-    correct for B1 field nonuniformity, and skull-strip the preprocessed magnitude.
+    Average (if not done already) the magnitude part of the
+    :abbr:`GRE (gradient recalled echo)` images, run N4 to
+    correct for B1 field nonuniformity, and skull-strip the
+    preprocessed magnitude.
 
-    **Parameters**:
-        omp_nthreads : int
-            Maximum number of threads an individual process may use
-        name : str
-            Name of workflow (default: ``magnitude_wf``)
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+            from sdcflows.workflows.fmap import init_prepare_magnitude_wf
+            wf = init_prepare_magnitude_wf(omp_nthreads=6)
 
-    **Inputs**:
-        magnitude : pathlike
-            Path to the corresponding magnitude path(s).
-        source_file : pathlike
-            Path to the corresponding phase-difference file.
+    Parameters
+    ----------
+    omp_nthreads : int
+        Maximum number of threads an individual process may use
+    name : str
+        Name of workflow (default: ``magnitude_wf``)
 
-    **Outputs**:
-        fmap_ref : pathlike
-            Path to the fieldmap reference calculated in this workflow.
-        fmap_mask : pathlike
-            Path to a binary brain mask corresponding to the reference above.
+    Inputs
+    ------
+    magnitude : pathlike
+        Path to the corresponding magnitude path(s).
+    source_file : pathlike
+        Path to the corresponding phase-difference file.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
-        from sdcflows.workflows.fmap import init_prepare_magnitude_wf
-        wf = init_prepare_magnitude_wf(omp_nthreads=6)
+    Outputs
+    -------
+    fmap_ref : pathlike
+        Path to the fieldmap reference calculated in this workflow.
+    fmap_mask : pathlike
+        Path to a binary brain mask corresponding to the reference above.
 
     """
     workflow = Workflow(name=name)
@@ -87,34 +93,38 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
 
     This workflow denoises (mostly via smoothing) a B0 fieldmap.
 
-    **Parameters**:
-        omp_nthreads : int
-            Maximum number of threads an individual process may use
-        fmap_bspline : bool
-            Whether the fieldmap should be smoothed and extrapolated to off-brain regions
-            using B-Spline basis.
-        median_kernel_size : int
-            Size of the kernel when smoothing is done with a median filter.
-        name : str
-            Name of workflow (default: ``fmap_postproc_wf``)
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+            from sdcflows.workflows.fmap import init_fmap_postproc_wf
+            wf = init_fmap_postproc_wf(omp_nthreads=6)
 
-    **Inputs**:
-        mask_file : pathlike
-            A brain binary mask corresponding to this fieldmap.
-        fmap_ref : pathlike
-            A preprocessed magnitude/reference image for the fieldmap.
-        fmap : pathlike
-            A B0 nonuniformity map (aka fieldmap) estimated elsewhere.
+    Parameters
+    ----------
+    omp_nthreads : int
+        Maximum number of threads an individual process may use
+    fmap_bspline : bool
+        Whether the fieldmap should be smoothed and extrapolated to off-brain regions
+        using B-Spline basis.
+    median_kernel_size : int
+        Size of the kernel when smoothing is done with a median filter.
+    name : str
+        Name of workflow (default: ``fmap_postproc_wf``)
 
-    **Outputs**:
-        out_fmap : pathlike
-            Postprocessed fieldmap.
+    Inputs
+    ------
+    mask_file : pathlike
+        A brain binary mask corresponding to this fieldmap.
+    fmap_ref : pathlike
+        A preprocessed magnitude/reference image for the fieldmap.
+    fmap : pathlike
+        A B0-field nonuniformity map (aka fieldmap) estimated elsewhere.
 
-    .. workflow ::
-        :graph2use: orig
-        :simple_form: yes
-        from sdcflows.workflows.fmap import init_fmap_postproc_wf
-        wf = init_fmap_postproc_wf(omp_nthreads=6)
+    Outputs
+    -------
+    out_fmap : pathlike
+        Postprocessed fieldmap.
 
     """
     workflow = Workflow(name=name)
@@ -136,7 +146,6 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
         ])
 
     else:
-
         denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                             kernel_size=median_kernel_size), name='denoise')
         demean = pe.Node(niu.Function(function=demean_image), name='demean')

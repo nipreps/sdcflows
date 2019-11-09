@@ -31,9 +31,10 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
-    When we have a sequence that directly measures the fieldmap
-    we just need to mask it (using the corresponding magnitude image) to remove the
-    noise in the surrounding air region, and ensure that units are Hz.
+    When we have a sequence that directly measures the fieldmap,
+    we just need to mask it (using the corresponding magnitude image)
+    to remove the noise in the surrounding air region, and ensure that
+    units are Hz.
 
     This is split into separate workflows. The first prepares the magnitude image(s)
     by aligning and averaging them, bias-correcting the average and applying
