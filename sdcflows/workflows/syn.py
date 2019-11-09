@@ -7,7 +7,6 @@ Estimating the susceptibility distortions without fieldmaps.
 
 Fieldmap-less estimation (experimental)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 In the absence of direct measurements of fieldmap data, we provide an (experimental)
 option to estimate the susceptibility distortion based on the ANTs symmetric
 normalization (SyN) technique.
