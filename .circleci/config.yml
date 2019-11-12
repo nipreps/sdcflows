@@ -2,6 +2,9 @@ docs_deploy: &docs
   docker:
     - image: node:8.10.0
   steps:
+    - add_ssh_keys:
+        fingerprints:
+          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
     - checkout
     - attach_workspace:
         at: docs/_build
@@ -14,9 +17,6 @@ docs_deploy: &docs
           npm install -g --silent gh-pages@2.0.1
           git config user.email "crn.poldracklab@gmail.com"
           git config user.name "ci-build"
-    - add_ssh_keys:
-        fingerprints:
-          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
     - run:
         name: Deploy docs to gh-pages branch
         command: gh-pages --dotfiles --message "doc(update) [skip ci]" --dist docs/_build/html
