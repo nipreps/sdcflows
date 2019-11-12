@@ -10,13 +10,13 @@ from ..phdiff import init_phdiff_wf, Workflow
     'ds001600',
     'testdata',
 ])
-def test_workflow(bids_layouts, tmpdir, output_path, dataset):
+def test_workflow(bids_layouts, tmpdir, output_path, dataset, workdir):
     """Test creation of the workflow."""
     tmpdir.chdir()
 
     data = bids_layouts[dataset]
-    wf = Workflow(name='tstworkflow')
-    phdiff_wf = init_phdiff_wf(omp_nthreads=1)
+    wf = Workflow(name='phdiff_%s' % dataset)
+    phdiff_wf = init_phdiff_wf(omp_nthreads=2)
     phdiff_wf.inputs.inputnode.magnitude = data.get(
         suffix=['magnitude1', 'magnitude2'],
         acq='v4',
@@ -47,5 +47,8 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset):
         ])
     else:
         wf.add_nodes([phdiff_wf])
+
+    if workdir:
+        wf.base_dir = str(workdir)
 
     wf.run()

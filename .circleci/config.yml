@@ -159,6 +159,14 @@ jobs:
             fi
 
       - run:
+          name: Get clean copy of workdir
+          command: |
+            if [[ ! -f /tmp/data/workdir.tar.gz ]]; then
+              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
+                  -O workdir.tar.gz "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5dcabd60a1cd9e000c751b3c"
+            fi
+
+      - run:
           name: Store FreeSurfer license file
           command: |
             mkdir -p /tmp/data/
@@ -193,9 +201,9 @@ jobs:
           at: /tmp
       - restore_cache:
           keys:
-            - workdir-v1-{{ .Branch }}-
-            - workdir-v1-master-
-            - workdir-v1-
+            - workdir-v2-{{ .Branch }}-
+            - workdir-v2-master-
+            - workdir-v2-
       - restore_cache:
           keys:
             - build-v1-{{ .Branch }}-{{ epoch }}
@@ -215,11 +223,25 @@ jobs:
             docker pull localhost:5000/sdcflows
             docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
       - run:
+          name: Refresh work directory?
+          command: |
+            set +e
+            do_refresh="$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[fresh[ _]?workdir\]' )"
+            set -e
+            if [[ "x${do_refresh}" = "x" ]]; then
+              echo "Did not refresh the workdir."
+              circleci step halt
+            fi
+            rm -rf /tmp/work
+            mkdir -p /tmp/work
+            cd /tmp/work
+            tar xzfv /tmp/data/workdir.tar.gz
+      - run:
           name: Run tests
           no_output_timeout: 2h
           command: |
             mkdir -p /tmp/work
-            docker run -it --rm=false -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
+            docker run -it --rm -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
                    -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
                    -v /tmp/work:/work -e TEST_WORK_DIR=/work \
                    -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
@@ -227,7 +249,7 @@ jobs:
                    -w /work poldracklab/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
       - save_cache:
-         key: workdir-v1-{{ .Branch }}-{{ .BuildNum }}
+         key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - /tmp/work
       - store_artifacts:
