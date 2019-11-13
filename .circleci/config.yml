@@ -5,6 +5,13 @@ docs_deploy: &docs
     - add_ssh_keys:
         fingerprints:
           - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
+    - run:
+        name: Check whether this is the original repo
+        command:
+          if [[ "$CIRCLE_PROJECT_USERNAME" != "poldracklab" ]]; then
+              echo "Not in poldracklab/sdcflows - skipping docs deploy."
+              circleci step halt
+          fi
     - checkout
     - attach_workspace:
         at: docs/_build
