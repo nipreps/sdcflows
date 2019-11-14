@@ -5,12 +5,13 @@ Fieldmap estimation and unwarping workflows.
 
 .. _sdc_base :
 
-Automatic selection of the appropriate SDC method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Automatic selection of the appropriate susceptibility-distortion correction (SDC) method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the dataset metadata indicate tha more than one field map acquisition is
-``IntendedFor`` (see BIDS Specification section 8.9) the following priority will
-be used:
+If the dataset metadata indicate that more than one field map acquisition is
+``IntendedFor`` (see the `BIDS Specification
+<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data>`__),
+the following priority will be used:
 
   1. :ref:`sdc_pepolar` (or **blip-up/blip-down**)
 
