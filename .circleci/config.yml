@@ -1,10 +1,8 @@
 docs_deploy: &docs
   docker:
     - image: node:8.10.0
+  working_directory: /tmp/gh-pages
   steps:
-    - add_ssh_keys:
-        fingerprints:
-          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
     - run:
         name: Check whether this is the original repo
         command: |
@@ -12,18 +10,21 @@ docs_deploy: &docs
               echo "Not in poldracklab/sdcflows - skipping docs deploy."
               circleci step halt
           fi
+    - add_ssh_keys:
+        fingerprints:
+          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
+    - run:
+        name: Install and configure dependencies
+        command: |
+          npm install -g --silent gh-pages@2.0.1
+          git config user.email "crn.poldracklab@gmail.com"
+          git config user.name "Documentation Push"
     - checkout
     - attach_workspace:
         at: docs/_build
     - run:
         name: Disable jekyll builds
         command: touch docs/_build/html/.nojekyll
-    - run:
-        name: Install and configure dependencies
-        command: |
-          npm install -g --silent gh-pages@2.0.1
-          git config user.email "crn.poldracklab@gmail.com"
-          git config user.name "ci-build"
     - run:
         name: Deploy docs to gh-pages branch
         command: gh-pages --dotfiles --message "doc(update) [skip ci]" --dist docs/_build/html
@@ -267,18 +268,11 @@ jobs:
   build_docs:
     docker:
       - image: python:3.7.4
+    working_directory: /tmp/gh-pages
     environment:
       - FSLOUTPUTTYPE: NIFTI
       - SUBJECTS_DIR: /tmp/subjects
     steps:
-      - restore_cache:
-          keys:
-            - docs-v1-{{ .Branch }}-{{ .Revision }}
-            - docs-v1-{{ .Branch }}-
-            - docs-v1-master
-            - docs-v1-
-          paths:
-            - ./docs/_build/_html
       - checkout
       - run:
           name: Create subjects folder
@@ -295,7 +289,7 @@ jobs:
       - store_artifacts:
           path: ./docs/_build/no_version_html
       - run:
-          name: Generate Versioned Docs
+          name: Stop or generate versioned docs?
           command: |
             set +e
             force_versioned="$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[docs?[ _]?versions?\]' )"
@@ -303,9 +297,18 @@ jobs:
             if [[ "x${CIRCLE_TAG}" = "x" && "${CIRCLE_BRANCH}" != "master" && "x${force_versioned}" = "x" ]]; then
               echo "Not a tag or master branch - skipping versioned docs."
               circleci step halt
-            else
-              make -f ./docs/Makefile versioned CURBRANCH=${CIRCLE_TAG:-$CIRCLE_BRANCH}
             fi
+      - restore_cache:
+          keys:
+            - docs-v1-{{ .Branch }}-{{ .Revision }}
+            - docs-v1-{{ .Branch }}-
+            - docs-v1-master
+            - docs-v1-
+          paths:
+            - ./docs/_build/_html
+      - run:
+          name: Generate Versioned Docs
+          command: make -f ./docs/Makefile versioned CURBRANCH=${CIRCLE_TAG:-$CIRCLE_BRANCH}
       - save_cache:
           key: docs-v1-{{ .Branch }}-{{ .Revision }}
           paths:
@@ -531,16 +534,16 @@ workflows:
             tags:
               only: /.*/
 
-      # - deploy_docs_master:
-      #     requires:
-      #       - test_sdcflows
-      #       - test_package
-      #       - build_docs
-      #     filters:
-      #       branches:
-      #         only: /master/
-      #       tags:
-      #         ignore: /.*/
+      - deploy_docs_master:
+          requires:
+            - test_sdcflows
+            - test_package
+            - build_docs
+          filters:
+            branches:
+              only: /master/
+            tags:
+              ignore: /.*/
 
       - deploy_docs_tag:
           requires:
