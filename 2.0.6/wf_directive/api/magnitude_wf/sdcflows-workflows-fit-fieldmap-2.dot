@@ -1,0 +1,9 @@
+strict digraph  {
+"inputnode (utility)";
+"magmrg (images)";
+brainextraction_wf;
+"outputnode (utility)";
+"inputnode (utility)" -> "magmrg (images)";
+"magmrg (images)" -> brainextraction_wf;
+brainextraction_wf -> "outputnode (utility)";
+}

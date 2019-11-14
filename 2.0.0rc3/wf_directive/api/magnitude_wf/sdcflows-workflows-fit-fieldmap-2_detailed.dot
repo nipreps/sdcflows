@@ -1,0 +1,12 @@
+digraph structs {
+node [shape=record];
+magnitude_wfinputnode [label="{IN}|{ inputnode | utility |  }|{OUT|<outmagnitude> magnitude}"];
+magnitude_wfmagmrg [label="{IN|<ininfiles> in_files}|{ magmrg | images |  }|{OUT|<outoutavg> out_avg}"];
+magnitude_wfbrainextraction_wf [label="{IN|<ininputnodeinfile> inputnode.in_file}|{ brainextraction_wf |  |  }|{OUT|<outoutputnodeoutfile> outputnode.out_file|<outoutputnodeoutmask> outputnode.out_mask|<outoutputnodeoutprobseg> outputnode.out_probseg}"];
+magnitude_wfoutputnode [label="{IN|<infmapmask> fmap_mask|<infmapprobseg> fmap_probseg|<infmapref> fmap_ref}|{ outputnode | utility |  }|{OUT}"];
+magnitude_wfbrainextraction_wf:outoutputnodeoutfile:e -> magnitude_wfoutputnode:infmapref:w;
+magnitude_wfbrainextraction_wf:outoutputnodeoutmask:e -> magnitude_wfoutputnode:infmapmask:w;
+magnitude_wfbrainextraction_wf:outoutputnodeoutprobseg:e -> magnitude_wfoutputnode:infmapprobseg:w;
+magnitude_wfinputnode:outmagnitude:e -> magnitude_wfmagmrg:ininfiles:w;
+magnitude_wfmagmrg:outoutavg:e -> magnitude_wfbrainextraction_wf:ininputnodeinfile:w;
+}

@@ -1,0 +1,499 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.utils.wrangler module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.viz package" href="sdcflows.viz.html" />
+    <link rel="prev" title="sdcflows.utils.phasemanip module" href="sdcflows.utils.phasemanip.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sdcflows.utils.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.utils.bimap.html">sdcflows.utils.bimap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sdcflows.utils.wrangler module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+          <li><a href="sdcflows.utils.html">sdcflows.utils package</a> &raquo;</li>
+        
+      <li>sdcflows.utils.wrangler module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.utils.wrangler.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../../master/api/sdcflows.utils.wrangler.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="module-sdcflows.utils.wrangler">
+<span id="sdcflows-utils-wrangler-module"></span><h1>sdcflows.utils.wrangler module<a class="headerlink" href="#module-sdcflows.utils.wrangler" title="Permalink to this headline">¶</a></h1>
+<p>Find fieldmaps on the BIDS inputs for <abbr title="susceptibility distortion correction">SDC</abbr>.</p>
+<dl class="function">
+<dt id="sdcflows.utils.wrangler.find_estimators">
+<code class="sig-prename descclassname">sdcflows.utils.wrangler.</code><code class="sig-name descname">find_estimators</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">layout</em>, <em class="sig-param">subject</em>, <em class="sig-param">fmapless=True</em>, <em class="sig-param">force_fmapless=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/wrangler.html#find_estimators"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.utils.wrangler.find_estimators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply basic heuristics to automatically find available data for fieldmap estimation.</p>
+<p>The “<em>fieldmap-less</em>” heuristics only attempt to find <code class="docutils literal notranslate"><span class="pre">_dwi</span></code> and <code class="docutils literal notranslate"><span class="pre">_bold</span></code> candidates
+to pair with a <code class="docutils literal notranslate"><span class="pre">_T1w</span></code> anatomical reference.
+For more complicated heuristics (for instance, using <code class="docutils literal notranslate"><span class="pre">_T2w</span></code> images or <code class="docutils literal notranslate"><span class="pre">_sbref</span></code>
+images,) the <a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> object must be
+created manually by the user.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.13.2)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bids.layout.BIDSLayout</span></code></a>) – An initialized PyBIDS layout.</p></li>
+<li><p><strong>subject</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Participant label for this single-subject workflow.</p></li>
+<li><p><strong>fmapless</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code></a>) – Indicates if fieldmap-less heuristics should be executed.
+When <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code></a>, it can contain valid BIDS suffices
+for EPI images (namely, <code class="docutils literal notranslate"><span class="pre">&quot;dwi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;bold&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;sbref&quot;</span></code>).
+When <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, heuristics will use the <code class="docutils literal notranslate"><span class="pre">{&quot;bold&quot;,</span> <span class="pre">&quot;dwi&quot;}</span></code> set.</p></li>
+<li><p><strong>force_fmapless</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – When some other fieldmap estimation methods have been found, fieldmap-less
+estimation will be skipped except if <code class="docutils literal notranslate"><span class="pre">force_fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>estimators</strong> – The list of <a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> objects that have
+successfully been built (meaning, all necessary inputs and corresponding metadata
+are present in the given layout.)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Our <code class="docutils literal notranslate"><span class="pre">ds000054</span></code> dataset, created for <em>fMRIPrep</em>, only has one <em>phasediff</em> type of fieldmap
+with <code class="docutils literal notranslate"><span class="pre">magnitude1</span></code> and <code class="docutils literal notranslate"><span class="pre">magnitude2</span></code> files:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00000&#39;)]</span>
+</pre></div>
+</div>
+<p>OpenNeuro’s dataset with four <em>PEPOLAR</em> EPI files, two runs per phase-encoding direction
+(AP, PA):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00001&#39;)]</span>
+</pre></div>
+</div>
+<p>OpenNeuro’s <code class="docutils literal notranslate"><span class="pre">ds001600</span></code> is an SDC test-dataset containing many different possibilities
+for fieldmap estimation:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001600&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00002&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00003&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00004&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00005&#39;)]</span>
+</pre></div>
+</div>
+<p>We can also pick one (simplified) HCP subject for testing purposes:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;HCP101006&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;101006&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00006&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00007&#39;)]</span>
+</pre></div>
+</div>
+<p>Finally, <em>SDCFlows</em>’ “<em>dataset A</em>” and “<em>dataset B</em>” contain BIDS structures
+with zero-byte NIfTI files and some corresponding metadata:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsB&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+</pre></div>
+</div>
+<p>After cleaning the registry, we can see how the “<em>fieldmap-less</em>” estimation
+can be forced:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fm</span><span class="o">.</span><span class="n">clear_registry</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00000&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00001&#39;)]</span>
+</pre></div>
+</div>
+<p>Likewise in a more comprehensive dataset:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                   bids_id=&#39;auto_00002&#39;),</span>
+<span class="go">FieldmapEstimation(sources=&lt;7 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                   bids_id=&#39;auto_00003&#39;),</span>
+<span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                   bids_id=&#39;auto_00004&#39;),</span>
+<span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                   bids_id=&#39;auto_00005&#39;)]</span>
+</pre></div>
+</div>
+<p>Because “<em>dataset A</em>” contains very few metadata fields available, “<em>fieldmap-less</em>”
+heuristics come back empty (BOLD and DWI files are missing
+the mandatory <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code>, in this case):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+</pre></div>
+</div>
+<p>This function should also correctly investigate multi-session datasets:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                    bids_id=&#39;auto_00011&#39;),</span>
+<span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
+<span class="go">                   bids_id=&#39;auto_00012&#39;)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.viz.html" class="btn btn-neutral float-right" title="sdcflows.viz package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.utils.phasemanip.html" class="btn btn-neutral float-left" title="sdcflows.utils.phasemanip module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.0rc1
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../../1.0.0/index.html">1.0.0</a></dd>
+            <dd><a href="../../1.0.0rc1/index.html">1.0.0rc1</a></dd>
+            <dd><a href="../../1.0.1/index.html">1.0.1</a></dd>
+            <dd><a href="../../1.0.2/index.html">1.0.2</a></dd>
+            <dd><a href="../../1.0.3/index.html">1.0.3</a></dd>
+            <dd><a href="../../1.0.4/index.html">1.0.4</a></dd>
+            <dd><a href="../../1.0.5/index.html">1.0.5</a></dd>
+            <dd><a href="../../1.0.6/index.html">1.0.6</a></dd>
+            <dd><a href="../../1.1.0/index.html">1.1.0</a></dd>
+            <dd><a href="../../1.2.0/index.html">1.2.0</a></dd>
+            <dd><a href="../../1.2.1/index.html">1.2.1</a></dd>
+            <dd><a href="../../1.2.2/index.html">1.2.2</a></dd>
+            <dd><a href="../../1.2.3/index.html">1.2.3</a></dd>
+            <dd><a href="../../1.3.0/index.html">1.3.0</a></dd>
+            <dd><a href="../../1.3.1/index.html">1.3.1</a></dd>
+            <dd><a href="../../1.3.2/index.html">1.3.2</a></dd>
+            <dd><a href="../../1.3.3/index.html">1.3.3</a></dd>
+            <dd><a href="../../1.4.0rc0/index.html">1.4.0rc0</a></dd>
+            <dd><a href="../../2.0.0/api/sdcflows.utils.wrangler.html">2.0.0</a></dd>
+            <dd><a href="sdcflows.utils.wrangler.html">2.0.0rc1</a></dd>
+            <dd><a href="../../2.0.0rc2/api/sdcflows.utils.wrangler.html">2.0.0rc2</a></dd>
+            <dd><a href="../../2.0.0rc3/api/sdcflows.utils.wrangler.html">2.0.0rc3</a></dd>
+            <dd><a href="../../2.0.0rc4/api/sdcflows.utils.wrangler.html">2.0.0rc4</a></dd>
+            <dd><a href="../../2.0.0rc5/api/sdcflows.utils.wrangler.html">2.0.0rc5</a></dd>
+            <dd><a href="../../2.0.1/api/sdcflows.utils.wrangler.html">2.0.1</a></dd>
+            <dd><a href="../../2.0.2/api/sdcflows.utils.wrangler.html">2.0.2</a></dd>
+            <dd><a href="../../2.0.2.post1/api/sdcflows.utils.wrangler.html">2.0.2.post1</a></dd>
+            <dd><a href="../../2.0.3/api/sdcflows.utils.wrangler.html">2.0.3</a></dd>
+            <dd><a href="../../2.0.4/api/sdcflows.utils.wrangler.html">2.0.4</a></dd>
+            <dd><a href="../../2.0.5/api/sdcflows.utils.wrangler.html">2.0.5</a></dd>
+            <dd><a href="../../2.0.6/api/sdcflows.utils.wrangler.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../../dev_1.4.0/api/sdcflows.utils.wrangler.html">dev/1.4.0</a></dd>
+            <dd><a href="../../enh_outputnode-method/api/sdcflows.utils.wrangler.html">enh/outputnode-method</a></dd>
+            <dd><a href="../../enh_pad-topup/api/sdcflows.utils.wrangler.html">enh/pad-topup</a></dd>
+            <dd><a href="../../feat_new-api/index.html">feat/new-api</a></dd>
+            <dd><a href="../../fix_field-direction/api/sdcflows.utils.wrangler.html">fix/field-direction</a></dd>
+            <dd><a href="../../maint_1.0.x/index.html">maint/1.0.x</a></dd>
+            <dd><a href="../../maint_1.2.x/index.html">maint/1.2.x</a></dd>
+            <dd><a href="../../maint_1.3.x/index.html">maint/1.3.x</a></dd>
+            <dd><a href="../../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../../maint_travis-gh-action-migration/index.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../../master/api/sdcflows.utils.wrangler.html">master</a></dd>
+            <dd><a href="../../rel_2.0.0/api/sdcflows.utils.wrangler.html">rel/2.0.0</a></dd>
+            <dd><a href="../../rel_2.0.0rc3/api/sdcflows.utils.wrangler.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

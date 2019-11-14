@@ -1,0 +1,18 @@
+strict digraph  {
+"inputnode (utility)";
+"split (utility)";
+"prelude (fsl)";
+"phmap2rads (fmap)";
+"calc_phdiff (fmap)";
+"compfmap (fmap)";
+"outputnode (utility)";
+"inputnode (utility)" -> "split (utility)";
+"inputnode (utility)" -> "prelude (fsl)";
+"split (utility)" -> "phmap2rads (fmap)";
+"split (utility)" -> "calc_phdiff (fmap)";
+"prelude (fsl)" -> "compfmap (fmap)";
+"phmap2rads (fmap)" -> "calc_phdiff (fmap)";
+"calc_phdiff (fmap)" -> "prelude (fsl)";
+"calc_phdiff (fmap)" -> "compfmap (fmap)";
+"compfmap (fmap)" -> "outputnode (utility)";
+}

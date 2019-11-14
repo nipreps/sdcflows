@@ -1,0 +1,14 @@
+strict digraph  {
+"inputnode (utility)";
+magnitude_wf;
+phdiff_wf;
+"bs_filter (bspline)";
+"outputnode (utility)";
+"inputnode (utility)" -> magnitude_wf;
+"inputnode (utility)" -> phdiff_wf;
+magnitude_wf -> "bs_filter (bspline)";
+magnitude_wf -> "outputnode (utility)";
+magnitude_wf -> phdiff_wf;
+phdiff_wf -> "bs_filter (bspline)";
+"bs_filter (bspline)" -> "outputnode (utility)";
+}

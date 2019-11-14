@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>SDCFlows &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Library API (application program interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>SDCFlows</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../master/index.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="sdcflows">
+<h1>SDCFlows<a class="headerlink" href="#sdcflows" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/sdcflows/"><img alt="Latest Version" src="https://img.shields.io/pypi/v/sdcflows.svg" /></a>
+<a class="reference external image-reference" href="https://codecov.io/gh/nipreps/sdcflows"><img alt="https://codecov.io/gh/nipreps/sdcflows/branch/master/graph/badge.svg?token=V2CS5adHYk" src="https://codecov.io/gh/nipreps/sdcflows/branch/master/graph/badge.svg?token=V2CS5adHYk" /></a>
+<a class="reference external image-reference" href="https://circleci.com/gh/nipreps/sdcflows"><img alt="https://circleci.com/gh/nipreps/sdcflows.svg?style=svg" src="https://circleci.com/gh/nipreps/sdcflows.svg?style=svg" /></a>
+<a class="reference external image-reference" href="https://github.com/nipreps/sdcflows/actions"><img alt="https://github.com/nipreps/sdcflows/workflows/Deps%20&amp;%20CI/badge.svg" src="https://github.com/nipreps/sdcflows/workflows/Deps%20&amp;%20CI/badge.svg" /></a>
+<p>SDCFlows (<em>Susceptibility Distortion Correction workFlows</em>) is a Python library of
+<em>NiPype</em>-based workflows to preprocess <em>B0</em> mapping data, estimate the corresponding
+fieldmap and finally correct for susceptibility distortions.
+Susceptibility-derived distortions are typically displayed by images acquired with EPI
+(echo-planar imaging) MR schemes.</p>
+<p>The library is designed to provide an easily accessible, state-of-the-art interface that is
+robust to differences in scan acquisition protocols and that requires minimal user input.</p>
+<p>This open-source neuroimaging data processing tool is being developed as a part of
+the MRI image analysis and reproducibility platform offered by
+<a class="reference external" href="https://www.nipreps.org">NiPreps</a>.</p>
+</section>
+<section id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#external-dependencies">External Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Library API (application program interface)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.interfaces.html">sdcflows.interfaces package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.interfaces.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.utils.html">sdcflows.utils package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.viz.html">sdcflows.viz package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.viz.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.workflows.html">sdcflows.workflows package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.workflows.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.workflows.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">What’s new?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#march-05-2021">2.0.1 (March 05, 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#january-25-2021">2.0.0 (January 25, 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#x-series">1.3.x series</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#september-4-2020">1.3.3 (September 4, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#august-14-2020">1.3.2 (August 14, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#may-22-2020">1.3.1 (May 22, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#may-4-2020">1.3.0 (May 4, 2020)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#pre-1-3-x-releases">Pre-1.3.x releases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#april-16-2020">1.2.2 (April 16, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#april-01-2020">1.2.1 (April 01, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#february-15-2020">1.2.0 (February 15, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#february-3-2020">1.1.0 (February 3, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#april-15-2020">1.0.6 (April 15, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#february-14-2020">1.0.5 (February 14, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#january-27-2020">1.0.4 (January 27, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#december-18-2019">1.0.3 (December 18, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#id1">1.0.2 (December 18, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#december-04-2019">1.0.1 (December 04, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#november-25-2019">1.0.0 (November 25, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#november-22-2019">0.1.4 (November 22, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#october-15-2019">0.1.3 (October 15, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#october-10-2019">0.1.2 (October 10, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#july-23-2019">0.1.1 (July 23, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="changes.html#july-22-2019">0.1.0 (July 22, 2019)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.1
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../1.0.0/index.html">1.0.0</a></dd>
+            <dd><a href="../1.0.0rc1/index.html">1.0.0rc1</a></dd>
+            <dd><a href="../1.0.1/index.html">1.0.1</a></dd>
+            <dd><a href="../1.0.2/index.html">1.0.2</a></dd>
+            <dd><a href="../1.0.3/index.html">1.0.3</a></dd>
+            <dd><a href="../1.0.4/index.html">1.0.4</a></dd>
+            <dd><a href="../1.0.5/index.html">1.0.5</a></dd>
+            <dd><a href="../1.0.6/index.html">1.0.6</a></dd>
+            <dd><a href="../1.1.0/index.html">1.1.0</a></dd>
+            <dd><a href="../1.2.0/index.html">1.2.0</a></dd>
+            <dd><a href="../1.2.1/index.html">1.2.1</a></dd>
+            <dd><a href="../1.2.2/index.html">1.2.2</a></dd>
+            <dd><a href="../1.2.3/index.html">1.2.3</a></dd>
+            <dd><a href="../1.3.0/index.html">1.3.0</a></dd>
+            <dd><a href="../1.3.1/index.html">1.3.1</a></dd>
+            <dd><a href="../1.3.2/index.html">1.3.2</a></dd>
+            <dd><a href="../1.3.3/index.html">1.3.3</a></dd>
+            <dd><a href="../1.4.0rc0/index.html">1.4.0rc0</a></dd>
+            <dd><a href="../2.0.0/index.html">2.0.0</a></dd>
+            <dd><a href="../2.0.0rc1/index.html">2.0.0rc1</a></dd>
+            <dd><a href="../2.0.0rc2/index.html">2.0.0rc2</a></dd>
+            <dd><a href="../2.0.0rc3/index.html">2.0.0rc3</a></dd>
+            <dd><a href="../2.0.0rc4/index.html">2.0.0rc4</a></dd>
+            <dd><a href="../2.0.0rc5/index.html">2.0.0rc5</a></dd>
+            <dd><a href="index.html">2.0.1</a></dd>
+            <dd><a href="../2.0.2/index.html">2.0.2</a></dd>
+            <dd><a href="../2.0.2.post1/index.html">2.0.2.post1</a></dd>
+            <dd><a href="../2.0.3/index.html">2.0.3</a></dd>
+            <dd><a href="../2.0.4/index.html">2.0.4</a></dd>
+            <dd><a href="../2.0.5/index.html">2.0.5</a></dd>
+            <dd><a href="../2.0.6/index.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../dev_1.4.0/index.html">dev/1.4.0</a></dd>
+            <dd><a href="../enh_outputnode-method/index.html">enh/outputnode-method</a></dd>
+            <dd><a href="../enh_pad-topup/index.html">enh/pad-topup</a></dd>
+            <dd><a href="../feat_new-api/index.html">feat/new-api</a></dd>
+            <dd><a href="../fix_field-direction/index.html">fix/field-direction</a></dd>
+            <dd><a href="../maint_1.0.x/index.html">maint/1.0.x</a></dd>
+            <dd><a href="../maint_1.2.x/index.html">maint/1.2.x</a></dd>
+            <dd><a href="../maint_1.3.x/index.html">maint/1.3.x</a></dd>
+            <dd><a href="../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../maint_travis-gh-action-migration/index.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../master/index.html">master</a></dd>
+            <dd><a href="../rel_2.0.0/index.html">rel/2.0.0</a></dd>
+            <dd><a href="../rel_2.0.0rc3/index.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

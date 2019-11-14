@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.transform module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.utils package" href="sdcflows.utils.html" />
+    <link rel="prev" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">sdcflows.transform module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+      <li>sdcflows.transform module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.transform.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../../master/api/sdcflows.transform.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="module-sdcflows.transform">
+<span id="sdcflows-transform-module"></span><h1>sdcflows.transform module<a class="headerlink" href="#module-sdcflows.transform" title="Permalink to this headline">¶</a></h1>
+<p>The <span class="math notranslate nohighlight">\(B_0\)</span> unwarping transform formalism.</p>
+<dl class="class">
+<dt id="sdcflows.transform.B0FieldTransform">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.transform.</code><code class="sig-name descname">B0FieldTransform</code><span class="sig-paren">(</span><em class="sig-param">coeffs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents and applies the transform to correct for susceptibility distortions.</p>
+<dl class="method">
+<dt id="sdcflows.transform.B0FieldTransform.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param">spatialimage</em>, <em class="sig-param">pe_dir</em>, <em class="sig-param">ro_time</em>, <em class="sig-param">order=3</em>, <em class="sig-param">mode='constant'</em>, <em class="sig-param">cval=0.0</em>, <em class="sig-param">prefilter=True</em>, <em class="sig-param">output_dtype=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a transformation to an image, resampling on the reference spatial object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spatialimage</strong> (<cite>spatialimage</cite>) – The image object containing the data to be resampled in reference
+space</p></li>
+<li><p><strong>reference</strong> (<em>spatial object, optional</em>) – The image, surface, or combination thereof containing the coordinates
+of samples that will be sampled.</p></li>
+<li><p><strong>order</strong> (<em>int, optional</em>) – The order of the spline interpolation, default is 3.
+The order has to be in the range 0-5.</p></li>
+<li><p><strong>mode</strong> (<em>{‘constant’, ‘reflect’, ‘nearest’, ‘mirror’, ‘wrap’}, optional</em>) – Determines how the input image is extended when the resamplings overflows
+a border. Default is ‘constant’.</p></li>
+<li><p><strong>cval</strong> (<em>float, optional</em>) – Constant value for <code class="docutils literal notranslate"><span class="pre">mode='constant'</span></code>. Default is 0.0.</p></li>
+<li><p><strong>prefilter</strong> (<em>bool, optional</em>) – Determines if the image’s data array is prefiltered with
+a spline filter before interpolation. The default is <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+which will create a temporary <em>float64</em> array of filtered values
+if <em>order &gt; 1</em>. If setting this to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the output will be
+slightly blurred if <em>order &gt; 1</em>, unless the input is prefiltered,
+i.e. it is the result of calling the spline filter on the original
+input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>resampled</strong> – The data imaged after resampling to reference space.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>spatialimage</cite> or ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sdcflows.transform.B0FieldTransform.coeffs">
+<code class="sig-name descname">coeffs</code><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.coeffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sdcflows.transform.B0FieldTransform.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">spatialimage</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the interpolation matrix (and the VSM with it).</p>
+<p>Implements Eq. <span class="math notranslate nohighlight">\(\eqref{eq:1}\)</span>, interpolating <span class="math notranslate nohighlight">\(f(\mathbf{s})\)</span>
+for all voxels in the target-image’s extent.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sdcflows.transform.B0FieldTransform.shifts">
+<code class="sig-name descname">shifts</code><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.shifts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sdcflows.transform.B0FieldTransform.to_displacements">
+<code class="sig-name descname">to_displacements</code><span class="sig-paren">(</span><em class="sig-param">ro_time</em>, <em class="sig-param">pe_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.to_displacements"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.to_displacements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.</p>
+<p>The displacements field can be calculated following
+<a class="reference external" href="sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2">Eq. (2) in the fieldmap fitting section</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
+<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>spatialimage</strong> – A NIfTI 1.0 object containing the distortion.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nibabel.nifti.Nifti1Image</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sdcflows.transform.grid_bspline_weights">
+<code class="sig-prename descclassname">sdcflows.transform.</code><code class="sig-name descname">grid_bspline_weights</code><span class="sig-paren">(</span><em class="sig-param">target_nii</em>, <em class="sig-param">ctrl_nii</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#grid_bspline_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.transform.grid_bspline_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate tensor-product B-Spline weights on a grid.</p>
+<p>For each of the <em>N</em> input samples <span class="math notranslate nohighlight">\((s_1, s_2, s_3)\)</span> and <em>K</em> control
+points or <em>knots</em> <span class="math notranslate nohighlight">\(\mathbf{k} =(k_1, k_2, k_3)\)</span>, the tensor-product
+cubic B-Spline kernel weights are calculated:</p>
+<div class="math notranslate nohighlight">
+\[\Psi^3(\mathbf{k}, \mathbf{s}) =
+\beta^3(s_1 - k_1) \cdot \beta^3(s_2 - k_2) \cdot \beta^3(s_3 - k_3),
+\label{eq:2}\tag{2}\]</div>
+<p>where each <span class="math notranslate nohighlight">\(\beta^3\)</span> represents the cubic B-Spline for one dimension.
+The 1D B-Spline kernel implementation uses <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.piecewise.html#numpy.piecewise" title="(in NumPy v1.21)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.piecewise</span></code></a>, and is based on the
+closed-form given by Eq. (6) of <a class="reference internal" href="sdcflows.interfaces.bspline.html#unser1999" id="id1"><span>[Unser1999]</span></a>.</p>
+<p>By iterating over dimensions, the data samples that fall outside of the compact
+support of the tensor-product kernel associated to each control point can be filtered
+out and dismissed to lighten computation.</p>
+<p>Finally, the resulting weights matrix <span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>
+can be easily identified in Eq. <span class="math notranslate nohighlight">\(\eqref{eq:1}\)</span> and used as the design matrix
+for approximation of data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_nii</strong> (<a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#module-nibabel.spatialimages" title="(in NiBabel v3.2.1+100.g9fdf5e3e)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nibabel.spatialimages</span></code></a>) – An spatial image object (typically, a <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.nifti1.html#nibabel.nifti1.Nifti1Image" title="(in NiBabel v3.2.1+100.g9fdf5e3e)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Nifti1Image</span></code></a>)
+embedding the target EPI image to be corrected.
+Provides the location of the <em>N</em> samples (total number of voxels) in the space.</p></li>
+<li><p><strong>ctrl_nii</strong> (<a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#module-nibabel.spatialimages" title="(in NiBabel v3.2.1+100.g9fdf5e3e)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nibabel.spatialimages</span></code></a>) – An spatial image object (typically, a <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.nifti1.html#nibabel.nifti1.Nifti1Image" title="(in NiBabel v3.2.1+100.g9fdf5e3e)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Nifti1Image</span></code></a>)
+embedding the location of the control points of the B-Spline grid.
+The data array should contain a total of <span class="math notranslate nohighlight">\(K\)</span> knots (control points).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>weights</strong> – A sparse matrix of interpolating weights <span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>
+for the <em>N</em> voxels of the target EPI, for each of the total <em>K</em> knots.
+This sparse matrix can be directly used as design matrix for the fitting
+step of approximation/extrapolation.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.21)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> (<span class="math notranslate nohighlight">\(K \times N\)</span>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.utils.html" class="btn btn-neutral float-right" title="sdcflows.utils package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.interfaces.utils.html" class="btn btn-neutral float-left" title="sdcflows.interfaces.utils module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.2
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../../1.0.0/index.html">1.0.0</a></dd>
+            <dd><a href="../../1.0.0rc1/index.html">1.0.0rc1</a></dd>
+            <dd><a href="../../1.0.1/index.html">1.0.1</a></dd>
+            <dd><a href="../../1.0.2/index.html">1.0.2</a></dd>
+            <dd><a href="../../1.0.3/index.html">1.0.3</a></dd>
+            <dd><a href="../../1.0.4/index.html">1.0.4</a></dd>
+            <dd><a href="../../1.0.5/index.html">1.0.5</a></dd>
+            <dd><a href="../../1.0.6/index.html">1.0.6</a></dd>
+            <dd><a href="../../1.1.0/index.html">1.1.0</a></dd>
+            <dd><a href="../../1.2.0/index.html">1.2.0</a></dd>
+            <dd><a href="../../1.2.1/index.html">1.2.1</a></dd>
+            <dd><a href="../../1.2.2/index.html">1.2.2</a></dd>
+            <dd><a href="../../1.2.3/index.html">1.2.3</a></dd>
+            <dd><a href="../../1.3.0/index.html">1.3.0</a></dd>
+            <dd><a href="../../1.3.1/index.html">1.3.1</a></dd>
+            <dd><a href="../../1.3.2/index.html">1.3.2</a></dd>
+            <dd><a href="../../1.3.3/index.html">1.3.3</a></dd>
+            <dd><a href="../../1.4.0rc0/index.html">1.4.0rc0</a></dd>
+            <dd><a href="../../2.0.0/index.html">2.0.0</a></dd>
+            <dd><a href="../../2.0.0rc1/index.html">2.0.0rc1</a></dd>
+            <dd><a href="../../2.0.0rc2/index.html">2.0.0rc2</a></dd>
+            <dd><a href="../../2.0.0rc3/index.html">2.0.0rc3</a></dd>
+            <dd><a href="../../2.0.0rc4/index.html">2.0.0rc4</a></dd>
+            <dd><a href="../../2.0.0rc5/index.html">2.0.0rc5</a></dd>
+            <dd><a href="../../2.0.1/index.html">2.0.1</a></dd>
+            <dd><a href="sdcflows.transform.html">2.0.2</a></dd>
+            <dd><a href="../../2.0.2.post1/api/sdcflows.transform.html">2.0.2.post1</a></dd>
+            <dd><a href="../../2.0.3/api/sdcflows.transform.html">2.0.3</a></dd>
+            <dd><a href="../../2.0.4/api/sdcflows.transform.html">2.0.4</a></dd>
+            <dd><a href="../../2.0.5/api/sdcflows.transform.html">2.0.5</a></dd>
+            <dd><a href="../../2.0.6/api/sdcflows.transform.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../../dev_1.4.0/index.html">dev/1.4.0</a></dd>
+            <dd><a href="../../enh_outputnode-method/index.html">enh/outputnode-method</a></dd>
+            <dd><a href="../../enh_pad-topup/api/sdcflows.transform.html">enh/pad-topup</a></dd>
+            <dd><a href="../../feat_new-api/index.html">feat/new-api</a></dd>
+            <dd><a href="../../fix_field-direction/index.html">fix/field-direction</a></dd>
+            <dd><a href="../../maint_1.0.x/index.html">maint/1.0.x</a></dd>
+            <dd><a href="../../maint_1.2.x/index.html">maint/1.2.x</a></dd>
+            <dd><a href="../../maint_1.3.x/index.html">maint/1.3.x</a></dd>
+            <dd><a href="../../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../../maint_travis-gh-action-migration/index.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../../master/api/sdcflows.transform.html">master</a></dd>
+            <dd><a href="../../rel_2.0.0/index.html">rel/2.0.0</a></dd>
+            <dd><a href="../../rel_2.0.0rc3/index.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,347 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.interfaces.reportlets module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" />
+    <link rel="prev" title="sdcflows.interfaces.fmap module" href="sdcflows.interfaces.fmap.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sdcflows.interfaces.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.brainmask.html">sdcflows.interfaces.brainmask module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.bspline.html">sdcflows.interfaces.bspline module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.epi.html">sdcflows.interfaces.epi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.fmap.html">sdcflows.interfaces.fmap module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sdcflows.interfaces.reportlets module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.utils.html">sdcflows.interfaces.utils module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.transform.html">sdcflows.transform module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+          <li><a href="sdcflows.interfaces.html">sdcflows.interfaces package</a> &raquo;</li>
+        
+      <li>sdcflows.interfaces.reportlets module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.interfaces.reportlets.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../../master/api/sdcflows.interfaces.reportlets.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="module-sdcflows.interfaces.reportlets">
+<span id="sdcflows-interfaces-reportlets-module"></span><h1>sdcflows.interfaces.reportlets module<a class="headerlink" href="#module-sdcflows.interfaces.reportlets" title="Permalink to this headline">¶</a></h1>
+<p>Interfaces to generate speciality reportlets.</p>
+<dl class="class">
+<dt id="sdcflows.interfaces.reportlets.FieldmapReportlet">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.reportlets.</code><code class="sig-name descname">FieldmapReportlet</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/reportlets.html#FieldmapReportlet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.reportlets.FieldmapReportlet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.mixins.reporting.ReportCapableInterface</span></code></p>
+<p>An abstract mixin to registration nipype interfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fieldmap</strong> (<em>a pathlike object or string representing an existing file</em>) – Input fieldmap.</p></li>
+<li><p><strong>reference</strong> (<em>a pathlike object or string representing an existing file</em>) – Input reference.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>apply_mask</strong> (<em>a boolean</em>) – Zero values outside mask.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
+<li><p><strong>mask</strong> (<em>a pathlike object or string representing an existing file</em>) – Brain mask.</p></li>
+<li><p><strong>max_alpha</strong> (<em>a float</em>) – Maximum alpha channel.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">0.7</span></code>)</p></li>
+<li><p><strong>moving</strong> (<em>a pathlike object or string representing an existing file</em>) – Input moving.</p></li>
+<li><p><strong>moving_label</strong> (<em>a string</em>) – A label name for the reference mosaic.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">Fieldmap</span> <span class="pre">(Hz)</span></code>)</p></li>
+<li><p><strong>out_report</strong> (<em>a pathlike object or string representing a file</em>) – Filename for the visual report.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">report.svg</span></code>)</p></li>
+<li><p><strong>reference_label</strong> (<em>a string</em>) – A label name for the reference mosaic.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">Reference</span></code>)</p></li>
+<li><p><strong>show</strong> (<em>1 or 0 or ‘both’</em>) – Where the fieldmap should be shown.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">1</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><p><strong>out_report</strong> (<em>a pathlike object or string representing a file</em>) – Filename for the visual report.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.interfaces.utils.html" class="btn btn-neutral float-right" title="sdcflows.interfaces.utils module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.interfaces.fmap.html" class="btn btn-neutral float-left" title="sdcflows.interfaces.fmap module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.4
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../../1.0.0/api/sdcflows.interfaces.reportlets.html">1.0.0</a></dd>
+            <dd><a href="../../1.0.0rc1/api/sdcflows.interfaces.reportlets.html">1.0.0rc1</a></dd>
+            <dd><a href="../../1.0.1/api/sdcflows.interfaces.reportlets.html">1.0.1</a></dd>
+            <dd><a href="../../1.0.2/api/sdcflows.interfaces.reportlets.html">1.0.2</a></dd>
+            <dd><a href="../../1.0.3/api/sdcflows.interfaces.reportlets.html">1.0.3</a></dd>
+            <dd><a href="../../1.0.4/api/sdcflows.interfaces.reportlets.html">1.0.4</a></dd>
+            <dd><a href="../../1.0.5/api/sdcflows.interfaces.reportlets.html">1.0.5</a></dd>
+            <dd><a href="../../1.0.6/api/sdcflows.interfaces.reportlets.html">1.0.6</a></dd>
+            <dd><a href="../../1.1.0/api/sdcflows.interfaces.reportlets.html">1.1.0</a></dd>
+            <dd><a href="../../1.2.0/api/sdcflows.interfaces.reportlets.html">1.2.0</a></dd>
+            <dd><a href="../../1.2.1/api/sdcflows.interfaces.reportlets.html">1.2.1</a></dd>
+            <dd><a href="../../1.2.2/api/sdcflows.interfaces.reportlets.html">1.2.2</a></dd>
+            <dd><a href="../../1.2.3/api/sdcflows.interfaces.reportlets.html">1.2.3</a></dd>
+            <dd><a href="../../1.3.0/api/sdcflows.interfaces.reportlets.html">1.3.0</a></dd>
+            <dd><a href="../../1.3.1/api/sdcflows.interfaces.reportlets.html">1.3.1</a></dd>
+            <dd><a href="../../1.3.2/api/sdcflows.interfaces.reportlets.html">1.3.2</a></dd>
+            <dd><a href="../../1.3.3/api/sdcflows.interfaces.reportlets.html">1.3.3</a></dd>
+            <dd><a href="../../1.4.0rc0/api/sdcflows.interfaces.reportlets.html">1.4.0rc0</a></dd>
+            <dd><a href="../../2.0.0/api/sdcflows.interfaces.reportlets.html">2.0.0</a></dd>
+            <dd><a href="../../2.0.0rc1/api/sdcflows.interfaces.reportlets.html">2.0.0rc1</a></dd>
+            <dd><a href="../../2.0.0rc2/api/sdcflows.interfaces.reportlets.html">2.0.0rc2</a></dd>
+            <dd><a href="../../2.0.0rc3/api/sdcflows.interfaces.reportlets.html">2.0.0rc3</a></dd>
+            <dd><a href="../../2.0.0rc4/api/sdcflows.interfaces.reportlets.html">2.0.0rc4</a></dd>
+            <dd><a href="../../2.0.0rc5/api/sdcflows.interfaces.reportlets.html">2.0.0rc5</a></dd>
+            <dd><a href="../../2.0.1/api/sdcflows.interfaces.reportlets.html">2.0.1</a></dd>
+            <dd><a href="../../2.0.2/api/sdcflows.interfaces.reportlets.html">2.0.2</a></dd>
+            <dd><a href="../../2.0.2.post1/api/sdcflows.interfaces.reportlets.html">2.0.2.post1</a></dd>
+            <dd><a href="../../2.0.3/api/sdcflows.interfaces.reportlets.html">2.0.3</a></dd>
+            <dd><a href="sdcflows.interfaces.reportlets.html">2.0.4</a></dd>
+            <dd><a href="../../2.0.5/api/sdcflows.interfaces.reportlets.html">2.0.5</a></dd>
+            <dd><a href="../../2.0.6/api/sdcflows.interfaces.reportlets.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../../dev_1.4.0/api/sdcflows.interfaces.reportlets.html">dev/1.4.0</a></dd>
+            <dd><a href="../../enh_outputnode-method/api/sdcflows.interfaces.reportlets.html">enh/outputnode-method</a></dd>
+            <dd><a href="../../enh_pad-topup/api/sdcflows.interfaces.reportlets.html">enh/pad-topup</a></dd>
+            <dd><a href="../../feat_new-api/api/sdcflows.interfaces.reportlets.html">feat/new-api</a></dd>
+            <dd><a href="../../fix_field-direction/api/sdcflows.interfaces.reportlets.html">fix/field-direction</a></dd>
+            <dd><a href="../../maint_1.0.x/api/sdcflows.interfaces.reportlets.html">maint/1.0.x</a></dd>
+            <dd><a href="../../maint_1.2.x/api/sdcflows.interfaces.reportlets.html">maint/1.2.x</a></dd>
+            <dd><a href="../../maint_1.3.x/api/sdcflows.interfaces.reportlets.html">maint/1.3.x</a></dd>
+            <dd><a href="../../maint_niworkflows-1.4-bridge/api/sdcflows.interfaces.reportlets.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../../maint_travis-gh-action-migration/api/sdcflows.interfaces.reportlets.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../../master/api/sdcflows.interfaces.reportlets.html">master</a></dd>
+            <dd><a href="../../rel_2.0.0/api/sdcflows.interfaces.reportlets.html">rel/2.0.0</a></dd>
+            <dd><a href="../../rel_2.0.0rc3/api/sdcflows.interfaces.reportlets.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

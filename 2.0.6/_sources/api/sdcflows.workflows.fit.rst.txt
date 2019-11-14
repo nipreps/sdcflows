@@ -1,0 +1,16 @@
+sdcflows.workflows.fit package
+==============================
+
+.. automodule:: sdcflows.workflows.fit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   sdcflows.workflows.fit.fieldmap
+   sdcflows.workflows.fit.pepolar
+   sdcflows.workflows.fit.syn

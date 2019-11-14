@@ -1,0 +1,13 @@
+strict digraph  {
+"inputnode (utility)";
+"rotime (epi)";
+"resample (bspline)";
+"outputnode (utility)";
+brainextraction_wf;
+"inputnode (utility)" -> "rotime (epi)";
+"inputnode (utility)" -> "resample (bspline)";
+"rotime (epi)" -> "resample (bspline)";
+"resample (bspline)" -> "outputnode (utility)";
+"resample (bspline)" -> brainextraction_wf;
+brainextraction_wf -> "outputnode (utility)";
+}

@@ -1,0 +1,451 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.workflows.fit.syn module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.workflows.ancillary module" href="sdcflows.workflows.ancillary.html" />
+    <link rel="prev" title="sdcflows.workflows.fit.pepolar module" href="sdcflows.workflows.fit.pepolar.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.transform.html">sdcflows.transform module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sdcflows.workflows.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.workflows.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+          <li><a href="sdcflows.workflows.html">sdcflows.workflows package</a> &raquo;</li>
+        
+          <li><a href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a> &raquo;</li>
+        
+      <li>sdcflows.workflows.fit.syn module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.workflows.fit.syn.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../../master/api/sdcflows.workflows.fit.syn.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="module-sdcflows.workflows.fit.syn">
+<span id="sdcflows-workflows-fit-syn-module"></span><h1>sdcflows.workflows.fit.syn module<a class="headerlink" href="#module-sdcflows.workflows.fit.syn" title="Permalink to this headline">¶</a></h1>
+<p>Estimating the susceptibility distortions without fieldmaps.</p>
+<section id="fieldmap-less-approaches">
+<span id="sdc-fieldmapless"></span><h2>Fieldmap-less approaches<a class="headerlink" href="#fieldmap-less-approaches" title="Permalink to this headline">¶</a></h2>
+<p>Many studies acquired (especially with legacy MRI protocols) do not have any
+information to estimate susceptibility-derived distortions.
+In the absence of data with the specific purpose of estimating the <span class="math notranslate nohighlight">\(B_0\)</span>
+inhomogeneity map, researchers resort to nonlinear registration to an
+«<em>anatomically correct</em>» map of the same individual (normally acquired with
+<abbr title="T1-weighted">T1w</abbr>, or <abbr title="T2-weighted">T2w</abbr> sequences).
+One of the most prominent proposals of this approach is found in <a class="reference internal" href="#studholme2000" id="id1"><span>[Studholme2000]</span></a>.</p>
+<p><em>SDCFlows</em> includes an (experimental) procedure (see <a class="reference internal" href="#sdcflows.workflows.fit.syn.init_syn_sdc_wf" title="sdcflows.workflows.fit.syn.init_syn_sdc_wf"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_syn_sdc_wf()</span></code></a> below),
+based on nonlinear image registration with ANTs’ symmetric normalization (SyN) technique.
+This workflow takes a skull-stripped <abbr title="T1-weighted">T1w</abbr> image and
+a reference <abbr title="Echo-Planar Imaging">EPI</abbr> image, and estimates a field of nonlinear
+displacements that accounts for susceptibility-derived distortions.
+To more accurately estimate the warping on typically distorted regions, this
+implementation uses an average <span class="math notranslate nohighlight">\(B_0\)</span> mapping described in <a class="reference internal" href="#treiber2016" id="id2"><span>[Treiber2016]</span></a>.
+The implementation is a variation on those developed in <a class="reference internal" href="#huntenburg2014" id="id3"><span>[Huntenburg2014]</span></a> and
+<a class="reference internal" href="#wang2017" id="id4"><span>[Wang2017]</span></a>.
+Feedback will be enthusiastically received.</p>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="studholme2000"><span class="brackets"><a class="fn-backref" href="#id1">Studholme2000</a></span></dt>
+<dd><p>Studholme et al. (2000) Accurate alignment of functional EPI data to
+anatomical MRI using a physics-based distortion model,
+IEEE Trans Med Imag 19(11):1115-1127, 2000, doi: <a class="reference external" href="https://doi.org/10.1109/42.896788">10.1109/42.896788</a>.</p>
+</dd>
+<dt class="label" id="treiber2016"><span class="brackets"><a class="fn-backref" href="#id2">Treiber2016</a></span></dt>
+<dd><p>Treiber, J. M. et al. (2016) Characterization and Correction
+of Geometric Distortions in 814 Diffusion Weighted Images,
+PLoS ONE 11(3): e0152472. doi:<a class="reference external" href="https://doi.org/10.1371/journal.pone.0152472">10.1371/journal.pone.0152472</a>.</p>
+</dd>
+<dt class="label" id="wang2017"><span class="brackets"><a class="fn-backref" href="#id4">Wang2017</a></span></dt>
+<dd><p>Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
+Registration Methods for Correction of Susceptibility Artifacts
+in Diffusion MRI. Front. Neuroinform. 11:17.
+doi:<a class="reference external" href="https://doi.org/10.3389/fninf.2017.00017">10.3389/fninf.2017.00017</a>.</p>
+</dd>
+<dt class="label" id="huntenburg2014"><span class="brackets"><a class="fn-backref" href="#id3">Huntenburg2014</a></span></dt>
+<dd><p>Huntenburg, J. M. (2014) <a class="reference external" href="http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf">Evaluating Nonlinear
+Coregistration of BOLD EPI and T1w Images</a>,
+Berlin: Master Thesis, Freie Universität.</p>
+</dd>
+</dl>
+<dl class="function">
+<dt id="sdcflows.workflows.fit.syn.init_syn_preprocessing_wf">
+<code class="sig-prename descclassname">sdcflows.workflows.fit.syn.</code><code class="sig-name descname">init_syn_preprocessing_wf</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">debug=False</em>, <em class="sig-param">name='syn_preprocessing_wf'</em>, <em class="sig-param">omp_nthreads=1</em>, <em class="sig-param">auto_bold_nss=False</em>, <em class="sig-param">t1w_inversion=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/fit/syn.html#init_syn_preprocessing_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.workflows.fit.syn.init_syn_preprocessing_wf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare EPI references and co-registration to anatomical for SyN.</p>
+<dl>
+<dt>Workflow Graph</dt><dd><figure class="align-default">
+<img alt="../_images/sdcflows-workflows-fit-syn-1.png" src="../_images/sdcflows-workflows-fit-syn-1.png" />
+</figure>
+<p>(<a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.py">Source code</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.png">png</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.svg">svg</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.pdf">pdf</a>)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>debug</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether a fast (less accurate) configuration of the workflow should be applied.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Name for this workflow</p></li>
+<li><p><strong>omp_nthreads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – Parallelize internal tasks across the number of CPUs given by this option.</p></li>
+<li><p><strong>auto_bold_nss</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Set up the reference workflow to automatically execute nonsteady states detection
+of BOLD images.</p></li>
+<li><p><strong>t1w_inversion</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Run T1w intensity inversion so that it looks more like a T2 contrast.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Inputs</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>in_epis</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Distorted EPI images that will be merged together to create the
+EPI reference file.</p></li>
+<li><p><strong>t_masks</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – (optional) mask of timepoints for calculating an EPI reference.
+Not used if <code class="docutils literal notranslate"><span class="pre">auto_bold_nss=True</span></code>.</p></li>
+<li><p><strong>in_meta</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – Metadata dictionaries corresponding to the <code class="docutils literal notranslate"><span class="pre">in_epis</span></code> input.</p></li>
+<li><p><strong>in_anat</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A preprocessed anatomical (T1w or T2w) image.</p></li>
+<li><p><strong>mask_anat</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A brainmask corresponding to the anatomical (T1w or T2w) image.</p></li>
+<li><p><strong>std2anat_xfm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – inverse registration transform of T1w image to MNI template.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epi_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>)) – A tuple, where the first element is the path of the distorted EPI
+reference map (e.g., an average of <em>b=0</em> volumes), and the second
+element is a dictionary of associated metadata.</p></li>
+<li><p><strong>anat_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to the anatomical, skull-stripped reference in EPI space.</p></li>
+<li><p><strong>anat_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to the brain mask corresponding to <code class="docutils literal notranslate"><span class="pre">anat_ref</span></code> in EPI space.</p></li>
+<li><p><strong>sd_prior</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A template map of areas with strong susceptibility distortions (SD) to regularize
+the cost function of SyN.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sdcflows.workflows.fit.syn.init_syn_sdc_wf">
+<code class="sig-prename descclassname">sdcflows.workflows.fit.syn.</code><code class="sig-name descname">init_syn_sdc_wf</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">atlas_threshold=3</em>, <em class="sig-param">sloppy=False</em>, <em class="sig-param">debug=False</em>, <em class="sig-param">name='syn_sdc_wf'</em>, <em class="sig-param">omp_nthreads=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/fit/syn.html#init_syn_sdc_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.workflows.fit.syn.init_syn_sdc_wf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the <em>fieldmap-less</em> susceptibility-distortion estimation workflow.</p>
+<p>SyN deformation is restricted to the phase-encoding (PE) direction.
+If no PE direction is specified, anterior-posterior PE is assumed.</p>
+<p>SyN deformation is also restricted to regions that are expected to have a
+&gt;3mm (approximately 1 voxel) warp, based on the fieldmap atlas.</p>
+<dl>
+<dt>Workflow Graph</dt><dd><figure class="align-default">
+<img alt="../_images/sdcflows-workflows-fit-syn-2.png" src="../_images/sdcflows-workflows-fit-syn-2.png" />
+</figure>
+<p>(<a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.py">Source code</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.png">png</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.svg">svg</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.pdf">pdf</a>)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>atlas_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – Exclude from the registration metric computation areas with average distortions
+below this threshold (in mm).</p></li>
+<li><p><strong>sloppy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether a fast (less accurate) configuration of the workflow should be applied.</p></li>
+<li><p><strong>debug</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Run in debug mode</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Name for this workflow</p></li>
+<li><p><strong>omp_nthreads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – Parallelize internal tasks across the number of CPUs given by this option.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Inputs</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>epi_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>)) – A tuple, where the first element is the path of the distorted EPI
+reference map (e.g., an average of <em>b=0</em> volumes), and the second
+element is a dictionary of associated metadata.</p></li>
+<li><p><strong>epi_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A path to a brain mask corresponding to <code class="docutils literal notranslate"><span class="pre">epi_ref</span></code>.</p></li>
+<li><p><strong>anat_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A preprocessed, skull-stripped anatomical (T1w or T2w) image resampled in EPI space.</p></li>
+<li><p><strong>anat_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to the brain mask corresponding to <code class="docutils literal notranslate"><span class="pre">anat_ref</span></code> in EPI space.</p></li>
+<li><p><strong>sd_prior</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A template map of areas with strong susceptibility distortions (SD) to regularize
+the cost function of SyN</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The path of the estimated fieldmap.</p></li>
+<li><p><strong>fmap_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The path of an unwarped conversion of files in <code class="docutils literal notranslate"><span class="pre">epi_ref</span></code>.</p></li>
+<li><p><strong>fmap_coeff</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The path(s) of the B-Spline coefficients supporting the fieldmap.</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Short description of the estimation method that was run.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.workflows.ancillary.html" class="btn btn-neutral float-right" title="sdcflows.workflows.ancillary module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.workflows.fit.pepolar.html" class="btn btn-neutral float-left" title="sdcflows.workflows.fit.pepolar module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.3
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../../1.0.0/index.html">1.0.0</a></dd>
+            <dd><a href="../../1.0.0rc1/index.html">1.0.0rc1</a></dd>
+            <dd><a href="../../1.0.1/index.html">1.0.1</a></dd>
+            <dd><a href="../../1.0.2/index.html">1.0.2</a></dd>
+            <dd><a href="../../1.0.3/index.html">1.0.3</a></dd>
+            <dd><a href="../../1.0.4/index.html">1.0.4</a></dd>
+            <dd><a href="../../1.0.5/index.html">1.0.5</a></dd>
+            <dd><a href="../../1.0.6/index.html">1.0.6</a></dd>
+            <dd><a href="../../1.1.0/index.html">1.1.0</a></dd>
+            <dd><a href="../../1.2.0/index.html">1.2.0</a></dd>
+            <dd><a href="../../1.2.1/index.html">1.2.1</a></dd>
+            <dd><a href="../../1.2.2/index.html">1.2.2</a></dd>
+            <dd><a href="../../1.2.3/index.html">1.2.3</a></dd>
+            <dd><a href="../../1.3.0/index.html">1.3.0</a></dd>
+            <dd><a href="../../1.3.1/index.html">1.3.1</a></dd>
+            <dd><a href="../../1.3.2/index.html">1.3.2</a></dd>
+            <dd><a href="../../1.3.3/index.html">1.3.3</a></dd>
+            <dd><a href="../../1.4.0rc0/api/sdcflows.workflows.fit.syn.html">1.4.0rc0</a></dd>
+            <dd><a href="../../2.0.0/api/sdcflows.workflows.fit.syn.html">2.0.0</a></dd>
+            <dd><a href="../../2.0.0rc1/api/sdcflows.workflows.fit.syn.html">2.0.0rc1</a></dd>
+            <dd><a href="../../2.0.0rc2/api/sdcflows.workflows.fit.syn.html">2.0.0rc2</a></dd>
+            <dd><a href="../../2.0.0rc3/api/sdcflows.workflows.fit.syn.html">2.0.0rc3</a></dd>
+            <dd><a href="../../2.0.0rc4/api/sdcflows.workflows.fit.syn.html">2.0.0rc4</a></dd>
+            <dd><a href="../../2.0.0rc5/api/sdcflows.workflows.fit.syn.html">2.0.0rc5</a></dd>
+            <dd><a href="../../2.0.1/api/sdcflows.workflows.fit.syn.html">2.0.1</a></dd>
+            <dd><a href="../../2.0.2/api/sdcflows.workflows.fit.syn.html">2.0.2</a></dd>
+            <dd><a href="../../2.0.2.post1/api/sdcflows.workflows.fit.syn.html">2.0.2.post1</a></dd>
+            <dd><a href="sdcflows.workflows.fit.syn.html">2.0.3</a></dd>
+            <dd><a href="../../2.0.4/api/sdcflows.workflows.fit.syn.html">2.0.4</a></dd>
+            <dd><a href="../../2.0.5/api/sdcflows.workflows.fit.syn.html">2.0.5</a></dd>
+            <dd><a href="../../2.0.6/api/sdcflows.workflows.fit.syn.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../../dev_1.4.0/api/sdcflows.workflows.fit.syn.html">dev/1.4.0</a></dd>
+            <dd><a href="../../enh_outputnode-method/api/sdcflows.workflows.fit.syn.html">enh/outputnode-method</a></dd>
+            <dd><a href="../../enh_pad-topup/api/sdcflows.workflows.fit.syn.html">enh/pad-topup</a></dd>
+            <dd><a href="../../feat_new-api/index.html">feat/new-api</a></dd>
+            <dd><a href="../../fix_field-direction/api/sdcflows.workflows.fit.syn.html">fix/field-direction</a></dd>
+            <dd><a href="../../maint_1.0.x/index.html">maint/1.0.x</a></dd>
+            <dd><a href="../../maint_1.2.x/index.html">maint/1.2.x</a></dd>
+            <dd><a href="../../maint_1.3.x/index.html">maint/1.3.x</a></dd>
+            <dd><a href="../../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../../maint_travis-gh-action-migration/index.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../../master/api/sdcflows.workflows.fit.syn.html">master</a></dd>
+            <dd><a href="../../rel_2.0.0/api/sdcflows.workflows.fit.syn.html">rel/2.0.0</a></dd>
+            <dd><a href="../../rel_2.0.0rc3/api/sdcflows.workflows.fit.syn.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

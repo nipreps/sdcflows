@@ -1,0 +1,599 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>What’s new? &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="sdcflows.workflows.outputs module" href="api/sdcflows.workflows.outputs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Library API (application program interface)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">What’s new?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#march-05-2021">2.0.1 (March 05, 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#january-25-2021">2.0.0 (January 25, 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#x-series">1.3.x series</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#september-4-2020">1.3.3 (September 4, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#august-14-2020">1.3.2 (August 14, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#may-22-2020">1.3.1 (May 22, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#may-4-2020">1.3.0 (May 4, 2020)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-1-3-x-releases">Pre-1.3.x releases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#april-16-2020">1.2.2 (April 16, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#april-01-2020">1.2.1 (April 01, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#february-15-2020">1.2.0 (February 15, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#february-3-2020">1.1.0 (February 3, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#april-15-2020">1.0.6 (April 15, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#february-14-2020">1.0.5 (February 14, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#january-27-2020">1.0.4 (January 27, 2020)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#december-18-2019">1.0.3 (December 18, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">1.0.2 (December 18, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#december-04-2019">1.0.1 (December 04, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#november-25-2019">1.0.0 (November 25, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#november-22-2019">0.1.4 (November 22, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#october-15-2019">0.1.3 (October 15, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#october-10-2019">0.1.2 (October 10, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#july-23-2019">0.1.1 (July 23, 2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#july-22-2019">0.1.0 (July 22, 2019)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>What’s new?</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/changes.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../master/changes.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="what-s-new">
+<h1>What’s new?<a class="headerlink" href="#what-s-new" title="Permalink to this headline">¶</a></h1>
+<section id="march-05-2021">
+<h2>2.0.1 (March 05, 2021)<a class="headerlink" href="#march-05-2021" title="Permalink to this headline">¶</a></h2>
+<p>A patch release including some bugfixes and minimal improvements over the previous
+major release.</p>
+<ul class="simple">
+<li><p>FIX: Inconsistency left after renaming inputs to SDC-SyN (removing “BOLD”) (#182)</p></li>
+<li><p>FIX: Correctly interpolate the BIDS root when datasets have sessions (#180)</p></li>
+<li><p>ENH: Add a preprocessing pipeline for SDC-SyN (#184)</p></li>
+<li><p>ENH: [rodents] Add input to override default B-Spline distances in INU correction with N4 (#178)</p></li>
+<li><p>ENH: Adopt new brain extraction algorithm in magnitude preparation workflow (#176)</p></li>
+<li><p>MAINT: Adapt to GitHub actions’ upgrade to Ubuntu 20.04 (#185)</p></li>
+</ul>
+</section>
+<section id="january-25-2021">
+<h2>2.0.0 (January 25, 2021)<a class="headerlink" href="#january-25-2021" title="Permalink to this headline">¶</a></h2>
+<p>The <em>SDCFlows</em> 2.0.x series are released after a comprehensive overhaul of the software’s API.
+This overhaul has the vision of converting <em>SDCFlows</em> into some sort of subordinate pipeline
+to other <em>d/fMRIPrep</em>, inline with <em>sMRIPrep</em>’s approach.
+The idea is to consider fieldmaps a first-citizen input, for which derivatives are generated
+at the output (on the same vein of, and effectively implementing <a class="reference external" href="https://github.com/nipreps/sdcflows/issues/26">#26</a>).
+A bids’s-eye view of this new release follows:</p>
+<ul class="simple">
+<li><p>Two new base objects (<a class="reference internal" href="api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapFile" title="sdcflows.fieldmaps.FieldmapFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapFile</span></code></a> and
+<a class="reference internal" href="api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a>) for the validation
+and representation of fieldmap estimation strategies.
+Validation of metadata and checking the sufficiency of imaging files
+and necessary parameters is now done with these two objects.
+<a class="reference internal" href="api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> also generates the
+appropriate estimation workflow for the input data.</p></li>
+<li><p>Moved estimation workflows under the <a class="reference internal" href="api/sdcflows.workflows.fit.html#module-sdcflows.workflows.fit" title="sdcflows.workflows.fit"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.workflows.fit</span></code></a> module.</p></li>
+<li><p>New outputs submodule <a class="reference internal" href="api/sdcflows.workflows.outputs.html#module-sdcflows.workflows.outputs" title="sdcflows.workflows.outputs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.workflows.outputs</span></code></a> that writes out reportlets and
+derivatives, following suit with higher-level <em>NiPreps</em> (<em>s/f/dMRIPrep</em>).
+The two workflows are exercised in the CircleCI tests, and the artifacts are generated
+this way.
+Derivatives are populated with relevant pieces of metadata (for instance, they forward
+the <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code> fields).</p></li>
+<li><p>A new <a class="reference internal" href="api/sdcflows.workflows.base.html#sdcflows.workflows.base.init_fmap_preproc_wf" title="sdcflows.workflows.base.init_fmap_preproc_wf"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_fmap_preproc_wf()</span></code></a>, leveraging
+<a class="reference internal" href="api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> objects.</p></li>
+<li><p>Separated out a new utilities module <a class="reference internal" href="api/sdcflows.utils.html#module-sdcflows.utils" title="sdcflows.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.utils</span></code></a> for the manipulation of
+phase information and <abbr title="echo-planar imaging">EPI</abbr> data.</p></li>
+<li><p>New <a class="reference internal" href="api/sdcflows.workflows.apply.registration.html#module-sdcflows.workflows.apply.registration" title="sdcflows.workflows.apply.registration"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.workflows.apply.registration</span></code></a> module, which aligns the reference map
+of the fieldmap of choice (e.g., a magnitude image) to the reference EPI
+(e.g., an SBRef, a <em>b=0</em> DWI, or a <em>fMRIPrep</em>’s <em>BOLDRef</em>) with ANTs.
+The workflow resamples the fieldmap reference into the reference EPI’s space for
+reporting/visualization objectives.</p></li>
+<li><p>New <a class="reference internal" href="api/sdcflows.interfaces.bspline.html#module-sdcflows.interfaces.bspline" title="sdcflows.interfaces.bspline"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.interfaces.bspline</span></code></a> set of utilities for the filtering and
+extrapolation of fieldmaps with B-Splines.
+Accordingly, all workflows have been updated to correctly handle (and better use) B-Spline
+coefficients.</p></li>
+<li><p>A new PEPOLAR implementation based on TOPUP (see
+<a class="reference internal" href="api/sdcflows.workflows.fit.pepolar.html#sdcflows.workflows.fit.pepolar.init_topup_wf" title="sdcflows.workflows.fit.pepolar.init_topup_wf"><code class="xref py py-func docutils literal notranslate"><span class="pre">sdcflows.workflows.fit.pepolar.init_topup_wf()</span></code></a>).</p></li>
+<li><p>Pushed the code coverage with tests, along with a deep code cleanup.</p></li>
+</ul>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p><em>SDCFlows</em> drops Python 3.6 starting with 1.4.x series.</p>
+</div>
+<p>Some of the most prominent pull-requests conducive to this release are:</p>
+<ul class="simple">
+<li><p>FIX: Fast &amp; accurate brain extraction of magnitude images without FSL BET (#174)</p></li>
+<li><p>FIX: svgutils 0.3.2 breaks our reportlets (#175)</p></li>
+<li><p>FIX: Misconfigured test of unwarping workflow (#170)</p></li>
+<li><p>FIX: Cleanup annoying isolated dots in reportlets + new tests (#168)</p></li>
+<li><p>FIX: Make images “plumb” before running ANTs-SyN (and roll-back afterwards) (#165)</p></li>
+<li><p>FIX: Convert SEI fieldmaps given in rad/s into Hz (#127)</p></li>
+<li><p>FIX: Limit <code class="docutils literal notranslate"><span class="pre">3dQwarp</span></code> to maximum 4 CPUs for stability reasons (#128)</p></li>
+<li><p>ENH: Adopt new brain extraction algorithm in magnitude preparation workflow (#176)</p></li>
+<li><p>ENH: Add “<em>fieldmap-less</em>” estimations to default heuristics (#166)</p></li>
+<li><p>ENH: Add one test for the SDC-SyN workflow (#164)</p></li>
+<li><p>ENH: Generate a simple mask after correction (#161)</p></li>
+<li><p>ENH: Increase unit-tests coverage of <code class="docutils literal notranslate"><span class="pre">sdcflows.fieldmaps</span></code> (#159)</p></li>
+<li><p>ENH: Optimize tensor-product B-Spline kernel evaluation (#157)</p></li>
+<li><p>ENH: Add a memory check to dynamically limit interpolation blocksize (#156)</p></li>
+<li><p>ENH: Massage TOPUP’s fieldcoeff files to be compatible with ours (#154)</p></li>
+<li><p>ENH: Add a simplistic EPI masking algorithm (#152)</p></li>
+<li><p>ENH: Utility that returns the <code class="docutils literal notranslate"><span class="pre">B0FieldSource</span></code> of a given potential EPI target (#151)</p></li>
+<li><p>ENH: Write <code class="docutils literal notranslate"><span class="pre">fmapid-</span></code> entity in Derivatives (#150)</p></li>
+<li><p>ENH: Multiplex fieldmap estimation outputs into a single <code class="docutils literal notranslate"><span class="pre">outputnode</span></code> (#149)</p></li>
+<li><p>ENH: Putting the new API together on a base workflow (#143)</p></li>
+<li><p>ENH: Autogenerate <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifiers</span></code> from <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code> (#142)</p></li>
+<li><p>ENH: Finalizing the API overhaul (#132)</p></li>
+<li><p>ENH: Keep a registry of already-used identifiers (and auto-generate new) (#130)</p></li>
+<li><p>ENH: New objects for better representation of fieldmap estimation (#114)</p></li>
+<li><p>ENH: Show FieldmapReportlet oriented aligned with cardinal axes (#120)</p></li>
+<li><p>ENH: New estimation API (featuring a TOPUP implementation!) (#115)</p></li>
+<li><p>DOC: Minor improvements to the literate workflows descriptions. (#162)</p></li>
+<li><p>DOC: Fix typo in docstring (#155)</p></li>
+<li><p>DOC: Enable NiPype’s sphinx-extension to better render Interfaces (#131)</p></li>
+<li><p>MAINT: Docker - Update base Ubuntu image &amp; ANTs, makefile (#173)</p></li>
+<li><p>MAINT: Retouch several tests and improve ANTs version handling of SyN workflow (#172)</p></li>
+<li><p>MAINT: Drop Python 3.6 (#160)</p></li>
+<li><p>MAINT: Enable Git-archive protocol with setuptools-scm-archive (#153)</p></li>
+<li><p>MAINT: Migrate TravisCI -&gt; GH Actions (completion) (#138)</p></li>
+<li><p>MAINT: Migrate TravisCI -&gt; GH Actions (#137)</p></li>
+<li><p>MAINT: Minimal unit test and refactor of pepolar workflow node (#133)</p></li>
+<li><p>MAINT: Collect code coverage from tests on Circle (#122)</p></li>
+<li><p>MAINT: Test minimum dependencies with TravisCI (#96)</p></li>
+<li><p>MAINT: Add FLIRT config files to prepare for TOPUP integration (#116)</p></li>
+</ul>
+<p>A complete list of issues addressed by the release is found <a class="reference external" href="https://github.com/nipreps/sdcflows/milestone/2?closed=1">in the GitHub repo</a>.</p>
+<div class="admonition-author-list-for-papers-based-on-sdcflows-2-0-x-series admonition">
+<p class="admonition-title">Author list for papers based on <em>SDCFlows</em> 2.0.x series</p>
+<p>As described in the <a class="reference external" href="https://www.nipreps.org/community/CONTRIBUTING/#recognizing-contributions">Contributor Guidelines</a>,
+anyone listed as developer or contributor may write and submit manuscripts
+about <em>SDCFlows</em>.
+To do so, please move the author(s) name(s) to the front of the following list:</p>
+<p>Markiewicz, Christopher J. <sup>1</sup>; Goncalves, Mathias <sup>1</sup>; Adebimpe, Azeez <sup>2</sup>; Blair, Ross W. <sup>1</sup>; Cieslak, Matthew <sup>2</sup>; Naveau, Mikaël <sup>3</sup>; Sitek, Kevin R. <sup>4</sup>; Sneve, Markus H. <sup>5</sup>; Gorgolewski, Krzysztof J. <sup>1</sup>; Satterthwaite, Theodore D. <sup>2</sup>; Poldrack, Russell A. <sup>1</sup>; Esteban, Oscar <sup>6</sup>.</p>
+<p>Affiliations:</p>
+<ol class="arabic simple">
+<li><p>Department of Psychology, Stanford University</p></li>
+<li><p>Perelman School of Medicine, University of Pennsylvania, PA, USA</p></li>
+<li><p>Cyceron, UMS 3408 (CNRS - UCBN), France</p></li>
+<li><p>Speech &amp; Hearing Bioscience &amp; Technology Program, Harvard University</p></li>
+<li><p>Center for Lifespan Changes in Brain and Cognition, University of Oslo</p></li>
+<li><p>Dept. of Radiology, Lausanne University Hospital, University of Lausanne</p></li>
+</ol>
+</div>
+</section>
+<section id="x-series">
+<h2>1.3.x series<a class="headerlink" href="#x-series" title="Permalink to this headline">¶</a></h2>
+<section id="september-4-2020">
+<h3>1.3.3 (September 4, 2020)<a class="headerlink" href="#september-4-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release in 1.3.x series.</p>
+<p>Allows niworkflows 1.2.x or 1.3.x, as no API-breaking changes in 1.3.0 affect SDCflows.</p>
+</section>
+<section id="august-14-2020">
+<h3>1.3.2 (August 14, 2020)<a class="headerlink" href="#august-14-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release in 1.3.x series.</p>
+<ul class="simple">
+<li><p>FIX: Replace NaNs in fieldmap atlas with zeros (#104)</p></li>
+<li><p>ENH: Return out_warp == “identity” if no SDC is applied (#108)</p></li>
+</ul>
+</section>
+<section id="may-22-2020">
+<h3>1.3.1 (May 22, 2020)<a class="headerlink" href="#may-22-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release adapting to use newly refacored DerivativesDataSink</p>
+<ul class="simple">
+<li><p>ENH: Use new <code class="docutils literal notranslate"><span class="pre">DerivativesDataSink</span></code> from NiWorkflows 1.2.0 (#102)</p></li>
+</ul>
+</section>
+<section id="may-4-2020">
+<h3>1.3.0 (May 4, 2020)<a class="headerlink" href="#may-4-2020" title="Permalink to this headline">¶</a></h3>
+<p>Minor release enforcing BIDS-Derivatives labels on <code class="docutils literal notranslate"><span class="pre">dseg</span></code> file.</p>
+<ul class="simple">
+<li><p>FIX: WM mask selection from dseg before generating report (#100)</p></li>
+</ul>
+</section>
+</section>
+<section id="pre-1-3-x-releases">
+<h2>Pre-1.3.x releases<a class="headerlink" href="#pre-1-3-x-releases" title="Permalink to this headline">¶</a></h2>
+<section id="april-16-2020">
+<h3>1.2.2 (April 16, 2020)<a class="headerlink" href="#april-16-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release to fix phase-difference masking bug in the 1.2.x series.</p>
+<ul class="simple">
+<li><p>FIX: Do not reorient magnitude images (#98)</p></li>
+</ul>
+</section>
+<section id="april-01-2020">
+<h3>1.2.1 (April 01, 2020)<a class="headerlink" href="#april-01-2020" title="Permalink to this headline">¶</a></h3>
+<p>A patch release to make <em>SDCFlows</em> more amicable to downstream software.</p>
+<ul class="simple">
+<li><p>MAINT: Migrate from versioneer to setuptools_scm (#97)</p></li>
+<li><p>MAINT: Flexibilize dependencies – nipype, niworkflows, pybids (#95)</p></li>
+</ul>
+</section>
+<section id="february-15-2020">
+<h3>1.2.0 (February 15, 2020)<a class="headerlink" href="#february-15-2020" title="Permalink to this headline">¶</a></h3>
+<p>A minor version release that changes phasediff caclulations to improve robustness.
+This release is preparation for <em>fMRIPrep</em> 20.0.0.</p>
+<ul class="simple">
+<li><p>FIX: Scale all phase maps to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">2pi]</span></code> range (#88)</p></li>
+<li><p>MNT: Fix package tests (#90)</p></li>
+<li><p>MNT: Fix circle deployment (#91)</p></li>
+</ul>
+</section>
+<section id="february-3-2020">
+<h3>1.1.0 (February 3, 2020)<a class="headerlink" href="#february-3-2020" title="Permalink to this headline">¶</a></h3>
+<p>This is a nominal release that enables downstream tools to depend on both
+SDCFlows and niworkflows 1.1.x.</p>
+<p>Bug fixes needed for the 1.5.x series of fMRIPrep will be accepted into the
+1.0.x series of SDCFlows.</p>
+</section>
+<section id="april-15-2020">
+<h3>1.0.6 (April 15, 2020)<a class="headerlink" href="#april-15-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release.</p>
+<ul class="simple">
+<li><p>FIX: Do not reorient magnitude images (#98)</p></li>
+</ul>
+</section>
+<section id="february-14-2020">
+<h3>1.0.5 (February 14, 2020)<a class="headerlink" href="#february-14-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release.</p>
+<ul class="simple">
+<li><p>FIX: Center phase maps around central mode, avoiding FoV-related outliers (#89)</p></li>
+</ul>
+</section>
+<section id="january-27-2020">
+<h3>1.0.4 (January 27, 2020)<a class="headerlink" href="#january-27-2020" title="Permalink to this headline">¶</a></h3>
+<p>Bug-fix release.</p>
+<ul class="simple">
+<li><p>FIX: Connect SyN outputs whenever SyN is run (#82)</p></li>
+<li><p>MNT: Skim Docker image, optimize CircleCI workflow, and reuse cached results (#80)</p></li>
+</ul>
+</section>
+<section id="december-18-2019">
+<h3>1.0.3 (December 18, 2019)<a class="headerlink" href="#december-18-2019" title="Permalink to this headline">¶</a></h3>
+<p>A hotfix release preventing downstream dependency collisions on fMRIPrep.</p>
+<ul class="simple">
+<li><p>PIN: niworkflows-1.0.3 <a class="reference external" href="https://github.com/nipreps/sdcflows/commit/449c2c2b0ab383544f5024de82ca8a80ee70894d">449c2c2</a></p></li>
+</ul>
+</section>
+<section id="id1">
+<h3>1.0.2 (December 18, 2019)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>A hotfix release.</p>
+<ul class="simple">
+<li><p>FIX: NiWorkflows’ <code class="docutils literal notranslate"><span class="pre">IntraModalMerge</span></code> choked with images of shape (x, y, z, 1) (#79, <a class="reference external" href="https://github.com/nipreps/sdcflows/commit/2e6faa05ed0f0ec0b4616f33db778a61a1df89d0">2e6faa0</a>,
+<a class="reference external" href="https://github.com/nipreps/sdcflows/commit/717a69ef680d556e4d5cde6876d0e60b023924e0">717a69e</a>,
+and <a class="reference external" href="https://github.com/nipreps/sdcflows/commit/361cd678215fca9434baa713fa43f77a2231e632">361cd67</a>)</p></li>
+</ul>
+</section>
+<section id="december-04-2019">
+<h3>1.0.1 (December 04, 2019)<a class="headerlink" href="#december-04-2019" title="Permalink to this headline">¶</a></h3>
+<p>A bugfix release.</p>
+<ul class="simple">
+<li><p>FIX: Flexibly and cheaply select initial PEPOLAR volumes (#75)</p></li>
+<li><p>ENH: Phase1/2 - subtract phases before unwrapping (#70)</p></li>
+</ul>
+</section>
+<section id="november-25-2019">
+<h3>1.0.0 (November 25, 2019)<a class="headerlink" href="#november-25-2019" title="Permalink to this headline">¶</a></h3>
+<p>A first stable release after detaching these workflows off from <em>fMRIPrep</em>.</p>
+<p>With thanks to Matthew Cieslak and Azeez Adebimpe.</p>
+<ul class="simple">
+<li><p>FIX: Hard-wire <code class="docutils literal notranslate"><span class="pre">MNI152NLin2009cAsym</span></code> as standard space for SDC-SyN (#63)</p></li>
+<li><p>ENH: Base implementation for phase1/2 fieldmaps (#60)</p></li>
+<li><p>ENH: Update <code class="docutils literal notranslate"><span class="pre">spatialimage.get_data()</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">spatialimage.get_fdata()</span></code> (#58)</p></li>
+<li><p>ENH: Refactor fieldmap-unwarping flows, more homogeneous interface (#56)</p></li>
+<li><p>ENH: Transparency on fieldmap plots! (#57)</p></li>
+<li><p>ENH: Stop using siemens2rads from old nipype workflows (#50)</p></li>
+<li><p>ENH: Large refactor of the orchestration workflow (#55)</p></li>
+<li><p>ENH: Refactor the distortion estimation workflow (#53)</p></li>
+<li><p>ENH: Deduplicating magnitude handling and fieldmap postprocessing workflows (#52)</p></li>
+<li><p>ENH: Do not use legacy demean function from old nipype workflows (#51)</p></li>
+<li><p>ENH: Revise and add tests for the PEPOLAR correction (#29)</p></li>
+<li><p>ENH: Improved fieldmap reportlets (#28)</p></li>
+<li><p>ENH: Set-up testing framework (#27)</p></li>
+<li><p>DOC: Update documentation (#61)</p></li>
+<li><p>DOC: Fix typo and link to BIDS Specification (#49)</p></li>
+<li><p>DOC: Build API documentation (#43)</p></li>
+<li><p>CI: Add check to avoid deployment of documentation from forks (#48)</p></li>
+<li><p>CI: Fix CircleCI builds by adding a [refresh workdir] commit message tag (#47)</p></li>
+<li><p>CI: Optimize CircleCI using a local docker registry instead docker save/load (#45)</p></li>
+<li><p>MAINT: Housekeeping - flake8 errors, settings, etc. (#44)</p></li>
+<li><p>MAINT: Rename boldrefs to distortedrefs (#41)</p></li>
+<li><p>MAINT: Use niflow-nipype1-workflows for old nipype.workflows imports (#39)</p></li>
+</ul>
+</section>
+<section id="november-22-2019">
+<h3>0.1.4 (November 22, 2019)<a class="headerlink" href="#november-22-2019" title="Permalink to this headline">¶</a></h3>
+<p>A maintenance release to pin niworkflows to version 1.0.0rc1.</p>
+</section>
+<section id="october-15-2019">
+<h3>0.1.3 (October 15, 2019)<a class="headerlink" href="#october-15-2019" title="Permalink to this headline">¶</a></h3>
+<p>Adapts <em>SDCflows</em> to the separation of workflows from Nipype 1.</p>
+<ul class="simple">
+<li><p>MAINT: pin <cite>niflow-nipype1-workflows</cite>, <cite>nipype</cite> and update corresponding imports.</p></li>
+</ul>
+</section>
+<section id="october-10-2019">
+<h3>0.1.2 (October 10, 2019)<a class="headerlink" href="#october-10-2019" title="Permalink to this headline">¶</a></h3>
+<p>BAD RELEASE – DO NOT USE</p>
+</section>
+<section id="july-23-2019">
+<h3>0.1.1 (July 23, 2019)<a class="headerlink" href="#july-23-2019" title="Permalink to this headline">¶</a></h3>
+<p>Minor fixup of the deploy infrastructure from CircleCI</p>
+<ul class="simple">
+<li><p>MAINT: Add manifest including versioneer (#25) &#64;effigies</p></li>
+</ul>
+</section>
+<section id="july-22-2019">
+<h3>0.1.0 (July 22, 2019)<a class="headerlink" href="#july-22-2019" title="Permalink to this headline">¶</a></h3>
+<p>First version working with <em>fMRIPrep</em> v1.4.1.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="api/sdcflows.workflows.outputs.html" class="btn btn-neutral float-left" title="sdcflows.workflows.outputs module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.1
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../1.0.0/changes.html">1.0.0</a></dd>
+            <dd><a href="../1.0.0rc1/changes.html">1.0.0rc1</a></dd>
+            <dd><a href="../1.0.1/changes.html">1.0.1</a></dd>
+            <dd><a href="../1.0.2/changes.html">1.0.2</a></dd>
+            <dd><a href="../1.0.3/changes.html">1.0.3</a></dd>
+            <dd><a href="../1.0.4/changes.html">1.0.4</a></dd>
+            <dd><a href="../1.0.5/changes.html">1.0.5</a></dd>
+            <dd><a href="../1.0.6/changes.html">1.0.6</a></dd>
+            <dd><a href="../1.1.0/changes.html">1.1.0</a></dd>
+            <dd><a href="../1.2.0/changes.html">1.2.0</a></dd>
+            <dd><a href="../1.2.1/changes.html">1.2.1</a></dd>
+            <dd><a href="../1.2.2/changes.html">1.2.2</a></dd>
+            <dd><a href="../1.2.3/changes.html">1.2.3</a></dd>
+            <dd><a href="../1.3.0/changes.html">1.3.0</a></dd>
+            <dd><a href="../1.3.1/changes.html">1.3.1</a></dd>
+            <dd><a href="../1.3.2/changes.html">1.3.2</a></dd>
+            <dd><a href="../1.3.3/changes.html">1.3.3</a></dd>
+            <dd><a href="../1.4.0rc0/changes.html">1.4.0rc0</a></dd>
+            <dd><a href="../2.0.0/changes.html">2.0.0</a></dd>
+            <dd><a href="../2.0.0rc1/changes.html">2.0.0rc1</a></dd>
+            <dd><a href="../2.0.0rc2/changes.html">2.0.0rc2</a></dd>
+            <dd><a href="../2.0.0rc3/changes.html">2.0.0rc3</a></dd>
+            <dd><a href="../2.0.0rc4/changes.html">2.0.0rc4</a></dd>
+            <dd><a href="../2.0.0rc5/changes.html">2.0.0rc5</a></dd>
+            <dd><a href="changes.html">2.0.1</a></dd>
+            <dd><a href="../2.0.2/changes.html">2.0.2</a></dd>
+            <dd><a href="../2.0.2.post1/changes.html">2.0.2.post1</a></dd>
+            <dd><a href="../2.0.3/changes.html">2.0.3</a></dd>
+            <dd><a href="../2.0.4/changes.html">2.0.4</a></dd>
+            <dd><a href="../2.0.5/changes.html">2.0.5</a></dd>
+            <dd><a href="../2.0.6/changes.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../dev_1.4.0/changes.html">dev/1.4.0</a></dd>
+            <dd><a href="../enh_outputnode-method/changes.html">enh/outputnode-method</a></dd>
+            <dd><a href="../enh_pad-topup/changes.html">enh/pad-topup</a></dd>
+            <dd><a href="../feat_new-api/changes.html">feat/new-api</a></dd>
+            <dd><a href="../fix_field-direction/changes.html">fix/field-direction</a></dd>
+            <dd><a href="../maint_1.0.x/changes.html">maint/1.0.x</a></dd>
+            <dd><a href="../maint_1.2.x/changes.html">maint/1.2.x</a></dd>
+            <dd><a href="../maint_1.3.x/changes.html">maint/1.3.x</a></dd>
+            <dd><a href="../maint_niworkflows-1.4-bridge/changes.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../maint_travis-gh-action-migration/changes.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../master/changes.html">master</a></dd>
+            <dd><a href="../rel_2.0.0/changes.html">rel/2.0.0</a></dd>
+            <dd><a href="../rel_2.0.0rc3/changes.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

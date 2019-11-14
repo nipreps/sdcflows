@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.workflows.base module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.workflows.outputs module" href="sdcflows.workflows.outputs.html" />
+    <link rel="prev" title="sdcflows.workflows.fit.syn module" href="sdcflows.workflows.fit.syn.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.workflows.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="sdcflows.workflows.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sdcflows.workflows.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.outputs.html">sdcflows.workflows.outputs module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+          <li><a href="sdcflows.workflows.html">sdcflows.workflows package</a> &raquo;</li>
+        
+      <li>sdcflows.workflows.base module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.workflows.base.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+    
+    
+
+
+
+    <p class="scv-banner scv-sphinx_rtd_theme"><a href="../../master/api/sdcflows.workflows.base.html"><b>Warning:</b> This document is for an old version of sdcflows. The main version is master.</a></p>
+<section id="module-sdcflows.workflows.base">
+<span id="sdcflows-workflows-base-module"></span><h1>sdcflows.workflows.base module<a class="headerlink" href="#module-sdcflows.workflows.base" title="Permalink to this headline">¶</a></h1>
+<p>Estimate fieldmaps for <abbr title="susceptibility distortion correction">SDC</abbr>.</p>
+<dl class="function">
+<dt id="sdcflows.workflows.base.init_fmap_preproc_wf">
+<code class="sig-prename descclassname">sdcflows.workflows.base.</code><code class="sig-name descname">init_fmap_preproc_wf</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">estimators</em>, <em class="sig-param">omp_nthreads</em>, <em class="sig-param">output_dir</em>, <em class="sig-param">subject</em>, <em class="sig-param">sloppy=False</em>, <em class="sig-param">debug=False</em>, <em class="sig-param">name='fmap_preproc_wf'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/base.html#init_fmap_preproc_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.workflows.base.init_fmap_preproc_wf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and combine estimator workflows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>estimators</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimator</span></code>) – A list of estimators.</p></li>
+<li><p><strong>omp_nthreads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – Maximum number of threads an individual process may use</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to save derivatives</p></li>
+<li><p><strong>subject</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Participant label for this single-subject workflow.</p></li>
+<li><p><strong>debug</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Enable debugging outputs</p></li>
+<li><p><strong>sloppy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Enable faster but less precise calculations</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>, optional) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">&quot;fmap_preproc_wf&quot;</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Inputs</dt>
+<dd class="field-even"><p><strong>in_&lt;B0FieldIdentifier&gt;.&lt;field&gt;</strong> – The workflow generates inputs depending on the estimation strategy.</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_&lt;B0FieldIdentifier&gt;.fmap</strong> – The preprocessed fieldmap.</p></li>
+<li><p><strong>out_&lt;B0FieldIdentifier&gt;.fmap_ref</strong> – The preprocessed fieldmap reference.</p></li>
+<li><p><strong>out_&lt;B0FieldIdentifier&gt;.fmap_coeff</strong> – The preprocessed fieldmap coefficients.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.workflows.outputs.html" class="btn btn-neutral float-right" title="sdcflows.workflows.outputs module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.workflows.fit.syn.html" class="btn btn-neutral float-left" title="sdcflows.workflows.fit.syn module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 2.0.0rc4
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../../1.0.0/api/sdcflows.workflows.base.html">1.0.0</a></dd>
+            <dd><a href="../../1.0.0rc1/api/sdcflows.workflows.base.html">1.0.0rc1</a></dd>
+            <dd><a href="../../1.0.1/api/sdcflows.workflows.base.html">1.0.1</a></dd>
+            <dd><a href="../../1.0.2/api/sdcflows.workflows.base.html">1.0.2</a></dd>
+            <dd><a href="../../1.0.3/api/sdcflows.workflows.base.html">1.0.3</a></dd>
+            <dd><a href="../../1.0.4/api/sdcflows.workflows.base.html">1.0.4</a></dd>
+            <dd><a href="../../1.0.5/api/sdcflows.workflows.base.html">1.0.5</a></dd>
+            <dd><a href="../../1.0.6/api/sdcflows.workflows.base.html">1.0.6</a></dd>
+            <dd><a href="../../1.1.0/api/sdcflows.workflows.base.html">1.1.0</a></dd>
+            <dd><a href="../../1.2.0/api/sdcflows.workflows.base.html">1.2.0</a></dd>
+            <dd><a href="../../1.2.1/api/sdcflows.workflows.base.html">1.2.1</a></dd>
+            <dd><a href="../../1.2.2/api/sdcflows.workflows.base.html">1.2.2</a></dd>
+            <dd><a href="../../1.2.3/api/sdcflows.workflows.base.html">1.2.3</a></dd>
+            <dd><a href="../../1.3.0/api/sdcflows.workflows.base.html">1.3.0</a></dd>
+            <dd><a href="../../1.3.1/api/sdcflows.workflows.base.html">1.3.1</a></dd>
+            <dd><a href="../../1.3.2/api/sdcflows.workflows.base.html">1.3.2</a></dd>
+            <dd><a href="../../1.3.3/api/sdcflows.workflows.base.html">1.3.3</a></dd>
+            <dd><a href="../../1.4.0rc0/api/sdcflows.workflows.base.html">1.4.0rc0</a></dd>
+            <dd><a href="../../2.0.0/api/sdcflows.workflows.base.html">2.0.0</a></dd>
+            <dd><a href="../../2.0.0rc1/api/sdcflows.workflows.base.html">2.0.0rc1</a></dd>
+            <dd><a href="../../2.0.0rc2/api/sdcflows.workflows.base.html">2.0.0rc2</a></dd>
+            <dd><a href="../../2.0.0rc3/api/sdcflows.workflows.base.html">2.0.0rc3</a></dd>
+            <dd><a href="sdcflows.workflows.base.html">2.0.0rc4</a></dd>
+            <dd><a href="../../2.0.0rc5/api/sdcflows.workflows.base.html">2.0.0rc5</a></dd>
+            <dd><a href="../../2.0.1/api/sdcflows.workflows.base.html">2.0.1</a></dd>
+            <dd><a href="../../2.0.2/api/sdcflows.workflows.base.html">2.0.2</a></dd>
+            <dd><a href="../../2.0.2.post1/api/sdcflows.workflows.base.html">2.0.2.post1</a></dd>
+            <dd><a href="../../2.0.3/api/sdcflows.workflows.base.html">2.0.3</a></dd>
+            <dd><a href="../../2.0.4/api/sdcflows.workflows.base.html">2.0.4</a></dd>
+            <dd><a href="../../2.0.5/api/sdcflows.workflows.base.html">2.0.5</a></dd>
+            <dd><a href="../../2.0.6/api/sdcflows.workflows.base.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../../dev_1.4.0/api/sdcflows.workflows.base.html">dev/1.4.0</a></dd>
+            <dd><a href="../../enh_outputnode-method/api/sdcflows.workflows.base.html">enh/outputnode-method</a></dd>
+            <dd><a href="../../enh_pad-topup/api/sdcflows.workflows.base.html">enh/pad-topup</a></dd>
+            <dd><a href="../../feat_new-api/api/sdcflows.workflows.base.html">feat/new-api</a></dd>
+            <dd><a href="../../fix_field-direction/api/sdcflows.workflows.base.html">fix/field-direction</a></dd>
+            <dd><a href="../../maint_1.0.x/api/sdcflows.workflows.base.html">maint/1.0.x</a></dd>
+            <dd><a href="../../maint_1.2.x/api/sdcflows.workflows.base.html">maint/1.2.x</a></dd>
+            <dd><a href="../../maint_1.3.x/api/sdcflows.workflows.base.html">maint/1.3.x</a></dd>
+            <dd><a href="../../maint_niworkflows-1.4-bridge/api/sdcflows.workflows.base.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../../maint_travis-gh-action-migration/api/sdcflows.workflows.base.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../../master/api/sdcflows.workflows.base.html">master</a></dd>
+            <dd><a href="../../rel_2.0.0/api/sdcflows.workflows.base.html">rel/2.0.0</a></dd>
+            <dd><a href="../../rel_2.0.0rc3/api/sdcflows.workflows.base.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

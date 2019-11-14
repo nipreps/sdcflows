@@ -1,0 +1,19 @@
+sdcflows.interfaces package
+===========================
+
+.. automodule:: sdcflows.interfaces
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   sdcflows.interfaces.brainmask
+   sdcflows.interfaces.bspline
+   sdcflows.interfaces.epi
+   sdcflows.interfaces.fmap
+   sdcflows.interfaces.reportlets
+   sdcflows.interfaces.utils

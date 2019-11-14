@@ -1,0 +1,24 @@
+sdcflows.workflows package
+==========================
+
+.. automodule:: sdcflows.workflows
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+   sdcflows.workflows.apply
+   sdcflows.workflows.fit
+
+Submodules
+----------
+
+.. toctree::
+
+   sdcflows.workflows.ancillary
+   sdcflows.workflows.base
+   sdcflows.workflows.outputs

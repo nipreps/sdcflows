@@ -1,0 +1,7 @@
+strict digraph  {
+"inputnode (utility)";
+"coregister (fixes)";
+"outputnode (utility)";
+"inputnode (utility)" -> "coregister (fixes)";
+"coregister (fixes)" -> "outputnode (utility)";
+}

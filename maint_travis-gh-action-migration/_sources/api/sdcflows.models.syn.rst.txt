@@ -1,0 +1,7 @@
+sdcflows.models.syn module
+==========================
+
+.. automodule:: sdcflows.models.syn
+   :members:
+   :undoc-members:
+   :show-inheritance:

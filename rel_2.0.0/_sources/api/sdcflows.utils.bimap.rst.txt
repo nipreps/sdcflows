@@ -1,0 +1,7 @@
+sdcflows.utils.bimap module
+===========================
+
+.. automodule:: sdcflows.utils.bimap
+   :members:
+   :undoc-members:
+   :show-inheritance:

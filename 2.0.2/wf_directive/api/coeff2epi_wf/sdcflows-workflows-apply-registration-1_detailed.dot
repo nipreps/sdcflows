@@ -1,0 +1,11 @@
+digraph structs {
+node [shape=record];
+coeff2epi_wfinputnode [label="{IN}|{ inputnode | utility |  }|{OUT|<outfmapmask> fmap_mask|<outfmapref> fmap_ref|<outtargetmask> target_mask|<outtargetref> target_ref}"];
+coeff2epi_wfcoregister [label="{IN|<infixedimage> fixed_image|<infixedimagemasks> fixed_image_masks|<inmovingimage> moving_image|<inmovingimagemasks> moving_image_masks}|{ coregister | fixes |  }|{OUT|<outwarpedimage> warped_image}"];
+coeff2epi_wfoutputnode [label="{IN|<intargetref> target_ref}|{ outputnode | utility |  }|{OUT}"];
+coeff2epi_wfcoregister:outwarpedimage:e -> coeff2epi_wfoutputnode:intargetref:w;
+coeff2epi_wfinputnode:outfmapmask:e -> coeff2epi_wfcoregister:infixedimagemasks:w;
+coeff2epi_wfinputnode:outfmapref:e -> coeff2epi_wfcoregister:infixedimage:w;
+coeff2epi_wfinputnode:outtargetmask:e -> coeff2epi_wfcoregister:inmovingimagemasks:w;
+coeff2epi_wfinputnode:outtargetref:e -> coeff2epi_wfcoregister:inmovingimage:w;
+}

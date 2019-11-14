@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sdcflows.interfaces.utils module &mdash; sdcflows 2.0.7.dev3 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/banner.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sdcflows.transform module" href="sdcflows.transform.html" />
+    <link rel="prev" title="sdcflows.interfaces.reportlets module" href="sdcflows.interfaces.reportlets.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sdcflows
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0.7.dev3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Library API (application program interface)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sdcflows.interfaces.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.brainmask.html">sdcflows.interfaces.brainmask module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.bspline.html">sdcflows.interfaces.bspline module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.epi.html">sdcflows.interfaces.epi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.fmap.html">sdcflows.interfaces.fmap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.interfaces.reportlets.html">sdcflows.interfaces.reportlets module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sdcflows.interfaces.utils module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.transform.html">sdcflows.transform module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">What’s new?</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sdcflows</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">Library API (application program interface)</a> &raquo;</li>
+        
+          <li><a href="sdcflows.interfaces.html">sdcflows.interfaces package</a> &raquo;</li>
+        
+      <li>sdcflows.interfaces.utils module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sdcflows.interfaces.utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+
+
+
+
+
+<section id="module-sdcflows.interfaces.utils">
+<span id="sdcflows-interfaces-utils-module"></span><h1>sdcflows.interfaces.utils module<a class="headerlink" href="#module-sdcflows.interfaces.utils" title="Permalink to this headline">¶</a></h1>
+<p>Utilities.</p>
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.ConvertWarp">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">ConvertWarp</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#ConvertWarp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.ConvertWarp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Convert a displacements field from <code class="docutils literal notranslate"><span class="pre">3dQwarp</span></code> to ANTS-compatible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>a pathlike object or string representing an existing file</em>) – Output of 3dQwarp.</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p><strong>out_file</strong> (<em>a pathlike object or string representing an existing file</em>) – The warp converted into ANTs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.DenoiseImage">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">DenoiseImage</code><span class="sig-paren">(</span><em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#DenoiseImage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.DenoiseImage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.ants.segmentation.DenoiseImage</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.mixins.fixheader.CopyHeaderInterface</span></code></p>
+<p>Wrapped executable: <code class="docutils literal notranslate"><span class="pre">DenoiseImage</span></code>.</p>
+<p>Add copy_header capability to DenoiseImage from nipype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_image</strong> (<em>a pathlike object or string representing an existing file</em>) – A scalar image is expected as input for noise correction.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-i</span> <span class="pre">%s</span></code>.</p></li>
+<li><p><strong>save_noise</strong> (<em>a boolean</em>) – True if the estimated noise should be saved to file.
+Mutually <strong>exclusive</strong> with inputs: <code class="docutils literal notranslate"><span class="pre">noise_image</span></code>.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>args</strong> (<em>a string</em>) – Additional parameters to the command.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">%s</span></code>.</p></li>
+<li><p><strong>copy_header</strong> (<em>a boolean</em>) – Copy headers of the original image into the output (corrected) file.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p><strong>dimension</strong> (<em>2 or 3 or 4</em>) – This option forces the image to be treated as a specified-dimensional image. If not specified, the program tries to infer the dimensionality from the input image.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-d</span> <span class="pre">%d</span></code>.</p></li>
+<li><p><strong>environ</strong> (<em>a dictionary with keys which are a bytes or None or a value of class ‘str’ and with values which are a bytes or None or a value of class ‘str’</em>) – Environment variables.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">{}</span></code>)</p></li>
+<li><p><strong>noise_image</strong> (<em>a pathlike object or string representing a file</em>) – Filename for the estimated noise.</p></li>
+<li><p><strong>noise_model</strong> (<em>‘Gaussian’ or ‘Rician’</em>) – Employ a Rician or Gaussian noise model.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-n</span> <span class="pre">%s</span></code>.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">Gaussian</span></code>)</p></li>
+<li><p><strong>num_threads</strong> (<em>an integer</em>) – Number of ITK threads to use.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">1</span></code>)</p></li>
+<li><p><strong>output_image</strong> (<em>a pathlike object or string representing a file</em>) – The output consists of the noise corrected version of the input image.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-o</span> <span class="pre">%s</span></code>.</p></li>
+<li><p><strong>shrink_factor</strong> (<em>an integer</em>) – Running noise correction on large images can be time consuming. To lessen computation time, the input image can be resampled. The shrink factor, specified as a single integer, describes this resampling. Shrink factor = 1 is the default.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-s</span> <span class="pre">%s</span></code>.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">1</span></code>)</p></li>
+<li><p><strong>verbose</strong> (<em>a boolean</em>) – Verbose output.
+Maps to a command-line argument: <code class="code docutils literal notranslate"><span class="pre">-v</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_image</strong> (<em>a pathlike object or string representing a file</em>)</p></li>
+<li><p><strong>output_image</strong> (<em>a pathlike object or string representing an existing file</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.Deoblique">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">Deoblique</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#Deoblique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.Deoblique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Make a dataset plumb.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>a pathlike object or string representing an existing file</em>) – The input dataset potentially oblique.</p>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><p><strong>in_mask</strong> (<em>a pathlike object or string representing an existing file</em>) – A binary mask corresponding to the input dataset.</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_file</strong> (<em>a pathlike object or string representing an existing file</em>) – The input dataset, after correcting obliquity.</p></li>
+<li><p><strong>out_mask</strong> (<em>a pathlike object or string representing an existing file</em>) – The input mask, after correcting obliquity.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.Flatten">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">Flatten</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#Flatten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.Flatten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Flatten a list of 3D and 4D files (and metadata).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – List of input data.</p></li>
+<li><p><strong>in_meta</strong> (<em>a list of items which are a dictionary with keys which are a value of class ‘str’ and with values which are any value</em>) – List of metadata.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><p><strong>max_trs</strong> (<em>an integer</em>) – Only pick first TRs.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">50</span></code>)</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>)</p></li>
+<li><p><strong>out_list</strong> (<em>a list of items which are a tuple of the form: (a pathlike object or string representing an existing file, a dictionary with keys which are a value of class ‘str’ and with values which are any value)</em>) – List of output files.</p></li>
+<li><p><strong>out_meta</strong> (<em>a list of items which are a dictionary with keys which are a value of class ‘str’ and with values which are any value</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.PadSlices">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">PadSlices</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#PadSlices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.PadSlices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Check an image for uneven slices, and add an empty slice if necessary</p>
+<p>This intends to avoid TOPUP’s segfault without changing the standard configuration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>a pathlike object or string representing an existing file</em>) – 3D or 4D NIfTI image.</p>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><p><strong>axis</strong> (<em>an integer</em>) – The axis through which slices are stacked in the input data.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">2</span></code>)</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_file</strong> (<em>a pathlike object or string representing an existing file</em>) – The output file with even number of slices.</p></li>
+<li><p><strong>padded</strong> (<em>a boolean</em>) – Indicator if the input image was padded.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.Reoblique">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">Reoblique</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#Reoblique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.Reoblique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Make a dataset plumb.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_epi</strong> (<em>a pathlike object or string representing an existing file</em>) – The original, potentially oblique EPI image.</p></li>
+<li><p><strong>in_field</strong> (<em>a pathlike object or string representing an existing file</em>) – The plumb field map, extracted from the displacements field estimated by SyN.</p></li>
+<li><p><strong>in_plumb</strong> (<em>a pathlike object or string representing an existing file</em>) – The plumb EPI image.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><p><strong>in_mask</strong> (<em>a pathlike object or string representing an existing file</em>) – A binary mask corresponding to the input dataset.</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_epi</strong> (<em>a pathlike object or string representing an existing file</em>) – The reoblique’d EPI image.</p></li>
+<li><p><strong>out_field</strong> (<em>a pathlike object or string representing an existing file</em>) – The reoblique’d EPI image.</p></li>
+<li><p><strong>out_mask</strong> (<em>a pathlike object or string representing an existing file</em>) – The input mask, after correcting obliquity.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="sdcflows.interfaces.utils.UniformGrid">
+<em class="property">class </em><code class="sig-prename descclassname">sdcflows.interfaces.utils.</code><code class="sig-name descname">UniformGrid</code><span class="sig-paren">(</span><em class="sig-param">from_file=None</em>, <em class="sig-param">resource_monitor=None</em>, <em class="sig-param">**inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/utils.html#UniformGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sdcflows.interfaces.utils.UniformGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Ensure all images in input have the same spatial parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><p><strong>in_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – List of input data.</p>
+</dd>
+<dt class="field-even">Optional Inputs</dt>
+<dd class="field-even"><p><strong>reference</strong> (<em>an integer</em>) – Reference index.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">0</span></code>)</p>
+</dd>
+<dt class="field-odd">Outputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>)</p></li>
+<li><p><strong>reference</strong> (<em>a pathlike object or string representing an existing file</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sdcflows.transform.html" class="btn btn-neutral float-right" title="sdcflows.transform module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sdcflows.interfaces.reportlets.html" class="btn btn-neutral float-left" title="sdcflows.interfaces.reportlets module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, The NiPreps developers.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: master
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="../1.0.0/index.html">1.0.0</a></dd>
+            <dd><a href="../1.0.0rc1/index.html">1.0.0rc1</a></dd>
+            <dd><a href="../1.0.1/index.html">1.0.1</a></dd>
+            <dd><a href="../1.0.2/index.html">1.0.2</a></dd>
+            <dd><a href="../1.0.3/index.html">1.0.3</a></dd>
+            <dd><a href="../1.0.4/index.html">1.0.4</a></dd>
+            <dd><a href="../1.0.5/index.html">1.0.5</a></dd>
+            <dd><a href="../1.0.6/index.html">1.0.6</a></dd>
+            <dd><a href="../1.1.0/index.html">1.1.0</a></dd>
+            <dd><a href="../1.2.0/index.html">1.2.0</a></dd>
+            <dd><a href="../1.2.1/index.html">1.2.1</a></dd>
+            <dd><a href="../1.2.2/index.html">1.2.2</a></dd>
+            <dd><a href="../1.2.3/index.html">1.2.3</a></dd>
+            <dd><a href="../1.3.0/index.html">1.3.0</a></dd>
+            <dd><a href="../1.3.1/index.html">1.3.1</a></dd>
+            <dd><a href="../1.3.2/index.html">1.3.2</a></dd>
+            <dd><a href="../1.3.3/index.html">1.3.3</a></dd>
+            <dd><a href="../1.4.0rc0/api/sdcflows.interfaces.utils.html">1.4.0rc0</a></dd>
+            <dd><a href="../2.0.0/api/sdcflows.interfaces.utils.html">2.0.0</a></dd>
+            <dd><a href="../2.0.0rc1/api/sdcflows.interfaces.utils.html">2.0.0rc1</a></dd>
+            <dd><a href="../2.0.0rc2/api/sdcflows.interfaces.utils.html">2.0.0rc2</a></dd>
+            <dd><a href="../2.0.0rc3/api/sdcflows.interfaces.utils.html">2.0.0rc3</a></dd>
+            <dd><a href="../2.0.0rc4/api/sdcflows.interfaces.utils.html">2.0.0rc4</a></dd>
+            <dd><a href="../2.0.0rc5/api/sdcflows.interfaces.utils.html">2.0.0rc5</a></dd>
+            <dd><a href="../2.0.1/api/sdcflows.interfaces.utils.html">2.0.1</a></dd>
+            <dd><a href="../2.0.2/api/sdcflows.interfaces.utils.html">2.0.2</a></dd>
+            <dd><a href="../2.0.2.post1/api/sdcflows.interfaces.utils.html">2.0.2.post1</a></dd>
+            <dd><a href="../2.0.3/api/sdcflows.interfaces.utils.html">2.0.3</a></dd>
+            <dd><a href="../2.0.4/api/sdcflows.interfaces.utils.html">2.0.4</a></dd>
+            <dd><a href="../2.0.5/api/sdcflows.interfaces.utils.html">2.0.5</a></dd>
+            <dd><a href="../2.0.6/api/sdcflows.interfaces.utils.html">2.0.6</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="../dev_1.4.0/api/sdcflows.interfaces.utils.html">dev/1.4.0</a></dd>
+            <dd><a href="../enh_outputnode-method/api/sdcflows.interfaces.utils.html">enh/outputnode-method</a></dd>
+            <dd><a href="../enh_pad-topup/api/sdcflows.interfaces.utils.html">enh/pad-topup</a></dd>
+            <dd><a href="../feat_new-api/index.html">feat/new-api</a></dd>
+            <dd><a href="../fix_field-direction/api/sdcflows.interfaces.utils.html">fix/field-direction</a></dd>
+            <dd><a href="../maint_1.0.x/index.html">maint/1.0.x</a></dd>
+            <dd><a href="../maint_1.2.x/index.html">maint/1.2.x</a></dd>
+            <dd><a href="../maint_1.3.x/index.html">maint/1.3.x</a></dd>
+            <dd><a href="../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
+            <dd><a href="../maint_travis-gh-action-migration/api/sdcflows.interfaces.utils.html">maint/travis-gh-action-migration</a></dd>
+            <dd><a href="../master/api/sdcflows.interfaces.utils.html">master</a></dd>
+            <dd><a href="../rel_2.0.0/api/sdcflows.interfaces.utils.html">rel/2.0.0</a></dd>
+            <dd><a href="../rel_2.0.0rc3/api/sdcflows.interfaces.utils.html">rel/2.0.0rc3</a></dd>
+        </dl>
+    </div>
+</div>
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+sdcflows.workflows.outputs module
+=================================
+
+.. automodule:: sdcflows.workflows.outputs
+   :members:
+   :undoc-members:
+   :show-inheritance:
