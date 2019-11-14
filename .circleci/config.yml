@@ -17,8 +17,6 @@ docs_deploy: &docs
         name: Install gh-pages tool
         command: |
           npm install -g --silent gh-pages@2.0.1
-          git config user.email "crn.poldracklab@gmail.com"
-          git config user.name "Documentation Push"
     - checkout
     - run:
         name: Set git settings
@@ -243,12 +241,12 @@ jobs:
             set -e
             if [[ "x${do_refresh}" = "x" ]]; then
               echo "Did not refresh the workdir."
-              circleci step halt
+            else
+              rm -rf /tmp/work
+              mkdir -p /tmp/work
+              cd /tmp/work
+              tar xzfv /tmp/data/workdir.tar.gz
             fi
-            rm -rf /tmp/work
-            mkdir -p /tmp/work
-            cd /tmp/work
-            tar xzfv /tmp/data/workdir.tar.gz
       - run:
           name: Run tests
           no_output_timeout: 2h
