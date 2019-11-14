@@ -531,16 +531,16 @@ workflows:
             tags:
               only: /.*/
 
-      - deploy_docs_master:
-          requires:
-            - test_sdcflows
-            - test_package
-            - build_docs
-          filters:
-            branches:
-              only: /master/
-            tags:
-              ignore: /.*/
+      # - deploy_docs_master:
+      #     requires:
+      #       - test_sdcflows
+      #       - test_package
+      #       - build_docs
+      #     filters:
+      #       branches:
+      #         only: /master/
+      #       tags:
+      #         ignore: /.*/
 
       - deploy_docs_tag:
           requires:
