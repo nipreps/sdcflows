@@ -38,7 +38,7 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     The most delicate bit of this workflow is the phase-unwrapping process: phase maps
     are clipped in the range :math:`[0 \dotsb 2 \cdot \pi )`.
     To find the integer number of offsets that make a region continously smooth with
-    its neighbour, FSL PRELUDE is run [Jenkinson1998]_.
+    its neighbour, FSL PRELUDE is run [Jenkinson2003]_.
     FSL PRELUDE takes wrapped maps in the range 0 to 6.28, `as per the user guide
     <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide#Step_2_-_Getting_.28wrapped.29_phase_in_radians>`__.
     For the phase-difference maps, recentering back to :math:`[-\pi \dotsb \pi )` is necessary.
@@ -77,6 +77,11 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
         The brain mask applied to the fieldmap
     fmap : pathlike
         The estimated fieldmap in Hz
+
+    References
+    ----------
+    .. [Jenkinson2003] Jenkinson, M. (2003) Fast, automated, N-dimensional phase-unwrapping
+        algorithm. MRM 49(1):193-197. doi:`10.1002/mrm.10354 <10.1002/mrm.10354>`__.
 
     """
     workflow = Workflow(name=name)
