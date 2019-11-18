@@ -20,12 +20,12 @@ This corresponds to `this section of the BIDS specification
 from nipype.interfaces import ants, fsl, utility as niu
 from nipype.pipeline import engine as pe
 from niflow.nipype1.workflows.dmri.fsl.utils import (
-    siemens2rads, demean_image, cleanup_edge_pipeline)
+    demean_image, cleanup_edge_pipeline)
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces.fmap import Phasediff2Fieldmap
+from ..interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
@@ -98,7 +98,7 @@ further improvements of HCP Pipelines [@hcppipelines].
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
 
     # phase diff -> radians
-    pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
+    phmap2rads = pe.Node(PhaseMap2rads(), name='phmap2rads')
 
     # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.Node(fsl.PRELUDE(), name='prelude')
@@ -124,8 +124,8 @@ further improvements of HCP Pipelines [@hcppipelines].
         (n4, prelude, [('output_image', 'magnitude_file')]),
         (n4, bet, [('output_image', 'in_file')]),
         (bet, prelude, [('mask_file', 'mask_file')]),
-        (inputnode, pha2rads, [('phasediff', 'in_file')]),
-        (pha2rads, prelude, [('out', 'phase_file')]),
+        (inputnode, phmap2rads, [('phasediff', 'in_file')]),
+        (phmap2rads, prelude, [('out_file', 'phase_file')]),
         (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup_wf, [('out', 'inputnode.in_file')]),

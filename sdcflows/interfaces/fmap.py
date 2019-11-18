@@ -200,6 +200,27 @@ class Phasediff2Fieldmap(SimpleInterface):
         return runtime
 
 
+class _PhaseMap2radsInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input (wrapped) phase map')
+
+
+class _PhaseMap2radsOutputSpec(TraitedSpec):
+    out_file = File(desc='the phase map in the range 0 - 6.28')
+
+
+class PhaseMap2rads(SimpleInterface):
+    """Convert a phase map in a.u. to radians."""
+
+    input_spec = _PhaseMap2radsInputSpec
+    output_spec = _PhaseMap2radsOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = au2rads(
+            self.inputs.in_file,
+            newpath=runtime.cwd)
+        return runtime
+
+
 def _despike2d(data, thres, neigh=None):
     """Despike axial slices, as done in FSL's ``epiunwarp``."""
     if neigh is None:
@@ -531,3 +552,22 @@ def _delta_te(in_values, te1=None, te2=None):
             'EchoTime2 metadata field not found. Please consult the BIDS specification.')
 
     return abs(float(te2) - float(te1))
+
+
+def au2rads(in_file, newpath=None):
+    """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
+    im = nb.load(in_file)
+    data = im.get_fdata().astype('float32')
+    hdr = im.header.copy()
+
+    data -= np.percentile(data, 2)
+    data[data < 0] = 0
+    data = 2.0 * np.pi * data / np.percentile(data, 98)
+    data[data > 2.0 * np.pi] = 2.0 * np.pi
+    hdr.set_data_dtype(np.float32)
+    hdr.set_xyzt_units('mm')
+    hdr['datatype'] = 16
+
+    out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
+    nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
+    return out_file
