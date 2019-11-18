@@ -183,7 +183,7 @@ def _demean(in_file, in_mask=None, usemode=True):
         against outliers).
 
     """
-    from os.path import basename
+    from os import getcwd
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -192,7 +192,7 @@ def _demean(in_file, in_mask=None, usemode=True):
     data = nii.get_fdata(dtype='float32')
 
     msk = np.ones_like(data, dtype=bool)
-    if in_mask is None:
+    if in_mask is not None:
         msk[nb.load(in_mask).get_fdata(dtype='float32') < 1e-4] = False
 
     if usemode:
@@ -201,6 +201,7 @@ def _demean(in_file, in_mask=None, usemode=True):
     else:
         data[msk] -= np.median(data[msk], axis=None)
 
-    out_file = fname_presuffix(basename(in_file), suffix='_demean')
+    out_file = fname_presuffix(in_file, suffix='_demean',
+                               newpath=getcwd())
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
