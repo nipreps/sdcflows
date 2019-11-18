@@ -187,7 +187,16 @@ class _Phasediff2FieldmapOutputSpec(TraitedSpec):
 
 
 class Phasediff2Fieldmap(SimpleInterface):
-    """Convert a phase difference map into a fieldmap in Hz."""
+    """
+    Convert a phase difference map into a fieldmap in Hz.
+
+    This interface is equivalent to running the following steps:
+      #. Convert from rad to rad/s
+         (``niflow.nipype1.workflows.dmri.fsl.utils.rads2radsec``)
+      #. FUGUE execution: fsl.FUGUE(save_fmap=True)
+      #. Conversion from rad/s to Hz (divide by 2pi, ``rsec2hz``).
+
+    """
 
     input_spec = _Phasediff2FieldmapInputSpec
     output_spec = _Phasediff2FieldmapOutputSpec
