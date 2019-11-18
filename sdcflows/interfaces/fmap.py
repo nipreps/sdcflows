@@ -557,7 +557,7 @@ def _delta_te(in_values, te1=None, te2=None):
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
     im = nb.load(in_file)
-    data = im.get_fdata().astype('float32')
+    data = im.get_fdata(dtype='float32')
     hdr = im.header.copy()
 
     data -= np.percentile(data, 2)
