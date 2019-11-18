@@ -566,7 +566,6 @@ def au2rads(in_file, newpath=None):
     data[data > 2.0 * np.pi] = 2.0 * np.pi
     hdr.set_data_dtype(np.float32)
     hdr.set_xyzt_units('mm')
-    hdr['datatype'] = 16
 
     out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
     nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
