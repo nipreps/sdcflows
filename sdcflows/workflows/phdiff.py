@@ -19,8 +19,7 @@ This corresponds to `this section of the BIDS specification
 
 from nipype.interfaces import ants, fsl, utility as niu
 from nipype.pipeline import engine as pe
-from niflow.nipype1.workflows.dmri.fsl.utils import (
-    demean_image, cleanup_edge_pipeline)
+from niflow.nipype1.workflows.dmri.fsl.utils import cleanup_edge_pipeline
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
@@ -125,7 +124,7 @@ further improvements of HCP Pipelines [@hcppipelines].
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                         kernel_size=3), name='denoise')
 
-    demean = pe.Node(niu.Function(function=demean_image), name='demean')
+    demean = pe.Node(niu.Function(function=_demean), name='demean')
 
     cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
 
@@ -169,5 +168,39 @@ def _recenter(in_file):
 
     out_file = fname_presuffix(in_file, suffix='_recentered',
                                newpath=getcwd())
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+    return out_file
+
+
+def _demean(in_file, in_mask=None, usemode=True):
+    """
+    Subtract the median (since it is robuster than the mean) from a map.
+
+    Parameters
+    ----------
+    usemode : bool
+        Use the mode instead of the median (should be even more robust
+        against outliers).
+
+    """
+    from os.path import basename
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    data = nii.get_fdata(dtype='float32')
+
+    msk = np.ones_like(data, dtype=bool)
+    if in_mask is None:
+        msk[nb.load(in_mask).get_fdata(dtype='float32') < 1e-4] = False
+
+    if usemode:
+        from scipy.stats import mode
+        data[msk] -= mode(data[msk], axis=None)[0][0]
+    else:
+        data[msk] -= np.median(data[msk], axis=None)
+
+    out_file = fname_presuffix(basename(in_file), suffix='_demean')
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
