@@ -565,17 +565,28 @@ def _delta_te(in_values, te1=None, te2=None):
 
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
+    from scipy.stats import mode
     im = nb.load(in_file)
     data = im.get_fdata(dtype='float32')
     hdr = im.header.copy()
 
-    data -= np.percentile(data, 2)
-    data[data < 0] = 0
-    data = 2.0 * np.pi * data / np.percentile(data, 98)
-    data[data > 2.0 * np.pi] = 2.0 * np.pi
+    # First center data around 0.0.
+    data -= mode(data, axis=None)[0][0]
+
+    # Scale lower tail
+    data[data < 0] = - np.pi * data[data < 0] / np.percentile(data[data < 0], 2)
+
+    # Scale upper tail
+    data[data > 0] = np.pi * data[data > 0] / np.percentile(data[data > 0], 98)
+
+    # Offset to 0 - 2pi
+    data += np.pi
+
+    # Clip
+    data = np.clip(data, 0.0, 2 * np.pi)
+
     hdr.set_data_dtype(np.float32)
     hdr.set_xyzt_units('mm')
-
     out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
     nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
     return out_file
