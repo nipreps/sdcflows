@@ -574,10 +574,10 @@ def au2rads(in_file, newpath=None):
     data -= mode(data, axis=None)[0][0]
 
     # Scale lower tail
-    data[data < 0] = - np.pi * data[data < 0] / np.percentile(data[data < 0], 2)
+    data[data < 0] = - np.pi * data[data < 0] / data[data < 0].min()
 
     # Scale upper tail
-    data[data > 0] = np.pi * data[data > 0] / np.percentile(data[data > 0], 98)
+    data[data > 0] = np.pi * data[data > 0] / data[data > 0].max()
 
     # Offset to 0 - 2pi
     data += np.pi
