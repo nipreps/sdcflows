@@ -141,7 +141,6 @@ further improvements of HCP Pipelines [@hcppipelines].
         (inputnode, phmap2rads, [('phasediff', 'in_file')]),
         (phmap2rads, prelude, [('out_file', 'phase_file')]),
         (prelude, recenter, [('unwrapped_phase_file', 'in_file')]),
-        (bet, recenter, [('mask_file', 'in_mask')]),
         (recenter, denoise, [('out', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
@@ -155,24 +154,18 @@ further improvements of HCP Pipelines [@hcppipelines].
     return workflow
 
 
-def _recenter(in_file, in_mask=None, offset=None):
+def _recenter(in_file):
     """Recenter the phase-map distribution to the -pi..pi range."""
     from os import getcwd
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
-    if offset is None:
-        offset = np.pi
-
     nii = nb.load(in_file)
     data = nii.get_fdata(dtype='float32')
-
-    msk = data > 1.e-6
-    if in_mask is not None:
-        msk = nb.load(in_mask).get_fdata(dtype='float32') > 1.e-4
-
-    data[msk] -= offset
+    msk = data != 0
+    msk[data == 0] = False
+    data[msk] -= np.median(data[msk])
 
     out_file = fname_presuffix(in_file, suffix='_recentered',
                                newpath=getcwd())
