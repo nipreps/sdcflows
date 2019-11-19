@@ -224,20 +224,12 @@ jobs:
           paths:
             - /tmp/docker
       - run:
-          name: Set-up a Docker registry
+          name: Refreshing cached intermediate results
           command: |
-            docker run -d -p 5000:5000 --restart=always --name=registry \
-                -v /tmp/docker:/var/lib/registry registry:2
-      - run:
-          name: Pull images from local registry
-          command: |
-            docker pull localhost:5000/sdcflows
-            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
-      - run:
-          name: Refresh work directory?
-          command: |
+            cd /tmp/src/sdcflows
+            COMMIT_MSG=$( git log --format=oneline -n 1 $CIRCLE_SHA1 )
             set +e
-            do_refresh="$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[fresh[ _]?workdir\]' )"
+            do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[fresh[ _]?workdir\]' )"
             set -e
             if [[ "x${do_refresh}" = "x" ]]; then
               echo "Did not refresh the workdir."
@@ -247,6 +239,23 @@ jobs:
               cd /tmp/work
               tar xzfv /tmp/data/workdir.tar.gz
             fi
+
+            wipe_dir=$( echo "${COMMIT_MSG}" | sed -n 's/.*\[wipe \([a-zA-Z0-9_\*]*\)\].*/\1/p' )
+            if [[ "x${wipe_dir}" != "x" ]]; then
+              path=/tmp/work/${wipe_dir}
+              echo "Found tag [wipe ${wipe_dir}] - clearing up $path ..."
+              rm -rf ${path}
+            fi
+      - run:
+          name: Set-up a Docker registry
+          command: |
+            docker run -d -p 5000:5000 --restart=always --name=registry \
+                -v /tmp/docker:/var/lib/registry registry:2
+      - run:
+          name: Pull images from local registry
+          command: |
+            docker pull localhost:5000/sdcflows
+            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
       - run:
           name: Run tests
           no_output_timeout: 2h
