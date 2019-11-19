@@ -132,7 +132,7 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
     wf = init_pepolar_unwarp_wf(omp_nthreads=cpu_count(), matched_pe=matched_pe)
     wf.inputs.inputnode.fmaps_epi = [(im.path, im.get_metadata()['PhaseEncodingDirection'])
                                      for im in epidata]
-    wf.inputs.inputnode.bold_pe_dir = bold.get_metadata()['PhaseEncodingDirection']
+    wf.inputs.inputnode.epi_pe_dir = bold.get_metadata()['PhaseEncodingDirection']
 
     if output_path:
         from nipype.interfaces import utility as niu
@@ -166,7 +166,7 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
 
         boiler.connect([
             (wf, split_field, [
-                ('inputnode.bold_pe_dir', 'pe_dir'),
+                ('inputnode.epi_pe_dir', 'pe_dir'),
                 ('outputnode.out_warp', 'in_field')]),
             (split_field, rep, [
                 ('out', 'fieldmap')]),
