@@ -187,7 +187,16 @@ class _Phasediff2FieldmapOutputSpec(TraitedSpec):
 
 
 class Phasediff2Fieldmap(SimpleInterface):
-    """Convert a phase difference map into a fieldmap in Hz."""
+    """
+    Convert a phase difference map into a fieldmap in Hz.
+
+    This interface is equivalent to running the following steps:
+      #. Convert from rad to rad/s
+         (``niflow.nipype1.workflows.dmri.fsl.utils.rads2radsec``)
+      #. FUGUE execution: fsl.FUGUE(save_fmap=True)
+      #. Conversion from rad/s to Hz (divide by 2pi, ``rsec2hz``).
+
+    """
 
     input_spec = _Phasediff2FieldmapInputSpec
     output_spec = _Phasediff2FieldmapOutputSpec
@@ -196,6 +205,27 @@ class Phasediff2Fieldmap(SimpleInterface):
         self._results['out_file'] = phdiff2fmap(
             self.inputs.in_file,
             _delta_te(self.inputs.metadata),
+            newpath=runtime.cwd)
+        return runtime
+
+
+class _PhaseMap2radsInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc='input (wrapped) phase map')
+
+
+class _PhaseMap2radsOutputSpec(TraitedSpec):
+    out_file = File(desc='the phase map in the range 0 - 6.28')
+
+
+class PhaseMap2rads(SimpleInterface):
+    """Convert a phase map in a.u. to radians."""
+
+    input_spec = _PhaseMap2radsInputSpec
+    output_spec = _PhaseMap2radsOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results['out_file'] = au2rads(
+            self.inputs.in_file,
             newpath=runtime.cwd)
         return runtime
 
@@ -531,3 +561,32 @@ def _delta_te(in_values, te1=None, te2=None):
             'EchoTime2 metadata field not found. Please consult the BIDS specification.')
 
     return abs(float(te2) - float(te1))
+
+
+def au2rads(in_file, newpath=None):
+    """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
+    from scipy.stats import mode
+    im = nb.load(in_file)
+    data = im.get_fdata(dtype='float32')
+    hdr = im.header.copy()
+
+    # First center data around 0.0.
+    data -= mode(data, axis=None)[0][0]
+
+    # Scale lower tail
+    data[data < 0] = - np.pi * data[data < 0] / data[data < 0].min()
+
+    # Scale upper tail
+    data[data > 0] = np.pi * data[data > 0] / data[data > 0].max()
+
+    # Offset to 0 - 2pi
+    data += np.pi
+
+    # Clip
+    data = np.clip(data, 0.0, 2 * np.pi)
+
+    hdr.set_data_dtype(np.float32)
+    hdr.set_xyzt_units('mm')
+    out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
+    nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
+    return out_file

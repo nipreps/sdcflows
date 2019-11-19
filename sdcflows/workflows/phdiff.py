@@ -20,21 +20,31 @@ This corresponds to `this section of the BIDS specification
 from nipype.interfaces import ants, fsl, utility as niu
 from nipype.pipeline import engine as pe
 from niflow.nipype1.workflows.dmri.fsl.utils import (
-    siemens2rads, demean_image, cleanup_edge_pipeline)
+    demean_image, cleanup_edge_pipeline)
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces.fmap import Phasediff2Fieldmap
+from ..interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads
 
 
 def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
-    """
+    r"""
     Distortion correction of EPI sequences using phase-difference maps.
 
     Estimates the fieldmap using a phase-difference image and one or more
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
-    acquisitions. The `original code was taken from nipype
+    acquisitions.
+    The most delicate bit of this workflow is the phase-unwrapping process: phase maps
+    are clipped in the range :math:`[0 \dotsb 2 \cdot \pi )`.
+    To find the integer number of offsets that make a region continously smooth with
+    its neighbour, FSL PRELUDE is run [Jenkinson2003]_.
+    FSL PRELUDE takes wrapped maps in the range 0 to 6.28, `as per the user guide
+    <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide#Step_2_-_Getting_.28wrapped.29_phase_in_radians>`__.
+    For the phase-difference maps, recentering back to :math:`[-\pi \dotsb \pi )` is necessary.
+    After some massaging and the application of the effective echo spacing parameter,
+    the phase-difference maps can be converted into a *B0 field map* in Hz units.
+    The `original code was taken from nipype
     <https://github.com/nipy/nipype/blob/0.12.1/nipype/workflows/dmri/fsl/artifacts.py#L514>`_.
 
     Workflow Graph
@@ -68,6 +78,11 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     fmap : pathlike
         The estimated fieldmap in Hz
 
+    References
+    ----------
+    .. [Jenkinson2003] Jenkinson, M. (2003) Fast, automated, N-dimensional phase-unwrapping
+        algorithm. MRM 49(1):193-197. doi:`10.1002/mrm.10354 <10.1002/mrm.10354>`__.
+
     """
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -98,10 +113,14 @@ further improvements of HCP Pipelines [@hcppipelines].
     #     nan2zeros=True, args='-kernel sphere 5 -dilM'), name='MskDilate')
 
     # phase diff -> radians
-    pha2rads = pe.Node(niu.Function(function=siemens2rads), name='pha2rads')
+    phmap2rads = pe.Node(PhaseMap2rads(), name='phmap2rads',
+                         run_without_submitting=True)
 
     # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.Node(fsl.PRELUDE(), name='prelude')
+
+    recenter = pe.Node(niu.Function(function=_recenter),
+                       name='recenter', run_without_submitting=True)
 
     denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
                                         kernel_size=3), name='denoise')
@@ -112,11 +131,6 @@ further improvements of HCP Pipelines [@hcppipelines].
 
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
-    # The phdiff2fmap interface is equivalent to:
-    # rad2rsec (using rads2radsec from niflow.nipype1.workflows.dmri.fsl.utils)
-    # pre_fugue = pe.Node(fsl.FUGUE(save_fmap=True), name='ComputeFieldmapFUGUE')
-    # rsec2hz (divide by 2pi)
-
     workflow.connect([
         (inputnode, compfmap, [('metadata', 'metadata')]),
         (inputnode, magmrg, [('magnitude', 'in_files')]),
@@ -124,9 +138,10 @@ further improvements of HCP Pipelines [@hcppipelines].
         (n4, prelude, [('output_image', 'magnitude_file')]),
         (n4, bet, [('output_image', 'in_file')]),
         (bet, prelude, [('mask_file', 'mask_file')]),
-        (inputnode, pha2rads, [('phasediff', 'in_file')]),
-        (pha2rads, prelude, [('out', 'phase_file')]),
-        (prelude, denoise, [('unwrapped_phase_file', 'in_file')]),
+        (inputnode, phmap2rads, [('phasediff', 'in_file')]),
+        (phmap2rads, prelude, [('out_file', 'phase_file')]),
+        (prelude, recenter, [('unwrapped_phase_file', 'in_file')]),
+        (recenter, denoise, [('out', 'in_file')]),
         (denoise, demean, [('out_file', 'in_file')]),
         (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
         (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
@@ -137,3 +152,22 @@ further improvements of HCP Pipelines [@hcppipelines].
     ])
 
     return workflow
+
+
+def _recenter(in_file):
+    """Recenter the phase-map distribution to the -pi..pi range."""
+    from os import getcwd
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    data = nii.get_fdata(dtype='float32')
+    msk = data != 0
+    msk[data == 0] = False
+    data[msk] -= np.median(data[msk])
+
+    out_file = fname_presuffix(in_file, suffix='_recentered',
+                               newpath=getcwd())
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+    return out_file
