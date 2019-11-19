@@ -23,7 +23,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import ants, fsl, utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from niworkflows.interfaces import itk
-from niworkflows.interfaces.images import DemeanImage, FilledImageLike
+from niworkflows.interfaces.images import FilledImageLike
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 from niworkflows.interfaces.bids import DerivativesDataSink
 from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
@@ -31,7 +31,7 @@ from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 from ..interfaces.fmap import get_ees as _get_ees, FieldToRadS
 
 
-def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
+def init_sdc_unwarp_wf(omp_nthreads, debug, name='sdc_unwarp_wf'):
     """
     Apply the warping given by a displacements fieldmap.
 
@@ -48,41 +48,48 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
 
         from sdcflows.workflows.unwarp import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(omp_nthreads=8,
-                                fmap_demean=True,
                                 debug=False)
 
+    Parameters
+    ----------
+    omp_nthreads : int
+        Maximum number of threads an individual process may use.
+    debug : bool
+        Run fast configurations of registrations.
+    name : str
+        Unique name of this workflow.
 
     Inputs
-
-        in_reference
-            the reference image
-        in_reference_brain
-            the reference image (skull-stripped)
-        in_mask
-            a brain mask corresponding to ``in_reference``
-        metadata
-            metadata associated to the ``in_reference`` EPI input
-        fmap
-            the fieldmap in Hz
-        fmap_ref
-            the reference (anatomical) image corresponding to ``fmap``
-        fmap_mask
-            a brain mask corresponding to ``fmap``
+    ------
+    in_reference
+        the reference image
+    in_reference_brain
+        the reference image (skull-stripped)
+    in_mask
+        a brain mask corresponding to ``in_reference``
+    metadata
+        metadata associated to the ``in_reference`` EPI input
+    fmap
+        the fieldmap in Hz
+    fmap_ref
+        the reference (anatomical) image corresponding to ``fmap``
+    fmap_mask
+        a brain mask corresponding to ``fmap``
 
 
     Outputs
-
-        out_reference
-            the ``in_reference`` after unwarping
-        out_reference_brain
-            the ``in_reference`` after unwarping and skullstripping
-        out_warp
-            the corresponding :abbr:`DFM (displacements field map)` compatible with
-            ANTs
-        out_jacobian
-            the jacobian of the field (for drop-out alleviation)
-        out_mask
-            mask of the unwarped input file
+    -------
+    out_reference
+        the ``in_reference`` after unwarping
+    out_reference_brain
+        the ``in_reference`` after unwarping and skullstripping
+    out_warp
+        the corresponding :abbr:`DFM (displacements field map)` compatible with
+        ANTs
+    out_jacobian
+        the jacobian of the field (for drop-out alleviation)
+    out_mask
+        mask of the unwarped input file
 
     """
     workflow = Workflow(name=name)
@@ -192,23 +199,8 @@ def init_sdc_unwarp_wf(omp_nthreads, fmap_demean, debug, name='sdc_unwarp_wf'):
             ('outputnode.mask_file', 'out_mask'),
             ('outputnode.skull_stripped_file', 'out_reference_brain')]),
         (jac_dfm, outputnode, [('jacobian_image', 'out_jacobian')]),
+        (gen_vsm, vsm2dfm, [('shift_out_file', 'in_file')]),
     ])
-
-    if fmap_demean:
-        # Demean within mask
-        demean = pe.Node(DemeanImage(), name='demean')
-
-        workflow.connect([
-            (gen_vsm, demean, [('shift_out_file', 'in_file')]),
-            (fmap_mask2ref_apply, demean, [('output_image', 'in_mask')]),
-            (demean, vsm2dfm, [('out_file', 'in_file')]),
-        ])
-
-    else:
-        workflow.connect([
-            (gen_vsm, vsm2dfm, [('shift_out_file', 'in_file')]),
-        ])
-
     return workflow
 
 

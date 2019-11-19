@@ -73,15 +73,15 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
     fmaps_epi : list of tuple(pathlike, str)
         The list of EPI images that will be used in PE-Polar correction, and
         their corresponding ``PhaseEncodingDirection`` metadata.
-        The workflow will use the ``bold_pe_dir`` input to separate out those
+        The workflow will use the ``epi_pe_dir`` input to separate out those
         EPI acquisitions with opposed PE blips and those with matched PE blips
         (the latter could be none, and ``in_reference_brain`` would then be
         used). The workflow raises a ``ValueError`` when no images with
         opposed PE blips are found.
-    bold_pe_dir : str
+    epi_pe_dir : str
         The baseline PE direction.
     in_reference : pathlike
-        The baseline reference image (must correspond to ``bold_pe_dir``).
+        The baseline reference image (must correspond to ``epi_pe_dir``).
     in_reference_brain : pathlike
         The reference image above, but skullstripped.
     in_mask : pathlike
@@ -110,7 +110,7 @@ directions, using `3dQwarp` @afni (AFNI {afni_ver}).
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['fmaps_epi', 'in_reference', 'in_reference_brain',
-                'in_mask', 'bold_pe_dir']), name='inputnode')
+                'in_mask', 'epi_pe_dir']), name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),
@@ -140,11 +140,11 @@ directions, using `3dQwarp` @afni (AFNI {afni_ver}).
         omp_nthreads=omp_nthreads)
 
     workflow.connect([
-        (inputnode, qwarp, [(('bold_pe_dir', _qwarp_args), 'args')]),
+        (inputnode, qwarp, [(('epi_pe_dir', _qwarp_args), 'args')]),
         (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
         (inputnode, prepare_epi_wf, [
             ('fmaps_epi', 'inputnode.maps_pe'),
-            ('bold_pe_dir', 'inputnode.epi_pe'),
+            ('epi_pe_dir', 'inputnode.epi_pe'),
             ('in_reference_brain', 'inputnode.ref_brain')]),
         (prepare_epi_wf, qwarp, [('outputnode.opposed_pe', 'base_file'),
                                  ('outputnode.matched_pe', 'in_file')]),

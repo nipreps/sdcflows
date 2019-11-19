@@ -39,7 +39,7 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger('nipype.workflow')
 
 
-def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
+def init_syn_sdc_wf(omp_nthreads, epi_pe=None,
                     atlas_threshold=3, name='syn_sdc_wf'):
     """
     Build the *fieldmap-less* susceptibility-distortion estimation workflow.
@@ -65,18 +65,18 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
 
             from sdcflows.workflows.syn import init_syn_sdc_wf
             wf = init_syn_sdc_wf(
-                bold_pe='j',
+                epi_pe='j',
                 omp_nthreads=8)
 
     Inputs
     ------
-    bold_ref
+    in_reference
         reference image
-    bold_ref_brain
+    in_reference_brain
         skull-stripped reference image
     template : str
         Name of template targeted by ``template`` output space
-    t1_brain
+    t1w_brain
         skull-stripped, bias-corrected structural image
     std2anat_xfm
         inverse registration transform of T1w image to MNI template
@@ -84,9 +84,9 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
     Outputs
     -------
     out_reference
-        the ``bold_ref`` image after unwarping
+        the ``in_reference`` image after unwarping
     out_reference_brain
-        the ``bold_ref_brain`` image after unwarping
+        the ``in_reference_brain`` image after unwarping
     out_warp
         the corresponding :abbr:`DFM (displacements field map)` compatible with
         ANTs
@@ -110,9 +110,9 @@ def init_syn_sdc_wf(omp_nthreads, bold_pe=None,
         <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`_.
 
     """
-    if bold_pe is None or bold_pe[0] not in ['i', 'j']:
+    if epi_pe is None or epi_pe[0] not in ['i', 'j']:
         LOGGER.warning('Incorrect phase-encoding direction, assuming PA (posterior-to-anterior).')
-        bold_pe = 'j'
+        epi_pe = 'j'
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -127,8 +127,8 @@ along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
 """.format(ants_ver=Registration().version or '<ver>')
     inputnode = pe.Node(
-        niu.IdentityInterface(['bold_ref', 'bold_ref_brain', 'template',
-                               't1_brain', 'std2anat_xfm']),
+        niu.IdentityInterface(['in_reference', 'in_reference_brain', 'template',
+                               't1w_brain', 'std2anat_xfm']),
         name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(['out_reference', 'out_reference_brain',
@@ -172,7 +172,7 @@ template [@fieldmapless3].
                                 mem_gb=DEFAULT_MEMORY_MIN_GB)
     fixed_image_masks.inputs.in1 = 'NULL'
 
-    restrict = [[int(bold_pe[0] == 'i'), int(bold_pe[0] == 'j'), 0]] * 2
+    restrict = [[int(epi_pe[0] == 'i'), int(epi_pe[0] == 'j'), 0]] * 2
     syn = pe.Node(
         Registration(from_file=syn_transform, restrict_deformation=restrict),
         name='syn', n_procs=omp_nthreads)
@@ -184,28 +184,28 @@ template [@fieldmapless3].
     skullstrip_bold_wf = init_skullstrip_bold_wf()
 
     workflow.connect([
-        (inputnode, invert_t1w, [('t1_brain', 'in_file'),
-                                 ('bold_ref', 'ref_file')]),
-        (inputnode, ref_2_t1, [('bold_ref_brain', 'moving_image')]),
+        (inputnode, invert_t1w, [('t1w_brain', 'in_file'),
+                                 ('in_reference', 'ref_file')]),
+        (inputnode, ref_2_t1, [('in_reference_brain', 'moving_image')]),
         (invert_t1w, ref_2_t1, [('out_file', 'fixed_image')]),
-        (inputnode, t1_2_ref, [('bold_ref', 'reference_image')]),
+        (inputnode, t1_2_ref, [('in_reference', 'reference_image')]),
         (invert_t1w, t1_2_ref, [('out_file', 'input_image')]),
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (ref_2_t1, transform_list, [('forward_transforms', 'in1')]),
         (inputnode, transform_list, [
             ('std2anat_xfm', 'in2'),
             (('template', _prior_path), 'in3')]),
-        (inputnode, atlas_2_ref, [('bold_ref', 'reference_image')]),
+        (inputnode, atlas_2_ref, [('in_reference', 'reference_image')]),
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
         (threshold_atlas, fixed_image_masks, [('out_file', 'in2')]),
-        (inputnode, syn, [('bold_ref_brain', 'moving_image')]),
+        (inputnode, syn, [('in_reference_brain', 'moving_image')]),
         (t1_2_ref, syn, [('output_image', 'fixed_image')]),
         (fixed_image_masks, syn, [('out', 'fixed_image_masks')]),
         (syn, outputnode, [('forward_transforms', 'out_warp')]),
         (syn, unwarp_ref, [('forward_transforms', 'transforms')]),
-        (inputnode, unwarp_ref, [('bold_ref', 'reference_image'),
-                                 ('bold_ref', 'input_image')]),
+        (inputnode, unwarp_ref, [('in_reference', 'reference_image'),
+                                 ('in_reference', 'input_image')]),
         (unwarp_ref, skullstrip_bold_wf, [
             ('output_image', 'inputnode.in_file')]),
         (unwarp_ref, outputnode, [('output_image', 'out_reference')]),
