@@ -19,16 +19,11 @@ This corresponds to `this section of the BIDS specification
 """
 
 from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu, fsl, ants
-from niflow.nipype1.workflows.dmri.fsl.utils import demean_image, cleanup_edge_pipeline
+from nipype.interfaces import utility as niu, fsl
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.bids import DerivativesDataSink
 from niworkflows.interfaces.images import IntraModalMerge
-from niworkflows.interfaces.masks import BETRPT
 
-from ..interfaces.fmap import (
-    FieldEnhance, FieldToRadS, FieldToHz
-)
+from .gre import init_fmap_postproc_wf, init_magnitude_wf
 
 
 def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
@@ -81,70 +76,28 @@ def init_fmap_wf(omp_nthreads, fmap_bspline, name='fmap_wf'):
     outputnode = pe.Node(niu.IdentityInterface(fields=['fmap', 'fmap_ref', 'fmap_mask']),
                          name='outputnode')
 
-    # Merge input magnitude images
-    magmrg = pe.Node(IntraModalMerge(), name='magmrg')
+    magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
+    workflow.connect([
+        (inputnode, magnitude_wf, [('magnitude', 'inputnode.magnitude')]),
+        (magnitude_wf, outputnode, [('outputnode.fmap_mask', 'fmap_mask'),
+                                    ('outputnode.fmap_ref', 'fmap_ref')]),
+    ])
+
     # Merge input fieldmap images
     fmapmrg = pe.Node(IntraModalMerge(zero_based_avg=False, hmc=False),
                       name='fmapmrg')
-
-    # de-gradient the fields ("bias/illumination artifact")
-    n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
-                         name='n4_correct', n_procs=omp_nthreads)
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
-                  name='bet')
-    ds_report_fmap_mask = pe.Node(DerivativesDataSink(
-        desc='brain', suffix='mask'), name='ds_report_fmap_mask',
-        run_without_submitting=True)
+    applymsk = pe.Node(fsl.ApplyMask(), name='applymsk')
+    fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
+                                             fmap_bspline=fmap_bspline)
 
     workflow.connect([
-        (inputnode, magmrg, [('magnitude', 'in_files')]),
         (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
-        (magmrg, n4_correct, [('out_file', 'input_image')]),
-        (n4_correct, bet, [('output_image', 'in_file')]),
-        (bet, outputnode, [('mask_file', 'fmap_mask'),
-                           ('out_file', 'fmap_ref')]),
-        (inputnode, ds_report_fmap_mask, [('fieldmap', 'source_file')]),
-        (bet, ds_report_fmap_mask, [('out_report', 'in_file')]),
+        (fmapmrg, applymsk, [('out_file', 'in_file')]),
+        (magnitude_wf, applymsk, [('outputnode.fmap_mask', 'mask_file')]),
+        (applymsk, fmap_postproc_wf, [('out_file', 'inputnode.fmap')]),
+        (magnitude_wf, fmap_postproc_wf, [
+            ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
+            ('outputnode.fmap_ref', 'inputnode.fmap_ref')]),
+        (fmap_postproc_wf, outputnode, [('outputnode.out_fmap', 'fmap')]),
     ])
-
-    if fmap_bspline:
-        # despike_threshold=1.0, mask_erode=1),
-        fmapenh = pe.Node(FieldEnhance(unwrap=False, despike=False),
-                          name='fmapenh', mem_gb=4, n_procs=omp_nthreads)
-
-        workflow.connect([
-            (bet, fmapenh, [('mask_file', 'in_mask'),
-                            ('out_file', 'in_magnitude')]),
-            (fmapmrg, fmapenh, [('out_file', 'in_file')]),
-            (fmapenh, outputnode, [('out_file', 'fmap')]),
-        ])
-
-    else:
-        torads = pe.Node(FieldToRadS(), name='torads')
-        prelude = pe.Node(fsl.PRELUDE(), name='prelude')
-        tohz = pe.Node(FieldToHz(), name='tohz')
-
-        denoise = pe.Node(fsl.SpatialFilter(operation='median', kernel_shape='sphere',
-                                            kernel_size=3), name='denoise')
-        demean = pe.Node(niu.Function(function=demean_image), name='demean')
-        cleanup_wf = cleanup_edge_pipeline(name='cleanup_wf')
-
-        applymsk = pe.Node(fsl.ApplyMask(), name='applymsk')
-
-        workflow.connect([
-            (bet, prelude, [('mask_file', 'mask_file'),
-                            ('out_file', 'magnitude_file')]),
-            (fmapmrg, torads, [('out_file', 'in_file')]),
-            (torads, tohz, [('fmap_range', 'range_hz')]),
-            (torads, prelude, [('out_file', 'phase_file')]),
-            (prelude, tohz, [('unwrapped_phase_file', 'in_file')]),
-            (tohz, denoise, [('out_file', 'in_file')]),
-            (denoise, demean, [('out_file', 'in_file')]),
-            (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
-            (bet, cleanup_wf, [('mask_file', 'inputnode.in_mask')]),
-            (cleanup_wf, applymsk, [('outputnode.out_file', 'in_file')]),
-            (bet, applymsk, [('mask_file', 'mask_file')]),
-            (applymsk, outputnode, [('out_file', 'fmap')]),
-        ])
-
     return workflow
