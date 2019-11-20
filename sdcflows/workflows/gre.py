@@ -128,8 +128,8 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
     """
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmap_mask', 'fmap_ref', 'fmap']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['out_fmap']),
+        fields=['fmap_mask', 'fmap_ref', 'fmap', 'metadata']), name='inputnode')
+    outputnode = pe.Node(niu.IdentityInterface(fields=['out_fmap', 'metadata']),
                          name='outputnode')
     if fmap_bspline:
         from ..interfaces.fmap import FieldEnhance
@@ -156,11 +156,12 @@ def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
 
         workflow.connect([
             (inputnode, cleanup_wf, [('fmap_mask', 'inputnode.in_mask')]),
-            (inputnode, recenter, [('fmap', 'in_file')]),
+            (inputnode, recenter, [(('fmap', _pop), 'in_file')]),
             (recenter, denoise, [('out', 'in_file')]),
             (denoise, demean, [('out_file', 'in_file')]),
             (demean, cleanup_wf, [('out', 'inputnode.in_file')]),
             (cleanup_wf, outputnode, [('outputnode.out_file', 'out_fmap')]),
+            (inputnode, outputnode, [(('metadata', _pop), 'metadata')]),
         ])
 
     return workflow
@@ -218,3 +219,9 @@ def _demean(in_file, in_mask=None, usemode=True):
                                newpath=getcwd())
     nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
     return out_file
+
+
+def _pop(inlist):
+    if isinstance(inlist, (tuple, list)):
+        return inlist[0]
+    return inlist

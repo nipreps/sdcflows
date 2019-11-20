@@ -59,12 +59,12 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
 
     Inputs
     ------
-    magnitude : pathlike
-        Path to the corresponding magnitude path(s).
-    phasediff : pathlike
-        Path to the corresponding phase-difference file.
-    metadata : dict
-        Metadata dictionary corresponding to the phasediff input
+    magnitude : list of os.pathlike
+        List of path(s) the GRE magnitude maps.
+    phasediff : list of tuple(os.pathlike, dict)
+        List containing one GRE phase-difference map with its corresponding metadata
+        (requires ``EchoTime1`` and ``EchoTime2``), or the phase maps for the two
+        subsequent echoes, with their metadata (requires ``EchoTime``).
 
     Outputs
     -------
@@ -90,39 +90,48 @@ run, using a custom workflow of *SDCFlows* derived from D. Greve's `epidewarp.fs
 further improvements of HCP Pipelines [@hcppipelines].
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff', 'metadata']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['fmap', 'fmap_ref', 'fmap_mask']), name='outputnode')
 
+    split = pe.MapNode(niu.Function(function=_split, output_names=['map_file', 'meta']),
+                       iterfield=['phasediff'], run_without_submitting=True, name='split')
+
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
 
     # phase diff -> radians
-    phmap2rads = pe.Node(PhaseMap2rads(), name='phmap2rads',
-                         run_without_submitting=True)
+    phmap2rads = pe.MapNode(PhaseMap2rads(), name='phmap2rads',
+                            iterfield=['in_file'], run_without_submitting=True)
     # FSL PRELUDE will perform phase-unwrapping
-    prelude = pe.Node(fsl.PRELUDE(), name='prelude')
+    prelude = pe.MapNode(fsl.PRELUDE(), iterfield=['phase_file'], name='prelude')
 
     fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
                                              fmap_bspline=False)
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
     workflow.connect([
-        (inputnode, compfmap, [('metadata', 'metadata')]),
+        (inputnode, split, [('phasediff', 'phasediff')]),
         (inputnode, magnitude_wf, [('magnitude', 'inputnode.magnitude')]),
         (magnitude_wf, prelude, [('outputnode.fmap_ref', 'magnitude_file'),
                                  ('outputnode.fmap_mask', 'mask_file')]),
-        (inputnode, phmap2rads, [('phasediff', 'in_file')]),
+        (split, phmap2rads, [('map_file', 'in_file')]),
         (phmap2rads, prelude, [('out_file', 'phase_file')]),
+        (split, fmap_postproc_wf, [('meta', 'inputnode.metadata')]),
         (prelude, fmap_postproc_wf, [('unwrapped_phase_file', 'inputnode.fmap')]),
         (magnitude_wf, fmap_postproc_wf, [
             ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
             ('outputnode.fmap_ref', 'inputnode.fmap_ref')]),
-        (fmap_postproc_wf, compfmap, [('outputnode.out_fmap', 'in_file')]),
+        (fmap_postproc_wf, compfmap, [('outputnode.out_fmap', 'in_file'),
+                                      ('outputnode.metadata', 'metadata')]),
         (compfmap, outputnode, [('out_file', 'fmap')]),
         (magnitude_wf, outputnode, [('outputnode.fmap_ref', 'fmap_ref'),
                                     ('outputnode.fmap_mask', 'fmap_mask')]),
     ])
 
     return workflow
+
+
+def _split(phasediff):
+    return phasediff
