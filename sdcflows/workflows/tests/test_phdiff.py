@@ -23,11 +23,11 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset, workdir):
         return_type='file',
         extension=['.nii', '.nii.gz'])
 
-    phdiff_file = data.get(suffix='phasediff', acq='v4',
-                           extension=['.nii', '.nii.gz'])[0]
+    phdiff_files = data.get(suffix='phasediff', acq='v4',
+                            extension=['.nii', '.nii.gz'])
 
-    phdiff_wf.inputs.inputnode.phasediff = phdiff_file.path
-    phdiff_wf.inputs.inputnode.metadata = phdiff_file.get_metadata()
+    phdiff_wf.inputs.inputnode.phasediff = [
+        (ph.path, ph.get_metadata()) for ph in phdiff_files]
 
     if output_path:
         from ...interfaces.reportlets import FieldmapReportlet
@@ -36,7 +36,7 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset, workdir):
         dsink = pe.Node(DerivativesDataSink(
             base_directory=str(output_path), keep_dtype=True), name='dsink')
         dsink.interface.out_path_base = 'sdcflows'
-        dsink.inputs.source_file = phdiff_file.path
+        dsink.inputs.source_file = phdiff_files[0].path
 
         wf.connect([
             (phdiff_wf, rep, [

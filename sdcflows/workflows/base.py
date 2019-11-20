@@ -79,15 +79,6 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
         method (for reporting purposes)
 
     """
-    if ignore is None:
-        ignore = tuple()
-
-    if not isinstance(ignore, (list, tuple)):
-        ignore = tuple(ignore)
-
-    # TODO: To be removed (filter out unsupported fieldmaps):
-    fmaps = [fmap for fmap in fmaps if fmap['suffix'] in FMAP_PRIORITY]
-
     workflow = Workflow(name='sdc_estimate_wf' if fmaps else 'sdc_bypass_wf')
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['epi_file', 'epi_brain', 'epi_mask', 't1w_brain', 'std2anat_xfm']),
@@ -99,7 +90,8 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
-    if not fmaps or 'fieldmaps' in ignore:
+    ignored = False if ignore is None else 'fieldmaps' in ignore
+    if not fmaps or ignored:
         workflow.__postdesc__ = """\
 Susceptibility distortion correction (SDC) has been skipped because the
 dataset does not contain extra field map acquisitions correctly described
@@ -119,18 +111,26 @@ EPI (echo-planar imaging) reference was calculated for a more
 accurate co-registration with the anatomical reference.
 """
 
-    # In case there are multiple fieldmaps prefer EPI
-    fmaps.sort(key=lambda fmap: FMAP_PRIORITY[fmap['suffix']])
-    fmap = fmaps[0]
+    only_syn = 'syn' in fmaps and len(fmaps) == 1
 
     # PEPOLAR path
     if 'epi' in fmaps:
         from .pepolar import init_pepolar_unwarp_wf, check_pes
+
+        # SyN works without this metadata
+        if epi_meta.get('PhaseEncodingDirection') is None:
+            raise ValueError(
+                'PhaseEncodingDirection is not defined within the metadata retrieved '
+                'for the intended EPI (DWI, BOLD, or SBRef) run.')
         outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
 
-        # Filter out EPI fieldmaps to be used
-        fmaps_epi = [(epi.path, epi.get_metadata()['PhaseEncodingDirection'])
-                     for epi in fmaps['epi']]
+        fmaps_epi = [(v[0], v[1].get('PhaseEncodingDirection'))
+                     for v in fmaps['epi']]
+
+        if not all(list(zip(*fmaps_epi))[1]):
+            raise ValueError(
+                'At least one of the EPI runs with alternative phase-encoding '
+                'blips is missing the required "PhaseEncodingDirection" metadata entry.')
 
         # Find matched PE directions
         matched_pe = check_pes(fmaps_epi, epi_meta['PhaseEncodingDirection'])
@@ -150,32 +150,34 @@ accurate co-registration with the anatomical reference.
         ])
 
     # FIELDMAP path
-    elif 'fieldmap' in fmaps:
+    elif 'fieldmap' in fmaps or 'phasediff' in fmaps:
         from .unwarp import init_sdc_unwarp_wf
-        # Import specific workflows here, so we don't break everything with one
-        # unused workflow.
-        suffices = {f.suffix for f in fmaps['fieldmap']}
-        if 'fieldmap' in suffices:
+
+        # SyN works without this metadata
+        if epi_meta.get('PhaseEncodingDirection') is None:
+            raise ValueError(
+                'PhaseEncodingDirection is not defined within the metadata retrieved '
+                'for the intended EPI (DWI, BOLD, or SBRef) run.')
+
+        if 'fieldmap' in fmaps:
             from .fmap import init_fmap_wf
-            outputnode.inputs.method = 'FMB (fieldmap-based)'
+            outputnode.inputs.method = 'FMB (fieldmap-based) - directly measured B0 map'
             fmap_wf = init_fmap_wf(
                 omp_nthreads=omp_nthreads,
                 fmap_bspline=False)
             # set inputs
-            fmap_wf.inputs.inputnode.magnitude = fmap['magnitude']
-            fmap_wf.inputs.inputnode.fieldmap = fmap['fieldmap']
-        elif 'phasediff' in suffices:
+            fmap_wf.inputs.inputnode.magnitude = [
+                m for m, _ in fmaps['fieldmap']['magnitude']]
+            fmap_wf.inputs.inputnode.fieldmap = [
+                m for m, _ in fmaps['fieldmap']['fieldmap']]
+        elif 'phasediff' in fmaps:
             from .phdiff import init_phdiff_wf
+            outputnode.inputs.method = 'FMB (fieldmap-based) - phase-difference map'
             fmap_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
             # set inputs
-            fmap_wf.inputs.inputnode.phasediff = fmap['phasediff']
             fmap_wf.inputs.inputnode.magnitude = [
-                fmap_ for key, fmap_ in sorted(fmap.items())
-                if key.startswith("magnitude")
-            ]
-        else:
-            raise ValueError('Fieldmaps of types %s are not supported' %
-                             ', '.join(['"%s"' % f for f in suffices]))
+                m for m, _ in fmaps['phasediff']['magnitude']]
+            fmap_wf.inputs.inputnode.phasediff = fmaps['phasediff']['phases']
 
         sdc_unwarp_wf = init_sdc_unwarp_wf(
             omp_nthreads=omp_nthreads,
@@ -193,9 +195,12 @@ accurate co-registration with the anatomical reference.
                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
                 ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
         ])
+    elif not only_syn:
+        raise ValueError('Fieldmaps of types %s are not supported' %
+                         ', '.join(['"%s"' % f for f in fmaps]))
 
     # FIELDMAP-less path
-    if any(fm['suffix'] == 'syn' for fm in fmaps):
+    if 'syn' in fmaps:
         from .syn import init_syn_sdc_wf
         syn_sdc_wf = init_syn_sdc_wf(
             epi_pe=epi_meta.get('PhaseEncodingDirection', None),
@@ -203,14 +208,14 @@ accurate co-registration with the anatomical reference.
 
         workflow.connect([
             (inputnode, syn_sdc_wf, [
+                ('epi_file', 'inputnode.in_reference'),
+                ('epi_brain', 'inputnode.in_reference_brain'),
                 ('t1w_brain', 'inputnode.t1w_brain'),
-                ('epi_file', 'inputnode.epi_file'),
-                ('epi_brain', 'inputnode.epi_brain'),
                 ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
         ])
 
         # XXX Eliminate branch when forcing isn't an option
-        if fmap['suffix'] == 'syn':  # No fieldmaps, but --use-syn
+        if only_syn:  # No fieldmaps, but --use-syn
             outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
             sdc_unwarp_wf = syn_sdc_wf
         else:  # --force-syn was called when other fieldmap was present
