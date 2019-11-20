@@ -126,11 +126,22 @@ accurate co-registration with the anatomical reference.
     # PEPOLAR path
     if 'epi' in fmaps:
         from .pepolar import init_pepolar_unwarp_wf, check_pes
+
+        # SyN works without this metadata
+        if epi_meta.get('PhaseEncodingDirection') is None:
+            raise ValueError(
+                'PhaseEncodingDirection is not defined within the metadata retrieved '
+                'for the intended EPI (DWI, BOLD, or SBRef) run.')
         outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
 
         # Filter out EPI fieldmaps to be used
         fmaps_epi = [(epi.path, epi.get_metadata()['PhaseEncodingDirection'])
                      for epi in fmaps['epi']]
+
+        if any(zip(*fmaps_epi)[1]):
+            raise ValueError(
+                'At least one of the EPI runs with alternative phase-encoding '
+                'blips is missing the required "PhaseEncodingDirection" metadata entry.')
 
         # Find matched PE directions
         matched_pe = check_pes(fmaps_epi, epi_meta['PhaseEncodingDirection'])
@@ -152,8 +163,13 @@ accurate co-registration with the anatomical reference.
     # FIELDMAP path
     elif 'fieldmap' in fmaps:
         from .unwarp import init_sdc_unwarp_wf
-        # Import specific workflows here, so we don't break everything with one
-        # unused workflow.
+
+        # SyN works without this metadata
+        if epi_meta.get('PhaseEncodingDirection') is None:
+            raise ValueError(
+                'PhaseEncodingDirection is not defined within the metadata retrieved '
+                'for the intended EPI (DWI, BOLD, or SBRef) run.')
+
         suffices = {f.suffix for f in fmaps['fieldmap']}
         if 'fieldmap' in suffices:
             from .fmap import init_fmap_wf
