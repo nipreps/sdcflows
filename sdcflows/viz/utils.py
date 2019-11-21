@@ -6,7 +6,7 @@
 def plot_registration(anat_nii, div_id, plot_params=None,
                       order=('z', 'x', 'y'), cuts=None,
                       estimate_brightness=False, label=None, contour=None,
-                      compress='auto'):
+                      compress='auto', overlay=None, overlay_params=None):
     """
     Plot the foreground and background views.
 
@@ -15,6 +15,7 @@ def plot_registration(anat_nii, div_id, plot_params=None,
     from uuid import uuid4
 
     from lxml import etree
+    import matplotlib.pyplot as plt
     from nilearn.plotting import plot_anat
     from svgutils.transform import SVGFigure
     from niworkflows.viz.utils import robust_set_limits, extract_svg, SVGNS
@@ -41,6 +42,15 @@ def plot_registration(anat_nii, div_id, plot_params=None,
 
         # Generate nilearn figure
         display = plot_anat(anat_nii, **plot_params)
+        if overlay is not None:
+            _overlay_params = {
+                'vmin': overlay.get_fdata().min(),
+                'vmax': overlay.get_fdata().max(),
+                'cmap': plt.cm.gray,
+                'interpolation': 'nearest',
+            }
+            _overlay_params.update(overlay_params)
+            display.add_overlay(overlay, **_overlay_params)
         if contour is not None:
             display.add_contours(contour, colors='g', levels=[0.5],
                                  linewidths=0.5)
@@ -60,7 +70,7 @@ def plot_registration(anat_nii, div_id, plot_params=None,
     return out_files
 
 
-def coolwarm_transparent():
+def coolwarm_transparent(max_alpha=0.7, opaque_perc=30, transparent_perc=8):
     """Modify the coolwarm color scale to have full transparency around the middle."""
     import numpy as np
     import matplotlib.pylab as pl
@@ -72,9 +82,15 @@ def coolwarm_transparent():
     # Get the colormap colors
     my_cmap = cmap(np.arange(cmap.N))
 
+    _20perc = (cmap.N * opaque_perc) // 100
+    midpoint = cmap.N // 2 + 1
+    _10perc = (cmap.N * transparent_perc) // 100
     # Set alpha
-    alpha = np.ones(cmap.N)
-    alpha[128:160] = np.linspace(0, 1, len(alpha[128:160]))
-    alpha[96:128] = np.linspace(1, 0, len(alpha[96:128]))
+    alpha = np.ones(cmap.N) * max_alpha
+    alpha[midpoint - _10perc:midpoint + _10perc] = 0
+    alpha[_20perc:midpoint - _10perc - 1] = np.linspace(
+        max_alpha, 0, len(alpha[_20perc:midpoint - _10perc - 1]))
+    alpha[midpoint + _10perc:-_20perc] = np.linspace(
+        0, max_alpha, len(alpha[midpoint + _10perc:-_20perc]))
     my_cmap[:, -1] = alpha
     return ListedColormap(my_cmap)

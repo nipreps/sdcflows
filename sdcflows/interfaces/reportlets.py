@@ -1,10 +1,11 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Interfaces to generate speciality reportlets."""
+import numpy as np
 from nilearn.image import threshold_img, load_img
 from niworkflows import NIWORKFLOWS_LOG
 from niworkflows.viz.utils import cuts_from_bbox, compose_view
-from nipype.interfaces.base import File, isdefined
+from nipype.interfaces.base import File, isdefined, traits
 from nipype.interfaces.mixins import reporting
 
 from ..viz.utils import plot_registration, coolwarm_transparent
@@ -12,10 +13,14 @@ from ..viz.utils import plot_registration, coolwarm_transparent
 
 class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
     reference = File(exists=True, mandatory=True, desc='input reference')
+    moving = File(exists=True, desc='input moving')
     fieldmap = File(exists=True, mandatory=True, desc='input fieldmap')
+    max_alpha = traits.Float(0.7, usedefault=True, desc='maximum alpha channel')
     mask = File(exists=True, desc='brain mask')
     out_report = File('report.svg', usedefault=True,
                       desc='filename for the visual report')
+    show = traits.Enum(1, 0, 'both', usedefault=True,
+                       desc='where the fieldmap should be shown')
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -39,28 +44,46 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
         refnii = load_img(self.inputs.reference)
         fmapnii = load_img(self.inputs.fieldmap)
-        contour_nii = load_img(self.inputs.mask) if isdefined(self.inputs.mask) else None
-        mask_nii = threshold_img(refnii, 1e-3)
+
+        contour_nii = mask_nii = None
+        if isdefined(self.inputs.mask):
+            contour_nii = load_img(self.inputs.mask)
+            maskdata = contour_nii.get_fdata() > 0
+        else:
+            mask_nii = threshold_img(refnii, 1e-3)
+            maskdata = mask_nii.get_fdata() > 0
         cuts = cuts_from_bbox(contour_nii or mask_nii, cuts=self._n_cuts)
         fmapdata = fmapnii.get_fdata()
-        vmax = max(fmapdata.max(), abs(fmapdata.min()))
+        vmax = max(abs(np.percentile(fmapdata[maskdata], 99.8)),
+                   abs(np.percentile(fmapdata[maskdata], 0.2)))
+
+        fmap_overlay = [{
+            'overlay': fmapnii,
+            'overlay_params': {
+                'cmap': coolwarm_transparent(max_alpha=self.inputs.max_alpha),
+                'vmax': vmax,
+                'vmin': -vmax,
+            }
+        }] * 2
+
+        if self.inputs.show != 'both':
+            fmap_overlay[not self.inputs.show] = {}
 
         # Call composer
         compose_view(
-            plot_registration(refnii, 'fixed-image',
-                              estimate_brightness=True,
-                              cuts=cuts,
-                              label='reference',
-                              contour=contour_nii,
-                              compress=False),
-            plot_registration(fmapnii, 'moving-image',
+            plot_registration(refnii, 'moving-image',
                               estimate_brightness=True,
                               cuts=cuts,
                               label='fieldmap (Hz)',
                               contour=contour_nii,
                               compress=False,
-                              plot_params={'cmap': coolwarm_transparent(),
-                                           'vmax': vmax,
-                                           'vmin': -vmax}),
+                              **fmap_overlay[1]),
+            plot_registration(refnii, 'fixed-image',
+                              estimate_brightness=True,
+                              cuts=cuts,
+                              label='reference',
+                              contour=contour_nii,
+                              compress=False,
+                              **fmap_overlay[0]),
             out_file=self._out_report
         )
