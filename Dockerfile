@@ -135,6 +135,18 @@ RUN useradd -m -s /bin/bash -G users sdcflows
 WORKDIR /home/sdcflows
 ENV HOME="/home/sdcflows"
 
+# Precaching atlases
+COPY setup.cfg setup.cfg
+RUN pip install --no-cache-dir "$( grep templateflow setup.cfg | xargs )" && \
+    python -c "from templateflow import api as tfapi; \
+               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
+               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');" && \
+    rm setup.cfg && \
+    find $HOME/.cache/templateflow -type d -exec chmod go=u {} + && \
+    find $HOME/.cache/templateflow -type f -exec chmod go=u {} +
+
+COPY .docker/files/nipype.cfg $HOME/.nipype/nipype.cfg
+
 # Installing dev requirements (packages that are not in pypi)
 WORKDIR /src/sdcflows
 
