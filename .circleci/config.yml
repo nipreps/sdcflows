@@ -175,7 +175,7 @@ jobs:
             mkdir -p /tmp/data/
             echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/data/fslicense.txt
 
-      - save_cache:
+     - save_cache:
          key: data-v2-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - "/opt/circleci/.pyenv/versions/3.5.2"
