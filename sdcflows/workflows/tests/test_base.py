@@ -74,10 +74,7 @@ def test_base(method):
     epi_meta = EPI_METADATA.copy()
 
     if method == 'skip':
-        wf = init_sdc_estimate_wf(fmaps=[], epi_meta=epi_meta)
-        assert wf.inputs.outputnode.method == 'None'
-
-        wf = init_sdc_estimate_wf(fmaps=fieldmaps, epi_meta=epi_meta, ignore=('fieldmaps', ))
+        wf = init_sdc_estimate_wf(fmaps=None, epi_meta=epi_meta)
         assert wf.inputs.outputnode.method == 'None'
 
         with pytest.raises(ValueError):

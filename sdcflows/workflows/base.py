@@ -19,7 +19,7 @@ FMAP_PRIORITY = {
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=None):
+def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False):
     """
     Build a :abbr:`SDC (susceptibility distortion correction)` workflow.
 
@@ -66,7 +66,7 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
 
     Outputs
     -------
-    epi_file
+    epi_corrected
         The EPI scan reference after unwarping.
     epi_mask
         The corresponding new mask after unwarping
@@ -87,28 +87,25 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['output_ref', 'epi_mask', 'epi_brain',
+        fields=['epi_corrected', 'epi_mask', 'epi_brain',
                 'out_warp', 'syn_ref', 'method']),
         name='outputnode')
 
     # No fieldmaps - forward inputs to outputs
-    ignored = False if ignore is None else 'fieldmaps' in ignore
-    if not fmaps or ignored:
+    if not fmaps:
         workflow.__postdesc__ = """\
-Susceptibility distortion correction (SDC) has been skipped because the
-dataset does not contain extra field map acquisitions correctly described
-with metadata, and the experimental SDC-SyN method was not explicitly selected.
+Susceptibility distortion correction (SDC) was omitted.
 """
         outputnode.inputs.method = 'None'
         workflow.connect([
-            (inputnode, outputnode, [('epi_file', 'output_ref'),
+            (inputnode, outputnode, [('epi_file', 'epi_corrected'),
                                      ('epi_mask', 'epi_mask'),
                                      ('epi_brain', 'epi_brain')]),
         ])
         return workflow
 
     workflow.__postdesc__ = """\
-Based on the estimated susceptibility distortion, an unwarped
+Based on the estimated susceptibility distortion, a corrected
 EPI (echo-planar imaging) reference was calculated for a more
 accurate co-registration with the anatomical reference.
 """
@@ -210,7 +207,7 @@ accurate co-registration with the anatomical reference.
                 ('epi_brain', 'inputnode.in_reference_brain')]),
             (inputnode, sdc_unwarp_wf, [
                 ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain')]),
+                ('epi_mask', 'inputnode.in_reference_mask')]),
             (fmap_wf, fmap2field_wf, [
                 ('outputnode.fmap', 'inputnode.fmap'),
                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
@@ -252,7 +249,7 @@ accurate co-registration with the anatomical reference.
     workflow.connect([
         (sdc_unwarp_wf, outputnode, [
             ('outputnode.out_warp', 'out_warp'),
-            ('outputnode.out_reference', 'epi_file'),
+            ('outputnode.out_reference', 'epi_corrected'),
             ('outputnode.out_reference_brain', 'epi_brain'),
             ('outputnode.out_mask', 'epi_mask')]),
     ])
