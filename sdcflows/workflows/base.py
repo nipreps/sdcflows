@@ -67,7 +67,7 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
     Outputs
     -------
     epi_file
-        An unwarped EPI scan reference
+        The EPI scan reference after unwarping.
     epi_mask
         The corresponding new mask after unwarping
     epi_brain
@@ -77,6 +77,8 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False, ignore=No
     syn_ref
         If ``--force-syn``, an unwarped EPI scan reference with this
         method (for reporting purposes)
+    method : str
+        Short description of the estimation method that was run.
 
     """
     workflow = Workflow(name='sdc_estimate_wf' if fmaps else 'sdc_bypass_wf')
@@ -162,23 +164,37 @@ accurate co-registration with the anatomical reference.
 
         if 'fieldmap' in fmaps:
             from .fmap import init_fmap_wf
+            try:
+                fmap, = fmaps['fieldmap']
+            except ValueError:
+                LOGGER.warning('Several B0 fieldmaps found for the given target, using '
+                               'the first one.')
+                fmap = fmaps['fieldmap'][0]
+
             outputnode.inputs.method = 'FMB (fieldmap-based) - directly measured B0 map'
             fmap_wf = init_fmap_wf(
                 omp_nthreads=omp_nthreads,
                 fmap_bspline=False)
             # set inputs
             fmap_wf.inputs.inputnode.magnitude = [
-                m for m, _ in fmaps['fieldmap']['magnitude']]
+                m for m, _ in fmap['magnitude']]
             fmap_wf.inputs.inputnode.fieldmap = [
-                m for m, _ in fmaps['fieldmap']['fieldmap']]
+                m for m, _ in fmap['fieldmap']]
         elif 'phasediff' in fmaps:
             from .phdiff import init_phdiff_wf
+            try:
+                fmap, = fmaps['phasediff']
+            except ValueError:
+                LOGGER.warning('Several phase-difference maps found for the given target, using '
+                               'the first one.')
+                fmap = fmaps['phasediff'][0]
+
             outputnode.inputs.method = 'FMB (fieldmap-based) - phase-difference map'
             fmap_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
             # set inputs
             fmap_wf.inputs.inputnode.magnitude = [
-                m for m, _ in fmaps['phasediff']['magnitude']]
-            fmap_wf.inputs.inputnode.phasediff = fmaps['phasediff']['phases']
+                m for m, _ in fmap['magnitude']]
+            fmap_wf.inputs.inputnode.phasediff = fmap['phases']
 
         fmap2field_wf = init_fmap2field_wf(omp_nthreads=omp_nthreads, debug=debug)
         fmap2field_wf.inputs.inputnode.metadata = epi_meta
@@ -242,3 +258,38 @@ accurate co-registration with the anatomical reference.
     ])
 
     return workflow
+
+
+def fieldmap_wrangler(layout, target_image, use_syn=False, force_syn=False):
+    """Query the BIDSLayout for fieldmaps, and arrange them for the orchestration workflow."""
+    from collections import defaultdict
+    fmap_bids = layout.get_fieldmap(target_image, return_list=True)
+    fieldmaps = defaultdict(list)
+    for fmap in fmap_bids:
+        if fmap['suffix'] == 'epi':
+            fieldmaps['epi'].append((fmap['epi'], layout.get_metadata(fmap['epi'])))
+
+        if fmap['suffix'] == 'fieldmap':
+            fieldmaps['fieldmap'].append({
+                'magnitude': [(fmap['magnitude'], layout.get_metadata(fmap['magnitude']))],
+                'fieldmap': [(fmap['fieldmap'], layout.get_metadata(fmap['fieldmap']))],
+            })
+
+        if fmap['suffix'] == 'phasediff':
+            fieldmaps['phasediff'].append({
+                'magnitude': [(fmap[k], layout.get_metadata(fmap[k]))
+                              for k in sorted(fmap.keys()) if k.startswith('magnitude')],
+                'phases': [(fmap['phasediff'], layout.get_metadata(fmap['phasediff']))],
+            })
+
+        if fmap['suffix'] == 'phase':
+            fieldmaps['phasediff'].append({
+                'magnitude': [(fmap[k], layout.get_metadata(fmap[k]))
+                              for k in sorted(fmap.keys()) if k.startswith('magnitude')],
+                'phases': [(fmap[k], layout.get_metadata(fmap[k]))
+                           for k in sorted(fmap.keys()) if k.startswith('phase')],
+            })
+
+    if force_syn is True or (not fieldmaps and use_syn is True):
+        fieldmaps['syn'] = force_syn
+    return fieldmaps
