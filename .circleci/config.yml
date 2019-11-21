@@ -128,9 +128,9 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - data-v1-{{ .Branch }}-
-            - data-v1-master-
-            - data-v1-
+            - data-v2-{{ .Branch }}-
+            - data-v2-master-
+            - data-v2-
       - run:
           name: Setup git-annex
           command: |
@@ -170,29 +170,13 @@ jobs:
             fi
 
       - run:
-          name: Get clean copy of workdir
-          command: |
-            if [[ ! -f /tmp/data/workdir.tar.gz ]]; then
-              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
-                  -O workdir.tar.gz "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5dcabd60a1cd9e000c751b3c"
-            fi
-
-      - run:
           name: Store FreeSurfer license file
           command: |
             mkdir -p /tmp/data/
             echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/data/fslicense.txt
 
-      - run:
-          name: Create Nipype config files
-          command: |
-            printf "[execution]\nstop_on_first_crash = true\n" > /tmp/data/nipype.cfg
-            echo "poll_sleep_duration = 0.01" >> /tmp/data/nipype.cfg
-            echo "hash_method = content" >> /tmp/data/nipype.cfg
-            echo "crashfile_format = txt" >> /tmp/data/nipype.cfg
-
       - save_cache:
-         key: data-v1-{{ .Branch }}-{{ .BuildNum }}
+         key: data-v2-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - "/opt/circleci/.pyenv/versions/3.5.2"
             - /tmp/data
@@ -229,15 +213,18 @@ jobs:
             cd /tmp/src/sdcflows
             COMMIT_MSG=$( git log --format=oneline -n 1 $CIRCLE_SHA1 )
             set +e
-            do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[fresh[ _]?workdir\]' )"
+            do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[refresh[ _]?cache\]' )"
             set -e
             if [[ "x${do_refresh}" = "x" ]]; then
               echo "Did not refresh the workdir."
             else
+              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
+                  -O /tmp/data/workdir.tar.gz "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5dcabd60a1cd9e000c751b3c"
               rm -rf /tmp/work
               mkdir -p /tmp/work
-              cd /tmp/work
-              tar xzfv /tmp/data/workdir.tar.gz
+              pushd /tmp/work
+              tar xzfv /tmp/data/workdir.tar.gz --strip 1
+              popd
             fi
 
             wipe_dir=$( echo "${COMMIT_MSG}" | sed -n 's/.*\[wipe \([a-zA-Z0-9_\*]*\)\].*/\1/p' )
@@ -264,7 +251,6 @@ jobs:
             docker run -it --rm -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
                    -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
                    -v /tmp/work:/work -e TEST_WORK_DIR=/work \
-                   -v /tmp/data/nipype.cfg:/home/sdcflows/.nipype/nipype.cfg \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows

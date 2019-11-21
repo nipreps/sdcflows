@@ -32,6 +32,7 @@ def test_workflow(bids_layouts, tmpdir, output_path, dataset, workdir):
     if output_path:
         from ...interfaces.reportlets import FieldmapReportlet
         rep = pe.Node(FieldmapReportlet(), 'simple_report')
+        rep.interface._always_run = True
 
         dsink = pe.Node(DerivativesDataSink(
             base_directory=str(output_path), keep_dtype=True), name='dsink')

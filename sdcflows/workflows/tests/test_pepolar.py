@@ -158,6 +158,7 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
             wf.inputs.inputnode.in_reference = boldref.path
 
         rep = pe.Node(FieldmapReportlet(), 'simple_report')
+        rep.interface._always_run = True
         dsink = pe.Node(DerivativesDataSink(
             base_directory=str(output_path), keep_dtype=True,
             desc='pepolar'), name='dsink')
