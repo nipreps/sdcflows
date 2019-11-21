@@ -139,7 +139,7 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
         from ..pepolar import Workflow
         from ...interfaces.reportlets import FieldmapReportlet
 
-        boiler = Workflow(name='boiler_%s' % dataset)
+        boiler = Workflow(name='pepolar_%s' % dataset)
 
         split_field = pe.Node(niu.Function(function=_split_field), name='split_field')
 
