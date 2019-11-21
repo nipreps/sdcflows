@@ -151,6 +151,7 @@ accurate co-registration with the anatomical reference.
 
     # FIELDMAP path
     elif 'fieldmap' in fmaps or 'phasediff' in fmaps:
+        from .fmap import init_fmap2field_wf
         from .unwarp import init_sdc_unwarp_wf
 
         # SyN works without this metadata
@@ -179,21 +180,28 @@ accurate co-registration with the anatomical reference.
                 m for m, _ in fmaps['phasediff']['magnitude']]
             fmap_wf.inputs.inputnode.phasediff = fmaps['phasediff']['phases']
 
+        fmap2field_wf = init_fmap2field_wf(omp_nthreads=omp_nthreads, debug=debug)
+        fmap2field_wf.inputs.inputnode.metadata = epi_meta
+
         sdc_unwarp_wf = init_sdc_unwarp_wf(
             omp_nthreads=omp_nthreads,
             debug=debug,
             name='sdc_unwarp_wf')
-        sdc_unwarp_wf.inputs.inputnode.metadata = epi_meta
 
         workflow.connect([
+            (inputnode, fmap2field_wf, [
+                ('epi_file', 'inputnode.in_reference'),
+                ('epi_brain', 'inputnode.in_reference_brain')]),
             (inputnode, sdc_unwarp_wf, [
                 ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain'),
-                ('epi_mask', 'inputnode.in_mask')]),
-            (fmap_wf, sdc_unwarp_wf, [
+                ('epi_brain', 'inputnode.in_reference_brain')]),
+            (fmap_wf, fmap2field_wf, [
                 ('outputnode.fmap', 'inputnode.fmap'),
                 ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
                 ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
+            (fmap2field_wf, sdc_unwarp_wf, [
+                ('outputnode.out_warp', 'inputnode.in_warp')]),
+
         ])
     elif not only_syn:
         raise ValueError('Fieldmaps of types %s are not supported' %
