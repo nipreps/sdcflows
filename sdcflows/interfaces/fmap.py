@@ -230,6 +230,63 @@ class PhaseMap2rads(SimpleInterface):
         return runtime
 
 
+class _FUGUEvsm2ANTSwarpInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True,
+                   desc='input displacements field map')
+    pe_dir = traits.Enum('i', 'i-', 'j', 'j-', 'k', 'k-',
+                         desc='phase-encoding axis')
+
+
+class _FUGUEvsm2ANTSwarpOutputSpec(TraitedSpec):
+    out_file = File(desc='the output warp field')
+    fieldmap = File(desc='field map in mm')
+
+
+class FUGUEvsm2ANTSwarp(SimpleInterface):
+    """Convert a voxel-shift-map to ants warp."""
+
+    _dtype = '<f4'
+    input_spec = _FUGUEvsm2ANTSwarpInputSpec
+    output_spec = _FUGUEvsm2ANTSwarpOutputSpec
+
+    def _run_interface(self, runtime):
+        phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
+        phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
+
+        # Create new header
+        nii = nb.load(self.inputs.in_file)
+        hdr = nii.header.copy()
+        hdr.set_data_dtype(self._dtype)
+
+        # Get data, convert to mm
+        data = nii.get_fdata(dtype=self._dtype)
+        aff = np.diag([1.0, 1.0, -1.0])
+        if np.linalg.det(aff) < 0 and phaseEncDim != 0:
+            # Reverse direction since ITK is LPS
+            aff *= -1.0
+
+        aff = aff.dot(nii.affine[:3, :3])
+        data *= phaseEncSign * nii.header.get_zooms()[phaseEncDim]
+        self._results['fieldmap'] = fname_presuffix(
+            self.inputs.in_file, suffix='_units-mm_fieldmap', newpath=runtime.cwd)
+        nb.Nifti1Image(data, nii.affine, hdr).to_filename(self._results['fieldmap'])
+
+        # Compose a vector field
+        zeros = np.zeros_like(data, dtype=self._dtype)
+        field = [zeros, zeros]
+        field.insert(phaseEncDim, data)
+        field = np.stack(field, -1)
+
+        hdr.set_intent('vector', (), '')
+        # Write out
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.in_file, suffix='_desc-field_sdcwarp', newpath=runtime.cwd)
+        nb.Nifti1Image(field[:, :, :, np.newaxis, :], nii.affine, hdr).to_filename(
+            self._results['out_file'])
+
+        return runtime
+
+
 def _despike2d(data, thres, neigh=None):
     """Despike axial slices, as done in FSL's ``epiunwarp``."""
     if neigh is None:

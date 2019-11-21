@@ -13,12 +13,13 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
     This workflow generates and saves a reportlet showing the effect of fieldmap
     unwarping a BOLD image.
 
-    .. workflow::
-        :graph2use: orig
-        :simple_form: yes
+    Workflow Graph
+        .. workflow::
+            :graph2use: orig
+            :simple_form: yes
 
-        from sdcflows.workflows.outputs import init_sdc_unwarp_report_wf
-        wf = init_sdc_unwarp_report_wf()
+            from sdcflows.workflows.outputs import init_sdc_unwarp_report_wf
+            wf = init_sdc_unwarp_report_wf()
 
     Parameters
     ----------

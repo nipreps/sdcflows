@@ -22,11 +22,10 @@ import pkg_resources as pkgr
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu, fsl
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces import itk
 from niworkflows.interfaces.images import IntraModalMerge
 from niworkflows.interfaces.registration import ANTSApplyTransformsRPT, ANTSRegistrationRPT
 
-from ..interfaces.fmap import get_ees as _get_ees, FieldToRadS
+from ..interfaces.fmap import get_ees as _get_ees, FieldToRadS, FUGUEvsm2ANTSwarp
 from .gre import init_fmap_postproc_wf, init_magnitude_wf
 
 
@@ -111,7 +110,8 @@ designed with that purpose (typically, a spiral pulse sequence).
     return workflow
 
 
-def init_fmap2field_wf(omp_nthreads, debug, name='fmap2field_wf'):
+def init_fmap2field_wf(omp_nthreads, debug, name='fmap2field_wf',
+                       generate_report=True):
     """
     Convert the estimated fieldmap in Hz into a displacements field.
 
@@ -187,13 +187,13 @@ tools such as ANTs) with FSL's `fugue` and other *SDCflows* tools.
             'sdcflows', 'data/fmap-any_registration_testing.json')
 
     fmap2ref_reg = pe.Node(
-        ANTSRegistrationRPT(generate_report=True, from_file=ants_settings,
+        ANTSRegistrationRPT(generate_report=False, from_file=ants_settings,
                             output_inverse_warped_image=True, output_warped_image=True),
         name='fmap2ref_reg', n_procs=omp_nthreads)
 
     # Map the VSM into the EPI space
     fmap2ref_apply = pe.Node(ANTSApplyTransformsRPT(
-        generate_report=True, dimension=3, interpolation='BSpline', float=True),
+        generate_report=False, dimension=3, interpolation='BSpline', float=True),
         name='fmap2ref_apply')
 
     fmap_mask2ref_apply = pe.Node(ANTSApplyTransformsRPT(
@@ -209,7 +209,7 @@ tools such as ANTs) with FSL's `fugue` and other *SDCflows* tools.
     gen_vsm = pe.Node(fsl.FUGUE(save_unmasked_shift=True), name='gen_vsm')
     # Convert the VSM into a DFM (displacements field map)
     # or: FUGUE shift to ANTS warping.
-    vsm2dfm = pe.Node(itk.FUGUEvsm2ANTSwarp(), name='vsm2dfm')
+    vsm2dfm = pe.Node(FUGUEvsm2ANTSwarp(), name='vsm2dfm')
 
     workflow.connect([
         (inputnode, fmap2ref_reg, [('fmap_ref', 'moving_image'),
@@ -228,11 +228,32 @@ tools such as ANTs) with FSL's `fugue` and other *SDCflows* tools.
             ('composite_transform', 'transforms')]),
         (fmap2ref_apply, torads, [('output_image', 'in_file')]),
         (fmap_mask2ref_apply, gen_vsm, [('output_image', 'mask_file')]),
-        (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (gen_vsm, vsm2dfm, [('shift_out_file', 'in_file')]),
+        (get_ees, gen_vsm, [('ees', 'dwell_time')]),
         (torads, gen_vsm, [('out_file', 'fmap_in_file')]),
         (vsm2dfm, outputnode, [('out_file', 'out_warp')]),
     ])
+
+    if generate_report:
+        from niworkflows.interfaces.bids import DerivativesDataSink
+        from ..interfaces.reportlets import FieldmapReportlet
+
+        fmap_rpt = pe.Node(FieldmapReportlet(
+            reference_label='EPI Reference',
+            moving_label='Magnitude', show='both'), name='fmap_rpt')
+        ds_report_sdc = pe.Node(
+            DerivativesDataSink(desc='fieldmap', suffix='bold'),
+            name='ds_report_fmap', mem_gb=0.01, run_without_submitting=True
+        )
+
+        workflow.connect([
+            (inputnode, fmap_rpt, [('in_reference', 'reference')]),
+            (fmap2ref_reg, fmap_rpt, [('warped_image', 'moving')]),
+            (fmap_mask2ref_apply, fmap_rpt, [('output_image', 'mask')]),
+            (vsm2dfm, fmap_rpt, [('fieldmap', 'fieldmap')]),
+            (fmap_rpt, ds_report_sdc, [('out_report', 'in_file')]),
+        ])
+
     return workflow
 
 
