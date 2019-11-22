@@ -21,6 +21,10 @@ class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
                       desc='filename for the visual report')
     show = traits.Enum(1, 0, 'both', usedefault=True,
                        desc='where the fieldmap should be shown')
+    reference_label = traits.Str('Reference', usedefault=True,
+                                 desc='a label name for the reference mosaic')
+    moving_label = traits.Str('Fieldmap (Hz)', usedefault=True,
+                              desc='a label name for the reference mosaic')
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -42,8 +46,11 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         """Generate a reportlet."""
         NIWORKFLOWS_LOG.info('Generating visual report')
 
-        refnii = load_img(self.inputs.reference)
+        movnii = refnii = load_img(self.inputs.reference)
         fmapnii = load_img(self.inputs.fieldmap)
+
+        if isdefined(self.inputs.moving):
+            movnii = load_img(self.inputs.moving)
 
         contour_nii = mask_nii = None
         if isdefined(self.inputs.mask):
@@ -71,17 +78,17 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
         # Call composer
         compose_view(
-            plot_registration(refnii, 'moving-image',
+            plot_registration(movnii, 'moving-image',
                               estimate_brightness=True,
                               cuts=cuts,
-                              label='fieldmap (Hz)',
+                              label=self.inputs.moving_label,
                               contour=contour_nii,
                               compress=False,
                               **fmap_overlay[1]),
             plot_registration(refnii, 'fixed-image',
                               estimate_brightness=True,
                               cuts=cuts,
-                              label='reference',
+                              label=self.inputs.reference_label,
                               contour=contour_nii,
                               compress=False,
                               **fmap_overlay[0]),
