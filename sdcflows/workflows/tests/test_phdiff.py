@@ -45,12 +45,18 @@ def test_phdiff(bids_layouts, tmpdir, output_path, dataset, workdir):
         dsink.interface.out_path_base = 'sdcflows'
         dsink.inputs.source_file = phdiff_files[0].path
 
+        dsink_fmap = pe.Node(DerivativesDataSink(
+            base_directory=str(output_path), keep_dtype=True), name='dsink_fmap')
+        dsink_fmap.interface.out_path_base = 'sdcflows'
+        dsink_fmap.inputs.source_file = phdiff_files[0].path
+
         wf.connect([
             (phdiff_wf, rep, [
                 ('outputnode.fmap', 'fieldmap'),
                 ('outputnode.fmap_ref', 'reference'),
                 ('outputnode.fmap_mask', 'mask')]),
             (rep, dsink, [('out_report', 'in_file')]),
+            (phdiff_wf, dsink_fmap, [('outputnode.fmap', 'in_file')]),
         ])
     else:
         wf.add_nodes([phdiff_wf])
@@ -90,12 +96,18 @@ def test_phases(bids_layouts, tmpdir, output_path, workdir):
         dsink.interface.out_path_base = 'sdcflows'
         dsink.inputs.source_file = phdiff_files[0].path
 
+        dsink_fmap = pe.Node(DerivativesDataSink(
+            base_directory=str(output_path), keep_dtype=True), name='dsink_fmap')
+        dsink_fmap.interface.out_path_base = 'sdcflows'
+        dsink_fmap.inputs.source_file = phdiff_files[0].path
+
         wf.connect([
             (phdiff_wf, rep, [
                 ('outputnode.fmap', 'fieldmap'),
                 ('outputnode.fmap_ref', 'reference'),
                 ('outputnode.fmap_mask', 'mask')]),
             (rep, dsink, [('out_report', 'in_file')]),
+            (phdiff_wf, dsink_fmap, [('outputnode.fmap', 'in_file')]),
         ])
     else:
         wf.add_nodes([phdiff_wf])
