@@ -14,17 +14,23 @@ def test_phdiff(bids_layouts, tmpdir, output_path, dataset, workdir):
     """Test creation of the workflow."""
     tmpdir.chdir()
 
+    extra_entities = {}
+    if dataset == 'ds001600':
+        extra_entities['acquisition'] = 'v4'
+
     data = bids_layouts[dataset]
     wf = Workflow(name='phdiff_%s' % dataset)
     phdiff_wf = init_phdiff_wf(omp_nthreads=2)
     phdiff_wf.inputs.inputnode.magnitude = data.get(
         suffix=['magnitude1', 'magnitude2'],
-        acquisition='v4',
         return_type='file',
-        extension=['.nii', '.nii.gz'])
+        extension=['.nii', '.nii.gz'],
+        **extra_entities)
 
-    phdiff_files = data.get(suffix='phasediff', acquisition='v4',
-                            extension=['.nii', '.nii.gz'])
+    phdiff_files = data.get(
+        suffix='phasediff',
+        extension=['.nii', '.nii.gz'],
+        **extra_entities)
 
     phdiff_wf.inputs.inputnode.phasediff = [
         (ph.path, ph.get_metadata()) for ph in phdiff_files]
