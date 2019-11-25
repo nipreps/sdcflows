@@ -68,16 +68,13 @@ def test_base(method):
     """Check the heuristics are correctly applied."""
     fieldmaps = {
         'epi': FMAP_DICT_ELEMENTS['epi1'].copy(),
-        'fieldmap': FMAP_DICT_ELEMENTS['fmap1'].copy(),
-        'phasediff': FMAP_DICT_ELEMENTS['phdiff1'].copy(),
+        'fieldmap': [FMAP_DICT_ELEMENTS['fmap1'].copy()],
+        'phasediff': [FMAP_DICT_ELEMENTS['phdiff1'].copy()],
     }
     epi_meta = EPI_METADATA.copy()
 
     if method == 'skip':
-        wf = init_sdc_estimate_wf(fmaps=[], epi_meta=epi_meta)
-        assert wf.inputs.outputnode.method == 'None'
-
-        wf = init_sdc_estimate_wf(fmaps=fieldmaps, epi_meta=epi_meta, ignore=('fieldmaps', ))
+        wf = init_sdc_estimate_wf(fmaps=None, epi_meta=epi_meta)
         assert wf.inputs.outputnode.method == 'None'
 
         with pytest.raises(ValueError):
@@ -103,15 +100,15 @@ def test_base(method):
 
     elif method == 'fieldmap':
         fieldmaps = {
-            'fieldmap': FMAP_DICT_ELEMENTS['fmap1'].copy(),
-            'phasediff': FMAP_DICT_ELEMENTS['phdiff1'].copy(),
+            'fieldmap': [FMAP_DICT_ELEMENTS['fmap1'].copy()],
+            'phasediff': [FMAP_DICT_ELEMENTS['phdiff1'].copy()],
         }
         wf = init_sdc_estimate_wf(fmaps=fieldmaps, epi_meta=epi_meta)
         assert 'directly measured B0 map' in wf.inputs.outputnode.method
 
     elif method == 'phasediff':
         fieldmaps = {
-            'phasediff': FMAP_DICT_ELEMENTS['phdiff1'].copy(),
+            'phasediff': [FMAP_DICT_ELEMENTS['phdiff1'].copy()],
         }
 
         wf = init_sdc_estimate_wf(fmaps=fieldmaps, epi_meta=epi_meta)

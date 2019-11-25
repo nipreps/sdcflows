@@ -103,9 +103,9 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
     """
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
-A deformation field to correct for susceptibility distortions was estimated
-based on two echo-planar imaging (EPI) references with opposing phase-encoding
-directions, using `3dQwarp` @afni (AFNI {afni_ver}).
+A B0-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
+echo-planar imaging (EPI) references with opposing phase-encoding
+directions, with `3dQwarp` @afni (AFNI {afni_ver}).
 """.format(afni_ver=''.join(['%02d' % v for v in afni.Info().version() or []]))
 
     inputnode = pe.Node(niu.IdentityInterface(

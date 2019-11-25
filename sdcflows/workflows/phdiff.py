@@ -33,7 +33,7 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     magnitude images corresponding to two or more :abbr:`GRE (Gradient Echo sequence)`
     acquisitions.
     The most delicate bit of this workflow is the phase-unwrapping process: phase maps
-    are clipped in the range :math:`[0 \dotsb 2 \cdot \pi )`.
+    are clipped in the range :math:`[0 \dotsb 2\pi )`.
     To find the integer number of offsets that make a region continously smooth with
     its neighbour, FSL PRELUDE is run [Jenkinson2003]_.
     FSL PRELUDE takes wrapped maps in the range 0 to 6.28, `as per the user guide
@@ -83,11 +83,11 @@ def init_phdiff_wf(omp_nthreads, name='phdiff_wf'):
     """
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
-A deformation field to correct for susceptibility distortions was estimated
-based on a field map that was co-registered to the EPI (echo-planar imaging) reference
-run, using a custom workflow of *SDCFlows* derived from D. Greve's `epidewarp.fsl`
-[script](http://www.nmr.mgh.harvard.edu/~greve/fbirn/b0/epidewarp.fsl) and
-further improvements of HCP Pipelines [@hcppipelines].
+A B0-nonuniformity map (or *fieldmap*) was estimated based on a phase-difference map
+calculated with a dual-echo GRE (gradient-recall echo) sequence, processed with a
+custom workflow of *SDCFlows* inspired by the
+[`epidewarp.fsl` script](http://www.nmr.mgh.harvard.edu/~greve/fbirn/b0/epidewarp.fsl)
+and further improvements in HCP Pipelines [@hcppipelines].
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude', 'phasediff']),

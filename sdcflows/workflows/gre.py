@@ -84,7 +84,7 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     return workflow
 
 
-def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=3,
+def init_fmap_postproc_wf(omp_nthreads, fmap_bspline, median_kernel_size=5,
                           name='fmap_postproc_wf'):
     """
     Postprocess a B0 map estimated elsewhere.
