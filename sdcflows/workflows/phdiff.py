@@ -21,7 +21,7 @@ from nipype.interfaces import fsl, utility as niu
 from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-from ..interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads
+from ..interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads, SubtractPhases
 from .gre import init_fmap_postproc_wf, init_magnitude_wf
 
 
@@ -107,6 +107,9 @@ and further improvements in HCP Pipelines [@hcppipelines].
     # FSL PRELUDE will perform phase-unwrapping
     prelude = pe.MapNode(fsl.PRELUDE(), iterfield=['phase_file'], name='prelude')
 
+    calc_phdiff = pe.Node(SubtractPhases(), name='calc_phdiff',
+                          run_without_submitting=True)
+
     fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads,
                                              fmap_bspline=False)
     compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
@@ -118,8 +121,11 @@ and further improvements in HCP Pipelines [@hcppipelines].
                                  ('outputnode.fmap_mask', 'mask_file')]),
         (split, phmap2rads, [('map_file', 'in_file')]),
         (phmap2rads, prelude, [('out_file', 'phase_file')]),
-        (split, fmap_postproc_wf, [('meta', 'inputnode.metadata')]),
-        (prelude, fmap_postproc_wf, [('unwrapped_phase_file', 'inputnode.fmap')]),
+        (prelude, calc_phdiff, [('unwrapped_phase_file', 'in_phases')]),
+        (split, calc_phdiff, [('meta', 'in_meta')]),
+        (calc_phdiff, fmap_postproc_wf, [
+            ('phase_diff', 'inputnode.fmap'),
+            ('metadata', 'inputnode.metadata')]),
         (magnitude_wf, fmap_postproc_wf, [
             ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
             ('outputnode.fmap_ref', 'inputnode.fmap_ref')]),
