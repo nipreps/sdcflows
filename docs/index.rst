@@ -6,4 +6,6 @@ Contents
 .. toctree::
     :maxdepth: 3
 
-    api/sdcflows
+    installation
+    api
+    changes
