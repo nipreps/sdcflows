@@ -28,8 +28,9 @@ def plot_registration(anat_nii, div_id, plot_params=None,
 
     out_files = []
     if estimate_brightness:
-        plot_params = robust_set_limits(anat_nii.get_data().reshape(-1),
-                                        plot_params)
+        plot_params = robust_set_limits(
+            anat_nii.get_fdata(dtype='float32').reshape(-1),
+            plot_params)
 
     # Plot each cut axis
     for i, mode in enumerate(list(order)):
@@ -44,8 +45,8 @@ def plot_registration(anat_nii, div_id, plot_params=None,
         display = plot_anat(anat_nii, **plot_params)
         if overlay is not None:
             _overlay_params = {
-                'vmin': overlay.get_fdata().min(),
-                'vmax': overlay.get_fdata().max(),
+                'vmin': overlay.get_fdata(dtype='float32').min(),
+                'vmax': overlay.get_fdata(dtype='float32').max(),
                 'cmap': plt.cm.gray,
                 'interpolation': 'nearest',
             }

@@ -51,7 +51,7 @@ class FieldEnhance(SimpleInterface):
         from scipy import ndimage as sim
 
         fmap_nii = nb.load(self.inputs.in_file)
-        data = np.squeeze(fmap_nii.get_data().astype(np.float32))
+        data = np.squeeze(fmap_nii.get_fdata(dtype='float32'))
 
         # Despike / denoise (no-mask)
         if self.inputs.despike:
@@ -60,7 +60,7 @@ class FieldEnhance(SimpleInterface):
         mask = None
         if isdefined(self.inputs.in_mask):
             masknii = nb.load(self.inputs.in_mask)
-            mask = masknii.get_data().astype(np.uint8)
+            mask = np.asanyarray(masknii.dataobj).astype('uint8')
 
             # Dilate mask
             if self.inputs.mask_erode > 0:
@@ -95,7 +95,7 @@ class FieldEnhance(SimpleInterface):
             smoothed1 = bspobj.get_smoothed()
 
             # Manipulate the difference map
-            diffmap = data - smoothed1.get_data()
+            diffmap = data - smoothed1.get_fdata(dtype='float32')
             sderror = mad(diffmap[mask > 0])
             LOGGER.info('SD of error after B-Spline fitting is %f', sderror)
             errormask = np.zeros_like(diffmap)
@@ -118,12 +118,12 @@ class FieldEnhance(SimpleInterface):
                 bspobj2 = fbsp.BSplineFieldmap(diffmapnii, knots_zooms=[24., 24., 4.],
                                                njobs=self.inputs.num_threads)
                 bspobj2.fit()
-                smoothed2 = bspobj2.get_smoothed().get_data()
+                smoothed2 = bspobj2.get_smoothed().get_fdata(dtype='float32')
 
-                final = smoothed1.get_data().copy()
+                final = smoothed1.get_fdata(dtype='float32').copy()
                 final[..., errorslice[0]:errorslice[-1]] += smoothed2
             else:
-                final = smoothed1.get_data()
+                final = smoothed1.get_fdata(dtype='float32')
 
             nb.Nifti1Image(final, datanii.affine, datanii.header).to_filename(
                 self._results['out_file'])
@@ -329,14 +329,16 @@ def _unwrap(fmap_data, mag_file, mask=None):
 
     nb.Nifti1Image(fmap_data, magnii.affine).to_filename('fmap_rad.nii.gz')
     nb.Nifti1Image(mask, magnii.affine).to_filename('fmap_mask.nii.gz')
-    nb.Nifti1Image(magnii.get_data(), magnii.affine).to_filename('fmap_mag.nii.gz')
+    nb.Nifti1Image(magnii.get_fdata(dtype='float32'),
+                   magnii.affine).to_filename('fmap_mag.nii.gz')
 
     # Run prelude
     res = PRELUDE(phase_file='fmap_rad.nii.gz',
                   magnitude_file='fmap_mag.nii.gz',
                   mask_file='fmap_mask.nii.gz').run()
 
-    unwrapped = nb.load(res.outputs.unwrapped_phase_file).get_data() * (fmapmax / pi)
+    unwrapped = nb.load(
+        res.outputs.unwrapped_phase_file).get_fdata(dtype='float32') * (fmapmax / pi)
     return unwrapped
 
 
@@ -517,7 +519,7 @@ def _torads(in_file, fmap_range=None, newpath=None):
 
     out_file = fname_presuffix(in_file, suffix='_rad', newpath=newpath)
     fmapnii = nb.load(in_file)
-    fmapdata = fmapnii.get_data()
+    fmapdata = fmapnii.get_fdata(dtype='float32')
 
     if fmap_range is None:
         fmap_range = max(abs(fmapdata.min()), fmapdata.max())
@@ -536,7 +538,7 @@ def _tohz(in_file, range_hz, newpath=None):
 
     out_file = fname_presuffix(in_file, suffix='_hz', newpath=newpath)
     fmapnii = nb.load(in_file)
-    fmapdata = fmapnii.get_data()
+    fmapdata = fmapnii.get_fdata(dtype='float32')
     fmapdata = fmapdata * (range_hz / pi)
     out_img = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
     out_img.set_data_dtype('float32')
@@ -578,7 +580,7 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
 
     out_file = fname_presuffix(in_file, suffix='_fmap', newpath=newpath)
     image = nb.load(in_file)
-    data = (image.get_data().astype(np.float32) / (2. * math.pi * delta_te))
+    data = (image.get_fdata(dtype='float32') / (2. * math.pi * delta_te))
     nii = nb.Nifti1Image(data, image.affine, image.header)
     nii.set_data_dtype(np.float32)
     nii.to_filename(out_file)
