@@ -24,6 +24,43 @@ from nipype.interfaces.base import (
 LOGGER = logging.getLogger('nipype.interface')
 
 
+class _SubtractPhasesInputSpec(BaseInterfaceInputSpec):
+    in_phases = traits.List(File(exists=True), min=1, max=2,
+                            desc='input phase maps')
+    in_meta = traits.List(traits.Dict(), min=1, max=2,
+                          desc='metadata corresponding to the inputs')
+
+
+class _SubtractPhasesOutputSpec(TraitedSpec):
+    phase_diff = File(exists=True, desc='phase difference map')
+    metadata = traits.Dict(desc='output metadata')
+
+
+class SubtractPhases(SimpleInterface):
+    """Calculate a phase difference map."""
+
+    input_spec = _SubtractPhasesInputSpec
+    output_spec = _SubtractPhasesOutputSpec
+
+    def _run_interface(self, runtime):
+        if len(self.inputs.in_phases) != len(self.inputs.in_meta):
+            raise ValueError(
+                'Length of input phase-difference maps and metadata files '
+                'should match.')
+
+        if len(self.inputs.in_phases) == 1:
+            self._results['phase_diff'] = self.inputs.in_phases[0]
+            self._results['metadata'] = self.inputs.in_meta[0]
+            return runtime
+
+        self._results['phase_diff'], self._results['metadata'] = \
+            _subtract_phases(self.inputs.in_phases,
+                             self.inputs.in_meta,
+                             newpath=runtime.cwd)
+
+        return runtime
+
+
 class _FieldEnhanceInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='input fieldmap')
     in_mask = File(exists=True, desc='brain mask')
@@ -649,3 +686,36 @@ def au2rads(in_file, newpath=None):
     out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
     nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
     return out_file
+
+
+def _subtract_phases(in_phases, in_meta, newpath=None):
+    # Discard traits with copy(), so that pop() works.
+    in_meta = (in_meta[0].copy(), in_meta[1].copy())
+    echo_times = tuple([m.pop('EchoTime', None) for m in in_meta])
+    if not all(echo_times):
+        raise ValueError(
+            'One or more missing EchoTime metadata parameter '
+            'associated to one or more phase map(s).')
+
+    if echo_times[0] > echo_times[1]:
+        in_phases = (in_phases[1], in_phases[0])
+        in_meta = (in_meta[1], in_meta[0])
+        echo_times = (echo_times[1], echo_times[0])
+
+    in_phases_nii = [nb.load(ph) for ph in in_phases]
+    sub_data = in_phases_nii[1].get_fdata(dtype='float32') - \
+        in_phases_nii[0].get_fdata(dtype='float32')
+
+    new_meta = in_meta[1].copy()
+    new_meta.update(in_meta[0])
+    new_meta['EchoTime1'] = echo_times[0]
+    new_meta['EchoTime2'] = echo_times[1]
+
+    hdr = in_phases_nii[0].header.copy()
+    hdr.set_data_dtype(np.float32)
+    hdr.set_xyzt_units('mm')
+    nii = nb.Nifti1Image(sub_data, in_phases_nii[0].affine, hdr)
+    out_phdiff = fname_presuffix(in_phases[0], suffix='_phdiff',
+                                 newpath=newpath)
+    nii.to_filename(out_phdiff)
+    return out_phdiff, new_meta
