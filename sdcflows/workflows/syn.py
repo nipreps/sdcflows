@@ -23,7 +23,7 @@ Feedback will be enthusiastically received.
 
 
 """
-import pkg_resources as pkgr
+from pkg_resources import resource_filename
 
 from nipype import logging
 from nipype.pipeline import engine as pe
@@ -74,8 +74,6 @@ def init_syn_sdc_wf(omp_nthreads, epi_pe=None,
         reference image
     in_reference_brain
         skull-stripped reference image
-    template : str
-        Name of template targeted by ``template`` output space
     t1w_brain
         skull-stripped, bias-corrected structural image
     std2anat_xfm
@@ -127,7 +125,7 @@ along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
 """.format(ants_ver=Registration().version or '<ver>')
     inputnode = pe.Node(
-        niu.IdentityInterface(['in_reference', 'in_reference_brain', 'template',
+        niu.IdentityInterface(['in_reference', 'in_reference_brain',
                                't1w_brain', 'std2anat_xfm']),
         name='inputnode')
     outputnode = pe.Node(
@@ -137,10 +135,10 @@ template [@fieldmapless3].
 
     # Collect predefined data
     # Atlas image and registration affine
-    atlas_img = pkgr.resource_filename('sdcflows', 'data/fmap_atlas.nii.gz')
+    atlas_img = resource_filename('sdcflows', 'data/fmap_atlas.nii.gz')
     # Registration specifications
-    affine_transform = pkgr.resource_filename('sdcflows', 'data/affine.json')
-    syn_transform = pkgr.resource_filename('sdcflows', 'data/susceptibility_syn.json')
+    affine_transform = resource_filename('sdcflows', 'data/affine.json')
+    syn_transform = resource_filename('sdcflows', 'data/susceptibility_syn.json')
 
     invert_t1w = pe.Node(Rescale(invert=True), name='invert_t1w',
                          mem_gb=0.3)
@@ -153,6 +151,8 @@ template [@fieldmapless3].
     # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
     transform_list = pe.Node(niu.Merge(3), name='transform_list',
                              mem_gb=DEFAULT_MEMORY_MIN_GB)
+    transform_list.inputs.in3 = resource_filename(
+        'sdcflows', 'data/fmap_atlas_2_MNI152NLin2009cAsym_affine.mat')
 
     # Inverting (1), then applying in reverse order:
     #
@@ -193,8 +193,7 @@ template [@fieldmapless3].
         (ref_2_t1, t1_2_ref, [('forward_transforms', 'transforms')]),
         (ref_2_t1, transform_list, [('forward_transforms', 'in1')]),
         (inputnode, transform_list, [
-            ('std2anat_xfm', 'in2'),
-            (('template', _prior_path), 'in3')]),
+            ('std2anat_xfm', 'in2')]),
         (inputnode, atlas_2_ref, [('in_reference', 'reference_image')]),
         (transform_list, atlas_2_ref, [('out', 'transforms')]),
         (atlas_2_ref, threshold_atlas, [('output_image', 'in_file')]),
@@ -215,10 +214,3 @@ template [@fieldmapless3].
     ])
 
     return workflow
-
-
-def _prior_path(template):
-    """Select an appropriate input xform, based on template."""
-    from pkg_resources import resource_filename
-    return resource_filename(
-        'sdcflows', 'data/fmap_atlas_2_{}_affine.mat'.format(template))
