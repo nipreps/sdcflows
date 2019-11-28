@@ -706,6 +706,10 @@ def _subtract_phases(in_phases, in_meta, newpath=None):
     sub_data = in_phases_nii[1].get_fdata(dtype='float32') - \
         in_phases_nii[0].get_fdata(dtype='float32')
 
+    # wrap negative radians back to [0, 2pi]
+    sub_data[sub_data < 0] += 2 * np.pi
+    sub_data = np.clip(sub_data, 0.0, 2 * np.pi)
+
     new_meta = in_meta[1].copy()
     new_meta.update(in_meta[0])
     new_meta['EchoTime1'] = echo_times[0]

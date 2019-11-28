@@ -120,12 +120,11 @@ and further improvements in HCP Pipelines [@hcppipelines].
         (magnitude_wf, prelude, [('outputnode.fmap_ref', 'magnitude_file'),
                                  ('outputnode.fmap_mask', 'mask_file')]),
         (split, phmap2rads, [('map_file', 'in_file')]),
-        (phmap2rads, prelude, [('out_file', 'phase_file')]),
-        (prelude, calc_phdiff, [('unwrapped_phase_file', 'in_phases')]),
+        (phmap2rads, calc_phdiff, [('out_file', 'in_phases')]),
         (split, calc_phdiff, [('meta', 'in_meta')]),
-        (calc_phdiff, fmap_postproc_wf, [
-            ('phase_diff', 'inputnode.fmap'),
-            ('metadata', 'inputnode.metadata')]),
+        (calc_phdiff, prelude, [('phase_diff', 'phase_file')]),
+        (prelude, fmap_postproc_wf, [('unwrapped_phase_file', 'inputnode.fmap')]),
+        (calc_phdiff, fmap_postproc_wf, [('metadata', 'inputnode.metadata')]),
         (magnitude_wf, fmap_postproc_wf, [
             ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
             ('outputnode.fmap_ref', 'inputnode.fmap_ref')]),
