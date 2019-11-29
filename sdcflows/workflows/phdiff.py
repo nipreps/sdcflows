@@ -105,7 +105,7 @@ and further improvements in HCP Pipelines [@hcppipelines].
     phmap2rads = pe.MapNode(PhaseMap2rads(), name='phmap2rads',
                             iterfield=['in_file'], run_without_submitting=True)
     # FSL PRELUDE will perform phase-unwrapping
-    prelude = pe.MapNode(fsl.PRELUDE(), iterfield=['phase_file'], name='prelude')
+    prelude = pe.Node(fsl.PRELUDE(), name='prelude')
 
     calc_phdiff = pe.Node(SubtractPhases(), name='calc_phdiff',
                           run_without_submitting=True)
