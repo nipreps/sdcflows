@@ -365,7 +365,11 @@ def _split_epi_lists(in_files, pe_dir, max_trs=50):
 
     for i, (epi_path, epi_pe) in enumerate(in_files):
         if epi_pe[0] == pe_dir[0]:
-            splitnii = nb.four_to_three(nb.load(epi_path))[:max_trs]
+            img = nb.load(epi_path)
+            if len(img.shape) == 3:
+                splitnii = [img]
+            else:
+                splitnii = nb.four_to_three(img.slicer[:, :, :, :max_trs])
 
             for j, nii in enumerate(splitnii):
                 out_name = op.abspath(
