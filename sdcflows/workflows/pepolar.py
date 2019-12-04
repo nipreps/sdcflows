@@ -365,7 +365,10 @@ def _split_epi_lists(in_files, pe_dir, max_trs=50):
 
     for i, (epi_path, epi_pe) in enumerate(in_files):
         if epi_pe[0] == pe_dir[0]:
-            splitnii = nb.four_to_three(nb.load(epi_path))[:max_trs]
+            try:
+                splitnii = nb.four_to_three(nb.load(epi_path))[:max_trs]
+            except ValueError:
+                splitnii = [nb.load(epi_path)]
 
             for j, nii in enumerate(splitnii):
                 out_name = op.abspath(
