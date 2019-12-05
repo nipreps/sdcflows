@@ -1,3 +1,10 @@
+1.0.1 (December 04, 2019)
+=========================
+A bugfix release.
+
+* FIX: Flexibly and cheaply select initial PEPOLAR volumes (#75)
+* ENH: Phase1/2 - subtract phases before unwrapping (#70)
+
 1.0.0 (November 25, 2019)
 =========================
 A first stable release after detaching these workflows off from *fMRIPrep*.
