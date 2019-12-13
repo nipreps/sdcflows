@@ -105,9 +105,8 @@ Susceptibility distortion correction (SDC) was omitted.
         return workflow
 
     workflow.__postdesc__ = """\
-Based on the estimated susceptibility distortion, a corrected
-EPI (echo-planar imaging) reference was calculated for a more
-accurate co-registration with the anatomical reference.
+Based on the estimated susceptibility distortion, a corrected EPI (echo-planar imaging) reference
+was calculated for a more accurate co-registration with the anatomical reference.
 """
 
     only_syn = 'syn' in fmaps and len(fmaps) == 1
@@ -140,7 +139,8 @@ accurate co-registration with the anatomical reference.
                 'blips is missing the required "PhaseEncodingDirection" metadata entry.')
 
         # Find matched PE directions. Return pe-dirs for matching/opposing EPIs
-        matched_pe, matched_pe_dir, opposed_pe_dir = check_pes(fmaps_epi, epi_meta['PhaseEncodingDirection'])
+        matched_pe, matched_pe_dir, opposed_pe_dir = check_pes(
+            fmaps_epi, epi_meta['PhaseEncodingDirection'])
 
         # Topup workflow (prepares epis and runs topup)
         topup_wf = init_topup_wf(
@@ -171,7 +171,7 @@ accurate co-registration with the anatomical reference.
         workflow.connect([
             (inputnode, topup_wf, [
                 ('epi_brain', 'inputnode.in_reference_brain')]),
-            (topup_wf, fmap_wf,[
+            (topup_wf, fmap_wf, [
                 ('outputnode.fieldmap', 'inputnode.fieldmap'),
                 ('outputnode.magnitude', 'inputnode.magnitude')]),
             (inputnode, fmap2field_wf, [

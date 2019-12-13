@@ -15,19 +15,20 @@ This corresponds to `this section of the BIDS specification
 import pkg_resources as pkgr
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.freesurfer import StructuralReference
 from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 
 from nipype.pipeline import engine as pe
-from nipype.interfaces import afni, ants, fsl, utility as niu
+from nipype.interfaces import ants, fsl, utility as niu
+
 
 def init_topup_wf(omp_nthreads=1, matched_pe=False, name="topup_wf"):
     """
     Create the PE-Polar field estimation workflow.
 
     This workflow takes in a set of EPI files with opposite phase encoding
-    direction than the target file and calculates a fieldmap (off-resonance field) in Hz that can be fed into the ``fmap`` workflows
+    direction than the target file and calculates a fieldmap (off-resonance field) in Hz that can
+    be fed into the ``fmap`` workflows
 
     This procedure works if there is only one ``_epi`` file is present
     (as long as it has the opposite phase encoding direction to the target
@@ -38,7 +39,9 @@ def init_topup_wf(omp_nthreads=1, matched_pe=False, name="topup_wf"):
     Currently, different phase encoding directions in the target file and the
     ``_epi`` file(s) (for example, ``i`` and ``j``) is not supported.
 
-    The off-resonance field is estimated using FSL's ``Topup``. Topup also calculates undistorted versions of the inputted EPI files which can be used as magnitute input in the ``fmap`` worklows.
+    The off-resonance field is estimated using FSL's ``Topup``. Topup also calculates undistorted
+    versions of the inputted EPI files which can be used as magnitute input in the ``fmap``
+    worklows.
 
     Workflow Graph
         .. workflow ::
@@ -96,7 +99,8 @@ directions, with `Topup`).
 """
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference_brain', 'matched_pe_dir', 'opposed_pe_dir']),
+        fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference_brain', 'matched_pe_dir',
+                'opposed_pe_dir']),
         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
@@ -129,7 +133,7 @@ directions, with `Topup`).
             ('merged_file', 'in_file')]),
         (inputnode, pedirs_merge2list, [
             (('matched_pe_dir', _get_pedir_topup), 'in1'),
-            (('opposed_pe_dir',_get_pedir_topup), 'in2')]),
+            (('opposed_pe_dir', _get_pedir_topup), 'in2')]),
         (pedirs_merge2list, topup, [
             ('out', 'encoding_direction')]),
         (inputnode, trt_merge2list, [
@@ -349,6 +353,7 @@ def _split_epi_lists(in_files, pe_dir, max_trs=50):
         return [opposed_pe, matched_pe]
 
     return [opposed_pe]
+
 
 def _get_pedir_topup(in_pe):
     return in_pe.replace('i', 'x').replace('j', 'y').replace('k', 'z')
