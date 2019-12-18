@@ -65,8 +65,7 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
         name='outputnode')
 
     # Merge input magnitude images
-    magmrg = pe.Node(IntraModalMerge(hmc=False, grand_mean_scaling=True),
-                     name='magmrg')
+    magmrg = pe.Node(IntraModalMerge(hmc=False), name='magmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
     n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
