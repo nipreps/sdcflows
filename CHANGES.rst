@@ -1,3 +1,9 @@
+1.0.2 (December 17, 2019)
+=========================
+A bugfix release.
+
+* FIX: NiWorkflows' ``IntraModalMerge`` choked with images of shape (x, y, z, 1) (#79)
+
 1.0.1 (December 04, 2019)
 =========================
 A bugfix release.
