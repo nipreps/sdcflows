@@ -69,7 +69,7 @@ def init_topup_wf(omp_nthreads=1, matched_pe=False, name="topup_wf"):
         their corresponding ``PhaseEncodingDirection`` metadata.
         The workflow will use the ``epi_pe_dir`` input to separate out those
         EPI acquisitions with opposed PE blips and those with matched PE blips
-        (the latter could be none, and ``in_reference_brain`` would then be
+        (the latter could be none, and ``in_reference`` would then be
         used). The workflow raises a ``ValueError`` when no images with
         opposed PE blips are found.
     epi_pe_dir : str
@@ -80,15 +80,15 @@ def init_topup_wf(omp_nthreads=1, matched_pe=False, name="topup_wf"):
         Phase encoding direction of matching fmap EPI
     opposed_pe_dir : str
         Phase encoding direction of opposed fmap EPI
-    in_reference_brain : pathlike
-        The skullstripped baseline reference image (must correspond to ``epi_pe_dir``).
+    in_reference : pathlike
+        The baseline reference image (must correspond to ``epi_pe_dir``).
 
     Outputs
     -------
     fieldmap : pathlike
         Topup estimated fieldmap (Hz)
     magnitude : pathlike
-        The ``fmaps_epi`` after unwarping and skullstripping
+        The ``fmaps_epi`` after unwarping
     """
 
     workflow = Workflow(name=name)
@@ -99,7 +99,7 @@ directions, with `Topup`).
 """
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference_brain', 'matched_pe_dir',
+        fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference', 'matched_pe_dir',
                 'opposed_pe_dir']),
         name='inputnode')
 
@@ -123,7 +123,7 @@ directions, with `Topup`).
         (inputnode, prepare_epi_wf, [
             ('fmaps_epi', 'inputnode.maps_pe'),
             ('epi_pe_dir', 'inputnode.epi_pe'),
-            ('in_reference_brain', 'inputnode.ref_brain')]),
+            ('in_reference', 'inputnode.ref')]),
         (prepare_epi_wf, epi_merge2list, [
             ('outputnode.matched_pe', 'in1'),
             ('outputnode.opposed_pe', 'in2')]),
@@ -188,8 +188,8 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         Phase-encoding direction of the EPI image to be corrected.
     maps_pe : list of tuple(pathlike, str)
         list of 3D or 4D NIfTI images
-    ref_brain
-        coregistration reference (skullstripped and bias field corrected)
+    ref
+        coregistration reference (bias field corrected)
 
     Outputs
     -------
@@ -199,7 +199,7 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         single 3D NIfTI file
 
     """
-    inputnode = pe.Node(niu.IdentityInterface(fields=['epi_pe', 'maps_pe', 'ref_brain']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['epi_pe', 'maps_pe', 'ref']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(fields=['opposed_pe', 'matched_pe']),
@@ -235,14 +235,14 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         (split, merge_op, [(('out', _front), 'in_files')]),
         (merge_op, ref_op_wf, [('out_file', 'inputnode.in_file')]),
         (ref_op_wf, op2ref_reg, [
-            ('outputnode.skull_stripped_file', 'moving_image')]),
-        (inputnode, op2ref_reg, [('ref_brain', 'fixed_image')]),
+            ('outputnode.bias_corrected_file', 'moving_image')]),
+        (inputnode, op2ref_reg, [('ref', 'fixed_image')]),
         (op2ref_reg, outputnode, [('warped_image', 'opposed_pe')]),
     ])
 
     if not matched_pe:
         workflow.connect([
-            (inputnode, outputnode, [('ref_brain', 'matched_pe')]),
+            (inputnode, outputnode, [('ref', 'matched_pe')]),
         ])
         return workflow
 
@@ -268,8 +268,8 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         (split, merge_ma, [(('out', _last), 'in_files')]),
         (merge_ma, ref_ma_wf, [('out_file', 'inputnode.in_file')]),
         (ref_ma_wf, ma2ref_reg, [
-            ('outputnode.skull_stripped_file', 'moving_image')]),
-        (inputnode, ma2ref_reg, [('ref_brain', 'fixed_image')]),
+            ('outputnode.bias_corrected_file', 'moving_image')]),
+        (inputnode, ma2ref_reg, [('ref', 'fixed_image')]),
         (ma2ref_reg, outputnode, [('warped_image', 'matched_pe')]),
     ])
     return workflow

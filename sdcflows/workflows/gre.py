@@ -70,7 +70,7 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     # de-gradient the fields ("bias/illumination artifact")
     n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
                          name='n4_correct', n_procs=omp_nthreads)
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.3, mask=True),
+    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True),
                   name='bet')
 
     workflow.connect([

@@ -170,7 +170,7 @@ was calculated for a more accurate co-registration with the anatomical reference
 
         workflow.connect([
             (inputnode, topup_wf, [
-                ('epi_brain', 'inputnode.in_reference_brain')]),
+                ('epi_file', 'inputnode.in_reference')]),
             (topup_wf, fmap_wf, [
                 ('outputnode.fieldmap', 'inputnode.fieldmap'),
                 ('outputnode.magnitude', 'inputnode.magnitude')]),
