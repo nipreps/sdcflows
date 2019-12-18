@@ -4,8 +4,10 @@ A hotfix release.
 
 * FIX: NiWorkflows' ``IntraModalMerge`` choked with images of shape (x, y, z, 1) (#79, `2e6faa0
   <https://github.com/poldracklab/sdcflows/commit/2e6faa05ed0f0ec0b4616f33db778a61a1df89d0>`__,
-  and `717a69e
-  <https://github.com/poldracklab/sdcflows/commit/717a69ef680d556e4d5cde6876d0e60b023924e0>`__)
+  `717a69e
+  <https://github.com/poldracklab/sdcflows/commit/717a69ef680d556e4d5cde6876d0e60b023924e0>`__,
+  and `361cd67
+  <https://github.com/poldracklab/sdcflows/commit/361cd678215fca9434baa713fa43f77a2231e632>`__)
 
 1.0.1 (December 04, 2019)
 =========================
