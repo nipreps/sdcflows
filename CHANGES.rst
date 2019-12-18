@@ -1,3 +1,10 @@
+1.0.3 (December 18, 2019)
+=========================
+A hotfix release preventing downstream dependency collisions on fMRIPrep.
+
+* PIN: niworkflows-1.0.3 `449c2c2
+  <https://github.com/poldracklab/sdcflows/commit/449c2c2b0ab383544f5024de82ca8a80ee70894d>`__
+
 1.0.2 (December 18, 2019)
 =========================
 A hotfix release.
