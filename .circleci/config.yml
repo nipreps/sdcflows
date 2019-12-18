@@ -199,14 +199,6 @@ jobs:
             - workdir-v2-{{ .Branch }}-
             - workdir-v2-master-
             - workdir-v2-
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{ epoch }}
-            - build-v1-{{ .Branch }}-
-            - build-v1-master-
-            - build-v1-
-          paths:
-            - /tmp/docker
       - run:
           name: Refreshing cached intermediate results
           command: |
@@ -233,6 +225,14 @@ jobs:
               echo "Found tag [wipe ${wipe_dir}] - clearing up $path ..."
               rm -rf ${path}
             fi
+      - restore_cache:
+          keys:
+            - build-v1-{{ .Branch }}-{{ epoch }}
+            - build-v1-{{ .Branch }}-
+            - build-v1-master-
+            - build-v1-
+          paths:
+            - /tmp/docker
       - run:
           name: Set-up a Docker registry
           command: |
