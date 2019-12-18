@@ -99,7 +99,7 @@ designed with that purpose (typically, a spiral pulse sequence).
 
     workflow.connect([
         (inputnode, fmapmrg, [('fieldmap', 'in_files')]),
-        (fmapmrg, applymsk, [('out_file', 'in_file')]),
+        (fmapmrg, applymsk, [('out_avg', 'in_file')]),
         (magnitude_wf, applymsk, [('outputnode.fmap_mask', 'mask_file')]),
         (applymsk, fmap_postproc_wf, [('out_file', 'inputnode.fmap')]),
         (magnitude_wf, fmap_postproc_wf, [

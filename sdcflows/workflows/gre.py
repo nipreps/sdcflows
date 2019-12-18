@@ -65,7 +65,8 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
         name='outputnode')
 
     # Merge input magnitude images
-    magmrg = pe.Node(IntraModalMerge(), name='magmrg')
+    magmrg = pe.Node(IntraModalMerge(hmc=False, grand_mean_scaling=True),
+                     name='magmrg')
 
     # de-gradient the fields ("bias/illumination artifact")
     n4_correct = pe.Node(ants.N4BiasFieldCorrection(dimension=3, copy_header=True),
@@ -75,7 +76,7 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
 
     workflow.connect([
         (inputnode, magmrg, [('magnitude', 'in_files')]),
-        (magmrg, n4_correct, [('out_file', 'input_image')]),
+        (magmrg, n4_correct, [('out_avg', 'input_image')]),
         (n4_correct, bet, [('output_image', 'in_file')]),
         (bet, outputnode, [('mask_file', 'fmap_mask'),
                            ('out_file', 'fmap_ref'),
