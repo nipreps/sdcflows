@@ -19,26 +19,17 @@ RUN apt-get update && \
                     git && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Installing freesurfer
-RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz | tar zxv --no-same-owner -C /opt \
-    --exclude='freesurfer/diffusion' \
-    --exclude='freesurfer/docs' \
-    --exclude='freesurfer/fsfast' \
-    --exclude='freesurfer/lib/cuda' \
-    --exclude='freesurfer/lib/qt' \
-    --exclude='freesurfer/matlab' \
-    --exclude='freesurfer/mni/share/man' \
-    --exclude='freesurfer/subjects/fsaverage_sym' \
-    --exclude='freesurfer/subjects/fsaverage3' \
-    --exclude='freesurfer/subjects/fsaverage4' \
-    --exclude='freesurfer/subjects/cvs_avg35' \
-    --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
-    --exclude='freesurfer/subjects/bert' \
-    --exclude='freesurfer/subjects/lh.EC_average' \
-    --exclude='freesurfer/subjects/rh.EC_average' \
-    --exclude='freesurfer/subjects/sample-*.mgz' \
-    --exclude='freesurfer/subjects/V1_average' \
-    --exclude='freesurfer/trctrain'
+# Installing Neurodebian packages (FSL, AFNI, git)
+RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key add /usr/local/etc/neurodebian.gpg && \
+    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+                    fsl-core=5.0.9-5~nd16.04+1 \
+                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
+                    convert3d \
+                    git-annex-standalone && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV FSL_DIR="/usr/share/fsl/5.0" \
     OS="Linux" \
@@ -56,20 +47,6 @@ ENV SUBJECTS_DIR="$FREESURFER_HOME/subjects" \
 ENV PERL5LIB="$MINC_LIB_DIR/perl5/5.8.5" \
     MNI_PERL5LIB="$MINC_LIB_DIR/perl5/5.8.5" \
     PATH="$FREESURFER_HOME/bin:$FSFAST_HOME/bin:$FREESURFER_HOME/tktools:$MINC_BIN_DIR:$PATH"
-
-# Installing Neurodebian packages (FSL, AFNI, git)
-RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key add /usr/local/etc/neurodebian.gpg && \
-    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-                    fsl-core=5.0.9-5~nd16.04+1 \
-                    afni=16.2.07~dfsg.1-5~nd16.04+1 \
-                    convert3d \
-                    git-annex-standalone && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 ENV FSLDIR="/usr/share/fsl/5.0" \
     FSLOUTPUTTYPE="NIFTI_GZ" \
     FSLMULTIFILEQUIT="TRUE" \
@@ -134,17 +111,6 @@ ENV MKL_NUM_THREADS=1 \
 RUN useradd -m -s /bin/bash -G users sdcflows
 WORKDIR /home/sdcflows
 ENV HOME="/home/sdcflows"
-
-# Precaching atlases
-COPY setup.cfg setup.cfg
-RUN pip install --no-cache-dir "$( grep templateflow setup.cfg | xargs )" && \
-    python -c "from templateflow import api as tfapi; \
-               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
-               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');" && \
-    rm setup.cfg && \
-    find $HOME/.cache/templateflow -type d -exec chmod go=u {} + && \
-    find $HOME/.cache/templateflow -type f -exec chmod go=u {} +
-
 COPY .docker/files/nipype.cfg $HOME/.nipype/nipype.cfg
 
 # Installing dev requirements (packages that are not in pypi)

@@ -34,20 +34,125 @@ docs_deploy: &docs
 
 version: 2
 jobs:
-  build:
-    machine:
-      image: circleci/classic:201711-01
-    working_directory: /tmp/src/sdcflows
+  cache_test_data:
+    docker:
+      - image: python:3.7.4
+    working_directory: /tmp/data
     environment:
-      TZ: "/usr/share/zoneinfo/America/Los_Angeles"
-      SCRATCH: "/scratch"
+      - TEMPLATEFLOW_HOME: /tmp/templateflow
     steps:
       - restore_cache:
           keys:
-            - build-v1-{{ .Branch }}-{{ epoch }}
-            - build-v1-{{ .Branch }}-
-            - build-v1-master-
-            - build-v1-
+            - env-v2-{{ .Branch }}-
+            - env-v2-master-
+            - env-v2-
+      - restore_cache:
+          keys:
+            - data-v2-{{ .Branch }}-
+            - data-v2-master-
+            - data-v2-
+
+      - run:
+          name: Setup git-annex
+          command: |
+            if [[ ! -d /usr/lib/git-annex.linux ]]; then
+              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+              apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+              apt update && apt-get install -y --no-install-recommends git-annex-standalone
+            fi
+            git config --global user.name 'CRN'
+            git config --global user.email 'crn.poldracklab@gmail.com'
+
+      - run:
+          name: Setup DataLad & TemplateFlow
+          command: |
+            python -m pip install --no-cache-dir -U pip
+            python -m pip install --no-cache-dir -U datalad
+            python -m pip install --no-cache-dir -U templateflow
+            python -c "from templateflow import api as tfapi; \
+                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
+                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
+
+      - save_cache:
+         key: env-v2-{{ .Branch }}-{{ .BuildNum }}
+         paths:
+            - /tmp/cache/git-annex-standalone.tar.gz
+            - /usr/local/bin
+            - /usr/local/lib/python3.7/site-packages
+            - /usr/bin/git-annex
+            - /usr/bin/git-annex-shell
+            - /usr/lib/git-annex.linux
+
+      - run:
+          name: Install ds001600
+          command: |
+            datalad install https://github.com/OpenNeuroDatasets/ds001600.git
+            datalad update --merge ds001600/
+            datalad get -r ds001600/*
+      - run:
+          name: Get testdata
+          command: |
+            if [[ ! -d /tmp/data/testdata ]]; then
+              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
+                  -O testdata.zip "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip="
+              unzip testdata.zip -d /tmp/data/testdata
+            fi
+      - save_cache:
+         key: data-v2-{{ .Branch }}-{{ .BuildNum }}
+         paths:
+            - /tmp/data
+            - /tmp/templateflow
+
+      - restore_cache:
+          keys:
+            - freesurfer-v1-{{ .BuildNum }}
+            - freesurfer-v1-
+      - run:
+          name: Pull FreeSurfer down
+          command: |
+            if [[ ! -d /tmp/freesurfer ]]; then
+              curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz | tar zxv --no-same-owner -C /tmp \
+                   --exclude='freesurfer/diffusion' \
+                   --exclude='freesurfer/docs' \
+                   --exclude='freesurfer/fsfast' \
+                   --exclude='freesurfer/lib/cuda' \
+                   --exclude='freesurfer/lib/qt' \
+                   --exclude='freesurfer/matlab' \
+                   --exclude='freesurfer/mni/share/man' \
+                   --exclude='freesurfer/subjects/fsaverage_sym' \
+                   --exclude='freesurfer/subjects/fsaverage3' \
+                   --exclude='freesurfer/subjects/fsaverage4' \
+                   --exclude='freesurfer/subjects/cvs_avg35' \
+                   --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
+                   --exclude='freesurfer/subjects/bert' \
+                   --exclude='freesurfer/subjects/lh.EC_average' \
+                   --exclude='freesurfer/subjects/rh.EC_average' \
+                   --exclude='freesurfer/subjects/sample-*.mgz' \
+                   --exclude='freesurfer/subjects/V1_average' \
+                   --exclude='freesurfer/trctrain'
+              echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
+            else
+              echo "FreeSurfer was cached."
+              circleci step halt
+            fi
+      - save_cache:
+         key: freesurfer-v1-{{ .BuildNum }}
+         paths:
+            - /tmp/freesurfer
+
+  build_n_pytest:
+    machine:
+      image: circleci/classic:201711-01
+    working_directory: /tmp/tests
+    environment:
+      TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+    steps:
+      - restore_cache:
+          keys:
+            - build-v2-{{ .Branch }}-{{ epoch }}
+            - build-v2-{{ .Branch }}-
+            - build-v2-master-
+            - build-v2-
           paths:
             - /tmp/docker
       - run:
@@ -75,11 +180,13 @@ jobs:
                 docker push localhost:5000/ubuntu
                 docker pull poldracklab/sdcflows:latest
             fi
-      - checkout
+      - checkout:
+          path: /tmp/src/sdcflows
       - run:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
+            cd /tmp/src/sdcflows
             export PY3=$(pyenv versions | grep '3\.' |
                          sed -e 's/.* 3\./3./' -e 's/ .*//')
             pyenv local $PY3
@@ -113,87 +220,19 @@ jobs:
             docker exec -it registry /bin/registry garbage-collect --delete-untagged \
                 /etc/docker/registry/config.yml
       - save_cache:
-         key: build-v1-{{ .Branch }}-{{ epoch }}
+         key: build-v2-{{ .Branch }}-{{ epoch }}
          paths:
             - /tmp/docker
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/sdcflows
 
-  cache_test_data:
-    machine:
-      image: circleci/classic:201711-01
-    working_directory: /tmp/data
-    steps:
+      - restore_cache:
+          keys:
+            - freesurfer-v1-{{ .BuildNum }}
+            - freesurfer-v1-
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
             - data-v2-master-
             - data-v2-
-      - run:
-          name: Setup git-annex
-          command: |
-            mkdir -p /tmp/cache
-            if [[ ! -e "/tmp/cache/git-annex-standalone.tar.gz" ]]; then
-              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
-              sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-              sudo apt update && sudo apt-get install -y --no-install-recommends git-annex-standalone
-              mkdir -p /tmp/cache
-              tar czvf /tmp/cache/git-annex-standalone.tar.gz /usr/bin/git-annex /usr/bin/git-annex-shell /usr/lib/git-annex.linux
-            else
-              sudo tar xzfv /tmp/cache/git-annex-standalone.tar.gz -C /
-            fi
-            git config --global user.name 'CRN'
-            git config --global user.email 'crn.poldracklab@gmail.com'
-
-      - run:
-          name: Setup DataLad
-          command: |
-            pyenv global 3.5.2
-            virtualenv venv
-            pip install --no-cache-dir -U pip
-            pip install --no-cache-dir -U datalad
-      - run:
-          name: Install ds001600
-          command: |
-            datalad install https://github.com/OpenNeuroDatasets/ds001600.git
-            datalad update --merge ds001600/
-            datalad get -r ds001600/*
-      - run:
-          name: Get testdata
-          command: |
-            if [[ ! -d /tmp/data/testdata ]]; then
-              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
-                  -O testdata.zip "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip="
-              unzip testdata.zip -d /tmp/data/testdata
-            fi
-
-      - run:
-          name: Store FreeSurfer license file
-          command: |
-            mkdir -p /tmp/data/
-            echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/data/fslicense.txt
-
-      - save_cache:
-         key: data-v2-{{ .Branch }}-{{ .BuildNum }}
-         paths:
-            - "/opt/circleci/.pyenv/versions/3.5.2"
-            - /tmp/data
-            - /tmp/cache/git-annex-standalone.tar.gz
-
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - data
-
-  test_sdcflows:
-    machine:
-      image: circleci/classic:201711-01
-    working_directory: /tmp/tests
-    steps:
-      - attach_workspace:
-          at: /tmp
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
@@ -225,32 +264,15 @@ jobs:
               echo "Found tag [wipe ${wipe_dir}] - clearing up $path ..."
               rm -rf ${path}
             fi
-      - restore_cache:
-          keys:
-            - build-v1-{{ .Branch }}-{{ epoch }}
-            - build-v1-{{ .Branch }}-
-            - build-v1-master-
-            - build-v1-
-          paths:
-            - /tmp/docker
-      - run:
-          name: Set-up a Docker registry
-          command: |
-            docker run -d -p 5000:5000 --restart=always --name=registry \
-                -v /tmp/docker:/var/lib/registry registry:2
-      - run:
-          name: Pull images from local registry
-          command: |
-            docker pull localhost:5000/sdcflows
-            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
       - run:
           name: Run tests
           no_output_timeout: 2h
           command: |
             mkdir -p /tmp/work
             docker run -it --rm -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
-                   -v /tmp/data/fslicense.txt:/opt/freesurfer/license.txt:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
+                   -v /tmp/freesurfer:/opt/freesurfer:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
                    -v /tmp/work:/work -e TEST_WORK_DIR=/work \
+                   -v /tmp/templateflow:/home/sdcflows/.cache/templateflow \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
                    -w /work poldracklab/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
@@ -324,10 +346,10 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - build-v1-{{ .Branch }}-{{ epoch }}
-            - build-v1-{{ .Branch }}-
-            - build-v1-master-
-            - build-v1-
+            - build-v2-{{ .Branch }}-{{ epoch }}
+            - build-v2-{{ .Branch }}-
+            - build-v2-master-
+            - build-v2-
           paths:
             - /tmp/docker
       - run:
@@ -466,13 +488,6 @@ workflows:
   version: 2
   build_deploy:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-            tags:
-              only: /.*/
       - cache_test_data:
           filters:
             branches:
@@ -481,9 +496,8 @@ workflows:
             tags:
               only: /.*/
 
-      - test_sdcflows:
+      - build_n_pytest:
           requires:
-            - build
             - cache_test_data
           filters:
             branches:
@@ -503,10 +517,9 @@ workflows:
 
       - deploy_pypi:
           requires:
-            - build
             - build_docs
             - test_package
-            - test_sdcflows
+            - build_n_pytest
           filters:
             branches:
               ignore: /.*/
@@ -527,14 +540,12 @@ workflows:
             branches:
               ignore:
                 - /tests?\/.*/
-                - /ds005\/.*/
-                - /ds054\/.*/
             tags:
               only: /.*/
 
       - deploy_docs_master:
           requires:
-            - test_sdcflows
+            - build_n_pytest
             - test_package
             - build_docs
           filters:
