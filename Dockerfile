@@ -4,11 +4,6 @@ FROM ubuntu:xenial-20191010
 # Pre-cache neurodebian key
 COPY .docker/files/neurodebian.gpg /usr/local/etc/neurodebian.gpg
 
-# Installing Neurodebian packages (FSL, AFNI, git)
-RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
-    apt-key add /usr/local/etc/neurodebian.gpg && \
-    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-
 # Prepare environment
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -21,7 +16,15 @@ RUN apt-get update && \
                     autoconf \
                     libtool \
                     pkg-config \
-                    git \
+                    git && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Installing Neurodebian packages (FSL, AFNI, git)
+RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key add /usr/local/etc/neurodebian.gpg && \
+    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
                     fsl-core=5.0.9-5~nd16.04+1 \
                     afni=16.2.07~dfsg.1-5~nd16.04+1 \
                     convert3d \
