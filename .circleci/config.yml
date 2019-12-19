@@ -43,9 +43,9 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - env-v1-{{ .Branch }}-
-            - env-v1-master-
-            - env-v1-
+            - env-v2-{{ .Branch }}-
+            - env-v2-master-
+            - env-v2-
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
@@ -56,9 +56,9 @@ jobs:
           name: Setup git-annex
           command: |
             if [[ ! -d /usr/lib/git-annex.linux ]]; then
-              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
               apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-              apt update && sudo apt-get install -y --no-install-recommends git-annex-standalone
+              apt update && apt-get install -y --no-install-recommends git-annex-standalone
             fi
             git config --global user.name 'CRN'
             git config --global user.email 'crn.poldracklab@gmail.com'
@@ -74,9 +74,10 @@ jobs:
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
 
       - save_cache:
-         key: env-v1-{{ .Branch }}-{{ .BuildNum }}
+         key: env-v2-{{ .Branch }}-{{ .BuildNum }}
          paths:
             - /tmp/cache/git-annex-standalone.tar.gz
+            - /usr/local/bin
             - /usr/local/lib/python3.7/site-packages
             - /usr/bin/git-annex
             - /usr/bin/git-annex-shell
@@ -104,8 +105,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .Branch }}-
-            - freesurfer-v1-master-
+            - freesurfer-v1-{{ .BuildNum }}
             - freesurfer-v1-
       - run:
           name: Pull FreeSurfer down
@@ -131,9 +131,12 @@ jobs:
                    --exclude='freesurfer/subjects/V1_average' \
                    --exclude='freesurfer/trctrain'
               echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
+            else
+              echo "FreeSurfer was cached."
+              circleci step halt
             fi
       - save_cache:
-         key: freesurfer-v1-{{ .Branch }}-{{ .BuildNum }}
+         key: freesurfer-v1-{{ .BuildNum }}
          paths:
             - /tmp/freesurfer
 
@@ -223,8 +226,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .Branch }}-
-            - freesurfer-v1-master-
+            - freesurfer-v1-{{ .BuildNum }}
             - freesurfer-v1-
       - restore_cache:
           keys:
