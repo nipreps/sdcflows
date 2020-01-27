@@ -233,6 +233,8 @@ accurate co-registration with the anatomical reference.
                 ('epi_brain', 'inputnode.in_reference_brain'),
                 ('t1w_brain', 'inputnode.t1w_brain'),
                 ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
+            (syn_sdc_wf, outputnode, [
+                ('outputnode.out_reference', 'syn_ref')]),
         ])
 
         # XXX Eliminate branch when forcing isn't an option
@@ -241,10 +243,6 @@ accurate co-registration with the anatomical reference.
             sdc_unwarp_wf = syn_sdc_wf
         else:  # --force-syn was called when other fieldmap was present
             sdc_unwarp_wf.__desc__ = None
-            workflow.connect([
-                (syn_sdc_wf, outputnode, [
-                    ('outputnode.out_reference', 'syn_ref')]),
-            ])
 
     workflow.connect([
         (sdc_unwarp_wf, outputnode, [
