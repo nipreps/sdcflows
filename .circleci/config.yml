@@ -87,8 +87,8 @@ jobs:
           name: Install ds001600
           command: |
             datalad install https://github.com/OpenNeuroDatasets/ds001600.git
-            datalad update --merge ds001600/
-            datalad get -r ds001600/*
+            datalad update --merge -d ds001600/
+            datalad get -r -d ds001600/
       - run:
           name: Get testdata
           command: |
