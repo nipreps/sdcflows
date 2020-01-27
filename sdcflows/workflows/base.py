@@ -285,6 +285,10 @@ def fieldmap_wrangler(layout, target_image, use_syn=False, force_syn=False):
                            for k in sorted(fmap.keys()) if k.startswith('phase')],
             })
 
-    if force_syn is True or (not fieldmaps and use_syn is True):
-        fieldmaps['syn'] = force_syn
+    if fieldmaps and force_syn:
+        # syn: True -> Run SyN in addition to fieldmap-based SDC
+        fieldmaps['syn'] = True
+    elif not fieldmaps and (force_syn or use_syn):
+        # syn: False -> Run SyN as only SDC
+        fieldmaps['syn'] = False
     return fieldmaps
