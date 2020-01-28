@@ -233,6 +233,8 @@ accurate co-registration with the anatomical reference.
                 ('epi_brain', 'inputnode.in_reference_brain'),
                 ('t1w_brain', 'inputnode.t1w_brain'),
                 ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
+            (syn_sdc_wf, outputnode, [
+                ('outputnode.out_reference', 'syn_ref')]),
         ])
 
         # XXX Eliminate branch when forcing isn't an option
@@ -241,10 +243,6 @@ accurate co-registration with the anatomical reference.
             sdc_unwarp_wf = syn_sdc_wf
         else:  # --force-syn was called when other fieldmap was present
             sdc_unwarp_wf.__desc__ = None
-            workflow.connect([
-                (syn_sdc_wf, outputnode, [
-                    ('outputnode.out_reference', 'syn_ref')]),
-            ])
 
     workflow.connect([
         (sdc_unwarp_wf, outputnode, [
@@ -287,6 +285,10 @@ def fieldmap_wrangler(layout, target_image, use_syn=False, force_syn=False):
                            for k in sorted(fmap.keys()) if k.startswith('phase')],
             })
 
-    if force_syn is True or (not fieldmaps and use_syn is True):
-        fieldmaps['syn'] = force_syn
+    if fieldmaps and force_syn:
+        # syn: True -> Run SyN in addition to fieldmap-based SDC
+        fieldmaps['syn'] = True
+    elif not fieldmaps and (force_syn or use_syn):
+        # syn: False -> Run SyN as only SDC
+        fieldmaps['syn'] = False
     return fieldmaps
