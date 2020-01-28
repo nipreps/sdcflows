@@ -1,3 +1,10 @@
+1.0.4 (January 27, 2020)
+=========================
+Bug-fix release.
+
+* FIX: Connect SyN outputs whenever SyN is run (#82)
+* MNT: Skim Docker image, optimize CircleCI workflow, and reuse cached results (#80)
+
 1.0.3 (December 18, 2019)
 =========================
 A hotfix release preventing downstream dependency collisions on fMRIPrep.
