@@ -14,6 +14,7 @@ def main():
     cmdclass = versioneer.get_cmdclass()
 
     setup(
+        name='sdcflows',
         version=__version__,
         cmdclass=cmdclass,
         download_url=DOWNLOAD_URL,
