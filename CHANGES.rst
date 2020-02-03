@@ -1,3 +1,11 @@
+1.1.0 (February 3, 2020)
+========================
+This is a nominal release that enables downstream tools to depend on both
+SDCFlows and niworkflows 1.1.x.
+
+Bug fixes needed for the 1.5.x series of fMRIPrep will be accepted into the
+1.0.x series of SDCFlows.
+
 1.0.4 (January 27, 2020)
 =========================
 Bug-fix release.
