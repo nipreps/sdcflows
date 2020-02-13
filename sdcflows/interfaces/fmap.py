@@ -661,46 +661,20 @@ def _delta_te(in_values, te1=None, te2=None):
 
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
-    from scipy import stats
     im = nb.load(in_file)
-    data = im.get_fdata(dtype='float32')
+    data = im.get_fdata(caching='unchanged')  # Read as float64 for safety
     hdr = im.header.copy()
 
-    if np.allclose((data.min(), data.max()), (-np.pi, np.pi), atol=0.01):
-        # Already in rads, but wrap to 0 - 2pi
-        data[data < 0] += 2 * np.pi
-    else:
-        dmin, dmax = data.min(), data.max()
+    # Rescale to [0, 2*pi]
+    data = (data - data.min()) * (2 * np.pi / (data.max() - data.min()))
 
-        # Find the mode ignoring outliers on the far max/min, to allow for junk outside the FoV
-        fudge = 0.05 * (dmax - dmin)
-        mode = stats.mode(data[(data > dmin + fudge) & (data < dmax - fudge)])[0][0]
-
-        # Center data around 0.0
-        data -= mode
-
-        # Provide a less opaque error if we still can't figure it out
-        neg = data < 0
-        pos = data > 0
-        if not (neg.any() and pos.any()):
-            raise ValueError("Could not find an appropriate mode to center phase values around")
-
-        # Scale lower tail
-        data[neg] = - np.pi * data[neg] / data[neg].min()
-
-        # Scale upper tail
-        data[pos] = np.pi * data[pos] / data[pos].max()
-
-        # Offset to 0 - 2pi
-        data += np.pi
-
-    # Clip
-    data = np.clip(data, 0.0, 2 * np.pi)
+    # Round to float32 and clip
+    data = np.clip(np.float32(data), 0.0, 2 * np.pi)
 
     hdr.set_data_dtype(np.float32)
     hdr.set_xyzt_units('mm')
     out_file = fname_presuffix(in_file, suffix='_rads', newpath=newpath)
-    nb.Nifti1Image(data, im.affine, hdr).to_filename(out_file)
+    nb.Nifti1Image(data, None, hdr).to_filename(out_file)
     return out_file
 
 
