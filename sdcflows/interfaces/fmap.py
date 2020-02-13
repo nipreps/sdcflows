@@ -666,29 +666,33 @@ def au2rads(in_file, newpath=None):
     data = im.get_fdata(dtype='float32')
     hdr = im.header.copy()
 
-    dmin, dmax = data.min(), data.max()
+    if np.allclose((data.min(), data.max()), (-np.pi, np.pi), atol=0.01):
+        # Already in rads, but wrap to 0 - 2pi
+        data[data < 0] += 2 * np.pi
+    else:
+        dmin, dmax = data.min(), data.max()
 
-    # Find the mode ignoring outliers on the far max/min, to allow for junk outside the FoV
-    fudge = 0.05 * (dmax - dmin)
-    mode = stats.mode(data[(data > dmin + fudge) & (data < dmax - fudge)])[0][0]
+        # Find the mode ignoring outliers on the far max/min, to allow for junk outside the FoV
+        fudge = 0.05 * (dmax - dmin)
+        mode = stats.mode(data[(data > dmin + fudge) & (data < dmax - fudge)])[0][0]
 
-    # Center data around 0.0
-    data -= mode
+        # Center data around 0.0
+        data -= mode
 
-    # Provide a less opaque error if we still can't figure it out
-    neg = data < 0
-    pos = data > 0
-    if not (neg.any() and pos.any()):
-        raise ValueError("Could not find an appropriate mode to center phase values around")
+        # Provide a less opaque error if we still can't figure it out
+        neg = data < 0
+        pos = data > 0
+        if not (neg.any() and pos.any()):
+            raise ValueError("Could not find an appropriate mode to center phase values around")
 
-    # Scale lower tail
-    data[neg] = - np.pi * data[neg] / data[neg].min()
+        # Scale lower tail
+        data[neg] = - np.pi * data[neg] / data[neg].min()
 
-    # Scale upper tail
-    data[pos] = np.pi * data[pos] / data[pos].max()
+        # Scale upper tail
+        data[pos] = np.pi * data[pos] / data[pos].max()
 
-    # Offset to 0 - 2pi
-    data += np.pi
+        # Offset to 0 - 2pi
+        data += np.pi
 
     # Clip
     data = np.clip(data, 0.0, 2 * np.pi)
