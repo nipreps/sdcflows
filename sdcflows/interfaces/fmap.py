@@ -661,19 +661,30 @@ def _delta_te(in_values, te1=None, te2=None):
 
 def au2rads(in_file, newpath=None):
     """Convert the input phase difference map in arbitrary units (a.u.) to rads."""
-    from scipy.stats import mode
     im = nb.load(in_file)
     data = im.get_fdata(dtype='float32')
     hdr = im.header.copy()
 
-    # First center data around 0.0.
-    data -= mode(data, axis=None)[0][0]
+    vals, counts = np.unique(data, return_counts=True)
+    modes = vals[np.argsort(counts)[::-1]]
+
+    # Second mode (idx 1) if first node (idx 0) is minimum, else first
+    idx = int(modes[0] == data.min())
+
+    # Center data around 0.0
+    data -= modes[idx]
+
+    # Provide a less opaque error if we still can't figure it out
+    neg = data < 0
+    pos = data > 0
+    if not (neg.any() and pos.any()):
+        raise ValueError("Could not find an appropriate mode to center phase values around")
 
     # Scale lower tail
-    data[data < 0] = - np.pi * data[data < 0] / data[data < 0].min()
+    data[neg] = - np.pi * data[neg] / data[neg].min()
 
     # Scale upper tail
-    data[data > 0] = np.pi * data[data > 0] / data[data > 0].max()
+    data[pos] = np.pi * data[pos] / data[pos].max()
 
     # Offset to 0 - 2pi
     data += np.pi
