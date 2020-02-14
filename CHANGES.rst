@@ -1,3 +1,9 @@
+1.0.5 (February 14, 2020)
+=========================
+Bug-fix release.
+
+* FIX: Center phase maps around central mode, avoiding FoV-related outliers (#89)
+
 1.0.4 (January 27, 2020)
 =========================
 Bug-fix release.
