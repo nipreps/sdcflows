@@ -374,16 +374,15 @@ jobs:
             fi
 
   test_package:
-    machine:
-      image: circleci/classic:201711-01
+    docker:
+      - image: circleci/python:3.7.4
     working_directory: /tmp/src/sdcflows
     steps:
       - checkout
       - run:
           name: Setup Python environment with virtualenvs
           command: |
-            pyenv global 3.5.2
-            python3 -m pip install --upgrade virtualenv
+            python -m pip install --user --upgrade virtualenv pip
       - run:
           name: Prepare build environment
           command: |
@@ -391,16 +390,20 @@ jobs:
             source /tmp/build/bin/activate
             python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1" twine docutils
       - run:
-          name: Prepare install environment
+          name: Prepare install environments
           command: |
-            virtualenv --python=python3 /tmp/install
-            source /tmp/install/bin/activate
+            virtualenv --python=python3 /tmp/install_sdist
+            source /tmp/install_sdist/bin/activate
+            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
+            deactivate
+            virtualenv --python=python3 /tmp/install_wheel
+            source /tmp/install_wheel/bin/activate
             python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
       - run:
           name: Build SDCflows in build environment
           command: |
             source /tmp/build/bin/activate
-            python setup.py sdist
+            python setup.py sdist bdist_wheel
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
       - run:
@@ -411,11 +414,25 @@ jobs:
       - run:
           name: Install sdist package into install environment and check version
           command: |
-            source /tmp/install/bin/activate
+            source /tmp/install_sdist/bin/activate
             THISVERSION=$( python get_version.py )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             pip install dist/sdcflows*.tar.gz
-            which sdcflows | grep install\\/bin
+            which sdcflows | grep install_sdist\\/bin
+            INSTALLED_VERSION=$(sdcflows --version)
+            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+            INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
+            echo "VERSION: \"$THISVERSION\""
+            echo "INSTALLED: \"$INSTALLED_VERSION\""
+            test "$INSTALLED_VERSION" = "v$THISVERSION"
+      - run:
+          name: Install wheel into install environment and check version
+          command: |
+            source /tmp/install_wheel/bin/activate
+            THISVERSION=$( python get_version.py )
+            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+            pip install dist/sdcflows*.whl
+            which sdcflows | grep install_wheel\\/bin
             INSTALLED_VERSION=$(sdcflows --version)
             INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
             INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
