@@ -382,7 +382,7 @@ jobs:
       - run:
           name: Setup Python environment with virtualenvs
           command: |
-            python -m pip install --upgrade virtualenv pip
+            python -m pip install --user --upgrade virtualenv pip
       - run:
           name: Prepare build environment
           command: |
