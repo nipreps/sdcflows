@@ -441,8 +441,8 @@ jobs:
             test "$INSTALLED_VERSION" = "v$THISVERSION"
 
   deploy_pypi:
-    machine:
-      image: circleci/python:3.7.4
+    docker:
+      - image: circleci/python:3.7.4
     working_directory: /tmp/src/sdcflows
     steps:
       - checkout

@@ -1,3 +1,12 @@
+1.2.0 (February 15, 2020)
+=========================
+A minor version release that changes phasediff caclulations to improve robustness.
+This release is preparation for *fMRIPrep* 20.0.0.
+
+* FIX: Scale all phase maps to ``[0, 2pi]`` range (#88)
+* MNT: Fix package tests (#90)
+* MNT: Fix circle deployment (#91)
+
 1.0.5 (February 14, 2020)
 =========================
 Bug-fix release.
