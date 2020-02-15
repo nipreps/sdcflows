@@ -6,8 +6,8 @@ docs_deploy: &docs
     - run:
         name: Check whether this is the original repo
         command: |
-          if [[ "$CIRCLE_PROJECT_USERNAME" != "poldracklab" ]]; then
-              echo "Not in poldracklab/sdcflows - skipping docs deploy."
+          if [[ "$CIRCLE_PROJECT_USERNAME" != "nipreps" ]]; then
+              echo "Not in nipreps/sdcflows - skipping docs deploy."
               circleci step halt
           fi
     - add_ssh_keys:
@@ -21,7 +21,7 @@ docs_deploy: &docs
     - run:
         name: Set git settings
         command: |
-          git config user.email "crn.poldracklab@gmail.com"
+          git config user.email "nipreps@gmail.com"
           git config user.name "Documentation Push"
     - attach_workspace:
         at: docs/_build
@@ -60,8 +60,8 @@ jobs:
               apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
               apt update && apt-get install -y --no-install-recommends git-annex-standalone
             fi
-            git config --global user.name 'CRN'
-            git config --global user.email 'crn.poldracklab@gmail.com'
+            git config --global user.name 'NiPreps Bot'
+            git config --global user.email 'nipreps@gmail.com'
 
       - run:
           name: Setup DataLad & TemplateFlow
@@ -171,14 +171,14 @@ jobs:
                 echo "Pulling from local registry"
                 docker tag localhost:5000/ubuntu ubuntu:xenial-20191010
                 docker pull localhost:5000/sdcflows
-                docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
-                docker tag localhost:5000/sdcflows poldracklab/sdcflows
+                docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
+                docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
                 echo "Pulling from Docker Hub"
                 docker pull ubuntu:xenial-20191010
                 docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
-                docker pull poldracklab/sdcflows:latest
+                docker pull nipreps/sdcflows:latest
             fi
       - checkout:
           path: /tmp/src/sdcflows
@@ -201,8 +201,8 @@ jobs:
             # Build docker image
             e=1 && for i in {1..5}; do
               docker build --rm \
-                --cache-from=poldracklab/sdcflows \
-                -t poldracklab/sdcflows:latest \
+                --cache-from=nipreps/sdcflows \
+                -t nipreps/sdcflows:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
@@ -212,7 +212,7 @@ jobs:
           name: Docker push to local registry
           no_output_timeout: 40m
           command: |
-            docker tag poldracklab/sdcflows:latest localhost:5000/sdcflows
+            docker tag nipreps/sdcflows:latest localhost:5000/sdcflows
             docker push localhost:5000/sdcflows
       - run:
           name: Docker registry garbage collection
@@ -274,7 +274,7 @@ jobs:
                    -v /tmp/work:/work -e TEST_WORK_DIR=/work \
                    -v /tmp/templateflow:/home/sdcflows/.cache/templateflow \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
-                   -w /work poldracklab/sdcflows:latest \
+                   -w /work nipreps/sdcflows:latest \
                    pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
       - save_cache:
          key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
@@ -361,16 +361,16 @@ jobs:
           name: Pull images from local registry
           command: |
             docker pull localhost:5000/sdcflows
-            docker tag localhost:5000/sdcflows poldracklab/sdcflows:latest
+            docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
       - run:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
             if [[ -n "$DOCKER_PASS" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker push poldracklab/sdcflows:latest
-              docker tag poldracklab/sdcflows poldracklab/sdcflows:$CIRCLE_TAG
-              docker push poldracklab/sdcflows:$CIRCLE_TAG
+              docker push nipreps/sdcflows:latest
+              docker tag nipreps/sdcflows nipreps/sdcflows:$CIRCLE_TAG
+              docker push nipreps/sdcflows:$CIRCLE_TAG
             fi
 
   test_package:

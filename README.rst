@@ -1,8 +1,8 @@
 SDCflows
 --------
 
-.. image:: https://circleci.com/gh/poldracklab/sdcflows.svg?style=svg
-    :target: https://circleci.com/gh/poldracklab/sdcflows
+.. image:: https://circleci.com/gh/nipreps/sdcflows.svg?style=svg
+    :target: https://circleci.com/gh/nipreps/sdcflows
 
 .. image:: https://img.shields.io/pypi/v/sdcflows.svg
   :target: https://pypi.python.org/pypi/sdcflows/

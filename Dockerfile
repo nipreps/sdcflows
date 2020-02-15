@@ -140,6 +140,6 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.description="SDCflows - Susceptibility Distortion Correction (SDC) workflows for EPI MR schemes" \
       org.label-schema.url="http://sdcflows.readthedocs.io" \
       org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/poldracklab/sdcflows" \
+      org.label-schema.vcs-url="https://github.com/nipreps/sdcflows" \
       org.label-schema.version=$VERSION \
       org.label-schema.schema-version="1.0"
