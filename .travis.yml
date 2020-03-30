@@ -2,6 +2,12 @@
 os: linux
 dist: xenial
 
+addons:
+  apt:
+    packages:
+      - libgomp1
+
+
 language: python
 cache: pip
 
@@ -16,6 +22,9 @@ env:
     - CHECK_TYPE="tests"
     - INSTALL_DEPENDS="pip setuptools"
     - DEPENDS="-r min-requirements.txt"
+    - MRI_ROBUST_TEMPLATE=sx2n7/providers/osfstorage/5e825301d0e35400ebb481f2
+    - FS_LICENSE=/tmp/freesurfer/license.txt
+    - TEST_DATA_HOME=/tmp/data
 
 before_install:
   - python -m pip install --upgrade pip virtualenv
@@ -30,9 +39,26 @@ install:
   - if [ -n "$DEPENDS" ]; then python -m pip install $DEPENDS; fi
   - python -m pip install .
   - python -c "import sdcflows; print(sdcflows.__version__)"
+  - travis_retry python -m pip install "sdcflows[$CHECK_TYPE]"
 
 before_script:
-  - travis_retry python -m pip install "sdcflows[$CHECK_TYPE]"
+  # External dependencies
+  - travis_retry bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
+  - sudo apt-get update
+  - sudo apt-get install -y --no-install-recommends git-annex-standalone fsl afni ants
+  - curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
+  - sudo install mri_robust_template /usr/local/bin
+  - mkdir /tmp/freesurfer
+  - echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $FS_LICENSE
+  - python -m pip install datalad
+  # Data dependencies
+  - python -c "from templateflow import api as tfapi;
+               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
+               tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
+  - mkdir -p $TEST_DATA_HOME
+  - datalad install -rg ///openneuro/ds001600 $TEST_DATA_HOME/ds001600
+  - curl https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip= --output testdata.zip
+  - unzip testdata.zip $TEST_DATA_HOME/testdata
 
 script:
   - pytest -n 2 -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
