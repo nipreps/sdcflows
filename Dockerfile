@@ -118,11 +118,8 @@ WORKDIR /src/sdcflows
 
 # Installing sMRIPREP
 COPY . /src/sdcflows
-ARG VERSION
 # Force static versioning within container
-RUN echo "${VERSION}" > /src/sdcflows/sdcflows/VERSION && \
-    echo "include sdcflows/VERSION" >> /src/sdcflows/MANIFEST.in && \
-    pip install --no-cache-dir .[all] && \
+RUN pip install --no-cache-dir .[all] && \
     rm -rf $HOME/.cache/pip
 
 RUN find $HOME -type d -exec chmod go=u {} + && \
@@ -135,6 +132,7 @@ WORKDIR /tmp/
 
 ARG BUILD_DATE
 ARG VCS_REF
+ARG VERSION
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="SDCflows" \
       org.label-schema.description="SDCflows - Susceptibility Distortion Correction (SDC) workflows for EPI MR schemes" \
