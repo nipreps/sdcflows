@@ -47,7 +47,9 @@ def outdir():
 
 @pytest.fixture
 def bids_layouts():
-    return layouts
+    if layouts:
+        return layouts
+    pytest.skip()
 
 
 @pytest.fixture
