@@ -74,8 +74,8 @@ jobs:
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
 
       - save_cache:
-         key: env-v2-{{ .Branch }}-{{ .BuildNum }}
-         paths:
+          key: env-v2-{{ .Branch }}-{{ .BuildNum }}
+          paths:
             - /tmp/cache/git-annex-standalone.tar.gz
             - /usr/local/bin
             - /usr/local/lib/python3.7/site-packages
@@ -98,8 +98,8 @@ jobs:
               unzip testdata.zip -d /tmp/data/testdata
             fi
       - save_cache:
-         key: data-v2-{{ .Branch }}-{{ .BuildNum }}
-         paths:
+          key: data-v2-{{ .Branch }}-{{ .BuildNum }}
+          paths:
             - /tmp/data
             - /tmp/templateflow
 
@@ -136,13 +136,13 @@ jobs:
               circleci step halt
             fi
       - save_cache:
-         key: freesurfer-v1-{{ .BuildNum }}
-         paths:
+          key: freesurfer-v1-{{ .BuildNum }}
+          paths:
             - /tmp/freesurfer
 
   build_n_pytest:
     machine:
-      image: circleci/classic:201711-01
+      image: circleci/classic:201808-01
     working_directory: /tmp/tests
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
@@ -187,11 +187,11 @@ jobs:
           no_output_timeout: 60m
           command: |
             cd /tmp/src/sdcflows
-            export PY3=$(pyenv versions | grep '3\.' |
-                         sed -e 's/.* 3\./3./' -e 's/ .*//')
-            pyenv local $PY3
+            pyenv local 3.7.0
+            python3 -m pip install "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4" "pip>=10.0.1"
+
             # Get version, update files.
-            THISVERSION=$( python3 get_version.py )
+            THISVERSION=$( python3 setup.py --version )
             if [[ ${THISVERSION:0:1} == "0" ]] ; then
               echo "WARNING: latest git tag could not be found"
               echo "Please, make sure you fetch all tags from upstream with"
@@ -208,6 +208,7 @@ jobs:
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
+            echo "${CIRCLE_TAG:-$THISVERSION}" >> /tmp/.local-version.txt
       - run:
           name: Docker push to local registry
           no_output_timeout: 40m
@@ -220,9 +221,19 @@ jobs:
             docker exec -it registry /bin/registry garbage-collect --delete-untagged \
                 /etc/docker/registry/config.yml
       - save_cache:
-         key: build-v2-{{ .Branch }}-{{ epoch }}
-         paths:
+          key: build-v2-{{ .Branch }}-{{ epoch }}
+          paths:
             - /tmp/docker
+      - run:
+          name: Check version packaged in Docker image
+          command: |
+              docker run --rm -v /tmp:/tmp -v /tmp/src/sdcflows/.circleci/version.py:/usr/share/version.py \
+                     --entrypoint=python nipreps/sdcflows /usr/share/version.py
+              THISVERSION=$( head -n1 /tmp/.local-version.txt )
+              INSTALLED_VERSION=$( head -n1 /tmp/.docker-version.txt )
+              echo "VERSION: \"${THISVERSION}\""
+              echo "INSTALLED: \"${INSTALLED_VERSION}\""
+              test "${INSTALLED_VERSION}" = "${THISVERSION}"
 
       - restore_cache:
           keys:
@@ -274,11 +285,11 @@ jobs:
                    -v /tmp/work:/work -e TEST_WORK_DIR=/work \
                    -v /tmp/templateflow:/home/sdcflows/.cache/templateflow \
                    -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
-                   -w /work nipreps/sdcflows:latest \
-                   pytest -v --junit-xml=/out/pytest.xml /src/sdcflows/sdcflows
+                   -w /src/sdcflows nipreps/sdcflows:latest \
+                   pytest -v --junit-xml=/out/pytest.xml sdcflows/
       - save_cache:
-         key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
-         paths:
+          key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
+          paths:
             - /tmp/work
       - store_artifacts:
           path: /tmp/tests
@@ -302,7 +313,10 @@ jobs:
           command: apt update && apt -y install graphviz
       - run:
           name: Install deps
-          command: pip install --no-cache-dir -r docs/requirements.txt
+          command: |
+            pip install --no-cache-dir -r docs/requirements.txt
+            pip install --no-cache-dir "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4"
+            python setup.py --version
       - run:
           name: Build only this commit
           command: make -C docs SPHINXOPTS="-W" BUILDDIR="_build/no_version_html" html
@@ -380,119 +394,61 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup Python environment with virtualenvs
+          name: Prepare environment & build
           command: |
-            python -m pip install --user --upgrade virtualenv pip
-      - run:
-          name: Prepare build environment
-          command: |
-            virtualenv --python=python3 /tmp/build
-            source /tmp/build/bin/activate
-            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1" twine docutils
-      - run:
-          name: Prepare install environments
-          command: |
-            virtualenv --python=python3 /tmp/install_sdist
-            source /tmp/install_sdist/bin/activate
-            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
-            deactivate
-            virtualenv --python=python3 /tmp/install_wheel
-            source /tmp/install_wheel/bin/activate
-            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
-      - run:
-          name: Build SDCflows in build environment
-          command: |
-            source /tmp/build/bin/activate
+            python3 -m venv /tmp/buildenv
+            source /tmp/buildenv/bin/activate
+            python3 -m pip install "setuptools ~= 42.0" wheel "setuptools_scm[toml] >= 3.4" \
+                "pip>=10.0.1" twine docutils
             python setup.py sdist bdist_wheel
+            twine check dist/sdcflows*
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
+      - persist_to_workspace:
+          root: /tmp/src/sdcflows
+          paths: dist
       - run:
-          name: Check sdist package in build environment
+          name: Install on separate environment and check version [sdist]
           command: |
-            source /tmp/build/bin/activate
-            twine check dist/sdcflows*
-      - run:
-          name: Install sdist package into install environment and check version
-          command: |
+            python3 -m venv /tmp/install_sdist
             source /tmp/install_sdist/bin/activate
-            THISVERSION=$( python get_version.py )
+            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
+            THISVERSION=$( python3 setup.py --version )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            pip install dist/sdcflows*.tar.gz
-            which sdcflows | grep install_sdist\\/bin
-            INSTALLED_VERSION=$(sdcflows --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "v$THISVERSION"
+            python3 -m pip install dist/sdcflows*.tar.gz
+            INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
+            echo "VERSION: \"${THISVERSION}\""
+            echo "INSTALLED: \"${INSTALLED_VERSION}\""
+            test "${INSTALLED_VERSION}" = "${THISVERSION}"
       - run:
-          name: Install wheel into install environment and check version
+          name: Install on separate environment and check version [wheel]
           command: |
+            python3 -m venv /tmp/install_wheel
             source /tmp/install_wheel/bin/activate
-            THISVERSION=$( python get_version.py )
+            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
+            THISVERSION=$( python3 setup.py --version )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            pip install dist/sdcflows*.whl
-            which sdcflows | grep install_wheel\\/bin
-            INSTALLED_VERSION=$(sdcflows --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "v$THISVERSION"
+            python3 -m pip install dist/sdcflows*.whl
+            INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
+            echo "VERSION: \"${THISVERSION}\""
+            echo "INSTALLED: \"${INSTALLED_VERSION}\""
+            test "${INSTALLED_VERSION}" = "${THISVERSION}"
 
   deploy_pypi:
     docker:
       - image: circleci/python:3.7.4
     working_directory: /tmp/src/sdcflows
     steps:
-      - checkout
+      - attach_workspace:
+          at: /tmp/src/sdcflows
       - run:
-          name: Setup Python environment with virtualenvs
+          name: Upload to Pypi
           command: |
-            python -m pip install --user --upgrade virtualenv pip
-      - run:
-          name: Prepare build environment
-          command: |
-            virtualenv --python=python3 /tmp/build
-            source /tmp/build/bin/activate
-            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1" twine docutils
-      - run:
-          name: Prepare install environments
-          command: |
-            virtualenv --python=python3 /tmp/install_sdist
-            source /tmp/install_sdist/bin/activate
-            python3 -m pip install "setuptools>=30.3.0" "pip>=10.0.1"
-      - run:
-          name: Build SDCflows in build environment
-          command: |
-            source /tmp/build/bin/activate
-            python setup.py sdist bdist_wheel
-      - store_artifacts:
-          path: /tmp/src/sdcflows/dist
-      - run:
-          name: Check sdist and wheel in build environment
-          command: |
-            source /tmp/build/bin/activate
-            twine check dist/sdcflows*
-      - run:
-          name: Install sdist package into install environment and check version
-          command: |
-            source /tmp/install_sdist/bin/activate
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            pip install dist/sdcflows*.tar.gz
-            which sdcflows | grep install_sdist\\/bin
-            INSTALLED_VERSION=$(sdcflows --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"sdcflows v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "v$THISVERSION"
-      - run:
-          name: Upload packages to PyPI
-          command: |
-            source /tmp/build/bin/activate
-            twine upload dist/sdcflows*
+            python3 -m venv /tmp/upload
+            source /tmp/upload/bin/activate
+            python3 -m pip install twine
+            python3 -m twine check dist/*
+            python3 -m twine upload dist/* --non-interactive
 
   deploy_docs_tag:
     <<: *docs

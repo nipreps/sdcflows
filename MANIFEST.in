@@ -1,4 +1,7 @@
-include CHANGES.rst
-include LICENSE
+recursive-exclude .circleci/ *
+recursive-exclude .docker/ *
+recursive-exclude .github/ *
+recursive-exclude docs/ *
 
-recursive-include sdcflows/data *
+exclude .*
+exclude Dockerfile
