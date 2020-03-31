@@ -58,7 +58,7 @@ before_script:
   - mkdir -p $TEST_DATA_HOME
   - datalad install -rg -J 1 -s ///openneuro/ds001600 $TEST_DATA_HOME/ds001600
   - curl https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip= --output testdata.zip
-  - unzip testdata.zip $TEST_DATA_HOME/testdata
+  - unzip testdata.zip -d $TEST_DATA_HOME/testdata
 
 script:
   - pytest -n 2 -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
