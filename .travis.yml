@@ -56,7 +56,7 @@ before_script:
                tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
                tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
   - mkdir -p $TEST_DATA_HOME
-  - datalad install -rg -J 1 ///openneuro/ds001600 $TEST_DATA_HOME/ds001600
+  - datalad install -rg -J 1 -s ///openneuro/ds001600 $TEST_DATA_HOME/ds001600
   - curl https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip= --output testdata.zip
   - unzip testdata.zip $TEST_DATA_HOME/testdata
 
