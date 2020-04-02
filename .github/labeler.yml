@@ -1,8 +1,0 @@
-core:
-    - sdcflows/cli/*
-    - sdcflows/interfaces/*
-    - sdcflows/viz/*
-    - sdcflows/workflows/*
-
-docs:
-    - docs/*
