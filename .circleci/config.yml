@@ -459,6 +459,12 @@ jobs:
 workflows:
   version: 2
   build_deploy:
+    triggers:
+      - schedule:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
     jobs:
       - cache_test_data:
           filters:

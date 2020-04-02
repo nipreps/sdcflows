@@ -1,3 +1,10 @@
+1.2.1 (April 01, 2020)
+======================
+A patch release to make SDCFlows more amicable to downstream software.
+
+  * MAINT: Migrate from versioneer to setuptools_scm (#97)
+  * MAINT: Flexibilize dependencies -- nipype, niworkflows, pybids (#95)
+
 1.2.0 (February 15, 2020)
 =========================
 A minor version release that changes phasediff caclulations to improve robustness.
