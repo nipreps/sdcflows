@@ -81,16 +81,19 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
 
 # Installing precomputed python packages
 RUN conda install -y python=3.7.1 \
-                     mkl=2018.0.3 \
-                     mkl-service \
-                     numpy=1.15.4 \
-                     scipy=1.1.0 \
-                     scikit-learn=0.19.1 \
-                     matplotlib=2.2.2 \
-                     pandas=0.23.4 \
+                     graphviz=2.40.1 \
                      libxml2=2.9.8 \
                      libxslt=1.1.32 \
-                     graphviz=2.40.1 \
+                     matplotlib=2.2.2 \
+                     mkl-service \
+                     mkl=2018.0.3 \
+                     numpy=1.15.4 \
+                     pandas=0.23.4 \
+                     scikit-learn=0.19.1 \
+                     scipy=1.1.0 \
+                     setuptools=44.0.0 \
+                     setuptools_scm=3.4.3 \
+                     toml=0.10 \
                      traits=4.6.0 \
                      zlib; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
@@ -116,12 +119,11 @@ COPY .docker/files/nipype.cfg $HOME/.nipype/nipype.cfg
 # Installing dev requirements (packages that are not in pypi)
 WORKDIR /src/sdcflows
 
-# Installing sMRIPREP
+# Installing SDCFlows
 COPY . /src/sdcflows
-ARG VERSION
 # Force static versioning within container
-RUN echo "${VERSION}" > /src/sdcflows/sdcflows/VERSION && \
-    echo "include sdcflows/VERSION" >> /src/sdcflows/MANIFEST.in && \
+ARG VERSION
+RUN sed -i "s/fallback_version\s=\s\"0\.0\"/fallback_version = \"${VERSION}\"/g" pyproject.toml && \
     pip install --no-cache-dir .[all] && \
     rm -rf $HOME/.cache/pip
 

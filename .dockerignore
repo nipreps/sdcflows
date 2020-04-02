@@ -8,8 +8,10 @@ build/**/*
 build
 dist/**/*
 dist
-fmriprep.egg-info/**/*
-fmriprep.egg-info
+docs/**/*
+docs
+sdcflows.egg-info/**/*
+sdcflows.egg-info
 .eggs/**/*
 .eggs
 
@@ -23,6 +25,7 @@ src/**/*
 src/
 
 # git
+.gitattributes
 .gitignore
 .github/**/*
 .github

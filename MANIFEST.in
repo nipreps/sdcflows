@@ -1,8 +1,7 @@
-include CHANGES.rst
-include LICENSE
+recursive-exclude .circleci/ *
+recursive-exclude .docker/ *
+recursive-exclude .github/ *
+recursive-exclude docs/ *
 
-recursive-include sdcflows/data *
-
-# versioneer
-include versioneer.py
-include sdcflows/_version.py
+exclude .*
+exclude Dockerfile

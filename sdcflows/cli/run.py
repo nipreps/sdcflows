@@ -11,7 +11,7 @@ def get_parser():
     """Define the command line interface"""
     from argparse import ArgumentParser
     from argparse import RawTextHelpFormatter
-    from ..__about__ import __version__ as _vstr
+    from .. import __version__ as _vstr
 
     parser = ArgumentParser(description='SDC Workflows',
                             formatter_class=RawTextHelpFormatter)
