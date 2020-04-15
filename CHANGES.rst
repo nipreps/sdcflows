@@ -1,3 +1,9 @@
+1.0.6 (April 15, 2020)
+======================
+Bug-fix release.
+
+* FIX: Do not reorient magnitude images (#98)
+
 1.0.5 (February 14, 2020)
 =========================
 Bug-fix release.
