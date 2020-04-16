@@ -1,3 +1,9 @@
+1.2.2 (April 16, 2020)
+======================
+Bug-fix release to fix phase-difference masking bug in the 1.2.x series.
+
+* FIX: Do not reorient magnitude images (#98)
+
 1.0.6 (April 15, 2020)
 ======================
 Bug-fix release.
