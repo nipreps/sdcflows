@@ -43,7 +43,7 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
     """
     from niworkflows.interfaces import SimpleBeforeAfter
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-    from niworkflows.interfaces.images import extract_wm
+    from niworkflows.utils.images import dseg_label as _dseg_label
 
     DEFAULT_MEMORY_MIN_GB = 0.01
 
@@ -56,8 +56,9 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
         dimension=3, float=True, interpolation='MultiLabel'),
         name='map_seg', mem_gb=0.3)
 
-    sel_wm = pe.Node(niu.Function(function=extract_wm), name='sel_wm',
+    sel_wm = pe.Node(niu.Function(function=_dseg_label), name='sel_wm',
                      mem_gb=DEFAULT_MEMORY_MIN_GB)
+    sel_wm.inputs.label = 2
 
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
