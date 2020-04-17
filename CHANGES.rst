@@ -1,3 +1,9 @@
+1.2.3 (April 16, 2020)
+======================
+Bug-fix release enforcing BIDS-Derivatives labels on ``dseg`` file.
+
+* FIX: WM mask selection from dseg before generating report (#100)
+
 1.2.2 (April 16, 2020)
 ======================
 Bug-fix release to fix phase-difference masking bug in the 1.2.x series.
