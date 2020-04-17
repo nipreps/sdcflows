@@ -355,7 +355,7 @@ jobs:
           root: docs/_build
           paths: html
       - store_artifacts:
-          path: ./docs/_build/html/html
+          path: ./docs/_build/html
           destination: versioned
 
   deploy_docker:
