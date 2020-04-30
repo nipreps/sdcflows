@@ -160,9 +160,8 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
         rep = pe.Node(FieldmapReportlet(reference_label='EPI Reference'), 'simple_report')
         rep.interface._always_run = True
         dsink = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=True,
-            desc='pepolar'), name='dsink')
-        dsink.interface.out_path_base = 'sdcflows'
+            base_directory=str(output_path), out_path_base='sdcflows', datatype="figures",
+            suffix='fieldmap', desc='pepolar', dismiss_entities='fmap'), name='dsink')
         dsink.inputs.source_file = epidata[0].path
 
         boiler.connect([

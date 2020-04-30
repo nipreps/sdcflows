@@ -63,8 +63,8 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
     ds_report_sdc = pe.Node(
-        DerivativesDataSink(desc='sdc' if not forcedsyn else 'forcedsyn',
-                            suffix='bold'), name='ds_report_sdc',
+        DerivativesDataSink(desc=('sdc', 'forcedsyn')[forcedsyn], suffix='bold',
+                            datatype='figures'), name='ds_report_sdc',
         mem_gb=DEFAULT_MEMORY_MIN_GB, run_without_submitting=True
     )
 
