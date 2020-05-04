@@ -1,3 +1,7 @@
+1.2.4 (May 4, 2020)
+===================
+Bug-fix release to ensure backwards compatibility with previous fMRIPrep versions.
+
 1.2.3 (April 16, 2020)
 ======================
 Bug-fix release enforcing BIDS-Derivatives labels on ``dseg`` file.

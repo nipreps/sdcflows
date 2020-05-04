@@ -41,9 +41,9 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
         Affine transform from T1 space to BOLD space (ITK format)
 
     """
+    from ..interfaces import dseg_label as _dseg_label
     from niworkflows.interfaces import SimpleBeforeAfter
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-    from niworkflows.utils.images import dseg_label as _dseg_label
 
     DEFAULT_MEMORY_MIN_GB = 0.01
 
@@ -58,7 +58,10 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
 
     sel_wm = pe.Node(niu.Function(function=_dseg_label), name='sel_wm',
                      mem_gb=DEFAULT_MEMORY_MIN_GB)
-    sel_wm.inputs.label = 2
+    # API CHANGE: sMRIPrep 0.6.x
+    # https://github.com/poldracklab/smriprep/issues/176
+    # https://github.com/poldracklab/smriprep/pull/177 changes this to 2
+    sel_wm.inputs.label = 3
 
     bold_rpt = pe.Node(SimpleBeforeAfter(), name='bold_rpt',
                        mem_gb=0.1)
