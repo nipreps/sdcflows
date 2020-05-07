@@ -40,13 +40,14 @@ def test_phdiff(bids_layouts, tmpdir, output_path, dataset, workdir):
         rep = pe.Node(FieldmapReportlet(reference_label='Magnitude'), 'simple_report')
         rep.interface._always_run = True
 
-        dsink = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=True), name='dsink')
-        dsink.interface.out_path_base = 'sdcflows'
-        dsink.inputs.source_file = phdiff_files[0].path
+        ds_report = pe.Node(DerivativesDataSink(
+            base_directory=str(output_path), out_path_base='sdcflows', datatype='figures',
+            suffix='fieldmap', desc='phasediff', dismiss_entities='fmap'), name='ds_report')
+        ds_report.inputs.source_file = phdiff_files[0].path
 
         dsink_fmap = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=True), name='dsink_fmap')
+            base_directory=str(output_path), dismiss_entities='fmap',
+            desc='phasediff', suffix='fieldmap'), name='dsink_fmap')
         dsink_fmap.interface.out_path_base = 'sdcflows'
         dsink_fmap.inputs.source_file = phdiff_files[0].path
 
@@ -55,7 +56,7 @@ def test_phdiff(bids_layouts, tmpdir, output_path, dataset, workdir):
                 ('outputnode.fmap', 'fieldmap'),
                 ('outputnode.fmap_ref', 'reference'),
                 ('outputnode.fmap_mask', 'mask')]),
-            (rep, dsink, [('out_report', 'in_file')]),
+            (rep, ds_report, [('out_report', 'in_file')]),
             (phdiff_wf, dsink_fmap, [('outputnode.fmap', 'in_file')]),
         ])
     else:
@@ -91,13 +92,14 @@ def test_phases(bids_layouts, tmpdir, output_path, workdir):
         rep = pe.Node(FieldmapReportlet(reference_label='Magnitude'), 'simple_report')
         rep.interface._always_run = True
 
-        dsink = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=True), name='dsink')
-        dsink.interface.out_path_base = 'sdcflows'
-        dsink.inputs.source_file = phdiff_files[0].path
+        ds_report = pe.Node(DerivativesDataSink(
+            base_directory=str(output_path), out_path_base='sdcflows', datatype='figures',
+            suffix='fieldmap', desc='twophases', dismiss_entities='fmap'), name='ds_report')
+        ds_report.inputs.source_file = phdiff_files[0].path
 
         dsink_fmap = pe.Node(DerivativesDataSink(
-            base_directory=str(output_path), keep_dtype=True), name='dsink_fmap')
+            base_directory=str(output_path), suffix='fieldmap', desc='twophases',
+            dismiss_entities='fmap'), name='dsink_fmap')
         dsink_fmap.interface.out_path_base = 'sdcflows'
         dsink_fmap.inputs.source_file = phdiff_files[0].path
 
@@ -106,7 +108,7 @@ def test_phases(bids_layouts, tmpdir, output_path, workdir):
                 ('outputnode.fmap', 'fieldmap'),
                 ('outputnode.fmap_ref', 'reference'),
                 ('outputnode.fmap_mask', 'mask')]),
-            (rep, dsink, [('out_report', 'in_file')]),
+            (rep, ds_report, [('out_report', 'in_file')]),
             (phdiff_wf, dsink_fmap, [('outputnode.fmap', 'in_file')]),
         ])
     else:
