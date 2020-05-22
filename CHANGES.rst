@@ -1,3 +1,9 @@
+1.3.1 (May 22, 2020)
+====================
+Bug-fix release adapting to use newly refacored DerivativesDataSink
+
+* ENH: Use new ``DerivativesDataSink`` from NiWorkflows 1.2.0 (#102)
+
 1.3.0 (May 4, 2020)
 ===================
 Minor release enforcing BIDS-Derivatives labels on ``dseg`` file.
