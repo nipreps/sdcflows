@@ -15,23 +15,20 @@ This corresponds to `this section of the BIDS specification
 import pkg_resources as pkgr
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces import CopyHeader
 from niworkflows.interfaces.freesurfer import StructuralReference
-from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
 from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 
 from nipype.pipeline import engine as pe
-from nipype.interfaces import afni, ants, utility as niu
+from nipype.interfaces import ants, fsl, utility as niu
 
 
-def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
-                           name="pepolar_unwarp_wf"):
+def init_pepolar_wf(omp_nthreads=1, matched_pe=False, name="pepolar_wf"):
     """
     Create the PE-Polar field estimation workflow.
 
     This workflow takes in a set of EPI files with opposite phase encoding
-    direction than the target file and calculates a displacements field
-    (in other words, an ANTs-compatible warp file).
+    direction than the target file and calculates a fieldmap (off-resonance field) in Hz that can
+    be fed into the ``fmap`` workflows
 
     This procedure works if there is only one ``_epi`` file is present
     (as long as it has the opposite phase encoding direction to the target
@@ -42,20 +39,17 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
     Currently, different phase encoding directions in the target file and the
     ``_epi`` file(s) (for example, ``i`` and ``j``) is not supported.
 
-    The warp field correcting for the distortions is estimated using AFNI's
-    ``3dQwarp``, with displacement estimation limited to the target file phase
-    encoding direction.
-
-    It also calculates a new mask for the input dataset that takes into
-    account the distortions.
+    The off-resonance field is estimated using FSL's ``Topup``. Topup also calculates undistorted
+    versions of the inputted EPI files which can be used as magnitute input in the ``fmap``
+    worklows.
 
     Workflow Graph
         .. workflow ::
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.pepolar import init_pepolar_unwarp_wf
-            wf = init_pepolar_unwarp_wf()
+            from sdcflows.workflows.pepolar import init_pepolar_wf
+            wf = init_pepolar_wf()
 
     Parameters
     ----------
@@ -75,91 +69,80 @@ def init_pepolar_unwarp_wf(omp_nthreads=1, matched_pe=False,
         their corresponding ``PhaseEncodingDirection`` metadata.
         The workflow will use the ``epi_pe_dir`` input to separate out those
         EPI acquisitions with opposed PE blips and those with matched PE blips
-        (the latter could be none, and ``in_reference_brain`` would then be
+        (the latter could be none, and ``in_reference`` would then be
         used). The workflow raises a ``ValueError`` when no images with
         opposed PE blips are found.
     epi_pe_dir : str
         The baseline PE direction.
+    epi_trt: float
+        Total readout time of the EPI (should be identical to TRT of fmaps_epi)
+    matched_pe_dir : str
+        Phase encoding direction of matching fmap EPI
+    opposed_pe_dir : str
+        Phase encoding direction of opposed fmap EPI
     in_reference : pathlike
         The baseline reference image (must correspond to ``epi_pe_dir``).
-    in_reference_brain : pathlike
-        The reference image above, but skullstripped.
-    in_mask : pathlike
-        Not used, present only for consistency across fieldmap estimation
-        workflows.
 
     Outputs
     -------
-    out_reference : pathlike
-        The ``in_reference`` after unwarping
-    out_reference_brain : pathlike
-        The ``in_reference`` after unwarping and skullstripping
-    out_warp : pathlike
-        The corresponding :abbr:`DFM (displacements field map)` compatible with
-        ANTs.
-    out_mask : pathlike
-        Mask of the unwarped input file
-
+    fieldmap : pathlike
+        Topup estimated fieldmap (Hz)
+    magnitude : pathlike
+        The ``fmaps_epi`` after unwarping
     """
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
 A B0-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
-echo-planar imaging (EPI) references with opposing phase-encoding
-directions, with `3dQwarp` @afni (AFNI {afni_ver}).
-""".format(afni_ver=''.join(['%02d' % v for v in afni.Info().version() or []]))
+echo-planar imaging (EPI) references of opposed phase-encoding
+directions, with `topup` @topup (FSL {fsl_ver}).
+""".format(fsl_ver=''.join(['%02d' % v for v in fsl.Info().version() or []]))
 
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['fmaps_epi', 'in_reference', 'in_reference_brain',
-                'in_mask', 'epi_pe_dir']), name='inputnode')
+        fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference', 'matched_pe_dir',
+                'opposed_pe_dir']),
+        name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),
+        fields=['fieldmap', 'magnitude']),
         name='outputnode')
 
     prepare_epi_wf = init_prepare_epi_wf(omp_nthreads=omp_nthreads,
                                          matched_pe=matched_pe,
                                          name="prepare_epi_wf")
 
-    qwarp = pe.Node(afni.QwarpPlusMinus(
-        pblur=[0.05, 0.05], blur=[-1, -1], noweight=True, minpatch=9, nopadWARP=True,
-        environ={'OMP_NUM_THREADS': '%d' % omp_nthreads}),
-        name='qwarp', n_procs=omp_nthreads)
+    epi_merge2list = pe.Node(niu.Merge(2), name='epi_merge2list')
+    pedirs_merge2list = pe.Node(niu.Merge(2), name='pedir_merge2list')
+    trt_merge2list = pe.Node(niu.Merge(2), name='trt_merge2list')
 
-    to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
-                      mem_gb=0.01)
+    merger = pe.Node(fsl.Merge(dimension='t'), name='merger')
 
-    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp', mem_gb=0.01)
-
-    unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
-                                                      generate_report=False,
-                                                      float=True,
-                                                      interpolation='LanczosWindowedSinc'),
-                               name='unwarp_reference')
-
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(
-        omp_nthreads=omp_nthreads)
+    topup = pe.Node(fsl.TOPUP(), name='topup')
 
     workflow.connect([
-        (inputnode, qwarp, [(('epi_pe_dir', _qwarp_args), 'args')]),
-        (inputnode, cphdr_warp, [('in_reference', 'hdr_file')]),
         (inputnode, prepare_epi_wf, [
             ('fmaps_epi', 'inputnode.maps_pe'),
             ('epi_pe_dir', 'inputnode.epi_pe'),
-            ('in_reference_brain', 'inputnode.ref_brain')]),
-        (prepare_epi_wf, qwarp, [('outputnode.opposed_pe', 'base_file'),
-                                 ('outputnode.matched_pe', 'in_file')]),
-        (qwarp, cphdr_warp, [('source_warp', 'in_file')]),
-        (cphdr_warp, to_ants, [('out_file', 'in_file')]),
-        (to_ants, unwarp_reference, [('out', 'transforms')]),
-        (inputnode, unwarp_reference, [('in_reference', 'reference_image'),
-                                       ('in_reference', 'input_image')]),
-        (unwarp_reference, enhance_and_skullstrip_bold_wf, [
-            ('output_image', 'inputnode.in_file')]),
-        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (enhance_and_skullstrip_bold_wf, outputnode, [
-            ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.skull_stripped_file', 'out_reference_brain')]),
-        (to_ants, outputnode, [('out', 'out_warp')]),
+            ('in_reference', 'inputnode.ref')]),
+        (prepare_epi_wf, epi_merge2list, [
+            ('outputnode.matched_pe', 'in1'),
+            ('outputnode.opposed_pe', 'in2')]),
+        (epi_merge2list, merger, [
+            ('out', 'in_files')]),
+        (merger, topup, [
+            ('merged_file', 'in_file')]),
+        (inputnode, pedirs_merge2list, [
+            (('matched_pe_dir', _get_pedir_topup), 'in1'),
+            (('opposed_pe_dir', _get_pedir_topup), 'in2')]),
+        (pedirs_merge2list, topup, [
+            ('out', 'encoding_direction')]),
+        (inputnode, trt_merge2list, [
+            ('epi_trt', 'in1'),
+            ('epi_trt', 'in2')]),
+        (trt_merge2list, topup, [
+            ('out', 'readout_times')]),
+        (topup, outputnode, [
+            ('out_field', 'fieldmap'),
+            ('out_corrected', 'magnitude')]),
     ])
 
     return workflow
@@ -204,8 +187,8 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         Phase-encoding direction of the EPI image to be corrected.
     maps_pe : list of tuple(pathlike, str)
         list of 3D or 4D NIfTI images
-    ref_brain
-        coregistration reference (skullstripped and bias field corrected)
+    ref
+        coregistration reference (bias field corrected)
 
     Outputs
     -------
@@ -215,7 +198,7 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         single 3D NIfTI file
 
     """
-    inputnode = pe.Node(niu.IdentityInterface(fields=['epi_pe', 'maps_pe', 'ref_brain']),
+    inputnode = pe.Node(niu.IdentityInterface(fields=['epi_pe', 'maps_pe', 'ref']),
                         name='inputnode')
 
     outputnode = pe.Node(niu.IdentityInterface(fields=['opposed_pe', 'matched_pe']),
@@ -251,14 +234,14 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         (split, merge_op, [(('out', _front), 'in_files')]),
         (merge_op, ref_op_wf, [('out_file', 'inputnode.in_file')]),
         (ref_op_wf, op2ref_reg, [
-            ('outputnode.skull_stripped_file', 'moving_image')]),
-        (inputnode, op2ref_reg, [('ref_brain', 'fixed_image')]),
+            ('outputnode.bias_corrected_file', 'moving_image')]),
+        (inputnode, op2ref_reg, [('ref', 'fixed_image')]),
         (op2ref_reg, outputnode, [('warped_image', 'opposed_pe')]),
     ])
 
     if not matched_pe:
         workflow.connect([
-            (inputnode, outputnode, [('ref_brain', 'matched_pe')]),
+            (inputnode, outputnode, [('ref', 'matched_pe')]),
         ])
         return workflow
 
@@ -284,8 +267,8 @@ def init_prepare_epi_wf(omp_nthreads, matched_pe=False,
         (split, merge_ma, [(('out', _last), 'in_files')]),
         (merge_ma, ref_ma_wf, [('out_file', 'inputnode.in_file')]),
         (ref_ma_wf, ma2ref_reg, [
-            ('outputnode.skull_stripped_file', 'moving_image')]),
-        (inputnode, ma2ref_reg, [('ref_brain', 'fixed_image')]),
+            ('outputnode.bias_corrected_file', 'moving_image')]),
+        (inputnode, ma2ref_reg, [('ref', 'fixed_image')]),
         (ma2ref_reg, outputnode, [('warped_image', 'matched_pe')]),
     ])
     return workflow
@@ -303,30 +286,19 @@ def _last(inlist):
     return inlist
 
 
-def _fix_hdr(in_file, newpath=None):
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
-
-    nii = nb.load(in_file)
-    hdr = nii.header.copy()
-    hdr.set_data_dtype('<f4')
-    hdr.set_intent('vector', (), '')
-    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
-    nb.Nifti1Image(nii.get_fdata(dtype='float32'), nii.affine, hdr).to_filename(
-        out_file)
-    return out_file
-
-
 def check_pes(epi_fmaps, pe_dir):
     """Check whether there are images with matched PE."""
     opposed_pe = False
     matched_pe = False
+    matched_pe_dir = pe_dir
+    opposed_pe_dir = ''
 
     for _, fmap_pe in epi_fmaps:
         if fmap_pe == pe_dir:
             matched_pe = True
         elif fmap_pe[0] == pe_dir[0]:
             opposed_pe = True
+            opposed_pe_dir = fmap_pe
 
     if not opposed_pe:
         raise ValueError("""\
@@ -334,12 +306,7 @@ None of the discovered fieldmaps has the right phase encoding direction. \
 This is possibly a problem with metadata. If not, rerun with \
 ``--ignore fieldmaps`` to skip the distortion correction step.""")
 
-    return matched_pe
-
-
-def _qwarp_args(pe_dir):
-    return {'i': '-noYdis -noZdis', 'j': '-noXdis -noZdis',
-            'k': '-noXdis -noYdis'}[pe_dir[0]]
+    return matched_pe, matched_pe_dir, opposed_pe_dir
 
 
 def _split_epi_lists(in_files, pe_dir, max_trs=50):
@@ -385,3 +352,7 @@ def _split_epi_lists(in_files, pe_dir, max_trs=50):
         return [opposed_pe, matched_pe]
 
     return [opposed_pe]
+
+
+def _get_pedir_topup(in_pe):
+    return in_pe.replace('i', 'x').replace('j', 'y').replace('k', 'z')
