@@ -114,13 +114,20 @@ accurate co-registration with the anatomical reference.
 
     # PEPOLAR path
     if 'epi' in fmaps:
-        from .pepolar import init_pepolar_unwarp_wf, check_pes
+        from .pepolar import init_pepolar_wf, check_pes
+        from .fmap import init_fmap_wf, init_fmap2field_wf
+        from .unwarp import init_sdc_unwarp_wf
 
         # SyN works without this metadata
         if epi_meta.get('PhaseEncodingDirection') is None:
             raise ValueError(
                 'PhaseEncodingDirection is not defined within the metadata retrieved '
                 'for the intended EPI (DWI, BOLD, or SBRef) run.')
+        if epi_meta.get('TotalReadoutTime') is None:
+            raise ValueError(
+                'TotalReadoutTime is not defined within the metadata retrieved '
+                'for the intended EPI (DWI, BOLD, or SBRef) run.')
+
         outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
 
         fmaps_epi = [(v[0], v[1].get('PhaseEncodingDirection'))
@@ -131,21 +138,54 @@ accurate co-registration with the anatomical reference.
                 'At least one of the EPI runs with alternative phase-encoding '
                 'blips is missing the required "PhaseEncodingDirection" metadata entry.')
 
-        # Find matched PE directions
-        matched_pe = check_pes(fmaps_epi, epi_meta['PhaseEncodingDirection'])
+        # Find matched PE directions. Return pe-dirs for matching/opposing EPIs
+        matched_pe, matched_pe_dir, opposed_pe_dir = check_pes(
+            fmaps_epi, epi_meta['PhaseEncodingDirection'])
 
-        # Get EPI polarities and their metadata
-        sdc_unwarp_wf = init_pepolar_unwarp_wf(
+        # Pepolar workflow (prepares epis and runs topup)
+        pepolar_wf = init_pepolar_wf(
             matched_pe=matched_pe,
             omp_nthreads=omp_nthreads)
-        sdc_unwarp_wf.inputs.inputnode.epi_pe_dir = epi_meta['PhaseEncodingDirection']
-        sdc_unwarp_wf.inputs.inputnode.fmaps_epi = fmaps_epi
+        # set inputs
+        pepolar_wf.inputs.inputnode.epi_pe_dir = epi_meta['PhaseEncodingDirection']
+        pepolar_wf.inputs.inputnode.epi_trt = epi_meta['TotalReadoutTime']
+        pepolar_wf.inputs.inputnode.fmaps_epi = fmaps_epi
+        pepolar_wf.inputs.inputnode.matched_pe_dir = matched_pe_dir
+        pepolar_wf.inputs.inputnode.opposed_pe_dir = opposed_pe_dir
+
+        # After topup workflow, recreate FIELDMAP PATH
+        fmap_wf = init_fmap_wf(
+            omp_nthreads=omp_nthreads,
+            fmap_bspline=False)
+
+        fmap2field_wf = init_fmap2field_wf(
+            omp_nthreads=omp_nthreads,
+            debug=debug)
+        # set inputs
+        fmap2field_wf.inputs.inputnode.metadata = epi_meta
+
+        sdc_unwarp_wf = init_sdc_unwarp_wf(
+            omp_nthreads=omp_nthreads,
+            debug=debug)
 
         workflow.connect([
+            (inputnode, pepolar_wf, [
+                ('epi_file', 'inputnode.in_reference')]),
+            (pepolar_wf, fmap_wf, [
+                ('outputnode.fieldmap', 'inputnode.fieldmap'),
+                ('outputnode.magnitude', 'inputnode.magnitude')]),
+            (inputnode, fmap2field_wf, [
+                ('epi_file', 'inputnode.in_reference'),
+                ('epi_brain', 'inputnode.in_reference_brain')]),
+            (fmap_wf, fmap2field_wf, [
+                ('outputnode.fmap', 'inputnode.fmap'),
+                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
             (inputnode, sdc_unwarp_wf, [
                 ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain'),
-                ('epi_mask', 'inputnode.in_mask')]),
+                ('epi_mask', 'inputnode.in_reference_mask')]),
+            (fmap2field_wf, sdc_unwarp_wf, [
+                ('outputnode.out_warp', 'inputnode.in_warp')]),
         ])
 
     # FIELDMAP path
