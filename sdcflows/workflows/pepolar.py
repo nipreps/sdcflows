@@ -95,7 +95,7 @@ def init_pepolar_wf(omp_nthreads=1, matched_pe=False, name="pepolar_wf"):
 A B0-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
 echo-planar imaging (EPI) references of opposed phase-encoding
 directions, with `topup` @topup (FSL {fsl_ver}).
-""".format(fsl_ver=''.join(['%02d' % v for v in fsl.Info().version() or []]))
+""".format(fsl_ver=fsl.Info().version())
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['fmaps_epi', 'epi_pe_dir', 'epi_trt', 'in_reference', 'matched_pe_dir',
