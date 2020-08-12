@@ -97,6 +97,7 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False):
 Susceptibility distortion correction (SDC) was omitted.
 """
         outputnode.inputs.method = 'None'
+        outputnode.inputs.out_warp = 'identity'
         workflow.connect([
             (inputnode, outputnode, [('epi_file', 'epi_corrected'),
                                      ('epi_mask', 'epi_mask'),
