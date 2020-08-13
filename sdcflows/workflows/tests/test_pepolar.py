@@ -15,7 +15,7 @@ def test_split_epi_lists(bids_layouts, tmpdir):
 
     layout = bids_layouts['testdata']
 
-    bold = layout.get(suffix='bold', dir='LR', direction='LR',
+    bold = layout.get(suffix='bold', direction='LR',
                       extension=['.nii.gz', '.nii'])[0]
     epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
 
@@ -47,9 +47,9 @@ def test_prepare_epi_wf0(bids_layouts, tmpdir):
 
     layout = bids_layouts['testdata']
 
-    bold = layout.get(suffix='bold', dir='LR', direction='LR',
+    bold = layout.get(suffix='bold', direction='LR',
                       extension=['.nii.gz', '.nii'])[0]
-    epidata = layout.get(suffix='epi', dir='LR', direction='LR',
+    epidata = layout.get(suffix='epi', direction='LR',
                          desc=None, extension=['.nii.gz', '.nii'])
 
     with pytest.raises(ValueError):
@@ -64,9 +64,9 @@ def test_prepare_epi_wf1(bids_layouts, tmpdir):
 
     layout = bids_layouts['testdata']
 
-    bold = layout.get(suffix='bold', dir='LR', direction='LR',
+    bold = layout.get(suffix='bold', direction='LR',
                       extension=['.nii.gz', '.nii'])[0]
-    boldref = layout.get(suffix='boldref', dir='LR', direction='LR',
+    boldref = layout.get(suffix='boldref', direction='LR',
                          extension=['.nii.gz', '.nii'])[0]
     epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
 
@@ -88,11 +88,11 @@ def test_prepare_epi_wf2(bids_layouts, tmpdir):
 
     layout = bids_layouts['testdata']
 
-    bold = layout.get(suffix='bold', dir='LR', direction='LR',
+    bold = layout.get(suffix='bold', direction='LR',
                       extension=['.nii.gz', '.nii'])[0]
-    boldref = layout.get(suffix='boldref', dir='LR', direction='LR',
+    boldref = layout.get(suffix='boldref', direction='LR',
                          extension=['.nii.gz', '.nii'])[0]
-    epidata = layout.get(suffix='epi', dir='RL', direction='RL',
+    epidata = layout.get(suffix='epi', direction='RL',
                          desc=None, extension=['.nii.gz', '.nii'])
 
     matched_pe = check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
@@ -116,15 +116,15 @@ def test_pepolar_wf1(bids_layouts, output_path, dataset, workdir):
     layout = bids_layouts[dataset]
 
     if dataset == 'testdata':
-        bold = layout.get(suffix='bold', dir='LR', direction='LR',
+        bold = layout.get(suffix='bold', direction='LR',
                           extension=['.nii.gz', '.nii'])[0]
-        boldref = layout.get(suffix='boldref', dir='LR', direction='LR', desc='brain',
+        boldref = layout.get(suffix='boldref', direction='LR', desc='brain',
                              extension=['.nii.gz', '.nii'])[0]
+        epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
     elif dataset == 'ds001600':
         bold = layout.get(suffix='bold', acquisition='AP',
                           extension=['.nii.gz', '.nii'])[0]
-
-    epidata = layout.get(suffix='epi', desc=None, extension=['.nii.gz', '.nii'])
+        epidata = layout.get(suffix='epi', extension=['.nii.gz', '.nii'])
 
     matched_pe = check_pes([(im.path, im.get_metadata()['PhaseEncodingDirection'])
                             for im in epidata], bold.get_metadata()['PhaseEncodingDirection'])
