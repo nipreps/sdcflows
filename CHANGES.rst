@@ -1,3 +1,10 @@
+1.3.2 (August 14, 2020)
+=======================
+Bug-fix release in 1.3.x series.
+
+* FIX: Replace NaNs in fieldmap atlas with zeros (#104)
+* ENH: Return out_warp == "identity" if no SDC is applied (#108)
+
 1.3.1 (May 22, 2020)
 ====================
 Bug-fix release adapting to use newly refacored DerivativesDataSink
