@@ -1,3 +1,9 @@
+1.3.3 (September 4, 2020)
+=========================
+Bug-fix release in 1.3.x series.
+
+Allows niworkflows 1.2.x or 1.3.x, as no API-breaking changes in 1.3.0 affect SDCflows.
+
 1.3.2 (August 14, 2020)
 =======================
 Bug-fix release in 1.3.x series.
