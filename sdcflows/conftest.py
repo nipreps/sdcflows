@@ -13,6 +13,8 @@ test_workdir = os.getenv('TEST_WORK_DIR')
 layouts = {p.name: BIDSLayout(str(p), validate=False, derivatives=True)
            for p in Path(test_data_env).glob('*') if p.is_dir()}
 
+data_dir = Path(__file__).parent / "tests" / "data" / "dsA"
+
 
 def pytest_report_header(config):
     msg = "Datasets found: %s" % ', '.join([v.root for v in layouts.values()])
@@ -29,6 +31,8 @@ def add_np(doctest_namespace):
     doctest_namespace['Path'] = Path
     for key, val in list(layouts.items()):
         doctest_namespace[key] = Path(val.root)
+
+    doctest_namespace['testdata_dir'] = data_dir
 
 
 @pytest.fixture
@@ -49,3 +53,8 @@ def bids_layouts():
 @pytest.fixture
 def datadir():
     return Path(test_data_env)
+
+
+@pytest.fixture
+def testdata_dir():
+    return data_dir
