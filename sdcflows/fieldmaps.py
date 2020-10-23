@@ -160,7 +160,7 @@ class FieldmapFile:
         """Validate a fieldmap path."""
         if isinstance(value, BIDSFile):
             value = Path(value.path)
-        if isinstance(value, str):
+        elif isinstance(value, str):
             value = Path(value)
 
         if not value.is_file():
@@ -213,17 +213,17 @@ class FieldmapFile:
                     f"Missing readout timing information for <{self.path}>."
                 )
 
-        if self.suffix == "fieldmap" and "Units" not in self.metadata:
+        elif self.suffix == "fieldmap" and "Units" not in self.metadata:
             raise MetadataError(f"Missing 'Units' for <{self.path}>.")
 
-        if self.suffix == "phasediff" and (
+        elif self.suffix == "phasediff" and (
             "EchoTime1" not in self.metadata or "EchoTime2" not in self.metadata
         ):
             raise MetadataError(
                 f"Missing 'EchoTime1' and/or 'EchoTime2' for <{self.path}>."
             )
 
-        if self.suffix in ("phase1", "phase2") and ("EchoTime" not in self.metadata):
+        elif self.suffix in ("phase1", "phase2") and ("EchoTime" not in self.metadata):
             raise MetadataError(f"Missing 'EchoTime' for <{self.path}>.")
 
 
