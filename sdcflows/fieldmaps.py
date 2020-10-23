@@ -45,9 +45,7 @@ def _type_setter(obj, attribute, value):
         return value
 
     if obj.method != EstimatorType.UNKNOWN and obj.method != value:
-        raise TypeError(
-            f"Cannot change determined method {obj.method} to {value}."
-        )
+        raise TypeError(f"Cannot change determined method {obj.method} to {value}.")
 
     if value not in (
         EstimatorType.PEPOLAR,
@@ -184,14 +182,12 @@ class FieldmapFile:
         """Validate metadata and additional checks."""
         self.entities = parse_file_entities(str(self.path))
         self.suffix = self.entities.pop("suffix")
-        extension = self.entities.pop('extension').lstrip('.')
+        extension = self.entities.pop("extension").lstrip(".")
 
         # Automatically fill metadata in when possible
         # TODO: implement BIDS hierarchy of metadata
         if self.find_meta:
-            sidecar = Path(
-                str(self.path).replace(extension, "json")
-            )
+            sidecar = Path(str(self.path).replace(extension, "json"))
             if sidecar.is_file():
                 _meta = self.metadata or {}
                 self.metadata = loads(sidecar.read_text())
@@ -200,26 +196,32 @@ class FieldmapFile:
         # Attempt to infer a bids_root folder
         relative_path = relative_to_root(self.path)
         if str(relative_path) != str(self.path):
-            self.bids_root = Path(str(self.path)[:-len(str(relative_path))])
+            self.bids_root = Path(str(self.path)[: -len(str(relative_path))])
 
         # Check for REQUIRED metadata (depends on suffix.)
         if self.suffix in ("bold", "dwi", "epi", "sbref"):
             if "PhaseEncodingDirection" not in self.metadata:
-                raise MetadataError(f"Missing 'PhaseEncodingDirection' for <{self.path}>.")
+                raise MetadataError(
+                    f"Missing 'PhaseEncodingDirection' for <{self.path}>."
+                )
             if not (
                 set(("TotalReadoutTime", "EffectiveEchoSpacing")).intersection(
-                    self.metadata.keys())
+                    self.metadata.keys()
+                )
             ):
-                raise MetadataError(f"Missing readout timing information for <{self.path}>.")
+                raise MetadataError(
+                    f"Missing readout timing information for <{self.path}>."
+                )
 
         if self.suffix == "fieldmap" and "Units" not in self.metadata:
             raise MetadataError(f"Missing 'Units' for <{self.path}>.")
 
-        if (
-            self.suffix == "phasediff"
-            and ("EchoTime1" not in self.metadata or "EchoTime2" not in self.metadata)
+        if self.suffix == "phasediff" and (
+            "EchoTime1" not in self.metadata or "EchoTime2" not in self.metadata
         ):
-            raise MetadataError(f"Missing 'EchoTime1' and/or 'EchoTime2' for <{self.path}>.")
+            raise MetadataError(
+                f"Missing 'EchoTime1' and/or 'EchoTime2' for <{self.path}>."
+            )
 
         if self.suffix in ("phase1", "phase2") and ("EchoTime" not in self.metadata):
             raise MetadataError(f"Missing 'EchoTime' for <{self.path}>.")
@@ -256,13 +258,16 @@ class FieldmapEstimation:
         suffix_set = set(suffix_list)
 
         # Fieldmap option 1: actual field-mapping sequences
-        fmap_types = suffix_set.intersection(("fieldmap", "phasediff", "phase1", "phase2"))
+        fmap_types = suffix_set.intersection(
+            ("fieldmap", "phasediff", "phase1", "phase2")
+        )
         if len(fmap_types) > 1 and fmap_types - set(("phase1", "phase2")):
             raise TypeError(f"Incompatible suffices found: <{','.join(fmap_types)}>.")
 
         if fmap_types:
             sources = sorted(
-                str(f.path) for f in self.sources
+                str(f.path)
+                for f in self.sources
                 if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2")
             )
 
@@ -282,10 +287,14 @@ class FieldmapEstimation:
             magnitude = f"magnitude{'' if self.method == EstimatorType.MAPPED else '1'}"
             if magnitude not in suffix_set:
                 try:
-                    self.sources.append(FieldmapFile(
-                        sources[0].replace("fieldmap", "magnitude").replace(
-                            "diff", "1").replace("phase", "magnitude")
-                    ))
+                    self.sources.append(
+                        FieldmapFile(
+                            sources[0]
+                            .replace("fieldmap", "magnitude")
+                            .replace("diff", "1")
+                            .replace("phase", "magnitude")
+                        )
+                    )
                 except Exception:
                     raise ValueError(
                         "A fieldmap or phase-difference estimation type was found, "
@@ -293,11 +302,18 @@ class FieldmapEstimation:
                     )
 
             # Check presence and try to find (if necessary) the second magnitude file
-            if self.method == EstimatorType.PHASEDIFF and "magnitude2" not in suffix_set:
+            if (
+                self.method == EstimatorType.PHASEDIFF
+                and "magnitude2" not in suffix_set
+            ):
                 try:
-                    self.sources.append(FieldmapFile(
-                        sources[-1].replace("diff", "2").replace("phase", "magnitude")
-                    ))
+                    self.sources.append(
+                        FieldmapFile(
+                            sources[-1]
+                            .replace("diff", "2")
+                            .replace("phase", "magnitude")
+                        )
+                    )
                 except Exception:
                     if "phase2" in suffix_set:
                         raise ValueError(
@@ -308,9 +324,9 @@ class FieldmapEstimation:
         # Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)
         # IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s
         pepolar_types = suffix_set.intersection(("bold", "dwi", "epi", "sbref"))
-        _pepolar_estimation = len([
-            f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref")
-        ]) > 1
+        _pepolar_estimation = (
+            len([f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref")]) > 1
+        )
 
         if _pepolar_estimation:
             self.method = MODALITIES[pepolar_types.pop()]
