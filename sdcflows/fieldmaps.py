@@ -1,6 +1,7 @@
 """Utilities for fieldmap estimation."""
 from pathlib import Path
 from enum import Enum, auto
+import re
 import attr
 from json import loads
 from bids.layout import BIDSFile, parse_file_entities
@@ -171,7 +172,7 @@ class FieldmapFile:
         if not str(value).endswith((".nii", ".nii.gz")):
             raise ValueError(f"File path <{value}> does not look like a NIfTI file.")
 
-        suffix = str(value).rpartition(".nii")[0].rpartition("_")[-1]
+        suffix = re.search(r"(?<=_)\w+(?=\.nii)", value.name).group()
         if suffix not in tuple(MODALITIES.keys()):
             raise ValueError(
                 f"File path <{value}> with suffix <{suffix}> is not a valid "
