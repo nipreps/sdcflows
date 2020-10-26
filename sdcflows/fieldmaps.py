@@ -331,6 +331,11 @@ class FieldmapEstimation:
 
         if _pepolar_estimation:
             self.method = MODALITIES[pepolar_types.pop()]
+            _pe = set(f.metadata["PhaseEncodingDirection"] for f in self.sources)
+            if len(_pe) == 1:
+                raise ValueError(
+                    f"Only one phase-encoding direction <{_pe.pop()}> found across sources."
+                )
 
         anat_types = suffix_set.intersection(("T1w", "T2w"))
         if anat_types:
