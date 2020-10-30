@@ -231,9 +231,9 @@ def init_fmap_postproc_wf(
     omp_nthreads, median_kernel_size=5, name="fmap_postproc_wf"
 ):
     """
-    Postprocess a B0 map estimated elsewhere.
+    Postprocess a :math:`B_0` map estimated elsewhere.
 
-    This workflow denoises (mostly via smoothing) a B0 fieldmap.
+    This workflow denoises (mostly via smoothing) a :math:`B_0` fieldmap.
 
     Workflow Graph
         .. workflow ::
@@ -254,12 +254,12 @@ def init_fmap_postproc_wf(
 
     Inputs
     ------
-    fmap_mask : pathlike
-        A brain binary mask corresponding to this fieldmap.
+    fmap : pathlike
+        Fully preprocessed :math:`B_0` field nonuniformity map (aka *fieldmap*).
     fmap_ref : pathlike
         A preprocessed magnitude/reference image for the fieldmap.
-    fmap : pathlike
-        A B0-field nonuniformity map (aka fieldmap) estimated elsewhere.
+    fmap_mask : pathlike
+        A brain binary mask corresponding to this fieldmap.
 
     Outputs
     -------
