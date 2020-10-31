@@ -46,7 +46,12 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
     # fmt: on
 
     if outdir:
+        from nipype.interfaces.afni import Automask
         from ...interfaces.reportlets import FieldmapReportlet
+
+        pre_mask = pe.Node(Automask(dilate=1, outputtype="NIFTI_GZ"),
+                           name="pre_mask")
+        merge_corrected = pe.Node(IntraModalMerge(hmc=False), name="merge_corrected")
 
         rep = pe.Node(
             FieldmapReportlet(reference_label="EPI Reference"), "simple_report"
@@ -67,8 +72,11 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
 
         # fmt: off
         wf.connect([
-            (topup_wf, rep, [("outputnode.fieldmap", "fieldmap"),
-                             ("outputnode.corrected", "reference")]),
+            (topup_wf, pre_mask, [("outputnode.corrected", "in_file")]),
+            (topup_wf, merge_corrected, [("outputnode.corrected", "in_files")]),
+            (merge_corrected, rep, [("out_avg", "reference")]),
+            (topup_wf, rep, [("outputnode.fieldmap", "fieldmap")]),
+            (pre_mask, rep, [("out_file", "mask")]),
             (rep, ds_report, [("out_report", "in_file")]),
         ])
         # fmt: on
