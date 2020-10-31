@@ -15,7 +15,7 @@ This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
 Some scanners produce one ``phasediff`` map, where the drift between the two echos has
 already been calulated (see `the corresponding section of BIDS
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>__`).
+<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
 
 .. _sdc_direct_b0 :
 
@@ -56,30 +56,30 @@ def init_fmap_wf(omp_nthreads, mode="phase-diff", name="fmap_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fmap import init_fmap_wf
+            from sdcflows.models.fieldmap import init_fmap_wf
             wf = init_fmap_wf(omp_nthreads=6)
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
-    name : str
+    name : :obj:`str`
         Unique name of this workflow.
 
     Inputs
     ------
-    magnitude : str
+    magnitude : :obj:`str`
         Path to the corresponding magnitude image for anatomical reference.
-    fieldmap : str
+    fieldmap : :obj:`str`
         Path to the fieldmap acquisition (``*_fieldmap.nii[.gz]`` of BIDS).
 
     Outputs
     -------
-    fmap : str
+    fmap : :obj:`str`
         Path to the estimated fieldmap.
-    fmap_ref : str
+    fmap_ref : :obj:`str`
         Path to a preprocessed magnitude image reference.
-    fmap_mask : str
+    fmap_mask : :obj:`str`
         Path to a binary brain mask corresponding to the ``fmap`` and ``fmap_ref``
         pair.
 
@@ -167,26 +167,26 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fmap import init_magnitude_wf
+            from sdcflows.models.fieldmap import init_magnitude_wf
             wf = init_magnitude_wf(omp_nthreads=6)
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
-    name : str
+    name : :obj:`str`
         Name of workflow (default: ``prepare_magnitude_w``)
 
     Inputs
     ------
-    magnitude : pathlike
+    magnitude : :obj:`os.PathLike`
         Path to the corresponding magnitude path(s).
 
     Outputs
     -------
-    fmap_ref : pathlike
+    fmap_ref : :obj:`os.PathLike`
         Path to the fieldmap reference calculated in this workflow.
-    fmap_mask : pathlike
+    fmap_mask : :obj:`os.PathLike`
         Path to a binary brain mask corresponding to the reference above.
 
     """
@@ -239,30 +239,30 @@ def init_fmap_postproc_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fmap import init_fmap_postproc_wf
+            from sdcflows.models.fieldmap import init_fmap_postproc_wf
             wf = init_fmap_postproc_wf(omp_nthreads=6)
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
-    median_kernel_size : int
+    median_kernel_size : :obj:`int`
         Size of the kernel when smoothing is done with a median filter.
-    name : str
+    name : :obj:`str`
         Name of workflow (default: ``fmap_postproc_wf``)
 
     Inputs
     ------
-    fmap : pathlike
+    fmap : :obj:`os.PathLike`
         Fully preprocessed :math:`B_0` field nonuniformity map (aka *fieldmap*).
-    fmap_ref : pathlike
+    fmap_ref : :obj:`os.PathLike`
         A preprocessed magnitude/reference image for the fieldmap.
-    fmap_mask : pathlike
+    fmap_mask : :obj:`os.PathLike`
         A brain binary mask corresponding to this fieldmap.
 
     Outputs
     -------
-    out_fmap : pathlike
+    out_fmap : :obj:`os.PathLike`
         Postprocessed fieldmap.
 
     """
@@ -336,28 +336,28 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.phdiff import init_phdiff_wf
+            from sdcflows.models.fieldmap import init_phdiff_wf
             wf = init_phdiff_wf(omp_nthreads=1)
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
 
     Inputs
     ------
-    magnitude : :obj:`os.pathlike`
+    magnitude : :obj:`os.PathLike`
         A reference magnitude image preprocessed elsewhere.
-    phase : list of tuple(os.pathlike, dict)
+    phase : :obj:`list` of :obj:`tuple` of (:obj:`os.PathLike`, :obj:`dict`)
         List containing one GRE phase-difference map with its corresponding metadata
         (requires ``EchoTime1`` and ``EchoTime2``), or the phase maps for the two
         subsequent echoes, with their metadata (requires ``EchoTime``).
-    mask : :obj:`os.pathlike`
+    mask : :obj:`os.PathLike`
         A brain mask calculated from the magnitude image.
 
     Outputs
     -------
-    fieldmap : :obj:`os.pathlike`
+    fieldmap : :obj:`os.PathLike`
         The estimated fieldmap in Hz.  # TODO: write metadata "Units"
 
     References
@@ -448,7 +448,7 @@ def _demean(in_file, in_mask=None, usemode=True):
 
     Parameters
     ----------
-    usemode : bool
+    usemode : :obj:`bool`
         Use the mode instead of the median (should be even more robust
         against outliers).
 
