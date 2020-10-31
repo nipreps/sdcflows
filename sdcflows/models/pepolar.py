@@ -61,11 +61,11 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     """
     from nipype.interfaces.fsl.epi import TOPUP
     from niworkflows.interfaces.nibabel import MergeSeries
-    from sdcflows.interfaces.fmap import get_trt
+    from sdcflows.interfaces.epi import GetReadoutTime
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
-{_PEPOLAR_DESC} with `topup` @topup (FSL {'.'.join(TOPUP().version())}).
+{_PEPOLAR_DESC} with `topup` @topup (FSL {TOPUP().version}).
 """
 
     inputnode = pe.Node(
@@ -87,9 +87,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     concat_blips = pe.Node(MergeSeries(), name="concat_blips")
     readout_time = pe.MapNode(
-        niu.Function(input_names=["in_meta", "in_file"], function=get_trt),
-        name="readout_time",
-        iterfield=["in_meta", "in_file"],
+        GetReadoutTime(), name="readout_time", iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
 
@@ -104,9 +102,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     workflow.connect([
         (inputnode, concat_blips, [("in_data", "in_files")]),
         (inputnode, readout_time, [("in_data", "in_file"),
-                                   ("metadata", "in_meta")]),
+                                   ("metadata", "metadata")]),
         (inputnode, topup, [(("metadata", _pe2fsl), "encoding_direction")]),
-        (readout_time, topup, [("out", "readout_times")]),
+        (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
         (topup, outputnode, [("out_corrected", "corrected"),
                              ("out_field", "fieldmap"),
@@ -239,7 +237,10 @@ def _fix_hdr(in_file, newpath=None):
 
 def _pe2fsl(metadata):
     """Convert ijk notation to xyz."""
-    return [chr(ord(m["PhaseEncodingDirection"]) + 15) for m in metadata]
+    return [
+        m["PhaseEncodingDirection"].replace("i", "x").replace("j", "y").replace("k", "z")
+        for m in metadata
+    ]
 
 
 def _front(inlist):
