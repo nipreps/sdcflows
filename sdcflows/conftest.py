@@ -35,10 +35,15 @@ def workdir():
 
 
 @pytest.fixture
-def output_path():
+def outdir():
     return None if test_output_dir is None else Path(test_output_dir)
 
 
 @pytest.fixture
 def bids_layouts():
     return layouts
+
+
+@pytest.fixture
+def datadir():
+    return Path(test_data_env)
