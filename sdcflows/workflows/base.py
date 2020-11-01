@@ -8,18 +8,18 @@ from nipype import logging
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-LOGGER = logging.getLogger('nipype.workflow')
+LOGGER = logging.getLogger("nipype.workflow")
 FMAP_PRIORITY = {
-    'epi': 0,
-    'fieldmap': 1,
-    'phasediff': 2,
-    'syn': 3,
+    "epi": 0,
+    "fieldmap": 1,
+    "phasediff": 2,
+    "syn": 3,
 }
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
-def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False):
+def init_sdc_estimate_wf(bids_fmaps, omp_nthreads=1, debug=False):
     """
     Build a :abbr:`SDC (susceptibility distortion correction)` workflow.
 
@@ -37,14 +37,10 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False):
 
     Parameters
     ----------
-    fmaps : list of pybids dicts
+    bids_fmaps : list of pybids dicts
         A list of dictionaries with the available fieldmaps
         (and their metadata using the key ``'metadata'`` for the
         case of :abbr:`PEPOLAR (Phase-Encoding POLARity)` fieldmaps).
-    epi_meta : dict
-        BIDS metadata dictionary corresponding to the
-        :abbr:`EPI (echo-planar imaging)` run (i.e., suffix ``bold``,
-        ``sbref``, or ``dwi``) for which the fieldmap is being estimated.
     omp_nthreads : int
         Maximum number of threads an individual process may use
     debug : bool
@@ -74,35 +70,26 @@ def init_sdc_estimate_wf(fmaps, epi_meta, omp_nthreads=1, debug=False):
         Brain-extracted, unwarped EPI scan reference
     out_warp
         The deformation field to unwarp the susceptibility distortions
-    syn_ref
-        If ``--force-syn``, an unwarped EPI scan reference with this
-        method (for reporting purposes)
     method : str
         Short description of the estimation method that was run.
 
     """
-    workflow = Workflow(name='sdc_estimate_wf' if fmaps else 'sdc_bypass_wf')
-    inputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_file', 'epi_brain', 'epi_mask', 't1w_brain', 'std2anat_xfm']),
-        name='inputnode')
-
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['epi_corrected', 'epi_mask', 'epi_brain',
-                'out_warp', 'syn_ref', 'method']),
-        name='outputnode')
+    workflow = Workflow(name="sdc_estimate_wf" if bids_fmaps else "sdc_bypass_wf")
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fieldmap", "fmap_ref", "method"]),
+        name="outputnode",
+    )
 
     # No fieldmaps - forward inputs to outputs
-    if not fmaps:
+    if not bids_fmaps:
         workflow.__postdesc__ = """\
 Susceptibility distortion correction (SDC) was omitted.
 """
-        outputnode.inputs.method = 'None'
-        outputnode.inputs.out_warp = 'identity'
-        workflow.connect([
-            (inputnode, outputnode, [('epi_file', 'epi_corrected'),
-                                     ('epi_mask', 'epi_mask'),
-                                     ('epi_brain', 'epi_brain')]),
-        ])
+        outputnode.inputs.method = "None"
+        outputnode.inputs.fieldmap = "identity"
+        # fmt: off
+        workflow.add_nodes([outputnode])
+        # fmt: on
         return workflow
 
     workflow.__postdesc__ = """\
@@ -111,185 +98,127 @@ EPI (echo-planar imaging) reference was calculated for a more
 accurate co-registration with the anatomical reference.
 """
 
-    only_syn = 'syn' in fmaps and len(fmaps) == 1
-
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=["epi_file", "epi_brain", "epi_mask", "t1w_brain", "std2anat_xfm"]
+        ),
+        name="inputnode",
+    )
     # PEPOLAR path
-    if 'epi' in fmaps:
-        from .pepolar import init_pepolar_unwarp_wf, check_pes
+    if "epi" in bids_fmaps:
+        from ..models.pepolar import init_3dQwarp_wf
 
-        # SyN works without this metadata
-        if epi_meta.get('PhaseEncodingDirection') is None:
-            raise ValueError(
-                'PhaseEncodingDirection is not defined within the metadata retrieved '
-                'for the intended EPI (DWI, BOLD, or SBRef) run.')
-        outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
+        outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
-        fmaps_epi = [(v[0], v[1].get('PhaseEncodingDirection'))
-                     for v in fmaps['epi']]
-
-        if not all(list(zip(*fmaps_epi))[1]):
-            raise ValueError(
-                'At least one of the EPI runs with alternative phase-encoding '
-                'blips is missing the required "PhaseEncodingDirection" metadata entry.')
-
-        # Find matched PE directions
-        matched_pe = check_pes(fmaps_epi, epi_meta['PhaseEncodingDirection'])
-
-        # Get EPI polarities and their metadata
-        sdc_unwarp_wf = init_pepolar_unwarp_wf(
-            matched_pe=matched_pe,
-            omp_nthreads=omp_nthreads)
-        sdc_unwarp_wf.inputs.inputnode.epi_pe_dir = epi_meta['PhaseEncodingDirection']
-        sdc_unwarp_wf.inputs.inputnode.fmaps_epi = fmaps_epi
-
-        workflow.connect([
-            (inputnode, sdc_unwarp_wf, [
-                ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain'),
-                ('epi_mask', 'inputnode.in_mask')]),
-        ])
+        in_data, metadata = zip(*bids_fmaps["epi"])
+        estimate_wf = init_3dQwarp_wf(omp_nthreads=omp_nthreads)
+        estimate_wf.inputs.inputnode.in_data = in_data
+        estimate_wf.inputs.inputnode.metadata = metadata
 
     # FIELDMAP path
-    elif 'fieldmap' in fmaps or 'phasediff' in fmaps:
-        from .fmap import init_fmap2field_wf
-        from .unwarp import init_sdc_unwarp_wf
+    elif "fieldmap" in bids_fmaps or "phasediff" in bids_fmaps:
+        from ..models.fieldmap import init_fmap_wf
 
-        # SyN works without this metadata
-        if epi_meta.get('PhaseEncodingDirection') is None:
-            raise ValueError(
-                'PhaseEncodingDirection is not defined within the metadata retrieved '
-                'for the intended EPI (DWI, BOLD, or SBRef) run.')
+        if "fieldmap" in bids_fmaps:
+            fmap = bids_fmaps["fieldmap"][0]
+            outputnode.inputs.method = "FMB (fieldmap-based) - directly measured B0 map"
+            estimate_wf = init_fmap_wf(omp_nthreads=omp_nthreads, mode="fieldmap")
+            estimate_wf.inputs.inputnode.fieldmap = [m for m, _ in fmap["fieldmap"]]
+        else:
+            fmap = bids_fmaps["phasediff"][0]
+            outputnode.inputs.method = "FMB (fieldmap-based) - phase-difference map"
+            estimate_wf = init_fmap_wf(omp_nthreads=omp_nthreads)
+            estimate_wf.inputs.inputnode.fieldmap = fmap["phases"]
 
-        if 'fieldmap' in fmaps:
-            from .fmap import init_fmap_wf
-            try:
-                fmap, = fmaps['fieldmap']
-            except ValueError:
-                LOGGER.warning('Several B0 fieldmaps found for the given target, using '
-                               'the first one.')
-                fmap = fmaps['fieldmap'][0]
-
-            outputnode.inputs.method = 'FMB (fieldmap-based) - directly measured B0 map'
-            fmap_wf = init_fmap_wf(
-                omp_nthreads=omp_nthreads,
-                fmap_bspline=False)
-            # set inputs
-            fmap_wf.inputs.inputnode.magnitude = [
-                m for m, _ in fmap['magnitude']]
-            fmap_wf.inputs.inputnode.fieldmap = [
-                m for m, _ in fmap['fieldmap']]
-        elif 'phasediff' in fmaps:
-            from .phdiff import init_phdiff_wf
-            try:
-                fmap, = fmaps['phasediff']
-            except ValueError:
-                LOGGER.warning('Several phase-difference maps found for the given target, using '
-                               'the first one.')
-                fmap = fmaps['phasediff'][0]
-
-            outputnode.inputs.method = 'FMB (fieldmap-based) - phase-difference map'
-            fmap_wf = init_phdiff_wf(omp_nthreads=omp_nthreads)
-            # set inputs
-            fmap_wf.inputs.inputnode.magnitude = [
-                m for m, _ in fmap['magnitude']]
-            fmap_wf.inputs.inputnode.phasediff = fmap['phases']
-
-        fmap2field_wf = init_fmap2field_wf(omp_nthreads=omp_nthreads, debug=debug)
-        fmap2field_wf.inputs.inputnode.metadata = epi_meta
-
-        sdc_unwarp_wf = init_sdc_unwarp_wf(
-            omp_nthreads=omp_nthreads,
-            debug=debug,
-            name='sdc_unwarp_wf')
-
-        workflow.connect([
-            (inputnode, fmap2field_wf, [
-                ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain')]),
-            (inputnode, sdc_unwarp_wf, [
-                ('epi_file', 'inputnode.in_reference'),
-                ('epi_mask', 'inputnode.in_reference_mask')]),
-            (fmap_wf, fmap2field_wf, [
-                ('outputnode.fmap', 'inputnode.fmap'),
-                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
-                ('outputnode.fmap_mask', 'inputnode.fmap_mask')]),
-            (fmap2field_wf, sdc_unwarp_wf, [
-                ('outputnode.out_warp', 'inputnode.in_warp')]),
-
-        ])
-    elif not only_syn:
-        raise ValueError('Fieldmaps of types %s are not supported' %
-                         ', '.join(['"%s"' % f for f in fmaps]))
+        # set magnitude files (common for the three flavors)
+        estimate_wf.inputs.inputnode.magnitude = [m for m, _ in fmap["magnitude"]]
 
     # FIELDMAP-less path
-    if 'syn' in fmaps:
-        from .syn import init_syn_sdc_wf
-        syn_sdc_wf = init_syn_sdc_wf(
-            epi_pe=epi_meta.get('PhaseEncodingDirection', None),
-            omp_nthreads=omp_nthreads)
+    elif "syn" in bids_fmaps:
+        from ..models.syn import init_syn_sdc_wf
 
+        outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
+
+        estimate_wf = init_syn_sdc_wf(omp_nthreads=omp_nthreads)
+
+        # fmt: off
         workflow.connect([
-            (inputnode, syn_sdc_wf, [
-                ('epi_file', 'inputnode.in_reference'),
-                ('epi_brain', 'inputnode.in_reference_brain'),
-                ('t1w_brain', 'inputnode.t1w_brain'),
-                ('std2anat_xfm', 'inputnode.std2anat_xfm')]),
-            (syn_sdc_wf, outputnode, [
-                ('outputnode.out_reference', 'syn_ref')]),
+            (inputnode, estimate_wf, [
+                ("epi_file", "inputnode.in_reference"),
+                ("epi_brain", "inputnode.in_reference_brain"),
+                ("t1w_brain", "inputnode.t1w_brain"),
+                ("std2anat_xfm", "inputnode.std2anat_xfm")]),
         ])
+        # fmt: on
+    else:
+        raise ValueError("Unsupported field mapping strategy.")
 
-        # XXX Eliminate branch when forcing isn't an option
-        if only_syn:  # No fieldmaps, but --use-syn
-            outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
-            sdc_unwarp_wf = syn_sdc_wf
-        else:  # --force-syn was called when other fieldmap was present
-            sdc_unwarp_wf.__desc__ = None
-
+    # fmt: off
     workflow.connect([
-        (sdc_unwarp_wf, outputnode, [
-            ('outputnode.out_warp', 'out_warp'),
-            ('outputnode.out_reference', 'epi_corrected'),
-            ('outputnode.out_reference_brain', 'epi_brain'),
-            ('outputnode.out_mask', 'epi_mask')]),
+        (estimate_wf, outputnode, [
+            ("outputnode.fmap", "fieldmap"),
+            ("outputnode.fmap_ref", "reference")]),
     ])
-
+    # fmt: on
     return workflow
 
 
 def fieldmap_wrangler(layout, target_image, use_syn=False, force_syn=False):
     """Query the BIDSLayout for fieldmaps, and arrange them for the orchestration workflow."""
     from collections import defaultdict
+
     fmap_bids = layout.get_fieldmap(target_image, return_list=True)
     fieldmaps = defaultdict(list)
     for fmap in fmap_bids:
-        if fmap['suffix'] == 'epi':
-            fieldmaps['epi'].append((fmap['epi'], layout.get_metadata(fmap['epi'])))
+        if fmap["suffix"] == "epi":
+            fieldmaps["epi"].append((fmap["epi"], layout.get_metadata(fmap["epi"])))
 
-        if fmap['suffix'] == 'fieldmap':
-            fieldmaps['fieldmap'].append({
-                'magnitude': [(fmap['magnitude'], layout.get_metadata(fmap['magnitude']))],
-                'fieldmap': [(fmap['fieldmap'], layout.get_metadata(fmap['fieldmap']))],
-            })
+        if fmap["suffix"] == "fieldmap":
+            fieldmaps["fieldmap"].append(
+                {
+                    "magnitude": [
+                        (fmap["magnitude"], layout.get_metadata(fmap["magnitude"]))
+                    ],
+                    "fieldmap": [
+                        (fmap["fieldmap"], layout.get_metadata(fmap["fieldmap"]))
+                    ],
+                }
+            )
 
-        if fmap['suffix'] == 'phasediff':
-            fieldmaps['phasediff'].append({
-                'magnitude': [(fmap[k], layout.get_metadata(fmap[k]))
-                              for k in sorted(fmap.keys()) if k.startswith('magnitude')],
-                'phases': [(fmap['phasediff'], layout.get_metadata(fmap['phasediff']))],
-            })
+        if fmap["suffix"] == "phasediff":
+            fieldmaps["phasediff"].append(
+                {
+                    "magnitude": [
+                        (fmap[k], layout.get_metadata(fmap[k]))
+                        for k in sorted(fmap.keys())
+                        if k.startswith("magnitude")
+                    ],
+                    "phases": [
+                        (fmap["phasediff"], layout.get_metadata(fmap["phasediff"]))
+                    ],
+                }
+            )
 
-        if fmap['suffix'] == 'phase':
-            fieldmaps['phasediff'].append({
-                'magnitude': [(fmap[k], layout.get_metadata(fmap[k]))
-                              for k in sorted(fmap.keys()) if k.startswith('magnitude')],
-                'phases': [(fmap[k], layout.get_metadata(fmap[k]))
-                           for k in sorted(fmap.keys()) if k.startswith('phase')],
-            })
+        if fmap["suffix"] == "phase":
+            fieldmaps["phasediff"].append(
+                {
+                    "magnitude": [
+                        (fmap[k], layout.get_metadata(fmap[k]))
+                        for k in sorted(fmap.keys())
+                        if k.startswith("magnitude")
+                    ],
+                    "phases": [
+                        (fmap[k], layout.get_metadata(fmap[k]))
+                        for k in sorted(fmap.keys())
+                        if k.startswith("phase")
+                    ],
+                }
+            )
 
     if fieldmaps and force_syn:
         # syn: True -> Run SyN in addition to fieldmap-based SDC
-        fieldmaps['syn'] = True
+        fieldmaps["syn"] = True
     elif not fieldmaps and (force_syn or use_syn):
         # syn: False -> Run SyN as only SDC
-        fieldmaps['syn'] = False
+        fieldmaps["syn"] = False
     return fieldmaps

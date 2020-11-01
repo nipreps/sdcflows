@@ -53,9 +53,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     Outputs
     -------
-    fieldmap : :obj:`str`
+    fmap : :obj:`str`
         The path of the estimated fieldmap.
-    corrected : :obj:`str`
+    fmap_ref : :obj:`str`
         The path of an unwarped conversion of files in ``in_data``.
 
     """
@@ -74,8 +74,8 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "corrected",
-                "fieldmap",
+                "fmap_ref",
+                "fmap",
                 "coefficients",
                 "jacobians",
                 "xfms",
@@ -87,7 +87,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     concat_blips = pe.Node(MergeSeries(), name="concat_blips")
     readout_time = pe.MapNode(
-        GetReadoutTime(), name="readout_time", iterfield=["metadata", "in_file"],
+        GetReadoutTime(),
+        name="readout_time",
+        iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
 
@@ -106,8 +108,8 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         (inputnode, topup, [(("metadata", _pe2fsl), "encoding_direction")]),
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
-        (topup, outputnode, [("out_corrected", "corrected"),
-                             ("out_field", "fieldmap"),
+        (topup, outputnode, [("out_corrected", "fmap_ref"),
+                             ("out_field", "fmap"),
                              ("out_fieldcoef", "coefficients"),
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
@@ -118,7 +120,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     return workflow
 
 
-def init_3dQwarp_wf(pe_dir, omp_nthreads=1, name="pepolar_estimate_wf"):
+def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
     """
     Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.
 
@@ -132,12 +134,10 @@ def init_3dQwarp_wf(pe_dir, omp_nthreads=1, name="pepolar_estimate_wf"):
             :simple_form: yes
 
             from sdcflows.models.pepolar import init_3dQwarp_wf
-            wf = init_3dQwarp_wf(pe_dir="j")
+            wf = init_3dQwarp_wf()
 
     Parameters
     ----------
-    pe_dir : :obj:`str`
-        PE direction (BIDS compatible)
     name : :obj:`str`
         Name for this workflow
     omp_nthreads : :obj:`int`
@@ -150,34 +150,66 @@ def init_3dQwarp_wf(pe_dir, omp_nthreads=1, name="pepolar_estimate_wf"):
 
     Outputs
     -------
-    fieldmap : :obj:`str`
+    fmap : :obj:`str`
         The path of the estimated fieldmap.
-    corrected : :obj:`str`
+    fmap_ref : :obj:`str`
         The path of an unwarped conversion of the first element of ``in_data``.
 
     """
     from nipype.interfaces import afni
     from niworkflows.interfaces import CopyHeader
-    from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
+    from niworkflows.interfaces.fixes import (
+        FixHeaderRegistration as Registration,
+        FixHeaderApplyTransforms as ApplyTransforms,
+    )
+    from niworkflows.interfaces.freesurfer import StructuralReference
+    from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
+    from ..interfaces.utils import Flatten
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \
 with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=["in_data"]), name="inputnode")
+    inputnode = pe.Node(niu.IdentityInterface(fields=["in_data", "metadata"]),
+                        name="inputnode")
 
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fieldmap", "corrected"]), name="outputnode"
+        niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
+    )
+
+    flatten = pe.Node(Flatten(), name="flatten")
+    sort_pe = pe.Node(niu.Function(
+        function=_sorted_pe, output_names=["sorted", "qwarp_args"]),
+        name="sort_pe", run_without_submitting=True)
+
+    merge_pes = pe.MapNode(StructuralReference(
+        auto_detect_sensitivity=True,
+        initial_timepoint=1,
+        fixed_timepoint=True,  # Align to first image
+        intensity_scaling=True,
+        # 7-DOF (rigid + intensity)
+        no_iteration=True,
+        subsample_threshold=200,
+        out_file='template.nii.gz'),
+        name='merge_pes',
+        iterfield=["in_files"],
+    )
+
+    pe0_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name="pe0_wf")
+    pe1_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name="pe1_wf")
+
+    align_pes = pe.Node(
+        Registration(
+            from_file=_pkg_fname("sdcflows", "data/translation_rigid.json"),
+            output_warped_image=True,
+        ),
+        name="align_pes",
+        n_procs=omp_nthreads,
     )
 
     qwarp = pe.Node(
         afni.QwarpPlusMinus(
-            args={
-                "i": "-noYdis -noZdis",
-                "j": "-noXdis -noZdis",
-                "k": "-noXdis -noYdis",
-            }[pe_dir[0]],
             blur=[-1, -1],
             environ={"OMP_NUM_THREADS": f"{omp_nthreads}"},
             minpatch=9,
@@ -194,9 +226,8 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
     cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
 
     unwarp_reference = pe.Node(
-        ANTSApplyTransformsRPT(
+        ApplyTransforms(
             dimension=3,
-            generate_report=False,
             float=True,
             interpolation="LanczosWindowedSinc",
         ),
@@ -205,16 +236,25 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
 
     # fmt: off
     workflow.connect([
-        (inputnode, qwarp, [(("in_data", _front), "in_file"),
-                            (("in_data", _last), "base_file")]),
+        (inputnode, flatten, [("in_data", "in_data"),
+                              ("metadata", "in_meta")]),
+        (flatten, sort_pe, [("out_list", "inlist")]),
+        (sort_pe, qwarp, [("qwarp_args", "args")]),
+        (sort_pe, merge_pes, [("sorted", "in_files")]),
+        (merge_pes, pe0_wf, [(("out_file", _front), "inputnode.in_file")]),
+        (merge_pes, pe1_wf, [(("out_file", _last), "inputnode.in_file")]),
+        (pe0_wf, align_pes, [("outputnode.skull_stripped_file", "fixed_image")]),
+        (pe1_wf, align_pes, [("outputnode.skull_stripped_file", "moving_image")]),
+        (pe0_wf, qwarp, [("outputnode.skull_stripped_file", "in_file")]),
+        (align_pes, qwarp, [("warped_image", "base_file")]),
         (inputnode, cphdr_warp, [(("in_data", _front), "hdr_file")]),
         (qwarp, cphdr_warp, [("source_warp", "in_file")]),
         (cphdr_warp, to_ants, [("out_file", "in_file")]),
         (to_ants, unwarp_reference, [("out", "transforms")]),
         (inputnode, unwarp_reference, [("in_reference", "reference_image"),
                                        ("in_reference", "input_image")]),
-        (unwarp_reference, outputnode, [("output_image", "corrected")]),
-        (to_ants, outputnode, [("out", "fieldmap")]),
+        (unwarp_reference, outputnode, [("output_image", "fmap_ref")]),
+        (to_ants, outputnode, [("out", "fmap")]),
     ])
     # fmt: on
     return workflow
@@ -238,9 +278,33 @@ def _fix_hdr(in_file, newpath=None):
 def _pe2fsl(metadata):
     """Convert ijk notation to xyz."""
     return [
-        m["PhaseEncodingDirection"].replace("i", "x").replace("j", "y").replace("k", "z")
+        m["PhaseEncodingDirection"]
+        .replace("i", "x")
+        .replace("j", "y")
+        .replace("k", "z")
         for m in metadata
     ]
+
+
+def _sorted_pe(inlist):
+    out_ref = [inlist[0][0]]
+    out_opp = []
+
+    ref_pe = inlist[0][1]["PhaseEncodingDirection"]
+    for d, m in inlist[1:]:
+        pe = m["PhaseEncodingDirection"]
+        if pe == ref_pe:
+            out_ref.append(d)
+        elif pe[0] == ref_pe[0]:
+            out_opp.append(d)
+        else:
+            raise ValueError("Cannot handle orthogonal PE encodings.")
+
+    return [out_ref, out_opp], {
+        "i": "-noYdis -noZdis",
+        "j": "-noXdis -noZdis",
+        "k": "-noXdis -noYdis",
+    }[ref_pe[0]]
 
 
 def _front(inlist):

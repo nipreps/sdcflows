@@ -81,15 +81,11 @@ def init_syn_sdc_wf(omp_nthreads, epi_pe=None, atlas_threshold=3, name="syn_sdc_
 
     Outputs
     -------
-    out_reference
-        the ``in_reference`` image after unwarping
-    out_reference_brain
-        the ``in_reference_brain`` image after unwarping
-    out_warp
+    fmap
         the corresponding :abbr:`DFM (displacements field map)` compatible with
         ANTs
-    out_mask
-        mask of the unwarped input file
+    fmap_ref
+        the ``in_reference`` image after unwarping
 
     References
     ----------
@@ -135,10 +131,7 @@ template [@fieldmapless3].
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(
-            ["out_reference", "out_reference_brain", "out_mask", "out_warp"]
-        ),
-        name="outputnode",
+        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_mask"]), name="outputnode",
     )
 
     # Collect predefined data
@@ -224,16 +217,13 @@ template [@fieldmapless3].
         (inputnode, syn, [("in_reference_brain", "moving_image")]),
         (t1_2_ref, syn, [("output_image", "fixed_image")]),
         (fixed_image_masks, syn, [("out", "fixed_image_masks")]),
-        (syn, outputnode, [("forward_transforms", "out_warp")]),
+        (syn, outputnode, [("forward_transforms", "fmap")]),
         (syn, unwarp_ref, [("forward_transforms", "transforms")]),
         (inputnode, unwarp_ref, [("in_reference", "reference_image"),
                                  ("in_reference", "input_image")]),
         (unwarp_ref, skullstrip_bold_wf, [
             ("output_image", "inputnode.in_file")]),
-        (unwarp_ref, outputnode, [("output_image", "out_reference")]),
-        (skullstrip_bold_wf, outputnode, [
-            ("outputnode.skull_stripped_file", "out_reference_brain"),
-            ("outputnode.mask_file", "out_mask")]),
+        (unwarp_ref, outputnode, [("output_image", "fmap_ref")]),
     ])
     # fmt: on
 

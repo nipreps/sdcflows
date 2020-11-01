@@ -37,7 +37,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_fmap_wf(omp_nthreads, mode="phase-diff", name="fmap_wf"):
+def init_fmap_wf(omp_nthreads, mode="phasediff", name="fmap_wf"):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
@@ -111,7 +111,7 @@ def init_fmap_wf(omp_nthreads, mode="phase-diff", name="fmap_wf"):
     ])
     # fmt: on
 
-    if mode == "phase-diff":
+    if mode == "phasediff":
         workflow.__desc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was estimated from the
 phase-drift map(s) measure with two consecutive GRE (gradient-recall echo)
