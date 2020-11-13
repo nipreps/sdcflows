@@ -109,7 +109,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_fmap_wf(omp_nthreads=1, mode="phasediff", name="fmap_wf"):
+def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
@@ -156,6 +156,10 @@ def init_fmap_wf(omp_nthreads=1, mode="phasediff", name="fmap_wf"):
         pair.
 
     """
+    from ...interfaces.bspline import (
+        BSplineApprox, DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM
+    )
+
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(
@@ -167,19 +171,19 @@ def init_fmap_wf(omp_nthreads=1, mode="phasediff", name="fmap_wf"):
     )
 
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
-    fmap_postproc_wf = init_fmap_postproc_wf(omp_nthreads=omp_nthreads)
+    bs_filter = pe.Node(BSplineApprox(
+        bs_spacing=[DEFAULT_LF_ZOOMS_MM] if debug else [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM],
+    ), n_procs=omp_nthreads, name="bs_filter")
 
     # fmt: off
     workflow.connect([
         (inputnode, magnitude_wf, [("magnitude", "inputnode.magnitude")]),
-        (magnitude_wf, fmap_postproc_wf, [
-            ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-            ("outputnode.fmap_ref", "inputnode.fmap_ref")]),
+        (magnitude_wf, bs_filter, [("outputnode.fmap_mask", "in_mask")]),
         (magnitude_wf, outputnode, [
             ("outputnode.fmap_mask", "fmap_mask"),
             ("outputnode.fmap_ref", "fmap_ref"),
         ]),
-        (fmap_postproc_wf, outputnode, [("outputnode.out_fmap", "fmap")]),
+        (bs_filter, outputnode, [("out_field", "fmap")]),
     ])
     # fmt: on
 
@@ -198,13 +202,12 @@ acquisitions.
                 ("outputnode.fmap_ref", "inputnode.magnitude"),
                 ("outputnode.fmap_mask", "inputnode.mask"),
             ]),
-            (phdiff_wf, fmap_postproc_wf, [
-                ("outputnode.fieldmap", "inputnode.fmap"),
+            (phdiff_wf, bs_filter, [
+                ("outputnode.fieldmap", "in_data"),
             ]),
         ])
         # fmt: on
     else:
-        from niworkflows.interfaces.nibabel import ApplyMask
         from niworkflows.interfaces.images import IntraModalMerge
 
         workflow.__desc__ = """\
@@ -215,13 +218,10 @@ an MRI scheme designed with that purpose (e.g., a spiral pulse sequence).
         fmapmrg = pe.Node(
             IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg"
         )
-        applymsk = pe.Node(ApplyMask(), name="applymsk")
         # fmt: off
         workflow.connect([
             (inputnode, fmapmrg, [("fieldmap", "in_files")]),
-            (fmapmrg, applymsk, [("out_avg", "in_file")]),
-            (magnitude_wf, applymsk, [("outputnode.fmap_mask", "in_mask")]),
-            (applymsk, fmap_postproc_wf, [("out_file", "inputnode.fmap")]),
+            (fmapmrg, bs_filter, [("out_avg", "in_data")]),
         ])
         # fmt: on
 
