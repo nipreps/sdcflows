@@ -33,7 +33,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
     wf = Workflow(
         name=f"phdiff_{fmap_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
     )
-    phdiff_wf = init_fmap_wf(omp_nthreads=2)
+    phdiff_wf = init_fmap_wf(omp_nthreads=2, debug=True)
     phdiff_wf.inputs.inputnode.fieldmap = fieldmaps
     phdiff_wf.inputs.inputnode.magnitude = [
         f.replace("diff", "1").replace("phase", "magnitude") for f, _ in fieldmaps
