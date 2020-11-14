@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import numpy
+import nibabel
 import pytest
 from bids.layout import BIDSLayout
 
@@ -23,6 +24,7 @@ def pytest_report_header(config):
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
+    doctest_namespace['nb'] = nibabel
     doctest_namespace['os'] = os
     doctest_namespace['Path'] = Path
     for key, val in list(layouts.items()):
@@ -35,10 +37,15 @@ def workdir():
 
 
 @pytest.fixture
-def output_path():
+def outdir():
     return None if test_output_dir is None else Path(test_output_dir)
 
 
 @pytest.fixture
 def bids_layouts():
     return layouts
+
+
+@pytest.fixture
+def datadir():
+    return Path(test_data_env)

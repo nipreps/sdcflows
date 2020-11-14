@@ -2,6 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Interfaces to generate speciality reportlets."""
 import numpy as np
+import nibabel as nb
 from nilearn.image import threshold_img, load_img
 from niworkflows import NIWORKFLOWS_LOG
 from niworkflows.viz.utils import cuts_from_bbox, compose_view
@@ -25,6 +26,7 @@ class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
                                  desc='a label name for the reference mosaic')
     moving_label = traits.Str('Fieldmap (Hz)', usedefault=True,
                               desc='a label name for the reference mosaic')
+    # pe_dir = traits.Enum(*tuple("ijk"), desc="PE direction")
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -47,7 +49,13 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         NIWORKFLOWS_LOG.info('Generating visual report')
 
         movnii = refnii = load_img(self.inputs.reference)
-        fmapnii = load_img(self.inputs.fieldmap)
+        fmapnii = nb.squeeze_image(load_img(self.inputs.fieldmap))
+
+        if fmapnii.dataobj.ndim == 4:
+            for i, tstep in enumerate(nb.four_to_three(fmapnii)):
+                if np.any(np.asanyarray(tstep.dataobj) != 0):
+                    fmapnii = tstep
+                    break
 
         if isdefined(self.inputs.moving):
             movnii = load_img(self.inputs.moving)

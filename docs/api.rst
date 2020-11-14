@@ -7,5 +7,6 @@ Information on specific functions, classes, and methods.
    :glob:
 
    api/sdcflows.interfaces
+   api/sdcflows.models
    api/sdcflows.viz
    api/sdcflows.workflows

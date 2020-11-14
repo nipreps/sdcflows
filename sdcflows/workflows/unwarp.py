@@ -28,32 +28,32 @@ def init_sdc_unwarp_wf(omp_nthreads, debug, name='sdc_unwarp_wf'):
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
-    debug : bool
+    debug : :obj:`bool`
         Run fast configurations of registrations.
-    name : str
+    name : :obj:`str`
         Unique name of this workflow.
 
     Inputs
     ------
-    in_warp : os.pathlike
+    in_warp : :obj:`os.PathLike`
         The :abbr:`DFM (displacements field map)` that corrects for
         susceptibility-derived distortions estimated elsewhere.
-    in_reference : os.pathlike
+    in_reference : :obj:`os.PathLike`
         the reference image to be unwarped.
-    in_reference_mask : os.pathlike
+    in_reference_mask : :obj:`os.PathLike`
         the reference image mask to be unwarped
 
     Outputs
     -------
-    out_reference : str
+    out_reference : :obj:`str`
         the ``in_reference`` after unwarping
-    out_reference_brain : str
+    out_reference_brain : :obj:`str`
         the ``in_reference`` after unwarping and skullstripping
-    out_warp : str
+    out_warp : :obj:`str`
         the ``in_warp`` field is forwarded for compatibility
-    out_mask : str
+    out_mask : :obj:`str`
         mask of the unwarped input file
 
     """
