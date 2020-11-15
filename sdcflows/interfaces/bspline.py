@@ -87,21 +87,24 @@ class BSplineApprox(SimpleInterface):
             sample_points.append((fmap_points / sp).astype("float32"))
 
         # Calculate the spatial location of control points
-        bs_x = []
+        w_x = []
         ncoeff = []
         for sp, level, points in zip(bs_spacing, bs_levels, sample_points):
             ncoeff.append(level.dataobj.size)
             control_points = grid_coords(level, control_zooms_mm=sp)
-            bs_x.append(control_points[:, np.newaxis, :] - points[np.newaxis, ...])
+            _w = _vbspl(
+                control_points[:, np.newaxis, :] - points[np.newaxis, ...]
+            ).prod(axis=-1, dtype="float32")
+            _w[_w < 1e-6] = 0.0
+            w_x.append(_w)
 
         # Calculate the cubic spline weights per dimension and tensor-product
-        dist = np.vstack(bs_x)
-        dist_support = (np.abs(dist) < 2).all(axis=-1)
-        weights = _vbspl(dist[dist_support]).prod(axis=-1)
+        weights = np.vstack(w_x)
+        dist_support = weights > 0.0
 
         # Compose the interpolation matrix
-        interp_mat = np.zeros(dist.shape[:2])
-        interp_mat[dist_support] = weights
+        interp_mat = np.zeros((np.sum(ncoeff), data.size))
+        interp_mat[dist_support] = weights[dist_support]
 
         # Fit the model
         model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
