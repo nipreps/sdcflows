@@ -72,6 +72,7 @@ class BSplineApprox(SimpleInterface):
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
         data = fmapnii.get_fdata()
+        nsamples = data.size
         mask = nb.load(self.inputs.in_mask).get_fdata() > 0
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
@@ -91,19 +92,23 @@ class BSplineApprox(SimpleInterface):
         ncoeff = []
         for sp, level, points in zip(bs_spacing, bs_levels, sample_points):
             ncoeff.append(level.dataobj.size)
-            control_points = grid_coords(level, control_zooms_mm=sp)
-            _w = _vbspl(
-                control_points[:, np.newaxis, :] - points[np.newaxis, ...]
-            ).prod(axis=-1, dtype="float32")
+            d = (
+                grid_coords(level, control_zooms_mm=sp)[:, np.newaxis, :]
+                - points[np.newaxis, ...]
+            )
+            d_support = (np.abs(d) < 2).all(axis=-1)
+            _w = _vbspl(d[d_support]).prod(axis=-1, dtype="float32")
             _w[_w < 1e-6] = 0.0
-            w_x.append(_w)
+            w = np.zeros((ncoeff[-1], nsamples), dtype="float32")
+            w[d_support] = _w
+            w_x.append(w)
 
         # Calculate the cubic spline weights per dimension and tensor-product
         weights = np.vstack(w_x)
         dist_support = weights > 0.0
 
         # Compose the interpolation matrix
-        interp_mat = np.zeros((np.sum(ncoeff), data.size))
+        interp_mat = np.zeros((np.sum(ncoeff), nsamples))
         interp_mat[dist_support] = weights[dist_support]
 
         # Fit the model
