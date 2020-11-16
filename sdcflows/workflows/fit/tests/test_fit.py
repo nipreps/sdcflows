@@ -15,7 +15,6 @@ from .. import syn  # noqa
         ("sdcflows.workflows.fit.syn.init_syn_sdc_wf", {}),
         ("sdcflows.workflows.fit.fieldmap.init_fmap_wf", {}),
         ("sdcflows.workflows.fit.fieldmap.init_fmap_wf", {"mode": "fieldmap"}),
-        ("sdcflows.workflows.fit.fieldmap.init_fmap_postproc_wf", {"omp_nthreads": 1}),
         ("sdcflows.workflows.fit.fieldmap.init_phdiff_wf", {"omp_nthreads": 1}),
     ),
 )
