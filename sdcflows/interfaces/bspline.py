@@ -72,7 +72,8 @@ class BSplineApprox(SimpleInterface):
         nsamples = data.size
         mask = nb.load(self.inputs.in_mask).get_fdata() > 0
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
-
+        data -= np.median(data[mask])
+        
         # Calculate B-Splines grid(s)
         bs_levels = []
         for sp in bs_spacing:
