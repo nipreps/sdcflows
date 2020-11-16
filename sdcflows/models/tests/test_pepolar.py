@@ -72,9 +72,9 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
 
         # fmt: off
         wf.connect([
-            (topup_wf, pre_mask, [("outputnode.fmap_ref", "in_file")]),
             (topup_wf, merge_corrected, [("outputnode.fmap_ref", "in_files")]),
             (merge_corrected, rep, [("out_avg", "reference")]),
+            (merge_corrected, pre_mask, [("out_avg", "in_file")]),
             (topup_wf, rep, [("outputnode.fmap", "fieldmap")]),
             (pre_mask, rep, [("out_file", "mask")]),
             (rep, ds_report, [("out_report", "in_file")]),
