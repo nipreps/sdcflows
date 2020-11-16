@@ -157,7 +157,10 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
 
     """
     from ...interfaces.bspline import (
-        BSplineApprox, DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM
+        BSplineApprox,
+        DEFAULT_LF_ZOOMS_MM,
+        DEFAULT_HF_ZOOMS_MM,
+        DEFAULT_ZOOMS_MM,
     )
 
     workflow = Workflow(name=name)
@@ -171,9 +174,12 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     )
 
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
-    bs_filter = pe.Node(BSplineApprox(
-        bs_spacing=[DEFAULT_LF_ZOOMS_MM] if debug else [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM],
-    ), n_procs=omp_nthreads, name="bs_filter")
+    bs_filter = pe.Node(BSplineApprox(), n_procs=omp_nthreads, name="bs_filter")
+    bs_filter.interface._always_run = debug
+    bs_filter.inputs.bs_spacing = (
+        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not debug else [DEFAULT_ZOOMS_MM]
+    )
+    bs_filter.inputs.extrapolate = not debug
 
     # fmt: off
     workflow.connect([
@@ -183,7 +189,8 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
             ("outputnode.fmap_mask", "fmap_mask"),
             ("outputnode.fmap_ref", "fmap_ref"),
         ]),
-        (bs_filter, outputnode, [("out_field", "fmap")]),
+        (bs_filter, outputnode, [
+            ("out_extrapolated" if not debug else "out_field", "fmap")]),
     ])
     # fmt: on
 
