@@ -64,10 +64,7 @@ class BSplineApprox(SimpleInterface):
     output_spec = _BSplineApproxOutputSpec
 
     def _run_interface(self, runtime):
-        from gridbspline.maths import cubic
         from sklearn import linear_model as lm
-
-        _vbspl = np.vectorize(cubic)
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
@@ -88,23 +85,29 @@ class BSplineApprox(SimpleInterface):
             sample_points.append((fmap_points / sp).astype("float32"))
 
         # Calculate the spatial location of control points
-        w_x = []
+        w_l = []
         ncoeff = []
         for sp, level, points in zip(bs_spacing, bs_levels, sample_points):
             ncoeff.append(level.dataobj.size)
-            d = (
-                grid_coords(level, control_zooms_mm=sp)[:, np.newaxis, :]
-                - points[np.newaxis, ...]
-            )
-            d_support = (np.abs(d) < 2).all(axis=-1)
-            _w = _vbspl(d[d_support]).prod(axis=-1, dtype="float32")
+            _w = np.ones((ncoeff[-1], nsamples), dtype="float32")
+
+            _gc = grid_coords(level, control_zooms_mm=sp)
+
+            for i in range(3):
+                d = np.abs((_gc[:, np.newaxis, i] - points[np.newaxis, :, i])[_w > 1e-6])
+                _w[_w > 1e-6] *= np.piecewise(
+                    d,
+                    [d >= 2.0, d < 1.0, (d >= 1.0) & (d < 2)],
+                    [0.,
+                     lambda d: (4. - 6. * d ** 2 + 3. * d ** 3) / 6.,
+                     lambda d: (2. - d) ** 3 / 6.]
+                )
+
             _w[_w < 1e-6] = 0.0
-            w = np.zeros((ncoeff[-1], nsamples), dtype="float32")
-            w[d_support] = _w
-            w_x.append(w)
+            w_l.append(_w)
 
         # Calculate the cubic spline weights per dimension and tensor-product
-        weights = np.vstack(w_x)
+        weights = np.vstack(w_l)
         dist_support = weights > 0.0
 
         # Compose the interpolation matrix
