@@ -44,11 +44,16 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     ridge_alpha = traits.Float(
         1e-4, usedefault=True, desc="controls the regularization"
     )
+    recenter = traits.Enum(
+        "mode", "median", "mean", "no", usedefault=True,
+        desc="strategy to recenter the distribution of the input fieldmap"
+    )
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
     out_field = File(exists=True)
     out_coeff = OutputMultiObject(File(exists=True))
+    out_error = File(exists=True)
 
 
 class BSplineApprox(SimpleInterface):
@@ -72,8 +77,16 @@ class BSplineApprox(SimpleInterface):
         nsamples = data.size
         mask = nb.load(self.inputs.in_mask).get_fdata() > 0
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
-        data -= np.median(data[mask])
-        
+
+        # Recenter the fieldmap
+        if self.inputs.recenter == "mode":
+            from scipy.stats import mode
+            data -= mode(data[mask], axis=None)[0][0]
+        elif self.inputs.recenter == "median":
+            data -= np.median(data[mask])
+        elif self.inputs.recenter == "mean":
+            data -= np.mean(data[mask])
+
         # Calculate B-Splines grid(s)
         bs_levels = []
         for sp in bs_spacing:
@@ -122,6 +135,20 @@ class BSplineApprox(SimpleInterface):
             data[mask],
         )
 
+        fit_data = (
+            (np.array(model.coef_) @ interp_mat)  # Interpolation
+            .astype("float32")
+            .reshape(data.shape)
+        )
+        # Recenter the fieldmap
+        if self.inputs.recenter == "mode":
+            from scipy.stats import mode
+            fit_data -= mode(fit_data[mask], axis=None)[0][0]
+        elif self.inputs.recenter == "median":
+            fit_data -= np.median(fit_data[mask])
+        elif self.inputs.recenter == "mean":
+            fit_data -= np.mean(fit_data[mask])
+
         # Store outputs
         out_name = str(
             Path(
@@ -132,13 +159,7 @@ class BSplineApprox(SimpleInterface):
         )
         hdr = fmapnii.header.copy()
         hdr.set_data_dtype("float32")
-        nb.Nifti1Image(
-            (np.array(model.coef_) @ interp_mat)
-            .astype("float32")  # Interpolation
-            .reshape(data.shape),
-            fmapnii.affine,
-            hdr,
-        ).to_filename(out_name)
+        nb.Nifti1Image(fit_data, fmapnii.affine, hdr).to_filename(out_name)
         self._results["out_field"] = out_name
 
         index = 0
@@ -146,7 +167,7 @@ class BSplineApprox(SimpleInterface):
         for i, (n, bsl) in enumerate(zip(ncoeff, bs_levels)):
             out_level = out_name.replace("_field.", f"_coeff{i:03}.")
             nb.Nifti1Image(
-                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
+                np.array(model.coef_, dtype="float32")[index:index + n].reshape(
                     bsl.shape
                 ),
                 bsl.affine,
@@ -154,6 +175,11 @@ class BSplineApprox(SimpleInterface):
             ).to_filename(out_level)
             index += n
             self._results["out_coeff"].append(out_level)
+
+        # Write out fitting-error map
+        self._results["out_error"] = out_name.replace("_field.", "_error.")
+        nb.Nifti1Image(data - fit_data * mask, fmapnii.affine, fmapnii.header).to_filename(
+            self._results["out_error"])
         return runtime
 
 
