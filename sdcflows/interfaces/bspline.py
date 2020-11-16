@@ -115,7 +115,7 @@ class BSplineApprox(SimpleInterface):
         interp_mat[dist_support] = weights[dist_support]
 
         # Fit the model
-        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
+        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=True)
         model.fit(
             interp_mat[..., mask.reshape(-1)].T,  # Regress only within brainmask
             data[mask],
@@ -132,7 +132,7 @@ class BSplineApprox(SimpleInterface):
         hdr = fmapnii.header.copy()
         hdr.set_data_dtype("float32")
         nb.Nifti1Image(
-            (model.intercept_ + np.array(model.coef_) @ interp_mat)
+            (np.array(model.coef_) @ interp_mat)
             .astype("float32")  # Interpolation
             .reshape(data.shape),
             fmapnii.affine,
