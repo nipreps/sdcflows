@@ -14,6 +14,7 @@ B-Spline filtering.
 from pathlib import Path
 import numpy as np
 import nibabel as nb
+from nibabel.affines import apply_affine
 
 from nipype.utils.filemanip import fname_presuffix
 from nipype.interfaces.base import (
@@ -45,8 +46,17 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         1e-4, usedefault=True, desc="controls the regularization"
     )
     recenter = traits.Enum(
-        "mode", "median", "mean", "no", usedefault=True,
-        desc="strategy to recenter the distribution of the input fieldmap"
+        "mode",
+        "median",
+        "mean",
+        "no",
+        usedefault=True,
+        desc="strategy to recenter the distribution of the input fieldmap",
+    )
+    extrapolate = traits.Bool(
+        True,
+        usedefault=True,
+        desc="generate a field, extrapolated outside the brain mask",
     )
 
 
@@ -54,6 +64,7 @@ class _BSplineApproxOutputSpec(TraitedSpec):
     out_field = File(exists=True)
     out_coeff = OutputMultiObject(File(exists=True))
     out_error = File(exists=True)
+    out_extrapolated = File()
 
 
 class BSplineApprox(SimpleInterface):
@@ -73,93 +84,55 @@ class BSplineApprox(SimpleInterface):
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
-        data = fmapnii.get_fdata()
-        nsamples = data.size
+        data = fmapnii.get_fdata(dtype="float32")
+        oriented_nii = canonical_orientation(fmapnii)
+        oriented_nii.to_filename("data.nii.gz")
         mask = nb.load(self.inputs.in_mask).get_fdata() > 0
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
         # Recenter the fieldmap
         if self.inputs.recenter == "mode":
             from scipy.stats import mode
+
             data -= mode(data[mask], axis=None)[0][0]
         elif self.inputs.recenter == "median":
             data -= np.median(data[mask])
         elif self.inputs.recenter == "mean":
             data -= np.mean(data[mask])
 
-        # Calculate B-Splines grid(s)
-        bs_levels = []
-        for sp in bs_spacing:
-            bs_levels.append(bspline_grid(fmapnii, control_zooms_mm=sp))
-
         # Calculate spatial location of voxels, and normalize per B-Spline grid
-        fmap_points = grid_coords(fmapnii)
-        sample_points = []
-        for sp in bs_spacing:
-            sample_points.append((fmap_points / sp).astype("float32"))
+        mask_indices = np.argwhere(mask)
+        fmap_points = apply_affine(
+            oriented_nii.affine.astype("float32"), mask_indices
+        )
 
         # Calculate the spatial location of control points
+        bs_levels = []
         w_l = []
         ncoeff = []
-        for sp, level, points in zip(bs_spacing, bs_levels, sample_points):
+        for sp in bs_spacing:
+            level = bspline_grid(oriented_nii, control_zooms_mm=sp)
+            bs_levels.append(level)
             ncoeff.append(level.dataobj.size)
-            _w = np.ones((ncoeff[-1], nsamples), dtype="float32")
-
-            _gc = grid_coords(level, control_zooms_mm=sp)
-
-            for i in range(3):
-                d = np.abs((_gc[:, np.newaxis, i] - points[np.newaxis, :, i])[_w > 1e-6])
-                _w[_w > 1e-6] *= np.piecewise(
-                    d,
-                    [d >= 2.0, d < 1.0, (d >= 1.0) & (d < 2)],
-                    [0.,
-                     lambda d: (4. - 6. * d ** 2 + 3. * d ** 3) / 6.,
-                     lambda d: (2. - d) ** 3 / 6.]
-                )
-
-            _w[_w < 1e-6] = 0.0
-            w_l.append(_w)
-
-        # Calculate the cubic spline weights per dimension and tensor-product
-        weights = np.vstack(w_l)
-        dist_support = weights > 0.0
+            w_l.append(bspline_weights(fmap_points, level))
 
         # Compose the interpolation matrix
-        interp_mat = np.zeros((np.sum(ncoeff), nsamples))
-        interp_mat[dist_support] = weights[dist_support]
+        regressors = np.vstack(w_l)
 
         # Fit the model
-        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=True)
-        model.fit(
-            interp_mat[..., mask.reshape(-1)].T,  # Regress only within brainmask
-            data[mask],
-        )
+        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
+        model.fit(regressors.T, data[mask])
 
-        fit_data = (
-            (np.array(model.coef_) @ interp_mat)  # Interpolation
-            .astype("float32")
-            .reshape(data.shape)
-        )
-        # Recenter the fieldmap
-        if self.inputs.recenter == "mode":
-            from scipy.stats import mode
-            fit_data -= mode(fit_data[mask], axis=None)[0][0]
-        elif self.inputs.recenter == "median":
-            fit_data -= np.median(fit_data[mask])
-        elif self.inputs.recenter == "mean":
-            fit_data -= np.mean(fit_data[mask])
+        interp_data = np.zeros_like(data)
+        interp_data[mask] = np.array(model.coef_) @ regressors  # Interpolation
 
         # Store outputs
-        out_name = str(
-            Path(
-                fname_presuffix(
-                    self.inputs.in_data, suffix="_field", newpath=runtime.cwd
-                )
-            ).absolute()
+        out_name = fname_presuffix(
+            self.inputs.in_data, suffix="_field", newpath=runtime.cwd
         )
         hdr = fmapnii.header.copy()
         hdr.set_data_dtype("float32")
-        nb.Nifti1Image(fit_data, fmapnii.affine, hdr).to_filename(out_name)
+        nb.Nifti1Image(interp_data, fmapnii.affine, hdr).to_filename(out_name)
         self._results["out_field"] = out_name
 
         index = 0
@@ -178,9 +151,40 @@ class BSplineApprox(SimpleInterface):
 
         # Write out fitting-error map
         self._results["out_error"] = out_name.replace("_field.", "_error.")
-        nb.Nifti1Image(data - fit_data * mask, fmapnii.affine, fmapnii.header).to_filename(
-            self._results["out_error"])
+        nb.Nifti1Image(
+            data * mask - interp_data, fmapnii.affine, fmapnii.header
+        ).to_filename(self._results["out_error"])
+
+        if not self.inputs.extrapolate:
+            return runtime
+
+        bg_indices = np.argwhere(~mask)
+        bg_points = apply_affine(
+            oriented_nii.affine.astype("float32"), bg_indices
+        )
+
+        extrapolators = np.vstack(
+            [bspline_weights(bg_points, level) for level in bs_levels]
+        )
+        interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
+        self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
+        nb.Nifti1Image(interp_data, fmapnii.affine, hdr).to_filename(
+            self._results["out_extrapolated"]
+        )
         return runtime
+
+
+def canonical_orientation(img):
+    """Generate an alternative image aligned with the array axes."""
+    if isinstance(img, (str, Path)):
+        img = nb.load(img)
+
+    shape = np.array(img.shape[:3])
+    affine = np.diag(np.hstack((img.header.get_zooms()[:3], 1)))
+    affine[:3, 3] -= affine[:3, :3] @ (0.5 * (shape - 1))
+    nii = nb.Nifti1Image(img.dataobj, affine)
+    nii.header.set_xyzt_units(*img.header.get_xyzt_units())
+    return nii
 
 
 def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
@@ -195,7 +199,8 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     dir_cos = img.affine[:3, :3] / im_zooms
 
     # Initialize the affine of the B-Spline grid
-    bs_affine = np.diag(np.hstack((np.array(control_zooms_mm) @ dir_cos, 1)))
+    bs_affine = np.eye(4)
+    bs_affine[:3, :3] = np.array(control_zooms_mm) * dir_cos
     bs_zooms = nb.affines.voxel_sizes(bs_affine)
 
     # Calculate the shape of the B-Spline grid
@@ -210,17 +215,33 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
 
-def grid_coords(img, control_zooms_mm=None, dtype="float32"):
-    """Create a linear space of physical coordinates."""
-    if isinstance(img, (str, Path)):
-        img = nb.load(img)
+def bspline_weights(points, level):
+    """Calculate the tensor-product cubic B-Spline weights for a list of 3D points."""
+    ctl_spacings = [float(sp) for sp in level.header.get_zooms()[:3]]
+    ncoeff = level.dataobj.size
+    ctl_points = apply_affine(
+        level.affine.astype("float32"), np.argwhere(np.isclose(level.dataobj, 0))
+    )
 
-    grid = np.array(
-        np.meshgrid(*[range(s) for s in img.shape[:3]]), dtype=dtype
-    ).reshape(3, -1)
-    coords = (img.affine @ np.vstack((grid, np.ones(grid.shape[-1])))).T[..., :3]
+    weights = np.ones((ncoeff, points.shape[0]), dtype="float32")
+    for i in range(3):
+        d = (
+            np.abs(
+                (ctl_points[:, np.newaxis, i] - points[np.newaxis, :, i])[
+                    weights > 1e-6
+                ]
+            )
+            / ctl_spacings[i]
+        )
+        weights[weights > 1e-6] *= np.piecewise(
+            d,
+            [d >= 2.0, d < 1.0, (d >= 1.0) & (d < 2)],
+            [
+                0.0,
+                lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
+                lambda d: (2.0 - d) ** 3 / 6.0,
+            ],
+        )
 
-    if control_zooms_mm is not None:
-        coords /= np.array(control_zooms_mm)
-
-    return coords.astype(dtype)
+    weights[weights < 1e-6] = 0.0
+    return weights
