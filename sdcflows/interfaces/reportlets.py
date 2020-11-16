@@ -5,6 +5,7 @@ import numpy as np
 import nibabel as nb
 from nilearn.image import threshold_img, load_img
 from niworkflows import NIWORKFLOWS_LOG
+from niworkflows.utils.images import rotation2canonical, rotate_affine
 from niworkflows.viz.utils import cuts_from_bbox, compose_view
 from nipype.interfaces.base import File, isdefined, traits
 from nipype.interfaces.mixins import reporting
@@ -48,8 +49,13 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         """Generate a reportlet."""
         NIWORKFLOWS_LOG.info('Generating visual report')
 
-        movnii = refnii = load_img(self.inputs.reference)
-        fmapnii = nb.squeeze_image(load_img(self.inputs.fieldmap))
+        movnii = load_img(self.inputs.reference)
+        canonical_r = rotation2canonical(movnii)
+        movnii = refnii = rotate_affine(movnii, rot=canonical_r)
+
+        fmapnii = nb.squeeze_image(
+            rotate_affine(load_img(self.inputs.fieldmap), rot=canonical_r)
+        )
 
         if fmapnii.dataobj.ndim == 4:
             for i, tstep in enumerate(nb.four_to_three(fmapnii)):
@@ -62,7 +68,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
         contour_nii = mask_nii = None
         if isdefined(self.inputs.mask):
-            contour_nii = load_img(self.inputs.mask)
+            contour_nii = rotate_affine(load_img(self.inputs.mask), rot=canonical_r)
             maskdata = contour_nii.get_fdata() > 0
         else:
             mask_nii = threshold_img(refnii, 1e-3)
