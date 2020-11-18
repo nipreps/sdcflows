@@ -1,4 +1,5 @@
 """Test phase-difference type of fieldmaps."""
+import os
 from pathlib import Path
 from json import loads
 
@@ -9,6 +10,7 @@ from nipype.pipeline import engine as pe
 from ..fieldmap import init_fmap_wf, Workflow
 
 
+@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 @pytest.mark.parametrize(
     "fmap_path",
     [

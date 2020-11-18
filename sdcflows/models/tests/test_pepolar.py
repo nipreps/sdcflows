@@ -1,4 +1,5 @@
 """Test pepolar type of fieldmaps."""
+import os
 from pathlib import Path
 from json import loads
 import pytest
@@ -9,6 +10,7 @@ from nipype.pipeline import engine as pe
 from ..pepolar import Workflow, init_topup_wf
 
 
+@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 @pytest.mark.parametrize(
     "epi_path",
     [
