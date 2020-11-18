@@ -60,7 +60,7 @@ before_script:
   - unzip testdata.zip -d $TEST_DATA_HOME/testdata
 
 script:
-  - pytest -n 2 -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
+  - pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
 
 after_script:
   - python -m pip install codecov
