@@ -53,6 +53,7 @@ before_script:
   # Data dependencies
   - python -c "from templateflow import api as tfapi;
                tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
+               tfapi.get('MNI152NLin2009cAsym', resolution=1, label='brain', suffix='probseg');
                tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
   - mkdir -p $TEST_DATA_HOME
   - datalad install -rg -J 1 -s ///openneuro/ds001600 $TEST_DATA_HOME/ds001600
