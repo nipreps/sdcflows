@@ -9,6 +9,7 @@ from nipype.interfaces.base import (
     File,
     traits,
     SimpleInterface,
+    InputMultiObject,
 )
 
 LOGGER = logging.getLogger("nipype.interface")
@@ -98,6 +99,28 @@ class Phasediff2Fieldmap(SimpleInterface):
         self._results["out_file"] = phdiff2fmap(
             self.inputs.in_file, _delta_te(self.inputs.metadata), newpath=runtime.cwd
         )
+        return runtime
+
+
+class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
+    in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+    in_coeff = InputMultiObject(File(exists=True), mandatory=True,
+                                desc="input coefficients, after alignment to the EPI data")
+    ro_time = traits.Float(mandatory=True, desc="EPI readout time")
+
+
+class _Coefficients2WarpOutputSpec(TraitedSpec):
+    out_warp = File(exists=True)
+
+
+class Coefficients2Warp(SimpleInterface):
+    """Convert coefficients to a full displacements map."""
+
+    input_spec = _Coefficients2WarpInputSpec
+    output_spec = _Coefficients2WarpOutputSpec
+
+    def _run_interface(self, runtime):
+        raise NotImplementedError
         return runtime
 
 
