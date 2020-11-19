@@ -69,54 +69,11 @@ def subtract_phases(in_phases, in_meta, newpath=None):
 
 
 def phdiff2fmap(in_file, delta_te, newpath=None):
-    r"""
-    Convert the input phase-difference map into a fieldmap in Hz.
-
-    Uses eq. (1) of [Hutton2002]_:
-
-    .. math::
-
-        \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi\gamma \, \Delta\text{TE}}
-
-    where :math:`\Delta B_0 (i, j, k)` is the *fieldmap* in Hz,
-    :math:`\Delta \Theta (i, j, k)` is the phase-difference map in rad,
-    :math:`\gamma` is the gyromagnetic ratio of the H proton,
-    and :math:`\Delta\text{TE}` is the elapsed time between the two GRE echoes.
-
-
-    We can obtain a voxel displacement map following eq. (2) of the same paper:
-
-    .. math::
-
-        d_\text{PE} (i, j, k) = \gamma \, \Delta B_0 (i, j, k) \, T_\text{ro}
-
-    where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
-    we want to correct for distortions, and
-    :math:`\Delta_\text{PE} (i, j, k)` is the *voxel-shift map* (VSM) along the *PE*
-    direction.
-
-    Replacing (1) into (2), and eliminating the scaling effect of :math:`T_\text{ro}`,
-    we obtain the *voxel-shift-velocity map* (voxels/ms) which can be then used to
-    recover the actual displacement field of the target EPI dataset.
-
-    .. math::
-
-        v(i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \, \Delta\text{TE}}
-
-    References
-    ----------
-    .. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
-      Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
-      <https://doi.org/10.1006/nimg.2001.1054>`_.
-
-
-    """
+    """Convert the input phase-difference map into a *fieldmap* in Hz."""
     import math
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
-
-    #  GYROMAG_RATIO_H_PROTON_MHZ = 42.576
 
     out_file = fname_presuffix(in_file, suffix="_fmap", newpath=newpath)
     image = nb.load(in_file)
