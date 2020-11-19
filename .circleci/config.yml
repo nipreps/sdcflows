@@ -280,13 +280,22 @@ jobs:
           no_output_timeout: 2h
           command: |
             mkdir -p /tmp/work
-            docker run -it --rm -e TEST_DATA_HOME=/data/ -e TEST_OUTPUT_DIR=/out \
-                   -v /tmp/freesurfer:/opt/freesurfer:ro -e FS_LICENSE=/opt/freesurfer/license.txt \
-                   -v /tmp/work:/work -e TEST_WORK_DIR=/work \
-                   -v /tmp/templateflow:/home/sdcflows/.cache/templateflow \
-                   -v /tmp/data:/data:ro -v /tmp/src:/src -v /tmp/tests:/out \
-                   -w /src/sdcflows nipreps/sdcflows:latest \
-                   pytest -v --junit-xml=/out/pytest.xml sdcflows/
+            docker run -it --rm -w /src/sdcflows \
+                -e TEST_WORK_DIR=/work \
+                -e TEST_DATA_HOME=/data \
+                -e TEST_OUTPUT_DIR=/out \
+                -e COVERAGE_FILE=/out/.coverage \
+                -e FS_LICENSE=/opt/freesurfer/license.txt \
+                -v /tmp/data:/data:ro \
+                -v /tmp/src:/src \
+                -v /tmp/tests:/out \
+                -v /tmp/work:/work \
+                -v /tmp/freesurfer:/opt/freesurfer:ro  \
+                -v /tmp/templateflow:/home/sdcflows/.cache/templateflow \
+                nipreps/sdcflows:latest \
+                pytest -v --junit-xml=/out/pytest.xml \
+                       --cov sdcflows --cov-report xml:/out/unittests.xml \
+                       sdcflows/
       - save_cache:
           key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
           paths:
@@ -295,6 +304,15 @@ jobs:
           path: /tmp/tests
       - store_test_results:
           path: /tmp/tests
+
+      - run:
+          name: Submit unit test coverage
+          command: |
+            pyenv local 3.7.0
+            python3 -m pip install codecov
+            cd /tmp/src/sdcflows
+            python3 -m codecov --file /tmp/tests/unittests.xml \
+                --flags unittests -e CIRCLE_JOB
 
   build_docs:
     docker:
