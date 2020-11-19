@@ -63,7 +63,7 @@ def init_syn_sdc_wf(omp_nthreads, epi_pe=None, atlas_threshold=3, name="syn_sdc_
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.syn import init_syn_sdc_wf
+            from sdcflows.workflows.fit.syn import init_syn_sdc_wf
             wf = init_syn_sdc_wf(
                 epi_pe="j",
                 omp_nthreads=8)

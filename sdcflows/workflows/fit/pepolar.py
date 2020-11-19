@@ -31,7 +31,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.pepolar import init_topup_wf
+            from sdcflows.workflows.fit.pepolar import init_topup_wf
             wf = init_topup_wf()
 
     Parameters
@@ -133,7 +133,7 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.pepolar import init_3dQwarp_wf
+            from sdcflows.workflows.fit.pepolar import init_3dQwarp_wf
             wf = init_3dQwarp_wf()
 
     Parameters
@@ -164,7 +164,7 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
     )
     from niworkflows.interfaces.freesurfer import StructuralReference
     from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
-    from ..interfaces.utils import Flatten
+    from ...interfaces.utils import Flatten
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \

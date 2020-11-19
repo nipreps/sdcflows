@@ -106,7 +106,7 @@ accurate co-registration with the anatomical reference.
     )
     # PEPOLAR path
     if "epi" in bids_fmaps:
-        from ..models.pepolar import init_3dQwarp_wf
+        from .fit.pepolar import init_3dQwarp_wf
 
         outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
@@ -117,7 +117,7 @@ accurate co-registration with the anatomical reference.
 
     # FIELDMAP path
     elif "fieldmap" in bids_fmaps or "phasediff" in bids_fmaps:
-        from ..models.fieldmap import init_fmap_wf
+        from .fit.fieldmap import init_fmap_wf
 
         if "fieldmap" in bids_fmaps:
             fmap = bids_fmaps["fieldmap"][0]
@@ -135,7 +135,7 @@ accurate co-registration with the anatomical reference.
 
     # FIELDMAP-less path
     elif "syn" in bids_fmaps:
-        from ..models.syn import init_syn_sdc_wf
+        from .fit.syn import init_syn_sdc_wf
 
         outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
 
