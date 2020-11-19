@@ -8,5 +8,6 @@ Information on specific functions, classes, and methods.
 
    api/sdcflows.fieldmaps
    api/sdcflows.interfaces
+   api/sdcflows.utils
    api/sdcflows.viz
    api/sdcflows.workflows
