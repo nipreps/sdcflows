@@ -1,15 +1,79 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-Processing phase-difference and *directly measured* B0 maps.
+r"""
+Processing phase-difference and *directly measured* :math:`B_0` maps.
+
+The displacement suffered by every voxel along the phase-encoding (PE) direction
+can be derived from eq. (2) of [Hutton2002]_:
+
+.. math::
+
+    \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro},
+
+where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
+we want to correct for distortions, and :math:`\Delta_\text{PE} (i, j, k)`
+is the *voxel-shift map* (VSM) along the *PE* direction.
+
+Calling the *fieldmap* in Hz :math:`V`,
+with :math:`V(i,j,k) = \gamma \cdot \Delta B_0 (i, j, k)`, and introducing
+the voxel zoom along the phase-encoding direction,  :math:`s_\text{PE}`,
+we obtain the nonzero component of the associated displacements field
+:math:`\Delta D_\text{PE} (i, j, k)` that unwarps the target EPI dataset:
+
+.. math::
+
+    \Delta D_\text{PE} (i, j, k) = V(i, j, k) \cdot T_\text{ro} \cdot s_\text{PE}.
+
+
+Theory
+~~~~~~
+The derivation of a fieldmap in Hz (or, as called thereafter, *voxel-shift-velocity
+map*) results from eq. (1) of [Hutton2002]_:
+
+.. math::
+
+    \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \gamma \, \Delta\text{TE}}
+
+where :math:`\Delta B_0 (i, j, k)` is the *fieldmap variation* in T,
+:math:`\Delta \Theta (i, j, k)` is the phase-difference map in rad,
+:math:`\gamma` is the gyromagnetic ratio of the H proton in Hz/T
+(:math:`\gamma = 42.576 \cdot 10^6 \, \text{Hz} \cdot \text{T}^\text{-1}`),
+and :math:`\Delta\text{TE}` is the elapsed time between the two GRE echoes.
+
+We can obtain a voxel displacement map following eq. (2) of the same paper:
+
+.. math::
+
+    \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro}
+
+where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
+we want to correct for distortions, and
+:math:`\Delta_\text{PE} (i, j, k)` is the *voxel-shift map* (VSM) along the *PE*
+direction.
 
 .. _sdc_phasediff :
 
 Phase-difference B0 estimation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The inhomogeneity of the :math:`B_0` field inside the scanner at each voxel is
-proportional to the phase drift (at that voxel) between two subsequent
-:abbr:`GRE (gradient-recalled echo)` acquisitions.
+The inhomogeneity of the :math:`B_0` field inside the scanner at each voxel
+(and hence, the *fieldmap* in Hz, :math:`V(i,j,k)`) is proportional to the
+phase drift :math:`\Delta \Theta (i,j,k) = \Theta_2(i,j,k) - \Theta_1(i,j,k)`
+between two subsequent :abbr:`GRE (gradient-recalled echo)` acquisitions
+(:math:`\Theta_1`, :math:`\Theta_2`), separated by a time
+:math:`\Delta \text{TE}` (s):
+Replacing (1) into (2), and eliminating the scaling effect of :math:`T_\text{ro}`,
+we obtain a *voxel-shift-velocity map* (voxels/s, or just Hz) which can be then
+used to recover the actual displacement field of the target EPI dataset.
+
+.. math::
+
+    V(i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \Delta\text{TE}}.
+
+This calculation if further complicated by the fact that :math:`\Theta_i`
+(and therfore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
+the range :math:`[0 \dotsb 2\pi )`.
+It is necessary to find the integer number of offsets that make a region
+continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
 
 This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
@@ -21,14 +85,22 @@ already been calulated (see `the corresponding section of BIDS
 
 Direct B0 mapping sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The inhomogeneity of the :math:`B_0` field can directly be mapped with a
-some MR schemes (such as :abbr:`SE (spiral echo)`).
+Some MR schemes such as :abbr:`SEI (spiral-echo imaging)` can directly
+reconstruct an estimate of *the fieldmap in Hz*, :math:`V(i,j,k)`.
 These *fieldmaps* are described with more detail `here
 <https://cni.stanford.edu/wiki/GE_Processing#Fieldmaps>`__.
 
 This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
 
+References
+----------
+.. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
+    Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
+    <https://doi.org/10.1006/nimg.2001.1054>`__.
+.. [Jenkinson2003] Jenkinson, M. (2003) Fast, automated, N-dimensional phase-unwrapping
+    algorithm. MRM 49(1):193-197. doi:`10.1002/mrm.10354
+    <https://doi.org/10.1002/mrm.10354>`__.
 
 """
 
@@ -226,86 +298,6 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     return workflow
 
 
-def init_fmap_postproc_wf(
-    omp_nthreads, median_kernel_size=5, name="fmap_postproc_wf"
-):
-    """
-    Postprocess a :math:`B_0` map estimated elsewhere.
-
-    This workflow denoises (mostly via smoothing) a :math:`B_0` fieldmap.
-
-    Workflow Graph
-        .. workflow ::
-            :graph2use: orig
-            :simple_form: yes
-
-            from sdcflows.workflows.fit.fieldmap import init_fmap_postproc_wf
-            wf = init_fmap_postproc_wf(omp_nthreads=6)
-
-    Parameters
-    ----------
-    omp_nthreads : :obj:`int`
-        Maximum number of threads an individual process may use
-    median_kernel_size : :obj:`int`
-        Size of the kernel when smoothing is done with a median filter.
-    name : :obj:`str`
-        Name of workflow (default: ``fmap_postproc_wf``)
-
-    Inputs
-    ------
-    fmap : :obj:`os.PathLike`
-        Fully preprocessed :math:`B_0` field nonuniformity map (aka *fieldmap*).
-    fmap_ref : :obj:`os.PathLike`
-        A preprocessed magnitude/reference image for the fieldmap.
-    fmap_mask : :obj:`os.PathLike`
-        A brain binary mask corresponding to this fieldmap.
-
-    Outputs
-    -------
-    out_fmap : :obj:`os.PathLike`
-        Postprocessed fieldmap.
-
-    """
-    from nipype.interfaces.fsl import SpatialFilter
-    from niflow.nipype1.workflows.dmri.fsl.utils import cleanup_edge_pipeline
-    workflow = Workflow(name=name)
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap_mask", "fmap_ref", "fmap", "metadata"]),
-        name="inputnode",
-    )
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=["out_fmap", "metadata"]), name="outputnode"
-    )
-    recenter = pe.Node(
-        niu.Function(function=_recenter),
-        name="recenter",
-        run_without_submitting=True,
-    )
-    denoise = pe.Node(
-        SpatialFilter(
-            operation="median",
-            kernel_shape="sphere",
-            kernel_size=median_kernel_size,
-        ),
-        name="denoise",
-    )
-    demean = pe.Node(niu.Function(function=_demean), name="demean")
-    cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
-
-    # fmt: off
-    workflow.connect([
-        (inputnode, cleanup_wf, [("fmap_mask", "inputnode.in_mask")]),
-        (inputnode, recenter, [(("fmap", _pop), "in_file")]),
-        (recenter, denoise, [("out", "in_file")]),
-        (denoise, demean, [("out_file", "in_file")]),
-        (demean, cleanup_wf, [("out", "inputnode.in_file")]),
-        (cleanup_wf, outputnode, [("outputnode.out_file", "out_fmap")]),
-        (inputnode, outputnode, [(("metadata", _pop), "metadata")]),
-    ])
-    # fmt: on
-    return workflow
-
-
 def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
     r"""
     Generate a :math:`B_0` field from consecutive-phases and phase-difference maps.
@@ -317,9 +309,6 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
 
     Besides phase2 - phase1 subtraction, the core of this particular workflow relies
     in the phase-unwrapping with FSL PRELUDE [Jenkinson2003]_.
-    Because phase (and phase-difference) maps are clipped in the range
-    :math:`[0 \dotsb 2\pi )`, it is necessary to find the integer number of offsets
-    that make a region continuously smooth with its neighbors (*phase-unwrapping*).
     FSL PRELUDE takes wrapped maps in the range 0 to 6.28, `as per the user guide
     <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE/Guide#Step_2_-_Getting_.28wrapped.29_phase_in_radians>`__.
 
@@ -328,8 +317,6 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
     After some massaging and with the scaling of the echo separation factor
     :math:`\Delta \text{TE}`, the phase-difference maps are converted into
     an actual :math:`B_0` map in Hz units.
-    This implementation derives `originally from Nipype
-    <https://github.com/nipy/nipype/blob/0.12.1/nipype/workflows/dmri/fsl/artifacts.py#L514>`__.
 
     Workflow Graph
         .. workflow ::
@@ -359,11 +346,6 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
     -------
     fieldmap : :obj:`os.PathLike`
         The estimated fieldmap in Hz.  # TODO: write metadata "Units"
-
-    References
-    ----------
-    .. [Jenkinson2003] Jenkinson, M. (2003) Fast, automated, N-dimensional phase-unwrapping
-        algorithm. MRM 49(1):193-197. doi:`10.1002/mrm.10354 <10.1002/mrm.10354>`__.
 
     """
     from nipype.interfaces.fsl import PRELUDE
@@ -424,60 +406,139 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
     return workflow
 
 
-def _recenter(in_file):
-    """Recenter the phase-map distribution to the -pi..pi range."""
-    from os import getcwd
-    import numpy as np
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
-
-    nii = nb.load(in_file)
-    data = nii.get_fdata(dtype="float32")
-    msk = data != 0
-    msk[data == 0] = False
-    data[msk] -= np.median(data[msk])
-
-    out_file = fname_presuffix(in_file, suffix="_recentered", newpath=getcwd())
-    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
-    return out_file
-
-
-def _demean(in_file, in_mask=None, usemode=True):
+def init_fmap_postproc_wf(
+    omp_nthreads, median_kernel_size=5, name="fmap_postproc_wf"
+):
     """
-    Subtract the median (since it is robuster than the mean) from a map.
+    Postprocess a :math:`B_0` map estimated elsewhere.
+
+    This workflow denoises (mostly via smoothing) a :math:`B_0` fieldmap.
+
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+
+            from sdcflows.workflows.fit.fieldmap import init_fmap_postproc_wf
+            wf = init_fmap_postproc_wf(omp_nthreads=6)
 
     Parameters
     ----------
-    usemode : :obj:`bool`
-        Use the mode instead of the median (should be even more robust
-        against outliers).
+    omp_nthreads : :obj:`int`
+        Maximum number of threads an individual process may use
+    median_kernel_size : :obj:`int`
+        Size of the kernel when smoothing is done with a median filter.
+    name : :obj:`str`
+        Name of workflow (default: ``fmap_postproc_wf``)
+
+    Inputs
+    ------
+    fmap : :obj:`os.PathLike`
+        Fully preprocessed :math:`B_0` field nonuniformity map (aka *fieldmap*).
+    fmap_ref : :obj:`os.PathLike`
+        A preprocessed magnitude/reference image for the fieldmap.
+    fmap_mask : :obj:`os.PathLike`
+        A brain binary mask corresponding to this fieldmap.
+
+    Outputs
+    -------
+    out_fmap : :obj:`os.PathLike`
+        Postprocessed fieldmap.
 
     """
-    from os import getcwd
-    import numpy as np
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
+    from nipype.interfaces.fsl import SpatialFilter
+    from niflow.nipype1.workflows.dmri.fsl.utils import cleanup_edge_pipeline
+    workflow = Workflow(name=name)
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=["fmap_mask", "fmap_ref", "fmap", "metadata"]),
+        name="inputnode",
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["out_fmap", "metadata"]), name="outputnode"
+    )
 
-    nii = nb.load(in_file)
-    data = nii.get_fdata(dtype="float32")
+    def _recenter(in_file):
+        """Recenter the phase-map distribution to the -pi..pi range."""
+        from os import getcwd
+        import numpy as np
+        import nibabel as nb
+        from nipype.utils.filemanip import fname_presuffix
 
-    msk = np.ones_like(data, dtype=bool)
-    if in_mask is not None:
-        msk[nb.load(in_mask).get_fdata(dtype="float32") < 1e-4] = False
+        nii = nb.load(in_file)
+        data = nii.get_fdata(dtype="float32")
+        msk = data != 0
+        msk[data == 0] = False
+        data[msk] -= np.median(data[msk])
 
-    if usemode:
-        from scipy.stats import mode
+        out_file = fname_presuffix(in_file, suffix="_recentered", newpath=getcwd())
+        nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+        return out_file
 
-        data[msk] -= mode(data[msk], axis=None)[0][0]
-    else:
-        data[msk] -= np.median(data[msk], axis=None)
+    recenter = pe.Node(
+        niu.Function(function=_recenter),
+        name="recenter",
+        run_without_submitting=True,
+    )
+    denoise = pe.Node(
+        SpatialFilter(
+            operation="median",
+            kernel_shape="sphere",
+            kernel_size=median_kernel_size,
+        ),
+        name="denoise",
+    )
 
-    out_file = fname_presuffix(in_file, suffix="_demean", newpath=getcwd())
-    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
-    return out_file
+    def _demean(in_file, in_mask=None, usemode=True):
+        """
+        Subtract the median (since it is robuster than the mean) from a map.
 
+        Parameters
+        ----------
+        usemode : :obj:`bool`
+            Use the mode instead of the median (should be even more robust
+            against outliers).
 
-def _pop(inlist):
-    if isinstance(inlist, (tuple, list)):
-        return inlist[0]
-    return inlist
+        """
+        from os import getcwd
+        import numpy as np
+        import nibabel as nb
+        from nipype.utils.filemanip import fname_presuffix
+
+        nii = nb.load(in_file)
+        data = nii.get_fdata(dtype="float32")
+
+        msk = np.ones_like(data, dtype=bool)
+        if in_mask is not None:
+            msk[nb.load(in_mask).get_fdata(dtype="float32") < 1e-4] = False
+
+        if usemode:
+            from scipy.stats import mode
+
+            data[msk] -= mode(data[msk], axis=None)[0][0]
+        else:
+            data[msk] -= np.median(data[msk], axis=None)
+
+        out_file = fname_presuffix(in_file, suffix="_demean", newpath=getcwd())
+        nb.Nifti1Image(data, nii.affine, nii.header).to_filename(out_file)
+        return out_file
+
+    demean = pe.Node(niu.Function(function=_demean), name="demean")
+    cleanup_wf = cleanup_edge_pipeline(name="cleanup_wf")
+
+    def _pop(inlist):
+        if isinstance(inlist, (tuple, list)):
+            return inlist[0]
+        return inlist
+
+    # fmt: off
+    workflow.connect([
+        (inputnode, cleanup_wf, [("fmap_mask", "inputnode.in_mask")]),
+        (inputnode, recenter, [(("fmap", _pop), "in_file")]),
+        (recenter, denoise, [("out", "in_file")]),
+        (denoise, demean, [("out_file", "in_file")]),
+        (demean, cleanup_wf, [("out", "inputnode.in_file")]),
+        (cleanup_wf, outputnode, [("outputnode.out_file", "out_fmap")]),
+        (inputnode, outputnode, [(("metadata", _pop), "metadata")]),
+    ])
+    # fmt: on
+    return workflow
