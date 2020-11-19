@@ -56,7 +56,7 @@ def init_fmap_wf(omp_nthreads, mode="phasediff", name="fmap_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.fieldmap import init_fmap_wf
+            from sdcflows.workflows.fit.fieldmap import init_fmap_wf
             wf = init_fmap_wf(omp_nthreads=6)
 
     Parameters
@@ -167,7 +167,7 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.fieldmap import init_magnitude_wf
+            from sdcflows.workflows.fit.fieldmap import init_magnitude_wf
             wf = init_magnitude_wf(omp_nthreads=6)
 
     Parameters
@@ -239,7 +239,7 @@ def init_fmap_postproc_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.fieldmap import init_fmap_postproc_wf
+            from sdcflows.workflows.fit.fieldmap import init_fmap_postproc_wf
             wf = init_fmap_postproc_wf(omp_nthreads=6)
 
     Parameters
@@ -336,7 +336,7 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.models.fieldmap import init_phdiff_wf
+            from sdcflows.workflows.fit.fieldmap import init_phdiff_wf
             wf = init_phdiff_wf(omp_nthreads=1)
 
     Parameters
@@ -367,7 +367,7 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
 
     """
     from nipype.interfaces.fsl import PRELUDE
-    from ..interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads, SubtractPhases
+    from ...interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads, SubtractPhases
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
