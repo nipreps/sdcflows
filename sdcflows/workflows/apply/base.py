@@ -4,11 +4,9 @@
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
-from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
 
 
-def init_sdc_unwarp_wf(omp_nthreads, debug, name='sdc_unwarp_wf'):
+def init_sdc_unwarp_wf(omp_nthreads, debug, name="sdc_unwarp_wf"):
     """
     Apply the warping given by a displacements fieldmap.
 
@@ -49,51 +47,60 @@ def init_sdc_unwarp_wf(omp_nthreads, debug, name='sdc_unwarp_wf'):
     -------
     out_reference : :obj:`str`
         the ``in_reference`` after unwarping
-    out_reference_brain : :obj:`str`
-        the ``in_reference`` after unwarping and skullstripping
-    out_warp : :obj:`str`
-        the ``in_warp`` field is forwarded for compatibility
     out_mask : :obj:`str`
         mask of the unwarped input file
+    out_warp : :obj:`str`
+        the ``in_warp`` field is forwarded for compatibility
 
     """
+    from niworkflows.interfaces.registration import ANTSApplyTransformsRPT
     workflow = Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(
-        fields=['in_warp', 'in_reference', 'in_reference_mask']),
-        name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_reference', 'out_reference_brain', 'out_warp', 'out_mask']),
-        name='outputnode')
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=["in_warp", "in_reference", "in_reference_mask"]),
+        name="inputnode",
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=["out_reference", "out_warp", "out_mask"]
+        ),
+        name="outputnode",
+    )
 
-    unwarp_reference = pe.Node(ANTSApplyTransformsRPT(dimension=3,
-                                                      generate_report=False,
-                                                      float=True,
-                                                      interpolation='LanczosWindowedSinc'),
-                               name='unwarp_reference')
+    unwarp_reference = pe.Node(
+        ANTSApplyTransformsRPT(
+            dimension=3,
+            generate_report=False,
+            float=True,
+            interpolation="LanczosWindowedSinc",
+        ),
+        name="unwarp_reference",
+    )
 
-    unwarp_mask = pe.Node(ANTSApplyTransformsRPT(
-        dimension=3, generate_report=False, float=True,
-        interpolation='NearestNeighbor'), name='unwarp_mask')
+    unwarp_mask = pe.Node(
+        ANTSApplyTransformsRPT(
+            dimension=3,
+            generate_report=False,
+            float=True,
+            interpolation="NearestNeighbor",
+        ),
+        name="unwarp_mask",
+    )
 
-    enhance_and_skullstrip_bold_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads,
-                                                                         pre_mask=True)
+    # fmt:off
     workflow.connect([
         (inputnode, unwarp_reference, [
-            ('in_warp', 'transforms'),
-            ('in_reference', 'reference_image'),
-            ('in_reference', 'input_image')]),
+            ("in_warp", "transforms"),
+            ("in_reference", "reference_image"),
+            ("in_reference", "input_image"),
+        ]),
         (inputnode, unwarp_mask, [
-            ('in_warp', 'transforms'),
-            ('in_reference_mask', 'reference_image'),
-            ('in_reference_mask', 'input_image')]),
-        (unwarp_reference, enhance_and_skullstrip_bold_wf, [
-            ('output_image', 'inputnode.in_file')]),
-        (unwarp_mask, enhance_and_skullstrip_bold_wf, [
-            ('output_image', 'inputnode.pre_mask')]),
-        (inputnode, outputnode, [('in_warp', 'out_warp')]),
-        (unwarp_reference, outputnode, [('output_image', 'out_reference')]),
-        (enhance_and_skullstrip_bold_wf, outputnode, [
-            ('outputnode.mask_file', 'out_mask'),
-            ('outputnode.skull_stripped_file', 'out_reference_brain')]),
+            ("in_warp", "transforms"),
+            ("in_reference_mask", "reference_image"),
+            ("in_reference_mask", "input_image"),
+        ]),
+        (inputnode, outputnode, [("in_warp", "out_warp")]),
+        (unwarp_reference, outputnode, [("output_image", "out_reference")]),
+        (unwarp_mask, outputnode, [("output_image", "out_mask")]),
     ])
+    # fmt: on
     return workflow
