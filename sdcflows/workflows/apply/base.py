@@ -22,7 +22,7 @@ def init_sdc_unwarp_wf(omp_nthreads, debug, name='sdc_unwarp_wf'):
         :graph2use: orig
         :simple_form: yes
 
-        from sdcflows.workflows.unwarp import init_sdc_unwarp_wf
+        from sdcflows.workflows.apply.base import init_sdc_unwarp_wf
         wf = init_sdc_unwarp_wf(omp_nthreads=8,
                                 debug=False)
 
