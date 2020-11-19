@@ -50,7 +50,7 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
 
     if outdir:
         from nipype.interfaces.afni import Automask
-        from ...interfaces.reportlets import FieldmapReportlet
+        from ....interfaces.reportlets import FieldmapReportlet
 
         pre_mask = pe.Node(Automask(dilate=1, outputtype="NIFTI_GZ"),
                            name="pre_mask")

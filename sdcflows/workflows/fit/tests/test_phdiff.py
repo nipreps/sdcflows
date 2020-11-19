@@ -43,7 +43,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
     ]
 
     if outdir:
-        from ...interfaces.reportlets import FieldmapReportlet
+        from ....interfaces.reportlets import FieldmapReportlet
 
         rep = pe.Node(FieldmapReportlet(reference_label="Magnitude"), "simple_report")
         rep.interface._always_run = True
