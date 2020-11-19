@@ -1,17 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-Interfaces to deal with the various types of fieldmap sources.
-
-    .. testsetup::
-
-        >>> tmpdir = getfixture('tmpdir')
-        >>> tmp = tmpdir.chdir() # changing to a temporary directory
-        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-        ...     tmpdir.join('epi.nii.gz').strpath)
-
-
-"""
+"""Interfaces to deal with the various types of fieldmap sources."""
 
 from nipype import logging
 from nipype.interfaces.base import (
@@ -98,16 +87,7 @@ class _Phasediff2FieldmapOutputSpec(TraitedSpec):
 
 
 class Phasediff2Fieldmap(SimpleInterface):
-    """
-    Convert a phase difference map into a fieldmap in Hz.
-
-    This interface is equivalent to running the following steps:
-      #. Convert from rad to rad/s
-         (``niflow.nipype1.workflows.dmri.fsl.utils.rads2radsec``)
-      #. FUGUE execution: fsl.FUGUE(save_fmap=True)
-      #. Conversion from rad/s to Hz (divide by 2pi, ``rsec2hz``).
-
-    """
+    """Convert a phase difference map into a fieldmap in Hz."""
 
     input_spec = _Phasediff2FieldmapInputSpec
     output_spec = _Phasediff2FieldmapOutputSpec
