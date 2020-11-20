@@ -40,7 +40,7 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 LOGGER = logging.getLogger("nipype.workflow")
 
 
-def init_syn_sdc_wf(omp_nthreads, epi_pe=None, atlas_threshold=3, name="syn_sdc_wf"):
+def init_syn_sdc_wf(omp_nthreads=1, epi_pe=None, atlas_threshold=3, name="syn_sdc_wf"):
     """
     Build the *fieldmap-less* susceptibility-distortion estimation workflow.
 
