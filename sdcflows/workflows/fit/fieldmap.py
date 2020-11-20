@@ -109,7 +109,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_fmap_wf(omp_nthreads, mode="phasediff", name="fmap_wf"):
+def init_fmap_wf(omp_nthreads=1, mode="phasediff", name="fmap_wf"):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
@@ -206,12 +206,15 @@ acquisitions.
     else:
         from niworkflows.interfaces.nibabel import ApplyMask
         from niworkflows.interfaces.images import IntraModalMerge
+
         workflow.__desc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was directly measured with
 an MRI scheme designed with that purpose (e.g., a spiral pulse sequence).
 """
         # Merge input fieldmap images
-        fmapmrg = pe.Node(IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg")
+        fmapmrg = pe.Node(
+            IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg"
+        )
         applymsk = pe.Node(ApplyMask(), name="applymsk")
         # fmt: off
         workflow.connect([
@@ -360,9 +363,7 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
         niu.IdentityInterface(fields=["magnitude", "phase", "mask"]), name="inputnode"
     )
 
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fieldmap"]), name="outputnode",
-    )
+    outputnode = pe.Node(niu.IdentityInterface(fields=["fieldmap"]), name="outputnode",)
 
     def _split(phase):
         return phase
@@ -406,9 +407,7 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
     return workflow
 
 
-def init_fmap_postproc_wf(
-    omp_nthreads, median_kernel_size=5, name="fmap_postproc_wf"
-):
+def init_fmap_postproc_wf(omp_nthreads, median_kernel_size=5, name="fmap_postproc_wf"):
     """
     Postprocess a :math:`B_0` map estimated elsewhere.
 
@@ -448,6 +447,7 @@ def init_fmap_postproc_wf(
     """
     from nipype.interfaces.fsl import SpatialFilter
     from niflow.nipype1.workflows.dmri.fsl.utils import cleanup_edge_pipeline
+
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(fields=["fmap_mask", "fmap_ref", "fmap", "metadata"]),
@@ -475,15 +475,11 @@ def init_fmap_postproc_wf(
         return out_file
 
     recenter = pe.Node(
-        niu.Function(function=_recenter),
-        name="recenter",
-        run_without_submitting=True,
+        niu.Function(function=_recenter), name="recenter", run_without_submitting=True,
     )
     denoise = pe.Node(
         SpatialFilter(
-            operation="median",
-            kernel_shape="sphere",
-            kernel_size=median_kernel_size,
+            operation="median", kernel_shape="sphere", kernel_size=median_kernel_size,
         ),
         name="denoise",
     )
