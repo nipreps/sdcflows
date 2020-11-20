@@ -4,8 +4,6 @@ from pathlib import Path
 from json import loads
 
 import pytest
-from niworkflows.interfaces.bids import DerivativesDataSink
-from nipype.pipeline import engine as pe
 
 from ..fieldmap import init_fmap_wf, Workflow
 
@@ -27,58 +25,47 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
     tmpdir.chdir()
 
     fmap_path = [datadir / f for f in fmap_path]
+    fieldmaps = [
+        (str(f.absolute()), loads(Path(str(f).replace(".nii.gz", ".json")).read_text()))
+        for f in fmap_path
+    ]
 
     wf = Workflow(
         name=f"phdiff_{fmap_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
     )
     phdiff_wf = init_fmap_wf(omp_nthreads=2)
+    phdiff_wf.inputs.inputnode.fieldmap = fieldmaps
     phdiff_wf.inputs.inputnode.magnitude = [
-        str(f.absolute()).replace("diff", "1").replace("phase", "magnitude")
-        for f in fmap_path
-    ]
-    phdiff_wf.inputs.inputnode.fieldmap = [
-        (str(f.absolute()), loads(Path(str(f).replace(".nii.gz", ".json")).read_text()))
-        for f in fmap_path
+        f.replace("diff", "1").replace("phase", "magnitude") for f, _ in fieldmaps
     ]
 
     if outdir:
-        from ....interfaces.reportlets import FieldmapReportlet
+        from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        rep = pe.Node(FieldmapReportlet(reference_label="Magnitude"), "simple_report")
-        rep.interface._always_run = True
-
-        ds_report = pe.Node(
-            DerivativesDataSink(
-                base_directory=str(outdir),
-                out_path_base="sdcflows",
-                datatype="figures",
-                suffix="fieldmap",
-                desc="phasediff",
-                dismiss_entities="fmap",
-            ),
-            name="ds_report",
+        fmap_derivatives_wf = init_fmap_derivatives_wf(
+            output_dir=str(outdir),
+            custom_entities={"est": "phasediff"},
+            bids_fmap_id="phasediff_id",
         )
-        ds_report.inputs.source_file = str(fmap_path[0])
+        fmap_derivatives_wf.inputs.inputnode.source_files = [f for f, _ in fieldmaps]
+        fmap_derivatives_wf.inputs.inputnode.fmap_meta = [f for _, f in fieldmaps]
 
-        dsink_fmap = pe.Node(
-            DerivativesDataSink(
-                base_directory=str(outdir),
-                dismiss_entities="fmap",
-                desc="phasediff",
-                suffix="fieldmap",
-            ),
-            name="dsink_fmap",
+        fmap_reports_wf = init_fmap_reports_wf(
+            output_dir=str(outdir),
+            fmap_type="phasediff" if len(fieldmaps) == 1 else "phases",
         )
-        dsink_fmap.interface.out_path_base = "sdcflows"
-        dsink_fmap.inputs.source_file = str(fmap_path[0])
+        fmap_reports_wf.inputs.inputnode.source_files = [f for f, _ in fieldmaps]
 
         # fmt: off
         wf.connect([
-            (phdiff_wf, rep, [("outputnode.fmap", "fieldmap"),
-                              ("outputnode.fmap_ref", "reference"),
-                              ("outputnode.fmap_mask", "mask")]),
-            (rep, ds_report, [("out_report", "in_file")]),
-            (phdiff_wf, dsink_fmap, [("outputnode.fmap", "in_file")]),
+            (phdiff_wf, fmap_reports_wf, [
+                ("outputnode.fmap", "inputnode.fieldmap"),
+                ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
+            (phdiff_wf, fmap_derivatives_wf, [
+                ("outputnode.fmap", "inputnode.fieldmap"),
+                ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+            ]),
         ])
         # fmt: on
     else:
