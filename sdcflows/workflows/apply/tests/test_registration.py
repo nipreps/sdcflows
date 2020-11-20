@@ -86,4 +86,4 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
     if workdir:
         workflow.base_dir = str(workdir)
 
-    workflow.run()
+    workflow.run(plugin="Linear")

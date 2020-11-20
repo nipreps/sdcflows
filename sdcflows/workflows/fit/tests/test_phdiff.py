@@ -75,4 +75,4 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
     if workdir:
         wf.base_dir = str(workdir)
 
-    wf.run()
+    wf.run(plugin="Linear")
