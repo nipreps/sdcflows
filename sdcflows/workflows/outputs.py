@@ -3,23 +3,107 @@
 """Writing out outputs."""
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from niworkflows.interfaces.bids import DerivativesDataSink
+from niworkflows.interfaces.bids import DerivativesDataSink as _DDS
+
+
+class DerivativesDataSink(_DDS):
+    """Overload the ``out_path_base`` setting."""
+
+    out_path_base = "sdcflows"
+
+
+del _DDS
+
+
+def init_fmap_reports_wf(
+    *, output_dir, fmap_type, custom_entities=None, name="fmap_reports_wf",
+):
+    """
+    Set up a battery of datasinks to store reports in the right location.
+
+    Parameters
+    ----------
+    fmap_type : :obj:`str`
+        The fieldmap estimator type.
+    custom_entities : :obj:`dict`
+        Define extra entities that will be written out in filenames.
+    output_dir : :obj:`str`
+        Directory in which to save derivatives
+    name : :obj:`str`
+        Workflow name (default: ``"fmap_reports_wf"``)
+
+    Inputs
+    ------
+    source_files
+        One or more fieldmap file(s) of the BIDS dataset that will serve for naming reference.
+    fieldmap
+        The preprocessed fieldmap, in its original space with Hz units.
+    fmap_ref
+        An anatomical reference (e.g., magnitude file)
+    fmap_mask
+        A brain mask in the fieldmap's space.
+
+    """
+    from ..interfaces.reportlets import FieldmapReportlet
+
+    custom_entities = custom_entities or {}
+
+    workflow = pe.Workflow(name=name)
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=["source_files", "fieldmap", "fmap_ref", "fmap_mask"]
+        ),
+        name="inputnode",
+    )
+
+    rep = pe.Node(FieldmapReportlet(), "simple_report")
+    rep.interface._always_run = True
+
+    ds_fmap_report = pe.Node(
+        DerivativesDataSink(
+            base_directory=str(output_dir),
+            datatype="figures",
+            suffix="fieldmap",
+            desc=fmap_type,
+            dismiss_entities=("fmap",),
+            allowed_entities=tuple(custom_entities.keys()),
+        ),
+        name="ds_fmap_report",
+    )
+    for k, v in custom_entities.items():
+        setattr(ds_fmap_report.inputs, k, v)
+
+    # fmt:off
+    workflow.connect([
+        (inputnode, rep, [("fieldmap", "fieldmap"),
+                          ("fmap_ref", "reference"),
+                          ("fmap_mask", "mask")]),
+        (rep, ds_fmap_report, [("out_report", "in_file")]),
+        (inputnode, ds_fmap_report, [("source_files", "source_file")]),
+
+    ])
+    # fmt:on
+
+    return workflow
 
 
 def init_fmap_derivatives_wf(
     *,
-    bids_root,
     output_dir,
-    write_coeff=False,
+    bids_fmap_id=None,
+    custom_entities=None,
     name="fmap_derivatives_wf",
+    write_coeff=False,
 ):
     """
     Set up datasinks to store derivatives in the right location.
 
     Parameters
     ----------
-    bids_root : :obj:`str`
-        Root path of BIDS dataset
+    bids_fmap_id : :obj:`str`
+        Sets the ``B0FieldIdentifier`` metadata into the outputs.
+    custom_entities : :obj:`dict`
+        Define extra entities that will be written out in filenames.
     output_dir : :obj:`str`
         Directory in which to save derivatives
     name : :obj:`str`
@@ -27,8 +111,8 @@ def init_fmap_derivatives_wf(
 
     Inputs
     ------
-    source_file
-        A fieldmap file of the BIDS dataset that will serve for naming reference.
+    source_files
+        One or more fieldmap file(s) of the BIDS dataset that will serve for naming reference.
     fieldmap
         The preprocessed fieldmap, in its original space with Hz units.
     fmap_coeff
@@ -37,25 +121,24 @@ def init_fmap_derivatives_wf(
         An anatomical reference (e.g., magnitude file)
 
     """
-    workflow = pe.Workflow(name=name)
+    custom_entities = custom_entities or {}
 
+    workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=[
-                "source_file",
-                "fieldmap",
-                "fmap_coeff",
-                "fmap_ref",
-            ]),
-        name="inputnode"
+            fields=["source_files", "fieldmap", "fmap_coeff", "fmap_ref", "fmap_meta"]
+        ),
+        name="inputnode",
     )
 
     ds_reference = pe.Node(
         DerivativesDataSink(
             base_directory=output_dir,
-            desc="reference",
+            compress=True,
             suffix="fieldmap",
-            compress=True),
+            dismiss_entities=("fmap",),
+            allowed_entities=tuple(custom_entities.keys()),
+        ),
         name="ds_reference",
     )
 
@@ -64,17 +147,31 @@ def init_fmap_derivatives_wf(
             base_directory=output_dir,
             desc="preproc",
             suffix="fieldmap",
-            compress=True),
+            compress=True,
+            allowed_entities=tuple(custom_entities.keys()),
+        ),
         name="ds_fieldmap",
     )
     ds_fieldmap.inputs.Units = "Hz"
+    if bids_fmap_id:
+        ds_fieldmap.inputs.B0FieldIdentifier = bids_fmap_id
+
+    for k, v in custom_entities.items():
+        setattr(ds_reference.inputs, k, v)
+        setattr(ds_fieldmap.inputs, k, v)
 
     # fmt:off
     workflow.connect([
-        (inputnode, ds_reference, [("source_file", "source_file"),
-                                   ("fmap_ref", "in_file")]),
-        (inputnode, ds_fieldmap, [("source_file", "source_file"),
-                                  ("fieldmap", "in_file")]),
+        (inputnode, ds_reference, [("source_files", "source_file"),
+                                   ("fmap_ref", "in_file"),
+                                   (("source_files", _getsourcetype), "desc")]),
+        (inputnode, ds_fieldmap, [("source_files", "source_file"),
+                                  ("fieldmap", "in_file"),
+                                  ("source_files", "RawSources")]),
+        (ds_reference, ds_fieldmap, [
+            (("out_file", _getname), "AnatomicalReference"),
+        ]),
+        (inputnode, ds_fieldmap, [(("fmap_meta", _selectintent), "IntendedFor")]),
     ])
     # fmt:on
 
@@ -85,19 +182,25 @@ def init_fmap_derivatives_wf(
         DerivativesDataSink(
             base_directory=output_dir,
             suffix="fieldmap",
-            compress=True),
+            compress=True,
+            allowed_entities=tuple(custom_entities.keys()),
+        ),
         name="ds_coeff",
         iterfield=("in_file", "desc"),
     )
 
     gen_desc = pe.Node(niu.Function(function=_gendesc), name="gen_desc")
 
+    for k, v in custom_entities.items():
+        setattr(ds_coeff.inputs, k, v)
+
     # fmt:off
     workflow.connect([
-        (inputnode, ds_coeff, [("source_file", "source_file"),
+        (inputnode, ds_coeff, [("source_files", "source_file"),
                                ("fmap_coeff", "in_file")]),
         (inputnode, gen_desc, [("fmap_coeff", "infiles")]),
         (gen_desc, ds_coeff, [("out", "desc")]),
+        (ds_coeff, ds_fieldmap, [(("out_file", _getname), "AssociatedCoefficients")]),
     ])
     # fmt:on
 
@@ -197,3 +300,26 @@ def _gendesc(infiles):
         return "coeff"
 
     return [f"coeff{i}" for i, _ in enumerate(infiles)]
+
+
+def _getname(infile):
+    from pathlib import Path
+
+    if isinstance(infile, (list, tuple)):
+        return [Path(f).name for f in infile]
+    return Path(infile).name
+
+
+def _getsourcetype(infiles):
+    from pathlib import Path
+
+    fname = Path(infiles[0]).name
+    return "epi" if fname.endswith(("_epi.nii.gz", "_epi.nii")) else "magnitude"
+
+
+def _selectintent(metadata):
+    from bids.utils import listify
+
+    return sorted(
+        set([el for m in metadata for el in listify(m.get("IntendedFor", []))])
+    )
