@@ -87,4 +87,4 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
     if workdir:
         wf.base_dir = str(workdir)
 
-    wf.run()
+    wf.run(plugin="Linear")
