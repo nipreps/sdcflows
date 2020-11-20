@@ -29,6 +29,7 @@ def add_np(doctest_namespace):
     doctest_namespace['nb'] = nibabel
     doctest_namespace['os'] = os
     doctest_namespace['Path'] = Path
+    doctest_namespace['layouts'] = layouts
     for key, val in list(layouts.items()):
         doctest_namespace[key] = Path(val.root)
 
