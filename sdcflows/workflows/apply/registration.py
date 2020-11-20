@@ -16,9 +16,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
 def init_coeff2epi_wf(
-    omp_nthreads,
-    debug=False,
-    name="fmap2field_wf",
+    omp_nthreads, debug=False, write_coeff=False, name="fmap2field_wf",
 ):
     """
     Move the field coefficients on to the target (distorted) EPI space.
@@ -33,12 +31,14 @@ def init_coeff2epi_wf(
 
     Parameters
     ----------
-    omp_nthreads : int
+    omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
-    debug : bool
+    debug : :obj:`bool`
         Run fast configurations of registrations.
-    name : str
+    name : :obj:`str`
         Unique name of this workflow.
+    write_coeff : :obj:`bool`
+        Map coefficients file
 
     Inputs
     ------
@@ -59,7 +59,9 @@ def init_coeff2epi_wf(
         fieldmap coefficients
 
     """
+    from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
 The estimated *fieldmap* was then aligned with rigid-registration to the target
@@ -68,18 +70,13 @@ The field coefficients were mapped on to the reference EPI using the transform.
 """
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=[
-                "target_ref",
-                "target_mask",
-                "fmap_ref",
-                "fmap_mask",
-                "fmap_coeff",
-            ]
+            fields=["target_ref", "target_mask", "fmap_ref", "fmap_mask", "fmap_coeff"]
         ),
         name="inputnode",
     )
-    outputnode = pe.Node(niu.IdentityInterface(fields=["fmap_coeff"]),
-                         name="outputnode")
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fmap_ref", "fmap_coeff"]), name="outputnode"
+    )
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -88,24 +85,34 @@ The field coefficients were mapped on to the reference EPI using the transform.
     )
 
     coregister = pe.Node(
-        Registration(
-            from_file=ants_settings,
-        ),
+        Registration(from_file=ants_settings, output_warped_image=True,),
         name="coregister",
         n_procs=omp_nthreads,
     )
 
-    # Map the coefficients into the EPI space
-    map_coeff = pe.Node(niu.Function(function=_move_coeff), name="map_coeff")
+    ver = coregister.interface.version or "2.2.0"
+    mask_trait_s = "s" if parseversion(ver) >= Version("2.2.0") else ""
 
     # fmt: off
     workflow.connect([
         (inputnode, coregister, [
             ("target_ref", "fixed_image"),
             ("fmap_ref", "moving_image"),
-            ("target_mask", "fixed_image_masks"),
-            ("fmap_mask", "moving_image_masks"),
+            ("target_mask", f"fixed_image_mask{mask_trait_s}"),
+            ("fmap_mask", f"moving_image_mask{mask_trait_s}"),
         ]),
+        (coregister, outputnode, [("warped_image", "fmap_ref")]),
+    ])
+    # fmt: on
+
+    if not write_coeff:
+        return workflow
+
+    # Map the coefficients into the EPI space
+    map_coeff = pe.Node(niu.Function(function=_move_coeff), name="map_coeff")
+
+    # fmt: off
+    workflow.connect([
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff")]),
         (coregister, map_coeff, [("forward_transforms", "transform")]),
         (map_coeff, outputnode, [("out", "fmap_coeff")]),
