@@ -9,7 +9,6 @@ from nipype.interfaces.base import (
     File,
     traits,
     SimpleInterface,
-    InputMultiObject,
 )
 
 LOGGER = logging.getLogger("nipype.interface")
@@ -94,7 +93,7 @@ class Phasediff2Fieldmap(SimpleInterface):
     output_spec = _Phasediff2FieldmapOutputSpec
 
     def _run_interface(self, runtime):
-        from ..utils.phasemanip import phdiff2fmap
+        from ..utils.phasemanip import phdiff2fmap, delta_te as _delta_te
 
         self._results["out_file"] = phdiff2fmap(
             self.inputs.in_file, _delta_te(self.inputs.metadata), newpath=runtime.cwd
@@ -102,62 +101,24 @@ class Phasediff2Fieldmap(SimpleInterface):
         return runtime
 
 
-class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
-    in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
-    in_coeff = InputMultiObject(File(exists=True), mandatory=True,
-                                desc="input coefficients, after alignment to the EPI data")
-    ro_time = traits.Float(mandatory=True, desc="EPI readout time")
+# Code stub for #119 (B-Spline smoothing)
+# class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
+#     in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+#     in_coeff = InputMultiObject(File(exists=True), mandatory=True,
+#                                 desc="input coefficients, after alignment to the EPI data")
+#     ro_time = traits.Float(mandatory=True, desc="EPI readout time")
 
 
-class _Coefficients2WarpOutputSpec(TraitedSpec):
-    out_warp = File(exists=True)
+# class _Coefficients2WarpOutputSpec(TraitedSpec):
+#     out_warp = File(exists=True)
 
 
-class Coefficients2Warp(SimpleInterface):
-    """Convert coefficients to a full displacements map."""
+# class Coefficients2Warp(SimpleInterface):
+#     """Convert coefficients to a full displacements map."""
 
-    input_spec = _Coefficients2WarpInputSpec
-    output_spec = _Coefficients2WarpOutputSpec
+#     input_spec = _Coefficients2WarpInputSpec
+#     output_spec = _Coefficients2WarpOutputSpec
 
-    def _run_interface(self, runtime):
-        raise NotImplementedError
-        return runtime
-
-
-def _delta_te(in_values, te1=None, te2=None):
-    r"""Read :math:`\Delta_\text{TE}` from BIDS metadata dict."""
-    if isinstance(in_values, float):
-        te2 = in_values
-        te1 = 0.0
-
-    if isinstance(in_values, dict):
-        te1 = in_values.get("EchoTime1")
-        te2 = in_values.get("EchoTime2")
-
-        if not all((te1, te2)):
-            te2 = in_values.get("EchoTimeDifference")
-            te1 = 0
-
-    if isinstance(in_values, list):
-        te2, te1 = in_values
-        if isinstance(te1, list):
-            te1 = te1[1]
-        if isinstance(te2, list):
-            te2 = te2[1]
-
-    # For convienience if both are missing we should give one error about them
-    if te1 is None and te2 is None:
-        raise RuntimeError(
-            "EchoTime1 and EchoTime2 metadata fields not found. "
-            "Please consult the BIDS specification."
-        )
-    if te1 is None:
-        raise RuntimeError(
-            "EchoTime1 metadata field not found. Please consult the BIDS specification."
-        )
-    if te2 is None:
-        raise RuntimeError(
-            "EchoTime2 metadata field not found. Please consult the BIDS specification."
-        )
-
-    return abs(float(te2) - float(te1))
+#     def _run_interface(self, runtime):
+#         raise NotImplementedError
+#         return runtime
