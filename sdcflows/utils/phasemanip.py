@@ -21,7 +21,7 @@ def au2rads(in_file, newpath=None):
 
     hdr.set_data_dtype(np.float32)
     hdr.set_xyzt_units("mm")
-    out_file = fname_presuffix(in_file, suffix="_rads", newpath=newpath)
+    out_file = fname_presuffix(str(in_file), suffix="_rads", newpath=newpath)
     nb.Nifti1Image(data, None, hdr).to_filename(out_file)
     return out_file
 
@@ -70,15 +70,67 @@ def subtract_phases(in_phases, in_meta, newpath=None):
 
 def phdiff2fmap(in_file, delta_te, newpath=None):
     """Convert the input phase-difference map into a *fieldmap* in Hz."""
-    import math
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
-    out_file = fname_presuffix(in_file, suffix="_fmap", newpath=newpath)
+    out_file = fname_presuffix(str(in_file), suffix="_fmap", newpath=newpath)
     image = nb.load(in_file)
-    data = image.get_fdata(dtype="float32") / (2.0 * math.pi * delta_te)
+    data = image.get_fdata(dtype="float32") / (2.0 * np.pi * delta_te)
     nii = nb.Nifti1Image(data, image.affine, image.header)
     nii.set_data_dtype(np.float32)
     nii.to_filename(out_file)
     return out_file
+
+
+def delta_te(in_values):
+    r"""
+    Read :math:`\Delta_\text{TE}` from BIDS metadata dict.
+
+    Examples
+    --------
+    >>> t = delta_te({"EchoTime1": 0.00522, "EchoTime2": 0.00768})
+    >>> f"{t:.5f}"
+    '0.00246'
+
+    >>> t = delta_te({'EchoTimeDifference': 0.00246})
+    >>> f"{t:.5f}"
+    '0.00246'
+
+    >>> delta_te({"EchoTime1": "a"})  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError:
+
+    >>> delta_te({"EchoTime2": "a"})  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError:
+
+    >>> delta_te({})  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError:
+
+    """
+    te2 = in_values.get("EchoTime2")
+    te1 = in_values.get("EchoTime1")
+
+    if te2 is None and te1 is None:
+        try:
+            te2 = float(in_values.get("EchoTimeDifference"))
+            return abs(te2)
+        except TypeError:
+            raise ValueError(
+                "Phase/phase-difference fieldmaps: no echo-times information."
+            )
+        except ValueError:
+            raise ValueError(
+                f"Could not interpret metadata <EchoTimeDifference={te2}>."
+            )
+    try:
+        te2 = float(te2 or "unknown")
+        te1 = float(te1 or "unknown")
+    except ValueError:
+        raise ValueError(
+            f"Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>."
+        )
+
+    return abs(te2 - te1)
