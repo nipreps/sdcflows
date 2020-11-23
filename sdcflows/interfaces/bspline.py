@@ -1,16 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-B-Spline filtering.
-
-    .. testsetup::
-
-        >>> tmpdir = getfixture('tmpdir')
-        >>> tmp = tmpdir.chdir() # changing to a temporary directory
-        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-        ...     tmpdir.join('epi.nii.gz').strpath)
-
-"""
+"""Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
 import numpy as np
 import nibabel as nb
@@ -68,11 +58,35 @@ class _BSplineApproxOutputSpec(TraitedSpec):
 
 
 class BSplineApprox(SimpleInterface):
-    """
-    Approximate the field to smooth it removing spikes and extrapolating beyond the brain mask.
+    r"""
+    Approximate the :math:`B_0` field using tensor-product B-Splines.
 
-    Examples
+    The approximation effectively smooths the data, removing spikes and other
+    sources of noise, as well as enables the extrapolation of the :math:`B_0` field
+    beyond the brain mask, which alleviates boundary effects in correction.
+
+    This interface resolves the optimization problem of obtaining the B-Spline coefficients
+    :math:`c(\mathbf{k})` that best approximate the data samples within the
+    brain mask :math:`f(\mathbf{s})`, following Eq. (17) -- in that case for 2D --
+    of [Unser1999]_.
+    Here, and adapted to 3D:
+
+    .. math::
+
+        f(\mathbf{s}) =
+        \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s})
+        \label{eq:1}\tag{1}.
+
+    References
+    ----------
+    .. [Unser1999] M. Unser, "`Splines: A Perfect Fit for Signal and Image Processing
+        <http://bigwww.epfl.ch/publications/unser9902.pdf>`__," IEEE Signal Processing
+        Magazine 16(6):22-38, 1999.
+
+    See Also
     --------
+    :py:func:`bspline_weights` - for Eq. :math:`\eqref{eq:2}` and the evaluation of
+    the tri-cubic B-Splines :math:`\Psi^3(\mathbf{k}, \mathbf{s})`.
 
     """
 
@@ -188,7 +202,7 @@ def canonical_orientation(img):
 
 
 def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
-    """Calculate a Nifti1Image object encoding the location of control points."""
+    """Create a :obj:`~nibabel.nifti1.Nifti1Image` embedding the location of control points."""
     if isinstance(img, (str, Path)):
         img = nb.load(img)
 
@@ -215,12 +229,55 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
 
-def bspline_weights(points, level):
-    """Calculate the tensor-product cubic B-Spline weights for a list of 3D points."""
-    ctl_spacings = [float(sp) for sp in level.header.get_zooms()[:3]]
-    ncoeff = level.dataobj.size
+def bspline_weights(points, ctrl_nii):
+    r"""
+    Calculate the tensor-product cubic B-Spline kernel weights for a list of 3D points.
+
+    For each of the *N* input samples :math:`(s_1, s_2, s_3)` and *K* control
+    points or *knots* :math:`\mathbf{k} =(k_1, k_2, k_3)`, the tensor-product
+    cubic B-Spline kernel weights are calculated:
+
+    .. math::
+
+        \Psi^3(\mathbf{k}, \mathbf{s}) =
+        \beta^3(s_1 - k_1) \cdot \beta^3(s_2 - k_2) \cdot \beta^3(s_3 - k_3)
+        \label{eq:2}\tag{2},
+
+    where each :math:`\beta^3` represents the cubic B-Spline for one dimension.
+    The 1D B-Spline kernel implementation uses :obj:`numpy.piecewise`, and is based on the
+    closed-form given by Eq. (6) of [Unser1999]_.
+
+    By iterating over dimensions, the data samples that fall outside of the compact
+    support of the tensor-product kernel associated to each control point can be filtered
+    out and dismissed to lighten computation.
+
+    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
+    can be easily identified in Eq. :math:`\eqref{eq:1}` and used as the design matrix
+    for approximation of data.
+
+    Parameters
+    ----------
+    points : :obj:`numpy.ndarray`; :math:`N \times 3`
+        Array of 3D coordinates of samples from the data to be approximated,
+        in index (i,j,k) coordinates with respect to the control points grid.
+    ctrl_nii : :obj:`nibabel.spatialimages`
+        An spatial image object (typically, a :obj:`~nibabel.nifti1.Nifti1Image`)
+        embedding the location of the control points of the B-Spline grid.
+        The data array should contain a total of :math:`K` knots (control points).
+
+    Returns
+    -------
+    weights : :obj:`numpy.ndarray` (:math:`K \times N`)
+        A sparse matrix of interpolating weights :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
+        for the *N* samples in ``points``, for each of the total *K* knots.
+        This sparse matrix can be directly used as design matrix for the fitting
+        step of approximation/extrapolation.
+
+    """
+    ctl_spacings = [float(sp) for sp in ctrl_nii.header.get_zooms()[:3]]
+    ncoeff = ctrl_nii.dataobj.size
     ctl_points = apply_affine(
-        level.affine.astype("float32"), np.argwhere(np.isclose(level.dataobj, 0))
+        ctrl_nii.affine.astype("float32"), np.argwhere(np.isclose(ctrl_nii.dataobj, 0))
     )
 
     weights = np.ones((ncoeff, points.shape[0]), dtype="float32")
