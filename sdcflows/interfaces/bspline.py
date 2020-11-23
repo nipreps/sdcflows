@@ -207,9 +207,10 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     bs_shape = (im_extent // bs_zooms + 3).astype(int)
 
     # Center both images
-    im_center = apply_affine(img.affine, 0.5 * (im_shape - 1))
-    bs_center = apply_affine(bs_affine, 0.5 * (bs_shape - 1))
-    bs_affine[:3, 3] = im_center[:3] - bs_center[:3]
+    bs_affine[:3, 3] = (
+        apply_affine(img.affine, 0.5 * (im_shape - 1))
+        - apply_affine(bs_affine, 0.5 * (bs_shape - 1))
+    )
 
     return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
