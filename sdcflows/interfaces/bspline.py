@@ -99,8 +99,6 @@ class BSplineApprox(SimpleInterface):
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
         data = fmapnii.get_fdata(dtype="float32")
-        oriented_nii = canonical_orientation(fmapnii)
-        oriented_nii.to_filename("data.nii.gz")
         mask = nb.load(self.inputs.in_mask).get_fdata() > 0
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
@@ -117,7 +115,7 @@ class BSplineApprox(SimpleInterface):
         # Calculate spatial location of voxels, and normalize per B-Spline grid
         mask_indices = np.argwhere(mask)
         fmap_points = apply_affine(
-            oriented_nii.affine.astype("float32"), mask_indices
+            fmapnii.affine.astype("float32"), mask_indices
         )
 
         # Calculate the spatial location of control points
@@ -125,7 +123,7 @@ class BSplineApprox(SimpleInterface):
         w_l = []
         ncoeff = []
         for sp in bs_spacing:
-            level = bspline_grid(oriented_nii, control_zooms_mm=sp)
+            level = bspline_grid(fmapnii, control_zooms_mm=sp)
             bs_levels.append(level)
             ncoeff.append(level.dataobj.size)
             w_l.append(bspline_weights(fmap_points, level))
@@ -174,7 +172,7 @@ class BSplineApprox(SimpleInterface):
 
         bg_indices = np.argwhere(~mask)
         bg_points = apply_affine(
-            oriented_nii.affine.astype("float32"), bg_indices
+            fmapnii.affine.astype("float32"), bg_indices
         )
 
         extrapolators = np.vstack(
@@ -186,19 +184,6 @@ class BSplineApprox(SimpleInterface):
             self._results["out_extrapolated"]
         )
         return runtime
-
-
-def canonical_orientation(img):
-    """Generate an alternative image aligned with the array axes."""
-    if isinstance(img, (str, Path)):
-        img = nb.load(img)
-
-    shape = np.array(img.shape[:3])
-    affine = np.diag(np.hstack((img.header.get_zooms()[:3], 1)))
-    affine[:3, 3] -= affine[:3, :3] @ (0.5 * (shape - 1))
-    nii = nb.Nifti1Image(img.dataobj, affine)
-    nii.header.set_xyzt_units(*img.header.get_xyzt_units())
-    return nii
 
 
 def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
@@ -222,8 +207,8 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     bs_shape = (im_extent // bs_zooms + 3).astype(int)
 
     # Center both images
-    im_center = img.affine @ np.hstack((0.5 * (im_shape - 1), 1))
-    bs_center = bs_affine @ np.hstack((0.5 * (bs_shape - 1), 1))
+    im_center = apply_affine(img.affine, 0.5 * (im_shape - 1))
+    bs_center = apply_affine(bs_affine, 0.5 * (bs_shape - 1))
     bs_affine[:3, 3] = im_center[:3] - bs_center[:3]
 
     return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
