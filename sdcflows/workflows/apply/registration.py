@@ -113,8 +113,9 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     # fmt: off
     workflow.connect([
-        (inputnode, map_coeff, [("fmap_coeff", "in_coeff")]),
-        (coregister, map_coeff, [("forward_transforms", "transform")]),
+        (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
+                                ("target_ref", "ref_image")]),
+        (coregister, map_coeff, [("reverse_transforms", "transform")]),
         (map_coeff, outputnode, [("out", "fmap_coeff")]),
     ])
     # fmt: on
@@ -122,6 +123,29 @@ The field coefficients were mapped on to the reference EPI using the transform.
     return workflow
 
 
-def _move_coeff(in_coeff, transform):
+def _move_coeff(in_coeff, ref_image, transform):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
-    raise NotImplementedError
+    from pathlib import Path
+    import numpy as np
+    import nibabel as nb
+    import nitransforms as nt
+
+    if isinstance(in_coeff, str):
+        in_coeff = [in_coeff]
+
+    xfm = nt.io.itk.ITKLinearTransform.from_filename(transform[0]).to_ras()
+
+    refaff = nb.load(ref_image).affine
+    refdir = refaff[:3, :3] / nb.affines.voxel_sizes(refaff)
+
+    out = []
+    for i, c in enumerate(in_coeff):
+        img = nb.load(c)
+
+        out.append(str(Path(f"moved_coeff_{i:03d}.nii.gz").absolute()))
+
+        newaff = np.eye(4)
+        newaff[:3, :3] = nb.affines.voxel_sizes(img.affine) * refdir
+        newaff[:3, 3] = nb.affines.apply_affine(xfm, img.affine[:3, 3].T)
+        img.__class__(img.dataobj, newaff, img.header).to_filename(out[-1])
+    return out
