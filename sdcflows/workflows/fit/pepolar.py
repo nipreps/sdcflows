@@ -57,6 +57,8 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         The path of the estimated fieldmap.
     fmap_ref : :obj:`str`
         The path of an unwarped conversion of files in ``in_data``.
+    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
+        The path(s) of the B-Spline coefficients supporting the fieldmap.
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
@@ -74,9 +76,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "fmap_ref",
                 "fmap",
-                "coefficients",
+                "fmap_ref",
+                "fmap_coeff",
                 "jacobians",
                 "xfms",
                 "out_warps",
@@ -110,7 +112,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         (concat_blips, topup, [("out_file", "in_file")]),
         (topup, outputnode, [("out_corrected", "fmap_ref"),
                              ("out_field", "fmap"),
-                             ("out_fieldcoef", "coefficients"),
+                             ("out_fieldcoef", "fmap_coeff"),
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
                              ("out_warps", "out_warps")]),

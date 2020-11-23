@@ -78,7 +78,7 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_path):
             (topup_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                ("outputnode.coefficients", "inputnode.fmap_coeff"),
+                ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
             ]),
         ])
         # fmt: on
