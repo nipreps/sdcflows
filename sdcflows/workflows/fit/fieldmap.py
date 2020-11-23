@@ -151,6 +151,8 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
         Path to the estimated fieldmap.
     fmap_ref : :obj:`str`
         Path to a preprocessed magnitude image reference.
+    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
+        The path(s) of the B-Spline coefficients supporting the fieldmap.
     fmap_mask : :obj:`str`
         Path to a binary brain mask corresponding to the ``fmap`` and ``fmap_ref``
         pair.
@@ -169,7 +171,7 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
         niu.IdentityInterface(fields=["magnitude", "fieldmap"]), name="inputnode"
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask"]),
+        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff"]),
         name="outputnode",
     )
 
@@ -190,7 +192,8 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
             ("outputnode.fmap_ref", "fmap_ref"),
         ]),
         (bs_filter, outputnode, [
-            ("out_extrapolated" if not debug else "out_field", "fmap")]),
+            ("out_extrapolated" if not debug else "out_field", "fmap"),
+            ("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
 
