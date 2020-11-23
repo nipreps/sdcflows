@@ -45,6 +45,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
 
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
+            write_coeff=True,
             custom_entities={"est": "phasediff"},
             bids_fmap_id="phasediff_id",
         )
@@ -66,6 +67,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
             (phdiff_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
             ]),
         ])
         # fmt: on
