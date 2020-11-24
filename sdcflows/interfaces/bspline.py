@@ -74,8 +74,8 @@ class BSplineApprox(SimpleInterface):
     .. math::
 
         f(\mathbf{s}) =
-        \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s})
-        \label{eq:1}\tag{1}.
+        \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
+        \label{eq:1}\tag{1}
 
     References
     ----------
@@ -186,6 +186,79 @@ class BSplineApprox(SimpleInterface):
         return runtime
 
 
+class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
+    in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+    in_coeff = InputMultiObject(File(exists=True), mandatory=True,
+                                desc="input coefficients, after alignment to the EPI data")
+    ro_time = traits.Float(1.0, usedefault=True, desc="EPI readout time (s).")
+    pe_dir = traits.Enum("i", "i-", "j", "j-", "k", "k-", mandatory=True,
+                         desc="the phase-encoding direction corresponding to in_target")
+
+
+class _Coefficients2WarpOutputSpec(TraitedSpec):
+    out_field = File(exists=True)
+    out_warp = File(exists=True)
+
+
+class Coefficients2Warp(SimpleInterface):
+    r"""
+    Convert a set of B-Spline coefficients to a full displacements map.
+
+    Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
+    for all voxels in the target-image's extent.
+    When the readout time is known, the displacements field can be calculated
+    following Eq. `(2) <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
+
+    """
+
+    input_spec = _Coefficients2WarpInputSpec
+    output_spec = _Coefficients2WarpOutputSpec
+
+    def _run_interface(self, runtime):
+
+        # Calculate the physical coordinates of target grid
+        targetnii = nb.load(self.inputs.in_target)
+        allmask = np.ones_like(targetnii.dataobj, dtype=bool)
+        points = apply_affine(
+            targetnii.affine.astype("float32"), np.argwhere(allmask).astype("float32")
+        )
+
+        weights = []
+        coeffs = []
+        for cname in self.inputs.in_coeff:
+            cnii = nb.load(cname)
+            cdata = cnii.get_fdata(dtype="float32")
+            weights.append(bspline_weights(points, cnii))
+            coeffs.append(cdata.reshape(-1))
+
+        data = np.zeros_like(targetnii.dataobj, dtype="float32")
+        data[allmask] = np.squeeze(np.vstack(coeffs).T) @ np.vstack(weights)
+
+        hdr = targetnii.header.copy()
+        hdr.set_data_dtype("float32")
+        self._results["out_field"] = fname_presuffix(
+            self.inputs.in_target, suffix="_field", newpath=runtime.cwd
+        )
+        nb.Nifti1Image(data, targetnii.affine, hdr).to_filename(self._results["out_field"])
+
+        # Generate warp field
+        phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
+        phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
+
+        data *= phaseEncSign * targetnii.header.get_zooms()[phaseEncDim] * self.inputs.ro_time
+
+        self._results["out_warp"] = fname_presuffix(
+            self.inputs.in_target, suffix="_xfm", newpath=runtime.cwd
+        )
+        # Compose a vector field
+        field = np.zeros(list(data.shape) + [3], dtype="float32")
+        field[..., phaseEncDim] = data
+        warpnii = nb.Nifti1Image(field, targetnii.affine, None)
+        warpnii.header.set_intent('vector', (), '')
+        warpnii.to_filename(self._results["out_warp"])
+        return runtime
+
+
 def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     """Create a :obj:`~nibabel.nifti1.Nifti1Image` embedding the location of control points."""
     if isinstance(img, (str, Path)):
@@ -226,8 +299,8 @@ def bspline_weights(points, ctrl_nii):
     .. math::
 
         \Psi^3(\mathbf{k}, \mathbf{s}) =
-        \beta^3(s_1 - k_1) \cdot \beta^3(s_2 - k_2) \cdot \beta^3(s_3 - k_3)
-        \label{eq:2}\tag{2},
+        \beta^3(s_1 - k_1) \cdot \beta^3(s_2 - k_2) \cdot \beta^3(s_3 - k_3),
+        \label{eq:2}\tag{2}
 
     where each :math:`\beta^3` represents the cubic B-Spline for one dimension.
     The 1D B-Spline kernel implementation uses :obj:`numpy.piecewise`, and is based on the
@@ -260,8 +333,8 @@ def bspline_weights(points, ctrl_nii):
         step of approximation/extrapolation.
 
     """
-    ncoeff = ctrl_nii.dataobj.size
-    knots = np.argwhere(np.isclose(ctrl_nii.dataobj, 0)).astype("float32")
+    ncoeff = np.prod(ctrl_nii.shape[:])
+    knots = np.argwhere(np.ones_like(ctrl_nii.dataobj, dtype=bool))
     ctl_points = apply_affine(
         np.linalg.inv(ctrl_nii.affine).astype("float32"),
         points
@@ -271,7 +344,7 @@ def bspline_weights(points, ctrl_nii):
     for i in range(3):
         d = (
             np.abs(
-                (knots[:, np.newaxis, i] - ctl_points[np.newaxis, :, i])[
+                (knots[:, np.newaxis, i].astype("float32") - ctl_points[np.newaxis, :, i])[
                     weights > 1e-6
                 ]
             )

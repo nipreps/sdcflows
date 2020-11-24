@@ -2,13 +2,11 @@
 import os
 import pytest
 
-import numpy as np
-import nibabel as nb
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 
 from ...fit.fieldmap import init_magnitude_wf
-from ..registration import init_coeff2epi_wf, _move_coeff
+from ..registration import init_coeff2epi_wf
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
