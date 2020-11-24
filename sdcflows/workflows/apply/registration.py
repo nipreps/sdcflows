@@ -56,7 +56,10 @@ def init_coeff2epi_wf(
     Outputs
     -------
     fmap_coeff
-        fieldmap coefficients
+        fieldmap coefficients in the space of the target reference EPI
+    target_ref
+        the target reference EPI resampled into the fieldmap reference for
+        quality control purposes.
 
     """
     from packaging.version import parse as parseversion, Version
@@ -75,7 +78,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap_ref", "fmap_coeff"]), name="outputnode"
+        niu.IdentityInterface(fields=["target_ref", "fmap_coeff"]), name="outputnode"
     )
 
     # Register the reference of the fieldmap to the reference
@@ -96,12 +99,12 @@ The field coefficients were mapped on to the reference EPI using the transform.
     # fmt: off
     workflow.connect([
         (inputnode, coregister, [
-            ("target_ref", "fixed_image"),
-            ("fmap_ref", "moving_image"),
-            ("target_mask", f"fixed_image_mask{mask_trait_s}"),
-            ("fmap_mask", f"moving_image_mask{mask_trait_s}"),
+            ("target_ref", "moving_image"),
+            ("fmap_ref", "fixed_image"),
+            ("target_mask", f"moving_image_mask{mask_trait_s}"),
+            ("fmap_mask", f"fixed_image_mask{mask_trait_s}"),
         ]),
-        (coregister, outputnode, [("warped_image", "fmap_ref")]),
+        (coregister, outputnode, [("warped_image", "target_ref")]),
     ])
     # fmt: on
 
@@ -114,8 +117,9 @@ The field coefficients were mapped on to the reference EPI using the transform.
     # fmt: off
     workflow.connect([
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
-                                ("target_ref", "ref_image")]),
-        (coregister, map_coeff, [("reverse_transforms", "transform")]),
+                                ("fmap_ref", "fmap_ref"),
+                                ("target_ref", "target_ref")]),
+        (coregister, map_coeff, [("forward_transforms", "transform")]),
         (map_coeff, outputnode, [("out", "fmap_coeff")]),
     ])
     # fmt: on
@@ -123,20 +127,20 @@ The field coefficients were mapped on to the reference EPI using the transform.
     return workflow
 
 
-def _move_coeff(in_coeff, ref_image, transform):
+def _move_coeff(in_coeff, target_ref, fmap_ref, transform):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
     from pathlib import Path
-    import numpy as np
     import nibabel as nb
     import nitransforms as nt
 
     if isinstance(in_coeff, str):
         in_coeff = [in_coeff]
 
-    xfm = nt.io.itk.ITKLinearTransform.from_filename(transform[0]).to_ras()
-
-    refaff = nb.load(ref_image).affine
-    refdir = refaff[:3, :3] / nb.affines.voxel_sizes(refaff)
+    xfm = nt.linear.Affine(
+        nt.io.itk.ITKLinearTransform.from_filename(transform[0]).to_ras(),
+        reference=fmap_ref,
+    )
+    xfm.apply(target_ref).to_filename("transformed.nii.gz")
 
     out = []
     for i, c in enumerate(in_coeff):
@@ -144,8 +148,7 @@ def _move_coeff(in_coeff, ref_image, transform):
 
         out.append(str(Path(f"moved_coeff_{i:03d}.nii.gz").absolute()))
 
-        newaff = np.eye(4)
-        newaff[:3, :3] = nb.affines.voxel_sizes(img.affine) * refdir
-        newaff[:3, 3] = nb.affines.apply_affine(xfm, img.affine[:3, 3].T)
+        newaff = xfm.matrix @ img.affine
         img.__class__(img.dataobj, newaff, img.header).to_filename(out[-1])
+
     return out
