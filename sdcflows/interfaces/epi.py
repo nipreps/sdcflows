@@ -30,6 +30,7 @@ class _GetReadoutTimeInputSpec(BaseInterfaceInputSpec):
 
 class _GetReadoutTimeOutputSpec(TraitedSpec):
     readout_time = traits.Float
+    pe_direction = traits.Enum("i", "i-", "j", "j-", "k", "k-")
 
 
 class GetReadoutTime(SimpleInterface):
@@ -43,6 +44,7 @@ class GetReadoutTime(SimpleInterface):
             self.inputs.metadata,
             self.inputs.in_file if isdefined(self.inputs.in_file) else None,
         )
+        self._results["pe_direction"] = self.inputs.metadata["PhaseEncodingDirection"]
         return runtime
 
 
@@ -59,9 +61,9 @@ def get_trt(in_meta, in_file=None):
     use an ``'epi.nii.gz'`` file-stub which has 90 pixels in the
     j-axis encoding direction.
 
-    >>> meta = {'TotalReadoutTime': 0.02596}
+    >>> meta = {'TotalReadoutTime': 0.05251}
     >>> get_trt(meta)
-    0.02596
+    0.05251
 
     If the *effective echo spacing* :math:`t_\text{ees}`
     (``EffectiveEchoSpacing`` BIDS field) is provided, then the
@@ -77,7 +79,7 @@ def get_trt(in_meta, in_file=None):
     ...         'PhaseEncodingDirection': 'j-',
     ...         'ParallelReductionFactorInPlane': 2}
     >>> get_trt(meta, in_file='epi.nii.gz')
-    0.02596
+    0.05251
 
     Some vendors, like Philips, store different parameter names:
 
@@ -96,15 +98,21 @@ def get_trt(in_meta, in_file=None):
     if trt is not None:
         return trt
 
-    # All other cases require the parallel acc and npe (N vox in PE dir)
-    acc = float(in_meta.get("ParallelReductionFactorInPlane", 1.0))
+    # npe = N voxels PE direction
     npe = nb.load(in_file).shape[_get_pe_index(in_meta)]
-    etl = npe // acc
 
     # Use case 2: TRT is defined
     ees = in_meta.get("EffectiveEchoSpacing", None)
     if ees is not None:
-        return ees * (etl - 1)
+        # Effective echo spacing means that acceleration factors have been accounted for.
+        return ees * (npe - 1)
+
+    # All other cases require the parallel acc and npe (N vox in PE dir)
+    acc = float(in_meta.get("ParallelReductionFactorInPlane", 1.0))
+    etl = npe // acc  # effective train length
+    es = in_meta.get("EchoSpacing", None)
+    if es is not None:
+        return es * (etl - 1)
 
     # Use case 3 (philips scans)
     wfs = in_meta.get("WaterFatShift", None)
