@@ -50,6 +50,7 @@ def test_bsplines(tmp_path, testnum):
         in_mask=str(tmp_path / "target.nii.gz"),
         bs_spacing=[(4, 6, 8)],
         recenter="no",
+        ridge_alpha=1e-4,
     ).run()
 
     # Absolute error of the interpolated field is always below 2 Hz
