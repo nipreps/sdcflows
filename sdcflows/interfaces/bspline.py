@@ -18,6 +18,7 @@ from nipype.interfaces.base import (
 )
 
 
+LOW_MEM_BLOCK_SIZE = 1000
 DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)       # For human adults (mid-frequency), in mm
 DEFAULT_LF_ZOOMS_MM = (100.0, 100.0, 40.0)  # For human adults (low-frequency), in mm
 DEFAULT_HF_ZOOMS_MM = (16.0, 16.0, 10.0)    # For human adults (high-frequency), in mm
@@ -33,7 +34,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         desc="spacing between B-Spline control points",
     )
     ridge_alpha = traits.Float(
-        1e-4, usedefault=True, desc="controls the regularization"
+        0.01, usedefault=True, desc="controls the regularization"
     )
     recenter = traits.Enum(
         "mode",
@@ -114,9 +115,7 @@ class BSplineApprox(SimpleInterface):
 
         # Calculate spatial location of voxels, and normalize per B-Spline grid
         mask_indices = np.argwhere(mask)
-        fmap_points = apply_affine(
-            fmapnii.affine.astype("float32"), mask_indices
-        )
+        fmap_points = apply_affine(fmapnii.affine.astype("float32"), mask_indices)
 
         # Calculate the spatial location of control points
         bs_levels = []
@@ -171,9 +170,7 @@ class BSplineApprox(SimpleInterface):
             return runtime
 
         bg_indices = np.argwhere(~mask)
-        bg_points = apply_affine(
-            fmapnii.affine.astype("float32"), bg_indices
-        )
+        bg_points = apply_affine(fmapnii.affine.astype("float32"), bg_indices)
 
         extrapolators = np.vstack(
             [bspline_weights(bg_points, level) for level in bs_levels]
@@ -188,11 +185,23 @@ class BSplineApprox(SimpleInterface):
 
 class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
     in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
-    in_coeff = InputMultiObject(File(exists=True), mandatory=True,
-                                desc="input coefficients, after alignment to the EPI data")
+    in_coeff = InputMultiObject(
+        File(exists=True),
+        mandatory=True,
+        desc="input coefficients, after alignment to the EPI data",
+    )
     ro_time = traits.Float(1.0, usedefault=True, desc="EPI readout time (s).")
-    pe_dir = traits.Enum("i", "i-", "j", "j-", "k", "k-", mandatory=True,
-                         desc="the phase-encoding direction corresponding to in_target")
+    pe_dir = traits.Enum(
+        "i",
+        "i-",
+        "j",
+        "j-",
+        "k",
+        "k-",
+        mandatory=True,
+        desc="the phase-encoding direction corresponding to in_target",
+    )
+    low_mem = traits.Bool(False, usedefault=True, desc="perform on low-mem fingerprint regime")
 
 
 class _Coefficients2WarpOutputSpec(TraitedSpec):
@@ -215,46 +224,67 @@ class Coefficients2Warp(SimpleInterface):
     output_spec = _Coefficients2WarpOutputSpec
 
     def _run_interface(self, runtime):
-
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
-        allmask = np.ones_like(targetnii.dataobj, dtype=bool)
-        points = apply_affine(
-            targetnii.affine.astype("float32"), np.argwhere(allmask).astype("float32")
-        )
+        targetaff = targetnii.affine
+        allmask = np.ones_like(targetnii.dataobj, dtype="uint8")
+        voxels = np.argwhere(allmask == 1).astype("float32")
+        points = apply_affine(targetaff.astype("float32"), voxels)
 
         weights = []
         coeffs = []
+        blocksize = LOW_MEM_BLOCK_SIZE if self.inputs.low_mem else len(points)
         for cname in self.inputs.in_coeff:
             cnii = nb.load(cname)
             cdata = cnii.get_fdata(dtype="float32")
-            weights.append(bspline_weights(points, cnii))
             coeffs.append(cdata.reshape(-1))
 
-        data = np.zeros_like(targetnii.dataobj, dtype="float32")
-        data[allmask] = np.squeeze(np.vstack(coeffs).T) @ np.vstack(weights)
+            idx = 0
+            block_w = []
+            while True:
+                end = idx + blocksize
+                subsample = points[idx:end, ...]
+                if subsample.shape[0] == 0:
+                    break
+
+                idx = end
+                block_w.append(bspline_weights(subsample, cnii))
+
+            weights.append(np.hstack(block_w))
+
+        data = np.zeros(targetnii.shape, dtype="float32")
+        data[allmask == 1] = np.squeeze(np.vstack(coeffs).T) @ np.vstack(weights)
 
         hdr = targetnii.header.copy()
         hdr.set_data_dtype("float32")
         self._results["out_field"] = fname_presuffix(
             self.inputs.in_target, suffix="_field", newpath=runtime.cwd
         )
-        nb.Nifti1Image(data, targetnii.affine, hdr).to_filename(self._results["out_field"])
+        nb.Nifti1Image(data, targetnii.affine, hdr).to_filename(
+            self._results["out_field"]
+        )
 
         # Generate warp field
-        phaseEncDim = {'i': 0, 'j': 1, 'k': 2}[self.inputs.pe_dir[0]]
+        phaseEncDim = "ijk".index(self.inputs.pe_dir[0])
         phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
 
-        data *= phaseEncSign * targetnii.header.get_zooms()[phaseEncDim] * self.inputs.ro_time
+        data *= phaseEncSign * self.inputs.ro_time
 
+        fieldshape = tuple(list(data.shape[:3]) + [3])
         self._results["out_warp"] = fname_presuffix(
             self.inputs.in_target, suffix="_xfm", newpath=runtime.cwd
         )
         # Compose a vector field
-        field = np.zeros(list(data.shape) + [3], dtype="float32")
-        field[..., phaseEncDim] = data
-        warpnii = nb.Nifti1Image(field, targetnii.affine, None)
-        warpnii.header.set_intent('vector', (), '')
+        field = np.zeros((data.size, 3), dtype="float32")
+        field[..., phaseEncDim] = data.reshape(-1)
+        aff = targetnii.affine.copy()
+        aff[:3, 3] = 0.0
+        field = nb.affines.apply_affine(aff, field).reshape(fieldshape)
+        warpnii = nb.Nifti1Image(
+            field[:, :, :, np.newaxis, :].astype("float32"), targetnii.affine, None
+        )
+        warpnii.header.set_intent("vector", (), "")
+        warpnii.header.set_xyzt_units("mm")
         warpnii.to_filename(self._results["out_warp"])
         return runtime
 
@@ -280,9 +310,8 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     bs_shape = (im_extent // bs_zooms + 3).astype(int)
 
     # Center both images
-    bs_affine[:3, 3] = (
-        apply_affine(img.affine, 0.5 * (im_shape - 1))
-        - apply_affine(bs_affine, 0.5 * (bs_shape - 1))
+    bs_affine[:3, 3] = apply_affine(img.affine, 0.5 * (im_shape - 1)) - apply_affine(
+        bs_affine, 0.5 * (bs_shape - 1)
     )
 
     return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
@@ -333,21 +362,16 @@ def bspline_weights(points, ctrl_nii):
         step of approximation/extrapolation.
 
     """
-    ncoeff = np.prod(ctrl_nii.shape[:])
-    knots = np.argwhere(np.ones_like(ctrl_nii.dataobj, dtype=bool))
-    ctl_points = apply_affine(
-        np.linalg.inv(ctrl_nii.affine).astype("float32"),
-        points
-    )
+    ncoeff = np.prod(ctrl_nii.shape[:3])
+    knots = np.argwhere(np.ones(ctrl_nii.shape[:3], dtype="uint8") == 1)
+    ctl_points = apply_affine(np.linalg.inv(ctrl_nii.affine).astype("float32"), points)
 
     weights = np.ones((ncoeff, points.shape[0]), dtype="float32")
     for i in range(3):
-        d = (
-            np.abs(
-                (knots[:, np.newaxis, i].astype("float32") - ctl_points[np.newaxis, :, i])[
-                    weights > 1e-6
-                ]
-            )
+        d = np.abs(
+            (knots[:, np.newaxis, i].astype("float32") - ctl_points[np.newaxis, :, i])[
+                weights > 1e-6
+            ]
         )
         weights[weights > 1e-6] *= np.piecewise(
             d,

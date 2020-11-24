@@ -27,7 +27,7 @@ class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
                                  desc='a label name for the reference mosaic')
     moving_label = traits.Str('Fieldmap (Hz)', usedefault=True,
                               desc='a label name for the reference mosaic')
-    # pe_dir = traits.Enum(*tuple("ijk"), desc="PE direction")
+    apply_mask = traits.Bool(False, usedefault=True, desc="zero values outside mask")
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -77,6 +77,9 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         fmapdata = fmapnii.get_fdata()
         vmax = max(abs(np.percentile(fmapdata[maskdata], 99.8)),
                    abs(np.percentile(fmapdata[maskdata], 0.2)))
+        if self.inputs.apply_mask:
+            fmapdata[~maskdata] = 0
+            fmapnii = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
 
         fmap_overlay = [{
             'overlay': fmapnii,

@@ -56,7 +56,7 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
         from ...outputs import DerivativesDataSink
 
         report = pe.Node(
-            SimpleBeforeAfter(before_label="Target EPI", after_label="B0 Reference",),
+            SimpleBeforeAfter(after_label="Target EPI", before_label="B0 Reference",),
             name="report",
             mem_gb=0.1,
         )
@@ -75,8 +75,8 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
 
         # fmt: off
         workflow.connect([
-            (epi_ref_wf, report, [("outputnode.fmap_ref", "before")]),
-            (reg_wf, report, [("outputnode.fmap_ref", "after")]),
+            (fmap_ref_wf, report, [("outputnode.fmap_ref", "before")]),
+            (reg_wf, report, [("outputnode.target_ref", "after")]),
             (report, ds_report, [("out_report", "in_file")]),
         ])
         # fmt: on
@@ -99,7 +99,6 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
 
 #     dircos = outnii.affine[:3, :3] / vs
 #     assert np.allclose(dircos, np.eye(3))
-
 
 
 def _gen_coeff(img):
