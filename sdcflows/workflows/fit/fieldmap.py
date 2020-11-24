@@ -4,11 +4,12 @@ r"""
 Processing phase-difference and *directly measured* :math:`B_0` maps.
 
 The displacement suffered by every voxel along the phase-encoding (PE) direction
-can be derived from eq. (2) of [Hutton2002]_:
+can be derived from Eq. (2) of [Hutton2002]_:
 
 .. math::
 
     \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro},
+    \label{eq:fieldmap-1}\tag{1}
 
 where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
 we want to correct for distortions, and :math:`\Delta_\text{PE} (i, j, k)`
@@ -23,7 +24,7 @@ we obtain the nonzero component of the associated displacements field
 .. math::
 
     \Delta D_\text{PE} (i, j, k) = V(i, j, k) \cdot T_\text{ro} \cdot s_\text{PE}.
-
+    \label{eq:fieldmap-2}\tag{2}
 
 Theory
 ~~~~~~
@@ -32,7 +33,8 @@ map*) results from eq. (1) of [Hutton2002]_:
 
 .. math::
 
-    \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \gamma \, \Delta\text{TE}}
+    \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \gamma \, \Delta\text{TE}},
+    \label{eq:fieldmap-3}\tag{3}
 
 where :math:`\Delta B_0 (i, j, k)` is the *fieldmap variation* in T,
 :math:`\Delta \Theta (i, j, k)` is the phase-difference map in rad,
@@ -44,7 +46,8 @@ We can obtain a voxel displacement map following eq. (2) of the same paper:
 
 .. math::
 
-    \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro}
+    \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro},
+    \label{eq:fieldmap-4}\tag{4}
 
 where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
 we want to correct for distortions, and
@@ -68,6 +71,7 @@ used to recover the actual displacement field of the target EPI dataset.
 .. math::
 
     V(i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \Delta\text{TE}}.
+    \label{eq:fieldmap-5}\tag{5}
 
 This calculation if further complicated by the fact that :math:`\Theta_i`
 (and therfore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
