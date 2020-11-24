@@ -260,21 +260,21 @@ def bspline_weights(points, ctrl_nii):
         step of approximation/extrapolation.
 
     """
-    ctl_spacings = [float(sp) for sp in ctrl_nii.header.get_zooms()[:3]]
     ncoeff = ctrl_nii.dataobj.size
+    knots = np.argwhere(np.isclose(ctrl_nii.dataobj, 0)).astype("float32")
     ctl_points = apply_affine(
-        ctrl_nii.affine.astype("float32"), np.argwhere(np.isclose(ctrl_nii.dataobj, 0))
+        np.linalg.inv(ctrl_nii.affine).astype("float32"),
+        points
     )
 
     weights = np.ones((ncoeff, points.shape[0]), dtype="float32")
     for i in range(3):
         d = (
             np.abs(
-                (ctl_points[:, np.newaxis, i] - points[np.newaxis, :, i])[
+                (knots[:, np.newaxis, i] - ctl_points[np.newaxis, :, i])[
                     weights > 1e-6
                 ]
             )
-            / ctl_spacings[i]
         )
         weights[weights > 1e-6] *= np.piecewise(
             d,
