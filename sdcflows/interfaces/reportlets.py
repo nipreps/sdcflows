@@ -79,7 +79,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
                    abs(np.percentile(fmapdata[maskdata], 0.2)))
         if self.inputs.apply_mask:
             fmapdata[~maskdata] = 0
-            fmapnii = nb.Nifti1Image(fmapdata, fmapnii.affine, fmapnii.header)
+            fmapnii = fmapnii.__class__(fmapdata, fmapnii.affine, fmapnii.header)
 
         fmap_overlay = [{
             'overlay': fmapnii,
