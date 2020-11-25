@@ -42,6 +42,7 @@ def test_bsplines(tmp_path, testnum):
         in_target=str(tmp_path / "target.nii.gz"),
         in_coeff=str(tmp_path / "coeffs.nii.gz"),
         pe_dir="j-",
+        ro_time=1.0,
     ).run()
 
     # Approximate the interpolated target
@@ -49,7 +50,7 @@ def test_bsplines(tmp_path, testnum):
         in_data=test1.outputs.out_field,
         in_mask=str(tmp_path / "target.nii.gz"),
         bs_spacing=[(4, 6, 8)],
-        recenter="no",
+        recenter=False,
         ridge_alpha=1e-4,
     ).run()
 

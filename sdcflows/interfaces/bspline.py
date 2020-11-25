@@ -40,7 +40,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         "mode",
         "median",
         "mean",
-        "no",
+        False,
         usedefault=True,
         desc="strategy to recenter the distribution of the input fieldmap",
     )
@@ -143,14 +143,14 @@ class BSplineApprox(SimpleInterface):
         )
         hdr = fmapnii.header.copy()
         hdr.set_data_dtype("float32")
-        nb.Nifti1Image(interp_data, fmapnii.affine, hdr).to_filename(out_name)
+        fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(out_name)
         self._results["out_field"] = out_name
 
         index = 0
         self._results["out_coeff"] = []
         for i, (n, bsl) in enumerate(zip(ncoeff, bs_levels)):
             out_level = out_name.replace("_field.", f"_coeff{i:03}.")
-            nb.Nifti1Image(
+            bsl.__class__(
                 np.array(model.coef_, dtype="float32")[index:index + n].reshape(
                     bsl.shape
                 ),
@@ -162,7 +162,7 @@ class BSplineApprox(SimpleInterface):
 
         # Write out fitting-error map
         self._results["out_error"] = out_name.replace("_field.", "_error.")
-        nb.Nifti1Image(
+        fmapnii.__class__(
             data * mask - interp_data, fmapnii.affine, fmapnii.header
         ).to_filename(self._results["out_error"])
 
@@ -177,7 +177,7 @@ class BSplineApprox(SimpleInterface):
         )
         interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
         self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
-        nb.Nifti1Image(interp_data, fmapnii.affine, hdr).to_filename(
+        fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(
             self._results["out_extrapolated"]
         )
         return runtime
@@ -190,7 +190,7 @@ class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="input coefficients, after alignment to the EPI data",
     )
-    ro_time = traits.Float(1.0, usedefault=True, desc="EPI readout time (s).")
+    ro_time = traits.Float(mandatory=True, desc="EPI readout time (s).")
     pe_dir = traits.Enum(
         "i",
         "i-",
@@ -260,7 +260,7 @@ class Coefficients2Warp(SimpleInterface):
         self._results["out_field"] = fname_presuffix(
             self.inputs.in_target, suffix="_field", newpath=runtime.cwd
         )
-        nb.Nifti1Image(data, targetnii.affine, hdr).to_filename(
+        targetnii.__class__(data, targetnii.affine, hdr).to_filename(
             self._results["out_field"]
         )
 
@@ -280,7 +280,7 @@ class Coefficients2Warp(SimpleInterface):
         aff = targetnii.affine.copy()
         aff[:3, 3] = 0.0
         field = nb.affines.apply_affine(aff, field).reshape(fieldshape)
-        warpnii = nb.Nifti1Image(
+        warpnii = targetnii.__class__(
             field[:, :, :, np.newaxis, :].astype("float32"), targetnii.affine, None
         )
         warpnii.header.set_intent("vector", (), "")
@@ -314,7 +314,7 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
         bs_affine, 0.5 * (bs_shape - 1)
     )
 
-    return nb.Nifti1Image(np.zeros(bs_shape, dtype="float32"), bs_affine)
+    return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
 
 def bspline_weights(points, ctrl_nii):
