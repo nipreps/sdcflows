@@ -36,9 +36,9 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
-    "nipype.sphinxext.plot_workflow",
     "sphinxcontrib.apidoc",
-    "sphinxcontrib.napoleon",
+    "nipype.sphinxext.plot_workflow",
+    "nipype.sphinxext.apidoc",
 ]
 
 autodoc_mock_imports = [
@@ -62,6 +62,9 @@ napoleon_use_param = False
 napoleon_custom_sections = [
     ("Inputs", "Parameters"),
     ("Outputs", "Parameters"),
+    ("Attributes", "Parameters"),
+    ("Mandatory Inputs", "Parameters"),
+    ("Optional Inputs", "Parameters"),
 ]
 
 # Add any paths that contain templates here, relative to this directory.
