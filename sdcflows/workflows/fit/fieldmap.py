@@ -127,6 +127,8 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     ----------
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
+    debug : :obj:`bool`
+        Run on debug mode
     name : :obj:`str`
         Unique name of this workflow.
 
@@ -198,7 +200,7 @@ A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was estimated from the
 phase-drift map(s) measure with two consecutive GRE (gradient-recall echo)
 acquisitions.
 """
-        phdiff_wf = init_phdiff_wf(omp_nthreads)
+        phdiff_wf = init_phdiff_wf(omp_nthreads, debug=debug)
 
         # fmt: off
         workflow.connect([
@@ -260,7 +262,7 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
     name : :obj:`str`
-        Name of workflow (default: ``prepare_magnitude_w``)
+        Name of workflow (default: ``magnitude_wf``)
 
     Inputs
     ------
@@ -311,7 +313,7 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     return workflow
 
 
-def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
+def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
     r"""
     Generate a :math:`B_0` field from consecutive-phases and phase-difference maps.
 
@@ -343,6 +345,10 @@ def init_phdiff_wf(omp_nthreads, name="phdiff_wf"):
     ----------
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
+    debug : :obj:`bool`
+        Run on debug mode
+    name : :obj:`str`
+        Name of workflow (default: ``phdiff_wf``)
 
     Inputs
     ------
@@ -398,6 +404,7 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
     calc_phdiff = pe.Node(
         SubtractPhases(), name="calc_phdiff", run_without_submitting=True
     )
+    calc_phdiff.interface._always_run = debug
     compfmap = pe.Node(Phasediff2Fieldmap(), name="compfmap")
 
     # fmt: off
