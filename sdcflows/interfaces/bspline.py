@@ -216,7 +216,8 @@ class Coefficients2Warp(SimpleInterface):
     Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
     for all voxels in the target-image's extent.
     When the readout time is known, the displacements field can be calculated
-    following Eq. `(2) <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
+    following `Eq. (2) in the fieldmap fitting section
+    <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
 
     """
 
