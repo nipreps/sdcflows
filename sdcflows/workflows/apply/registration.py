@@ -113,6 +113,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     # Map the coefficients into the EPI space
     map_coeff = pe.Node(niu.Function(function=_move_coeff), name="map_coeff")
+    map_coeff.interface._always_run = debug
 
     # fmt: off
     workflow.connect([
