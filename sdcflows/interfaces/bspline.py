@@ -201,7 +201,9 @@ class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="the phase-encoding direction corresponding to in_target",
     )
-    low_mem = traits.Bool(False, usedefault=True, desc="perform on low-mem fingerprint regime")
+    low_mem = traits.Bool(
+        False, usedefault=True, desc="perform on low-mem fingerprint regime"
+    )
 
 
 class _Coefficients2WarpOutputSpec(TraitedSpec):
@@ -287,6 +289,31 @@ class Coefficients2Warp(SimpleInterface):
         warpnii.header.set_intent("vector", (), "")
         warpnii.header.set_xyzt_units("mm")
         warpnii.to_filename(self._results["out_warp"])
+        return runtime
+
+
+class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
+    in_coeff = InputMultiObject(
+        File(exist=True), mandatory=True, desc="input coefficients file(s)"
+    )
+    fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
+    transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
+
+
+class _TransformCoefficientsOutputSpec(TraitedSpec):
+    out_coeff = OutputMultiObject(File(exists=True), desc="moved coefficients")
+
+
+class TransformCoefficients(SimpleInterface):
+    """Project coefficients files to another space through a rigid-body transform."""
+
+    input_spec = _TransformCoefficientsInputSpec
+    output_spec = _TransformCoefficientsOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results["out_coeff"] = _move_coeff(
+            self.inputs.in_coeff, self.inputs.fmap_ref, self.inputs.transform,
+        )
         return runtime
 
 
@@ -386,3 +413,27 @@ def bspline_weights(points, ctrl_nii):
 
     weights[weights < 1e-6] = 0.0
     return weights
+
+
+def _move_coeff(in_coeff, fmap_ref, transform):
+    """Read in a rigid transform from ANTs, and update the coefficients field affine."""
+    from pathlib import Path
+    import nibabel as nb
+    import nitransforms as nt
+
+    if isinstance(in_coeff, str):
+        in_coeff = [in_coeff]
+
+    xfm = nt.linear.Affine(
+        nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
+        reference=fmap_ref,
+    )
+
+    out = []
+    for i, c in enumerate(in_coeff):
+        out.append(str(Path(f"moved_coeff_{i:03d}.nii.gz").absolute()))
+        img = nb.load(c)
+        newaff = xfm.matrix @ img.affine
+        img.__class__(img.dataobj, newaff, img.header).to_filename(out[-1])
+
+    return out
