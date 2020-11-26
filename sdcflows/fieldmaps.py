@@ -9,6 +9,9 @@ from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
 
 
+_unique_ids = set()
+
+
 class MetadataError(ValueError):
     """A better name for a specific value error."""
 
@@ -56,6 +59,26 @@ def _type_setter(obj, attribute, value):
     ):
         raise ValueError(f"Invalid estimation method type {value}.")
 
+    return value
+
+
+def _id_setter(obj, attribute, value):
+    """Ensure uniqueness of B0FieldIdentifier metadata."""
+    if obj.bids_id:
+        if obj.bids_id != value:
+            raise ValueError("Unique identifier is already set")
+        _unique_ids.add(value)
+        return value
+
+    if value is True:
+        value = f"auto_{len([el for el in _unique_ids if el.startswith('auto_')])}"
+    elif not value:
+        raise ValueError("Invalid unique identifier")
+
+    if value in _unique_ids:
+        raise ValueError("Unique identifier has been previously registered.")
+
+    _unique_ids.add(value)
     return value
 
 
@@ -253,6 +276,9 @@ class FieldmapEstimation:
     method = attr.ib(init=False, default=EstimatorType.UNKNOWN, on_setattr=_type_setter)
     """Flag indicating the estimator type inferred from the input sources."""
 
+    bids_id = attr.ib(default=None, kw_only=True, type=str, on_setattr=_id_setter)
+    """The unique ``B0FieldIdentifier`` field of this fieldmap."""
+
     def __attrs_post_init__(self):
         """Determine the inteded fieldmap estimation type and check for data completeness."""
         suffix_list = [f.suffix for f in self.sources]
@@ -349,3 +375,21 @@ class FieldmapEstimation:
         # No method has been identified -> fail.
         if self.method == EstimatorType.UNKNOWN:
             raise ValueError("Insufficient sources to estimate a fieldmap.")
+
+        if not self.bids_id:
+            bids_ids = set([
+                f.metadata.get("B0FieldIdentifier")
+                for f in self.sources if f.metadata.get("B0FieldIdentifier")
+            ])
+            if len(bids_ids) > 1:
+                raise ValueError(
+                    f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"
+                )
+            elif not bids_ids:
+                self.bids_id = True
+            else:
+                self.bids_id = bids_ids.pop()
+        elif self.bids_id in _unique_ids:
+            raise ValueError("Unique identifier has been previously registered.")
+        else:
+            _unique_ids.add(self.bids_id)
