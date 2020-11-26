@@ -208,6 +208,18 @@ def init_fmap_derivatives_wf(
 
 
 def _gendesc(infiles):
+    """
+    Generate a desc entity value.
+
+    Examples
+    --------
+    >>> _gendesc("f")
+    'coeff'
+
+    >>> _gendesc(list("ab"))
+    ['coeff0', 'coeff1']
+
+    """
     if isinstance(infiles, (str, bytes)):
         infiles = [infiles]
 
@@ -218,6 +230,18 @@ def _gendesc(infiles):
 
 
 def _getname(infile):
+    """
+    Get file names only.
+
+    Examples
+    --------
+    >>> _getname("drop/path/filename.txt")
+    'filename.txt'
+
+    >>> _getname(["drop/path/filename.txt", "other/path/filename2.txt"])
+    ['filename.txt', 'filename2.txt']
+
+    """
     from pathlib import Path
 
     if isinstance(infile, (list, tuple)):
@@ -226,6 +250,18 @@ def _getname(infile):
 
 
 def _getsourcetype(infiles):
+    """
+    Determine the type of fieldmap estimation strategy.
+
+    Example
+    -------
+    >>> _getsourcetype(["path/some_epi.nii.gz"])
+    'epi'
+
+    >>> _getsourcetype(["path/some_notepi.nii.gz"])
+    'magnitude'
+
+    """
     from pathlib import Path
 
     fname = Path(infiles[0]).name
@@ -233,8 +269,33 @@ def _getsourcetype(infiles):
 
 
 def _selectintent(metadata):
+    """
+    Extract the IntendedFor metadata.
+
+    Example
+    -------
+    >>> _selectintent({})
+    []
+
+    >>> _selectintent({"IntendedFor": "just/one/file.txt"})
+    ['just/one/file.txt']
+
+    >>> _selectintent({"IntendedFor": ["file2.txt", "file1.txt"]})
+    ['file1.txt', 'file2.txt']
+
+    >>> _selectintent([{"IntendedFor": "just/one/file.txt"}] * 2)
+    ['just/one/file.txt']
+
+    >>> _selectintent([
+    ...     {"IntendedFor": "just/one/file.txt"},
+    ...     {"IntendedFor": ["file2.txt", "file1.txt"]},
+    ... ])
+    ['file1.txt', 'file2.txt', 'just/one/file.txt']
+
+    """
     from bids.utils import listify
 
     return sorted(
-        set([el for m in metadata for el in listify(m.get("IntendedFor", []))])
+        set([el for m in listify(metadata)
+             for el in listify(m.get("IntendedFor", []))])
     )
