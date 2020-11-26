@@ -41,20 +41,20 @@ def init_fmap_preproc_wf(
     ...     omp_nthreads=1,
     ...     output_dir="/tmp",
     ...     subject="1",
-    ... )
-    [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>),
-     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>),
-     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>),
-     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>)]
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
 
     >>> init_fmap_preproc_wf(
     ...     layout=layouts['testdata'],
     ...     omp_nthreads=1,
     ...     output_dir="/tmp",
     ...     subject="HCP101006",
-    ... )
-    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>),
-     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>)]
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
 
     """
     from ..fieldmaps import FieldmapEstimation, FieldmapFile
