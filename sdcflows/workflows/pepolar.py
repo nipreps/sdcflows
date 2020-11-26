@@ -122,8 +122,8 @@ directions, with `3dQwarp` @afni (AFNI {afni_ver}).
 
     qwarp = pe.Node(afni.QwarpPlusMinus(
         pblur=[0.05, 0.05], blur=[-1, -1], noweight=True, minpatch=9, nopadWARP=True,
-        environ={'OMP_NUM_THREADS': '%d' % omp_nthreads}),
-        name='qwarp', n_procs=omp_nthreads)
+        environ={'OMP_NUM_THREADS': f"{min(omp_nthreads, 4)}"}),
+        name='qwarp', n_procs=min(omp_nthreads, 4))
 
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name='to_ants',
                       mem_gb=0.01)
