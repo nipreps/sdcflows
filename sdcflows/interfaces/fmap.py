@@ -1,7 +1,9 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Interfaces to deal with the various types of fieldmap sources."""
-
+import numpy as np
+import nibabel as nb
+from nipype.utils.filemanip import fname_presuffix
 from nipype import logging
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
@@ -97,5 +99,36 @@ class Phasediff2Fieldmap(SimpleInterface):
 
         self._results["out_file"] = phdiff2fmap(
             self.inputs.in_file, _delta_te(self.inputs.metadata), newpath=runtime.cwd
+        )
+        return runtime
+
+
+class _CheckB0UnitsInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="input fieldmap")
+    units = traits.Enum("Hz", "rad/s", mandatory=True, desc="fieldmap units")
+
+
+class _CheckB0UnitsOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="output fieldmap in Hz")
+
+
+class CheckB0Units(SimpleInterface):
+    """Ensure the input fieldmap is given in Hz."""
+
+    input_spec = _CheckB0UnitsInputSpec
+    output_spec = _CheckB0UnitsOutputSpec
+
+    def _run_interface(self, runtime):
+        if self.inputs.units == "Hz":
+            self._results["out_file"] = self.inputs.in_file
+            return runtime
+
+        self._results["out_file"] = fname_presuffix(
+            self.inputs.in_file, suffix="_Hz", newpath=runtime.cwd
+        )
+        img = nb.load(self.inputs.in_file)
+        data = np.asanyarray(img.dataobj) / (2.0 * np.pi)
+        img.__class__(data, img.affine, img.header).to_filename(
+            self._results["out_file"]
         )
         return runtime
