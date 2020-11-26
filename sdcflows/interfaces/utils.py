@@ -1,18 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-Utilities.
-
-    .. testsetup::
-
-        >>> tmpdir = getfixture('tmpdir')
-        >>> tmp = tmpdir.chdir() # changing to a temporary directory
-        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-        ...     tmpdir.join('epi.nii.gz').strpath)
-
-"""
-
-from nipype import logging
+"""Utilities."""
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     TraitedSpec,
@@ -22,8 +10,6 @@ from nipype.interfaces.base import (
     InputMultiObject,
     OutputMultiObject,
 )
-
-LOGGER = logging.getLogger("nipype.interface")
 
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
@@ -52,7 +38,7 @@ class Flatten(SimpleInterface):
 
     def _run_interface(self, runtime):
         self._results["out_list"] = _flatten(
-            zip(self.inputs.inlist, self.inputs.in_meta),
+            zip(self.inputs.in_data, self.inputs.in_meta),
             max_trs=self.inputs.max_trs,
             out_dir=runtime.cwd,
         )
@@ -72,9 +58,9 @@ def _flatten(inlist, max_trs=50, out_dir=None):
     ------
     inlist : :obj:`list` of :obj:`tuple`
         List of pairs (filepath, metadata)
-    max_trs : int
+    max_trs : :obj:`int`
         Index of frame after which all volumes will be discarded
-        from the input EPI images.
+        from the input images.
 
     """
     from pathlib import Path
