@@ -211,14 +211,14 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
     qwarp = pe.Node(
         afni.QwarpPlusMinus(
             blur=[-1, -1],
-            environ={"OMP_NUM_THREADS": f"{omp_nthreads}"},
+            environ={"OMP_NUM_THREADS": f"{min(omp_nthreads, 4)}"},
             minpatch=9,
             nopadWARP=True,
             noweight=True,
             pblur=[0.05, 0.05],
         ),
         name="qwarp",
-        n_procs=omp_nthreads,
+        n_procs=min(omp_nthreads, 4),
     )
 
     to_ants = pe.Node(niu.Function(function=_fix_hdr), name="to_ants", mem_gb=0.01)
