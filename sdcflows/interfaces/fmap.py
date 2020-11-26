@@ -124,8 +124,11 @@ class CheckB0Units(SimpleInterface):
             return runtime
 
         self._results["out_file"] = fname_presuffix(
-            self.inputs.in_file, suffix="_Hz", newpath=runtime.cwd)
+            self.inputs.in_file, suffix="_Hz", newpath=runtime.cwd
+        )
         img = nb.load(self.inputs.in_file)
         data = np.asanyarray(img.dataobj) / (2.0 * np.pi)
-        img.__class__(data, img.affine, img.header).to_filename(self._results["out_file"])
+        img.__class__(data, img.affine, img.header).to_filename(
+            self._results["out_file"]
+        )
         return runtime
