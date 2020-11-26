@@ -64,6 +64,7 @@ def init_coeff2epi_wf(
     """
     from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+    from ...interfaces.bspline import TransformCoefficients
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -112,44 +113,22 @@ The field coefficients were mapped on to the reference EPI using the transform.
         return workflow
 
     # Map the coefficients into the EPI space
-    map_coeff = pe.Node(niu.Function(function=_move_coeff), name="map_coeff")
+    map_coeff = pe.Node(TransformCoefficients(), name="map_coeff")
     map_coeff.interface._always_run = debug
 
     # fmt: off
     workflow.connect([
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
-                                ("fmap_ref", "fmap_ref"),
-                                ("target_ref", "target_ref")]),
-        (coregister, map_coeff, [("forward_transforms", "transform")]),
-        (map_coeff, outputnode, [("out", "fmap_coeff")]),
+                                ("fmap_ref", "fmap_ref")]),
+        (coregister, map_coeff, [(("forward_transforms", _flatten), "transform")]),
+        (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
 
     return workflow
 
 
-def _move_coeff(in_coeff, target_ref, fmap_ref, transform):
-    """Read in a rigid transform from ANTs, and update the coefficients field affine."""
-    from pathlib import Path
-    import nibabel as nb
-    import nitransforms as nt
-
-    if isinstance(in_coeff, str):
-        in_coeff = [in_coeff]
-
-    xfm = nt.linear.Affine(
-        nt.io.itk.ITKLinearTransform.from_filename(transform[0]).to_ras(),
-        reference=fmap_ref,
-    )
-    xfm.apply(target_ref).to_filename("transformed.nii.gz")
-
-    out = []
-    for i, c in enumerate(in_coeff):
-        img = nb.load(c)
-
-        out.append(str(Path(f"moved_coeff_{i:03d}.nii.gz").absolute()))
-
-        newaff = xfm.matrix @ img.affine
-        img.__class__(img.dataobj, newaff, img.header).to_filename(out[-1])
-
-    return out
+def _flatten(inlist):
+    if isinstance(inlist, str):
+        return inlist
+    return inlist[0]
