@@ -108,6 +108,10 @@ def delta_te(in_values):
     >>> delta_te({})  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ValueError:
+    
+    >>> delta_te({"EchoTimeDifference": "a"})  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError:
 
     """
     te2 = in_values.get("EchoTime2")
