@@ -3,6 +3,8 @@
 r"""
 Processing phase-difference and *directly measured* :math:`B_0` maps.
 
+Theory
+~~~~~~
 The displacement suffered by every voxel along the phase-encoding (PE) direction
 can be derived from Eq. (2) of [Hutton2002]_:
 
@@ -11,13 +13,18 @@ can be derived from Eq. (2) of [Hutton2002]_:
     \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro},
     \label{eq:fieldmap-1}\tag{1}
 
-where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
-we want to correct for distortions, and :math:`\Delta_\text{PE} (i, j, k)`
-is the *voxel-shift map* (VSM) along the *PE* direction.
+where
+:math:`\Delta_\text{PE} (i, j, k)` is the *voxel-shift map* (VSM) along the *PE* direction,
+:math:`\gamma` is the gyromagnetic ratio of the H proton in Hz/T
+(:math:`\gamma = 42.576 \cdot 10^6 \, \text{Hz} \cdot \text{T}^\text{-1}`),
+:math:`\Delta B_0 (i, j, k)` is the *fieldmap variation* in T (Tesla), and
+:math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
+we want to correct for distortions.
 
-Calling the *fieldmap* in Hz :math:`V`,
-with :math:`V(i,j,k) = \gamma \cdot \Delta B_0 (i, j, k)`, and introducing
-the voxel zoom along the phase-encoding direction,  :math:`s_\text{PE}`,
+Let :math:`V` represent the «*fieldmap in Hz*» (or equivalently,
+«*voxel-shift-velocity map*» as Hz are equivalent to voxels/s), with
+:math:`V(i,j,k) = \gamma \cdot \Delta B_0 (i, j, k)`, then, introducing
+the voxel zoom along the phase-encoding direction, :math:`s_\text{PE}`,
 we obtain the nonzero component of the associated displacements field
 :math:`\Delta D_\text{PE} (i, j, k)` that unwarps the target EPI dataset:
 
@@ -26,64 +33,6 @@ we obtain the nonzero component of the associated displacements field
     \Delta D_\text{PE} (i, j, k) = V(i, j, k) \cdot T_\text{ro} \cdot s_\text{PE}.
     \label{eq:fieldmap-2}\tag{2}
 
-Theory
-~~~~~~
-The derivation of a fieldmap in Hz (or, as called thereafter, *voxel-shift-velocity
-map*) results from eq. (1) of [Hutton2002]_:
-
-.. math::
-
-    \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \gamma \, \Delta\text{TE}},
-    \label{eq:fieldmap-3}\tag{3}
-
-where :math:`\Delta B_0 (i, j, k)` is the *fieldmap variation* in T,
-:math:`\Delta \Theta (i, j, k)` is the phase-difference map in rad,
-:math:`\gamma` is the gyromagnetic ratio of the H proton in Hz/T
-(:math:`\gamma = 42.576 \cdot 10^6 \, \text{Hz} \cdot \text{T}^\text{-1}`),
-and :math:`\Delta\text{TE}` is the elapsed time between the two GRE echoes.
-
-We can obtain a voxel displacement map following eq. (2) of the same paper:
-
-.. math::
-
-    \Delta_\text{PE} (i, j, k) = \gamma \cdot \Delta B_0 (i, j, k) \cdot T_\text{ro},
-    \label{eq:fieldmap-4}\tag{4}
-
-where :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
-we want to correct for distortions, and
-:math:`\Delta_\text{PE} (i, j, k)` is the *voxel-shift map* (VSM) along the *PE*
-direction.
-
-.. _sdc_phasediff :
-
-Phase-difference B0 estimation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The inhomogeneity of the :math:`B_0` field inside the scanner at each voxel
-(and hence, the *fieldmap* in Hz, :math:`V(i,j,k)`) is proportional to the
-phase drift :math:`\Delta \Theta (i,j,k) = \Theta_2(i,j,k) - \Theta_1(i,j,k)`
-between two subsequent :abbr:`GRE (gradient-recalled echo)` acquisitions
-(:math:`\Theta_1`, :math:`\Theta_2`), separated by a time
-:math:`\Delta \text{TE}` (s):
-Replacing (1) into (2), and eliminating the scaling effect of :math:`T_\text{ro}`,
-we obtain a *voxel-shift-velocity map* (voxels/s, or just Hz) which can be then
-used to recover the actual displacement field of the target EPI dataset.
-
-.. math::
-
-    V(i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \Delta\text{TE}}.
-    \label{eq:fieldmap-5}\tag{5}
-
-This calculation if further complicated by the fact that :math:`\Theta_i`
-(and therfore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
-the range :math:`[0 \dotsb 2\pi )`.
-It is necessary to find the integer number of offsets that make a region
-continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
-
-This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
-Some scanners produce one ``phasediff`` map, where the drift between the two echos has
-already been calulated (see `the corresponding section of BIDS
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
 
 .. _sdc_direct_b0 :
 
@@ -95,7 +44,46 @@ These *fieldmaps* are described with more detail `here
 <https://cni.stanford.edu/wiki/GE_Processing#Fieldmaps>`__.
 
 This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
+<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
+
+.. _sdc_phasediff :
+
+Phase-difference B0 estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The fieldmap variation in T, :math:`\Delta B_0 (i, j, k)`, that is necessary to obtain
+:math:`\Delta_\text{PE} (i, j, k)` in Eq. :math:`\eqref{eq:fieldmap-1}` can be
+calculated from two subsequient :abbr:`GRE (Gradient-Recalled Echo)` echoes,
+via eq. (1) of [Hutton2002]_:
+
+.. math::
+
+    \Delta B_0 (i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \gamma \, \Delta\text{TE}},
+    \label{eq:fieldmap-3}\tag{3}
+
+where
+:math:`\Delta \Theta (i, j, k)` is the phase-difference map in radians,
+and :math:`\Delta\text{TE}` is the elapsed time between the two GRE echoes.
+
+For simplicity, the «*voxel-shift-velocity map*» :math:`V(i,j,k)`, which we
+can introduce in Eq. :math:`\eqref{eq:fieldmap-2}` to directly obtain
+the displacements field, can be obtained as:
+
+.. math::
+
+    V(i, j, k) = \frac{\Delta \Theta (i, j, k)}{2\pi \cdot \Delta\text{TE}}.
+    \label{eq:fieldmap-4}\tag{4}
+
+This calculation is further complicated by the fact that :math:`\Theta_i`
+(and therfore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
+the range :math:`[0 \dotsb 2\pi )`.
+It is necessary to find the integer number of offsets that make a region
+continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
+
+This corresponds to `this section of the BIDS specification
+<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
+Some scanners produce one ``phasediff`` map, where the drift between the two echos has
+already been calulated (see `the corresponding section of BIDS
+<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
 
 References
 ----------
