@@ -148,6 +148,9 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
         Path to the corresponding magnitude image for anatomical reference.
     fieldmap : :obj:`str`
         Path to the fieldmap acquisition (``*_fieldmap.nii[.gz]`` of BIDS).
+    units : :obj:`str`
+        Units (`"Hz"` or `"rad/s"`) of the fieldmap (only direct :math:`B_0`
+        acquisitions with :abbr:`SEI (Spiral-Echo Imaging)` fieldmaps).
 
     Outputs
     -------
@@ -223,19 +226,24 @@ acquisitions.
         # fmt: on
     else:
         from niworkflows.interfaces.images import IntraModalMerge
+        from ...interfaces.fmap import CheckB0Units
 
         workflow.__desc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was directly measured with
-an MRI scheme designed with that purpose (e.g., a spiral pulse sequence).
+an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
-        # Merge input fieldmap images
+        # Merge input fieldmap images (assumes all are given in the same units!)
         fmapmrg = pe.Node(
             IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg"
         )
+        units = pe.Node(CheckB0Units(), name="units", run_without_submitting=True)
+
         # fmt: off
         workflow.connect([
+            (inputnode, units, [("units", "units")]),
             (inputnode, fmapmrg, [("fieldmap", "in_files")]),
-            (fmapmrg, bs_filter, [("out_avg", "in_data")]),
+            (fmapmrg, units, [("out_avg", "in_file")]),
+            (units, bs_filter, [("out_file", "in_data")]),
         ])
         # fmt: on
 
