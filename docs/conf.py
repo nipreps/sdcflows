@@ -92,7 +92,7 @@ language = None
 exclude_patterns = [
     '_build', 'Thumbs.db', '.DS_Store',
     'api/sdcflows.rst',
-    'api/sdcflows.cli.rst', 'api/sdcflows.cli.*.rst']
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
