@@ -5,49 +5,60 @@ Estimating the susceptibility distortions without fieldmaps.
 
 .. _sdc_fieldmapless :
 
-Fieldmap-less estimation (experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In the absence of direct measurements of fieldmap data, we provide an (experimental)
-option to estimate the susceptibility distortion based on the ANTs symmetric
-normalization (SyN) technique.
-This feature may be enabled, using the ``--use-syn-sdc`` flag, and will only be
-applied if fieldmaps are unavailable.
+Fieldmap-less approaches
+~~~~~~~~~~~~~~~~~~~~~~~~
+Many studies acquired (especially with legacy MRI protocols) do not have any
+information to estimate susceptibility-derived distortions.
+In the absence of data with the specific purpose of estimating the :math:`B_0`
+inhomogeneity map, researchers resort to nonlinear registration to an
+«*anatomically correct*» map of the same individual (normally acquired with
+:abbr:`T1w (T1-weighted)`, or :abbr:`T2w (T2-weighted)` sequences).
+One of the most prominent proposals of this approach is found in [Studholme2000]_.
 
-During the evaluation phase, the ``--force-syn`` flag will cause this estimation to
-be performed *in addition to* fieldmap-based estimation, to permit the direct
-comparison of the results of each technique.
-Note that, even if ``--force-syn`` is given, the functional outputs of FMRIPREP will
-be corrected using the fieldmap-based estimates.
-
+*SDCFlows* includes an (experimental) procedure (see :py:func:`init_syn_sdc_wf` below),
+based on nonlinear image registration with ANTs' symmetric normalization (SyN) technique.
+This workflow takes a skull-stripped :abbr:`T1w (T1-weighted)` image and
+a reference :abbr:`EPI (Echo-Planar Imaging)` image, and estimates a field of nonlinear
+displacements that accounts for susceptibility-derived distortions.
+To more accurately estimate the warping on typically distorted regions, this
+implementation uses an average :math:`B_0` mapping described in [Treiber2016]_.
+The implementation is a variation on those developed in [Huntenburg2014]_ and
+[Wang2017]_.
 Feedback will be enthusiastically received.
 
+References
+----------
+.. [Studholme2000] Studholme et al. (2000) Accurate alignment of functional EPI data to
+    anatomical MRI using a physics-based distortion model,
+    IEEE Trans Med Imag 19(11):1115-1127, 2000, doi: `10.1109/42.896788
+    <https://doi.org/10.1109/42.896788>`__.
+.. [Treiber2016] Treiber, J. M. et al. (2016) Characterization and Correction
+    of Geometric Distortions in 814 Diffusion Weighted Images,
+    PLoS ONE 11(3): e0152472. doi:`10.1371/journal.pone.0152472
+    <https://doi.org/10.1371/journal.pone.0152472>`_.
+.. [Wang2017] Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
+    Registration Methods for Correction of Susceptibility Artifacts
+    in Diffusion MRI. Front. Neuroinform. 11:17.
+    doi:`10.3389/fninf.2017.00017
+    <https://doi.org/10.3389/fninf.2017.00017>`_.
+.. [Huntenburg2014] Huntenburg, J. M. (2014) `Evaluating Nonlinear
+    Coregistration of BOLD EPI and T1w Images
+    <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`__,
+    Berlin: Master Thesis, Freie Universität.
+
 """
-from pkg_resources import resource_filename
-
-from nipype import logging
 from nipype.pipeline import engine as pe
-from nipype.interfaces import fsl, utility as niu
-from nipype.interfaces.image import Rescale
-
+from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from niworkflows.interfaces.fixes import (
-    FixHeaderApplyTransforms as ApplyTransforms,
-    FixHeaderRegistration as Registration,
-)
-from niworkflows.func.util import init_skullstrip_bold_wf
 
 DEFAULT_MEMORY_MIN_GB = 0.01
-LOGGER = logging.getLogger("nipype.workflow")
 
 
-def init_syn_sdc_wf(omp_nthreads=1, epi_pe=None, atlas_threshold=3, name="syn_sdc_wf"):
+def init_syn_sdc_wf(
+    *, atlas_threshold=3, debug=False, name="syn_sdc_wf", omp_nthreads=1,
+):
     """
     Build the *fieldmap-less* susceptibility-distortion estimation workflow.
-
-    This workflow takes a skull-stripped T1w image and reference BOLD image and
-    estimates a susceptibility distortion correction warp, using ANTs symmetric
-    normalization (SyN) and the average fieldmap atlas described in
-    [Treiber2016]_.
 
     SyN deformation is restricted to the phase-encoding (PE) direction.
     If no PE direction is specified, anterior-posterior PE is assumed.
@@ -55,8 +66,6 @@ def init_syn_sdc_wf(omp_nthreads=1, epi_pe=None, atlas_threshold=3, name="syn_sd
     SyN deformation is also restricted to regions that are expected to have a
     >3mm (approximately 1 voxel) warp, based on the fieldmap atlas.
 
-    This technique is a variation on those developed in [Huntenburg2014]_ and
-    [Wang2017]_.
 
     Workflow Graph
         .. workflow ::
@@ -64,69 +73,70 @@ def init_syn_sdc_wf(omp_nthreads=1, epi_pe=None, atlas_threshold=3, name="syn_sd
             :simple_form: yes
 
             from sdcflows.workflows.fit.syn import init_syn_sdc_wf
-            wf = init_syn_sdc_wf(
-                epi_pe="j",
-                omp_nthreads=8)
+            wf = init_syn_sdc_wf(omp_nthreads=8)
+
+    Parameters
+    ----------
+    atlas_threshold : :obj:`float`
+        Exclude from the registration metric computation areas with average distortions
+        below this threshold (in mm).
+    debug : :obj:`bool`
+        Whether a fast (less accurate) configuration of the workflow should be applied.
+    name : :obj:`str`
+        Name for this workflow
+    omp_nthreads : :obj:`int`
+        Parallelize internal tasks across the number of CPUs given by this option.
 
     Inputs
     ------
-    in_reference
-        reference image
-    in_reference_brain
-        skull-stripped reference image
-    t1w_brain
-        skull-stripped, bias-corrected structural image
-    std2anat_xfm
+    epi_ref : :obj:`tuple` (:obj:`str`, :obj:`dict`)
+        A tuple, where the first element is the path of the distorted EPI
+        reference map (e.g., an average of *b=0* volumes), and the second
+        element is a dictionary of associated metadata.
+    epi_mask : :obj:`str`
+        A path to a brain mask corresponding to ``epi_ref``.
+    anat_brain : :obj:`str`
+        A preprocessed, skull-stripped anatomical (T1w or T2w) image.
+    std2anat_xfm : :obj:`str`
         inverse registration transform of T1w image to MNI template
+    anat2bold_xfm : :obj:`str`
+        transform mapping coordinates from the EPI space to the anatomical
+        space (i.e., the transform to resample anatomical info into EPI space.)
 
     Outputs
     -------
-    fmap
-        the corresponding :abbr:`DFM (displacements field map)` compatible with
-        ANTs
-    fmap_ref
-        the ``in_reference`` image after unwarping
-
-    References
-    ----------
-    .. [Treiber2016] Treiber, J. M. et al. (2016) Characterization and Correction
-        of Geometric Distortions in 814 Diffusion Weighted Images,
-        PLoS ONE 11(3): e0152472. doi:`10.1371/journal.pone.0152472
-        <https://doi.org/10.1371/journal.pone.0152472>`_.
-    .. [Wang2017] Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
-        Registration Methods for Correction of Susceptibility Artifacts
-        in Diffusion MRI. Front. Neuroinform. 11:17.
-        doi:`10.3389/fninf.2017.00017
-        <https://doi.org/10.3389/fninf.2017.00017>`_.
-    .. [Huntenburg2014] Huntenburg, J. M. (2014) Evaluating Nonlinear
-        Coregistration of BOLD EPI and T1w Images. Berlin: Master
-        Thesis, Freie Universität. `PDF
-        <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`_.
+    fmap : :obj:`str`
+        The path of the estimated fieldmap.
+    fmap_ref : :obj:`str`
+        The path of an unwarped conversion of files in ``epi_ref``.
+    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
+        The path(s) of the B-Spline coefficients supporting the fieldmap.
 
     """
-    if epi_pe is None or epi_pe[0] not in ["i", "j"]:
-        LOGGER.warning(
-            "Incorrect phase-encoding direction, assuming PA (posterior-to-anterior)."
-        )
-        epi_pe = "j"
+    from pkg_resources import resource_filename as pkgrf
+    from nipype.interfaces.image import Rescale
+    from niworkflows.interfaces.fixes import (
+        FixHeaderApplyTransforms as ApplyTransforms,
+        FixHeaderRegistration as Registration,
+    )
+    from niworkflows.interfaces.nibabel import Binarize
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
+    workflow.__desc__ = f"""\
 A deformation field to correct for susceptibility distortions was estimated
 based on *fMRIPrep*'s *fieldmap-less* approach.
-The deformation field is that resulting from co-registering the BOLD reference
+The deformation field is that resulting from co-registering the EPI reference
 to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
 @fieldmapless2].
-Registration is performed with `antsRegistration` (ANTs {ants_ver}), and
+Registration is performed with `antsRegistration`
+(ANTs {Registration().version or "-- version unknown"}), and
 the process regularized by constraining deformation to be nonzero only
 along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
-""".format(
-        ants_ver=Registration().version or "<ver>"
-    )
+"""
     inputnode = pe.Node(
         niu.IdentityInterface(
-            ["in_reference", "in_reference_brain", "t1w_brain", "std2anat_xfm"]
+            ["epi_ref", "epi_mask", "anat_brain", "std2anat_xfm", "anat2bold_xfm"]
         ),
         name="inputnode",
     )
@@ -134,97 +144,93 @@ template [@fieldmapless3].
         niu.IdentityInterface(["fmap", "fmap_ref", "fmap_mask"]), name="outputnode",
     )
 
-    # Collect predefined data
-    # Atlas image and registration affine
-    atlas_img = resource_filename("sdcflows", "data/fmap_atlas.nii.gz")
-    # Registration specifications
-    affine_transform = resource_filename("sdcflows", "data/affine.json")
-    syn_transform = resource_filename("sdcflows", "data/susceptibility_syn.json")
-
     invert_t1w = pe.Node(Rescale(invert=True), name="invert_t1w", mem_gb=0.3)
-
-    ref_2_t1 = pe.Node(
-        Registration(from_file=affine_transform), name="ref_2_t1", n_procs=omp_nthreads
-    )
-    t1_2_ref = pe.Node(
-        ApplyTransforms(invert_transform_flags=[True]),
-        name="t1_2_ref",
-        n_procs=omp_nthreads,
+    anat2epi = pe.Node(
+        ApplyTransforms(interpolation="BSpline"), name="anat2epi", n_procs=omp_nthreads
     )
 
-    # 1) BOLD -> T1; 2) MNI -> T1; 3) ATLAS -> MNI
+    # Mapping & preparing prior knowledge
+    # Concatenate transform files:
+    # 1) anat -> EPI; 2) MNI -> anat; 3) ATLAS -> MNI
     transform_list = pe.Node(
         niu.Merge(3), name="transform_list", mem_gb=DEFAULT_MEMORY_MIN_GB
     )
-    transform_list.inputs.in3 = resource_filename(
+    transform_list.inputs.in3 = pkgrf(
         "sdcflows", "data/fmap_atlas_2_MNI152NLin2009cAsym_affine.mat"
     )
-
-    # Inverting (1), then applying in reverse order:
-    #
-    # ATLAS -> MNI -> T1 -> BOLD
-    atlas_2_ref = pe.Node(
-        ApplyTransforms(invert_transform_flags=[True, False, False]),
-        name="atlas_2_ref",
+    prior2epi = pe.Node(
+        ApplyTransforms(input_image=pkgrf("sdcflows", "data/fmap_atlas.nii.gz")),
+        name="prior2epi",
         n_procs=omp_nthreads,
         mem_gb=0.3,
     )
-    atlas_2_ref.inputs.input_image = atlas_img
+    atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
 
-    threshold_atlas = pe.Node(
-        fsl.maths.MathsCommand(
-            args="-thr {:.8g} -bin".format(atlas_threshold), output_datatype="char"
-        ),
-        name="threshold_atlas",
-        mem_gb=0.3,
-    )
-
-    fixed_image_masks = pe.Node(
-        niu.Merge(2), name="fixed_image_masks", mem_gb=DEFAULT_MEMORY_MIN_GB
-    )
-    fixed_image_masks.inputs.in1 = "NULL"
-
-    restrict = [[int(epi_pe[0] == "i"), int(epi_pe[0] == "j"), 0]] * 2
+    # SyN Registration Core
     syn = pe.Node(
-        Registration(from_file=syn_transform, restrict_deformation=restrict),
+        Registration(from_file=pkgrf("sdcflows", "data/susceptibility_syn.json")),
         name="syn",
         n_procs=omp_nthreads,
     )
 
-    unwarp_ref = pe.Node(
-        ApplyTransforms(dimension=3, float=True, interpolation="LanczosWindowedSinc"),
-        name="unwarp_ref",
-    )
-
-    skullstrip_bold_wf = init_skullstrip_bold_wf()
+    unwarp_ref = pe.Node(ApplyTransforms(interpolation="BSpline"), name="unwarp_ref",)
 
     # fmt: off
     workflow.connect([
-        (inputnode, invert_t1w, [("t1w_brain", "in_file"),
-                                 ("in_reference", "ref_file")]),
-        (inputnode, ref_2_t1, [("in_reference_brain", "moving_image")]),
-        (invert_t1w, ref_2_t1, [("out_file", "fixed_image")]),
-        (inputnode, t1_2_ref, [("in_reference", "reference_image")]),
-        (invert_t1w, t1_2_ref, [("out_file", "input_image")]),
-        (ref_2_t1, t1_2_ref, [("forward_transforms", "transforms")]),
-        (ref_2_t1, transform_list, [("forward_transforms", "in1")]),
-        (inputnode, transform_list, [
-            ("std2anat_xfm", "in2")]),
-        (inputnode, atlas_2_ref, [("in_reference", "reference_image")]),
-        (transform_list, atlas_2_ref, [("out", "transforms")]),
-        (atlas_2_ref, threshold_atlas, [("output_image", "in_file")]),
-        (threshold_atlas, fixed_image_masks, [("out_file", "in2")]),
-        (inputnode, syn, [("in_reference_brain", "moving_image")]),
-        (t1_2_ref, syn, [("output_image", "fixed_image")]),
-        (fixed_image_masks, syn, [("out", "fixed_image_masks")]),
+        (inputnode, transform_list, [("anat2bold_xfm", "in1"),
+                                     ("std2anat_xfm", "in2")]),
+        (inputnode, invert_t1w, [("anat_brain", "in_file"),
+                                 (("epi_ref", _pop), "ref_file")]),
+        (inputnode, anat2epi, [(("epi_ref", _pop), "reference_image")]),
+        (inputnode, syn, [(("epi_ref", _pop), "moving_image"),
+                          ("epi_mask", "moving_image_masks"),
+                          (("epi_ref", _warp_dir), "restrict_deformation")]),
+        (inputnode, prior2epi, [(("epi_ref", _pop), "reference_image")]),
+        (invert_t1w, anat2epi, [("out_file", "input_image")]),
+        (transform_list, prior2epi, [("out", "transforms")]),
+        (prior2epi, atlas_msk, [("output_image", "in_file")]),
+        (anat2epi, syn, [("output_image", "fixed_image")]),
+        (atlas_msk, syn, [(("out_mask", _fixed_masks_arg), "fixed_image_masks")]),
         (syn, outputnode, [("forward_transforms", "fmap")]),
         (syn, unwarp_ref, [("forward_transforms", "transforms")]),
-        (inputnode, unwarp_ref, [("in_reference", "reference_image"),
-                                 ("in_reference", "input_image")]),
-        (unwarp_ref, skullstrip_bold_wf, [
-            ("output_image", "inputnode.in_file")]),
+        (inputnode, unwarp_ref, [(("epi_ref", _pop), "reference_image"),
+                                 (("epi_ref", _pop), "input_image")]),
         (unwarp_ref, outputnode, [("output_image", "fmap_ref")]),
     ])
     # fmt: on
 
     return workflow
+
+
+def _warp_dir(intuple):
+    """
+    Extract the ``restrict_deformation`` argument from metadata.
+
+    Example
+    -------
+    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "i-"}))
+    [[1, 0, 0], [1, 0, 0]]
+
+    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "j-"}))
+    [[0, 1, 0], [0, 1, 0]]
+
+    """
+    pe = intuple[1]["PhaseEncodingDirection"][0]
+    return 2 * [[int(pe == ax) for ax in "ijk"]]
+
+
+def _fixed_masks_arg(mask):
+    """
+    Prepare the ``fixed_image_masks`` argument of SyN.
+
+    Example
+    -------
+    >>> _fixed_masks_arg("atlas_mask.nii.gz")
+    ['NULL', 'atlas_mask.nii.gz']
+
+    """
+    return ["NULL", mask]
+
+
+def _pop(inlist):
+    return inlist[0]
