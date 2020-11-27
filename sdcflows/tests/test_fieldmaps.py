@@ -77,6 +77,10 @@ def test_FieldmapEstimation(testdata_dir, inputfiles, method, nsources):
     fe2 = FieldmapEstimation(sources, bids_id=f"no{fe.bids_id}")
     assert fe2.bids_id and fe2.bids_id.startswith("noauto_")
 
+    # Exercise workflow creation
+    wf = fe.get_workflow()
+    wf == fe.get_workflow()
+
 
 @pytest.mark.parametrize(
     "inputfiles,errortype",
