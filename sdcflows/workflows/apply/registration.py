@@ -65,6 +65,7 @@ def init_coeff2epi_wf(
     from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
     from ...interfaces.bspline import TransformCoefficients
+    from ...utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -120,15 +121,9 @@ The field coefficients were mapped on to the reference EPI using the transform.
     workflow.connect([
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
                                 ("fmap_ref", "fmap_ref")]),
-        (coregister, map_coeff, [(("forward_transforms", _flatten), "transform")]),
+        (coregister, map_coeff, [(("forward_transforms", _pop), "transform")]),
         (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
 
     return workflow
-
-
-def _flatten(inlist):
-    if isinstance(inlist, str):
-        return inlist
-    return inlist[0]

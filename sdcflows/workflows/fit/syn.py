@@ -120,6 +120,7 @@ def init_syn_sdc_wf(
         FixHeaderRegistration as Registration,
     )
     from niworkflows.interfaces.nibabel import Binarize
+    from ...utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
@@ -230,7 +231,3 @@ def _fixed_masks_arg(mask):
 
     """
     return ["NULL", mask]
-
-
-def _pop(inlist):
-    return inlist[0]
