@@ -134,13 +134,10 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
 
     Inputs
     ------
-    magnitude : :obj:`str`
+    magnitude : :obj:`list` of :obj:`str`
         Path to the corresponding magnitude image for anatomical reference.
-    fieldmap : :obj:`str`
+    fieldmap : :obj:`list` of :obj:`tuple`(:obj:`str`, :obj:`dict`)
         Path to the fieldmap acquisition (``*_fieldmap.nii[.gz]`` of BIDS).
-    units : :obj:`str`
-        Units (`"Hz"` or `"rad/s"`) of the fieldmap (only direct :math:`B_0`
-        acquisitions with :abbr:`SEI (Spiral-Echo Imaging)` fieldmaps).
 
     Outputs
     -------
@@ -230,7 +227,7 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 
         # fmt: off
         workflow.connect([
-            (inputnode, units, [("units", "units")]),
+            (inputnode, units, [(("fieldmap", _get_units), "units")]),
             (inputnode, fmapmrg, [("fieldmap", "in_files")]),
             (fmapmrg, units, [("out_avg", "in_file")]),
             (units, bs_filter, [("out_file", "in_data")]),
@@ -422,3 +419,19 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
     ])
     # fmt: on
     return workflow
+
+
+def _get_units(intuple):
+    """
+    Extract Units from metadata.
+
+    >>> _get_units([("fmap.nii.gz", {"Units": "rad/s"})])
+    'rad/s'
+
+    >>> _get_units(("fmap.nii.gz", {"Units": "rad/s"}))
+    'rad/s'
+
+    """
+    if isinstance(intuple, list):
+        intuple = intuple[0]
+    return intuple[1]["Units"]

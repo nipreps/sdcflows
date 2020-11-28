@@ -75,14 +75,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
-            fields=[
-                "fmap",
-                "fmap_ref",
-                "fmap_coeff",
-                "jacobians",
-                "xfms",
-                "out_warps",
-            ]
+            fields=["fmap", "fmap_ref", "fmap_coeff", "jacobians", "xfms", "out_warps"]
         ),
         name="outputnode",
     )
@@ -166,6 +159,7 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
     )
     from niworkflows.interfaces.freesurfer import StructuralReference
     from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
+    from ...utils.misc import front as _front, last as _last
     from ...interfaces.utils import Flatten
 
     workflow = Workflow(name=name)
@@ -173,33 +167,42 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
 with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=["in_data", "metadata"]),
-                        name="inputnode")
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=["in_data", "metadata"]), name="inputnode"
+    )
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
     )
 
     flatten = pe.Node(Flatten(), name="flatten")
-    sort_pe = pe.Node(niu.Function(
-        function=_sorted_pe, output_names=["sorted", "qwarp_args"]),
-        name="sort_pe", run_without_submitting=True)
+    sort_pe = pe.Node(
+        niu.Function(function=_sorted_pe, output_names=["sorted", "qwarp_args"]),
+        name="sort_pe",
+        run_without_submitting=True,
+    )
 
-    merge_pes = pe.MapNode(StructuralReference(
-        auto_detect_sensitivity=True,
-        initial_timepoint=1,
-        fixed_timepoint=True,  # Align to first image
-        intensity_scaling=True,
-        # 7-DOF (rigid + intensity)
-        no_iteration=True,
-        subsample_threshold=200,
-        out_file='template.nii.gz'),
-        name='merge_pes',
+    merge_pes = pe.MapNode(
+        StructuralReference(
+            auto_detect_sensitivity=True,
+            initial_timepoint=1,
+            fixed_timepoint=True,  # Align to first image
+            intensity_scaling=True,
+            # 7-DOF (rigid + intensity)
+            no_iteration=True,
+            subsample_threshold=200,
+            out_file="template.nii.gz",
+        ),
+        name="merge_pes",
         iterfield=["in_files"],
     )
 
-    pe0_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name="pe0_wf")
-    pe1_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name="pe1_wf")
+    pe0_wf = init_enhance_and_skullstrip_bold_wf(
+        omp_nthreads=omp_nthreads, name="pe0_wf"
+    )
+    pe1_wf = init_enhance_and_skullstrip_bold_wf(
+        omp_nthreads=omp_nthreads, name="pe1_wf"
+    )
 
     align_pes = pe.Node(
         Registration(
@@ -228,11 +231,7 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
     cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
 
     unwarp_reference = pe.Node(
-        ApplyTransforms(
-            dimension=3,
-            float=True,
-            interpolation="LanczosWindowedSinc",
-        ),
+        ApplyTransforms(dimension=3, float=True, interpolation="LanczosWindowedSinc",),
         name="unwarp_reference",
     )
 
@@ -278,7 +277,15 @@ def _fix_hdr(in_file, newpath=None):
 
 
 def _pe2fsl(metadata):
-    """Convert ijk notation to xyz."""
+    """
+    Convert ijk notation to xyz.
+
+    Example
+    -------
+    >>> _pe2fsl([{"PhaseEncodingDirection": "j-"}, {"PhaseEncodingDirection": "i"}])
+    ['y-', 'x']
+
+    """
     return [
         m["PhaseEncodingDirection"]
         .replace("i", "x")
@@ -289,6 +296,29 @@ def _pe2fsl(metadata):
 
 
 def _sorted_pe(inlist):
+    """
+    Generate suitable inputs to ``3dQwarp``.
+
+    Example
+    -------
+    >>> paths, args = _sorted_pe([
+    ...     ("dir-AP_epi.nii.gz", {"PhaseEncodingDirection": "j-"}),
+    ...     ("dir-AP_bold.nii.gz", {"PhaseEncodingDirection": "j-"}),
+    ...     ("dir-PA_epi.nii.gz", {"PhaseEncodingDirection": "j"}),
+    ...     ("dir-PA_bold.nii.gz", {"PhaseEncodingDirection": "j"}),
+    ...     ("dir-AP_sbref.nii.gz", {"PhaseEncodingDirection": "j-"}),
+    ...     ("dir-PA_sbref.nii.gz", {"PhaseEncodingDirection": "j"}),
+    ... ])
+    >>> paths[0]
+    ['dir-AP_epi.nii.gz', 'dir-AP_bold.nii.gz', 'dir-AP_sbref.nii.gz']
+
+    >>> paths[1]
+    ['dir-PA_epi.nii.gz', 'dir-PA_bold.nii.gz', 'dir-PA_sbref.nii.gz']
+
+    >>> args
+    '-noXdis -noZdis'
+
+    """
     out_ref = [inlist[0][0]]
     out_opp = []
 
@@ -302,20 +332,9 @@ def _sorted_pe(inlist):
         else:
             raise ValueError("Cannot handle orthogonal PE encodings.")
 
-    return [out_ref, out_opp], {
-        "i": "-noYdis -noZdis",
-        "j": "-noXdis -noZdis",
-        "k": "-noXdis -noYdis",
-    }[ref_pe[0]]
-
-
-def _front(inlist):
-    if isinstance(inlist, (list, tuple)):
-        return inlist[0]
-    return inlist
-
-
-def _last(inlist):
-    if isinstance(inlist, (list, tuple)):
-        return inlist[-1]
-    return inlist
+    return (
+        [out_ref, out_opp],
+        {"i": "-noYdis -noZdis", "j": "-noXdis -noZdis", "k": "-noXdis -noYdis"}[
+            ref_pe[0]
+        ],
+    )

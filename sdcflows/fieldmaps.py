@@ -228,11 +228,12 @@ class FieldmapFile:
                 raise MetadataError(
                     f"Missing 'PhaseEncodingDirection' for <{self.path}>."
                 )
-            if not (
-                set(("TotalReadoutTime", "EffectiveEchoSpacing")).intersection(
-                    self.metadata.keys()
-                )
-            ):
+
+            from .utils.epimanip import get_trt
+
+            try:
+                get_trt(self.metadata, in_file=self.path)
+            except ValueError:
                 raise MetadataError(
                     f"Missing readout timing information for <{self.path}>."
                 )
@@ -278,6 +279,9 @@ class FieldmapEstimation:
 
     bids_id = attr.ib(default=None, kw_only=True, type=str, on_setattr=_id_setter)
     """The unique ``B0FieldIdentifier`` field of this fieldmap."""
+
+    _wf = attr.ib(init=False, default=None, repr=False)
+    """Internal pointer to a workflow."""
 
     def __attrs_post_init__(self):
         """Determine the inteded fieldmap estimation type and check for data completeness."""
@@ -377,10 +381,13 @@ class FieldmapEstimation:
             raise ValueError("Insufficient sources to estimate a fieldmap.")
 
         if not self.bids_id:
-            bids_ids = set([
-                f.metadata.get("B0FieldIdentifier")
-                for f in self.sources if f.metadata.get("B0FieldIdentifier")
-            ])
+            bids_ids = set(
+                [
+                    f.metadata.get("B0FieldIdentifier")
+                    for f in self.sources
+                    if f.metadata.get("B0FieldIdentifier")
+                ]
+            )
             if len(bids_ids) > 1:
                 raise ValueError(
                     f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"
@@ -393,3 +400,35 @@ class FieldmapEstimation:
             raise ValueError("Unique identifier has been previously registered.")
         else:
             _unique_ids.add(self.bids_id)
+
+    def get_workflow(self, **kwargs):
+        """Build the estimation workflow corresponding to this instance."""
+        if self._wf is not None:
+            return self._wf
+
+        # Override workflow name
+        kwargs["name"] = f"wf_{self.bids_id}"
+
+        if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
+            from .workflows.fit.fieldmap import init_fmap_wf
+
+            kwargs["mode"] = str(self.method).split(".")[-1].lower()
+            self._wf = init_fmap_wf(**kwargs)
+            self._wf.inputs.inputnode.magnitude = [
+                str(f.path) for f in self.sources if f.suffix.startswith("magnitude")
+            ]
+            self._wf.inputs.inputnode.fieldmap = [
+                (str(f.path), f.metadata)
+                for f in self.sources
+                if f.suffix in ("fieldmap", "phasediff", "phase2", "phase1")
+            ]
+        elif self.method == EstimatorType.PEPOLAR:
+            from .workflows.fit.pepolar import init_topup_wf
+
+            self._wf = init_topup_wf(**kwargs)
+        elif self.method == EstimatorType.ANAT:
+            from .workflows.fit.syn import init_syn_sdc_wf
+
+            self._wf = init_syn_sdc_wf(**kwargs)
+
+        return self._wf
