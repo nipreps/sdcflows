@@ -361,7 +361,7 @@ def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
     Outputs
     -------
     fieldmap : :obj:`os.PathLike`
-        The estimated fieldmap in Hz.  # TODO: write metadata "Units"
+        The estimated fieldmap in Hz.
 
     """
     from nipype.interfaces.fsl import PRELUDE
