@@ -54,6 +54,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     )
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
+    rotime.interface._always_run = debug
     resample = pe.Node(Coefficients2Warp(low_mem=debug), name="resample")
     unwarp = pe.Node(
         ApplyTransforms(dimension=3, interpolation="BSpline"), name="unwarp"
