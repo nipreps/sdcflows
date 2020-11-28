@@ -318,6 +318,13 @@ def _sorted_pe(inlist):
     >>> args
     '-noXdis -noZdis'
 
+    >>> paths, args = _sorted_pe([
+    ...     ("dir-AP_epi.nii.gz", {"PhaseEncodingDirection": "j-"}),
+    ...     ("dir-LR_epi.nii.gz", {"PhaseEncodingDirection": "i"}),
+    ... ])  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError:
+
     """
     out_ref = [inlist[0][0]]
     out_opp = []
