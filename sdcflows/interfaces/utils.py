@@ -50,6 +50,27 @@ class Flatten(SimpleInterface):
         return runtime
 
 
+class _ConvertWarpInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="output of 3dQwarp")
+
+
+class _ConvertWarpOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="the warp converted into ANTs")
+
+
+class ConvertWarp(SimpleInterface):
+    """Convert a displacements field from ``3dQwarp`` to ANTS-compatible."""
+
+    input_spec = _ConvertWarpInputSpec
+    output_spec = _ConvertWarpOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results["out_file"] = _qwarp2ants(
+            self.inputs.in_file, newpath=runtime.cwd
+        )
+        return runtime
+
+
 def _flatten(inlist, max_trs=50, out_dir=None):
     """
     Split the input EPIs and generate a flattened list with corresponding metadata.
@@ -83,3 +104,21 @@ def _flatten(inlist, max_trs=50, out_dir=None):
                 output.append((str(out_name), meta))
 
     return output
+
+
+def _qwarp2ants(in_file, newpath=None):
+    """Ensure the data type and intent of a warp is acceptable by ITK-based tools."""
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype("<f4")
+    hdr.set_intent("vector", (), "")
+    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
+    data = np.squeeze(nii.get_fdata(dtype="float32"))[..., np.newaxis, :]
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename(
+        out_file
+    )
+    return out_file
