@@ -1,8 +1,9 @@
 """Test utilites."""
+import pytest
 import numpy as np
 import nibabel as nb
 
-from ..utils import Flatten
+from ..utils import Flatten, ConvertWarp
 
 
 def test_Flatten(tmpdir):
@@ -31,3 +32,22 @@ def test_Flatten(tmpdir):
     assert out_meta[0] == {"a": 1}
     assert out_meta[1] == out_meta[2] == out_meta[3] == {"b": 2}
     assert out_meta[4] == out_meta[5] == {"c": 3}
+
+
+@pytest.mark.parametrize("shape", [
+    (10, 10, 10, 1, 3),
+    (10, 10, 10, 3)
+])
+def test_ConvertWarp(tmpdir, shape):
+    """Exercise the interface."""
+    tmpdir.chdir()
+
+    nb.Nifti1Image(np.zeros(shape, dtype="uint8"),
+                   np.eye(4), None).to_filename("3dQwarp.nii.gz")
+
+    out = ConvertWarp(in_file="3dQwarp.nii.gz").run()
+
+    nii = nb.load(out.outputs.out_file)
+    assert nii.header.get_data_dtype() == np.float32
+    assert nii.header.get_intent() == ("vector", (), "")
+    assert nii.shape == (10, 10, 10, 1, 3)

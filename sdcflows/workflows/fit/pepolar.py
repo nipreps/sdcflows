@@ -160,7 +160,7 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
     from niworkflows.interfaces.freesurfer import StructuralReference
     from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
     from ...utils.misc import front as _front, last as _last
-    from ...interfaces.utils import Flatten
+    from ...interfaces.utils import Flatten, ConvertWarp
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \
@@ -226,7 +226,7 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
         n_procs=min(omp_nthreads, 4),
     )
 
-    to_ants = pe.Node(niu.Function(function=_fix_hdr), name="to_ants", mem_gb=0.01)
+    to_ants = pe.Node(ConvertWarp(), name="to_ants", mem_gb=0.01)
 
     cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
 
@@ -251,29 +251,14 @@ with `3dQwarp` @afni (AFNI {''.join(['%02d' % v for v in afni.Info().version() o
         (inputnode, cphdr_warp, [(("in_data", _front), "hdr_file")]),
         (qwarp, cphdr_warp, [("source_warp", "in_file")]),
         (cphdr_warp, to_ants, [("out_file", "in_file")]),
-        (to_ants, unwarp_reference, [("out", "transforms")]),
+        (to_ants, unwarp_reference, [("out_file", "transforms")]),
         (inputnode, unwarp_reference, [("in_reference", "reference_image"),
                                        ("in_reference", "input_image")]),
         (unwarp_reference, outputnode, [("output_image", "fmap_ref")]),
-        (to_ants, outputnode, [("out", "fmap")]),
+        (to_ants, outputnode, [("out_file", "fmap")]),
     ])
     # fmt: on
     return workflow
-
-
-def _fix_hdr(in_file, newpath=None):
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
-
-    nii = nb.load(in_file)
-    hdr = nii.header.copy()
-    hdr.set_data_dtype("<f4")
-    hdr.set_intent("vector", (), "")
-    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
-    nb.Nifti1Image(nii.get_fdata(dtype="float32"), nii.affine, hdr).to_filename(
-        out_file
-    )
-    return out_file
 
 
 def _pe2fsl(metadata):
