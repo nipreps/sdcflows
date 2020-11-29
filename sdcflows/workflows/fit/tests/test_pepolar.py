@@ -19,8 +19,8 @@ from ..pepolar import init_topup_wf
         #     "ds001600/sub-1/fmap/sub-1_dir-PA_epi.nii.gz",
         # ),
         (
-            "testdata/sub-HCP101006/fmap/sub-HCP101006_dir-LR_epi.nii.gz",
-            "testdata/sub-HCP101006/fmap/sub-HCP101006_dir-RL_epi.nii.gz",
+            "HCP101006/sub-101006/fmap/sub-101006_dir-LR_epi.nii.gz",
+            "HCP101006/sub-101006/fmap/sub-101006_dir-RL_epi.nii.gz",
         ),
     ],
 )

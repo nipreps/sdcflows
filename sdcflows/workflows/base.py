@@ -48,10 +48,10 @@ def init_fmap_preproc_wf(
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
 
     >>> init_fmap_preproc_wf(
-    ...     layout=layouts['testdata'],
+    ...     layout=layouts['HCP101006'],
     ...     omp_nthreads=1,
     ...     output_dir="/tmp",
-    ...     subject="HCP101006",
+    ...     subject="101006",
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
