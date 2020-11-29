@@ -48,9 +48,9 @@ jobs:
             - env-v2-
       - restore_cache:
           keys:
-            - data-v2-{{ .Branch }}-
-            - data-v2-master-
-            - data-v2-
+            - data-v3-{{ .Branch }}-
+            - data-v3-master-
+            - data-v3-
 
       - run:
           name: Setup git-annex
@@ -67,7 +67,7 @@ jobs:
           name: Setup DataLad & TemplateFlow
           command: |
             python -m pip install --no-cache-dir -U pip
-            python -m pip install --no-cache-dir -U datalad
+            python -m pip install --no-cache-dir -U datalad datalad-osf
             python -m pip install --no-cache-dir -U templateflow
             python -c "from templateflow import api as tfapi; \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
@@ -89,16 +89,23 @@ jobs:
             datalad install https://github.com/OpenNeuroDatasets/ds001600.git
             datalad update --merge -d ds001600/
             datalad get -r -d ds001600/
+
       - run:
-          name: Get testdata
+          name: Install HCP/sub-101006
           command: |
-            if [[ ! -d /tmp/data/testdata ]]; then
-              wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q \
-                  -O testdata.zip "https://files.osf.io/v1/resources/9sy2a/providers/osfstorage/5d44b940bcd6d900198ed6be/?zip="
-              unzip testdata.zip -d /tmp/data/testdata
-            fi
+            datalad install -r https://github.com/nipreps-data/HCP101006.git
+            datalad update -r --merge -d HCP101006/
+            datalad get -r -d HCP101006
+
+      - run:
+          name: Install ds001771
+          command: |
+            datalad install -r https://github.com/nipreps-data/ds001771.git
+            datalad update --merge -d ds001771/
+            datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
+
       - save_cache:
-          key: data-v2-{{ .Branch }}-{{ .BuildNum }}
+          key: data-v3-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/data
             - /tmp/templateflow
@@ -241,9 +248,9 @@ jobs:
             - freesurfer-v1-
       - restore_cache:
           keys:
-            - data-v2-{{ .Branch }}-
-            - data-v2-master-
-            - data-v2-
+            - data-v3-{{ .Branch }}-
+            - data-v3-master-
+            - data-v3-
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
