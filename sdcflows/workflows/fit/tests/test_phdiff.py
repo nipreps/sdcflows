@@ -17,7 +17,7 @@ from ..fieldmap import init_fmap_wf, Workflow
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase1.nii.gz",
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase2.nii.gz",
         ),
-        ("testdata/sub-HCP101006/fmap/sub-HCP101006_phasediff.nii.gz",),
+        ("HCP101006/sub-101006/fmap/sub-101006_phasediff.nii.gz",),
     ],
 )
 def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):

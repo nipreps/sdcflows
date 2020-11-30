@@ -15,18 +15,18 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     """Test the unwarping workflow."""
     distorted = (
         datadir
-        / "testdata"
-        / "sub-HCP101006"
+        / "HCP101006"
+        / "sub-101006"
         / "func"
-        / "sub-HCP101006_task-rest_dir-LR_sbref.nii.gz"
+        / "sub-101006_task-rest_dir-LR_sbref.nii.gz"
     )
 
     magnitude = (
         datadir
-        / "testdata"
-        / "sub-HCP101006"
+        / "HCP101006"
+        / "sub-101006"
         / "fmap"
-        / "sub-HCP101006_magnitude1.nii.gz"
+        / "sub-101006_magnitude1.nii.gz"
     )
     fmap_ref_wf = init_magnitude_wf(2, name="fmap_ref_wf")
     fmap_ref_wf.inputs.inputnode.magnitude = magnitude
