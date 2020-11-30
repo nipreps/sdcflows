@@ -12,21 +12,10 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
 
     steps:
-    - name: Install NeuroDebian & software packages
-      run: |
-        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends fsl afni ants
-    - uses: actions/cache@v1
-      with:
-        path: /var/lib/apt
-        key: apt-cache-v1
-        restore-keys: |
-          apt-cache-
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${matrix.python-version}
+        python-version: ${{ matrix.python-version }}
     - name: Install DataLad
       run: |
         $CONDA/bin/conda install -c conda-forge git-annex datalad pip
@@ -34,7 +23,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install minimal dependencies
       run: $CONDA/bin/pip install -r min-requirements.txt
-    - uses: actions/cache@v1
+    - uses: actions/cache@v2
       with:
         path: $HOME/.cache/pip
         key: pip-cache-v1
@@ -46,7 +35,7 @@ jobs:
             tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
             tfapi.get('MNI152NLin2009cAsym', resolution=1, label='brain', suffix='probseg');
             tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
-    - uses: actions/cache@v1
+    - uses: actions/cache@v2
       with:
         path: $HOME/.cache/templateflow
         key: tf-cache-v1
@@ -71,12 +60,24 @@ jobs:
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
-    - uses: actions/cache@v1
+    - uses: actions/cache@v2
       with:
         path: $HOME/data
         key: data-cache-v1
         restore-keys: |
           data-cache-
+
+    - name: Install NeuroDebian & software packages
+      run: |
+        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends fsl afni ants
+    - uses: actions/cache@v2
+      with:
+        path: /var/lib/apt
+        key: apt-cache-v1
+        restore-keys: |
+          apt-cache-
 
     - name: Install FreeSurfer's mri_robust_template
       env:
