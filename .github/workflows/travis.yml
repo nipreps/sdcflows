@@ -16,13 +16,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install DataLad
-      run: |
-        $CONDA/bin/conda install -c conda-forge git-annex datalad pip
-        $CONDA/bin/pip install datalad-osf
-    - uses: actions/checkout@v2
-    - name: Install minimal dependencies
-      run: $CONDA/bin/pip install -r min-requirements.txt
     - uses: actions/cache@v2
       with:
         path: |
@@ -31,19 +24,30 @@ jobs:
         key: python-cache-v1
         restore-keys: |
           python-cache-
-    - name: Get TemplateFlow's required objects
+    - name: Install DataLad
       run: |
-        $CONDA/bin/python -c "\
-            from templateflow import api as tfapi;
-            tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
-            tfapi.get('MNI152NLin2009cAsym', resolution=1, label='brain', suffix='probseg');
-            tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
+        $CONDA/bin/conda install -c conda-forge git-annex datalad pip
+        $CONDA/bin/pip install datalad-osf
+    - uses: actions/checkout@v2
+    - name: Install minimal dependencies
+      run: $CONDA/bin/pip install -r min-requirements.txt
+
     - uses: actions/cache@v2
       with:
         path: $HOME/.cache/templateflow
         key: tf-cache-v1
         restore-keys: |
           tf-cache-
+    - name: Get TemplateFlow's required objects
+      run: |
+        $CONDA/bin/python tools/cache_templateflow.py
+
+    - uses: actions/cache@v2
+      with:
+        path: $HOME/data
+        key: data-cache-v1
+        restore-keys: |
+          data-cache-
     - name: Install test data
       env:
         PATH: $PATH:$CONDA/bin/
@@ -63,24 +67,18 @@ jobs:
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
-    - uses: actions/cache@v2
-      with:
-        path: $HOME/data
-        key: data-cache-v1
-        restore-keys: |
-          data-cache-
 
-    - name: Install NeuroDebian & software packages
-      run: |
-        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends fsl afni ants
     - uses: actions/cache@v2
       with:
         path: /var/lib/apt
         key: apt-cache-v1
         restore-keys: |
           apt-cache-
+    - name: Install NeuroDebian & software packages
+      run: |
+        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends fsl afni ants
 
     - name: Install FreeSurfer's mri_robust_template
       env:
