@@ -7,7 +7,7 @@ jobs:
     if: "!startsWith(github.ref, 'refs/tags/') && !contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     env:
-      DATADIR: $HOME/data
+      TEST_DATA_HOME: $HOME/data
     strategy:
       max-parallel: 5
       matrix:
@@ -34,7 +34,10 @@ jobs:
         $CONDA/bin/pip install datalad-osf
     - uses: actions/checkout@v2
     - name: Install minimal dependencies
-      run: $CONDA/bin/pip install -r min-requirements.txt
+      run: |
+        $CONDA/bin/pip install -r min-requirements.txt
+        $CONDA/bin/pip install .
+        $CONDA/bin/pip install .[tests]
 
     - uses: actions/cache@v2
       with:
@@ -55,8 +58,8 @@ jobs:
     - name: Install test data
       run: |
         export PATH=$CONDA/bin:$PATH
-        mkdir -p ${{ env.DATADIR }}
-        cd ${{ env.DATADIR }}
+        mkdir -p ${{ env.TEST_DATA_HOME }}
+        cd ${{ env.TEST_DATA_HOME }}
 
         # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
@@ -92,3 +95,12 @@ jobs:
         sudo install mri_robust_template /usr/local/bin
         mkdir -p $HOME/.cache/freesurfer/
         echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $HOME/.cache/freesurfer/license.txt
+
+    - name: Run pytest with coverage
+      run: |
+        $CONDA/bin/pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
+
+    - name: Submit code coverage
+      run: |
+        $CONDA/bin/conda install codecov
+        $CONDA/bin/python -m codecov --flags travis --file cov.xml -e $GITHUB_RUN_NUMBER

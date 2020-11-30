@@ -11,6 +11,7 @@ from ..fieldmap import init_fmap_wf, Workflow
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize(
     "fmap_path",
     [
