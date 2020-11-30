@@ -8,28 +8,34 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEST_DATA_HOME: $HOME/data
+      FSLOUTPUTTYPE: NIFTI_GZ
     strategy:
       max-parallel: 5
       matrix:
         python-version: [3.6, 3.7, 3.8]
 
     steps:
+    - name: Git settings (pacify DataLad)
+      run: |
+        git config --global user.name 'NiPreps Bot'
+        git config --global user.email 'nipreps@gmail.com'
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
     - uses: actions/cache@v2
+      id: conda
       with:
         path: |
+          /usr/share/miniconda
           $CONDA/
           $HOME/.cache/pip
-        key: python-${{ matrix.python-version }}-v1
+        key: python-${{ matrix.python-version }}-v2
         restore-keys: |
           python-${{ matrix.python-version }}-
     - name: Install DataLad
+      if: steps.conda.outputs.cache-hit != 'true'
       run: |
-        git config --global user.name 'NiPreps Bot'
-        git config --global user.email 'nipreps@gmail.com'
         $CONDA/bin/conda install -c conda-forge git-annex datalad pip
         $CONDA/bin/pip install datalad-osf
     - uses: actions/checkout@v2
