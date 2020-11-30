@@ -18,6 +18,7 @@ from ..fieldmap import init_fmap_wf, Workflow
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase1.nii.gz",
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase2.nii.gz",
         ),
+        ("ds001771/sub-36/fmap/sub-36_acq-topup1_fieldmap.nii.gz",),
         ("HCP101006/sub-101006/fmap/sub-101006_phasediff.nii.gz",),
     ],
 )
@@ -34,10 +35,16 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
     wf = Workflow(
         name=f"phdiff_{fmap_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
     )
-    phdiff_wf = init_fmap_wf(omp_nthreads=2, debug=True)
+    mode = "mapped" if "fieldmap" in fmap_path[0].name else "phasediff"
+    phdiff_wf = init_fmap_wf(
+        omp_nthreads=2,
+        debug=True,
+        mode=mode,
+    )
     phdiff_wf.inputs.inputnode.fieldmap = fieldmaps
     phdiff_wf.inputs.inputnode.magnitude = [
-        f.replace("diff", "1").replace("phase", "magnitude") for f, _ in fieldmaps
+        f.replace("diff", "1").replace("phase", "magnitude").replace("fieldmap", "magnitude")
+        for f, _ in fieldmaps
     ]
 
     if outdir:
@@ -54,7 +61,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_path):
 
         fmap_reports_wf = init_fmap_reports_wf(
             output_dir=str(outdir),
-            fmap_type="phasediff" if len(fieldmaps) == 1 else "phases",
+            fmap_type=mode if len(fieldmaps) == 1 else "phases",
         )
         fmap_reports_wf.inputs.inputnode.source_files = [f for f, _ in fieldmaps]
 

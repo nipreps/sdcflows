@@ -14,10 +14,14 @@ from ..pepolar import init_topup_wf
 @pytest.mark.parametrize(
     "epi_path",
     [
-        # (
-        #     "ds001600/sub-1/fmap/sub-1_dir-AP_epi.nii.gz",
-        #     "ds001600/sub-1/fmap/sub-1_dir-PA_epi.nii.gz",
-        # ),
+        (
+            "ds001771/sub-36/fmap/sub-36_acq-topup1_dir-01_epi.nii.gz",
+            "ds001771/sub-36/fmap/sub-36_acq-topup1_dir-02_epi.nii.gz",
+        ),
+        (
+            "ds001771/sub-36/fmap/sub-36_acq-topup2_dir-01_epi.nii.gz",
+            "ds001771/sub-36/fmap/sub-36_acq-topup2_dir-02_epi.nii.gz",
+        ),
         (
             "HCP101006/sub-101006/fmap/sub-101006_dir-LR_epi.nii.gz",
             "HCP101006/sub-101006/fmap/sub-101006_dir-RL_epi.nii.gz",
