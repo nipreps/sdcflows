@@ -6,50 +6,67 @@ jobs:
   build-linux:
     if: "!startsWith(github.ref, 'refs/tags/') && !contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
+    env:
+      TEST_DATA_HOME: $HOME/data
+      FSLOUTPUTTYPE: NIFTI_GZ
     strategy:
       max-parallel: 5
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        pip: ["pip 'setuptools ~= 42.0' 'setuptools_scm[toml] >= 3.4'"]
 
     steps:
-    - name: Install NeuroDebian & software packages
+    - name: Git settings (pacify DataLad)
       run: |
-        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends git-annex-standalone fsl afni ants
-    - uses: actions/cache@v1
+        git config --global user.name 'NiPreps Bot'
+        git config --global user.email 'nipreps@gmail.com'
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
       with:
-        path: /var/lib/apt
-        key: apt-cache-v1
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/cache@v2
+      id: conda
+      with:
+        path: |
+          /usr/share/miniconda
+          $CONDA/
+          $HOME/.cache/pip
+        key: python-${{ matrix.python-version }}-v2
         restore-keys: |
-          apt-cache-
+          python-${{ matrix.python-version }}-
     - name: Install DataLad
-      run: pip install datalad datalad-osf
+      if: steps.conda.outputs.cache-hit != 'true'
+      run: |
+        $CONDA/bin/conda install -c conda-forge git-annex datalad pip
+        $CONDA/bin/pip install datalad-osf
     - uses: actions/checkout@v2
     - name: Install minimal dependencies
-      run: pip install -r min-requirements.txt
-    - uses: actions/cache@v1
-      with:
-        path: $HOME/.cache/pip
-        key: pip-cache-v1
-        restore-keys: |
-          pip-cache-
-    - name: Get TemplateFlow's required objects
       run: |
-        python -c "from templateflow import api as tfapi;
-            tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
-            tfapi.get('MNI152NLin2009cAsym', resolution=1, label='brain', suffix='probseg');
-            tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
-    - uses: actions/cache@v1
+        $CONDA/bin/pip install -r min-requirements.txt
+        $CONDA/bin/pip install .
+        $CONDA/bin/pip install .[tests]
+
+    - uses: actions/cache@v2
       with:
         path: $HOME/.cache/templateflow
         key: tf-cache-v1
         restore-keys: |
           tf-cache-
-    - name: Install test data
-      working-directory: $HOME/data
+    - name: Get TemplateFlow's required objects
       run: |
+        $CONDA/bin/python tools/cache_templateflow.py
+
+    - uses: actions/cache@v2
+      with:
+        path: $HOME/data
+        key: data-cache-v1
+        restore-keys: |
+          data-cache-
+    - name: Install test data
+      run: |
+        export PATH=$CONDA/bin:$PATH
+        mkdir -p ${{ env.TEST_DATA_HOME }}
+        cd ${{ env.TEST_DATA_HOME }}
+
         # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
         datalad update -r --merge -d ds001600/
@@ -64,12 +81,17 @@ jobs:
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
-    - uses: actions/cache@v1
+    - uses: actions/cache@v2
       with:
-        path: $HOME/data
-        key: data-cache-v1
+        path: /var/lib/apt
+        key: apt-cache-v1
         restore-keys: |
-          data-cache-
+          apt-cache-
+    - name: Install NeuroDebian & software packages
+      run: |
+        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends fsl afni ants
 
     - name: Install FreeSurfer's mri_robust_template
       env:
@@ -78,5 +100,13 @@ jobs:
         curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
         sudo install mri_robust_template /usr/local/bin
         mkdir -p $HOME/.cache/freesurfer/
-        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > mkdir -p $HOME/.cache/freesurfer/license.txt
-        
+        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $HOME/.cache/freesurfer/license.txt
+
+    - name: Run pytest with coverage
+      run: |
+        $CONDA/bin/pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
+
+    - name: Submit code coverage
+      run: |
+        $CONDA/bin/conda install codecov
+        $CONDA/bin/python -m codecov --flags travis --file cov.xml -e $GITHUB_RUN_NUMBER

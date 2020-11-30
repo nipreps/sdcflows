@@ -11,6 +11,7 @@ from ..pepolar import Workflow, init_topup_wf
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize(
     "epi_path",
     [
