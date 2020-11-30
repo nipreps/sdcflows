@@ -24,15 +24,6 @@ jobs:
         key: apt-cache-v1
         restore-keys: |
           apt-cache-
-    - name: Install FreeSurfer's mri_robust_template
-      env:
-        MRI_ROBUST_TEMPLATE: sx2n7/providers/osfstorage/5e825301d0e35400ebb481f2
-        FS_LICENSE: $HOME/.cache/freesurfer/license.txt
-      run: |
-        curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
-        sudo install mri_robust_template /usr/local/bin
-        mkdir -p $HOME/.cache/freesurfer/
-        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $FS_LICENSE
     - name: Install DataLad
       run: pip install datalad datalad-osf
     - uses: actions/checkout@v2
@@ -79,3 +70,13 @@ jobs:
         key: data-cache-v1
         restore-keys: |
           data-cache-
+
+    - name: Install FreeSurfer's mri_robust_template
+      env:
+        MRI_ROBUST_TEMPLATE: sx2n7/providers/osfstorage/5e825301d0e35400ebb481f2
+      run: |
+        curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
+        sudo install mri_robust_template /usr/local/bin
+        mkdir -p $HOME/.cache/freesurfer/
+        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > mkdir -p $HOME/.cache/freesurfer/license.txt
+        
