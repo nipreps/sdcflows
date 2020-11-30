@@ -48,9 +48,9 @@ jobs:
             - env-v2-
       - restore_cache:
           keys:
-            - data-v3-{{ .Branch }}-
-            - data-v3-master-
-            - data-v3-
+            - data-v4-{{ .Branch }}-
+            - data-v4-master-
+            - data-v4-
 
       - run:
           name: Setup git-annex
@@ -86,9 +86,9 @@ jobs:
       - run:
           name: Install ds001600
           command: |
-            datalad install https://github.com/OpenNeuroDatasets/ds001600.git
-            datalad update --merge -d ds001600/
-            datalad get -r -d ds001600/
+            datalad install -r https://github.com/nipreps-data/ds001600.git
+            datalad update -r --merge -d ds001600/
+            datalad get -r -d ds001600/ ds001600/sub-1/
 
       - run:
           name: Install HCP/sub-101006
@@ -105,7 +105,7 @@ jobs:
             datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
 
       - save_cache:
-          key: data-v3-{{ .Branch }}-{{ .BuildNum }}
+          key: data-v4-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/data
             - /tmp/templateflow
@@ -248,9 +248,9 @@ jobs:
             - freesurfer-v1-
       - restore_cache:
           keys:
-            - data-v3-{{ .Branch }}-
-            - data-v3-master-
-            - data-v3-
+            - data-v4-{{ .Branch }}-
+            - data-v4-master-
+            - data-v4-
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
