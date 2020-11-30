@@ -17,10 +17,12 @@ data_dir = Path(__file__).parent / "tests" / "data" / "dsA"
 
 
 def pytest_report_header(config):
-    msg = "Datasets found: %s" % ', '.join([v.root for v in layouts.values()])
-    if test_output_dir is not None:
-        msg += '\nOutput folder: %s' % Path(test_output_dir).resolve()
-    return msg
+    return f"""\
+TEST_DATA_HOME={test_data_env}
+-> Available datasets: {', '.join(layouts.keys())}.
+TEST_OUTPUT_DIR={test_output_dir or '<unset> (output files will be discarded)'}.
+TEST_WORK_DIR={test_workdir or '<unset> (intermediate files will be discarded)'}.
+"""
 
 
 @pytest.fixture(autouse=True)
