@@ -25,13 +25,16 @@ jobs:
       run: $CONDA/bin/pip install -r min-requirements.txt
     - uses: actions/cache@v2
       with:
-        path: $HOME/.cache/pip
-        key: pip-cache-v1
+        path: |
+          $CONDA/
+          $HOME/.cache/pip
+        key: python-cache-v1
         restore-keys: |
-          pip-cache-
+          python-cache-
     - name: Get TemplateFlow's required objects
       run: |
-        $CONDA/bin/python -c "from templateflow import api as tfapi;
+        $CONDA/bin/python -c "\
+            from templateflow import api as tfapi;
             tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask');
             tfapi.get('MNI152NLin2009cAsym', resolution=1, label='brain', suffix='probseg');
             tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
