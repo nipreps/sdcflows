@@ -228,7 +228,7 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
         # fmt: off
         workflow.connect([
             (inputnode, units, [(("fieldmap", _get_units), "units")]),
-            (inputnode, fmapmrg, [("fieldmap", "in_files")]),
+            (inputnode, fmapmrg, [(("fieldmap", _get_file), "in_files")]),
             (fmapmrg, units, [("out_avg", "in_file")]),
             (units, bs_filter, [("out_file", "in_data")]),
         ])
@@ -419,6 +419,22 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
     ])
     # fmt: on
     return workflow
+
+
+def _get_file(intuple):
+    """
+    Extract the filename from the inputnode.
+
+    >>> _get_file([("fmap.nii.gz", {"Units": "rad/s"})])
+    'fmap.nii.gz'
+
+    >>> _get_file(("fmap.nii.gz", {"Units": "rad/s"}))
+    'fmap.nii.gz'
+
+    """
+    if isinstance(intuple, list):
+        intuple = intuple[0]
+    return intuple[0]
 
 
 def _get_units(intuple):

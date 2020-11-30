@@ -37,6 +37,16 @@ def init_fmap_preproc_wf(
     Examples
     --------
     >>> init_fmap_preproc_wf(
+    ...     layout=layouts['ds001771'],
+    ...     omp_nthreads=1,
+    ...     output_dir="/tmp",
+    ...     subject="36",
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='...'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
+
+    >>> init_fmap_preproc_wf(
     ...     layout=layouts['ds001600'],
     ...     omp_nthreads=1,
     ...     output_dir="/tmp",
