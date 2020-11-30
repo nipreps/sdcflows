@@ -53,21 +53,17 @@ jobs:
         PATH: $PATH:$CONDA/bin/
       working-directory: $HOME/data
       run: |
-        # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
         datalad update -r --merge -d ds001600/
         datalad get -r -d ds001600/ ds001600/sub-1/
 
-        # HCP/sub-101006
         datalad install -r https://github.com/nipreps-data/HCP101006.git
         datalad update -r --merge -d HCP101006/
         datalad get -r -d HCP101006
 
-        # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
-
     - uses: actions/cache@v2
       with:
         path: /var/lib/apt
