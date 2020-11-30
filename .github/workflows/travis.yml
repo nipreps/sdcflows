@@ -6,6 +6,8 @@ jobs:
   build-linux:
     if: "!startsWith(github.ref, 'refs/tags/') && !contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
+    env:
+      DATADIR: $HOME/data
     strategy:
       max-parallel: 5
       matrix:
@@ -21,11 +23,13 @@ jobs:
         path: |
           $CONDA/
           $HOME/.cache/pip
-        key: python-cache-v1
+        key: python-${{ matrix.python-version }}-v1
         restore-keys: |
-          python-cache-
+          python-${{ matrix.python-version }}-
     - name: Install DataLad
       run: |
+        git config --global user.name 'NiPreps Bot'
+        git config --global user.email 'nipreps@gmail.com'
         $CONDA/bin/conda install -c conda-forge git-annex datalad pip
         $CONDA/bin/pip install datalad-osf
     - uses: actions/checkout@v2
@@ -49,18 +53,22 @@ jobs:
         restore-keys: |
           data-cache-
     - name: Install test data
-      env:
-        PATH: $PATH:$CONDA/bin/
-      working-directory: $HOME/data
       run: |
+        export PATH=$CONDA/bin:$PATH
+        mkdir -p ${{ env.DATADIR }}
+        cd ${{ env.DATADIR }}
+
+        # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
         datalad update -r --merge -d ds001600/
         datalad get -r -d ds001600/ ds001600/sub-1/
 
+        # HCP/sub-101006
         datalad install -r https://github.com/nipreps-data/HCP101006.git
         datalad update -r --merge -d HCP101006/
         datalad get -r -d HCP101006
 
+        # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
@@ -83,4 +91,4 @@ jobs:
         curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
         sudo install mri_robust_template /usr/local/bin
         mkdir -p $HOME/.cache/freesurfer/
-        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > mkdir -p $HOME/.cache/freesurfer/license.txt
+        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $HOME/.cache/freesurfer/license.txt
