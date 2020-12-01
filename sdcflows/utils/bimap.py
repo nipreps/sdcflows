@@ -56,6 +56,10 @@ class bidict(dict):
     Traceback (most recent call last):
     TypeError: value '[]' of unhashable type: 'list'
 
+    >>> d[list()] = 1  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    TypeError: key '[]' of unhashable type: 'list'
+
     >>> d.add("a new value")
     'auto_00000'
 
@@ -73,6 +77,14 @@ class bidict(dict):
     >>> d == bidict(reversed(list(d.items())))
     True
 
+    >>> bidict({"a": 1, "b": 1})  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    TypeError: Bidirectional dictionary cannot contain repeated values
+
+    >>> del d["e"]  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    KeyError: 'e'
+
     """
 
     _inverse = None
@@ -82,7 +94,7 @@ class bidict(dict):
         self._inverse = {v: k for k, v in self.items()}
         if len(self) != len(self._inverse):
             raise TypeError(
-                "Bidirectional dictionary cannot contain repeated keys or values."
+                "Bidirectional dictionary cannot contain repeated values"
             )
 
     def __setitem__(self, key, value):
