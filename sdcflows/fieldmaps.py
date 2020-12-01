@@ -390,7 +390,7 @@ class FieldmapEstimation:
         _estimators[self.bids_id] = self.paths()
 
     def paths(self):
-        """Return a tuple of paths (sorted)."""
+        """Return a tuple of paths that are sorted."""
         return tuple(sorted(str(f.path) for f in self.sources))
 
     def get_workflow(self, **kwargs):

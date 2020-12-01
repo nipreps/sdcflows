@@ -4,18 +4,12 @@
 from itertools import product
 from nipype import logging
 
-LOGGER = logging.getLogger('nipype.workflow')
+LOGGER = logging.getLogger("nipype.workflow")
 DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def init_fmap_preproc_wf(
-    *,
-    layout,
-    omp_nthreads,
-    output_dir,
-    subject,
-    debug=False,
-    name='fmap_preproc_wf',
+    *, layout, omp_nthreads, output_dir, subject, debug=False, name="fmap_preproc_wf",
 ):
     """
     Stage the fieldmap data preprocessing steps of *SDCFlows*.
@@ -68,6 +62,17 @@ def init_fmap_preproc_wf(
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
 
+    >>> init_fmap_preproc_wf(
+    ...     layout=layouts['dsA'],
+    ...     omp_nthreads=1,
+    ...     output_dir="/tmp",
+    ...     subject="01",
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='...'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>, bids_id='...'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
+
     """
     from ..fieldmaps import FieldmapEstimation, FieldmapFile
 
@@ -80,38 +85,31 @@ def init_fmap_preproc_wf(
     estimators = []
 
     # Set up B0 fieldmap strategies:
-    for fmap in layout.get(
-        suffix=["fieldmap", "phasediff", "phase1"], **base_entities
-    ):
-        e = FieldmapEstimation(
-            FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-        )
+    for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
+        e = FieldmapEstimation(FieldmapFile(fmap.path, metadata=fmap.get_metadata()))
         estimators.append(e)
 
     # A bunch of heuristics to select EPI fieldmaps
-    sessions = layout.get_sessions() or (None, )
+    sessions = layout.get_sessions() or (None,)
     acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
     contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
 
     for ses, acq, ce in product(sessions, acqs, contrasts):
         entities = base_entities.copy()
-        entities.update({
-            "suffix": "epi",
-            "session": ses,
-            "acquisition": acq,
-            "ceagent": ce,
-        })
+        entities.update(
+            {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
+        )
         dirs = layout.get_directions(**entities)
         if len(dirs) > 1:
-            e = FieldmapEstimation([
-                FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                for fmap in layout.get(direction=dirs, **entities)
-            ])
+            e = FieldmapEstimation(
+                [
+                    FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                    for fmap in layout.get(direction=dirs, **entities)
+                ]
+            )
             estimators.append(e)
 
     for e in estimators:
-        LOGGER.info(
-            f"{e.method}:: <{':'.join(s.path.name for s in e.sources)}>."
-        )
+        LOGGER.info(f"{e.method}:: <{':'.join(s.path.name for s in e.sources)}>.")
 
     return estimators

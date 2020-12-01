@@ -9,6 +9,7 @@ def test_FieldmapFile(testdata_dir):
     fm.FieldmapFile(testdata_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
 
 
+@pytest.fixture(scope="module")
 @pytest.mark.parametrize(
     "inputfiles,method,nsources,raises",
     [
@@ -66,8 +67,12 @@ def test_FieldmapEstimation(
     sources = [sub_dir / f for f in inputfiles]
 
     if raises is True:
+        # Ensure that _estimators is still holding values from previous
+        # parameter set of this parametrized execution.
         with pytest.raises(ValueError):
             fm.FieldmapEstimation(sources)
+
+        # Clean up so this parameter set can be tested.
         monkeypatch.setattr(fm, "_estimators", bidict())
 
     fe = fm.FieldmapEstimation(sources)
@@ -92,7 +97,11 @@ def test_FieldmapEstimation(
 
     # Exercise workflow creation
     wf = fe.get_workflow()
-    wf == fe.get_workflow()
+
+    yield wf == fe.get_workflow()  # Code after this yield will only run on cleanup
+
+    # Clean-up: reset _estimators registry
+    monkeypatch.setattr(fm, "_estimators", bidict())
 
 
 @pytest.mark.parametrize(
@@ -112,6 +121,8 @@ def test_FieldmapEstimationError(monkeypatch, testdata_dir, inputfiles, errortyp
 
     with pytest.raises(errortype):
         fm.FieldmapEstimation([sub_dir / f for f in inputfiles])
+
+    monkeypatch.setattr(fm, "_estimators", bidict())
 
 
 def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
