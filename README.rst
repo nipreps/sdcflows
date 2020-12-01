@@ -1,6 +1,5 @@
 SDCFlows
 --------
-
 .. image:: https://img.shields.io/pypi/v/sdcflows.svg
   :target: https://pypi.python.org/pypi/sdcflows/
   :alt: Latest Version
@@ -11,9 +10,9 @@ SDCFlows
 .. image:: https://circleci.com/gh/nipreps/sdcflows.svg?style=svg
     :target: https://circleci.com/gh/nipreps/sdcflows
 
-.. image:: https://travis-ci.com/nipreps/sdcflows.svg?branch=master
-    :target: https://travis-ci.com/nipreps/sdcflows
-  
+.. image:: https://github.com/nipreps/sdcflows/workflows/Deps%20&%20CI/badge.svg
+    :target: https://github.com/nipreps/sdcflows/actions
+
 SDCFlows (*Susceptibility Distortion Correction workFlows*) is a Python library of 
 *NiPype*-based workflows to preprocess *B0* mapping data, estimate the corresponding
 fieldmap and finally correct for susceptibility distortions.
