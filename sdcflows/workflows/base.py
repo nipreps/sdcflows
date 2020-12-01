@@ -1,6 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
+from itertools import product
 from nipype import logging
 
 LOGGER = logging.getLogger('nipype.workflow')
@@ -44,7 +45,8 @@ def init_fmap_preproc_wf(
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='...'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='...'),
-     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='...')]
 
     >>> init_fmap_preproc_wf(
     ...     layout=layouts['ds001600'],
@@ -87,18 +89,23 @@ def init_fmap_preproc_wf(
         estimators.append(e)
 
     # A bunch of heuristics to select EPI fieldmaps
-    sessions = layout.get_sessions() or [None]
-    for session in sessions:
-        dirs = layout.get_directions(
-            suffix="epi",
-            session=session,
-            **base_entities,
-        )
+    sessions = layout.get_sessions() or (None, )
+    acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
+    contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
+
+    for ses, acq, ce in product(sessions, acqs, contrasts):
+        entities = base_entities.copy()
+        entities.update({
+            "suffix": "epi",
+            "session": ses,
+            "acquisition": acq,
+            "ceagent": ce,
+        })
+        dirs = layout.get_directions(**entities)
         if len(dirs) > 1:
             e = FieldmapEstimation([
                 FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                for fmap in layout.get(suffix="epi", session=session,
-                                       direction=dirs, **base_entities)
+                for fmap in layout.get(direction=dirs, **entities)
             ])
             estimators.append(e)
 
