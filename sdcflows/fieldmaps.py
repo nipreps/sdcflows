@@ -7,9 +7,10 @@ from json import loads
 from bids.layout import BIDSFile, parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
+from .utils.bimap import bidict
 
 
-_unique_ids = set()
+_estimators = bidict()
 
 
 class MetadataError(ValueError):
@@ -63,23 +64,9 @@ def _type_setter(obj, attribute, value):
 
 
 def _id_setter(obj, attribute, value):
-    """Ensure uniqueness of B0FieldIdentifier metadata."""
-    if obj.bids_id:
-        if obj.bids_id != value:
-            raise ValueError("Unique identifier is already set")
-        _unique_ids.add(value)
+    if obj.bids_id and obj.bids_id == value:
         return value
-
-    if value is True:
-        value = f"auto_{len([el for el in _unique_ids if el.startswith('auto_')])}"
-    elif not value:
-        raise ValueError("Invalid unique identifier")
-
-    if value in _unique_ids:
-        raise ValueError("Unique identifier has been previously registered.")
-
-    _unique_ids.add(value)
-    return value
+    raise ValueError("Cannot edit the bids_id")
 
 
 @attr.s(slots=True)
@@ -380,7 +367,9 @@ class FieldmapEstimation:
         if self.method == EstimatorType.UNKNOWN:
             raise ValueError("Insufficient sources to estimate a fieldmap.")
 
+        # Register this estimation method
         if not self.bids_id:
+            # If not manually set, try to get it from BIDS metadata
             bids_ids = set(
                 [
                     f.metadata.get("B0FieldIdentifier")
@@ -392,14 +381,17 @@ class FieldmapEstimation:
                 raise ValueError(
                     f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"
                 )
-            elif not bids_ids:
-                self.bids_id = True
+            elif bids_ids:
+                object.__setattr__(self, "bids_id", bids_ids.pop())
             else:
-                self.bids_id = bids_ids.pop()
-        elif self.bids_id in _unique_ids:
-            raise ValueError("Unique identifier has been previously registered.")
-        else:
-            _unique_ids.add(self.bids_id)
+                object.__setattr__(self, "bids_id", _estimators.add(self.paths()))
+                return
+
+        _estimators[self.bids_id] = self.paths()
+
+    def paths(self):
+        """Return a tuple of paths (sorted)."""
+        return tuple(sorted(str(f.path) for f in self.sources))
 
     def get_workflow(self, **kwargs):
         """Build the estimation workflow corresponding to this instance."""
