@@ -7,10 +7,10 @@ from json import loads
 from bids.layout import BIDSFile, parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
-from .utils.bimap import bidict
+from .utils.bimap import EstimatorRegistry
 
 
-_estimators = bidict()
+_estimators = EstimatorRegistry()
 
 
 class MetadataError(ValueError):
