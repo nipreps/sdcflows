@@ -160,7 +160,6 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     )
 
     workflow = Workflow(name=name)
-
     inputnode = pe.Node(
         niu.IdentityInterface(fields=["magnitude", "fieldmap"]), name="inputnode"
     )

@@ -404,7 +404,7 @@ class FieldmapEstimation:
         if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             from .workflows.fit.fieldmap import init_fmap_wf
 
-            kwargs["mode"] = str(self.method).split(".")[-1].lower()
+            kwargs["mode"] = str(self.method).rpartition(".")[-1].lower()
             self._wf = init_fmap_wf(**kwargs)
             self._wf.inputs.inputnode.magnitude = [
                 str(f.path) for f in self.sources if f.suffix.startswith("magnitude")
