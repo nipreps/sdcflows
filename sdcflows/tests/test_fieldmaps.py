@@ -1,6 +1,5 @@
 """test_fieldmaps."""
 import pytest
-from ..utils.bimap import bidict
 from .. import fieldmaps as fm
 
 
@@ -57,18 +56,20 @@ def test_FieldmapFile(testdata_dir):
         ),
     ],
 )
-def test_FieldmapEstimation(
-    monkeypatch, testdata_dir, inputfiles, method, nsources, raises
-):
+def test_FieldmapEstimation(testdata_dir, inputfiles, method, nsources, raises):
     """Test errors."""
     sub_dir = testdata_dir / "sub-01"
 
     sources = [sub_dir / f for f in inputfiles]
 
     if raises is True:
+        # Ensure that _estimators is still holding values from previous
+        # parameter set of this parametrized execution.
         with pytest.raises(ValueError):
             fm.FieldmapEstimation(sources)
-        monkeypatch.setattr(fm, "_estimators", bidict())
+
+        # Clean up so this parameter set can be tested.
+        fm._estimators.clear()
 
     fe = fm.FieldmapEstimation(sources)
     assert fe.method == method
@@ -104,20 +105,21 @@ def test_FieldmapEstimation(
         (("anat/sub-01_T1w.nii.gz", "fmap/sub-01_phase2.nii.gz"), TypeError),
     ],
 )
-def test_FieldmapEstimationError(monkeypatch, testdata_dir, inputfiles, errortype):
+def test_FieldmapEstimationError(testdata_dir, inputfiles, errortype):
     """Test errors."""
     sub_dir = testdata_dir / "sub-01"
 
-    monkeypatch.setattr(fm, "_estimators", bidict())
+    fm._estimators.clear()
 
     with pytest.raises(errortype):
         fm.FieldmapEstimation([sub_dir / f for f in inputfiles])
 
+    fm._estimators.clear()
 
-def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
+
+def test_FieldmapEstimationIdentifier(testdata_dir):
     """Check some use cases of B0FieldIdentifier."""
-
-    monkeypatch.setattr(fm, "_estimators", bidict())
+    fm._estimators.clear()
 
     with pytest.raises(ValueError):
         fm.FieldmapEstimation(
@@ -161,7 +163,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
             ]
         )  # Consistent, but already exists
 
-    monkeypatch.setattr(fm, "_estimators", bidict())
+    fm._estimators.clear()
 
     fe = fm.FieldmapEstimation(
         [
@@ -177,4 +179,4 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
     )
     assert fe.bids_id == "fmap_1"
 
-    monkeypatch.setattr(fm, "_estimators", bidict())
+    fm._estimators.clear()

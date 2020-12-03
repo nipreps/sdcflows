@@ -15,6 +15,8 @@ layouts = {p.name: BIDSLayout(str(p), validate=False, derivatives=True)
 
 data_dir = Path(__file__).parent / "tests" / "data" / "dsA"
 
+layouts["dsA"] = BIDSLayout(data_dir, validate=False, derivatives=False)
+
 
 def pytest_report_header(config):
     return f"""\

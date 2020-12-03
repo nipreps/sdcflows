@@ -104,6 +104,13 @@ jobs:
             datalad update --merge -d ds001771/
             datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
 
+      - run:
+          name: Install ds000054
+          command: |
+            datalad install -r https://github.com/nipreps-data/ds000054.git
+            datalad update --merge -d ds000054/
+            datalad get -r -d ds000054/ ds000054/sub-100185/fmap/*
+
       - save_cache:
           key: data-v4-{{ .Branch }}-{{ .BuildNum }}
           paths:

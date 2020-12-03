@@ -7,10 +7,10 @@ from json import loads
 from bids.layout import BIDSFile, parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
-from .utils.bimap import bidict
+from .utils.bimap import EstimatorRegistry
 
 
-_estimators = bidict()
+_estimators = EstimatorRegistry()
 
 
 class MetadataError(ValueError):
@@ -390,7 +390,7 @@ class FieldmapEstimation:
         _estimators[self.bids_id] = self.paths()
 
     def paths(self):
-        """Return a tuple of paths (sorted)."""
+        """Return a tuple of paths that are sorted."""
         return tuple(sorted(str(f.path) for f in self.sources))
 
     def get_workflow(self, **kwargs):

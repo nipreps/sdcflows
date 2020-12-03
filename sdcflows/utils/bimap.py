@@ -85,6 +85,16 @@ class bidict(dict):
     Traceback (most recent call last):
     KeyError: 'e'
 
+    >>> list(d)
+    ['a', 'b', 'c', 'auto_00000', 'auto_00001', 'auto_00002']
+
+    >>> list(d.values())
+    [1, 2, 3, 'a new value', 'another value', 'third value']
+
+    >>> d.clear()
+    >>> d
+    {}
+
     """
 
     _inverse = None
@@ -93,9 +103,7 @@ class bidict(dict):
         super().__init__(*args, **kwargs)
         self._inverse = {v: k for k, v in self.items()}
         if len(self) != len(self._inverse):
-            raise TypeError(
-                "Bidirectional dictionary cannot contain repeated values"
-            )
+            raise TypeError("Bidirectional dictionary cannot contain repeated values")
 
     def __setitem__(self, key, value):
         if key == value:
@@ -158,3 +166,48 @@ class bidict(dict):
 
         self.__setitem__(newkey, value)
         return newkey
+
+    def clear(self):
+        """Empty of all key/value pairs."""
+        self._inverse.clear()
+        super().clear()
+
+
+class EstimatorRegistry(bidict):
+    """
+    A specialized :py:class:`bidict` to track :py:class:`~sdcflows.fieldmaps.FieldmapEstimation`.
+
+    Examples
+    --------
+    >>> estimators = EstimatorRegistry()
+    >>> _ = estimators.add(("file3.txt", "file4.txt"))
+    >>> estimators.sources
+    ['file3.txt', 'file4.txt']
+
+    >>> _ = estimators.add(("file1.txt", "file2.txt"))
+    >>> estimators.sources
+    ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']
+
+    >>> _ = estimators.add(("file3.txt", "file2.txt"))
+    >>> estimators.sources
+    ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']
+
+    >>> estimators.get_key("file3.txt")
+    ('auto_00000', 'auto_00002')
+
+    >>> estimators.get_key("file5.txt")
+    ()
+
+    """
+
+    @property
+    def sources(self):
+        """Return a flattened list of fieldmap sources."""
+        return sorted(set([el for group in self.values() for el in group]))
+
+    def get_key(self, value):
+        """Get the key(s) containing a particular value."""
+        if value not in self.sources:
+            return tuple()
+
+        return tuple(sorted(k for k, v in self.items() if value in v))
