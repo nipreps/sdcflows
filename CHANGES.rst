@@ -1,6 +1,6 @@
-1.4.0 (TBD)
+2.0.0 (TBD)
 ===========
-The *SDCFlows* 1.4.x series are release with a comprehensive overhaul of the software's API.
+The *SDCFlows* 2.0.x series are release with a comprehensive overhaul of the software's API.
 This overhaul has the vision of converting *SDCFlows* into some sort of subordinate pipeline
 to other *d/fMRIPrep*, inline with *sMRIPrep*'s approach.
 The idea is to consider fieldmaps a first-citizen input, for which derivatives are generated
