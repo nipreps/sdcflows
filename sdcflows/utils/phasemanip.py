@@ -45,9 +45,8 @@ def subtract_phases(in_phases, in_meta, newpath=None):
         echo_times = (echo_times[1], echo_times[0])
 
     in_phases_nii = [nb.load(ph) for ph in in_phases]
-    sub_data = (
-        in_phases_nii[1].get_fdata(dtype="float32")
-        - in_phases_nii[0].get_fdata(dtype="float32")
+    sub_data = in_phases_nii[1].get_fdata(dtype="float32") - in_phases_nii[0].get_fdata(
+        dtype="float32"
     )
 
     # wrap negative radians back to [0, 2pi]
@@ -133,8 +132,6 @@ def delta_te(in_values):
         te2 = float(te2 or "unknown")
         te1 = float(te1 or "unknown")
     except ValueError:
-        raise ValueError(
-            f"Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>."
-        )
+        raise ValueError(f"Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>.")
 
     return abs(te2 - te1)

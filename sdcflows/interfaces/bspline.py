@@ -19,9 +19,9 @@ from nipype.interfaces.base import (
 
 
 LOW_MEM_BLOCK_SIZE = 1000
-DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)       # For human adults (mid-frequency), in mm
+DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)  # For human adults (mid-frequency), in mm
 DEFAULT_LF_ZOOMS_MM = (100.0, 100.0, 40.0)  # For human adults (low-frequency), in mm
-DEFAULT_HF_ZOOMS_MM = (16.0, 16.0, 10.0)    # For human adults (high-frequency), in mm
+DEFAULT_HF_ZOOMS_MM = (16.0, 16.0, 10.0)  # For human adults (high-frequency), in mm
 
 
 class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
@@ -151,7 +151,7 @@ class BSplineApprox(SimpleInterface):
         for i, (n, bsl) in enumerate(zip(ncoeff, bs_levels)):
             out_level = out_name.replace("_field.", f"_coeff{i:03}.")
             bsl.__class__(
-                np.array(model.coef_, dtype="float32")[index:index + n].reshape(
+                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
                     bsl.shape
                 ),
                 bsl.affine,

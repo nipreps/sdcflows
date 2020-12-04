@@ -10,15 +10,9 @@ def test_Flatten(tmpdir):
     """Test the flattening interface."""
     tmpdir.chdir()
     shape = (5, 5, 5)
-    nb.Nifti1Image(
-        np.zeros(shape), np.eye(4), None
-    ).to_filename("file1.nii.gz")
-    nb.Nifti1Image(
-        np.zeros((*shape, 6)), np.eye(4), None
-    ).to_filename("file2.nii.gz")
-    nb.Nifti1Image(
-        np.zeros((*shape, 2)), np.eye(4), None
-    ).to_filename("file3.nii.gz")
+    nb.Nifti1Image(np.zeros(shape), np.eye(4), None).to_filename("file1.nii.gz")
+    nb.Nifti1Image(np.zeros((*shape, 6)), np.eye(4), None).to_filename("file2.nii.gz")
+    nb.Nifti1Image(np.zeros((*shape, 2)), np.eye(4), None).to_filename("file3.nii.gz")
 
     out = Flatten(
         in_data=["file1.nii.gz", "file2.nii.gz", "file3.nii.gz"],
@@ -34,16 +28,14 @@ def test_Flatten(tmpdir):
     assert out_meta[4] == out_meta[5] == {"c": 3}
 
 
-@pytest.mark.parametrize("shape", [
-    (10, 10, 10, 1, 3),
-    (10, 10, 10, 3)
-])
+@pytest.mark.parametrize("shape", [(10, 10, 10, 1, 3), (10, 10, 10, 3)])
 def test_ConvertWarp(tmpdir, shape):
     """Exercise the interface."""
     tmpdir.chdir()
 
-    nb.Nifti1Image(np.zeros(shape, dtype="uint8"),
-                   np.eye(4), None).to_filename("3dQwarp.nii.gz")
+    nb.Nifti1Image(np.zeros(shape, dtype="uint8"), np.eye(4), None).to_filename(
+        "3dQwarp.nii.gz"
+    )
 
     out = ConvertWarp(in_file="3dQwarp.nii.gz").run()
 

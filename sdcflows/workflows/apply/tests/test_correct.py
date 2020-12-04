@@ -22,11 +22,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     )
 
     magnitude = (
-        datadir
-        / "HCP101006"
-        / "sub-101006"
-        / "fmap"
-        / "sub-101006_magnitude1.nii.gz"
+        datadir / "HCP101006" / "sub-101006" / "fmap" / "sub-101006_magnitude1.nii.gz"
     )
     fmap_ref_wf = init_magnitude_wf(2, name="fmap_ref_wf")
     fmap_ref_wf.inputs.inputnode.magnitude = magnitude

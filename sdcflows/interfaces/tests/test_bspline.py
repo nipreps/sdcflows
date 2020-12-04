@@ -23,11 +23,7 @@ def test_bsplines(tmp_path, testnum):
     )
 
     # Generate some target grid
-    targetnii = nb.Nifti1Image(
-        np.ones(targetshape),
-        targetaff,
-        None
-    )
+    targetnii = nb.Nifti1Image(np.ones(targetshape), targetaff, None)
     targetnii.to_filename(tmp_path / "target.nii.gz")
 
     # Generate random coefficients

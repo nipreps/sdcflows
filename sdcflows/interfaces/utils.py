@@ -118,7 +118,5 @@ def _qwarp2ants(in_file, newpath=None):
     hdr.set_intent("vector", (), "")
     out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
     data = np.squeeze(nii.get_fdata(dtype="float32"))[..., np.newaxis, :]
-    nb.Nifti1Image(data, nii.affine, hdr).to_filename(
-        out_file
-    )
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename(out_file)
     return out_file

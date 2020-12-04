@@ -6,12 +6,15 @@ import nibabel
 import pytest
 from bids.layout import BIDSLayout
 
-test_data_env = os.getenv('TEST_DATA_HOME', str(Path.home() / 'sdcflows-tests'))
-test_output_dir = os.getenv('TEST_OUTPUT_DIR')
-test_workdir = os.getenv('TEST_WORK_DIR')
+test_data_env = os.getenv("TEST_DATA_HOME", str(Path.home() / "sdcflows-tests"))
+test_output_dir = os.getenv("TEST_OUTPUT_DIR")
+test_workdir = os.getenv("TEST_WORK_DIR")
 
-layouts = {p.name: BIDSLayout(str(p), validate=False, derivatives=True)
-           for p in Path(test_data_env).glob('*') if p.is_dir()}
+layouts = {
+    p.name: BIDSLayout(str(p), validate=False, derivatives=True)
+    for p in Path(test_data_env).glob("*")
+    if p.is_dir()
+}
 
 data_dir = Path(__file__).parent / "tests" / "data" / "dsA"
 
@@ -29,15 +32,15 @@ TEST_WORK_DIR={test_workdir or '<unset> (intermediate files will be discarded)'}
 
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
-    doctest_namespace['np'] = numpy
-    doctest_namespace['nb'] = nibabel
-    doctest_namespace['os'] = os
-    doctest_namespace['Path'] = Path
-    doctest_namespace['layouts'] = layouts
+    doctest_namespace["np"] = numpy
+    doctest_namespace["nb"] = nibabel
+    doctest_namespace["os"] = os
+    doctest_namespace["Path"] = Path
+    doctest_namespace["layouts"] = layouts
     for key, val in list(layouts.items()):
         doctest_namespace[key] = Path(val.root)
 
-    doctest_namespace['testdata_dir'] = data_dir
+    doctest_namespace["testdata_dir"] = data_dir
 
 
 @pytest.fixture
