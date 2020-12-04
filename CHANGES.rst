@@ -61,6 +61,25 @@ Some of the most prominent pull-requests conducive to this release are:
 A complete list of issues addressed by the release is found `in the GitHub repo
 <https://github.com/nipreps/sdcflows/milestone/2?closed=1>`__.
 
+.. admonition:: Author list for papers based on *SDCFlows* 2.0.x series
+
+    As described in the `Contributor Guidelines
+    <https://www.nipreps.org/community/CONTRIBUTING/#recognizing-contributions>`__,
+    anyone listed as developer or contributor may write and submit manuscripts
+    about *SDCFlows*.
+    To do so, please move the author(s) name(s) to the front of the following list:
+
+    Markiewicz, Christopher J. \ :sup:`1`\ ; Goncalves, Mathias \ :sup:`1`\ ; Adebimpe, Azeez \ :sup:`2`\ ; Blair, Ross W. \ :sup:`1`\ ; Cieslak, Matthew \ :sup:`2`\ ; Naveau, Mikaël \ :sup:`3`\ ; Sitek, Kevin R. \ :sup:`4`\ ; Sneve, Markus H. \ :sup:`5`\ ; Gorgolewski, Krzysztof J. \ :sup:`1`\ ; Satterthwaite, Theodore D. \ :sup:`2`\ ; Poldrack, Russell A. \ :sup:`1`\ ; Esteban, Oscar \ :sup:`6`\ .
+
+    Affiliations:
+
+    1. Department of Psychology, Stanford University
+    2. Perelman School of Medicine, University of Pennsylvania, PA, USA
+    3. Cyceron, UMS 3408 (CNRS - UCBN), France
+    4. Speech & Hearing Bioscience & Technology Program, Harvard University
+    5. Center for Lifespan Changes in Brain and Cognition, University of Oslo
+    6. Dept. of Radiology, Lausanne University Hospital, University of Lausanne
+
 1.3.x series
 ============
 
