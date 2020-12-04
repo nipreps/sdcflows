@@ -160,7 +160,6 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     )
 
     workflow = Workflow(name=name)
-
     inputnode = pe.Node(
         niu.IdentityInterface(fields=["magnitude", "fieldmap"]), name="inputnode"
     )
@@ -221,7 +220,8 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
         # Merge input fieldmap images (assumes all are given in the same units!)
         fmapmrg = pe.Node(
-            IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg"
+            IntraModalMerge(zero_based_avg=False, hmc=False, to_ras=False),
+            name="fmapmrg",
         )
         units = pe.Node(CheckB0Units(), name="units", run_without_submitting=True)
 
