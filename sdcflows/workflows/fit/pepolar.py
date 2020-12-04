@@ -63,7 +63,10 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     """
     from nipype.interfaces.fsl.epi import TOPUP
     from niworkflows.interfaces.nibabel import MergeSeries
-    from sdcflows.interfaces.epi import GetReadoutTime
+    from niworkflows.interfaces.images import IntraModalMerge
+
+    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.utils import Flatten
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
@@ -80,6 +83,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         name="outputnode",
     )
 
+    flatten = pe.Node(Flatten(), name="flatten")
     concat_blips = pe.Node(MergeSeries(), name="concat_blips")
     readout_time = pe.MapNode(
         GetReadoutTime(),
@@ -94,28 +98,34 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         ),
         name="topup",
     )
+    merge_corrected = pe.Node(
+        IntraModalMerge(hmc=False, to_ras=False), name="merge_corrected"
+    )
 
     # fmt: off
     workflow.connect([
-        (inputnode, concat_blips, [("in_data", "in_files")]),
-        (inputnode, readout_time, [("in_data", "in_file"),
-                                   ("metadata", "metadata")]),
-        (inputnode, topup, [(("metadata", _pe2fsl), "encoding_direction")]),
+        (inputnode, flatten, [("in_data", "in_data"),
+                              ("metadata", "in_meta")]),
+        (flatten, readout_time, [("out_data", "in_file"),
+                                 ("out_meta", "metadata")]),
+        (flatten, concat_blips, [("out_data", "in_files")]),
+        (flatten, topup, [(("out_meta", _pe2fsl), "encoding_direction")]),
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
-        (topup, outputnode, [("out_corrected", "fmap_ref"),
-                             ("out_field", "fmap"),
+        (topup, merge_corrected, [("out_corrected", "in_files")]),
+        (topup, outputnode, [("out_field", "fmap"),
                              ("out_fieldcoef", "fmap_coeff"),
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
                              ("out_warps", "out_warps")]),
+        (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
     ])
     # fmt: on
 
     return workflow
 
 
-def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
+def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     """
     Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.
 
@@ -133,6 +143,8 @@ def init_3dQwarp_wf(omp_nthreads=1, name="pepolar_estimate_wf"):
 
     Parameters
     ----------
+    debug : :obj:`bool`
+        Whether a fast configuration of topup (less accurate) should be applied.
     name : :obj:`str`
         Name for this workflow
     omp_nthreads : :obj:`int`

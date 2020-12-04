@@ -220,7 +220,8 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
         # Merge input fieldmap images (assumes all are given in the same units!)
         fmapmrg = pe.Node(
-            IntraModalMerge(zero_based_avg=False, hmc=False), name="fmapmrg"
+            IntraModalMerge(zero_based_avg=False, hmc=False, to_ras=False),
+            name="fmapmrg",
         )
         units = pe.Node(CheckB0Units(), name="units", run_without_submitting=True)
 
