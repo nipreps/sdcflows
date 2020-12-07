@@ -14,20 +14,24 @@ from ..viz.utils import plot_registration, coolwarm_transparent
 
 
 class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):
-    reference = File(exists=True, mandatory=True, desc='input reference')
-    moving = File(exists=True, desc='input moving')
-    fieldmap = File(exists=True, mandatory=True, desc='input fieldmap')
-    max_alpha = traits.Float(0.7, usedefault=True, desc='maximum alpha channel')
-    mask = File(exists=True, desc='brain mask')
-    out_report = File('report.svg', usedefault=True,
-                      desc='filename for the visual report')
-    show = traits.Enum(1, 0, 'both', usedefault=True,
-                       desc='where the fieldmap should be shown')
-    reference_label = traits.Str('Reference', usedefault=True,
-                                 desc='a label name for the reference mosaic')
-    moving_label = traits.Str('Fieldmap (Hz)', usedefault=True,
-                              desc='a label name for the reference mosaic')
-    # pe_dir = traits.Enum(*tuple("ijk"), desc="PE direction")
+    reference = File(exists=True, mandatory=True, desc="input reference")
+    moving = File(exists=True, desc="input moving")
+    fieldmap = File(exists=True, mandatory=True, desc="input fieldmap")
+    max_alpha = traits.Float(0.7, usedefault=True, desc="maximum alpha channel")
+    mask = File(exists=True, desc="brain mask")
+    out_report = File(
+        "report.svg", usedefault=True, desc="filename for the visual report"
+    )
+    show = traits.Enum(
+        1, 0, "both", usedefault=True, desc="where the fieldmap should be shown"
+    )
+    reference_label = traits.Str(
+        "Reference", usedefault=True, desc="a label name for the reference mosaic"
+    )
+    moving_label = traits.Str(
+        "Fieldmap (Hz)", usedefault=True, desc="a label name for the reference mosaic"
+    )
+    apply_mask = traits.Bool(False, usedefault=True, desc="zero values outside mask")
 
 
 class FieldmapReportlet(reporting.ReportCapableInterface):
@@ -39,7 +43,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
     def __init__(self, **kwargs):
         """Instantiate FieldmapReportlet."""
-        self._n_cuts = kwargs.pop('n_cuts', self._n_cuts)
+        self._n_cuts = kwargs.pop("n_cuts", self._n_cuts)
         super(FieldmapReportlet, self).__init__(generate_report=True, **kwargs)
 
     def _run_interface(self, runtime):
@@ -47,7 +51,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
     def _generate_report(self):
         """Generate a reportlet."""
-        NIWORKFLOWS_LOG.info('Generating visual report')
+        NIWORKFLOWS_LOG.info("Generating visual report")
 
         movnii = load_img(self.inputs.reference)
         canonical_r = rotation2canonical(movnii)
@@ -75,36 +79,49 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
             maskdata = mask_nii.get_fdata() > 0
         cuts = cuts_from_bbox(contour_nii or mask_nii, cuts=self._n_cuts)
         fmapdata = fmapnii.get_fdata()
-        vmax = max(abs(np.percentile(fmapdata[maskdata], 99.8)),
-                   abs(np.percentile(fmapdata[maskdata], 0.2)))
+        vmax = max(
+            abs(np.percentile(fmapdata[maskdata], 99.8)),
+            abs(np.percentile(fmapdata[maskdata], 0.2)),
+        )
+        if self.inputs.apply_mask:
+            fmapdata[~maskdata] = 0
+            fmapnii = fmapnii.__class__(fmapdata, fmapnii.affine, fmapnii.header)
 
-        fmap_overlay = [{
-            'overlay': fmapnii,
-            'overlay_params': {
-                'cmap': coolwarm_transparent(max_alpha=self.inputs.max_alpha),
-                'vmax': vmax,
-                'vmin': -vmax,
+        fmap_overlay = [
+            {
+                "overlay": fmapnii,
+                "overlay_params": {
+                    "cmap": coolwarm_transparent(max_alpha=self.inputs.max_alpha),
+                    "vmax": vmax,
+                    "vmin": -vmax,
+                },
             }
-        }] * 2
+        ] * 2
 
-        if self.inputs.show != 'both':
+        if self.inputs.show != "both":
             fmap_overlay[not self.inputs.show] = {}
 
         # Call composer
         compose_view(
-            plot_registration(movnii, 'moving-image',
-                              estimate_brightness=True,
-                              cuts=cuts,
-                              label=self.inputs.moving_label,
-                              contour=contour_nii,
-                              compress=False,
-                              **fmap_overlay[1]),
-            plot_registration(refnii, 'fixed-image',
-                              estimate_brightness=True,
-                              cuts=cuts,
-                              label=self.inputs.reference_label,
-                              contour=contour_nii,
-                              compress=False,
-                              **fmap_overlay[0]),
-            out_file=self._out_report
+            plot_registration(
+                movnii,
+                "moving-image",
+                estimate_brightness=True,
+                cuts=cuts,
+                label=self.inputs.moving_label,
+                contour=contour_nii,
+                compress=False,
+                **fmap_overlay[1]
+            ),
+            plot_registration(
+                refnii,
+                "fixed-image",
+                estimate_brightness=True,
+                cuts=cuts,
+                label=self.inputs.reference_label,
+                contour=contour_nii,
+                compress=False,
+                **fmap_overlay[0]
+            ),
+            out_file=self._out_report,
         )

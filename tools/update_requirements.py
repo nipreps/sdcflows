@@ -11,8 +11,10 @@ min_reqs = repo_root / "min-requirements.txt"
 
 config = ConfigParser()
 config.read(setup_cfg)
-requirements = [Requirement(req)
-                for req in config.get("options", "install_requires").strip().splitlines()]
+requirements = [
+    Requirement(req)
+    for req in config.get("options", "install_requires").strip().splitlines()
+]
 
 script_name = Path(__file__).relative_to(repo_root)
 
@@ -20,8 +22,8 @@ script_name = Path(__file__).relative_to(repo_root)
 def to_min(req):
     if req.specifier:
         req = copy(req)
-        min_spec = [spec for spec in req.specifier if spec.operator in ('>=', '~=')][0]
-        min_spec._spec = ('==', ) + min_spec._spec[1:]
+        min_spec = [spec for spec in req.specifier if spec.operator in (">=", "~=")][0]
+        min_spec._spec = ("==",) + min_spec._spec[1:]
         req.specifier = SpecifierSet(str(min_spec))
     return req
 

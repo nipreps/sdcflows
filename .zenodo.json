@@ -3,65 +3,70 @@
   "description": "<p>Nipype-based neuroimaging workflows for susceptibility distortion correction (SDC) of echo-planar MRI images.</p>",
   "creators": [
     {
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
-      "name": "Esteban, Oscar",
-      "orcid": "0000-0001-8435-6191"
-    },
-    {
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "affiliation": "Department of Psychology, Stanford University",
       "name": "Markiewicz, Christopher J.",
       "orcid": "0000-0002-6533-164X"
     },
     {
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "affiliation": "Department of Psychology, Stanford University",
+      "name": "Goncalves, Mathias",
+      "orcid": "0000-0002-7252-7771"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University",
       "name": "Blair, Ross W.",
       "orcid": "0000-0003-3007-1056"
     },
     {
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "affiliation": "Department of Psychology, Stanford University",
+      "name": "Gorgolewski, Krzysztof J.",
+      "orcid": "0000-0003-3321-7583"
+    },
+    {
+      "affiliation": "Department of Psychology, Stanford University",
       "name": "Poldrack, Russell A.",
       "orcid": "0000-0001-6755-0259"
     },
     {
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
-      "name": "Gorgolewski, Krzysztof J.",
-      "orcid": "0000-0003-3321-7583"
+      "affiliation": "Dept. of Radiology, Lausanne University Hospital, University of Lausanne",
+      "name": "Esteban, Oscar",
+      "orcid": "0000-0001-8435-6191"
     }
   ],
   "contributors": [
     {
-      "name": "Kent, James D.",
-      "affiliation": "Neuroscience Program, University of Iowa, IA, USA",
-      "orcid": "0000-0002-4892-2659",
-      "type": "Researcher"
-    },
-    {
-      "name": "Sitek, Kevin R.",
-      "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University, MA, USA",
-      "orcid": "0000-0002-2172-5786",
-      "type": "Researcher"
-    },
-    {
-      "affiliation": "Cyceron, UMS 3408 (CNRS - UCBN), France",
-      "name": "Naveau, Mikaël",
-      "orcid": "0000-0001-6948-9068",
-      "type": "Researcher"
-    },
-    {
-      "name": "Cieslak, Matthew",
-      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
-      "orcid": "0000-0002-1931-4734",
-      "type": "Researcher"
-    },
-    {
+      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
       "name": "Adebimpe, Azeez",
-      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
       "orcid": "0000-0001-9049-0135",
       "type": "Researcher"
     },
     {
-      "name": "Satterthwaite, Theodore",
-      "affiliation": "Department of Neuropsychiatry, University of Pennsylvania, PA, USA",
+      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
+      "name": "Cieslak, Matthew",
+      "orcid": "0000-0002-1931-4734",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "Cyceron, UMS 3408 (CNRS - UCBN), France",
+      "name": "Naveau, Mika\u00ebl",
+      "orcid": "0000-0001-6948-9068",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University",
+      "name": "Sitek, Kevin R.",
+      "orcid": "0000-0002-2172-5786",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "Center for Lifespan Changes in Brain and Cognition, University of Oslo",
+      "name": "Sneve, Markus H.",
+      "orcid": "0000-0001-7644-7915",
+      "type": "Researcher"
+    },
+    {
+      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
+      "name": "Satterthwaite, Theodore D.",
       "orcid": "0000-0001-7072-9399",
       "type": "Researcher"
     }

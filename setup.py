@@ -8,8 +8,9 @@
 def main():
     """Install entry-point."""
     from setuptools import setup
-    setup(name='sdcflows')
+
+    setup(name="sdcflows")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

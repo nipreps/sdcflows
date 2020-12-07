@@ -7,6 +7,10 @@ from json import loads
 from bids.layout import BIDSFile, parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
+from .utils.bimap import EstimatorRegistry
+
+
+_estimators = EstimatorRegistry()
 
 
 class MetadataError(ValueError):
@@ -57,6 +61,12 @@ def _type_setter(obj, attribute, value):
         raise ValueError(f"Invalid estimation method type {value}.")
 
     return value
+
+
+def _id_setter(obj, attribute, value):
+    if obj.bids_id and obj.bids_id == value:
+        return value
+    raise ValueError("Cannot edit the bids_id")
 
 
 @attr.s(slots=True)
@@ -205,11 +215,12 @@ class FieldmapFile:
                 raise MetadataError(
                     f"Missing 'PhaseEncodingDirection' for <{self.path}>."
                 )
-            if not (
-                set(("TotalReadoutTime", "EffectiveEchoSpacing")).intersection(
-                    self.metadata.keys()
-                )
-            ):
+
+            from .utils.epimanip import get_trt
+
+            try:
+                get_trt(self.metadata, in_file=self.path)
+            except ValueError:
                 raise MetadataError(
                     f"Missing readout timing information for <{self.path}>."
                 )
@@ -252,6 +263,12 @@ class FieldmapEstimation:
 
     method = attr.ib(init=False, default=EstimatorType.UNKNOWN, on_setattr=_type_setter)
     """Flag indicating the estimator type inferred from the input sources."""
+
+    bids_id = attr.ib(default=None, kw_only=True, type=str, on_setattr=_id_setter)
+    """The unique ``B0FieldIdentifier`` field of this fieldmap."""
+
+    _wf = attr.ib(init=False, default=None, repr=False)
+    """Internal pointer to a workflow."""
 
     def __attrs_post_init__(self):
         """Determine the inteded fieldmap estimation type and check for data completeness."""
@@ -349,3 +366,61 @@ class FieldmapEstimation:
         # No method has been identified -> fail.
         if self.method == EstimatorType.UNKNOWN:
             raise ValueError("Insufficient sources to estimate a fieldmap.")
+
+        # Register this estimation method
+        if not self.bids_id:
+            # If not manually set, try to get it from BIDS metadata
+            bids_ids = set(
+                [
+                    f.metadata.get("B0FieldIdentifier")
+                    for f in self.sources
+                    if f.metadata.get("B0FieldIdentifier")
+                ]
+            )
+            if len(bids_ids) > 1:
+                raise ValueError(
+                    f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"
+                )
+            elif bids_ids:
+                object.__setattr__(self, "bids_id", bids_ids.pop())
+            else:
+                object.__setattr__(self, "bids_id", _estimators.add(self.paths()))
+                return
+
+        _estimators[self.bids_id] = self.paths()
+
+    def paths(self):
+        """Return a tuple of paths that are sorted."""
+        return tuple(sorted(str(f.path) for f in self.sources))
+
+    def get_workflow(self, **kwargs):
+        """Build the estimation workflow corresponding to this instance."""
+        if self._wf is not None:
+            return self._wf
+
+        # Override workflow name
+        kwargs["name"] = f"wf_{self.bids_id}"
+
+        if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
+            from .workflows.fit.fieldmap import init_fmap_wf
+
+            kwargs["mode"] = str(self.method).rpartition(".")[-1].lower()
+            self._wf = init_fmap_wf(**kwargs)
+            self._wf.inputs.inputnode.magnitude = [
+                str(f.path) for f in self.sources if f.suffix.startswith("magnitude")
+            ]
+            self._wf.inputs.inputnode.fieldmap = [
+                (str(f.path), f.metadata)
+                for f in self.sources
+                if f.suffix in ("fieldmap", "phasediff", "phase2", "phase1")
+            ]
+        elif self.method == EstimatorType.PEPOLAR:
+            from .workflows.fit.pepolar import init_topup_wf
+
+            self._wf = init_topup_wf(**kwargs)
+        elif self.method == EstimatorType.ANAT:
+            from .workflows.fit.syn import init_syn_sdc_wf
+
+            self._wf = init_syn_sdc_wf(**kwargs)
+
+        return self._wf

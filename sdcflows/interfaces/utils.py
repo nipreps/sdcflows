@@ -1,18 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-"""
-Utilities.
-
-    .. testsetup::
-
-        >>> tmpdir = getfixture('tmpdir')
-        >>> tmp = tmpdir.chdir() # changing to a temporary directory
-        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-        ...     tmpdir.join('epi.nii.gz').strpath)
-
-"""
-
-from nipype import logging
+"""Utilities."""
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     TraitedSpec,
@@ -22,8 +10,6 @@ from nipype.interfaces.base import (
     InputMultiObject,
     OutputMultiObject,
 )
-
-LOGGER = logging.getLogger("nipype.interface")
 
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
@@ -52,7 +38,7 @@ class Flatten(SimpleInterface):
 
     def _run_interface(self, runtime):
         self._results["out_list"] = _flatten(
-            zip(self.inputs.inlist, self.inputs.in_meta),
+            zip(self.inputs.in_data, self.inputs.in_meta),
             max_trs=self.inputs.max_trs,
             out_dir=runtime.cwd,
         )
@@ -60,6 +46,27 @@ class Flatten(SimpleInterface):
         # Unzip out_data, out_meta outputs.
         self._results["out_data"], self._results["out_meta"] = zip(
             *self._results["out_list"]
+        )
+        return runtime
+
+
+class _ConvertWarpInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="output of 3dQwarp")
+
+
+class _ConvertWarpOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="the warp converted into ANTs")
+
+
+class ConvertWarp(SimpleInterface):
+    """Convert a displacements field from ``3dQwarp`` to ANTS-compatible."""
+
+    input_spec = _ConvertWarpInputSpec
+    output_spec = _ConvertWarpOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results["out_file"] = _qwarp2ants(
+            self.inputs.in_file, newpath=runtime.cwd
         )
         return runtime
 
@@ -72,9 +79,9 @@ def _flatten(inlist, max_trs=50, out_dir=None):
     ------
     inlist : :obj:`list` of :obj:`tuple`
         List of pairs (filepath, metadata)
-    max_trs : int
+    max_trs : :obj:`int`
         Index of frame after which all volumes will be discarded
-        from the input EPI images.
+        from the input images.
 
     """
     from pathlib import Path
@@ -97,3 +104,19 @@ def _flatten(inlist, max_trs=50, out_dir=None):
                 output.append((str(out_name), meta))
 
     return output
+
+
+def _qwarp2ants(in_file, newpath=None):
+    """Ensure the data type and intent of a warp is acceptable by ITK-based tools."""
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    nii = nb.load(in_file)
+    hdr = nii.header.copy()
+    hdr.set_data_dtype("<f4")
+    hdr.set_intent("vector", (), "")
+    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
+    data = np.squeeze(nii.get_fdata(dtype="float32"))[..., np.newaxis, :]
+    nb.Nifti1Image(data, nii.affine, hdr).to_filename(out_file)
+    return out_file
