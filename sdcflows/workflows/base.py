@@ -78,6 +78,11 @@ def init_fmap_preproc_wf(
     }
     outputnode = pe.Node(niu.IdentityInterface(fields=out_fields), name="outputnode")
 
+    workflow.connect([
+        (mergenode, outputnode, [("out", field)])
+        for field, mergenode in out_merge.items()
+    ])
+
     for n, estimator in enumerate(estimators):
         est_wf = estimator.get_workflow(omp_nthreads=omp_nthreads, debug=debug)
         source_files = [str(f.path) for f in estimator.sources]
@@ -146,6 +151,5 @@ def init_fmap_preproc_wf(
 
         for field, mergenode in out_merge.items():
             workflow.connect(out_map, field, mergenode, f"in{n}")
-            workflow.connect(mergenode, "out", outputnode, field)
 
     return workflow
