@@ -9,7 +9,9 @@ def main():
     """Install entry-point."""
     from setuptools import setup
 
-    setup(name="sdcflows")
+    setup(
+        name="sdcflows", use_scm_version=True,
+    )
 
 
 if __name__ == "__main__":
