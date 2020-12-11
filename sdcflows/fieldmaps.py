@@ -82,65 +82,65 @@ class FieldmapFile:
 
     Examples
     --------
-    >>> f = FieldmapFile(testdata_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
+    >>> f = FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
     >>> f.suffix
     'T1w'
 
     >>> FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
 
     >>> f = FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
     ... )
     >>> f.metadata['TotalReadoutTime']
     0.005
 
     >>> f = FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
     ...     metadata={'TotalReadoutTime': 0.006}
     ... )
     >>> f.metadata['TotalReadoutTime']
     0.006
 
     >>> FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
 
     >>> f = FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
     ... )
     >>> f.metadata['EchoTime2']
     0.00746
 
     >>> FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
 
     >>> f = FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
     ... )
     >>> f.metadata['EchoTime']
     0.00746
 
     >>> FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz",
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
 
     >>> f = FieldmapFile(
-    ...     testdata_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
     ... )
     >>> f.metadata['Units']
     'rad/s'

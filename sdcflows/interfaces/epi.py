@@ -8,6 +8,7 @@ from nipype.interfaces.base import (
     traits,
     SimpleInterface,
 )
+from nipype.utils.filemanip import fname_presuffix
 
 
 class _GetReadoutTimeInputSpec(BaseInterfaceInputSpec):
@@ -34,4 +35,28 @@ class GetReadoutTime(SimpleInterface):
             self.inputs.in_file if isdefined(self.inputs.in_file) else None,
         )
         self._results["pe_direction"] = self.inputs.metadata["PhaseEncodingDirection"]
+        return runtime
+
+
+class _EPIMaskInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, desc="EPI image")
+
+
+class _EPIMaskOutputSpec(TraitedSpec):
+    out_file = File(exists=True)
+
+
+class EPIMask(SimpleInterface):
+    """Calculate the readout time from available metadata."""
+
+    input_spec = _EPIMaskInputSpec
+    output_spec = _EPIMaskOutputSpec
+
+    def _run_interface(self, runtime):
+        from ..utils.epimanip import epi_mask
+
+        self._results["out_file"] = epi_mask(
+            self.inputs.in_file,
+            fname_presuffix(self.inputs.in_file, suffix="_mask", newpath=runtime.cwd),
+        )
         return runtime

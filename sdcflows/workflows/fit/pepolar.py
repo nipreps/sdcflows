@@ -57,6 +57,8 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         The path of the estimated fieldmap.
     fmap_ref : :obj:`str`
         The path of an unwarped conversion of files in ``in_data``.
+    fmap_mask : :obj:`str`
+        The path of mask corresponding to the ``fmap_ref`` output.
     fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
         The path(s) of the B-Spline coefficients supporting the fieldmap.
 
@@ -65,7 +67,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     from niworkflows.interfaces.nibabel import MergeSeries
     from niworkflows.interfaces.images import IntraModalMerge
 
-    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.epi import GetReadoutTime, EPIMask
     from ...interfaces.utils import Flatten
 
     workflow = Workflow(name=name)
@@ -78,7 +80,15 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["fmap", "fmap_ref", "fmap_coeff", "jacobians", "xfms", "out_warps"]
+            fields=[
+                "fmap",
+                "fmap_ref",
+                "fmap_coeff",
+                "fmap_mask",
+                "jacobians",
+                "xfms",
+                "out_warps",
+            ]
         ),
         name="outputnode",
     )
@@ -102,6 +112,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         IntraModalMerge(hmc=False, to_ras=False), name="merge_corrected"
     )
 
+    epi_mask = pe.Node(EPIMask(), name="epi_mask")
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
@@ -118,7 +129,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
                              ("out_warps", "out_warps")]),
+        (merge_corrected, epi_mask, [("out_avg", "in_file")]),
         (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
+        (epi_mask, outputnode, [("out_file", "fmap_mask")]),
     ])
     # fmt: on
 

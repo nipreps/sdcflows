@@ -3,9 +3,9 @@ import pytest
 from .. import fieldmaps as fm
 
 
-def test_FieldmapFile(testdata_dir):
+def test_FieldmapFile(dsA_dir):
     """Test one existing file."""
-    fm.FieldmapFile(testdata_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
+    fm.FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
 
 
 @pytest.mark.parametrize(
@@ -56,9 +56,9 @@ def test_FieldmapFile(testdata_dir):
         ),
     ],
 )
-def test_FieldmapEstimation(testdata_dir, inputfiles, method, nsources, raises):
+def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources, raises):
     """Test errors."""
-    sub_dir = testdata_dir / "sub-01"
+    sub_dir = dsA_dir / "sub-01"
 
     sources = [sub_dir / f for f in inputfiles]
 
@@ -105,9 +105,9 @@ def test_FieldmapEstimation(testdata_dir, inputfiles, method, nsources, raises):
         (("anat/sub-01_T1w.nii.gz", "fmap/sub-01_phase2.nii.gz"), TypeError),
     ],
 )
-def test_FieldmapEstimationError(testdata_dir, inputfiles, errortype):
+def test_FieldmapEstimationError(dsA_dir, inputfiles, errortype):
     """Test errors."""
-    sub_dir = testdata_dir / "sub-01"
+    sub_dir = dsA_dir / "sub-01"
 
     fm.clear_registry()
 
@@ -117,7 +117,7 @@ def test_FieldmapEstimationError(testdata_dir, inputfiles, errortype):
     fm.clear_registry()
 
 
-def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
+def test_FieldmapEstimationIdentifier(monkeypatch, dsA_dir):
     """Check some use cases of B0FieldIdentifier."""
     fm.clear_registry()
 
@@ -125,11 +125,11 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
         fm.FieldmapEstimation(
             [
                 fm.FieldmapFile(
-                    testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
+                    dsA_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
                     metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_0"},
                 ),
                 fm.FieldmapFile(
-                    testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
+                    dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
                     metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_1"},
                 ),
             ]
@@ -138,7 +138,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
     fe = fm.FieldmapEstimation(
         [
             fm.FieldmapFile(
-                testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
+                dsA_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
                 metadata={
                     "Units": "Hz",
                     "B0FieldIdentifier": "fmap_0",
@@ -146,7 +146,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
                 },
             ),
             fm.FieldmapFile(
-                testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
+                dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
                 metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_0"},
             ),
         ]
@@ -159,11 +159,11 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
         fm.FieldmapEstimation(
             [
                 fm.FieldmapFile(
-                    testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
+                    dsA_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
                     metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_0"},
                 ),
                 fm.FieldmapFile(
-                    testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
+                    dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
                     metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_0"},
                 ),
             ]
@@ -174,7 +174,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
     fe = fm.FieldmapEstimation(
         [
             fm.FieldmapFile(
-                testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
+                dsA_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
                 metadata={
                     "Units": "Hz",
                     "B0FieldIdentifier": "fmap_1",
@@ -182,7 +182,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
                 },
             ),
             fm.FieldmapFile(
-                testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
+                dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
                 metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_1"},
             ),
         ]
@@ -192,7 +192,7 @@ def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
     assert fm.get_identifier("file2.nii.gz") == ("fmap_1",)
     assert not fm.get_identifier("file3.nii.gz")
     assert fm.get_identifier(
-        str(testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz"), by="sources"
+        str(dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz"), by="sources"
     ) == ("fmap_1",)
 
     with monkeypatch.context() as m:
