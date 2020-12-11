@@ -69,7 +69,7 @@ def test_FieldmapEstimation(testdata_dir, inputfiles, method, nsources, raises):
             fm.FieldmapEstimation(sources)
 
         # Clean up so this parameter set can be tested.
-        fm._estimators.clear()
+        fm.clear_registry()
 
     fe = fm.FieldmapEstimation(sources)
     assert fe.method == method
@@ -109,17 +109,17 @@ def test_FieldmapEstimationError(testdata_dir, inputfiles, errortype):
     """Test errors."""
     sub_dir = testdata_dir / "sub-01"
 
-    fm._estimators.clear()
+    fm.clear_registry()
 
     with pytest.raises(errortype):
         fm.FieldmapEstimation([sub_dir / f for f in inputfiles])
 
-    fm._estimators.clear()
+    fm.clear_registry()
 
 
-def test_FieldmapEstimationIdentifier(testdata_dir):
+def test_FieldmapEstimationIdentifier(monkeypatch, testdata_dir):
     """Check some use cases of B0FieldIdentifier."""
-    fm._estimators.clear()
+    fm.clear_registry()
 
     with pytest.raises(ValueError):
         fm.FieldmapEstimation(
@@ -139,7 +139,11 @@ def test_FieldmapEstimationIdentifier(testdata_dir):
         [
             fm.FieldmapFile(
                 testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
-                metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_0"},
+                metadata={
+                    "Units": "Hz",
+                    "B0FieldIdentifier": "fmap_0",
+                    "IntendedFor": "file1.nii.gz",
+                },
             ),
             fm.FieldmapFile(
                 testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
@@ -148,6 +152,8 @@ def test_FieldmapEstimationIdentifier(testdata_dir):
         ]
     )
     assert fe.bids_id == "fmap_0"
+    assert fm.get_identifier("file1.nii.gz") == ("fmap_0",)
+    assert not fm.get_identifier("file2.nii.gz")
 
     with pytest.raises(KeyError):
         fm.FieldmapEstimation(
@@ -163,13 +169,17 @@ def test_FieldmapEstimationIdentifier(testdata_dir):
             ]
         )  # Consistent, but already exists
 
-    fm._estimators.clear()
+    fm.clear_registry()
 
     fe = fm.FieldmapEstimation(
         [
             fm.FieldmapFile(
                 testdata_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
-                metadata={"Units": "Hz", "B0FieldIdentifier": "fmap_1"},
+                metadata={
+                    "Units": "Hz",
+                    "B0FieldIdentifier": "fmap_1",
+                    "IntendedFor": ["file1.nii.gz", "file2.nii.gz"],
+                },
             ),
             fm.FieldmapFile(
                 testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
@@ -178,5 +188,18 @@ def test_FieldmapEstimationIdentifier(testdata_dir):
         ]
     )
     assert fe.bids_id == "fmap_1"
+    assert fm.get_identifier("file1.nii.gz") == ("fmap_1",)
+    assert fm.get_identifier("file2.nii.gz") == ("fmap_1",)
+    assert not fm.get_identifier("file3.nii.gz")
+    assert fm.get_identifier(
+        str(testdata_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz"), by="sources"
+    ) == ("fmap_1",)
 
-    fm._estimators.clear()
+    with monkeypatch.context() as m:
+        m.setattr(fm, "_intents", {"file1.nii.gz": {"fmap_0", "fmap_1"}})
+        assert fm.get_identifier("file1.nii.gz") == ("fmap_0", "fmap_1",)
+
+    with pytest.raises(KeyError):
+        fm.get_identifier("file", by="invalid")
+
+    fm.clear_registry()

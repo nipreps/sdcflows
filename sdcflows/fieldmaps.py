@@ -1,6 +1,7 @@
 """Utilities for fieldmap estimation."""
 from pathlib import Path
 from enum import Enum, auto
+from collections import defaultdict
 import re
 import attr
 from json import loads
@@ -11,6 +12,7 @@ from .utils.bimap import EstimatorRegistry
 
 
 _estimators = EstimatorRegistry()
+_intents = defaultdict(set)
 
 
 class MetadataError(ValueError):
@@ -367,6 +369,12 @@ class FieldmapEstimation:
         if self.method == EstimatorType.UNKNOWN:
             raise ValueError("Insufficient sources to estimate a fieldmap.")
 
+        intents_meta = set(
+            el
+            for f in self.sources
+            for el in listify(f.metadata.get("IntendedFor") or [])
+        )
+
         # Register this estimation method
         if not self.bids_id:
             # If not manually set, try to get it from BIDS metadata
@@ -384,10 +392,15 @@ class FieldmapEstimation:
             elif bids_ids:
                 object.__setattr__(self, "bids_id", bids_ids.pop())
             else:
-                object.__setattr__(self, "bids_id", _estimators.add(self.paths()))
+                bids_id = _estimators.add(self.paths())
+                object.__setattr__(self, "bids_id", bids_id)
+                for intent_file in intents_meta:
+                    _intents[intent_file].add(bids_id)
                 return
 
         _estimators[self.bids_id] = self.paths()
+        for intent_file in intents_meta:
+            _intents[intent_file].add(self.bids_id)
 
     def paths(self):
         """Return a tuple of paths that are sorted."""
@@ -424,3 +437,30 @@ class FieldmapEstimation:
             self._wf = init_syn_sdc_wf(**kwargs)
 
         return self._wf
+
+
+def get_identifier(filename, by="IntendedFor"):
+    """
+    Return the fieldmap identifier for a given filename.
+
+    Parameters
+    ----------
+    filename : :obj:`str`
+        The file we want to search in indexes.
+    by : :obj:`str` (``IntendedFor`` or ``sources``)
+        Index table in which the search should be performed.
+
+    """
+    if by == "IntendedFor":
+        return tuple(sorted(_intents.get(filename, ())))
+
+    if by == "sources":
+        return _estimators.get_key(filename)
+
+    raise KeyError(r"'{by}'")
+
+
+def clear_registry():
+    """Empty registries."""
+    _estimators.clear()
+    _intents.clear()
