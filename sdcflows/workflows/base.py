@@ -123,16 +123,6 @@ def init_fmap_preproc_wf(
                 (inputnode, est_wf, [(f, f"inputnode.{f}") for f in fields])
             ])
             # fmt:on
-        else:
-            # PEPOLAR and ANAT do not produce masks
-            # fmt:off
-            workflow.connect([
-                (est_wf, fmap_reports_wf, [
-                    ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-                ]),
-                (est_wf, out_map, [("outputnode.fmap_mask", "fmap_mask")]),
-            ])
-            # fmt:on
 
         # fmt:off
         workflow.connect([
@@ -144,11 +134,13 @@ def init_fmap_preproc_wf(
             (est_wf, fmap_reports_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                ("outputnode.fmap_mask", "inputnode.fmap_mask"),
             ]),
             (est_wf, out_map, [
                 ("outputnode.fmap", "fmap"),
                 ("outputnode.fmap_ref", "fmap_ref"),
                 ("outputnode.fmap_coeff", "fmap_coeff"),
+                ("outputnode.fmap_mask", "fmap_mask"),
             ]),
         ])
         # fmt:on

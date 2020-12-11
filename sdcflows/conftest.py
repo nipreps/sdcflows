@@ -16,9 +16,9 @@ layouts = {
     if p.is_dir()
 }
 
-data_dir = Path(__file__).parent / "tests" / "data" / "dsA"
+data_dir = Path(__file__).parent / "tests" / "data"
 
-layouts["dsA"] = BIDSLayout(data_dir, validate=False, derivatives=False)
+layouts["dsA"] = BIDSLayout(data_dir / "dsA", validate=False, derivatives=False)
 
 
 def pytest_report_header(config):
@@ -40,7 +40,7 @@ def add_np(doctest_namespace):
     for key, val in list(layouts.items()):
         doctest_namespace[key] = Path(val.root)
 
-    doctest_namespace["testdata_dir"] = data_dir
+    doctest_namespace["dsA_dir"] = data_dir / "dsA"
 
 
 @pytest.fixture
@@ -68,3 +68,8 @@ def datadir():
 @pytest.fixture
 def testdata_dir():
     return data_dir
+
+
+@pytest.fixture
+def dsA_dir():
+    return data_dir / "dsA"

@@ -44,7 +44,6 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
     topup_wf.inputs.inputnode.metadata = metadata
 
     if outdir:
-        from nipype.interfaces.afni import Automask
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
         outdir = outdir / "unittests" / epi_file[0].split("/")[0]
@@ -62,14 +61,11 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
         )
         fmap_reports_wf.inputs.inputnode.source_files = in_data
 
-        pre_mask = pe.Node(Automask(dilate=1, outputtype="NIFTI_GZ"), name="pre_mask")
-
         # fmt: off
         wf.connect([
-            (topup_wf, pre_mask, [("outputnode.fmap_ref", "in_file")]),
-            (pre_mask, fmap_reports_wf, [("out_file", "inputnode.fmap_mask")]),
             (topup_wf, fmap_reports_wf, [("outputnode.fmap", "inputnode.fieldmap"),
-                                         ("outputnode.fmap_ref", "inputnode.fmap_ref")]),
+                                         ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                                         ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
             (topup_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),

@@ -1,4 +1,5 @@
 """Test the base workflow."""
+from pathlib import Path
 import os
 import pytest
 from ... import fieldmaps as fm
@@ -13,6 +14,9 @@ from ..base import init_fmap_preproc_wf
 )
 def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
     """Test the encompassing of the wrangler and the workflow creator."""
+    if outdir is None:
+        outdir = Path(str(tmpdir))
+
     outdir = outdir / "test_base" / dataset
     fm._estimators.clear()
     estimators = find_estimators(bids_layouts[dataset], subject=subject)
