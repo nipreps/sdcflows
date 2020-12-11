@@ -71,17 +71,19 @@ def init_fmap_preproc_wf(
 
     workflow = Workflow(name=name)
 
-    out_fields = ("fmap", "fmap_ref", "fmap_coeff", "fmap_mask")
+    out_fields = ("fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "fmap_id")
     out_merge = {
         f: pe.Node(niu.Merge(len(estimators)), name=f"out_merge_{f}")
         for f in out_fields
     }
     outputnode = pe.Node(niu.IdentityInterface(fields=out_fields), name="outputnode")
 
-    workflow.connect([
-        (mergenode, outputnode, [("out", field)])
-        for field, mergenode in out_merge.items()
-    ])
+    workflow.connect(
+        [
+            (mergenode, outputnode, [("out", field)])
+            for field, mergenode in out_merge.items()
+        ]
+    )
 
     for n, estimator in enumerate(estimators):
         est_wf = estimator.get_workflow(omp_nthreads=omp_nthreads, debug=debug)
@@ -90,11 +92,12 @@ def init_fmap_preproc_wf(
         out_map = pe.Node(
             niu.IdentityInterface(fields=out_fields), name=f"out_{estimator.bids_id}"
         )
+        out_map.inputs.fmap_id = estimator.bids_id
 
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
             write_coeff=True,
-            bids_fmap_id=estimator.bids_id.replace("_", ""),
+            bids_fmap_id=estimator.bids_id,
             name=f"fmap_derivatives_wf_{estimator.bids_id}",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = source_files
@@ -105,6 +108,7 @@ def init_fmap_preproc_wf(
         fmap_reports_wf = init_fmap_reports_wf(
             output_dir=str(output_dir),
             fmap_type=str(estimator.method).rpartition(".")[-1].lower(),
+            bids_fmap_id=estimator.bids_id,
             name=f"fmap_reports_wf_{estimator.bids_id}",
         )
         fmap_reports_wf.inputs.inputnode.source_files = source_files

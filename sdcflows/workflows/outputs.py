@@ -16,7 +16,12 @@ del _DDS
 
 
 def init_fmap_reports_wf(
-    *, output_dir, fmap_type, custom_entities=None, name="fmap_reports_wf",
+    *,
+    output_dir,
+    fmap_type,
+    bids_fmap_id=None,
+    custom_entities=None,
+    name="fmap_reports_wf",
 ):
     """
     Set up a battery of datasinks to store reports in the right location.
@@ -25,10 +30,12 @@ def init_fmap_reports_wf(
     ----------
     fmap_type : :obj:`str`
         The fieldmap estimator type.
-    custom_entities : :obj:`dict`
-        Define extra entities that will be written out in filenames.
     output_dir : :obj:`str`
         Directory in which to save derivatives
+    bids_fmap_id : :obj:`str`
+        Sets the ``B0FieldIdentifier`` metadata into the outputs.
+    custom_entities : :obj:`dict`
+        Define extra entities that will be written out in filenames.
     name : :obj:`str`
         Workflow name (default: ``"fmap_reports_wf"``)
 
@@ -47,6 +54,8 @@ def init_fmap_reports_wf(
     from ..interfaces.reportlets import FieldmapReportlet
 
     custom_entities = custom_entities or {}
+    if bids_fmap_id:
+        custom_entities["fmapid"] = bids_fmap_id.replace("_", "")
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
@@ -100,14 +109,16 @@ def init_fmap_derivatives_wf(
 
     Parameters
     ----------
+    output_dir : :obj:`str`
+        Directory in which to save derivatives
     bids_fmap_id : :obj:`str`
         Sets the ``B0FieldIdentifier`` metadata into the outputs.
     custom_entities : :obj:`dict`
         Define extra entities that will be written out in filenames.
-    output_dir : :obj:`str`
-        Directory in which to save derivatives
     name : :obj:`str`
         Workflow name (default: ``"fmap_derivatives_wf"``)
+    write_coeff : :obj:`bool`
+        Build the workflow path to map coefficients into target space.
 
     Inputs
     ------
@@ -122,6 +133,8 @@ def init_fmap_derivatives_wf(
 
     """
     custom_entities = custom_entities or {}
+    if bids_fmap_id:
+        custom_entities["fmapid"] = bids_fmap_id.replace("_", "")
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
