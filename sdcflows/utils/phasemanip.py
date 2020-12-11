@@ -33,12 +33,6 @@ def subtract_phases(in_phases, in_meta, newpath=None):
     from nipype.utils.filemanip import fname_presuffix
 
     echo_times = tuple([m.pop("EchoTime", None) for m in in_meta])
-    if not all(echo_times):
-        raise ValueError(
-            "One or more missing EchoTime metadata parameter "
-            "associated to one or more phase map(s)."
-        )
-
     if echo_times[0] > echo_times[1]:
         in_phases = (in_phases[1], in_phases[0])
         in_meta = (in_meta[1], in_meta[0])
