@@ -1,4 +1,4 @@
-"""py.test configuration"""
+"""py.test configuration."""
 import os
 from pathlib import Path
 import numpy
