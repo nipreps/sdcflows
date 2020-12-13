@@ -227,6 +227,8 @@ class Coefficients2Warp(SimpleInterface):
     output_spec = _Coefficients2WarpOutputSpec
 
     def _run_interface(self, runtime):
+        from ..utils.misc import get_free_mem
+
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
         targetaff = targetnii.affine
@@ -237,10 +239,20 @@ class Coefficients2Warp(SimpleInterface):
         weights = []
         coeffs = []
         blocksize = LOW_MEM_BLOCK_SIZE if self.inputs.low_mem else len(points)
+
         for cname in self.inputs.in_coeff:
             cnii = nb.load(cname)
             cdata = cnii.get_fdata(dtype="float32")
             coeffs.append(cdata.reshape(-1))
+
+            # Try to probe the free memory
+            _free_mem = get_free_mem()
+            suggested_blocksize = (
+                int(np.round((_free_mem * 0.80) / (3 * 32 * cdata.size)))
+                if _free_mem
+                else blocksize
+            )
+            blocksize = min(blocksize, suggested_blocksize)
 
             idx = 0
             block_w = []

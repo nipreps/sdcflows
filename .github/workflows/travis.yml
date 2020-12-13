@@ -50,7 +50,6 @@ jobs:
     - name: Install minimal dependencies
       run: |
         $CONDA/bin/pip install -r min-requirements.txt
-        $CONDA/bin/pip install .
         $CONDA/bin/pip install .[tests]
 
     - uses: actions/cache@v2
