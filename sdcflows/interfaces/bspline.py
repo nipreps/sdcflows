@@ -332,10 +332,10 @@ class TOPUPCoeffReorient(SimpleInterface):
     """
     Revise the orientation of TOPUP-generated B-Spline coefficients.
 
-    TOUP-generated "fieldcoeff" files are just B-Spline fields, where the shape
+    TOPUP-generated "fieldcoeff" files are just B-Spline fields, where the shape
     of the field is fixated to be a decimated grid of the original image by an
     integer factor and added 3 pixels on each dimension.
-    This is one root reason why TOPUP errors (FSL 6) or segfaults (FSL5), when the
+    This is one root reason why TOPUP errors (FSL 6) or segfaults (FSL 5), when the
     input image has odd number of voxels along one or more directions.
 
     These "fieldcoeff" are fixated to be zero-centered, and have "plumb" orientation
