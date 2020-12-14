@@ -35,3 +35,13 @@ def last(inlist):
     if isinstance(inlist, (list, tuple)):
         return inlist[-1]
     return inlist
+
+
+def get_free_mem():
+    """Probe the free memory right now."""
+    try:
+        from psutil import virtual_memory
+
+        return round(virtual_memory().free, 1)
+    except Exception:
+        return None
