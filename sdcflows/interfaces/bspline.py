@@ -359,7 +359,13 @@ class TOPUPCoeffReorient(SimpleInterface):
 
     def _run_interface(self, runtime):
         self._results["out_coeff"] = [
-            str(_fix_topup_fieldcoeff(in_coeff, self.inputs.fmap_ref,))
+            str(
+                _fix_topup_fieldcoeff(
+                    in_coeff,
+                    self.inputs.fmap_ref,
+                    fname_presuffix(in_coeff, suffix="_fixed", newpath=runtime.cwd),
+                )
+            )
             for in_coeff in self.inputs.in_coeff
         ]
         return runtime

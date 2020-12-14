@@ -4,7 +4,13 @@ import numpy as np
 import nibabel as nb
 import pytest
 
-from ..bspline import bspline_grid, Coefficients2Warp, BSplineApprox, TOPUPCoeffReorient
+from ..bspline import (
+    bspline_grid,
+    Coefficients2Warp,
+    BSplineApprox,
+    TOPUPCoeffReorient,
+    _fix_topup_fieldcoeff,
+)
 
 
 @pytest.mark.parametrize("testnum", range(100))
@@ -56,7 +62,6 @@ def test_bsplines(tmp_path, testnum):
 
 def test_topup_coeffs(tmpdir, testdata_dir):
     """Check the revision of TOPUP headers."""
-
     tmpdir.chdir()
     result = TOPUPCoeffReorient(
         in_coeff=str(testdata_dir / "topup-coeff.nii.gz"),
@@ -75,3 +80,7 @@ def test_topup_coeffs(tmpdir, testdata_dir):
         TOPUPCoeffReorient(
             in_coeff="failing.nii.gz", fmap_ref=str(testdata_dir / "epi.nii.gz"),
         ).run()
+
+    # Test automatic output file name generation, just for coverage
+    with pytest.raises(ValueError):
+        _fix_topup_fieldcoeff("failing.nii.gz", str(testdata_dir / "epi.nii.gz"))
