@@ -4,7 +4,7 @@ import numpy as np
 import nibabel as nb
 import pytest
 
-from ..bspline import bspline_grid, Coefficients2Warp, BSplineApprox
+from ..bspline import bspline_grid, Coefficients2Warp, BSplineApprox, TOPUPCoeffReorient
 
 
 @pytest.mark.parametrize("testnum", range(100))
@@ -52,3 +52,26 @@ def test_bsplines(tmp_path, testnum):
 
     # Absolute error of the interpolated field is always below 2 Hz
     assert np.all(np.abs(nb.load(test2.outputs.out_error).get_fdata()) < 2)
+
+
+def test_topup_coeffs(tmpdir, testdata_dir):
+    """Check the revision of TOPUP headers."""
+
+    tmpdir.chdir()
+    result = TOPUPCoeffReorient(
+        in_coeff=str(testdata_dir / "topup-coeff.nii.gz"),
+        fmap_ref=str(testdata_dir / "epi.nii.gz"),
+    ).run()
+
+    nii = nb.load(result.outputs.out_coeff)
+    ctrl = nb.load(testdata_dir / "topup-coeff-fixed.nii.gz")
+    assert np.allclose(nii.affine, ctrl.affine)
+
+    nb.Nifti1Image(nii.get_fdata()[:-1, :-1, :-1], nii.affine, nii.header).to_filename(
+        "failing.nii.gz"
+    )
+
+    with pytest.raises(ValueError):
+        TOPUPCoeffReorient(
+            in_coeff="failing.nii.gz", fmap_ref=str(testdata_dir / "epi.nii.gz"),
+        ).run()
