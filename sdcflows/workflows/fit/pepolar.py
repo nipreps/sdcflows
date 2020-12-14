@@ -69,6 +69,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     from ...interfaces.epi import GetReadoutTime, EPIMask
     from ...interfaces.utils import Flatten
+    from ...interfaces.bspline import TOPUPCoeffReorient
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
@@ -113,6 +114,11 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     )
 
     epi_mask = pe.Node(EPIMask(), name="epi_mask")
+
+    fix_coeff = pe.Node(
+        TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
+    )
+
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
@@ -124,14 +130,16 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
         (topup, merge_corrected, [("out_corrected", "in_files")]),
+        (topup, fix_coeff, [("out_fieldcoef", "in_coeff"),
+                            ("out_corrected", "fmap_ref")]),
         (topup, outputnode, [("out_field", "fmap"),
-                             ("out_fieldcoef", "fmap_coeff"),
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
                              ("out_warps", "out_warps")]),
         (merge_corrected, epi_mask, [("out_avg", "in_file")]),
         (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
         (epi_mask, outputnode, [("out_file", "fmap_mask")]),
+        (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
 
