@@ -6,6 +6,7 @@ import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
 
+from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
@@ -22,7 +23,8 @@ LOW_MEM_BLOCK_SIZE = 1000
 DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)  # For human adults (mid-frequency), in mm
 DEFAULT_LF_ZOOMS_MM = (100.0, 100.0, 40.0)  # For human adults (low-frequency), in mm
 DEFAULT_HF_ZOOMS_MM = (16.0, 16.0, 10.0)  # For human adults (high-frequency), in mm
-BSPLINE_SUPPORT = 2 - 1.82e-2  # Disallows weights < 1e-6
+BSPLINE_SUPPORT = 2 - 1.82e-3  # Disallows weights < 1e-9
+LOGGER = logging.getLogger("nipype.interface")
 
 
 class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
@@ -97,6 +99,7 @@ class BSplineApprox(SimpleInterface):
 
     def _run_interface(self, runtime):
         from sklearn import linear_model as lm
+        from scipy.sparse import vstack as sparse_vstack
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
@@ -130,7 +133,7 @@ class BSplineApprox(SimpleInterface):
             if regressors is None:
                 regressors = bspline_weights(fmap_points, level)
             else:
-                regressors = np.vstack(
+                regressors = sparse_vstack(
                     (regressors, bspline_weights(fmap_points, level))
                 )
 
@@ -179,7 +182,7 @@ class BSplineApprox(SimpleInterface):
             return runtime
 
         bg_points = apply_affine(fmapnii.affine.astype("float32"), bg_indices)
-        extrapolators = np.vstack(
+        extrapolators = sparse_vstack(
             [bspline_weights(bg_points, level) for level in bs_levels]
         )
         interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
@@ -234,6 +237,8 @@ class Coefficients2Warp(SimpleInterface):
     output_spec = _Coefficients2WarpOutputSpec
 
     def _run_interface(self, runtime):
+        from scipy.sparse import vstack as sparse_vstack
+
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
         targetaff = targetnii.affine
@@ -247,15 +252,13 @@ class Coefficients2Warp(SimpleInterface):
         for cname in self.inputs.in_coeff:
             coeff_nii = nb.load(cname)
             wmat = bspline_weights(
-                points,
-                coeff_nii,
-                blocksize=LOW_MEM_BLOCK_SIZE if self.inputs.low_mem else None,
+                points, coeff_nii, mem_percent=0.1 if self.inputs.low_mem else None,
             )
             weights.append(wmat)
             coeffs.append(coeff_nii.get_fdata(dtype="float32").reshape(-1))
 
         data = np.zeros(targetnii.shape, dtype="float32")
-        data[allmask == 1] = np.squeeze(np.vstack(coeffs).T) @ np.vstack(weights)
+        data[allmask == 1] = np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)
 
         hdr = targetnii.header.copy()
         hdr.set_data_dtype("float32")
@@ -398,7 +401,7 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
 
-def bspline_weights(points, ctrl_nii, blocksize=None):
+def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
     r"""
     Calculate the tensor-product cubic B-Spline kernel weights for a list of 3D points.
 
@@ -443,6 +446,7 @@ def bspline_weights(points, ctrl_nii, blocksize=None):
         step of approximation/extrapolation.
 
     """
+    from scipy.sparse import csc_matrix, hstack
     from ..utils.misc import get_free_mem
 
     if isinstance(ctrl_nii, (str, bytes, Path)):
@@ -457,11 +461,17 @@ def bspline_weights(points, ctrl_nii, blocksize=None):
     # Try to probe the free memory
     _free_mem = get_free_mem()
     suggested_blocksize = (
-        int(np.round((_free_mem * 0.80) / (3 * 32 * ncoeff)))
+        int(np.round((_free_mem * (mem_percent or 0.9)) / (3 * 4 * ncoeff)))
         if _free_mem
         else blocksize
     )
     blocksize = min(blocksize, suggested_blocksize)
+    LOGGER.info(
+        f"Determined a block size of {blocksize}, for interpolating "
+        f"an image of {len(points)} voxels with a grid of {ncoeff} "
+        f"coefficients ({_free_mem / 1024**3:.2f} GiB free memory)."
+    )
+
     idx = 0
     wmatrix = None
     while True:
@@ -497,13 +507,13 @@ def bspline_weights(points, ctrl_nii, blocksize=None):
 
         weights[weights < 1e-6] = 0.0
 
-        if idx == 0:
-            wmatrix = weights
+        if wmatrix is None:
+            wmatrix = csc_matrix(weights)
         else:
-            wmatrix = np.hstack((wmatrix, weights))
+            wmatrix = hstack((wmatrix, csc_matrix(weights)))
         idx = end
 
-    return wmatrix
+    return wmatrix.tocsr()
 
 
 def _move_coeff(in_coeff, fmap_ref, transform):

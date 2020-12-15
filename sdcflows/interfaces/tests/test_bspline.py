@@ -56,8 +56,8 @@ def test_bsplines(tmp_path, testnum):
         ridge_alpha=1e-4,
     ).run()
 
-    # Absolute error of the interpolated field is always below 2 Hz
-    assert np.all(np.abs(nb.load(test2.outputs.out_error).get_fdata()) < 2)
+    # Absolute error of the interpolated field is always below 5 Hz
+    assert np.all(np.abs(nb.load(test2.outputs.out_error).get_fdata()) < 5)
 
 
 def test_topup_coeffs(tmpdir, testdata_dir):
