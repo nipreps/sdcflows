@@ -56,8 +56,8 @@ def test_bsplines(tmp_path, testnum):
         ridge_alpha=1e-4,
     ).run()
 
-    # Absolute error of the interpolated field is always below 2 Hz
-    assert np.all(np.abs(nb.load(test2.outputs.out_error).get_fdata()) < 2)
+    # Absolute error of the interpolated field is always below 5 Hz
+    assert np.all(np.abs(nb.load(test2.outputs.out_error).get_fdata()) < 5)
 
 
 def test_topup_coeffs(tmpdir, testdata_dir):
@@ -84,3 +84,27 @@ def test_topup_coeffs(tmpdir, testdata_dir):
     # Test automatic output file name generation, just for coverage
     with pytest.raises(ValueError):
         _fix_topup_fieldcoeff("failing.nii.gz", str(testdata_dir / "epi.nii.gz"))
+
+
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
+def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
+    """Check that our interpolation is not far away from TOPUP's."""
+    tmpdir.chdir()
+    result = Coefficients2Warp(
+        in_target=str(testdata_dir / "epi.nii.gz"),
+        in_coeff=str(testdata_dir / "topup-coeff-fixed.nii.gz"),
+        pe_dir="j-",
+        ro_time=1.0,
+    ).run()
+    assert (
+        np.sqrt(
+            np.mean(
+                (
+                    nb.load(result.outputs.out_field).get_fdata()
+                    - nb.load(testdata_dir / "topup-field.nii.gz").get_fdata()
+                )
+                ** 2
+            )
+        )
+        < 3
+    )
