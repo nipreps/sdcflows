@@ -251,9 +251,10 @@ class Coefficients2Warp(SimpleInterface):
 
         for cname in self.inputs.in_coeff:
             coeff_nii = nb.load(cname)
-            wmat = bspline_weights(
-                points, coeff_nii, mem_percent=0.1 if self.inputs.low_mem else None,
-            )
+            wmat = grid_bspline_weights(targetnii, coeff_nii)
+            # wmat = bspline_weights(
+            #     points, coeff_nii, mem_percent=0.1 if self.inputs.low_mem else None,
+            # )
             weights.append(wmat)
             coeffs.append(coeff_nii.get_fdata(dtype="float32").reshape(-1))
 
@@ -401,6 +402,53 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
 
 
+def grid_bspline_weights(target_nii, ctrl_nii):
+    """Fast, gridded evaluation."""
+    from scipy.sparse import csr_matrix
+
+    if isinstance(target_nii, (str, bytes, Path)):
+        target_nii = nb.load(target_nii)
+    if isinstance(ctrl_nii, (str, bytes, Path)):
+        ctrl_nii = nb.load(ctrl_nii)
+
+    shape = target_nii.shape[:3]
+    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
+    ras2ijk = np.linalg.inv(ctrl_nii.affine)
+    origin = apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
+
+    wd = []
+    for i, (o, n, sp) in enumerate(
+        zip(origin, shape, target_nii.header.get_zooms()[:3])
+    ):
+        locations = np.arange(0, n, dtype="float32") * sp / ctrl_sp[i] + o
+        knots = np.arange(0, ctrl_nii.shape[i], dtype="float32")
+        distance = (locations[np.newaxis, ...] - knots[..., np.newaxis]).astype(
+            "float32"
+        )
+        weights = np.zeros_like(distance, dtype="float32")
+        within_support = np.abs(distance) < BSPLINE_SUPPORT
+        d = np.abs(distance[within_support])
+        weights[within_support] = np.piecewise(
+            d,
+            [d < 1.0, d >= 1.0],
+            [
+                lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
+                lambda d: (2.0 - d) ** 3 / 6.0,
+            ],
+        )
+        wd.append(weights)
+
+    wmat = csr_matrix(
+        (
+            wd[0][:, np.newaxis, np.newaxis, :, np.newaxis, np.newaxis]
+            * wd[1][np.newaxis, :, np.newaxis, np.newaxis, :, np.newaxis]
+            * wd[2][np.newaxis, np.newaxis, :, np.newaxis, np.newaxis, :]
+        ).reshape((np.prod(ctrl_nii.shape[:3]), np.prod(shape))),
+        dtype="float32",
+    )
+    return wmat
+
+
 def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
     r"""
     Calculate the tensor-product cubic B-Spline kernel weights for a list of 3D points.
@@ -466,7 +514,7 @@ def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
         else blocksize
     )
     blocksize = min(blocksize, suggested_blocksize)
-    LOGGER.info(
+    LOGGER.debug(
         f"Determined a block size of {blocksize}, for interpolating "
         f"an image of {len(points)} voxels with a grid of {ncoeff} "
         f"coefficients ({_free_mem / 1024**3:.2f} GiB free memory)."
@@ -512,7 +560,6 @@ def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
         else:
             wmatrix = hstack((wmatrix, csc_matrix(weights)))
         idx = end
-
     return wmatrix.tocsr()
 
 
