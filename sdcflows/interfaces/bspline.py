@@ -130,12 +130,11 @@ class BSplineApprox(SimpleInterface):
             bs_levels.append(level)
             ncoeff.append(level.dataobj.size)
 
-            if regressors is None:
-                regressors = bspline_weights(fmap_points, level)
-            else:
-                regressors = sparse_vstack(
-                    (regressors, bspline_weights(fmap_points, level))
-                )
+            regressors = (
+                bspline_weights(fmap_points, level)
+                if regressors is None
+                else sparse_vstack((regressors, bspline_weights(fmap_points, level)))
+            )
 
         # Fit the model
         model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
@@ -563,10 +562,11 @@ def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
 
         weights[weights < 1e-6] = 0.0
 
-        if wmatrix is None:
-            wmatrix = csc_matrix(weights)
-        else:
-            wmatrix = hstack((wmatrix, csc_matrix(weights)))
+        wmatrix = (
+            csc_matrix(weights)
+            if wmatrix is None
+            else hstack((wmatrix, csc_matrix(weights)))
+        )
         idx = end
     return wmatrix.tocsr()
 
