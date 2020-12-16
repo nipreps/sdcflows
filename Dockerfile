@@ -86,15 +86,15 @@ RUN conda install -y python=3.7.1 \
                      libxslt=1.1.32 \
                      matplotlib=2.2.2 \
                      mkl-service \
-                     mkl=2018.0.3 \
-                     numpy=1.15.4 \
-                     pandas=0.23.4 \
-                     scikit-learn=0.19.1 \
-                     scipy=1.1.0 \
+                     mkl \
+                     numpy=1.19 \
+                     pip=20.3 \
+                     scikit-learn=0.19 \
+                     scipy=1.5 \
                      setuptools=44.0.0 \
-                     setuptools_scm=3.4.3 \
+                     setuptools_scm=3.4 \
                      toml=0.10 \
-                     traits=4.6.0 \
+                     traits=4.6 \
                      zlib; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \

@@ -213,15 +213,13 @@ jobs:
               echo "them to your fork with ``git push origin --tags``"
             fi
             # Build docker image
-            e=1 && for i in {1..5}; do
-              docker build --rm \
+            docker build --rm \
                 --cache-from=nipreps/sdcflows \
                 -t nipreps/sdcflows:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
-              && e=0 && break || sleep 15
-            done && [ "$e" -eq "0" ]
+                | tee build-output.log
             echo "${CIRCLE_TAG:-$THISVERSION}" >> /tmp/.local-version.txt
       - run:
           name: Docker push to local registry
