@@ -80,20 +80,20 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
     PYTHONNOUSERSITE=1
 
 # Installing precomputed python packages
-RUN conda install -y python=3.7.1 \
-                     graphviz=2.40.1 \
-                     libxml2=2.9.8 \
-                     libxslt=1.1.32 \
-                     matplotlib=2.2.2 \
+RUN conda install -y python=3.7 \
+                     graphviz=2.40 \
+                     libxml2=2.9 \
+                     libxslt=1.1 \
+                     matplotlib=2.2 \
                      mkl-service \
                      mkl \
                      numpy=1.19 \
                      pip=20.3 \
                      scikit-learn=0.19 \
                      scipy=1.5 \
-                     setuptools=44.0.0 \
-                     setuptools_scm=3.4 \
-                     toml=0.10 \
+                     setuptools \
+                     setuptools_scm \
+                     toml \
                      traits=4.6 \
                      zlib; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
