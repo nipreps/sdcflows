@@ -404,7 +404,7 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
 
 def grid_bspline_weights(target_nii, ctrl_nii):
     """Fast, gridded evaluation."""
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_matrix, vstack
 
     if isinstance(target_nii, (str, bytes, Path)):
         target_nii = nb.load(target_nii)
@@ -426,7 +426,7 @@ def grid_bspline_weights(target_nii, ctrl_nii):
             "float32"
         )
         weights = np.zeros_like(distance, dtype="float32")
-        within_support = np.abs(distance) < BSPLINE_SUPPORT
+        within_support = np.abs(distance) < 2.0
         d = np.abs(distance[within_support])
         weights[within_support] = np.piecewise(
             d,
@@ -438,14 +438,22 @@ def grid_bspline_weights(target_nii, ctrl_nii):
         )
         wd.append(weights)
 
-    wmat = csr_matrix(
-        (
-            wd[0][:, np.newaxis, np.newaxis, :, np.newaxis, np.newaxis]
+    ctrl_shape = ctrl_nii.shape[:3]
+    data_size = np.prod(shape)
+    wmat = None
+    for i in range(ctrl_shape[0]):
+        sparse_mat = (
+            wd[0][i, np.newaxis, np.newaxis, :, np.newaxis, np.newaxis]
             * wd[1][np.newaxis, :, np.newaxis, np.newaxis, :, np.newaxis]
             * wd[2][np.newaxis, np.newaxis, :, np.newaxis, np.newaxis, :]
-        ).reshape((np.prod(ctrl_nii.shape[:3]), np.prod(shape))),
-        dtype="float32",
-    )
+        ).reshape((-1, data_size))
+        sparse_mat[sparse_mat < 1e-9] = 0
+
+        if wmat is None:
+            wmat = csr_matrix(sparse_mat)
+        else:
+            wmat = vstack((wmat, csr_matrix(sparse_mat)))
+
     return wmat
 
 
