@@ -6,7 +6,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
+def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
     """
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
@@ -24,6 +24,10 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         Maximum number of threads an individual process may use.
     name : :obj:`str`
         Unique name of this workflow.
+    debug : :obj:`bool`
+        Whether to run in *sloppy* mode.
+    mask : obj:`bool`
+        Generate a quick mask.
 
     Inputs
     ------
@@ -41,7 +45,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
 
     """
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.epi import GetReadoutTime, EPIMask
     from ...interfaces.bspline import Coefficients2Warp
 
     workflow = Workflow(name=name)
@@ -50,7 +54,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["corrected", "fieldmap"]), name="outputnode"
+        niu.IdentityInterface(fields=["corrected", "fieldmap", "corrected_mask"]),
+        name="outputnode",
     )
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
@@ -73,6 +78,18 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         (resample, unwarp, [("out_warp", "transforms")]),
         (resample, outputnode, [("out_field", "fieldmap")]),
         (unwarp, outputnode, [("output_image", "corrected")]),
+    ])
+    # fmt:on
+
+    if not mask:
+        return workflow
+
+    epi_mask = pe.Node(EPIMask(), name="epi_mask")
+
+    # fmt:off
+    workflow.connect([
+        (unwarp, epi_mask, [("output_image", "in_file")]),
+        (epi_mask, outputnode, [("out_file", "corrected_mask")]),
     ])
     # fmt:on
     return workflow
