@@ -39,10 +39,22 @@ A bids's-eye view of this new release follows:
   :py:func:`sdcflows.workflows.fit.pepolar.init_topup_wf`).
 * Pushed the code coverage with tests, along with a deep code cleanup.
 
+.. attention::
+
+    *SDCFlows* drops Python 3.6 starting with 1.4.x series.
+
 Some of the most prominent pull-requests conducive to this release are:
 
 * FIX: Convert SEI fieldmaps given in rad/s into Hz (#127)
 * FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* ENH: Increase unit-tests coverage of ``sdcflows.fieldmaps`` (#159)
+* ENH: Optimize tensor-product B-Spline kernel evaluation (#157)
+* ENH: Add a memory check to dynamically limit interpolation blocksize (#156)
+* ENH: Massage TOPUP's fieldcoeff files to be compatible with ours (#154)
+* ENH: Add a simplistic EPI masking algorithm (#152)
+* ENH: Utility that returns the ``B0FieldSource`` of a given potential EPI target (#151)
+* ENH: Write ``fmapid-`` entity in Derivatives (#150)
+* ENH: Multiplex fieldmap estimation outputs into a single ``outputnode`` (#149)
 * ENH: Putting the new API together on a base workflow (#143)
 * ENH: Autogenerate ``B0FieldIdentifiers`` from ``IntendedFor`` (#142)
 * ENH: Finalizing the API overhaul (#132)
@@ -50,7 +62,10 @@ Some of the most prominent pull-requests conducive to this release are:
 * ENH: New objects for better representation of fieldmap estimation (#114)
 * ENH: Show FieldmapReportlet oriented aligned with cardinal axes (#120)
 * ENH: New estimation API (featuring a TOPUP implementation!) (#115)
+* DOC: Fix typo in docstring (#155)
 * DOC: Enable NiPype's sphinx-extension to better render Interfaces (#131)
+* MAINT: Drop Python 3.6 (#160)
+* MAINT: Enable Git-archive protocol with setuptools-scm-archive (#153)
 * MAINT: Migrate TravisCI -> GH Actions (completion) (#138)
 * MAINT: Migrate TravisCI -> GH Actions (#137)
 * MAINT: Minimal unit test and refactor of pepolar workflow node (#133)
