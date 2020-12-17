@@ -96,7 +96,8 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         # fmt: off
         workflow.connect([
             (epi_ref_wf, report, [("outputnode.fmap_ref", "before")]),
-            (unwarp_wf, report, [("outputnode.corrected", "after")]),
+            (unwarp_wf, report, [("outputnode.corrected", "after"),
+                                 ("outputnode.corrected_mask", "wm_seg")]),
             (report, ds_report, [("out_report", "in_file")]),
             (epi_ref_wf, rep, [("outputnode.fmap_ref", "reference"),
                                ("outputnode.fmap_mask", "mask")]),

@@ -5,7 +5,7 @@ from collections import defaultdict
 import re
 import attr
 from json import loads
-from bids.layout import BIDSFile, parse_file_entities
+from bids.layout import parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
 from .utils.bimap import EstimatorRegistry
