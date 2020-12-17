@@ -1,11 +1,25 @@
 """test_fieldmaps."""
+from collections import namedtuple
+import shutil
 import pytest
+import bids
 from .. import fieldmaps as fm
 
 
 def test_FieldmapFile(dsA_dir):
     """Test one existing file."""
-    fm.FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
+    f1 = fm.FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
+    f2 = fm.FieldmapFile(str(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz"))
+    f3 = fm.FieldmapFile(
+        bids.layout.BIDSFile(str(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz"))
+    )
+    assert f1 == f2 == f3
+
+    with pytest.raises(ValueError):
+        fm.FieldmapFile(dsA_dir / "sub-01" / "fmap" / "sub-01_dir-AP_epi.json")
+
+    with pytest.raises(ValueError):
+        fm.FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_FLAIR.nii.gz")
 
 
 @pytest.mark.parametrize(
@@ -203,3 +217,78 @@ def test_FieldmapEstimationIdentifier(monkeypatch, dsA_dir):
         fm.get_identifier("file", by="invalid")
 
     fm.clear_registry()
+
+
+def test_type_setter():
+    """Cover the _type_setter routine."""
+    obj = namedtuple("FieldmapEstimation", ("method",))(method=fm.EstimatorType.UNKNOWN)
+    with pytest.raises(ValueError):
+        fm._type_setter(obj, "method", 10)
+
+    obj = namedtuple("FieldmapEstimation", ("method",))(method=fm.EstimatorType.PEPOLAR)
+    assert (
+        fm._type_setter(obj, "method", fm.EstimatorType.PEPOLAR)
+        == fm.EstimatorType.PEPOLAR
+    )
+
+
+def test_FieldmapEstimation_missing_files(tmpdir, dsA_dir):
+    """Exercise some FieldmapEstimation checks."""
+    tmpdir.chdir()
+    tmpdir.mkdir("data")
+
+    # fieldmap - no magnitude
+    path = dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+
+    with pytest.raises(
+        ValueError,
+        match=r"A fieldmap or phase-difference .* \(magnitude file\) is missing.*",
+    ):
+        fm.FieldmapEstimation(
+            [fm.FieldmapFile("data/sub-01_fieldmap.nii.gz", metadata={"Units": "Hz"})]
+        )
+
+    # phase1/2 - no magnitude2
+    path = dsA_dir / "sub-01" / "fmap" / "sub-01_phase1.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+
+    path = dsA_dir / "sub-01" / "fmap" / "sub-01_magnitude1.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+
+    path = dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+
+    with pytest.raises(
+        ValueError, match=r".* \(phase1/2\) .* \(magnitude2 file\) is missing.*"
+    ):
+        fm.FieldmapEstimation(
+            [
+                fm.FieldmapFile(
+                    "data/sub-01_phase1.nii.gz", metadata={"EchoTime": 0.004}
+                ),
+                fm.FieldmapFile(
+                    "data/sub-01_phase2.nii.gz", metadata={"EchoTime": 0.007}
+                ),
+            ]
+        )
+
+    # pepolar - only one PE
+    path = dsA_dir / "sub-01" / "fmap" / "sub-01_dir-AP_epi.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+
+    path = dsA_dir / "sub-01" / "dwi" / "sub-01_dir-AP_dwi.nii.gz"
+    shutil.copy(path, f"data/{path.name}")
+    with pytest.raises(ValueError, match="Only one phase-encoding direction <j>.*"):
+        fm.FieldmapEstimation(
+            [
+                fm.FieldmapFile(
+                    "data/sub-01_dir-AP_epi.nii.gz",
+                    metadata={"PhaseEncodingDirection": "j", "TotalReadoutTime": 0.004},
+                ),
+                fm.FieldmapFile(
+                    "data/sub-01_dir-AP_dwi.nii.gz",
+                    metadata={"PhaseEncodingDirection": "j", "TotalReadoutTime": 0.004},
+                ),
+            ]
+        )

@@ -161,7 +161,11 @@ def get_trt(in_meta, in_file=None):
 
     # Use case 1: TRT is defined
     if "TotalReadoutTime" in in_meta:
-        return in_meta.get("TotalReadoutTime")
+        trt = in_meta.get("TotalReadoutTime")
+        if not trt:
+            raise ValueError(f"'{trt}'")
+
+        return trt
 
     # npe = N voxels PE direction
     pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])

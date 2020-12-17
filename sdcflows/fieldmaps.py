@@ -50,8 +50,7 @@ def _type_setter(obj, attribute, value):
     """Make sure the type of estimation is not changed."""
     if obj.method == value:
         return value
-
-    if obj.method != EstimatorType.UNKNOWN and obj.method != value:
+    elif obj.method != EstimatorType.UNKNOWN:
         raise TypeError(f"Cannot change determined method {obj.method} to {value}.")
 
     if value not in (
@@ -98,6 +97,13 @@ class FieldmapFile:
     ... )
     >>> f.metadata['TotalReadoutTime']
     0.005
+
+    >>> f = FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     metadata={"TotalReadoutTime": None},
+    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    MetadataError:
 
     >>> f = FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
@@ -171,17 +177,12 @@ class FieldmapFile:
     @path.validator
     def check_path(self, attribute, value):
         """Validate a fieldmap path."""
-        if isinstance(value, BIDSFile):
-            value = Path(value.path)
-        elif isinstance(value, str):
-            value = Path(value)
-
         if not value.is_file():
             raise FileNotFoundError(
                 f"File path <{value}> does not exist, is a broken link, or it is not a file"
             )
 
-        if not str(value).endswith((".nii", ".nii.gz")):
+        if not value.name.endswith((".nii", ".nii.gz")):
             raise ValueError(f"File path <{value}> does not look like a NIfTI file.")
 
         suffix = re.search(r"(?<=_)\w+(?=\.nii)", value.name).group()
@@ -208,8 +209,11 @@ class FieldmapFile:
 
         # Attempt to infer a bids_root folder
         relative_path = relative_to_root(self.path)
-        if str(relative_path) != str(self.path):
-            self.bids_root = Path(str(self.path)[: -len(str(relative_path))])
+        self.bids_root = (
+            Path(str(self.path)[: -len(str(relative_path))])
+            if str(relative_path) != str(self.path)
+            else None
+        )
 
         # Check for REQUIRED metadata (depends on suffix.)
         if self.suffix in ("bold", "dwi", "epi", "sbref"):
@@ -222,10 +226,10 @@ class FieldmapFile:
 
             try:
                 get_trt(self.metadata, in_file=self.path)
-            except ValueError:
+            except ValueError as exc:
                 raise MetadataError(
                     f"Missing readout timing information for <{self.path}>."
-                )
+                ) from exc
 
         elif self.suffix == "fieldmap" and "Units" not in self.metadata:
             raise MetadataError(f"Missing 'Units' for <{self.path}>.")
