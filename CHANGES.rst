@@ -1,3 +1,8 @@
+2.0.0 (December 18, 2020)
+=========================
+
+
+
 2.0.0 (TBD)
 ===========
 The *SDCFlows* 2.0.x series are released with a comprehensive overhaul of the software's API.
@@ -47,6 +52,7 @@ Some of the most prominent pull-requests conducive to this release are:
 
 * FIX: Convert SEI fieldmaps given in rad/s into Hz (#127)
 * FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* ENH: Generate a simple mask after correction (#161)
 * ENH: Increase unit-tests coverage of ``sdcflows.fieldmaps`` (#159)
 * ENH: Optimize tensor-product B-Spline kernel evaluation (#157)
 * ENH: Add a memory check to dynamically limit interpolation blocksize (#156)
@@ -62,6 +68,7 @@ Some of the most prominent pull-requests conducive to this release are:
 * ENH: New objects for better representation of fieldmap estimation (#114)
 * ENH: Show FieldmapReportlet oriented aligned with cardinal axes (#120)
 * ENH: New estimation API (featuring a TOPUP implementation!) (#115)
+* DOC: Minor improvements to the literate workflows descriptions. (#162)
 * DOC: Fix typo in docstring (#155)
 * DOC: Enable NiPype's sphinx-extension to better render Interfaces (#131)
 * MAINT: Drop Python 3.6 (#160)
