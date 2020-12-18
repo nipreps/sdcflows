@@ -191,9 +191,9 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     # fmt: on
 
     if mode == "phasediff":
-        workflow.__desc__ = """\
+        workflow.__postdesc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was estimated from the
-phase-drift map(s) measure with two consecutive GRE (gradient-recall echo)
+phase-drift map(s) measure with two consecutive GRE (gradient-recalled echo)
 acquisitions.
 """
         phdiff_wf = init_phdiff_wf(omp_nthreads, debug=debug)
@@ -214,7 +214,7 @@ acquisitions.
         from niworkflows.interfaces.images import IntraModalMerge
         from ...interfaces.fmap import CheckB0Units
 
-        workflow.__desc__ = """\
+        workflow.__postdesc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was directly measured with
 an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
@@ -368,7 +368,7 @@ def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
     from ...interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads, SubtractPhases
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = f"""\
+    workflow.__postdesc__ = f"""\
 The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE.version}).
 """
 
