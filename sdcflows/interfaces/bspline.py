@@ -240,10 +240,10 @@ class Coefficients2Warp(SimpleInterface):
 
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
-        targetaff = targetnii.affine
         allmask = np.ones_like(targetnii.dataobj, dtype="uint8")
-        voxels = np.argwhere(allmask == 1).astype("float32")
-        points = apply_affine(targetaff.astype("float32"), voxels)
+        # targetaff = targetnii.affine
+        # voxels = np.argwhere(allmask == 1).astype("float32")
+        # points = apply_affine(targetaff.astype("float32"), voxels)
 
         weights = []
         coeffs = []
