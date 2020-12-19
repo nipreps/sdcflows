@@ -293,7 +293,7 @@ def _extract_field(in_file, epi_meta):
     >>> nii.shape
     (10, 10, 10)
 
-    >>> np.allclose(nii.get_fdata(), 200)
+    >>> np.allclose(nii.get_fdata(), -200)
     True
 
     """
@@ -308,7 +308,7 @@ def _extract_field(in_file, epi_meta):
         np.squeeze(fieldnii.get_fdata(dtype="float32"))[
             ..., "ijk".index(epi_meta[1]["PhaseEncodingDirection"][0])
         ]
-        / trt
+        / trt * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
     )
     out_file = fname_presuffix(in_file[0], suffix="_fieldmap")
     nii = nb.Nifti1Image(data, fieldnii.affine, None)

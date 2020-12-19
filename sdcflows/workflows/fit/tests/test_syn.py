@@ -23,7 +23,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
             / "sdcflows-tests"
             / "sub-100185_task-machinegame_run-1_boldref.nii.gz"
         ),
-        {"PhaseEncodingDirection": "j", "TotalReadoutTime": 0.005},
+        {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005},
     )
     syn_wf.inputs.inputnode.epi_mask = str(
         derivs_path
@@ -74,7 +74,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
 
         fmap_reports_wf = init_fmap_reports_wf(
             output_dir=str(outdir),
-            fmap_type="pepolar",
+            fmap_type="sdcsyn",
         )
         fmap_reports_wf.inputs.inputnode.source_files = [
             str(
