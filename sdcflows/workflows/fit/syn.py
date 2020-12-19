@@ -3,6 +3,15 @@
 """
 Estimating the susceptibility distortions without fieldmaps.
 
+.. testsetup::
+
+    >>> tmpdir = getfixture('tmpdir')
+    >>> tmp = tmpdir.chdir() # changing to a temporary directory
+    >>> data = np.zeros((10, 10, 10, 1, 3))
+    >>> data[..., 1] = 1
+    >>> nb.Nifti1Image(data, None, None).to_filename(
+    ...     tmpdir.join('field.nii.gz').strpath)
+
 .. _sdc_fieldmapless :
 
 Fieldmap-less approaches
@@ -55,7 +64,11 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def init_syn_sdc_wf(
-    *, atlas_threshold=3, debug=False, name="syn_sdc_wf", omp_nthreads=1,
+    *,
+    atlas_threshold=3,
+    debug=False,
+    name="syn_sdc_wf",
+    omp_nthreads=1,
 ):
     """
     Build the *fieldmap-less* susceptibility-distortion estimation workflow.
@@ -99,7 +112,7 @@ def init_syn_sdc_wf(
         A preprocessed, skull-stripped anatomical (T1w or T2w) image.
     std2anat_xfm : :obj:`str`
         inverse registration transform of T1w image to MNI template
-    anat2bold_xfm : :obj:`str`
+    anat2epi_xfm : :obj:`str`
         transform mapping coordinates from the EPI space to the anatomical
         space (i.e., the transform to resample anatomical info into EPI space.)
 
@@ -120,7 +133,14 @@ def init_syn_sdc_wf(
         FixHeaderRegistration as Registration,
     )
     from niworkflows.interfaces.nibabel import Binarize
+    from ...interfaces.epi import EPIMask
     from ...utils.misc import front as _pop
+    from ...interfaces.bspline import (
+        BSplineApprox,
+        DEFAULT_LF_ZOOMS_MM,
+        DEFAULT_HF_ZOOMS_MM,
+        DEFAULT_ZOOMS_MM,
+    )
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
@@ -137,12 +157,13 @@ template [@fieldmapless3].
 """
     inputnode = pe.Node(
         niu.IdentityInterface(
-            ["epi_ref", "epi_mask", "anat_brain", "std2anat_xfm", "anat2bold_xfm"]
+            ["epi_ref", "epi_mask", "anat_brain", "std2anat_xfm", "anat2epi_xfm"]
         ),
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_mask"]), name="outputnode",
+        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_coeff", "fmap_mask"]),
+        name="outputnode",
     )
 
     invert_t1w = pe.Node(Rescale(invert=True), name="invert_t1w", mem_gb=0.3)
@@ -174,29 +195,54 @@ template [@fieldmapless3].
         n_procs=omp_nthreads,
     )
 
-    unwarp_ref = pe.Node(ApplyTransforms(interpolation="BSpline"), name="unwarp_ref",)
+    unwarp_ref = pe.Node(
+        ApplyTransforms(interpolation="BSpline"),
+        name="unwarp_ref",
+    )
+
+    epi_mask = pe.Node(EPIMask(), name="epi_mask")
+
+    # Extract nonzero component
+    extract_field = pe.Node(niu.Function(function=_extract_field), name="extract_field")
+
+    # Regularize with B-Splines
+    bs_filter = pe.Node(BSplineApprox(), n_procs=omp_nthreads, name="bs_filter")
+    bs_filter.interface._always_run = debug
+    bs_filter.inputs.bs_spacing = (
+        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not debug else [DEFAULT_ZOOMS_MM]
+    )
+    bs_filter.inputs.extrapolate = not debug
 
     # fmt: off
     workflow.connect([
-        (inputnode, transform_list, [("anat2bold_xfm", "in1"),
+        (inputnode, transform_list, [("anat2epi_xfm", "in1"),
                                      ("std2anat_xfm", "in2")]),
         (inputnode, invert_t1w, [("anat_brain", "in_file"),
                                  (("epi_ref", _pop), "ref_file")]),
-        (inputnode, anat2epi, [(("epi_ref", _pop), "reference_image")]),
+        (inputnode, anat2epi, [(("epi_ref", _pop), "reference_image"),
+                               ("anat2epi_xfm", "transforms")]),
         (inputnode, syn, [(("epi_ref", _pop), "moving_image"),
                           ("epi_mask", "moving_image_masks"),
                           (("epi_ref", _warp_dir), "restrict_deformation")]),
+        (inputnode, unwarp_ref, [(("epi_ref", _pop), "reference_image"),
+                                 (("epi_ref", _pop), "input_image")]),
         (inputnode, prior2epi, [(("epi_ref", _pop), "reference_image")]),
+        (inputnode, extract_field, [("epi_ref", "epi_meta")]),
         (invert_t1w, anat2epi, [("out_file", "input_image")]),
         (transform_list, prior2epi, [("out", "transforms")]),
         (prior2epi, atlas_msk, [("output_image", "in_file")]),
         (anat2epi, syn, [("output_image", "fixed_image")]),
         (atlas_msk, syn, [(("out_mask", _fixed_masks_arg), "fixed_image_masks")]),
-        (syn, outputnode, [("forward_transforms", "fmap")]),
+        (syn, extract_field, [("forward_transforms", "in_file")]),
         (syn, unwarp_ref, [("forward_transforms", "transforms")]),
-        (inputnode, unwarp_ref, [(("epi_ref", _pop), "reference_image"),
-                                 (("epi_ref", _pop), "input_image")]),
+        (unwarp_ref, epi_mask, [("output_image", "in_file")]),
+        (extract_field, bs_filter, [("out", "in_data")]),
+        (epi_mask, bs_filter, [("out_file", "in_mask")]),
         (unwarp_ref, outputnode, [("output_image", "fmap_ref")]),
+        (epi_mask, outputnode, [("out_file", "fmap_mask")]),
+        (bs_filter, outputnode, [
+            ("out_extrapolated" if not debug else "out_field", "fmap"),
+            ("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
 
@@ -231,3 +277,41 @@ def _fixed_masks_arg(mask):
 
     """
     return ["NULL", mask]
+
+
+def _extract_field(in_file, epi_meta):
+    """
+    Extract the nonzero component of the deformation field estimated by ANTs.
+
+    Examples
+    --------
+    >>> nii = nb.load(
+    ...     _extract_field(
+    ...         ["field.nii.gz"],
+    ...         ("epi.nii.gz", {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005}))
+    ... )
+    >>> nii.shape
+    (10, 10, 10)
+
+    >>> np.allclose(nii.get_fdata(), -200)
+    True
+
+    """
+    from nipype.utils.filemanip import fname_presuffix
+    import numpy as np
+    import nibabel as nb
+    from sdcflows.utils.epimanip import get_trt
+
+    fieldnii = nb.load(in_file[0])
+    trt = get_trt(epi_meta[1], in_file=epi_meta[0])
+    data = (
+        np.squeeze(fieldnii.get_fdata(dtype="float32"))[
+            ..., "ijk".index(epi_meta[1]["PhaseEncodingDirection"][0])
+        ]
+        / trt * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
+    )
+    out_file = fname_presuffix(in_file[0], suffix="_fieldmap")
+    nii = nb.Nifti1Image(data, fieldnii.affine, None)
+    nii.header.set_xyzt_units(fieldnii.header.get_xyzt_units()[0])
+    nii.to_filename(out_file)
+    return out_file
