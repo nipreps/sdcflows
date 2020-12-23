@@ -11,20 +11,30 @@ from nipype.interfaces.base import (
     OutputMultiObject,
 )
 
+OBLIQUE_THRESHOLD_DEG = 0.5
+
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
     in_data = InputMultiObject(
-        File(exists=True), mandatory=True, desc="list of input data",
+        File(exists=True),
+        mandatory=True,
+        desc="list of input data",
     )
     in_meta = InputMultiObject(
-        traits.DictStrAny, mandatory=True, desc="list of metadata",
+        traits.DictStrAny,
+        mandatory=True,
+        desc="list of metadata",
     )
     max_trs = traits.Int(50, usedefault=True, desc="only pick first TRs")
 
 
 class _FlattenOutputSpec(TraitedSpec):
     out_list = OutputMultiObject(
-        traits.Tuple(File(exists=True), traits.DictStrAny,), desc="list of output files"
+        traits.Tuple(
+            File(exists=True),
+            traits.DictStrAny,
+        ),
+        desc="list of output files",
     )
     out_data = OutputMultiObject(File(exists=True))
     out_meta = OutputMultiObject(traits.DictStrAny)
@@ -67,6 +77,97 @@ class ConvertWarp(SimpleInterface):
     def _run_interface(self, runtime):
         self._results["out_file"] = _qwarp2ants(
             self.inputs.in_file, newpath=runtime.cwd
+        )
+        return runtime
+
+
+class _DeobliqueInputSpec(BaseInterfaceInputSpec):
+    in_epi = File(
+        exists=True, mandatory=True, desc="the EPI dataset potentially oblique"
+    )
+    mask_epi = File(
+        exists=True,
+        mandatory=True,
+        desc="a binary mask corresponding to the EPI dataset",
+    )
+    in_anat = File(
+        exists=True,
+        mandatory=True,
+        desc="the corresponging anatomical dataset potentially oblique",
+    )
+    mask_anat = File(
+        exists=True,
+        mandatory=True,
+        desc="a binary mask corresponding to the anatomical dataset",
+    )
+
+
+class _DeobliqueOutputSpec(TraitedSpec):
+    out_epi = File(exists=True, desc="the plumb, EPI dataset")
+    out_anat = File(exists=True, desc="the plumb, anatomical dataset")
+    mask_epi = File(
+        exists=True,
+        mandatory=True,
+        desc="a binary mask corresponding to the EPI dataset",
+    )
+    mask_anat = File(
+        exists=True,
+        mandatory=True,
+        desc="a binary mask corresponding to the anatomical dataset",
+    )
+
+
+class Deoblique(SimpleInterface):
+    """Make a dataset plumb."""
+
+    input_spec = _DeobliqueInputSpec
+    output_spec = _DeobliqueOutputSpec
+
+    def _run_interface(self, runtime):
+        (
+            self._results["out_epi"],
+            self._results["out_anat"],
+            self._results["mask_epi"],
+            self._results["mask_anat"],
+        ) = _deoblique(
+            self.inputs.in_epi,
+            self.inputs.in_anat,
+            self.inputs.mask_epi,
+            self.inputs.mask_anat,
+            newpath=runtime.cwd,
+        )
+        return runtime
+
+
+class _ReobliqueInputSpec(BaseInterfaceInputSpec):
+    in_plumb = File(exists=True, mandatory=True, desc="the plumb EPI image")
+    in_field = File(
+        exists=True,
+        mandatory=True,
+        desc="the plumb field map, extracted from the displacements field estimated by SyN",
+    )
+    in_epi = File(
+        exists=True, mandatory=True, desc="the original, potentially oblique EPI image"
+    )
+
+
+class _ReobliqueOutputSpec(TraitedSpec):
+    out_epi = File(exists=True, desc="the reoblique'd EPI image")
+    out_field = File(exists=True, desc="the reoblique'd EPI image")
+
+
+class Reoblique(SimpleInterface):
+    """Make a dataset plumb."""
+
+    input_spec = _ReobliqueInputSpec
+    output_spec = _ReobliqueOutputSpec
+
+    def _run_interface(self, runtime):
+        (self._results["out_epi"], self._results["out_field"],) = _reoblique(
+            self.inputs.in_epi,
+            self.inputs.in_plumb,
+            self.inputs.in_field,
+            newpath=runtime.cwd,
         )
         return runtime
 
@@ -120,3 +221,63 @@ def _qwarp2ants(in_file, newpath=None):
     data = np.squeeze(nii.get_fdata(dtype="float32"))[..., np.newaxis, :]
     nb.Nifti1Image(data, nii.affine, hdr).to_filename(out_file)
     return out_file
+
+
+def _deoblique(in_epi, in_anat, mask_epi, mask_anat, newpath=None):
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    epinii = nb.load(in_epi)
+    if np.all(nb.affines.obliquity(epinii.affine)) < OBLIQUE_THRESHOLD_DEG:
+        return in_epi, in_anat, mask_epi, mask_anat
+
+    newaff = np.eye(4)
+    newaff[:3, :3] = np.diag(np.array(epinii.header.get_zooms()[:3]))
+    newaff[:3, 3] -= (np.array(epinii.shape[:3]) - 1) * 0.5
+
+    hdr = epinii.header.copy()
+    hdr.set_qform(newaff, code=1)
+    hdr.set_sform(newaff, code=1)
+    newepi = epinii.__class__(epinii.dataobj, newaff, hdr)
+    out_epi = fname_presuffix(in_epi, suffix="_plumb", newpath=newpath)
+    newepi.to_filename(out_epi)
+
+    out_files = [out_epi]
+    for fname in (in_anat, mask_epi, mask_anat):
+        nii = nb.load(fname)
+        hdr = nii.header.copy()
+        hdr.set_qform(newaff, code=1)
+        hdr.set_sform(newaff, code=1)
+        newnii = nii.__class__(np.asanyarray(nii.dataobj), newaff, hdr)
+        out = fname_presuffix(fname, suffix="_plumb", newpath=newpath)
+        newnii.to_filename(out)
+        out_files.append(out)
+
+    return tuple(out_files)
+
+
+def _reoblique(in_epi, in_plumb, in_field, newpath=None):
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    epinii = nb.load(in_epi)
+    if np.all(nb.affines.obliquity(epinii.affine)) < OBLIQUE_THRESHOLD_DEG:
+        return in_plumb, in_field
+
+    out_files = [
+        fname_presuffix(f, suffix="_oriented", newpath=newpath)
+        for f in (in_plumb, in_field)
+    ]
+    plumbnii = nb.load(in_plumb)
+    plumbnii.__class__(plumbnii.dataobj, epinii.affine, epinii.header).to_filename(
+        out_files[0]
+    )
+
+    fmapnii = nb.load(in_field)
+    hdr = fmapnii.header.copy()
+    hdr.set_qform(*epinii.header.get_qform(coded=True))
+    hdr.set_sform(*epinii.header.get_sform(coded=True))
+    fmapnii.__class__(fmapnii.dataobj, epinii.affine, hdr).to_filename(out_files[1])
+    return out_files

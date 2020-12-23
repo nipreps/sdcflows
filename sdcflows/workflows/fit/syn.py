@@ -135,6 +135,7 @@ def init_syn_sdc_wf(
     from niworkflows.interfaces.nibabel import Binarize
     from ...interfaces.epi import EPIMask
     from ...utils.misc import front as _pop
+    from ...interfaces.utils import Deoblique, Reoblique
     from ...interfaces.bspline import (
         BSplineApprox,
         DEFAULT_LF_ZOOMS_MM,
@@ -188,6 +189,9 @@ template [@fieldmapless3].
     )
     atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
 
+    deoblique = pe.Node(Deoblique(), name="deoblique")
+    reoblique = pe.Node(Reoblique(), name="reoblique")
+
     # SyN Registration Core
     syn = pe.Node(
         Registration(from_file=pkgrf("sdcflows", "data/susceptibility_syn.json")),
@@ -221,9 +225,10 @@ template [@fieldmapless3].
                                  (("epi_ref", _pop), "ref_file")]),
         (inputnode, anat2epi, [(("epi_ref", _pop), "reference_image"),
                                ("anat2epi_xfm", "transforms")]),
-        (inputnode, syn, [(("epi_ref", _pop), "moving_image"),
-                          ("epi_mask", "moving_image_masks"),
-                          (("epi_ref", _warp_dir), "restrict_deformation")]),
+        (inputnode, deoblique, [(("epi_ref", _pop), "in_epi"),
+                                ("epi_mask", "mask_epi")]),
+        (inputnode, reoblique, [(("epi_ref", _pop), "in_epi")]),
+        (inputnode, syn, [(("epi_ref", _warp_dir), "restrict_deformation")]),
         (inputnode, unwarp_ref, [(("epi_ref", _pop), "reference_image"),
                                  (("epi_ref", _pop), "input_image")]),
         (inputnode, prior2epi, [(("epi_ref", _pop), "reference_image")]),
@@ -231,14 +236,20 @@ template [@fieldmapless3].
         (invert_t1w, anat2epi, [("out_file", "input_image")]),
         (transform_list, prior2epi, [("out", "transforms")]),
         (prior2epi, atlas_msk, [("output_image", "in_file")]),
-        (anat2epi, syn, [("output_image", "fixed_image")]),
-        (atlas_msk, syn, [(("out_mask", _fixed_masks_arg), "fixed_image_masks")]),
+        (anat2epi, deoblique, [("output_image", "in_anat")]),
+        (atlas_msk, deoblique, [("out_mask", "mask_anat")]),
+        (deoblique, syn, [("out_epi", "moving_image"),
+                          ("out_anat", "fixed_image"),
+                          ("mask_epi", "moving_image_masks"),
+                          (("mask_anat", _fixed_masks_arg), "fixed_image_masks")]),
         (syn, extract_field, [("forward_transforms", "in_file")]),
         (syn, unwarp_ref, [("forward_transforms", "transforms")]),
-        (unwarp_ref, epi_mask, [("output_image", "in_file")]),
-        (extract_field, bs_filter, [("out", "in_data")]),
+        (unwarp_ref, reoblique, [("output_image", "in_plumb")]),
+        (reoblique, epi_mask, [("out_epi", "in_file")]),
+        (extract_field, reoblique, [("out", "in_field")]),
+        (reoblique, bs_filter, [("out_field", "in_data")]),
         (epi_mask, bs_filter, [("out_file", "in_mask")]),
-        (unwarp_ref, outputnode, [("output_image", "fmap_ref")]),
+        (reoblique, outputnode, [("out_epi", "fmap_ref")]),
         (epi_mask, outputnode, [("out_file", "fmap_mask")]),
         (bs_filter, outputnode, [
             ("out_extrapolated" if not debug else "out_field", "fmap"),
@@ -308,7 +319,8 @@ def _extract_field(in_file, epi_meta):
         np.squeeze(fieldnii.get_fdata(dtype="float32"))[
             ..., "ijk".index(epi_meta[1]["PhaseEncodingDirection"][0])
         ]
-        / trt * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
+        / trt
+        * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
     )
     out_file = fname_presuffix(in_file[0], suffix="_fieldmap")
     nii = nb.Nifti1Image(data, fieldnii.affine, None)
