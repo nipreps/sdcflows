@@ -1,8 +1,3 @@
-2.0.0 (December 18, 2020)
-=========================
-
-
-
 2.0.0 (TBD)
 ===========
 The *SDCFlows* 2.0.x series are released with a comprehensive overhaul of the software's API.
@@ -50,8 +45,10 @@ A bids's-eye view of this new release follows:
 
 Some of the most prominent pull-requests conducive to this release are:
 
+* FIX: Make images "plumb" before running ANTs-SyN (and roll-back afterwards) (#165)
 * FIX: Convert SEI fieldmaps given in rad/s into Hz (#127)
 * FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* ENH: Add one test for the SDC-SyN workflow (#164)
 * ENH: Generate a simple mask after correction (#161)
 * ENH: Increase unit-tests coverage of ``sdcflows.fieldmaps`` (#159)
 * ENH: Optimize tensor-product B-Spline kernel evaluation (#157)
