@@ -241,9 +241,6 @@ class Coefficients2Warp(SimpleInterface):
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
         allmask = np.ones_like(targetnii.dataobj, dtype="uint8")
-        # targetaff = targetnii.affine
-        # voxels = np.argwhere(allmask == 1).astype("float32")
-        # points = apply_affine(targetaff.astype("float32"), voxels)
 
         weights = []
         coeffs = []
@@ -251,9 +248,6 @@ class Coefficients2Warp(SimpleInterface):
         for cname in self.inputs.in_coeff:
             coeff_nii = nb.load(cname)
             wmat = grid_bspline_weights(targetnii, coeff_nii)
-            # wmat = bspline_weights(
-            #     points, coeff_nii, mem_percent=0.1 if self.inputs.low_mem else None,
-            # )
             weights.append(wmat)
             coeffs.append(coeff_nii.get_fdata(dtype="float32").reshape(-1))
 
@@ -284,6 +278,7 @@ class Coefficients2Warp(SimpleInterface):
         field[..., phaseEncDim] = data.reshape(-1)
         aff = targetnii.affine.copy()
         aff[:3, 3] = 0.0
+        # Multiplying by the affine implicitly applies the voxel size to the shift map
         field = nb.affines.apply_affine(aff, field).reshape(fieldshape)
         warpnii = targetnii.__class__(
             field[:, :, :, np.newaxis, :].astype("float32"), targetnii.affine, None

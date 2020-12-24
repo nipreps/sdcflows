@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import nibabel as nb
 
-from ..utils import Flatten, ConvertWarp
+from ..utils import Flatten, ConvertWarp, Deoblique, Reoblique
 
 
 def test_Flatten(tmpdir):
@@ -43,3 +43,47 @@ def test_ConvertWarp(tmpdir, shape):
     assert nii.header.get_data_dtype() == np.float32
     assert nii.header.get_intent() == ("vector", (), "")
     assert nii.shape == (10, 10, 10, 1, 3)
+
+
+@pytest.mark.parametrize(
+    "angles,oblique",
+    [
+        ((0, 0, 0), False),
+        ((0.9, 0.001, 0.001), True),
+        ((0, 0, 2 * np.pi), False),
+    ],
+)
+def test_Xeoblique(tmpdir, angles, oblique):
+    """Exercise De/Reoblique interfaces."""
+
+    tmpdir.chdir()
+
+    affine = nb.affines.from_matvec(nb.eulerangles.euler2mat(*angles))
+    nb.Nifti1Image(np.zeros((10, 10, 10), dtype="uint8"), affine, None).to_filename(
+        "epi.nii.gz"
+    )
+
+    result = (
+        Deoblique(
+            in_epi="epi.nii.gz",
+            mask_epi="epi.nii.gz",
+            in_anat="epi.nii.gz",
+            mask_anat="epi.nii.gz",
+        )
+        .run()
+        .outputs
+    )
+
+    assert np.allclose(nb.load(result.out_epi).affine, affine) is not oblique
+
+    reoblique = (
+        Reoblique(
+            in_plumb=result.out_epi,
+            in_field=result.out_epi,
+            in_epi="epi.nii.gz",
+        )
+        .run()
+        .outputs
+    )
+
+    assert np.allclose(nb.load(reoblique.out_epi).affine, affine)
