@@ -215,6 +215,9 @@ class FieldmapFile:
             else None
         )
 
+        if self.suffix in ("T1w", "T2w"):
+            self.metadata["TotalReadoutTime"] = 0.0
+
         # Check for REQUIRED metadata (depends on suffix.)
         if self.suffix in ("bold", "dwi", "epi", "sbref"):
             if "PhaseEncodingDirection" not in self.metadata:
@@ -348,20 +351,19 @@ class FieldmapEstimation:
         # Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)
         # IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s
         pepolar_types = suffix_set.intersection(("bold", "dwi", "epi", "sbref"))
+        anat_types = suffix_set.intersection(("T1w", "T2w"))
         _pepolar_estimation = (
             len([f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref")]) > 1
         )
 
-        if _pepolar_estimation:
+        if _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]
             _pe = set(f.metadata["PhaseEncodingDirection"] for f in self.sources)
             if len(_pe) == 1:
                 raise ValueError(
                     f"Only one phase-encoding direction <{_pe.pop()}> found across sources."
                 )
-
-        anat_types = suffix_set.intersection(("T1w", "T2w"))
-        if anat_types:
+        elif anat_types:
             self.method = MODALITIES[anat_types.pop()]
 
             if not pepolar_types:
@@ -369,8 +371,8 @@ class FieldmapEstimation:
                     "Only anatomical sources were found, cannot estimate fieldmap."
                 )
 
-        # No method has been identified -> fail.
         if self.method == EstimatorType.UNKNOWN:
+            # No method has been identified -> fail.
             raise ValueError("Insufficient sources to estimate a fieldmap.")
 
         intents_meta = set(

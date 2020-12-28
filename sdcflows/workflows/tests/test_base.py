@@ -7,8 +7,6 @@ from ...utils.wrangler import find_estimators
 from ..base import init_fmap_preproc_wf
 
 
-@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize(
     "dataset,subject", [("ds000054", "100185"), ("HCP101006", "101006")]
 )
@@ -19,7 +17,7 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
 
     outdir = outdir / "test_base" / dataset
     fm._estimators.clear()
-    estimators = find_estimators(bids_layouts[dataset], subject=subject)
+    estimators = find_estimators(layout=bids_layouts[dataset], subject=subject)
     wf = init_fmap_preproc_wf(
         estimators=estimators,
         omp_nthreads=2,
@@ -42,4 +40,5 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
     if workdir:
         wf.base_dir = str(workdir)
 
-    wf.run(plugin="Linear")
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        wf.run(plugin="Linear")

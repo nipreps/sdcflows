@@ -87,12 +87,12 @@ jobs:
         # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update --merge -d ds001771/
-        datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
+        datalad get -r -d ds001771/ ds001771/sub-36/*
 
         # ds000054
         datalad install -r https://github.com/nipreps-data/ds000054.git
         datalad update --merge -d ds000054/
-        datalad get -r -d ds000054/ ds000054/sub-100185/fmap/*
+        datalad get -r -d ds000054/ ds000054/sub-100185/*
     - uses: actions/cache@v2
       with:
         path: /var/lib/apt
