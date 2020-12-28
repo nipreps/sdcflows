@@ -64,11 +64,7 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 
 
 def init_syn_sdc_wf(
-    *,
-    atlas_threshold=3,
-    debug=False,
-    name="syn_sdc_wf",
-    omp_nthreads=1,
+    *, atlas_threshold=3, debug=False, name="syn_sdc_wf", omp_nthreads=1,
 ):
     """
     Build the *fieldmap-less* susceptibility-distortion estimation workflow.
@@ -199,10 +195,7 @@ template [@fieldmapless3].
         n_procs=omp_nthreads,
     )
 
-    unwarp_ref = pe.Node(
-        ApplyTransforms(interpolation="BSpline"),
-        name="unwarp_ref",
-    )
+    unwarp_ref = pe.Node(ApplyTransforms(interpolation="BSpline"), name="unwarp_ref",)
 
     epi_mask = pe.Node(EPIMask(), name="epi_mask")
 

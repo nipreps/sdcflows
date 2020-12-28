@@ -45,11 +45,11 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         name="t1w_mask",
     )
 
-    wf.connect(
-        [
-            (t1w_mask, syn_wf, [("out_file", "inputnode.anat_brain")]),
-        ]
-    )
+    # fmt: off
+    wf.connect([
+        (t1w_mask, syn_wf, [("out_file", "inputnode.anat_brain")]),
+    ])
+    # fmt: on
 
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
@@ -73,8 +73,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         }
 
         fmap_reports_wf = init_fmap_reports_wf(
-            output_dir=str(outdir),
-            fmap_type="sdcsyn",
+            output_dir=str(outdir), fmap_type="sdcsyn",
         )
         fmap_reports_wf.inputs.inputnode.source_files = [
             str(

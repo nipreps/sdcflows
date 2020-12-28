@@ -16,24 +16,17 @@ OBLIQUE_THRESHOLD_DEG = 0.5
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
     in_data = InputMultiObject(
-        File(exists=True),
-        mandatory=True,
-        desc="list of input data",
+        File(exists=True), mandatory=True, desc="list of input data",
     )
     in_meta = InputMultiObject(
-        traits.DictStrAny,
-        mandatory=True,
-        desc="list of metadata",
+        traits.DictStrAny, mandatory=True, desc="list of metadata",
     )
     max_trs = traits.Int(50, usedefault=True, desc="only pick first TRs")
 
 
 class _FlattenOutputSpec(TraitedSpec):
     out_list = OutputMultiObject(
-        traits.Tuple(
-            File(exists=True),
-            traits.DictStrAny,
-        ),
+        traits.Tuple(File(exists=True), traits.DictStrAny,),
         desc="list of output files",
     )
     out_data = OutputMultiObject(File(exists=True))
