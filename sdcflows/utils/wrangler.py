@@ -6,7 +6,7 @@ from contextlib import suppress
 from pathlib import Path
 
 
-def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
+def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -40,6 +40,9 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
 
     Examples
     --------
+    Our ``ds000054`` dataset, created for *fMRIPrep*, only has one *phasediff* type of fieldmap
+    with ``magnitude1`` and ``magnitude2`` files:
+
     >>> find_estimators(
     ...     layout=layouts['ds000054'],
     ...     subject="100185",
@@ -47,6 +50,10 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
                         bids_id='auto_00000')]
+
+    OpenNeuro's dataset with fake :math:`B_0` maps derived from two *PEPOLAR* acquisitions
+    has a total of 4 possible estimations: the two original *PEPOLAR* acquisitions and the
+    corresponding two that are just renamed versions of the former:
 
     >>> find_estimators(
     ...     layout=layouts['ds001771'],
@@ -58,6 +65,9 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
                         bids_id='auto_00003'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00004')]
+
+    OpenNeuro's ``ds001600`` is an SDC test-dataset containing many different possibilities
+    for fieldmap estimation:
 
     >>> find_estimators(
     ...     layout=layouts['ds001600'],
@@ -72,6 +82,8 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00008')]
 
+    We can also pick one (simplified) HCP subject for testing purposes:
+
     >>> find_estimators(
     ...     layout=layouts['HCP101006'],
     ...     subject="101006",
@@ -80,6 +92,9 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
                         bids_id='auto_00009'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00010')]
+
+    Finally, *SDCFlows*' "*dataset A*" contains a BIDS structure with zero-bytes
+    NIfTI files and some corresponding metadata:
 
     >>> find_estimators(
     ...     layout=layouts['dsA'],
@@ -96,6 +111,9 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00015')]
 
+    After cleaning the registry, we can see how the "*fieldmap-less*" estimation
+    can be forced:
+
     >>> from .. import fieldmaps as fm
     >>> fm.clear_registry()
     >>> find_estimators(
@@ -108,6 +126,8 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
                         bids_id='auto_00000'),
      FieldmapEstimation(sources=<3 files>, method=<EstimatorType.ANAT: 5>,
                         bids_id='auto_00001')]
+
+    Likewise in a more comprehensive dataset:
 
     >>> find_estimators(
     ...     layout=layouts['ds001771'],
@@ -129,17 +149,34 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_00008')]
 
+    Because "*dataset A*" contains very few metadata fields available, "*fieldmap-less*"
+    heuristics come back empty (BOLD and DWI files are missing
+    the mandatory ``PhaseEncodingDirection``, in this case):
+
+    >>> find_estimators(
+    ...     layout=layouts['dsA'],
+    ...     subject="01",
+    ...     force_fmapless=True,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>,
+                        bids_id='auto_00009'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>,
+                        bids_id='auto_00010'),
+     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
+                        bids_id='auto_00011'),
+     FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='auto_00012'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='auto_00013')]
+
     """
     from .. import fieldmaps as fm
     from bids.layout import Query
 
-    if subject is None:
-        subject = Query.ANY
-
     base_entities = {
         "subject": subject,
         "extension": [".nii", ".nii.gz"],
-        "space": None,  # Ensure derivatives are not captured
+        "scope": "raw",  # Ensure derivatives are not captured
     }
 
     fmapless = fmapless or {}
@@ -177,10 +214,9 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
 
     # At this point, only single-PE _epi files WITH ``IntendedFor`` can be automatically processed
     # (this will be easier with bids-standard/bids-specification#622 in).
-    try:
+    has_intended = tuple()
+    with suppress(ValueError):
         has_intended = layout.get(suffix="epi", IntendedFor=Query.ANY, **base_entities)
-    except ValueError:
-        has_intended = tuple()
 
     for epi_fmap in has_intended:
         if epi_fmap.path in fm._estimators.sources:
@@ -194,31 +230,25 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
 
         epi_sources = []
         for fmap in targets:
-            try:
+            with suppress(fm.MetadataError):
                 epi_sources.append(
                     fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
                 )
-            except fm.MetadataError:
-                pass
 
-        try:
+        with suppress(ValueError, TypeError):
             estimators.append(fm.FieldmapEstimation(epi_sources))
-        except (ValueError, TypeError):
-            pass
 
     if estimators and not force_fmapless:
         fmapless = False
 
-    if not fmapless:
-        return estimators
-
     # Find fieldmap-less schemes
-    anat_file = layout.get(suffix="T1w", desc=None, **base_entities)
+    anat_file = layout.get(suffix="T1w", **base_entities)
 
-    if not anat_file:
+    if not fmapless or not anat_file:
         return estimators
 
     from .epimanip import get_trt
+
     intended_root = Path(anat_file[0].path).parent.parent
     for ses, suffix in sorted(product(sessions, fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
@@ -240,26 +270,29 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
                 ro = get_trt(meta, candidate.path)
             ro_totals.append(ro)
             meta.update({"TotalReadoutTime": ro})
-            epi_targets.append(
-                fm.FieldmapFile(candidate.path, metadata=meta)
-            )
+            epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
 
         for pe_dir in sorted(set(pe_dirs)):
             pe_ro = [ro for ro, pe in zip(ro_totals, pe_dirs) if pe == pe_dir]
             for ro_time in sorted(set(pe_ro)):
-                fmfiles, fmpaths = tuple(zip(*[
-                    (target, str(Path(target.path).relative_to(intended_root)))
-                    for i, target in enumerate(epi_targets)
-                    if pe_dirs[i] == pe_dir and ro_totals[i] == ro_time
-                ]))
-                estimators.append(
-                    fm.FieldmapEstimation(
-                        [fm.FieldmapFile(
-                            anat_file[0],
-                            metadata={"IntendedFor": fmpaths}
-                        ), *fmfiles]
+                fmfiles, fmpaths = tuple(
+                    zip(
+                        *[
+                            (target, str(Path(target.path).relative_to(intended_root)))
+                            for i, target in enumerate(epi_targets)
+                            if pe_dirs[i] == pe_dir and ro_totals[i] == ro_time
+                        ]
                     )
                 )
-                # import pdb; pdb.set_trace()
+                estimators.append(
+                    fm.FieldmapEstimation(
+                        [
+                            fm.FieldmapFile(
+                                anat_file[0], metadata={"IntendedFor": fmpaths}
+                            ),
+                            *fmfiles,
+                        ]
+                    )
+                )
 
     return estimators
