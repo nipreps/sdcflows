@@ -102,7 +102,7 @@ jobs:
           command: |
             datalad install -r https://github.com/nipreps-data/ds001771.git
             datalad update -r --merge -d ds001771/
-            datalad get -r -d ds001771/ ds001771/sub-36/fmap/*
+            datalad get -r -d ds001771/ ds001771/sub-36/*
 
       - run:
           name: Install ds000054

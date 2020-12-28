@@ -101,6 +101,7 @@ def find_estimators(layout, subject=None, fmapless=True, force_fmapless=False):
     >>> find_estimators(
     ...     layout=layouts['ds000054'],
     ...     subject="100185",
+    ...     fmapless={"bold"},
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
