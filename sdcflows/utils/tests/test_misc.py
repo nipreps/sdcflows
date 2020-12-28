@@ -9,6 +9,7 @@ from ..misc import get_free_mem
 @pytest.mark.parametrize("retval", [None, 10])
 def test_get_free_mem(monkeypatch, retval):
     """Test the get_free_mem utility."""
+
     def mock_func():
         if retval is None:
             raise ImportError

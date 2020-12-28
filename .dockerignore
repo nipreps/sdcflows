@@ -39,6 +39,7 @@ out/**/*
 out/
 tools/**/*
 tools
+.DS_Store
 
 # CI, etc.
 .circleci/**/*
@@ -50,3 +51,4 @@ tools
 .travis.yml
 .zenodo.json
 CONTRIBUTING.md
+

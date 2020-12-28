@@ -51,7 +51,6 @@ def test_ConvertWarp(tmpdir, shape):
 )
 def test_Xeoblique(tmpdir, angles, oblique):
     """Exercise De/Reoblique interfaces."""
-
     tmpdir.chdir()
 
     affine = nb.affines.from_matvec(nb.eulerangles.euler2mat(*angles))
