@@ -68,7 +68,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
                     break
 
         if isdefined(self.inputs.moving):
-            movnii = load_img(self.inputs.moving)
+            movnii = rotate_affine(load_img(self.inputs.moving), rot=canonical_r)
 
         contour_nii = mask_nii = None
         if isdefined(self.inputs.mask):

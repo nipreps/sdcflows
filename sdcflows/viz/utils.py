@@ -95,8 +95,9 @@ def coolwarm_transparent(max_alpha=0.7, opaque_perc=30, transparent_perc=8):
     midpoint = cmap.N // 2 + 1
     _10perc = (cmap.N * transparent_perc) // 100
     # Set alpha
-    alpha = np.ones(cmap.N) * max_alpha
-    alpha[midpoint - _10perc : midpoint + _10perc] = 0
+    alpha = np.zeros(cmap.N)
+    alpha[:_20perc] = max_alpha
+    alpha[-_20perc:] = max_alpha
     alpha[_20perc : midpoint - _10perc - 1] = np.linspace(
         max_alpha, 0, len(alpha[_20perc : midpoint - _10perc - 1])
     )
