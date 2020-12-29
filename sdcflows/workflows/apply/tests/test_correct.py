@@ -36,7 +36,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     unwarp_wf = init_unwarp_wf(omp_nthreads=2, debug=True)
     unwarp_wf.inputs.inputnode.metadata = {
         "EffectiveEchoSpacing": 0.00058,
-        "PhaseEncodingDirection": "i-",
+        "PhaseEncodingDirection": "i",
     }
 
     workflow = pe.Workflow(name="test_unwarp_wf")
