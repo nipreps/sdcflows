@@ -8,4 +8,4 @@ def test_epi_mask(tmpdir, testdata_dir):
     """Check mask algorithm."""
     tmpdir.chdir()
     mask = epi_mask(testdata_dir / "epi.nii.gz")
-    assert abs(np.asanyarray(nb.load(mask).dataobj).sum() - 189052) < 10
+    assert abs(np.asanyarray(nb.load(mask).dataobj).sum() - 175793) < 10

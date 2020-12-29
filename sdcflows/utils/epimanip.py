@@ -219,6 +219,15 @@ def epi_mask(in_file, out_file=None):
 
     img = nb.load(in_file)
     data = img.get_fdata(dtype="float32")
+    # Truncate data to a standard uint8 range
+    data = np.clip(
+        data,
+        a_min=np.percentile(data[data >= 0], 25),
+        a_max=np.percentile(data[data >= 0], 95),
+    )
+    data -= data.min()
+    data *= 255 / data.max()
+
     # First open to blur out the skull around the brain
     opened = ndimage.grey_opening(data, structure=ball(3))
     # Second, close large vessels and the ventricles
@@ -229,23 +238,22 @@ def epi_mask(in_file, out_file=None):
     # Window filter on percentile 90 of data
     maxnorm = np.percentile(closed[closed > 0], 90)
     closed = np.clip(closed, a_min=0.0, a_max=maxnorm)
-    # Calculate index of center of masses
-    cm = tuple(np.round(ndimage.measurements.center_of_mass(closed)).astype(int))
     # Erode the picture of the brain by a lot
     eroded = ndimage.grey_erosion(closed, structure=ball(5))
     # Calculate the residual
     wshed = opened - eroded
-    wshed -= wshed.min()
-    wshed = np.round(1e3 * wshed / wshed.max()).astype(np.uint16)
+    wshed[wshed < 0] = 0
+    # Calculate index of center of masses
+    cm = tuple(np.round(ndimage.measurements.center_of_mass(eroded)).astype(int))
     markers = np.zeros_like(wshed, dtype=int)
     markers[cm] = 2
     markers[0, 0, -1] = -1
     # Run watershed
-    labels = ndimage.watershed_ift(wshed, markers)
+    labels = ndimage.watershed_ift(np.round(wshed).astype(np.uint16), markers)
 
     hdr = img.header.copy()
     hdr.set_data_dtype("uint8")
     nb.Nifti1Image(
-        ndimage.binary_dilation(labels == 2, ball(2)).astype("uint8"), img.affine, hdr
+        ndimage.binary_dilation(labels == 2, ball(1)).astype("uint8"), img.affine, hdr
     ).to_filename(out_file)
     return out_file
