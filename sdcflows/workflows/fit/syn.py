@@ -123,6 +123,7 @@ def init_syn_sdc_wf(
 
     """
     from pkg_resources import resource_filename as pkgrf
+    from packaging.version import parse as parseversion, Version
     from nipype.interfaces.image import Rescale
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
@@ -139,6 +140,12 @@ def init_syn_sdc_wf(
         DEFAULT_ZOOMS_MM,
     )
 
+    ants_version = Registration().version
+    if ants_version and parseversion(ants_version) < Version("2.2.0"):
+        raise RuntimeError(
+            f"Please upgrade ANTs to 2.2 or older ({ants_version} found)."
+        )
+
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
 A deformation field to correct for susceptibility distortions was estimated
@@ -147,7 +154,7 @@ The deformation field is that resulting from co-registering the EPI reference
 to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
 @fieldmapless2].
 Registration is performed with `antsRegistration`
-(ANTs {Registration().version or "-- version unknown"}), and
+(ANTs {ants_version or "-- version unknown"}), and
 the process regularized by constraining deformation to be nonzero only
 along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
