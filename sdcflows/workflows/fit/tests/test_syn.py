@@ -58,7 +58,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
-            custom_entities={"est": "sdcsyn"},
             bids_fmap_id="sdcsyn",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = [
@@ -101,3 +100,17 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         wf.base_dir = str(workdir)
 
     wf.run(plugin="Linear")
+
+
+@pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
+def test_syn_wf_version(monkeypatch, ants_version):
+    """Ensure errors are triggered with ANTs < 2.2."""
+    from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+
+    monkeypatch.setattr(Registration, "version", ants_version)
+    if ants_version == "2.1.0":
+        with pytest.raises(RuntimeError):
+            init_syn_sdc_wf(debug=True, omp_nthreads=4)
+    else:
+        wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
+        assert (ants_version or "version unknown") in wf.__desc__

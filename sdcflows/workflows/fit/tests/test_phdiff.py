@@ -52,7 +52,6 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_file):
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
-            custom_entities={"est": "phasediff"},
             bids_fmap_id="phasediff_id",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = [f for f, _ in fieldmaps]

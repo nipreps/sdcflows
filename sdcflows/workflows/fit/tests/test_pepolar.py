@@ -50,7 +50,6 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
-            custom_entities={"est": "pepolar"},
             bids_fmap_id="pepolar_id",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = in_data
