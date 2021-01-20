@@ -156,7 +156,7 @@ jobs:
 
   build_n_pytest:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/tests
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
@@ -183,14 +183,14 @@ jobs:
             set -e
             if [[ "$success" = "0" ]]; then
                 echo "Pulling from local registry"
-                docker tag localhost:5000/ubuntu ubuntu:xenial-20191010
+                docker tag localhost:5000/ubuntu ubuntu:xenial-20201030
                 docker pull localhost:5000/sdcflows
                 docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
                 echo "Pulling from Docker Hub"
-                docker pull ubuntu:xenial-20191010
-                docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
+                docker pull ubuntu:xenial-20201030
+                docker tag ubuntu:xenial-20201030 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
                 docker pull nipreps/sdcflows:latest
             fi
@@ -390,7 +390,7 @@ jobs:
 
   deploy_docker:
     machine:
-      image: circleci/classic:201711-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/
     steps:
       - restore_cache:
