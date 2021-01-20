@@ -1,4 +1,5 @@
 """Check the tools submodule."""
+import os
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -7,6 +8,7 @@ from niworkflows.interfaces.masks import SimpleShowMaskRPT
 from ..tools import brain_masker
 
 
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize("folder", ["magnitude/ds000054", "magnitude/ds000217"])
 def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     """Exercise the brain masking tool."""
@@ -34,14 +36,15 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
         n_procs=8,
         name="n4",
     )
-    clipper_n4 = pe.Node(niu.Function(function=_advanced_clip, input_names=["in_file", "p_min", "p_max"]), name="clipper_n4")
+    clipper_n4 = pe.Node(
+        niu.Function(
+            function=_advanced_clip, input_names=["in_file", "p_min", "p_max"]
+        ),
+        name="clipper_n4",
+    )
     clipper_n4.inputs.p_max = 100.0
 
     masker = pe.Node(niu.Function(function=brain_masker), name="masker")
-
-    # clipper_final = pe.Node(niu.Function(function=_advanced_clip, input_names=["in_file", "p_min", "p_max"]), name="clipper_final")
-    # clipper_final.inputs.p_min = 0.0
-    # clipper_final.inputs.p_max = 100.0
 
     # fmt:off
     wf.connect([

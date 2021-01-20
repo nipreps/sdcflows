@@ -81,7 +81,8 @@ ENV PATH="/usr/local/miniconda/bin:$PATH" \
     PYTHONNOUSERSITE=1
 
 # Installing precomputed python packages
-RUN conda install -y python=3.7 \
+RUN conda install -y -c anaconda -c conda-forge \
+                     python=3.7 \
                      graphviz=2.40 \
                      libxml2=2.9 \
                      libxslt=1.1 \
@@ -90,6 +91,7 @@ RUN conda install -y python=3.7 \
                      mkl \
                      numpy=1.19 \
                      pip=20.3 \
+                     scikit-image=0.18 \
                      scikit-learn=0.19 \
                      scipy=1.5 \
                      setuptools \

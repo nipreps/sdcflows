@@ -111,6 +111,13 @@ jobs:
             datalad update -r --merge -d ds000054/
             datalad get -r -J 2 -d ds000054/ ds000054/* ds000054/derivatives/*
 
+      - run:
+          name: Install Brain extraction tests
+          command: |
+            datalad install -r https://oesteban@github.com/nipreps-data/brain-extraction-tests.git
+            datalad update --merge -d brain-extraction-tests/
+            datalad get -r -J 2 -d brain-extraction-tests
+
       - save_cache:
           key: data-v4-{{ .Branch }}-{{ .BuildNum }}
           paths:
