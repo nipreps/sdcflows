@@ -1,5 +1,5 @@
 # Use Ubuntu 16.04 LTS
-FROM ubuntu:xenial-20191010
+FROM ubuntu:xenial-20201030
 
 # Pre-cache neurodebian key
 COPY .docker/files/neurodebian.gpg /usr/local/etc/neurodebian.gpg
@@ -60,10 +60,11 @@ ENV FSLDIR="/usr/share/fsl/5.0" \
     AFNI_PLUGINPATH="/usr/lib/afni/plugins"
 ENV PATH="/usr/lib/fsl/5.0:/usr/lib/afni/bin:$PATH"
 
-# Installing ANTs 2.2.0 (NeuroDocker build)
+# Installing ANTs 2.3.3 (NeuroDocker build)
+# Note: the URL says 2.3.4 but it is actually 2.3.3
 ENV ANTSPATH=/usr/lib/ants
 RUN mkdir -p $ANTSPATH && \
-    curl -sSL "https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz" \
+    curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
     | tar -xzC $ANTSPATH --strip-components 1
 ENV PATH=$ANTSPATH:$PATH
 
