@@ -5,7 +5,7 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces.ants import N4BiasFieldCorrection
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
-from ..tools import brain_masker
+from ..brainmask import BrainExtraction
 
 
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
@@ -44,10 +44,7 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     )
     clipper_n4.inputs.p_max = 100.0
 
-    masker = pe.Node(
-        niu.Function(function=brain_masker, output_names=("out_probseg", "out_mask")),
-        name="masker",
-    )
+    masker = pe.Node(BrainExtraction(), name="masker")
 
     # fmt:off
     wf.connect([
