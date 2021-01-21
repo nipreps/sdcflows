@@ -4,6 +4,7 @@
 def brain_masker(in_file, out_file=None, padding=5):
     """Use grayscale morphological operations to obtain a quick mask of EPI data."""
     from pathlib import Path
+    import re
     import nibabel as nb
     import numpy as np
     from scipy import ndimage
@@ -53,15 +54,17 @@ def brain_masker(in_file, out_file=None, padding=5):
         segtarget, markers, spacing=img.header.get_zooms()[:3], return_full_prob=True
     )[..., padding:-padding, padding:-padding, padding:-padding]
 
-    if out_file is None:
-        out_probseg = Path("brain_probseg.nii.gz").absolute()
-        out_mask = Path("brain_mask.nii.gz").absolute()
-
-    hdr.set_data_dtype("float32")
-    img.__class__((labels[0, ...]), img.affine, hdr).to_filename(out_probseg)
+    out_mask = Path(out_file or "brain_mask.nii.gz").absolute()
 
     hdr.set_data_dtype("uint8")
     img.__class__((labels[0, ...] >= 0.5).astype("uint8"), img.affine, hdr).to_filename(
         out_mask
     )
+
+    out_probseg = re.sub(
+        r"\.nii(\.gz)$", r"_probseg.nii\1", str(out_mask).replace("_mask.", ".")
+    )
+    hdr.set_data_dtype("float32")
+    img.__class__((labels[0, ...]), img.affine, hdr).to_filename(out_probseg)
+
     return str(out_probseg), str(out_mask)
