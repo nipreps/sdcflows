@@ -44,7 +44,10 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     )
     clipper_n4.inputs.p_max = 100.0
 
-    masker = pe.Node(niu.Function(function=brain_masker), name="masker")
+    masker = pe.Node(
+        niu.Function(function=brain_masker, output_names=("out_probseg", "out_mask")),
+        name="masker",
+    )
 
     # fmt:off
     wf.connect([
@@ -74,7 +77,7 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
         # fmt: off
         wf.connect([
             (inputnode, report, [(("in_file", _report_name, out_path), "out_report")]),
-            (masker, report, [("out", "mask_file")]),
+            (masker, report, [("out_mask", "mask_file")]),
             (clipper_n4, report, [("out", "background_file")]),
         ])
         # fmt: on

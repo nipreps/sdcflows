@@ -54,10 +54,14 @@ def brain_masker(in_file, out_file=None, padding=5):
     )[..., padding:-padding, padding:-padding, padding:-padding]
 
     if out_file is None:
-        out_file = Path("brain_probseg.nii.gz").absolute()
+        out_probseg = Path("brain_probseg.nii.gz").absolute()
+        out_mask = Path("brain_mask.nii.gz").absolute()
+
+    hdr.set_data_dtype("float32")
+    img.__class__((labels[0, ...]), img.affine, hdr).to_filename(out_probseg)
 
     hdr.set_data_dtype("uint8")
-    img.__class__((labels[0, ...]).astype("uint8"), img.affine, hdr).to_filename(
-        out_file
+    img.__class__((labels[0, ...] >= 0.5).astype("uint8"), img.affine, hdr).to_filename(
+        out_mask
     )
-    return str(out_file)
+    return str(out_probseg), str(out_mask)
