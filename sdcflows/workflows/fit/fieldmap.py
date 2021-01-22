@@ -275,8 +275,9 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
 
     """
     from nipype.interfaces.ants import N4BiasFieldCorrection
-    from niworkflows.interfaces.masks import BETRPT
     from niworkflows.interfaces.images import IntraModalMerge
+    from ...interfaces.brainmask import BrainExtraction
+    from ...interfaces.utils import IntensityClip
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=["magnitude"]), name="inputnode")
@@ -290,21 +291,30 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     magmrg = pe.Node(IntraModalMerge(hmc=False, to_ras=False), name="magmrg")
 
     # de-gradient the fields ("bias/illumination artifact")
+    clipper_pre = pe.Node(IntensityClip(), name="clipper_pre")
     n4_correct = pe.Node(
-        N4BiasFieldCorrection(dimension=3, copy_header=True),
+        N4BiasFieldCorrection(
+            dimension=3,
+            copy_header=True,
+            n_iterations=[50] * 5,
+            convergence_threshold=1e-7,
+            shrink_factor=4,
+        ),
         name="n4_correct",
         n_procs=omp_nthreads,
     )
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name="bet")
+    clipper_post = pe.Node(IntensityClip(p_max=100.0), name="clipper_post")
+    masker = pe.Node(BrainExtraction(), name="masker")
 
     # fmt: off
     workflow.connect([
         (inputnode, magmrg, [("magnitude", "in_files")]),
-        (magmrg, n4_correct, [("out_avg", "input_image")]),
-        (n4_correct, bet, [("output_image", "in_file")]),
-        (bet, outputnode, [("mask_file", "fmap_mask"),
-                           ("out_file", "fmap_ref"),
-                           ("out_report", "mask_report")]),
+        (magmrg, clipper_pre, [("out_avg", "in_file")]),
+        (clipper_pre, n4_correct, [("out_file", "input_image")]),
+        (n4_correct, clipper_post, [("output_image", "in_file")]),
+        (clipper_post, masker, [("out_file", "in_file")]),
+        (masker, outputnode, [("out_mask", "fmap_mask"),
+                              ("out_probseg", "fmap_probseg")]),
     ])
     # fmt: on
     return workflow
