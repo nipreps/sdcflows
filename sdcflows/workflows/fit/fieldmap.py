@@ -313,7 +313,8 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
         (clipper_pre, n4_correct, [("out_file", "input_image")]),
         (n4_correct, clipper_post, [("output_image", "in_file")]),
         (clipper_post, masker, [("out_file", "in_file")]),
-        (masker, outputnode, [("out_mask", "fmap_mask"),
+        (masker, outputnode, [("out_file", "fmap_ref"),
+                              ("out_mask", "fmap_mask"),
                               ("out_probseg", "fmap_probseg")]),
     ])
     # fmt: on
@@ -386,7 +387,10 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
         niu.IdentityInterface(fields=["magnitude", "phase", "mask"]), name="inputnode"
     )
 
-    outputnode = pe.Node(niu.IdentityInterface(fields=["fieldmap"]), name="outputnode",)
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fieldmap"]),
+        name="outputnode",
+    )
 
     def _split(phase):
         return phase
