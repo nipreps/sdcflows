@@ -26,7 +26,8 @@ def brain_masker(in_file, out_file=None, padding=5):
 
     # Grayscale closing to enhance CSF layer surrounding the brain
     closed = ndimage.grey_closing(datainv, structure=ball(1))
-    th = threshold_otsu(closed) * 0.9
+    denoised = ndimage.median_filter(closed, footprint=ball(3))
+    th = threshold_otsu(denoised)
 
     # Rough binary mask
     closedbin = np.zeros_like(closed)
