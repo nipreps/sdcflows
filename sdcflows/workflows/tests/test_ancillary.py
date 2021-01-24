@@ -3,10 +3,8 @@ import os
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces.ants import N4BiasFieldCorrection
 from niworkflows.interfaces.masks import SimpleShowMaskRPT
-from ..brainmask import BrainExtraction
-from ..utils import IntensityClip
+from ..ancillary import init_brainextraction_wf
 
 
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
@@ -25,27 +23,14 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
 
     inputnode = pe.Node(niu.IdentityInterface(fields=("in_file",)), name="inputnode")
     inputnode.iterables = ("in_file", input_files)
-    clipper = pe.Node(IntensityClip(), name="clipper")
-    n4 = pe.Node(
-        N4BiasFieldCorrection(
-            dimension=3,
-            copy_header=True,
-            n_iterations=[50] * 5,
-            convergence_threshold=1e-7,
-            shrink_factor=4,
-        ),
-        n_procs=8,
-        name="n4",
-    )
-    clipper_n4 = pe.Node(IntensityClip(p_max=100.0), name="clipper_n4")
-    masker = pe.Node(BrainExtraction(), name="masker")
+    merger = pe.Node(niu.Function(function=_merge), name="merger")
+
+    brainmask_wf = init_brainextraction_wf()
 
     # fmt:off
     wf.connect([
-        (inputnode, clipper, [("in_file", "in_file")]),
-        (clipper, n4, [("out_file", "input_image")]),
-        (n4, clipper_n4, [("output_image", "in_file")]),
-        (clipper_n4, masker, [("out_file", "in_file")]),
+        (inputnode, merger, [("in_file", "in_file")]),
+        (merger, brainmask_wf, [("out", "inputnode.in_file")]),
     ])
     # fmt:on
 
@@ -53,6 +38,7 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
         out_path = outdir / "masks" / folder.split("/")[-1]
         out_path.mkdir(exist_ok=True, parents=True)
         report = pe.Node(SimpleShowMaskRPT(), name="report")
+        report.interface._always_run = True
 
         def _report_name(fname, out_path):
             from pathlib import Path
@@ -68,9 +54,26 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
         # fmt: off
         wf.connect([
             (inputnode, report, [(("in_file", _report_name, out_path), "out_report")]),
-            (masker, report, [("out_mask", "mask_file")]),
-            (clipper_n4, report, [("out_file", "background_file")]),
+            (brainmask_wf, report, [("outputnode.out_mask", "mask_file"),
+                                    ("outputnode.out_file", "background_file")]),
         ])
         # fmt: on
 
     wf.run()
+
+
+def _merge(in_file):
+    import nibabel as nb
+    import numpy as np
+
+    img = nb.squeeze_image(nb.load(in_file))
+
+    data = np.asanyarray(img.dataobj)
+    if data.ndim == 3:
+        return in_file
+
+    from pathlib import Path
+    data = data.mean(-1)
+    out_file = (Path() / "merged.nii.gz").absolute()
+    img.__class__(data, img.affine, img.header).to_filename(out_file)
+    return str(out_file)

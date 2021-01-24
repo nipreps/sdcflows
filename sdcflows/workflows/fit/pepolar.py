@@ -67,9 +67,10 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     from niworkflows.interfaces.nibabel import MergeSeries
     from niworkflows.interfaces.images import IntraModalMerge
 
-    from ...interfaces.epi import GetReadoutTime, EPIMask
+    from ...interfaces.epi import GetReadoutTime
     from ...interfaces.utils import Flatten
     from ...interfaces.bspline import TOPUPCoeffReorient
+    from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
     workflow.__postdesc__ = f"""\
@@ -113,11 +114,11 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
         IntraModalMerge(hmc=False, to_ras=False), name="merge_corrected"
     )
 
-    epi_mask = pe.Node(EPIMask(), name="epi_mask")
-
     fix_coeff = pe.Node(
         TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
     )
+
+    brainextraction_wf = init_brainextraction_wf()
 
     # fmt: off
     workflow.connect([
@@ -136,9 +137,9 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
                              ("out_warps", "out_warps")]),
-        (merge_corrected, epi_mask, [("out_avg", "in_file")]),
+        (merge_corrected, brainextraction_wf, [("out_avg", "inputnode.in_file")]),
         (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
-        (epi_mask, outputnode, [("out_file", "fmap_mask")]),
+        (brainextraction_wf, outputnode, [("outputnode.out_mask", "fmap_mask")]),
         (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
