@@ -1,8 +1,5 @@
 """Test unwarp."""
-import os
 from pathlib import Path
-import pytest
-
 from nipype.pipeline import engine as pe
 
 from ...fit.fieldmap import init_magnitude_wf
@@ -10,7 +7,6 @@ from ..correction import init_unwarp_wf
 from ..registration import init_coeff2epi_wf
 
 
-@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     """Test the unwarping workflow."""
     distorted = (
