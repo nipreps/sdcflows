@@ -130,7 +130,6 @@ def init_syn_sdc_wf(
         FixHeaderRegistration as Registration,
     )
     from niworkflows.interfaces.nibabel import Binarize
-    from ...interfaces.epi import EPIMask
     from ...utils.misc import front as _pop
     from ...interfaces.utils import Deoblique, Reoblique
     from ...interfaces.bspline import (
@@ -139,6 +138,7 @@ def init_syn_sdc_wf(
         DEFAULT_HF_ZOOMS_MM,
         DEFAULT_ZOOMS_MM,
     )
+    from ..ancillary import init_brainextraction_wf
 
     ants_version = Registration().version
     if ants_version and parseversion(ants_version) < Version("2.2.0"):
@@ -204,7 +204,7 @@ template [@fieldmapless3].
 
     unwarp_ref = pe.Node(ApplyTransforms(interpolation="BSpline"), name="unwarp_ref",)
 
-    epi_mask = pe.Node(EPIMask(), name="epi_mask")
+    brainextraction_wf = init_brainextraction_wf()
 
     # Extract nonzero component
     extract_field = pe.Node(niu.Function(function=_extract_field), name="extract_field")
@@ -245,12 +245,12 @@ template [@fieldmapless3].
         (syn, extract_field, [("forward_transforms", "in_file")]),
         (syn, unwarp_ref, [("forward_transforms", "transforms")]),
         (unwarp_ref, reoblique, [("output_image", "in_plumb")]),
-        (reoblique, epi_mask, [("out_epi", "in_file")]),
+        (reoblique, brainextraction_wf, [("out_epi", "inputnode.in_file")]),
         (extract_field, reoblique, [("out", "in_field")]),
         (reoblique, bs_filter, [("out_field", "in_data")]),
-        (epi_mask, bs_filter, [("out_file", "in_mask")]),
+        (brainextraction_wf, bs_filter, [("outputnode.out_mask", "in_mask")]),
         (reoblique, outputnode, [("out_epi", "fmap_ref")]),
-        (epi_mask, outputnode, [("out_file", "fmap_mask")]),
+        (brainextraction_wf, outputnode, [("outputnode.out_mask", "fmap_mask")]),
         (bs_filter, outputnode, [
             ("out_extrapolated" if not debug else "out_field", "fmap"),
             ("out_coeff", "fmap_coeff")]),

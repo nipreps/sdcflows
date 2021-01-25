@@ -57,7 +57,10 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         from ....interfaces.reportlets import FieldmapReportlet
 
         report = pe.Node(
-            SimpleBeforeAfter(before_label="Distorted", after_label="Corrected",),
+            SimpleBeforeAfter(
+                before_label="Distorted",
+                after_label="Corrected",
+            ),
             name="report",
             mem_gb=0.1,
         )

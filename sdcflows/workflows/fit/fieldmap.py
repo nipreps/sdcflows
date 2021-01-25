@@ -274,9 +274,8 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
         Path to a binary brain mask corresponding to the reference above.
 
     """
-    from nipype.interfaces.ants import N4BiasFieldCorrection
-    from niworkflows.interfaces.masks import BETRPT
     from niworkflows.interfaces.images import IntraModalMerge
+    from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=["magnitude"]), name="inputnode")
@@ -288,23 +287,17 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     # Merge input magnitude images
     # Do not reorient to RAS to preserve the validity of PhaseEncodingDirection
     magmrg = pe.Node(IntraModalMerge(hmc=False, to_ras=False), name="magmrg")
-
-    # de-gradient the fields ("bias/illumination artifact")
-    n4_correct = pe.Node(
-        N4BiasFieldCorrection(dimension=3, copy_header=True),
-        name="n4_correct",
-        n_procs=omp_nthreads,
-    )
-    bet = pe.Node(BETRPT(generate_report=True, frac=0.6, mask=True), name="bet")
+    brainextraction_wf = init_brainextraction_wf()
 
     # fmt: off
     workflow.connect([
         (inputnode, magmrg, [("magnitude", "in_files")]),
-        (magmrg, n4_correct, [("out_avg", "input_image")]),
-        (n4_correct, bet, [("output_image", "in_file")]),
-        (bet, outputnode, [("mask_file", "fmap_mask"),
-                           ("out_file", "fmap_ref"),
-                           ("out_report", "mask_report")]),
+        (magmrg, brainextraction_wf, [("out_avg", "inputnode.in_file")]),
+        (brainextraction_wf, outputnode, [
+            ("outputnode.out_file", "fmap_ref"),
+            ("outputnode.out_mask", "fmap_mask"),
+            ("outputnode.out_probseg", "fmap_probseg"),
+        ]),
     ])
     # fmt: on
     return workflow
@@ -376,7 +369,10 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
         niu.IdentityInterface(fields=["magnitude", "phase", "mask"]), name="inputnode"
     )
 
-    outputnode = pe.Node(niu.IdentityInterface(fields=["fieldmap"]), name="outputnode",)
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fieldmap"]),
+        name="outputnode",
+    )
 
     def _split(phase):
         return phase

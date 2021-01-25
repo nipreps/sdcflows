@@ -68,4 +68,11 @@ def brain_masker(in_file, out_file=None, padding=5):
     hdr.set_data_dtype("float32")
     img.__class__((labels[0, ...]), img.affine, hdr).to_filename(out_probseg)
 
-    return str(out_probseg), str(out_mask)
+    out_brain = re.sub(
+        r"\.nii(\.gz)$", r"_brainmasked.nii\1", str(out_mask).replace("_mask.", ".")
+    )
+    data = np.asanyarray(img.dataobj)
+    data[labels[0, ...] < 0.5] = 0
+    img.__class__(data, img.affine, img.header).to_filename(out_brain)
+
+    return str(out_brain), str(out_probseg), str(out_mask)

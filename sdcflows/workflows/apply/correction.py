@@ -6,7 +6,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
+def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     """
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
@@ -26,8 +26,6 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
         Unique name of this workflow.
     debug : :obj:`bool`
         Whether to run in *sloppy* mode.
-    mask : obj:`bool`
-        Generate a quick mask.
 
     Inputs
     ------
@@ -40,13 +38,20 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
 
     Outputs
     -------
+    fieldmap
+        the displacements field interpolated from the B-Spline coefficients
+        and scaled by the appropriate parameters (readout time of the EPI
+        target and voxel size along PE).
     corrected
         the target EPI reference image, after applying unwarping.
+    corrected_mask
+        a fast mask calculated from the corrected EPI reference.
 
     """
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-    from ...interfaces.epi import GetReadoutTime, EPIMask
+    from ...interfaces.epi import GetReadoutTime
     from ...interfaces.bspline import Coefficients2Warp
+    from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(
@@ -64,6 +69,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
     unwarp = pe.Node(
         ApplyTransforms(dimension=3, interpolation="BSpline"), name="unwarp"
     )
+    brainextraction_wf = init_brainextraction_wf()
 
     # fmt:off
     workflow.connect([
@@ -77,19 +83,11 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf", mask=True):
                              ("distorted", "input_image")]),
         (resample, unwarp, [("out_warp", "transforms")]),
         (resample, outputnode, [("out_field", "fieldmap")]),
-        (unwarp, outputnode, [("output_image", "corrected")]),
-    ])
-    # fmt:on
-
-    if not mask:
-        return workflow
-
-    epi_mask = pe.Node(EPIMask(), name="epi_mask")
-
-    # fmt:off
-    workflow.connect([
-        (unwarp, epi_mask, [("output_image", "in_file")]),
-        (epi_mask, outputnode, [("out_file", "corrected_mask")]),
+        (unwarp, brainextraction_wf, [("output_image", "inputnode.in_file")]),
+        (brainextraction_wf, outputnode, [
+            ("outputnode.out_file", "corrected"),
+            ("outputnode.out_mask", "corrected_mask"),
+        ]),
     ])
     # fmt:on
     return workflow
