@@ -1,6 +1,6 @@
-2.0.0 (TBD)
-===========
-The *SDCFlows* 2.0.x series are released with a comprehensive overhaul of the software's API.
+2.0.0 (January 25, 2021)
+========================
+The *SDCFlows* 2.0.x series are released after a comprehensive overhaul of the software's API.
 This overhaul has the vision of converting *SDCFlows* into some sort of subordinate pipeline
 to other *d/fMRIPrep*, inline with *sMRIPrep*'s approach.
 The idea is to consider fieldmaps a first-citizen input, for which derivatives are generated
@@ -45,9 +45,15 @@ A bids's-eye view of this new release follows:
 
 Some of the most prominent pull-requests conducive to this release are:
 
+* FIX: Fast & accurate brain extraction of magnitude images without FSL BET (#174)
+* FIX: svgutils 0.3.2 breaks our reportlets (#175)
+* FIX: Misconfigured test of unwarping workflow (#170)
+* FIX: Cleanup annoying isolated dots in reportlets + new tests (#168)
 * FIX: Make images "plumb" before running ANTs-SyN (and roll-back afterwards) (#165)
 * FIX: Convert SEI fieldmaps given in rad/s into Hz (#127)
 * FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* ENH: Adopt new brain extraction algorithm in magnitude preparation workflow (#176)
+* ENH: Add "*fieldmap-less*" estimations to default heuristics (#166)
 * ENH: Add one test for the SDC-SyN workflow (#164)
 * ENH: Generate a simple mask after correction (#161)
 * ENH: Increase unit-tests coverage of ``sdcflows.fieldmaps`` (#159)
@@ -68,6 +74,8 @@ Some of the most prominent pull-requests conducive to this release are:
 * DOC: Minor improvements to the literate workflows descriptions. (#162)
 * DOC: Fix typo in docstring (#155)
 * DOC: Enable NiPype's sphinx-extension to better render Interfaces (#131)
+* MAINT: Docker - Update base Ubuntu image & ANTs, makefile (#173)
+* MAINT: Retouch several tests and improve ANTs version handling of SyN workflow (#172)
 * MAINT: Drop Python 3.6 (#160)
 * MAINT: Enable Git-archive protocol with setuptools-scm-archive (#153)
 * MAINT: Migrate TravisCI -> GH Actions (completion) (#138)
