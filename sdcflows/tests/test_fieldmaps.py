@@ -211,7 +211,10 @@ def test_FieldmapEstimationIdentifier(monkeypatch, dsA_dir):
 
     with monkeypatch.context() as m:
         m.setattr(fm, "_intents", {"file1.nii.gz": {"fmap_0", "fmap_1"}})
-        assert fm.get_identifier("file1.nii.gz") == ("fmap_0", "fmap_1",)
+        assert fm.get_identifier("file1.nii.gz") == (
+            "fmap_0",
+            "fmap_1",
+        )
 
     with pytest.raises(KeyError):
         fm.get_identifier("file", by="invalid")

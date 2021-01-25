@@ -78,7 +78,8 @@ def test_topup_coeffs(tmpdir, testdata_dir):
 
     with pytest.raises(ValueError):
         TOPUPCoeffReorient(
-            in_coeff="failing.nii.gz", fmap_ref=str(testdata_dir / "epi.nii.gz"),
+            in_coeff="failing.nii.gz",
+            fmap_ref=str(testdata_dir / "epi.nii.gz"),
         ).run()
 
     # Test automatic output file name generation, just for coverage

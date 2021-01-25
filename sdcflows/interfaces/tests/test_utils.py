@@ -47,7 +47,11 @@ def test_ConvertWarp(tmpdir, shape):
 
 @pytest.mark.parametrize(
     "angles,oblique",
-    [((0, 0, 0), False), ((0.9, 0.001, 0.001), True), ((0, 0, 2 * np.pi), False),],
+    [
+        ((0, 0, 0), False),
+        ((0.9, 0.001, 0.001), True),
+        ((0, 0, 2 * np.pi), False),
+    ],
 )
 def test_Xeoblique(tmpdir, angles, oblique):
     """Exercise De/Reoblique interfaces."""
@@ -73,7 +77,9 @@ def test_Xeoblique(tmpdir, angles, oblique):
 
     reoblique = (
         Reoblique(
-            in_plumb=result.out_epi, in_field=result.out_epi, in_epi="epi.nii.gz",
+            in_plumb=result.out_epi,
+            in_field=result.out_epi,
+            in_epi="epi.nii.gz",
         )
         .run()
         .outputs

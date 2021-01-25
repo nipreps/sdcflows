@@ -73,6 +73,7 @@ def _merge(in_file):
         return in_file
 
     from pathlib import Path
+
     data = data.mean(-1)
     out_file = (Path() / "merged.nii.gz").absolute()
     img.__class__(data, img.affine, img.header).to_filename(out_file)

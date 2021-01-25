@@ -116,7 +116,8 @@ def init_fmap_preproc_wf(
         if estimator.method not in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             fields = INPUT_FIELDS[estimator.method]
             inputnode = pe.Node(
-                niu.IdentityInterface(fields=fields), name=f"in_{estimator.bids_id}",
+                niu.IdentityInterface(fields=fields),
+                name=f"in_{estimator.bids_id}",
             )
             # fmt:off
             workflow.connect([

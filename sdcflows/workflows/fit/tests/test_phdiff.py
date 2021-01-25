@@ -36,7 +36,11 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_file):
         name=f"phdiff_{fmap_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
     )
     mode = "mapped" if "fieldmap" in fmap_path[0].name else "phasediff"
-    phdiff_wf = init_fmap_wf(omp_nthreads=2, debug=True, mode=mode,)
+    phdiff_wf = init_fmap_wf(
+        omp_nthreads=2,
+        debug=True,
+        mode=mode,
+    )
     phdiff_wf.inputs.inputnode.fieldmap = fieldmaps
     phdiff_wf.inputs.inputnode.magnitude = [
         f.replace("diff", "1")
@@ -58,7 +62,8 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_file):
         fmap_derivatives_wf.inputs.inputnode.fmap_meta = [f for _, f in fieldmaps]
 
         fmap_reports_wf = init_fmap_reports_wf(
-            output_dir=str(outdir), fmap_type=mode if len(fieldmaps) == 1 else "phases",
+            output_dir=str(outdir),
+            fmap_type=mode if len(fieldmaps) == 1 else "phases",
         )
         fmap_reports_wf.inputs.inputnode.source_files = [f for f, _ in fieldmaps]
 

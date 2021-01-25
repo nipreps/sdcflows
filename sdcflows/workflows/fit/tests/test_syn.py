@@ -72,7 +72,8 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         }
 
         fmap_reports_wf = init_fmap_reports_wf(
-            output_dir=str(outdir), fmap_type="sdcsyn",
+            output_dir=str(outdir),
+            fmap_type="sdcsyn",
         )
         fmap_reports_wf.inputs.inputnode.source_files = [
             str(
