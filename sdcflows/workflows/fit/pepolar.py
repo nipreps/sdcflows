@@ -265,7 +265,11 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
     cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
 
     unwarp_reference = pe.Node(
-        ApplyTransforms(dimension=3, float=True, interpolation="LanczosWindowedSinc",),
+        ApplyTransforms(
+            dimension=3,
+            float=True,
+            interpolation="LanczosWindowedSinc",
+        ),
         name="unwarp_reference",
     )
 

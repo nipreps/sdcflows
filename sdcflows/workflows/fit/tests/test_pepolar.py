@@ -56,7 +56,8 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
         fmap_derivatives_wf.inputs.inputnode.fmap_meta = metadata
 
         fmap_reports_wf = init_fmap_reports_wf(
-            output_dir=str(outdir), fmap_type="pepolar",
+            output_dir=str(outdir),
+            fmap_type="pepolar",
         )
         fmap_reports_wf.inputs.inputnode.source_files = in_data
 

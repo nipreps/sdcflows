@@ -309,7 +309,9 @@ class TransformCoefficients(SimpleInterface):
 
     def _run_interface(self, runtime):
         self._results["out_coeff"] = _move_coeff(
-            self.inputs.in_coeff, self.inputs.fmap_ref, self.inputs.transform,
+            self.inputs.in_coeff,
+            self.inputs.fmap_ref,
+            self.inputs.transform,
         )
         return runtime
 

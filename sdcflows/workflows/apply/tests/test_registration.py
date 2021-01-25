@@ -52,7 +52,10 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
         from ...outputs import DerivativesDataSink
 
         report = pe.Node(
-            SimpleBeforeAfter(after_label="Target EPI", before_label="B0 Reference",),
+            SimpleBeforeAfter(
+                after_label="Target EPI",
+                before_label="B0 Reference",
+            ),
             name="report",
             mem_gb=0.1,
         )

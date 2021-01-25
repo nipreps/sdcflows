@@ -16,7 +16,10 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
 def init_coeff2epi_wf(
-    omp_nthreads, debug=False, write_coeff=False, name="fmap2field_wf",
+    omp_nthreads,
+    debug=False,
+    write_coeff=False,
+    name="fmap2field_wf",
 ):
     """
     Move the field coefficients on to the target (distorted) EPI space.
@@ -90,7 +93,10 @@ The field coefficients were mapped on to the reference EPI using the transform.
     )
 
     coregister = pe.Node(
-        Registration(from_file=ants_settings, output_warped_image=True,),
+        Registration(
+            from_file=ants_settings,
+            output_warped_image=True,
+        ),
         name="coregister",
         n_procs=omp_nthreads,
     )
