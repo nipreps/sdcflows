@@ -22,6 +22,8 @@ def init_brainextraction_wf(name="brainextraction_wf"):
     ------
     in_file : :obj:`str`
         the GRE magnitude or EPI reference to be brain-extracted
+    bspline_dist : :obj:`int`, optional
+        Integer to replace default distance of b-spline separation for N4
 
     Outputs
     -------
@@ -42,7 +44,14 @@ def init_brainextraction_wf(name="brainextraction_wf"):
 
     wf = Workflow(name=name)
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=("in_file",)), name="inputnode")
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=(
+                "in_file",
+                "bspline_dist"
+            )
+        ),
+        name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=(
@@ -74,6 +83,7 @@ def init_brainextraction_wf(name="brainextraction_wf"):
     # fmt:off
     wf.connect([
         (inputnode, clipper_pre, [("in_file", "in_file")]),
+        (inputnode, n4, [("bspline_dist", "bspline_fitting_distance")]),
         (clipper_pre, n4, [("out_file", "input_image")]),
         (n4, clipper_post, [("output_image", "in_file")]),
         (clipper_post, masker, [("out_file", "in_file")]),
