@@ -193,11 +193,11 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         estimators.append(e)
 
     # A bunch of heuristics to select EPI fieldmaps
-    sessions = layout.get_sessions() or (None,)
+    sessions = layout.get_sessions()
     acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
     contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
 
-    for ses, acq, ce in product(sessions, acqs, contrasts):
+    for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
         entities = base_entities.copy()
         entities.update(
             {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
@@ -250,7 +250,10 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     from .epimanip import get_trt
 
     intended_root = Path(anat_file[0].path).parent.parent
-    for ses, suffix in sorted(product(sessions, fmapless)):
+    if sessions:
+        intended_root = intended_root.parent
+
+    for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
 
         # Filter out candidates without defined PE direction
