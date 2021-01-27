@@ -169,6 +169,27 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00013')]
 
+    This function should also correctly investigate multi-session datasets:
+
+    >>> find_estimators(
+    ...     layout=layouts['ds000206'],
+    ...     subject="05",
+    ...     fmapless=False,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    []
+
+    >>> find_estimators(
+    ...     layout=layouts['ds000206'],
+    ...     subject="05",
+    ...     fmapless=True,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_00014'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_00015')]
+
     """
     from .. import fieldmaps as fm
     from bids.layout import Query
@@ -193,11 +214,11 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         estimators.append(e)
 
     # A bunch of heuristics to select EPI fieldmaps
-    sessions = layout.get_sessions() or (None,)
+    sessions = layout.get_sessions()
     acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
     contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
 
-    for ses, acq, ce in product(sessions, acqs, contrasts):
+    for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
         entities = base_entities.copy()
         entities.update(
             {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
@@ -250,7 +271,10 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     from .epimanip import get_trt
 
     intended_root = Path(anat_file[0].path).parent.parent
-    for ses, suffix in sorted(product(sessions, fmapless)):
+    if sessions:
+        intended_root = intended_root.parent
+
+    for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
 
         # Filter out candidates without defined PE direction
