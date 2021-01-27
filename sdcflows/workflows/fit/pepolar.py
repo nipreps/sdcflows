@@ -17,6 +17,7 @@ from nipype.interfaces import utility as niu
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
+INPUT_FIELDS = ("metadata", "in_data")
 _PEPOLAR_DESC = """\
 A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
 echo-planar imaging (EPI) references """
@@ -77,9 +78,7 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
 
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=["metadata", "in_data"]), name="inputnode"
-    )
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[

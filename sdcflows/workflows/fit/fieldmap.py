@@ -100,6 +100,8 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
+INPUT_FIELDS = ("magnitude", "fieldmap")
+
 
 def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     """
@@ -160,9 +162,7 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     )
 
     workflow = Workflow(name=name)
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=["magnitude", "fieldmap"]), name="inputnode"
-    )
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff"]),
         name="outputnode",
