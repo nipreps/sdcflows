@@ -169,6 +169,27 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_00013')]
 
+    This function should also correctly investigate multi-session datasets:
+
+    >>> find_estimators(
+    ...     layout=layouts['ds000206'],
+    ...     subject="05",
+    ...     fmapless=False,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    []
+
+    >>> find_estimators(
+    ...     layout=layouts['ds000206'],
+    ...     subject="05",
+    ...     fmapless=True,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_00014'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_00015')]
+
     """
     from .. import fieldmaps as fm
     from bids.layout import Query

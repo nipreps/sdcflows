@@ -94,6 +94,11 @@ jobs:
         datalad update --merge -d ds000054/
         datalad get -r -d ds000054/ ds000054/sub-100185/*
 
+        # ds000206
+        datalad install -r https://github.com/nipreps-data/ds000206.git
+        datalad update -r --merge -d ds000206/
+        datalad get -r -d ds000206/ ds000206/sub-05/
+
     - uses: actions/cache@v2
       with:
         path: /var/lib/apt
