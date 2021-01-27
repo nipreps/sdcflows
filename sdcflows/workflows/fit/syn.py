@@ -61,6 +61,13 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 DEFAULT_MEMORY_MIN_GB = 0.01
+INPUT_FIELDS = (
+    "epi_ref",
+    "epi_mask",
+    "anat_brain",
+    "std2anat_xfm",
+    "anat2epi_xfm",
+)
 
 
 def init_syn_sdc_wf(
@@ -163,12 +170,7 @@ the process regularized by constraining deformation to be nonzero only
 along the phase-encoding direction, and modulated with an average fieldmap
 template [@fieldmapless3].
 """
-    inputnode = pe.Node(
-        niu.IdentityInterface(
-            ["epi_ref", "epi_mask", "anat_brain", "std2anat_xfm", "anat2epi_xfm"]
-        ),
-        name="inputnode",
-    )
+    inputnode = pe.Node(niu.IdentityInterface(INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(["fmap", "fmap_ref", "fmap_coeff", "fmap_mask"]),
         name="outputnode",

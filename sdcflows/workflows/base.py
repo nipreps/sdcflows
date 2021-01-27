@@ -5,24 +5,9 @@ from nipype import logging
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
-from ..fieldmaps import EstimatorType
-
 
 LOGGER = logging.getLogger("nipype.workflow")
 DEFAULT_MEMORY_MIN_GB = 0.01
-
-INPUT_FIELDS = {
-    EstimatorType.MAPPED: ["magnitude", "fieldmap"],
-    EstimatorType.PHASEDIFF: ["magnitude", "fieldmap"],
-    EstimatorType.PEPOLAR: ["metadata", "in_data"],
-    EstimatorType.ANAT: [
-        "epi_ref",
-        "epi_mask",
-        "anat_brain",
-        "std2anat_xfm",
-        "anat2bold_xfm",
-    ],
-}
 
 
 def init_fmap_preproc_wf(
@@ -67,7 +52,12 @@ def init_fmap_preproc_wf(
         The preprocessed fieldmap coefficients.
 
     """
+    from .fit.pepolar import INPUT_FIELDS as _pepolar_fields
+    from .fit.syn import INPUT_FIELDS as _syn_fields
     from .outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
+    from ..fieldmaps import EstimatorType
+
+    INPUT_FIELDS = {EstimatorType.ANAT: _syn_fields, EstimatorType.PEPOLAR: _pepolar_fields}
 
     workflow = Workflow(name=name)
 
