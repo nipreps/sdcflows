@@ -56,6 +56,7 @@ References
     Berlin: Master Thesis, Freie Universität.
 
 """
+from pkg_resources import resource_filename
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
@@ -269,6 +270,111 @@ template [@fieldmapless3].
     return workflow
 
 
+def init_syn_preprocessing_wf(
+    *,
+    debug=False,
+    name="syn_preprocessing_wf",
+    omp_nthreads=1,
+):
+    """
+    Prepare EPI references and co-registration to anatomical for SyN.
+
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+
+            from sdcflows.workflows.fit.syn import init_syn_sdc_wf
+            wf = init_syn_sdc_wf(omp_nthreads=8)
+
+    Parameters
+    ----------
+    debug : :obj:`bool`
+        Whether a fast (less accurate) configuration of the workflow should be applied.
+    name : :obj:`str`
+        Name for this workflow
+    omp_nthreads : :obj:`int`
+        Parallelize internal tasks across the number of CPUs given by this option.
+
+    Inputs
+    ------
+    in_epis : :obj:`list` of :obj:`str`
+        Distorted EPI images that will be merged together to create the
+        EPI reference file.
+    in_meta : :obj:`list` of :obj:`dict`
+        Metadata dictionaries corresponding to the ``in_epis`` input.
+    anat_brain : :obj:`str`
+        A preprocessed, skull-stripped anatomical (T1w or T2w) image.
+
+    Outputs
+    -------
+    epi_ref : :obj:`tuple` (:obj:`str`, :obj:`dict`)
+        A tuple, where the first element is the path of the distorted EPI
+        reference map (e.g., an average of *b=0* volumes), and the second
+        element is a dictionary of associated metadata.
+    anat_ref : :obj:`str`
+        Path to the anatomical reference in EPI space.
+    anat2epi_xfm : :obj:`str`
+        transform mapping coordinates from the EPI space to the anatomical
+        space (i.e., the transform to resample anatomical info into EPI space.)
+
+    """
+    from niworkflows.interfaces.nibabel import IntensityClip
+    from niworkflows.interfaces.fixes import (
+        FixHeaderApplyTransforms as ApplyTransforms,
+        FixHeaderRegistration as Registration,
+    )
+    from niworkflows.workflows.epi.refmap import init_epi_reference_wf
+
+    workflow = Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=["in_epis", "in_meta", "in_anat", "mask_anat"]),
+        name="inputnode",
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["epi_ref", "anat2epi_xfm"]), name="outputnode"
+    )
+
+    epi_reference_wf = init_epi_reference_wf(omp_nthreads=omp_nthreads)
+    merge_output = pe.Node(
+        niu.Function(function=_merge_meta),
+        name="merge_output",
+        run_without_submitting=True,
+    )
+
+    clip_anat = pe.Node(IntensityClip(p_min=2.0, p_max=99.8), name="clip_anat")
+    epi2anat = pe.Node(
+        Registration(from_file=resource_filename("sdcflows", "data/affine.json")),
+        name="epi2anat",
+        n_procs=omp_nthreads,
+    )
+    apply_anat2epi = pe.Node(
+        ApplyTransforms(invert_transform_flags=[True]),
+        name="apply_anat2epi",
+        n_procs=omp_nthreads,
+    )
+
+    # fmt:off
+    workflow.connect([
+        (inputnode, epi_reference_wf, [("in_epis", "inputnode.in_files")]),
+        (inputnode, merge_output, [("in_meta", "meta_list")]),
+        (inputnode, clip_anat, [("in_anat", "in_file")]),
+        (inputnode, epi2anat, [("mask_anat", "fixed_image_masks")]),
+        (clip_anat, epi2anat, [("out_file", "fixed_image")]),
+        (epi_reference_wf, epi2anat, [
+            ("outputnode.epi_ref_file", "moving_image"),
+        ]),
+        (epi_reference_wf, merge_output, [("outputnode.epi_ref_file", "epi_ref")]),
+        (epi2anat, apply_anat2epi, [("forward_transforms", "transforms")]),
+        (epi2anat, outputnode, [("forward_transforms", "anat2epi_xfm")]),
+        (apply_anat2epi, outputnode, [("output_image", "anat_ref")]),
+        (merge_output, outputnode, [("out", "epi_ref")]),
+    ])
+    # fmt:on
+    return workflow
+
+
 def _warp_dir(intuple):
     """
     Extract the ``restrict_deformation`` argument from metadata.
@@ -336,3 +442,8 @@ def _extract_field(in_file, epi_meta):
     nii.header.set_xyzt_units(fieldnii.header.get_xyzt_units()[0])
     nii.to_filename(out_file)
     return out_file
+
+
+def _merge_meta(epi_ref, meta_list):
+    """Prepare a tuple of EPI reference and metadata."""
+    return (epi_ref, meta_list[0])
