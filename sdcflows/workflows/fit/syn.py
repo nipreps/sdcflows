@@ -275,6 +275,7 @@ def init_syn_preprocessing_wf(
     debug=False,
     name="syn_preprocessing_wf",
     omp_nthreads=1,
+    auto_bold_nss=False,
 ):
     """
     Prepare EPI references and co-registration to anatomical for SyN.
@@ -295,6 +296,9 @@ def init_syn_preprocessing_wf(
         Name for this workflow
     omp_nthreads : :obj:`int`
         Parallelize internal tasks across the number of CPUs given by this option.
+    auto_bold_nss : :obj:`bool`
+        Set up the reference workflow to automatically execute nonsteady states detection
+        of BOLD images.
 
     Inputs
     ------
@@ -329,14 +333,20 @@ def init_syn_preprocessing_wf(
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["in_epis", "in_meta", "in_anat", "mask_anat"]),
+        niu.IdentityInterface(
+            fields=["in_epis", "t_masks", "in_meta", "in_anat", "mask_anat"]
+        ),
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["epi_ref", "anat2epi_xfm"]), name="outputnode"
+        niu.IdentityInterface(fields=["epi_ref", "anat_ref", "anat2epi_xfm"]),
+        name="outputnode",
     )
 
-    epi_reference_wf = init_epi_reference_wf(omp_nthreads=omp_nthreads)
+    epi_reference_wf = init_epi_reference_wf(
+        omp_nthreads=omp_nthreads,
+        auto_bold_nss=auto_bold_nss,
+    )
     merge_output = pe.Node(
         niu.Function(function=_merge_meta),
         name="merge_output",
@@ -372,6 +382,10 @@ def init_syn_preprocessing_wf(
         (merge_output, outputnode, [("out", "epi_ref")]),
     ])
     # fmt:on
+
+    if not auto_bold_nss:
+        workflow.connect(inputnode, "t_masks", epi_reference_wf, "inputnode.t_masks")
+
     return workflow
 
 
