@@ -65,7 +65,7 @@ DEFAULT_MEMORY_MIN_GB = 0.01
 INPUT_FIELDS = (
     "epi_ref",
     "epi_mask",
-    "anat_brain",
+    "anat_ref",
     "std2anat_xfm",
     "anat2epi_xfm",
 )
@@ -116,8 +116,8 @@ def init_syn_sdc_wf(
         element is a dictionary of associated metadata.
     epi_mask : :obj:`str`
         A path to a brain mask corresponding to ``epi_ref``.
-    anat_brain : :obj:`str`
-        A preprocessed, skull-stripped anatomical (T1w or T2w) image.
+    anat_ref : :obj:`str`
+        A preprocessed, skull-stripped anatomical (T1w or T2w) image resampled in EPI space.
     std2anat_xfm : :obj:`str`
         inverse registration transform of T1w image to MNI template
     anat2epi_xfm : :obj:`str`
@@ -136,7 +136,6 @@ def init_syn_sdc_wf(
     """
     from pkg_resources import resource_filename as pkgrf
     from packaging.version import parse as parseversion, Version
-    from nipype.interfaces.image import Rescale
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
         FixHeaderRegistration as Registration,
@@ -177,7 +176,6 @@ template [@fieldmapless3].
         name="outputnode",
     )
 
-    invert_t1w = pe.Node(Rescale(invert=True), name="invert_t1w", mem_gb=0.3)
     anat2epi = pe.Node(
         ApplyTransforms(interpolation="BSpline"), name="anat2epi", n_procs=omp_nthreads
     )
@@ -231,8 +229,6 @@ template [@fieldmapless3].
     workflow.connect([
         (inputnode, transform_list, [("anat2epi_xfm", "in1"),
                                      ("std2anat_xfm", "in2")]),
-        (inputnode, invert_t1w, [("anat_brain", "in_file"),
-                                 (("epi_ref", _pop), "ref_file")]),
         (inputnode, anat2epi, [(("epi_ref", _pop), "reference_image"),
                                ("anat2epi_xfm", "transforms")]),
         (inputnode, deoblique, [(("epi_ref", _pop), "in_epi"),
@@ -243,7 +239,7 @@ template [@fieldmapless3].
                                  (("epi_ref", _pop), "input_image")]),
         (inputnode, prior2epi, [(("epi_ref", _pop), "reference_image")]),
         (inputnode, extract_field, [("epi_ref", "epi_meta")]),
-        (invert_t1w, anat2epi, [("out_file", "input_image")]),
+        (inputnode, anat2epi, [("out_file", "input_image")]),
         (transform_list, prior2epi, [("out", "transforms")]),
         (prior2epi, atlas_msk, [("output_image", "in_file")]),
         (anat2epi, deoblique, [("output_image", "in_anat")]),
@@ -276,6 +272,7 @@ def init_syn_preprocessing_wf(
     name="syn_preprocessing_wf",
     omp_nthreads=1,
     auto_bold_nss=False,
+    t1w_inversion=False,
 ):
     """
     Prepare EPI references and co-registration to anatomical for SyN.
@@ -299,16 +296,23 @@ def init_syn_preprocessing_wf(
     auto_bold_nss : :obj:`bool`
         Set up the reference workflow to automatically execute nonsteady states detection
         of BOLD images.
+    t1w_inversion : :obj:`bool`
+        Run T1w intensity inversion so that it looks more like a T2 contrast.
 
     Inputs
     ------
     in_epis : :obj:`list` of :obj:`str`
         Distorted EPI images that will be merged together to create the
         EPI reference file.
+    t_masks : :obj:`list` of :obj:`bool`
+        (optional) mask of timepoints for calculating an EPI reference.
+        Not used if ``auto_bold_nss=True``.
     in_meta : :obj:`list` of :obj:`dict`
         Metadata dictionaries corresponding to the ``in_epis`` input.
-    anat_brain : :obj:`str`
-        A preprocessed, skull-stripped anatomical (T1w or T2w) image.
+    in_anat : :obj:`str`
+        A preprocessed anatomical (T1w or T2w) image.
+    mask_anat : :obj:`str`
+        A brainmask corresponding to the anatomical (T1w or T2w) image.
 
     Outputs
     -------
@@ -317,13 +321,13 @@ def init_syn_preprocessing_wf(
         reference map (e.g., an average of *b=0* volumes), and the second
         element is a dictionary of associated metadata.
     anat_ref : :obj:`str`
-        Path to the anatomical reference in EPI space.
+        Path to the anatomical, skull-stripped reference in EPI space.
     anat2epi_xfm : :obj:`str`
         transform mapping coordinates from the EPI space to the anatomical
         space (i.e., the transform to resample anatomical info into EPI space.)
 
     """
-    from niworkflows.interfaces.nibabel import IntensityClip
+    from niworkflows.interfaces.nibabel import IntensityClip, ApplyMask
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
         FixHeaderRegistration as Registration,
@@ -353,7 +357,11 @@ def init_syn_preprocessing_wf(
         run_without_submitting=True,
     )
 
-    clip_anat = pe.Node(IntensityClip(p_min=2.0, p_max=99.8), name="clip_anat")
+    mask_anat = pe.Node(ApplyMask(), name="mask_anat")
+    clip_anat = pe.Node(
+        IntensityClip(p_min=0.0, p_max=99.8, invert=t1w_inversion), name="clip_anat"
+    )
+
     epi2anat = pe.Node(
         Registration(from_file=resource_filename("sdcflows", "data/affine.json")),
         name="epi2anat",
@@ -369,11 +377,15 @@ def init_syn_preprocessing_wf(
     workflow.connect([
         (inputnode, epi_reference_wf, [("in_epis", "inputnode.in_files")]),
         (inputnode, merge_output, [("in_meta", "meta_list")]),
-        (inputnode, clip_anat, [("in_anat", "in_file")]),
+        (inputnode, mask_anat, [("in_anat", "in_file"),
+                                ("mask_anat", "in_mask")]),
+        (mask_anat, clip_anat, [("out_file", "in_file")]),
         (inputnode, epi2anat, [("mask_anat", "fixed_image_masks")]),
-        (clip_anat, epi2anat, [("out_file", "fixed_image")]),
         (epi_reference_wf, epi2anat, [
             ("outputnode.epi_ref_file", "moving_image"),
+        ]),
+        (epi_reference_wf, apply_anat2epi, [
+            ("outputnode.epi_ref_file", "reference"),
         ]),
         (epi_reference_wf, merge_output, [("outputnode.epi_ref_file", "epi_ref")]),
         (epi2anat, apply_anat2epi, [("forward_transforms", "transforms")]),
@@ -382,6 +394,25 @@ def init_syn_preprocessing_wf(
         (merge_output, outputnode, [("out", "epi_ref")]),
     ])
     # fmt:on
+
+    if t1w_inversion:
+        # Mask out non-brain zeros.
+        mask_inverted = pe.Node(ApplyMask(), name="mask_anat")
+        # fmt:off
+        workflow.connect([
+            (inputnode, mask_inverted, [("in_anat", "in_file"),
+                                        ("mask_anat", "in_mask")]),
+            (mask_inverted, apply_anat2epi, [("out_file", "input_image")]),
+            (mask_inverted, epi2anat, [("out_file", "fixed_image")]),
+        ])
+        # fmt:on
+    else:
+        # fmt:off
+        workflow.connect([
+            (clip_anat, apply_anat2epi, [("out_file", "input_image")]),
+            (clip_anat, epi2anat, [("out_file", "fixed_image")]),
+        ])
+        # fmt:on
 
     if not auto_bold_nss:
         workflow.connect(inputnode, "t_masks", epi_reference_wf, "inputnode.t_masks")
