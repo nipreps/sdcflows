@@ -149,6 +149,7 @@ def init_fmap_derivatives_wf(
             base_directory=output_dir,
             compress=True,
             suffix="fieldmap",
+            datatype="fmap",
             dismiss_entities=("fmap",),
             allowed_entities=tuple(custom_entities.keys()),
         ),
@@ -160,6 +161,7 @@ def init_fmap_derivatives_wf(
             base_directory=output_dir,
             desc="preproc",
             suffix="fieldmap",
+            datatype="fmap",
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
@@ -195,6 +197,7 @@ def init_fmap_derivatives_wf(
         DerivativesDataSink(
             base_directory=output_dir,
             suffix="fieldmap",
+            datatype="fmap",
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
