@@ -25,6 +25,29 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
 
     steps:
+    - uses: actions/cache@v2
+      with:
+        path: /var/lib/apt
+        key: apt-cache-v2
+        restore-keys: |
+          apt-cache-v2
+    - name: Install AFNI, ANTS & FSL (with dependencies)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+                        curl bzip2 ca-certificates        \
+                        tcsh gsl-bin netpbm               \
+                        libjpeg62 xvfb xterm              \
+                        libglu1-mesa-dev libglw1-mesa     \
+                        libxm4 build-essential
+
+        curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries && \
+        tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /opt/afni
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends fsl
+        sudo mkdir -p $ANTSPATH
+        curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
+
     - name: Git settings (pacify DataLad)
       run: |
         git config --global user.name 'NiPreps Bot'
@@ -51,6 +74,7 @@ jobs:
       run: |
         $CONDA/bin/pip install -r min-requirements.txt
         $CONDA/bin/pip install .[tests]
+
 
     - uses: actions/cache@v2
       with:
@@ -98,20 +122,6 @@ jobs:
         datalad install -r https://github.com/nipreps-data/ds000206.git
         datalad update -r --merge -d ds000206/
         datalad get -r -d ds000206/ ds000206/sub-05/
-
-    - uses: actions/cache@v2
-      with:
-        path: /var/lib/apt
-        key: apt-cache-v1
-        restore-keys: |
-          apt-cache-
-    - name: Install NeuroDebian & software packages
-      run: |
-        bash <(wget -q -O- https://raw.githubusercontent.com/neurodebian/neurodebian/master/tools/neurodebian-travis.sh);
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends fsl afni
-        sudo mkdir -p $ANTSPATH
-        curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
 
     - name: Install FreeSurfer's mri_robust_template
       env:
