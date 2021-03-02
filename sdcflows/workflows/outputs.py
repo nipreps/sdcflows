@@ -65,8 +65,8 @@ def init_fmap_reports_wf(
         name="inputnode",
     )
 
-    rep = pe.Node(FieldmapReportlet(), "simple_report")
-    rep.interface._always_run = True
+    fmap_rpt = pe.Node(FieldmapReportlet(), "fmap_rpt")
+    fmap_rpt.interface._always_run = True
 
     ds_fmap_report = pe.Node(
         DerivativesDataSink(
@@ -84,10 +84,10 @@ def init_fmap_reports_wf(
 
     # fmt:off
     workflow.connect([
-        (inputnode, rep, [("fieldmap", "fieldmap"),
-                          ("fmap_ref", "reference"),
-                          ("fmap_mask", "mask")]),
-        (rep, ds_fmap_report, [("out_report", "in_file")]),
+        (inputnode, fmap_rpt, [("fieldmap", "fieldmap"),
+                               ("fmap_ref", "reference"),
+                               ("fmap_mask", "mask")]),
+        (fmap_rpt, ds_fmap_report, [("out_report", "in_file")]),
         (inputnode, ds_fmap_report, [("source_files", "source_file")]),
 
     ])
