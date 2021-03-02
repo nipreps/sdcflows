@@ -424,7 +424,7 @@ def init_syn_preprocessing_wf(
         omp_nthreads=omp_nthreads,
         auto_bold_nss=auto_bold_nss,
     )
-    epi_brain = pe.Node(BrainExtraction(), name=f"epi_brain")
+    epi_brain = pe.Node(BrainExtraction(), name="epi_brain")
     merge_output = pe.Node(
         niu.Function(function=_merge_meta),
         name="merge_output",
@@ -580,9 +580,7 @@ def _extract_field(in_file, epi_meta):
         / trt
         * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
     )
-    out_file = Path(
-        fname_presuffix(Path(in_file[0]).name, suffix="_fieldmap")
-    )
+    out_file = Path(fname_presuffix(Path(in_file[0]).name, suffix="_fieldmap"))
     nii = nb.Nifti1Image(data, fieldnii.affine, None)
     nii.header.set_xyzt_units(fieldnii.header.get_xyzt_units()[0])
     nii.to_filename(out_file)
