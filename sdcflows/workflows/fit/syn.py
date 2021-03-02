@@ -202,10 +202,11 @@ template [@fieldmapless3].
         name="syn",
         n_procs=omp_nthreads,
     )
+    syn.inputs.output_warped_image = debug
+    syn.inputs.output_inverse_warped_image = debug
+
     if debug:
-        syn.inputs.output_inverse_warped_image = True
         syn.inputs.args = "--write-interval-volumes 5"
-    syn.inputs.args = "--write-interval-volumes 2"
 
     unwarp_ref = pe.Node(
         ApplyTransforms(interpolation="BSpline"),
@@ -442,6 +443,11 @@ def init_syn_preprocessing_wf(
         name="epi2anat",
         n_procs=omp_nthreads,
     )
+    epi2anat.inputs.output_warped_image = debug
+    epi2anat.inputs.output_inverse_warped_image = debug
+    if debug:
+        epi2anat.inputs.args = "--write-interval-volumes 5"
+
     clip_anat_final = pe.Node(
         IntensityClip(p_min=0.0, p_max=100), name="clip_anat_final"
     )
