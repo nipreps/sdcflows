@@ -176,6 +176,12 @@ template [@fieldmapless3].
         name="outputnode",
     )
 
+    warp_dir = pe.Node(
+        niu.Function(function=_warp_dir),
+        run_without_submitting=True,
+        name="warp_dir",
+    )
+
     atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
     epi_dilmsk = pe.Node(niu.Function(function=_dilate), name="epi_dilmsk")
     epi_dilmsk.inputs.radius = 5
@@ -245,8 +251,9 @@ template [@fieldmapless3].
         (inputnode, zooms_bmask, [("anat_mask", "input_image")]),
         (inputnode, fixed_masks, [("anat_mask", "in1"),
                                   ("anat_mask", "in2")]),
-        (inputnode, syn, [("anat_ref", "fixed_image"),
-                          (("epi_ref", _warp_dir), "restrict_deformation")]),
+        (inputnode, warp_dir, [("epi_ref", "intuple")]),
+        (inputnode, syn, [("anat_ref", "fixed_image")]),
+        (warp_dir, syn, [("out", "restrict_deformation")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
                                  (("epi_ref", _pop), "in_epi")]),
         (deoblique, zooms_epi, [("epi_ref", "in_file")]),
@@ -536,21 +543,21 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(intuple):
+def _warp_dir(intuple, nlevels=3):
     """
     Extract the ``restrict_deformation`` argument from metadata.
 
     Example
     -------
     >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "i-"}))
-    [[1, 0, 0], [1, 0, 0]]
+    [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
 
-    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "j-"}))
+    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "j-"}), nlevels=2)
     [[0, 1, 0], [0, 1, 0]]
 
     """
     pe = intuple[1]["PhaseEncodingDirection"][0]
-    return 3 * [[int(pe == ax) for ax in "ijk"]]
+    return nlevels * [[int(pe == ax) for ax in "ijk"]]
 
 
 def _extract_field(in_file, epi_meta):
