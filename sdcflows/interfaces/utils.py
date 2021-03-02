@@ -316,9 +316,7 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
         hdr = masknii.header.copy()
         hdr.set_qform(*epinii.header.get_qform(coded=True))
         hdr.set_sform(*epinii.header.get_sform(coded=True))
-        fmapnii.__class__(masknii.dataobj, masknii.affine, hdr).to_filename(
-            out_files[2]
-        )
+        masknii.__class__(masknii.dataobj, epinii.affine, hdr).to_filename(out_files[2])
 
     return out_files
 
