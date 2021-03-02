@@ -107,7 +107,7 @@ jobs:
           apt-cache-
     - name: Install NeuroDebian & software packages
       run: |
-        bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh);
+        bash <(wget -q -O- https://raw.githubusercontent.com/neurodebian/neurodebian/master/tools/neurodebian-travis.sh);
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends fsl afni
         sudo mkdir -p $ANTSPATH
