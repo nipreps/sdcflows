@@ -1,10 +1,10 @@
 """Test fieldmap-less SDC-SyN."""
 import os
+import json
 import pytest
 from nipype.pipeline import engine as pe
-from niworkflows.interfaces.nibabel import ApplyMask
 
-from ..syn import init_syn_sdc_wf
+from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
@@ -16,38 +16,52 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
 
     wf = pe.Workflow(name="syn_test")
 
-    syn_wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
-    syn_wf.inputs.inputnode.epi_ref = (
+    prep_wf = init_syn_preprocessing_wf(
+        omp_nthreads=4,
+        debug=True,
+        auto_bold_nss=True,
+        t1w_inversion=True,
+    )
+    prep_wf.inputs.inputnode.in_epis = [
         str(
-            derivs_path
-            / "sdcflows-tests"
-            / "sub-100185_task-machinegame_run-1_boldref.nii.gz"
+            datadir
+            / "ds000054"
+            / "sub-100185"
+            / "func"
+            / "sub-100185_task-machinegame_run-01_bold.nii.gz"
         ),
-        {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005},
-    )
-    syn_wf.inputs.inputnode.epi_mask = str(
-        derivs_path
-        / "sdcflows-tests"
-        / "sub-100185_task-machinegame_run-1_desc-brain_mask.nii.gz"
-    )
-    syn_wf.inputs.inputnode.anat2epi_xfm = str(
-        derivs_path / "sdcflows-tests" / "t1w2bold.txt"
-    )
-    syn_wf.inputs.inputnode.std2anat_xfm = str(
+        str(
+            datadir
+            / "ds000054"
+            / "sub-100185"
+            / "func"
+            / "sub-100185_task-machinegame_run-02_bold.nii.gz"
+        ),
+    ]
+    prep_wf.inputs.inputnode.in_meta = [
+        json.loads((datadir / "ds000054" / "task-machinegame_bold.json").read_text()),
+    ] * 2
+    prep_wf.inputs.inputnode.std2anat_xfm = str(
         smriprep / "sub-100185_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
     )
-
-    t1w_mask = pe.Node(
-        ApplyMask(
-            in_file=str(smriprep / "sub-100185_desc-preproc_T1w.nii.gz"),
-            in_mask=str(smriprep / "sub-100185_desc-brain_mask.nii.gz"),
-        ),
-        name="t1w_mask",
+    prep_wf.inputs.inputnode.in_anat = str(
+        smriprep / "sub-100185_desc-preproc_T1w.nii.gz"
     )
+    prep_wf.inputs.inputnode.mask_anat = str(
+        smriprep / "sub-100185_desc-brain_mask.nii.gz"
+    )
+
+    syn_wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
 
     # fmt: off
     wf.connect([
-        (t1w_mask, syn_wf, [("out_file", "inputnode.anat_brain")]),
+        (prep_wf, syn_wf, [
+            ("outputnode.epi_ref", "inputnode.epi_ref"),
+            ("outputnode.epi_mask", "inputnode.epi_mask"),
+            ("outputnode.anat_ref", "inputnode.anat_ref"),
+            ("outputnode.anat_mask", "inputnode.anat_mask"),
+            ("outputnode.sd_prior", "inputnode.sd_prior"),
+        ]),
     ])
     # fmt: on
 
