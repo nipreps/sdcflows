@@ -48,7 +48,9 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
     # fmt: on
 
     if outdir:
-        from niworkflows.interfaces import SimpleBeforeAfter
+        from niworkflows.interfaces.reportlets.registration import (
+            SimpleBeforeAfterRPT as SimpleBeforeAfter,
+        )
         from ...outputs import DerivativesDataSink
 
         report = pe.Node(

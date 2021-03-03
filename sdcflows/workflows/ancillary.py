@@ -45,13 +45,8 @@ def init_brainextraction_wf(name="brainextraction_wf"):
     wf = Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(
-            fields=(
-                "in_file",
-                "bspline_dist"
-            )
-        ),
-        name="inputnode")
+        niu.IdentityInterface(fields=("in_file", "bspline_dist")), name="inputnode"
+    )
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=(
