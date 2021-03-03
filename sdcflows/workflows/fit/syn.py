@@ -644,7 +644,7 @@ def _dilate(in_file, radius=3):
     return out_file
 
 
-def _adjust_zooms(in_anat, in_epi, z_max=2.2, z_min=1.0):
+def _adjust_zooms(in_anat, in_epi, z_max=2.2, z_min=1.8):
     import nibabel as nb
 
     anat_res = min(nb.load(in_anat).header.get_zooms()[:3])
