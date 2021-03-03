@@ -185,7 +185,7 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     """
     from nipype.interfaces import afni
-    from niworkflows.interfaces import CopyHeader
+    from niworkflows.interfaces.header import CopyHeader
     from niworkflows.interfaces.fixes import (
         FixHeaderRegistration as Registration,
         FixHeaderApplyTransforms as ApplyTransforms,

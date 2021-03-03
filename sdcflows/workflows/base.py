@@ -57,7 +57,10 @@ def init_fmap_preproc_wf(
     from .outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
     from ..fieldmaps import EstimatorType
 
-    INPUT_FIELDS = {EstimatorType.ANAT: _syn_fields, EstimatorType.PEPOLAR: _pepolar_fields}
+    INPUT_FIELDS = {
+        EstimatorType.ANAT: _syn_fields,
+        EstimatorType.PEPOLAR: _pepolar_fields,
+    }
 
     workflow = Workflow(name=name)
 
