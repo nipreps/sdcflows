@@ -14,11 +14,12 @@ jobs:
       POSSUMDIR: /usr/share/fsl/5.0
       FSLTCLSH: /usr/bin/tclsh
       FSLWISH: /usr/bin/wish
-      AFNI_MODELPATH: /usr/lib/afni/models
+      AFNI_HOME: /opt/afni
+      AFNI_MODELPATH: /opt/afni/models
       AFNI_IMSAVE_WARNINGS: NO
-      AFNI_TTATLAS_DATASET: /usr/share/afni/atlases
-      AFNI_PLUGINPATH: /usr/lib/afni/plugins
-      ANTSPATH: /usr/lib/ants
+      AFNI_TTATLAS_DATASET: /opt/afni/atlases
+      AFNI_PLUGINPATH: /opt/afni/plugins
+      ANTSPATH: /opt/ants
     strategy:
       max-parallel: 5
       matrix:
@@ -31,7 +32,7 @@ jobs:
         key: apt-cache-v2
         restore-keys: |
           apt-cache-v2
-    - name: Install AFNI, ANTS & FSL (with dependencies)
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
@@ -41,12 +42,35 @@ jobs:
                         libglu1-mesa-dev libglw1-mesa     \
                         libxm4 build-essential
 
-        curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries && \
-        tcsh @update.afni.binaries -package linux_ubuntu_16_64 -do_extras -bindir /opt/afni
-        sudo apt-get update
+    - name: Install FSL
+      run: |
         sudo apt-get install -y --no-install-recommends fsl
-        sudo mkdir -p $ANTSPATH
-        curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
+
+    - uses: actions/cache@v2
+      with:
+        path: /opt/afni
+        key: afni-v1
+        restore-keys: |
+          afni-v1
+    - name: Install AFNI
+      run: |
+        if [[ ! -d "${AFNI_HOME}" ]]; then
+          curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries && \
+          tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
+        fi
+
+    - uses: actions/cache@v2
+      with:
+        path: /opt/ants
+        key: ants-v1
+        restore-keys: |
+          ants-v1
+    - name: Install ANTS
+      run: |
+        if [[ ! -d "${ANTSPATH}" ]]; then
+          sudo mkdir -p $ANTSPATH
+          curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
+        fi
 
     - name: Git settings (pacify DataLad)
       run: |
@@ -135,7 +159,7 @@ jobs:
     - name: Run pytest with coverage
       run: |
         export LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-        export PATH=/usr/lib/ants:/usr/lib/fsl/5.0:/usr/lib/afni/bin:$PATH
+        export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
         $CONDA/bin/pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
 
     - name: Submit code coverage
