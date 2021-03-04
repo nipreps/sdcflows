@@ -4,7 +4,7 @@ import json
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf
+from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
@@ -129,3 +129,33 @@ def test_syn_wf_version(monkeypatch, ants_version):
     else:
         wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
         assert (ants_version or "version unknown") in wf.__desc__
+
+
+@pytest.mark.parametrize(
+    "anat_res,epi_res,retval",
+    [
+        ((1.0, 1.0, 1.0), (2.0, 2.0, 2.0), (1.8, 1.8, 1.8)),
+        ((1.8, 1.8, 1.8), (2.0, 2.0, 2.0), (1.9, 1.9, 1.9)),
+        ((1.5, 1.5, 1.5), (1.8, 1.8, 1.8), (1.8, 1.8, 1.8)),
+        ((1.8, 1.8, 1.8), (2.5, 2.5, 2.5), (2.15, 2.15, 2.15)),
+    ],
+)
+def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
+    """Exercise the adjust zooms function node."""
+    import numpy as np
+    import nibabel as nb
+
+    tmpdir.chdir()
+
+    nb.Nifti1Image(
+        np.zeros((10, 10, 10)),
+        np.diag(list(anat_res) + [1]),
+        None,
+    ).to_filename("anat.nii.gz")
+    nb.Nifti1Image(
+        np.zeros((10, 10, 10)),
+        np.diag(list(epi_res) + [1]),
+        None,
+    ).to_filename("epi.nii.gz")
+
+    assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval
