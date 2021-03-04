@@ -11,6 +11,11 @@ from nipype.interfaces.base import (
     OutputMultiObject,
     isdefined,
 )
+from nipype.interfaces.ants.segmentation import (
+    DenoiseImage as _DenoiseImageBase,
+    DenoiseImageInputSpec as _DenoiseImageInputSpecBase,
+)
+from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 
 OBLIQUE_THRESHOLD_DEG = 0.5
 
@@ -200,6 +205,21 @@ class IntensityClip(SimpleInterface):
             newpath=runtime.cwd,
         )
         return runtime
+
+
+class _DenoiseImageInputSpec(_DenoiseImageInputSpecBase):
+    copy_header = traits.Bool(
+        True,
+        usedefault=True,
+        desc="copy headers of the original image into the output (corrected) file",
+    )
+
+
+class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
+    """Add copy_header capability to DenoiseImage from nipype."""
+
+    input_spec = _DenoiseImageInputSpec
+    _copy_header_map = {"output_image": "input_image"}
 
 
 def _flatten(inlist, max_trs=50, out_dir=None):

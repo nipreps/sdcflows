@@ -9,16 +9,16 @@ from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
-def test_syn_wf(tmpdir, datadir, workdir, outdir):
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
 
-    wf = pe.Workflow(name="syn_test")
+    wf = pe.Workflow(name="test_syn")
 
     prep_wf = init_syn_preprocessing_wf(
         omp_nthreads=4,
-        debug=True,
+        debug=sloppy_mode,
         auto_bold_nss=True,
         t1w_inversion=True,
     )
@@ -51,7 +51,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
         smriprep / "sub-100185_desc-brain_mask.nii.gz"
     )
 
-    syn_wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
+    syn_wf = init_syn_sdc_wf(debug=sloppy_mode, omp_nthreads=4)
 
     # fmt: off
     wf.connect([
@@ -68,7 +68,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir):
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        outdir = outdir / "unittests" / "syn_test"
+        outdir = outdir / "unittests" / "test_syn"
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,

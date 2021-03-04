@@ -150,6 +150,7 @@ def init_syn_sdc_wf(
         DEFAULT_HF_ZOOMS_MM,
         DEFAULT_ZOOMS_MM,
     )
+    from ...interfaces.brainmask import BinaryDilation, Union
 
     ants_version = Registration().version
     if ants_version and parseversion(ants_version) < Version("2.2.0"):
@@ -183,8 +184,24 @@ template [@fieldmapless3].
     )
 
     atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
-    epi_dilmsk = pe.Node(niu.Function(function=_dilate), name="epi_dilmsk")
-    epi_dilmsk.inputs.radius = 5
+    anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
+    epi_dilmsk = pe.Node(BinaryDilation(), name="epi_dilmsk")
+    amask2epi = pe.Node(
+        ApplyTransforms(interpolation="MultiLabel", transforms="identity"),
+        name="amask2epi",
+    )
+    prior2epi = pe.Node(
+        ApplyTransforms(interpolation="MultiLabel", transforms="identity"),
+        name="prior2epi",
+    )
+    prior_dilmsk = pe.Node(BinaryDilation(radius=4), name="prior_dilmsk")
+
+    epi_umask = pe.Node(Union(), name="epi_umask")
+    moving_masks = pe.Node(
+        niu.Merge(3),
+        name="moving_masks",
+        run_without_submitting=True,
+    )
 
     fixed_masks = pe.Node(
         niu.Merge(3),
@@ -249,10 +266,14 @@ template [@fieldmapless3].
         (inputnode, reoblique, [(("epi_ref", _pop), "in_epi")]),
         (inputnode, epi_dilmsk, [("epi_mask", "in_file")]),
         (inputnode, zooms_bmask, [("anat_mask", "input_image")]),
-        (inputnode, fixed_masks, [("anat_mask", "in1"),
-                                  ("anat_mask", "in2")]),
+        (inputnode, fixed_masks, [("anat_mask", "in2")]),
+        (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
         (inputnode, warp_dir, [("epi_ref", "intuple")]),
-        (inputnode, syn, [("anat_ref", "fixed_image")]),
+        (inputnode, syn, [("anat_ref", "moving_image")]),
+        (epi_dilmsk, prior2epi, [("out_file", "reference_image")]),
+        (atlas_msk, prior2epi, [("out_file", "input_image")]),
+        (prior2epi, prior_dilmsk, [("output_image", "in_file")]),
+        (anat_dilmsk, fixed_masks, [("out_file", "in1")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
                                  (("epi_ref", _pop), "in_epi")]),
@@ -261,11 +282,18 @@ template [@fieldmapless3].
         (find_zooms, zooms_epi, [("out", "zooms")]),
         (zooms_epi, unwarp_ref, [("out_file", "reference_image")]),
         (atlas_msk, fixed_masks, [("out_mask", "in3")]),
-        (fixed_masks, syn, [("out", "fixed_image_masks")]),
-        (epi_dilmsk, syn, [("out", "moving_image_masks")]),
-        (deoblique, syn, [("epi_ref", "moving_image")]),
-        (syn, extract_field, [("forward_transforms", "in_file")]),
-        (syn, unwarp_ref, [("forward_transforms", "transforms")]),
+        (fixed_masks, syn, [("out", "moving_image_masks")]),
+        (epi_dilmsk, epi_umask, [("out_file", "in1")]),
+        (epi_dilmsk, amask2epi, [("out_file", "reference_image")]),
+        (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
+        (amask2epi, epi_umask, [("output_image", "in2")]),
+        (epi_umask, moving_masks, [("out_file", "in1")]),
+        (prior_dilmsk, moving_masks, [("out_file", "in2")]),
+        (prior2epi, moving_masks, [("output_image", "in3")]),
+        (moving_masks, syn, [("out", "fixed_image_masks")]),
+        (deoblique, syn, [("epi_ref", "fixed_image")]),
+        (syn, extract_field, [("reverse_transforms", "in_file")]),
+        (syn, unwarp_ref, [("reverse_transforms", "transforms")]),
         (unwarp_ref, zooms_bmask, [("output_image", "reference_image")]),
         (unwarp_ref, zooms_field, [("output_image", "reference_image")]),
         (extract_field, zooms_field, [("out", "input_image")]),
@@ -361,8 +389,8 @@ def init_syn_preprocessing_wf(
         FixHeaderRegistration as Registration,
     )
     from niworkflows.workflows.epi.refmap import init_epi_reference_wf
-    from ...interfaces.utils import Deoblique
-    from ...interfaces.brainmask import BrainExtraction
+    from ...interfaces.utils import Deoblique, DenoiseImage
+    from ...interfaces.brainmask import BrainExtraction, BinaryDilation
 
     workflow = Workflow(name=name)
 
@@ -443,7 +471,8 @@ def init_syn_preprocessing_wf(
     clip_anat = pe.Node(
         IntensityClip(p_min=0.0, p_max=99.8, invert=t1w_inversion), name="clip_anat"
     )
-    ref_anat = pe.Node(niu.IdentityInterface(fields=("in_anat",)), name="ref_anat")
+    ref_anat = pe.Node(DenoiseImage(copy_header=True), name="ref_anat",
+                       n_procs=omp_nthreads)
 
     epi2anat = pe.Node(
         Registration(from_file=resource_filename("sdcflows", "data/affine.json")),
@@ -459,8 +488,8 @@ def init_syn_preprocessing_wf(
         IntensityClip(p_min=0.0, p_max=100), name="clip_anat_final"
     )
 
-    anat_dilmsk = pe.Node(niu.Function(function=_dilate), name="anat_dilmsk")
-    epi_dilmsk = pe.Node(niu.Function(function=_dilate), name="epi_dilmsk")
+    anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
+    epi_dilmsk = pe.Node(BinaryDilation(), name="epi_dilmsk")
 
     sampling_ref = pe.Node(GenerateSamplingReference(), name="sampling_ref")
 
@@ -478,17 +507,17 @@ def init_syn_preprocessing_wf(
         (mask_anat, clip_anat, [("out_file", "in_file")]),
         (deob_epi, epi_brain, [("out_file", "in_file")]),
         (epi_brain, epi_dilmsk, [("out_mask", "in_file")]),
-        (ref_anat, epi2anat, [("in_anat", "fixed_image")]),
-        (anat_dilmsk, epi2anat, [("out", "fixed_image_masks")]),
+        (ref_anat, epi2anat, [("output_image", "fixed_image")]),
+        (anat_dilmsk, epi2anat, [("out_file", "fixed_image_masks")]),
         (deob_epi, epi2anat, [("out_file", "moving_image")]),
-        (epi_dilmsk, epi2anat, [("out", "moving_image_masks")]),
+        (epi_dilmsk, epi2anat, [("out_file", "moving_image_masks")]),
         (deob_epi, sampling_ref, [("out_file", "fixed_image")]),
         (epi2anat, transform_list, [("forward_transforms", "in1")]),
         (transform_list, prior2epi, [("out", "transforms")]),
         (sampling_ref, prior2epi, [("out_file", "reference_image")]),
         (epi2anat, anat2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, anat2epi, [("out_file", "reference_image")]),
-        (ref_anat, anat2epi, [("in_anat", "input_image")]),
+        (ref_anat, anat2epi, [("output_image", "input_image")]),
         (epi2anat, mask2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, mask2epi, [("out_file", "reference_image")]),
         (mask2epi, mask_dtype, [("output_image", "in_file")]),
@@ -508,13 +537,13 @@ def init_syn_preprocessing_wf(
         workflow.connect([
             (inputnode, mask_inverted, [("mask_anat", "in_mask")]),
             (clip_anat, mask_inverted, [("out_file", "in_file")]),
-            (mask_inverted, ref_anat, [("out_file", "in_anat")]),
+            (mask_inverted, ref_anat, [("out_file", "input_image")]),
         ])
         # fmt:on
     else:
         # fmt:off
         workflow.connect([
-            (clip_anat, ref_anat, [("out_file", "in_anat")]),
+            (clip_anat, ref_anat, [("out_file", "input_image")]),
         ])
         # fmt:on
 
@@ -620,27 +649,6 @@ def _set_dtype(in_file, dtype="int16"):
     hdr = img.header.copy()
     hdr.set_data_dtype(dtype)
     img.__class__(img.dataobj, img.affine, hdr).to_filename(out_file)
-    return out_file
-
-
-def _dilate(in_file, radius=3):
-    """Dilate (binary) input mask."""
-    from pathlib import Path
-    import numpy as np
-    import nibabel as nb
-    from scipy import ndimage
-    from skimage.morphology import ball
-    from nipype.utils.filemanip import fname_presuffix
-
-    mask = nb.load(in_file)
-    newdata = ndimage.binary_dilation(
-        np.asanyarray(mask.dataobj, dtype="uint8"), ball(radius)
-    )
-
-    out_file = fname_presuffix(in_file, suffix="_dil", newpath=Path.cwd())
-    mask.__class__(newdata.astype("uint8"), mask.affine, mask.header).to_filename(
-        out_file
-    )
     return out_file
 
 
