@@ -1,60 +1,74 @@
 """Test fieldmap-less SDC-SyN."""
 import os
+import json
 import pytest
 from nipype.pipeline import engine as pe
-from niworkflows.interfaces.nibabel import ApplyMask
 
-from ..syn import init_syn_sdc_wf
+from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
-def test_syn_wf(tmpdir, datadir, workdir, outdir):
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
 
-    wf = pe.Workflow(name="syn_test")
+    wf = pe.Workflow(name="test_syn")
 
-    syn_wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
-    syn_wf.inputs.inputnode.epi_ref = (
+    prep_wf = init_syn_preprocessing_wf(
+        omp_nthreads=4,
+        debug=sloppy_mode,
+        auto_bold_nss=True,
+        t1w_inversion=True,
+    )
+    prep_wf.inputs.inputnode.in_epis = [
         str(
-            derivs_path
-            / "sdcflows-tests"
-            / "sub-100185_task-machinegame_run-1_boldref.nii.gz"
+            datadir
+            / "ds000054"
+            / "sub-100185"
+            / "func"
+            / "sub-100185_task-machinegame_run-01_bold.nii.gz"
         ),
-        {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005},
-    )
-    syn_wf.inputs.inputnode.epi_mask = str(
-        derivs_path
-        / "sdcflows-tests"
-        / "sub-100185_task-machinegame_run-1_desc-brain_mask.nii.gz"
-    )
-    syn_wf.inputs.inputnode.anat2epi_xfm = str(
-        derivs_path / "sdcflows-tests" / "t1w2bold.txt"
-    )
-    syn_wf.inputs.inputnode.std2anat_xfm = str(
+        str(
+            datadir
+            / "ds000054"
+            / "sub-100185"
+            / "func"
+            / "sub-100185_task-machinegame_run-02_bold.nii.gz"
+        ),
+    ]
+    prep_wf.inputs.inputnode.in_meta = [
+        json.loads((datadir / "ds000054" / "task-machinegame_bold.json").read_text()),
+    ] * 2
+    prep_wf.inputs.inputnode.std2anat_xfm = str(
         smriprep / "sub-100185_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
     )
-
-    t1w_mask = pe.Node(
-        ApplyMask(
-            in_file=str(smriprep / "sub-100185_desc-preproc_T1w.nii.gz"),
-            in_mask=str(smriprep / "sub-100185_desc-brain_mask.nii.gz"),
-        ),
-        name="t1w_mask",
+    prep_wf.inputs.inputnode.in_anat = str(
+        smriprep / "sub-100185_desc-preproc_T1w.nii.gz"
     )
+    prep_wf.inputs.inputnode.mask_anat = str(
+        smriprep / "sub-100185_desc-brain_mask.nii.gz"
+    )
+
+    syn_wf = init_syn_sdc_wf(debug=sloppy_mode, omp_nthreads=4)
 
     # fmt: off
     wf.connect([
-        (t1w_mask, syn_wf, [("out_file", "inputnode.anat_brain")]),
+        (prep_wf, syn_wf, [
+            ("outputnode.epi_ref", "inputnode.epi_ref"),
+            ("outputnode.epi_mask", "inputnode.epi_mask"),
+            ("outputnode.anat_ref", "inputnode.anat_ref"),
+            ("outputnode.anat_mask", "inputnode.anat_mask"),
+            ("outputnode.sd_prior", "inputnode.sd_prior"),
+        ]),
     ])
     # fmt: on
 
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        outdir = outdir / "unittests" / "syn_test"
+        outdir = outdir / "unittests" / "test_syn"
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
@@ -115,3 +129,33 @@ def test_syn_wf_version(monkeypatch, ants_version):
     else:
         wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
         assert (ants_version or "version unknown") in wf.__desc__
+
+
+@pytest.mark.parametrize(
+    "anat_res,epi_res,retval",
+    [
+        ((1.0, 1.0, 1.0), (2.0, 2.0, 2.0), (1.8, 1.8, 1.8)),
+        ((1.8, 1.8, 1.8), (2.0, 2.0, 2.0), (1.9, 1.9, 1.9)),
+        ((1.5, 1.5, 1.5), (1.8, 1.8, 1.8), (1.8, 1.8, 1.8)),
+        ((1.8, 1.8, 1.8), (2.5, 2.5, 2.5), (2.15, 2.15, 2.15)),
+    ],
+)
+def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
+    """Exercise the adjust zooms function node."""
+    import numpy as np
+    import nibabel as nb
+
+    tmpdir.chdir()
+
+    nb.Nifti1Image(
+        np.zeros((10, 10, 10)),
+        np.diag(list(anat_res) + [1]),
+        None,
+    ).to_filename("anat.nii.gz")
+    nb.Nifti1Image(
+        np.zeros((10, 10, 10)),
+        np.diag(list(epi_res) + [1]),
+        None,
+    ).to_filename("epi.nii.gz")
+
+    assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval

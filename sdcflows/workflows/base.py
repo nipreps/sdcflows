@@ -78,9 +78,11 @@ def init_fmap_preproc_wf(
         ]
     )
 
-    for n, estimator in enumerate(estimators):
+    for n, estimator in enumerate(estimators, 1):
         est_wf = estimator.get_workflow(omp_nthreads=omp_nthreads, debug=debug)
-        source_files = [str(f.path) for f in estimator.sources]
+        source_files = [
+            str(f.path) for f in estimator.sources if f.suffix not in ("T1w", "T2w")
+        ]
 
         out_map = pe.Node(
             niu.IdentityInterface(fields=out_fields), name=f"out_{estimator.bids_id}"

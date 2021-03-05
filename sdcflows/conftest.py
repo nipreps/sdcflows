@@ -9,6 +9,7 @@ from bids.layout import BIDSLayout
 test_data_env = os.getenv("TEST_DATA_HOME", str(Path.home() / "sdcflows-tests"))
 test_output_dir = os.getenv("TEST_OUTPUT_DIR")
 test_workdir = os.getenv("TEST_WORK_DIR")
+_sloppy_mode = os.getenv("TEST_PRODUCTION", "off").lower() not in ("on", "1", "true", "yes", "y")
 
 layouts = {
     p.name: BIDSLayout(str(p), validate=False, derivatives=True)
@@ -73,3 +74,8 @@ def testdata_dir():
 @pytest.fixture
 def dsA_dir():
     return data_dir / "dsA"
+
+
+@pytest.fixture
+def sloppy_mode():
+    return _sloppy_mode

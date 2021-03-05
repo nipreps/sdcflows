@@ -64,21 +64,19 @@ def test_Xeoblique(tmpdir, angles, oblique):
 
     result = (
         Deoblique(
-            in_epi="epi.nii.gz",
-            mask_epi="epi.nii.gz",
-            in_anat="epi.nii.gz",
-            mask_anat="epi.nii.gz",
+            in_file="epi.nii.gz",
+            in_mask="epi.nii.gz",
         )
         .run()
         .outputs
     )
 
-    assert np.allclose(nb.load(result.out_epi).affine, affine) is not oblique
+    assert np.allclose(nb.load(result.out_file).affine, affine) is not oblique
 
     reoblique = (
         Reoblique(
-            in_plumb=result.out_epi,
-            in_field=result.out_epi,
+            in_plumb=result.out_file,
+            in_field=result.out_file,
             in_epi="epi.nii.gz",
         )
         .run()

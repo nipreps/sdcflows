@@ -65,8 +65,8 @@ def init_fmap_reports_wf(
         name="inputnode",
     )
 
-    rep = pe.Node(FieldmapReportlet(), "simple_report")
-    rep.interface._always_run = True
+    fmap_rpt = pe.Node(FieldmapReportlet(), "fmap_rpt")
+    fmap_rpt.interface._always_run = True
 
     ds_fmap_report = pe.Node(
         DerivativesDataSink(
@@ -84,10 +84,10 @@ def init_fmap_reports_wf(
 
     # fmt:off
     workflow.connect([
-        (inputnode, rep, [("fieldmap", "fieldmap"),
-                          ("fmap_ref", "reference"),
-                          ("fmap_mask", "mask")]),
-        (rep, ds_fmap_report, [("out_report", "in_file")]),
+        (inputnode, fmap_rpt, [("fieldmap", "fieldmap"),
+                               ("fmap_ref", "reference"),
+                               ("fmap_mask", "mask")]),
+        (fmap_rpt, ds_fmap_report, [("out_report", "in_file")]),
         (inputnode, ds_fmap_report, [("source_files", "source_file")]),
 
     ])
@@ -149,6 +149,7 @@ def init_fmap_derivatives_wf(
             base_directory=output_dir,
             compress=True,
             suffix="fieldmap",
+            datatype="fmap",
             dismiss_entities=("fmap",),
             allowed_entities=tuple(custom_entities.keys()),
         ),
@@ -160,6 +161,7 @@ def init_fmap_derivatives_wf(
             base_directory=output_dir,
             desc="preproc",
             suffix="fieldmap",
+            datatype="fmap",
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
@@ -195,6 +197,7 @@ def init_fmap_derivatives_wf(
         DerivativesDataSink(
             base_directory=output_dir,
             suffix="fieldmap",
+            datatype="fmap",
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
