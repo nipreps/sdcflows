@@ -4,7 +4,7 @@ import json
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms
+from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
@@ -146,7 +146,6 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     import nibabel as nb
 
     tmpdir.chdir()
-
     nb.Nifti1Image(
         np.zeros((10, 10, 10)),
         np.diag(list(anat_res) + [1]),
@@ -159,3 +158,28 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     ).to_filename("epi.nii.gz")
 
     assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval
+
+
+@pytest.mark.parametrize("in_dtype,out_dtype", [
+    ("float32", "int16"),
+    ("int16", "int16"),
+    ("uint8", "int16"),
+    ("float64", "int16"),
+])
+def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
+    """Exercise the set dtype function node."""
+    import numpy as np
+    import nibabel as nb
+
+    tmpdir.chdir()
+    nb.Nifti1Image(
+        np.zeros((10, 10, 10), dtype=in_dtype),
+        np.eye(4),
+        None,
+    ).to_filename(f"{in_dtype}.nii.gz")
+
+    out_file = _set_dtype(f"{in_dtype}.nii.gz")
+    if in_dtype == out_dtype:
+        assert out_file == f"{in_dtype}.nii.gz"
+    else:
+        assert out_file == f"{in_dtype}_{out_dtype}.nii.gz"
