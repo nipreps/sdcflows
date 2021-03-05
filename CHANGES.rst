@@ -1,3 +1,15 @@
+2.0.1 (March 05, 2021)
+======================
+A patch release including some bugfixes and minimal improvements over the previous
+major release.
+
+* FIX: Inconsistency left after renaming inputs to SDC-SyN (removing "BOLD") (#182)
+* FIX: Correctly interpolate the BIDS root when datasets have sessions (#180)
+* ENH: Add a preprocessing pipeline for SDC-SyN (#184)
+* ENH: [rodents] Add input to override default B-Spline distances in INU correction with N4 (#178)
+* ENH: Adopt new brain extraction algorithm in magnitude preparation workflow (#176)
+* MAINT: Adapt to GitHub actions' upgrade to Ubuntu 20.04 (#185)
+
 2.0.0 (January 25, 2021)
 ========================
 The *SDCFlows* 2.0.x series are released after a comprehensive overhaul of the software's API.
