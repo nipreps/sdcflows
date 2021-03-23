@@ -16,6 +16,7 @@ def init_fmap_preproc_wf(
     omp_nthreads,
     output_dir,
     subject,
+    sloppy=False,
     debug=False,
     name="fmap_preproc_wf",
 ):

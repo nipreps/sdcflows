@@ -36,7 +36,7 @@ def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
         name=f"topup_{epi_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
     )
 
-    topup_wf = init_topup_wf(omp_nthreads=2, debug=True)
+    topup_wf = init_topup_wf(omp_nthreads=2, debug=True, sloppy=True)
     metadata = [
         loads(Path(str(f).replace(".nii.gz", ".json")).read_text()) for f in in_data
     ]
