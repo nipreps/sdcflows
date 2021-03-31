@@ -74,6 +74,7 @@ INPUT_FIELDS = (
 def init_syn_sdc_wf(
     *,
     atlas_threshold=3,
+    sloppy=False,
     debug=False,
     name="syn_sdc_wf",
     omp_nthreads=1,
@@ -101,8 +102,10 @@ def init_syn_sdc_wf(
     atlas_threshold : :obj:`float`
         Exclude from the registration metric computation areas with average distortions
         below this threshold (in mm).
-    debug : :obj:`bool`
+    sloppy : :obj:`bool`
         Whether a fast (less accurate) configuration of the workflow should be applied.
+    debug : :obj:`bool`
+        Run in debug mode
     name : :obj:`str`
         Name for this workflow
     omp_nthreads : :obj:`int`
@@ -220,7 +223,7 @@ template [@fieldmapless3].
     # SyN Registration Core
     syn = pe.Node(
         Registration(
-            from_file=pkgrf("sdcflows", f"data/sd_syn{'_debug' * debug}.json")
+            from_file=pkgrf("sdcflows", f"data/sd_syn{'_sloppy' * sloppy}.json")
         ),
         name="syn",
         n_procs=omp_nthreads,
@@ -253,7 +256,7 @@ template [@fieldmapless3].
     bs_filter = pe.Node(BSplineApprox(), n_procs=omp_nthreads, name="bs_filter")
     bs_filter.interface._always_run = debug
     bs_filter.inputs.bs_spacing = (
-        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not debug else [DEFAULT_ZOOMS_MM]
+        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
     )
     bs_filter.inputs.extrapolate = not debug
 

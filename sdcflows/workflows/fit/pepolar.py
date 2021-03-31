@@ -23,7 +23,7 @@ A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (
 echo-planar imaging (EPI) references """
 
 
-def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
+def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"):
     """
     Create the PEPOLAR field estimation workflow based on FSL's ``topup``.
 
@@ -37,8 +37,10 @@ def init_topup_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     Parameters
     ----------
-    debug : :obj:`bool`
+    sloppy : :obj:`bool`
         Whether a fast configuration of topup (less accurate) should be applied.
+    debug : :obj:`bool`
+        Run in debug mode
     name : :obj:`str`
         Name for this workflow
     omp_nthreads : :obj:`int`

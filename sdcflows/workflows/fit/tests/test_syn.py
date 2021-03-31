@@ -51,7 +51,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
         smriprep / "sub-100185_desc-brain_mask.nii.gz"
     )
 
-    syn_wf = init_syn_sdc_wf(debug=sloppy_mode, omp_nthreads=4)
+    syn_wf = init_syn_sdc_wf(debug=sloppy_mode, sloppy=sloppy_mode, omp_nthreads=4)
 
     # fmt: off
     wf.connect([
@@ -125,9 +125,9 @@ def test_syn_wf_version(monkeypatch, ants_version):
     monkeypatch.setattr(Registration, "version", ants_version)
     if ants_version == "2.1.0":
         with pytest.raises(RuntimeError):
-            init_syn_sdc_wf(debug=True, omp_nthreads=4)
+            init_syn_sdc_wf(debug=True, sloppy=True, omp_nthreads=4)
     else:
-        wf = init_syn_sdc_wf(debug=True, omp_nthreads=4)
+        wf = init_syn_sdc_wf(debug=True, sloppy=True, omp_nthreads=4)
         assert (ants_version or "version unknown") in wf.__desc__
 
 

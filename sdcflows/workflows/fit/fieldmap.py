@@ -103,7 +103,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 INPUT_FIELDS = ("magnitude", "fieldmap")
 
 
-def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
+def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", name="fmap_wf"):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
@@ -129,8 +129,10 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     ----------
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
+    sloppy : :obj:`bool`
+        Whether a fast but less accurate correction should be applied.
     debug : :obj:`bool`
-        Run on debug mode
+        Run in debug mode
     name : :obj:`str`
         Unique name of this workflow.
 
@@ -172,7 +174,7 @@ def init_fmap_wf(omp_nthreads=1, debug=False, mode="phasediff", name="fmap_wf"):
     bs_filter = pe.Node(BSplineApprox(), n_procs=omp_nthreads, name="bs_filter")
     bs_filter.interface._always_run = debug
     bs_filter.inputs.bs_spacing = (
-        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not debug else [DEFAULT_ZOOMS_MM]
+        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
     )
     bs_filter.inputs.extrapolate = not debug
 
@@ -336,7 +338,7 @@ def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use
     debug : :obj:`bool`
-        Run on debug mode
+        Run in debug mode
     name : :obj:`str`
         Name of workflow (default: ``phdiff_wf``)
 

@@ -39,6 +39,7 @@ def test_phdiff(tmpdir, datadir, workdir, outdir, fmap_file):
     phdiff_wf = init_fmap_wf(
         omp_nthreads=2,
         debug=True,
+        sloppy=True,
         mode=mode,
     )
     phdiff_wf.inputs.inputnode.fieldmap = fieldmaps
