@@ -64,6 +64,8 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         The path of mask corresponding to the ``fmap_ref`` output.
     fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
         The path(s) of the B-Spline coefficients supporting the fieldmap.
+    method: :obj:`str`
+        Short description of the estimation method that was run.
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
@@ -91,10 +93,12 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
                 "jacobians",
                 "xfms",
                 "out_warps",
+                "method",
             ]
         ),
         name="outputnode",
     )
+    outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
     flatten = pe.Node(Flatten(), name="flatten")
     concat_blips = pe.Node(MergeSeries(), name="concat_blips")

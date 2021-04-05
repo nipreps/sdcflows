@@ -154,6 +154,8 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
     fmap_mask : :obj:`str`
         Path to a binary brain mask corresponding to the ``fmap`` and ``fmap_ref``
         pair.
+    method: :obj:`str`
+        Short description of the estimation method that was run.
 
     """
     from ...interfaces.bspline import (
@@ -166,7 +168,7 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff"]),
+        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff", "method"]),
         name="outputnode",
     )
 
@@ -199,6 +201,7 @@ phase-drift map(s) measure with two consecutive GRE (gradient-recalled echo)
 acquisitions.
 """
         phdiff_wf = init_phdiff_wf(omp_nthreads, debug=debug)
+        outputnode.inputs.method = "FMB (fieldmap-based) - phase-difference map"
 
         # fmt: off
         workflow.connect([
@@ -220,6 +223,7 @@ acquisitions.
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was directly measured with
 an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
+        outputnode.inputs.method = "FMB (fieldmap-based) - directly measured B0 map"
         # Merge input fieldmap images (assumes all are given in the same units!)
         fmapmrg = pe.Node(
             IntraModalMerge(zero_based_avg=False, hmc=False, to_ras=False),
