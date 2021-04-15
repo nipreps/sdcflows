@@ -67,7 +67,7 @@ def init_fmap_preproc_wf(
 
     workflow = Workflow(name=name)
 
-    out_fields = ("fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "fmap_id")
+    out_fields = ("fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "fmap_id", "method")
     out_merge = {
         f: pe.Node(niu.Merge(len(estimators)), name=f"out_merge_{f}")
         for f in out_fields
@@ -144,6 +144,7 @@ def init_fmap_preproc_wf(
                 ("outputnode.fmap_ref", "fmap_ref"),
                 ("outputnode.fmap_coeff", "fmap_coeff"),
                 ("outputnode.fmap_mask", "fmap_mask"),
+                ("outputnode.method", "method")
             ]),
         ])
         # fmt:on

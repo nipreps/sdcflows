@@ -135,6 +135,8 @@ def init_syn_sdc_wf(
         The path of an unwarped conversion of files in ``epi_ref``.
     fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
         The path(s) of the B-Spline coefficients supporting the fieldmap.
+    method: :obj:`str`
+        Short description of the estimation method that was run.
 
     """
     from pkg_resources import resource_filename as pkgrf
@@ -176,9 +178,10 @@ template [@fieldmapless3].
 """
     inputnode = pe.Node(niu.IdentityInterface(INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_coeff", "fmap_mask"]),
+        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "method"]),
         name="outputnode",
     )
+    outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
 
     warp_dir = pe.Node(
         niu.Function(function=_warp_dir),
