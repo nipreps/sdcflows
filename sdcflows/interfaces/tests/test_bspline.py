@@ -66,6 +66,7 @@ def test_topup_coeffs(tmpdir, testdata_dir):
     result = TOPUPCoeffReorient(
         in_coeff=str(testdata_dir / "topup-coeff.nii.gz"),
         fmap_ref=str(testdata_dir / "epi.nii.gz"),
+        ro_time=1.0,
     ).run()
 
     nii = nb.load(result.outputs.out_coeff)
@@ -80,6 +81,7 @@ def test_topup_coeffs(tmpdir, testdata_dir):
         TOPUPCoeffReorient(
             in_coeff="failing.nii.gz",
             fmap_ref=str(testdata_dir / "epi.nii.gz"),
+            ro_time=1.0,
         ).run()
 
     # Test automatic output file name generation, just for coverage
