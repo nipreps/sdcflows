@@ -140,7 +140,7 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
         (topup, merge_corrected, [("out_corrected", "in_files")]),
-        (readout_time, fix_coeff, [(("readout_time", _front), "ro_time")])
+        (readout_time, fix_coeff, [(("readout_time", _front), "ro_time")]),
         (flatten, fix_coeff, [(("out_meta", _get_pe), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff"),
                             ("out_corrected", "fmap_ref")]),
