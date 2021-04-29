@@ -636,7 +636,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, ro_time=1.0, out_file=None
     coeffnii.header.set_sform(newaff, code=1)
 
     pe_axis = "ijk".index(pe_dir[0])
-    pe_sign = [1.0, -1.0][len(pe_dir) != 2]
+    pe_sign = -1.0 if pe_dir.endswith('-') else 1.0
     # Convert coefficients from mm to Hz
     cdata = coeffnii.get_fdata()
     cdata *= pe_sign * 1.0 / (ro_time * refnii.header.get_zooms()[pe_axis])
