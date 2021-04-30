@@ -265,7 +265,7 @@ class Coefficients2Warp(SimpleInterface):
 
         # Generate warp field
         phaseEncDim = "ijk".index(self.inputs.pe_dir[0])
-        phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
+        phaseEncSign = -1.0 if self.inputs.pe_dir.endswith("-") else 1.0
 
         data *= phaseEncSign * self.inputs.ro_time
 
