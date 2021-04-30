@@ -19,7 +19,7 @@ def init_coeff2epi_wf(
     omp_nthreads,
     debug=False,
     write_coeff=False,
-    name="fmap2field_wf",
+    name="coeff2epi_wf",
 ):
     """
     Move the field coefficients on to the target (distorted) EPI space.
