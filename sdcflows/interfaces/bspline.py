@@ -284,7 +284,7 @@ class Coefficients2Warp(SimpleInterface):
         if obliquity(aff).max() * 180 / pi > 0.01:
             dirmat = np.eye(4)
             dirmat[:3, :3] = aff[:3, :3] / (voxel_sizes(aff) * io_orientation(aff)[:, 1])
-            field = nb.affines.apply_affine(aff, field)
+            field = nb.affines.apply_affine(dirmat, field)
 
         warpnii = targetnii.__class__(
             field.reshape(fieldshape)[:, :, :, np.newaxis, :], targetnii.affine, None
