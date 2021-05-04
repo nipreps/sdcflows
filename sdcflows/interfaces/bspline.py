@@ -281,7 +281,7 @@ class Coefficients2Warp(SimpleInterface):
 
         # If coordinate system is oblique, project displacements through directions matrix
         aff = targetnii.affine
-        if (obliquity(aff).min() * 180 / pi) > 0.01:
+        if obliquity(aff).max() * 180 / pi > 0.01:
             dirmat = np.eye(4)
             dirmat[:3, :3] = aff[:3, :3] / (voxel_sizes(aff) * io_orientation(aff)[:, 1])
             field = nb.affines.apply_affine(aff, field)
