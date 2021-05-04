@@ -2,9 +2,11 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
+from math import pi
 import numpy as np
 import nibabel as nb
-from nibabel.affines import apply_affine
+from nibabel.affines import apply_affine, obliquity, voxel_sizes
+from nibabel.orientations import io_orientation
 
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
@@ -264,10 +266,10 @@ class Coefficients2Warp(SimpleInterface):
         )
 
         # Generate warp field
-        phaseEncDim = "ijk".index(self.inputs.pe_dir[0])
-        phaseEncSign = [1.0, -1.0][len(self.inputs.pe_dir) != 2]
-
-        data *= phaseEncSign * self.inputs.ro_time
+        pe_axis = "ijk".index(self.inputs.pe_dir[0])
+        pe_sign = -1.0 if self.inputs.pe_dir.endswith("-") else 1.0
+        pe_size = targetnii.header.get_zooms()[pe_axis]
+        data *= pe_sign * self.inputs.ro_time * pe_size
 
         fieldshape = tuple(list(data.shape[:3]) + [3])
         self._results["out_warp"] = fname_presuffix(
@@ -275,13 +277,17 @@ class Coefficients2Warp(SimpleInterface):
         )
         # Compose a vector field
         field = np.zeros((data.size, 3), dtype="float32")
-        field[..., phaseEncDim] = data.reshape(-1)
-        aff = targetnii.affine.copy()
-        aff[:3, 3] = 0.0
-        # Multiplying by the affine implicitly applies the voxel size to the shift map
-        field = nb.affines.apply_affine(aff, field).reshape(fieldshape)
+        field[..., pe_axis] = data.reshape(-1)
+
+        # If coordinate system is oblique, project displacements through directions matrix
+        aff = targetnii.affine
+        if obliquity(aff).max() * 180 / pi > 0.01:
+            dirmat = np.eye(4)
+            dirmat[:3, :3] = aff[:3, :3] / (voxel_sizes(aff) * io_orientation(aff)[:, 1])
+            field = nb.affines.apply_affine(dirmat, field)
+
         warpnii = targetnii.__class__(
-            field[:, :, :, np.newaxis, :].astype("float32"), targetnii.affine, None
+            field.reshape(fieldshape)[:, :, :, np.newaxis, :], targetnii.affine, None
         )
         warpnii.header.set_intent("vector", (), "")
         warpnii.header.set_xyzt_units("mm")
