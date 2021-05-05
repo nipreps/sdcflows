@@ -178,6 +178,8 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
     )
 
     def _getpe(in_meta):
+        if isinstance(in_meta, list):
+            return [m["PhaseEncodingDirection"] for m in in_meta]
         return in_meta["PhaseEncodingDirection"]
 
     # fmt:off
