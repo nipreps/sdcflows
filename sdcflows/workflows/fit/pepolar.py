@@ -112,7 +112,7 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
 
     topup = pe.Node(
         TOPUP(
-            config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * debug}.cnf")
+            config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
         ),
         name="topup",
     )
@@ -144,17 +144,56 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
                               (("out_meta", _getpe), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
-        (topup, merge_corrected, [("out_corrected", "in_files")]),
-        (topup, outputnode, [("out_field", "fmap"),
-                             ("out_jacs", "jacobians"),
-                             ("out_mats", "xfms"),
-                             ("out_warps", "out_warps")]),
+        (topup, outputnode, [("out_jacs", "jacobians"),
+                             ("out_mats", "xfms")]),
         (merge_corrected, brainextraction_wf, [("out_avg", "inputnode.in_file")]),
         (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
         (brainextraction_wf, outputnode, [("outputnode.out_mask", "fmap_mask")]),
         (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
+
+    if not debug:
+        # fmt: off
+        workflow.connect([
+            (topup, merge_corrected, [("out_corrected", "in_files")]),
+            (topup, outputnode, [("out_field", "fmap"),
+                                 ("out_warps", "out_warps")]),
+        ])
+        # fmt: on
+        return workflow
+
+    from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
+    from ...interfaces.bspline import Coefficients2Warp
+
+    coeff2xfm = pe.MapNode(
+        Coefficients2Warp(low_mem=sloppy),
+        name="coeff2xfm",
+        iterfield=["in_target", "pe_dir", "ro_time"],
+    )
+    unwarp = pe.MapNode(
+        ApplyTransforms(dimension=3, interpolation="BSpline"),
+        name="unwarp",
+        iterfield=["reference_image", "input_image", "transforms"],
+    )
+
+    def _getpe(in_meta):
+        return in_meta["PhaseEncodingDirection"]
+
+    # fmt:off
+    workflow.connect([
+        (fix_coeff, coeff2xfm, [("out_coeff", "in_coeff")]),
+        (flatten, coeff2xfm, [("out_data", "in_target"),
+                              (("out_meta", _getpe), "pe_dir")]),
+        (readout_time, coeff2xfm, [("readout_time", "ro_time")]),
+        (coeff2xfm, unwarp, [("out_warp", "transforms")]),
+        (flatten, unwarp, [("out_data", "reference_image"),
+                           ("out_data", "input_image")]),
+        (coeff2xfm, outputnode, [("out_warp", "out_warps"),
+                                 ("out_field", "fmap")]),
+        (unwarp, merge_corrected, [("output_image", "in_files")]),
+    ])
+    # fmt:on
 
     return workflow
 
