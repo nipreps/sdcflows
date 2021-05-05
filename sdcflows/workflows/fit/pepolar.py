@@ -164,33 +164,32 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         return workflow
 
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
+    from ...utils.misc import front as _front
     from ...interfaces.bspline import Coefficients2Warp
 
-    coeff2xfm = pe.MapNode(
-        Coefficients2Warp(low_mem=sloppy),
+    coeff2xfm = pe.Node(
+        Coefficients2Warp(ro_time=1.0, low_mem=sloppy),
         name="coeff2xfm",
-        iterfield=["in_target", "pe_dir", "ro_time"],
     )
-    unwarp = pe.MapNode(
+    unwarp = pe.Node(
         ApplyTransforms(dimension=3, interpolation="BSpline"),
         name="unwarp",
-        iterfield=["reference_image", "input_image", "transforms"],
     )
 
     def _getpe(in_meta):
         if isinstance(in_meta, list):
-            return [m["PhaseEncodingDirection"] for m in in_meta]
+            in_meta = in_meta[0]
         return in_meta["PhaseEncodingDirection"]
 
     # fmt:off
     workflow.connect([
         (fix_coeff, coeff2xfm, [("out_coeff", "in_coeff")]),
-        (flatten, coeff2xfm, [("out_data", "in_target"),
+        (flatten, coeff2xfm, [(("out_data", _front), "in_target"),
                               (("out_meta", _getpe), "pe_dir")]),
-        (readout_time, coeff2xfm, [("readout_time", "ro_time")]),
+        (readout_time, coeff2xfm, [(("readout_time", _front), "ro_time")]),
         (coeff2xfm, unwarp, [("out_warp", "transforms")]),
-        (flatten, unwarp, [("out_data", "reference_image"),
-                           ("out_data", "input_image")]),
+        (flatten, unwarp, [(("out_data", _front), "reference_image"),
+                           (("out_data", _front), "input_image")]),
         (coeff2xfm, outputnode, [("out_warp", "out_warps"),
                                  ("out_field", "fmap")]),
         (unwarp, merge_corrected, [("output_image", "in_files")]),
