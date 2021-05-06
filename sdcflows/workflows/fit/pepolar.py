@@ -72,6 +72,7 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
     from niworkflows.interfaces.nibabel import MergeSeries
     from niworkflows.interfaces.images import IntraModalMerge
 
+    from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
     from ...interfaces.utils import Flatten
     from ...interfaces.bspline import TOPUPCoeffReorient
@@ -125,6 +126,11 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
 
     brainextraction_wf = init_brainextraction_wf()
 
+    def _getpe(in_meta):
+        if isinstance(in_meta, list):
+            in_meta = in_meta[0]
+        return in_meta["PhaseEncodingDirection"]
+
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
@@ -135,9 +141,10 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         (flatten, topup, [(("out_meta", _pe2fsl), "encoding_direction")]),
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
+        (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
+                              (("out_meta", _getpe), "pe_dir")]),
+        (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, merge_corrected, [("out_corrected", "in_files")]),
-        (topup, fix_coeff, [("out_fieldcoef", "in_coeff"),
-                            ("out_corrected", "fmap_ref")]),
         (topup, outputnode, [("out_field", "fmap"),
                              ("out_jacs", "jacobians"),
                              ("out_mats", "xfms"),
