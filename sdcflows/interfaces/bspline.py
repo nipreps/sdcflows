@@ -450,6 +450,7 @@ def grid_bspline_weights(target_nii, ctrl_nii):
                 lambda d: (2.0 - d) ** 3 / 6.0,
             ],
         )
+
         wd.append(weights)
 
     ctrl_shape = ctrl_nii.shape[:3]
