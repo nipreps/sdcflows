@@ -239,6 +239,7 @@ class Coefficients2Warp(SimpleInterface):
 
     def _run_interface(self, runtime):
         from scipy.sparse import vstack as sparse_vstack
+        from sdcflows.transform import grid_bspline_weights
 
         # Calculate the physical coordinates of target grid
         targetnii = nb.load(self.inputs.in_target)
@@ -414,62 +415,6 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     )
 
     return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
-
-
-def grid_bspline_weights(target_nii, ctrl_nii):
-    """Fast, gridded evaluation."""
-    from scipy.sparse import csr_matrix, vstack
-
-    if isinstance(target_nii, (str, bytes, Path)):
-        target_nii = nb.load(target_nii)
-    if isinstance(ctrl_nii, (str, bytes, Path)):
-        ctrl_nii = nb.load(ctrl_nii)
-
-    shape = target_nii.shape[:3]
-    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
-    ras2ijk = np.linalg.inv(ctrl_nii.affine)
-    origin = apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
-
-    wd = []
-    for i, (o, n, sp) in enumerate(
-        zip(origin, shape, target_nii.header.get_zooms()[:3])
-    ):
-        locations = np.arange(0, n, dtype="float32") * sp / ctrl_sp[i] + o
-        knots = np.arange(0, ctrl_nii.shape[i], dtype="float32")
-        distance = (locations[np.newaxis, ...] - knots[..., np.newaxis]).astype(
-            "float32"
-        )
-        weights = np.zeros_like(distance, dtype="float32")
-        within_support = np.abs(distance) < 2.0
-        d = np.abs(distance[within_support])
-        weights[within_support] = np.piecewise(
-            d,
-            [d < 1.0, d >= 1.0],
-            [
-                lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
-                lambda d: (2.0 - d) ** 3 / 6.0,
-            ],
-        )
-
-        wd.append(weights)
-
-    ctrl_shape = ctrl_nii.shape[:3]
-    data_size = np.prod(shape)
-    wmat = None
-    for i in range(ctrl_shape[0]):
-        sparse_mat = (
-            wd[0][i, np.newaxis, np.newaxis, :, np.newaxis, np.newaxis]
-            * wd[1][np.newaxis, :, np.newaxis, np.newaxis, :, np.newaxis]
-            * wd[2][np.newaxis, np.newaxis, :, np.newaxis, np.newaxis, :]
-        ).reshape((-1, data_size))
-        sparse_mat[sparse_mat < 1e-9] = 0
-
-        if wmat is None:
-            wmat = csr_matrix(sparse_mat)
-        else:
-            wmat = vstack((wmat, csr_matrix(sparse_mat)))
-
-    return wmat
 
 
 def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
