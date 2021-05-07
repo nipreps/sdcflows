@@ -1,4 +1,4 @@
-"""Basic miscelaneous utilities."""
+"""Basic miscellaneous utilities."""
 
 
 def front(inlist):

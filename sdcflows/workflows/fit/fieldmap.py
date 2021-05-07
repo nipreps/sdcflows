@@ -74,7 +74,7 @@ the displacements field, can be obtained as:
     \label{eq:fieldmap-4}\tag{4}
 
 This calculation is further complicated by the fact that :math:`\Theta_i`
-(and therfore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
+(and therefore, :math:`\Delta \Theta`) are clipped (or *wrapped*) within
 the range :math:`[0 \dotsb 2\pi )`.
 It is necessary to find the integer number of offsets that make a region
 continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
@@ -82,7 +82,7 @@ continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
 This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
 Some scanners produce one ``phasediff`` map, where the drift between the two echos has
-already been calulated (see `the corresponding section of BIDS
+already been calculated (see `the corresponding section of BIDS
 <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
 
 References
