@@ -23,7 +23,9 @@ A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (
 echo-planar imaging (EPI) references """
 
 
-def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"):
+def init_topup_wf(
+    omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"
+):
     """
     Create the PEPOLAR field estimation workflow based on FSL's ``topup``.
 
@@ -112,7 +114,7 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
 
     topup = pe.Node(
         TOPUP(
-            config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * debug}.cnf")
+            config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
         ),
         name="topup",
     )
@@ -144,17 +146,49 @@ def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estim
         (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
                               (("out_meta", _getpe), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
-        (topup, merge_corrected, [("out_corrected", "in_files")]),
-        (topup, outputnode, [("out_field", "fmap"),
-                             ("out_jacs", "jacobians"),
-                             ("out_mats", "xfms"),
-                             ("out_warps", "out_warps")]),
+        (topup, outputnode, [("out_jacs", "jacobians"),
+                             ("out_mats", "xfms")]),
         (merge_corrected, brainextraction_wf, [("out_avg", "inputnode.in_file")]),
         (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
         (brainextraction_wf, outputnode, [("outputnode.out_mask", "fmap_mask")]),
         (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
+
+    if not debug:
+        # fmt: off
+        workflow.connect([
+            (topup, merge_corrected, [("out_corrected", "in_files")]),
+            (topup, outputnode, [("out_field", "fmap"),
+                                 ("out_warps", "out_warps")]),
+        ])
+        # fmt: on
+        return workflow
+
+    from ...interfaces.bspline import ApplyCoeffsField
+
+    unwarp = pe.Node(
+        ApplyCoeffsField(ro_time=1.0),
+        name="unwarp",
+    )
+
+    def _getpe(inlist):
+        if isinstance(inlist, dict):
+            inlist = [inlist]
+
+        return [m["PhaseEncodingDirection"] for m in inlist]
+
+    # fmt:off
+    workflow.connect([
+        (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
+        (flatten, unwarp, [("out_data", "in_target"),
+                           (("out_meta", _getpe), "pe_dir")]),
+        (readout_time, unwarp, [("readout_time", "ro_time")]),
+        (unwarp, outputnode, [("out_warp", "out_warps"),
+                              ("out_field", "fmap")]),
+        (unwarp, merge_corrected, [("out_corrected", "in_files")]),
+    ])
+    # fmt:on
 
     return workflow
 
