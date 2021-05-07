@@ -167,10 +167,7 @@ def init_topup_wf(
 
     from ...interfaces.bspline import ApplyCoeffsField
 
-    unwarp = pe.Node(
-        ApplyCoeffsField(ro_time=1.0),
-        name="unwarp",
-    )
+    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
 
     def _getpe(inlist):
         if isinstance(inlist, dict):
