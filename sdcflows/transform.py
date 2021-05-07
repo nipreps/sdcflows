@@ -17,6 +17,45 @@ class B0FieldTransform:
     coeffs = attr.ib(default=None)
     shifts = attr.ib(default=None, init=False)
 
+    def fit(self, spatialimage):
+        r"""
+        Generate the interpolation matrix (and the VSM with it).
+
+        Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
+        for all voxels in the target-image's extent.
+
+        """
+        # Calculate the physical coordinates of target grid
+        if isinstance(spatialimage, (str, bytes, Path)):
+            spatialimage = nb.load(spatialimage)
+
+        if self.shifts is not None:
+            newaff = spatialimage.affine
+            newshape = spatialimage.shape
+
+            if np.all(newshape == self.shifts.shape) and np.allclose(
+                newaff, self.shifts.affine
+            ):
+                return
+
+        weights = []
+        coeffs = []
+
+        # Generate tensor-product B-Spline weights
+        for level in listify(self.coeffs):
+            wmat = grid_bspline_weights(spatialimage, level)
+            weights.append(wmat)
+            coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
+
+        # Interpolate the VSM (voxel-shift map)
+        vsm = np.zeros(spatialimage.shape[:3], dtype="float32")
+        vsm = (np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)).reshape(
+            vsm.shape
+        )
+
+        # Cache
+        self.shifts = nb.Nifti1Image(vsm, spatialimage.affine, None)
+
     def apply(
         self,
         spatialimage,
@@ -62,28 +101,9 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
-        # Calculate the physical coordinates of target grid
-        if isinstance(spatialimage, (str, bytes, Path)):
-            spatialimage = nb.load(spatialimage)
-
-        vsm = self.shifts
-        if vsm is None:
-            weights = []
-            coeffs = []
-
-            for level in listify(self.coeffs):
-                wmat = grid_bspline_weights(spatialimage, level)
-                weights.append(wmat)
-                coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
-
-            # VSM = voxel-shift map
-            vsm = np.zeros(spatialimage.shape[:3], dtype="float32")
-            vsm = (np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)).reshape(
-                vsm.shape
-            )
-
-            # Cache
-            self.shifts = vsm
+        # Ensure the vsm has been computed
+        self.fit(spatialimage)
+        vsm = self.shifts.get_fdata()
 
         # Reverse shifts if reversed blips
         if pe_dir.endswith("-"):
@@ -117,6 +137,60 @@ class B0FieldTransform:
         )
         moved.header.set_data_dtype(output_dtype)
         return moved
+
+    def to_displacements(self, ro_time, pe_dir):
+        """
+        Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.
+
+        The displacements field can be calculated following
+        `Eq. (2) in the fieldmap fitting section
+        <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
+
+        Parameters
+        ----------
+        ro_time : :obj:`float`
+            The total readout time in seconds (only if ``vsm=False``).
+        pe_dir : :obj:`str`
+            The ``PhaseEncodingDirection`` metadata value (only if ``vsm=False``).
+
+        Returns
+        -------
+        spatialimage : :obj:`nibabel.nifti.Nifti1Image`
+            A NIfTI 1.0 object containing the distortion.
+
+        """
+        from math import pi
+        from nibabel.affines import voxel_sizes, obliquity
+        from nibabel.orientations import io_orientation
+
+        # Generate warp field
+        data = self.shifts.get_fdata(dtype="float32")
+        pe_axis = "ijk".index(pe_dir[0])
+        pe_sign = -1.0 if pe_dir.endswith("-") else 1.0
+        pe_size = self.shifts.header.get_zooms()[pe_axis]
+        data *= pe_sign * ro_time * pe_size
+
+        fieldshape = tuple(list(data.shape[:3]) + [3])
+
+        # Compose a vector field
+        field = np.zeros((data.size, 3), dtype="float32")
+        field[..., pe_axis] = data.reshape(-1)
+
+        # If coordinate system is oblique, project displacements through directions matrix
+        aff = self.shifts.affine
+        if obliquity(aff).max() * 180 / pi > 0.01:
+            dirmat = np.eye(4)
+            dirmat[:3, :3] = aff[:3, :3] / (
+                voxel_sizes(aff) * io_orientation(aff)[:, 1]
+            )
+            field = nb.affines.apply_affine(dirmat, field)
+
+        warpnii = nb.Nifti1Image(
+            field.reshape(fieldshape)[:, :, :, np.newaxis, :], aff, None
+        )
+        warpnii.header.set_intent("vector", (), "")
+        warpnii.header.set_xyzt_units("mm")
+        return warpnii
 
 
 def _cubic_bspline(d):

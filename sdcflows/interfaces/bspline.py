@@ -2,11 +2,9 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
-from math import pi
 import numpy as np
 import nibabel as nb
-from nibabel.affines import apply_affine, obliquity, voxel_sizes
-from nibabel.orientations import io_orientation
+from nibabel.affines import apply_affine
 
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
@@ -20,7 +18,7 @@ from nipype.interfaces.base import (
     OutputMultiObject,
 )
 
-from sdcflows.transform import grid_bspline_weights as gbsw
+from sdcflows.transform import grid_bspline_weights as gbsw, B0FieldTransform
 
 
 LOW_MEM_BLOCK_SIZE = 1000
@@ -219,77 +217,29 @@ class _Coefficients2WarpOutputSpec(TraitedSpec):
 
 
 class Coefficients2Warp(SimpleInterface):
-    r"""
-    Convert a set of B-Spline coefficients to a full displacements map.
-
-    Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
-    for all voxels in the target-image's extent.
-    When the readout time is known, the displacements field can be calculated
-    following `Eq. (2) in the fieldmap fitting section
-    <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
-
-    """
+    """Convert a set of B-Spline coefficients to a full displacements map."""
 
     input_spec = _Coefficients2WarpInputSpec
     output_spec = _Coefficients2WarpOutputSpec
 
     def _run_interface(self, runtime):
-        from scipy.sparse import vstack as sparse_vstack
-
-        # Calculate the physical coordinates of target grid
-        targetnii = nb.load(self.inputs.in_target)
-        allmask = np.ones_like(targetnii.dataobj, dtype="uint8")
-
-        weights = []
-        coeffs = []
-
-        for cname in self.inputs.in_coeff:
-            coeff_nii = nb.load(cname)
-            wmat = gbsw(targetnii, coeff_nii)
-            weights.append(wmat)
-            coeffs.append(coeff_nii.get_fdata(dtype="float32").reshape(-1))
-
-        data = np.zeros(targetnii.shape, dtype="float32")
-        data[allmask == 1] = np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)
-
-        hdr = targetnii.header.copy()
-        hdr.set_data_dtype("float32")
+        # Prepare output names
         self._results["out_field"] = fname_presuffix(
             self.inputs.in_target, suffix="_field", newpath=runtime.cwd
         )
-        targetnii.__class__(data, targetnii.affine, hdr).to_filename(
-            self._results["out_field"]
+        self._results["out_warp"] = self._results["out_field"].replace(
+            "_field.nii", "_xfm.nii"
         )
 
-        # Generate warp field
-        pe_axis = "ijk".index(self.inputs.pe_dir[0])
-        pe_sign = -1.0 if self.inputs.pe_dir.endswith("-") else 1.0
-        pe_size = targetnii.header.get_zooms()[pe_axis]
-        data *= pe_sign * self.inputs.ro_time * pe_size
-
-        fieldshape = tuple(list(data.shape[:3]) + [3])
-        self._results["out_warp"] = fname_presuffix(
-            self.inputs.in_target, suffix="_xfm", newpath=runtime.cwd
+        xfm = B0FieldTransform(
+            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
         )
-        # Compose a vector field
-        field = np.zeros((data.size, 3), dtype="float32")
-        field[..., pe_axis] = data.reshape(-1)
-
-        # If coordinate system is oblique, project displacements through directions matrix
-        aff = targetnii.affine
-        if obliquity(aff).max() * 180 / pi > 0.01:
-            dirmat = np.eye(4)
-            dirmat[:3, :3] = aff[:3, :3] / (
-                voxel_sizes(aff) * io_orientation(aff)[:, 1]
-            )
-            field = nb.affines.apply_affine(dirmat, field)
-
-        warpnii = targetnii.__class__(
-            field.reshape(fieldshape)[:, :, :, np.newaxis, :], targetnii.affine, None
-        )
-        warpnii.header.set_intent("vector", (), "")
-        warpnii.header.set_xyzt_units("mm")
-        warpnii.to_filename(self._results["out_warp"])
+        xfm.fit(self.inputs.in_target)
+        xfm.shifts.to_filename(self._results["out_field"])
+        xfm.to_displacements(
+            ro_time=self.inputs.ro_time,
+            pe_dir=self.inputs.pe_dir,
+        ).to_filename(self._results["out_warp"])
         return runtime
 
 
