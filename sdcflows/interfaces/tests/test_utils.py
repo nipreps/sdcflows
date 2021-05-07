@@ -1,4 +1,4 @@
-"""Test utilites."""
+"""Test utilities."""
 import pytest
 import numpy as np
 import nibabel as nb

@@ -137,7 +137,7 @@ def get_trt(in_meta, in_file=None):
 
     .. admonition:: Thanks
 
-        With thanks to Dr. Rorden for his thourough
+        With thanks to Dr. Rorden for his thorough
         `assessment <https://github.com/rordenlab/dcm2niix/issues/377>`__
         and `validation <https://osf.io/9ucek/>`__ on the matter,
         and to Pravesh Parekh for `his wonderful review on NeuroStars

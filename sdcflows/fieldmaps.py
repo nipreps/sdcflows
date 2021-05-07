@@ -280,7 +280,7 @@ class FieldmapEstimation:
     """Internal pointer to a workflow."""
 
     def __attrs_post_init__(self):
-        """Determine the inteded fieldmap estimation type and check for data completeness."""
+        """Determine the intended fieldmap estimation type and check for data completeness."""
         suffix_list = [f.suffix for f in self.sources]
         suffix_set = set(suffix_list)
 
