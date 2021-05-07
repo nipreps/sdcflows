@@ -279,7 +279,9 @@ class Coefficients2Warp(SimpleInterface):
         aff = targetnii.affine
         if obliquity(aff).max() * 180 / pi > 0.01:
             dirmat = np.eye(4)
-            dirmat[:3, :3] = aff[:3, :3] / (voxel_sizes(aff) * io_orientation(aff)[:, 1])
+            dirmat[:3, :3] = aff[:3, :3] / (
+                voxel_sizes(aff) * io_orientation(aff)[:, 1]
+            )
             field = nb.affines.apply_affine(dirmat, field)
 
         warpnii = targetnii.__class__(
@@ -377,7 +379,9 @@ class TOPUPCoeffReorient(SimpleInterface):
                     in_coeff,
                     self.inputs.fmap_ref,
                     refpe_reversed=self.inputs.pe_dir.endswith("-"),
-                    out_file=fname_presuffix(in_coeff, suffix="_fixed", newpath=runtime.cwd),
+                    out_file=fname_presuffix(
+                        in_coeff, suffix="_fixed", newpath=runtime.cwd
+                    ),
                 )
             )
             for in_coeff in self.inputs.in_coeff
