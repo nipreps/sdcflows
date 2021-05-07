@@ -165,36 +165,28 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
-    from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
-    from ...utils.misc import front as _front
-    from ...interfaces.bspline import Coefficients2Warp
+    from ...interfaces.bspline import ApplyCoeffsField
 
-    coeff2xfm = pe.Node(
-        Coefficients2Warp(ro_time=1.0, low_mem=sloppy),
-        name="coeff2xfm",
-    )
     unwarp = pe.Node(
-        ApplyTransforms(dimension=3, interpolation="BSpline"),
+        ApplyCoeffsField(ro_time=1.0),
         name="unwarp",
     )
 
-    def _getpe(in_meta):
-        if isinstance(in_meta, list):
-            in_meta = in_meta[0]
-        return in_meta["PhaseEncodingDirection"]
+    def _getpe(inlist):
+        if isinstance(inlist, dict):
+            inlist = [inlist]
+
+        return [m["PhaseEncodingDirection"] for m in inlist]
 
     # fmt:off
     workflow.connect([
-        (fix_coeff, coeff2xfm, [("out_coeff", "in_coeff")]),
-        (flatten, coeff2xfm, [(("out_data", _front), "in_target"),
-                              (("out_meta", _getpe), "pe_dir")]),
-        (readout_time, coeff2xfm, [(("readout_time", _front), "ro_time")]),
-        (coeff2xfm, unwarp, [("out_warp", "transforms")]),
-        (flatten, unwarp, [(("out_data", _front), "reference_image"),
-                           (("out_data", _front), "input_image")]),
-        (coeff2xfm, outputnode, [("out_warp", "out_warps"),
-                                 ("out_field", "fmap")]),
-        (unwarp, merge_corrected, [("output_image", "in_files")]),
+        (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
+        (flatten, unwarp, [("out_data", "in_target"),
+                           (("out_meta", _getpe), "pe_dir")]),
+        (readout_time, unwarp, [("readout_time", "ro_time")]),
+        (unwarp, outputnode, [("out_warp", "out_warps"),
+                              ("out_field", "fmap")]),
+        (unwarp, merge_corrected, [("out_corrected", "in_files")]),
     ])
     # fmt:on
 

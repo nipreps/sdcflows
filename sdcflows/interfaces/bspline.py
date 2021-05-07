@@ -2,6 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
+from functools import partial
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
@@ -188,58 +189,80 @@ class BSplineApprox(SimpleInterface):
         return runtime
 
 
-class _Coefficients2WarpInputSpec(BaseInterfaceInputSpec):
-    in_target = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
+    in_target = InputMultiObject(
+        File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+    )
     in_coeff = InputMultiObject(
         File(exists=True),
         mandatory=True,
         desc="input coefficients, after alignment to the EPI data",
     )
-    ro_time = traits.Float(mandatory=True, desc="EPI readout time (s).")
-    pe_dir = traits.Enum(
-        "i",
-        "i-",
-        "j",
-        "j-",
-        "k",
-        "k-",
-        mandatory=True,
-        desc="the phase-encoding direction corresponding to in_target",
+    ro_time = InputMultiObject(
+        traits.Float(mandatory=True, desc="EPI readout time (s).")
     )
-    low_mem = traits.Bool(
-        False, usedefault=True, desc="perform on low-mem fingerprint regime"
+    pe_dir = InputMultiObject(
+        traits.Enum(
+            "i",
+            "i-",
+            "j",
+            "j-",
+            "k",
+            "k-",
+            mandatory=True,
+            desc="the phase-encoding direction corresponding to in_target",
+        )
     )
 
 
-class _Coefficients2WarpOutputSpec(TraitedSpec):
+class _ApplyCoeffsFieldOutputSpec(TraitedSpec):
+    out_corrected = OutputMultiObject(File(exists=True))
     out_field = File(exists=True)
-    out_warp = File(exists=True)
+    out_warp = OutputMultiObject(File(exists=True))
 
 
-class Coefficients2Warp(SimpleInterface):
+class ApplyCoeffsField(SimpleInterface):
     """Convert a set of B-Spline coefficients to a full displacements map."""
 
-    input_spec = _Coefficients2WarpInputSpec
-    output_spec = _Coefficients2WarpOutputSpec
+    input_spec = _ApplyCoeffsFieldInputSpec
+    output_spec = _ApplyCoeffsFieldOutputSpec
 
     def _run_interface(self, runtime):
         # Prepare output names
-        self._results["out_field"] = fname_presuffix(
-            self.inputs.in_target, suffix="_field", newpath=runtime.cwd
-        )
-        self._results["out_warp"] = self._results["out_field"].replace(
-            "_field.nii", "_xfm.nii"
-        )
+        filename = partial(fname_presuffix, newpath=runtime.cwd)
+
+        self._results["out_field"] = filename(self.inputs.in_coeff[0], suffix="_field")
+        self._results["out_warp"] = []
+        self._results["out_corrected"] = []
 
         xfm = B0FieldTransform(
             coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
         )
-        xfm.fit(self.inputs.in_target)
+        xfm.fit(self.inputs.in_target[0])
         xfm.shifts.to_filename(self._results["out_field"])
-        xfm.to_displacements(
-            ro_time=self.inputs.ro_time,
-            pe_dir=self.inputs.pe_dir,
-        ).to_filename(self._results["out_warp"])
+
+        n_inputs = len(self.inputs.in_target)
+        ro_time = self.inputs.ro_time
+        if len(ro_time) == 1:
+            ro_time = [ro_time[0]] * n_inputs
+
+        pe_dir = self.inputs.pe_dir
+        if len(pe_dir) == 1:
+            pe_dir = [pe_dir[0]] * n_inputs
+
+        for fname, pe, ro in zip(self.inputs.in_target, pe_dir, ro_time):
+            xfm.fit(fname)
+
+            # Generate warpfield
+            warp_name = filename(fname, suffix="_xfm")
+            xfm.to_displacements(ro_time=ro, pe_dir=pe).to_filename(warp_name)
+            self._results["out_warp"].append(warp_name)
+
+            # Generate resampled
+            out_name = filename(fname, suffix="_unwarped")
+            xfm.apply(nb.load(fname), ro_time=ro, pe_dir=pe).to_filename(out_name)
+            self._results["out_corrected"].append(out_name)
+
         return runtime
 
 

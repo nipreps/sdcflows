@@ -48,9 +48,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         a fast mask calculated from the corrected EPI reference.
 
     """
-    from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.bspline import Coefficients2Warp
+    from ...interfaces.bspline import ApplyCoeffsField
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -65,10 +64,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
     rotime.interface._always_run = debug
-    resample = pe.Node(Coefficients2Warp(low_mem=debug), name="resample")
-    unwarp = pe.Node(
-        ApplyTransforms(dimension=3, interpolation="BSpline"), name="unwarp"
-    )
+    resample = pe.Node(ApplyCoeffsField(), name="resample")
+
     brainextraction_wf = init_brainextraction_wf()
 
     # fmt:off
@@ -79,11 +76,9 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
                                ("fmap_coeff", "in_coeff")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
-        (inputnode, unwarp, [("distorted", "reference_image"),
-                             ("distorted", "input_image")]),
-        (resample, unwarp, [("out_warp", "transforms")]),
-        (resample, outputnode, [("out_field", "fieldmap")]),
-        (unwarp, brainextraction_wf, [("output_image", "inputnode.in_file")]),
+        (resample, outputnode, [("out_field", "fieldmap"),
+                                ("out_warp", "transforms")]),
+        (resample, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected"),
             ("outputnode.out_mask", "corrected_mask"),

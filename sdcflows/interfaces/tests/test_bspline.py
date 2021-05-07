@@ -6,7 +6,7 @@ import pytest
 
 from ..bspline import (
     bspline_grid,
-    Coefficients2Warp,
+    ApplyCoeffsField,
     BSplineApprox,
     TOPUPCoeffReorient,
     _fix_topup_fieldcoeff,
@@ -40,7 +40,7 @@ def test_bsplines(tmp_path, testnum):
 
     os.chdir(tmp_path)
     # Check that we can interpolate the coefficients on a target
-    test1 = Coefficients2Warp(
+    test1 = ApplyCoeffsField(
         in_target=str(tmp_path / "target.nii.gz"),
         in_coeff=str(tmp_path / "coeffs.nii.gz"),
         pe_dir="j-",
@@ -91,8 +91,8 @@ def test_topup_coeffs(tmpdir, testdata_dir):
 def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
     """Check that our interpolation is not far away from TOPUP's."""
     tmpdir.chdir()
-    result = Coefficients2Warp(
-        in_target=str(testdata_dir / "epi.nii.gz"),
+    result = ApplyCoeffsField(
+        in_target=[str(testdata_dir / "epi.nii.gz")] * 2,
         in_coeff=str(testdata_dir / "topup-coeff-fixed.nii.gz"),
         pe_dir="j-",
         ro_time=1.0,

@@ -118,7 +118,7 @@ class B0FieldTransform:
         voxcoords[pe_axis, ...] += vsm * ro_time
 
         # Prepare data
-        data = np.asanyarray(spatialimage.dataobj)
+        data = np.squeeze(np.asanyarray(spatialimage.dataobj))
         output_dtype = output_dtype or data.dtype
 
         # Resample
