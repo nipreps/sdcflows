@@ -93,7 +93,7 @@ RUN conda install -y -c anaconda -c conda-forge \
                      pip=20.3 \
                      scikit-image=0.18 \
                      scikit-learn=0.19 \
-                     scipy=1.5 \
+                     scipy=1.6 \
                      setuptools \
                      setuptools_scm \
                      toml \
