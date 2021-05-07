@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build-linux:
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
     runs-on: ubuntu-latest
     env:
       TEST_DATA_HOME: /home/runner/sdcflows-tests
