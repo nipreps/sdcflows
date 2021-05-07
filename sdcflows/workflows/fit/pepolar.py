@@ -23,7 +23,9 @@ A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (
 echo-planar imaging (EPI) references """
 
 
-def init_topup_wf(omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"):
+def init_topup_wf(
+    omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"
+):
     """
     Create the PEPOLAR field estimation workflow based on FSL's ``topup``.
 
