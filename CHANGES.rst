@@ -1,3 +1,25 @@
+2.0.2 (May 07, 2021)
+====================
+A patch release including hot-fixes and some relevant improvements inteded for the reliability
+of the new API.
+The most relevant advance is the new :math:`B_0` fieldmap unwarping object which is compatible
+with *NiTranforms* and evades the problem of fiddling with the target image's x-forms.
+
+* FIX: Normalize phase-encoding polarity of coefficients after TOPUP (#202)
+* FIX: Revise generation of the displacements field from coefficients (#199)
+* FIX: Inconsistency left after renaming inputs to SDC-SyN (removing "BOLD") (#182)
+* FIX: Correctly interpolate the BIDS root when datasets have sessions (#180)
+* ENH: :math:`B_0` fieldmap unwarping object (#204)
+* ENH: Add estimation method description to outputs (#191)
+* ENH: Ensure a function node is covered with unit tests (#188)
+* ENH: Add a preprocessing pipeline for SDC-SyN (#184)
+* ENH: [rodents] Add input to override default B-Spline distances in INU correction with N4 (#178)
+* ENH: Adopt new brain extraction algorithm in magnitude preparation workflow (#176)
+* DOC: Fix typos as per codespell (#205)
+* MAINT: Double-check conversion from TOPUP to standardized fieldmaps (#200)
+* MAINT: Divide ambiguous debug parameter into smaller, more focused parameters (#190)
+* MAINT: Adapt to GitHub actions' upgrade to Ubuntu 20.04 (#185)
+
 2.0.1 (March 05, 2021)
 ======================
 A patch release including some bugfixes and minimal improvements over the previous
@@ -108,16 +130,17 @@ A complete list of issues addressed by the release is found `in the GitHub repo
     about *SDCFlows*.
     To do so, please move the author(s) name(s) to the front of the following list:
 
-    Markiewicz, Christopher J. \ :sup:`1`\ ; Goncalves, Mathias \ :sup:`1`\ ; Adebimpe, Azeez \ :sup:`2`\ ; Blair, Ross W. \ :sup:`1`\ ; Cieslak, Matthew \ :sup:`2`\ ; Naveau, Mikaël \ :sup:`3`\ ; Sitek, Kevin R. \ :sup:`4`\ ; Sneve, Markus H. \ :sup:`5`\ ; Gorgolewski, Krzysztof J. \ :sup:`1`\ ; Satterthwaite, Theodore D. \ :sup:`2`\ ; Poldrack, Russell A. \ :sup:`1`\ ; Esteban, Oscar \ :sup:`6`\ .
+    Markiewicz, Christopher J. \ :sup:`1`\ ; Goncalves, Mathias \ :sup:`1`\ ; MacNicol, Eilidh \ :sup:`2`\ ; Adebimpe, Azeez \ :sup:`3`\ ; Blair, Ross W. \ :sup:`1`\ ; Cieslak, Matthew \ :sup:`3`\ ; Naveau, Mikaël \ :sup:`4`\ ; Sitek, Kevin R. \ :sup:`5`\ ; Sneve, Markus H. \ :sup:`6`\ ; Gorgolewski, Krzysztof J. \ :sup:`1`\ ; Satterthwaite, Theodore D. \ :sup:`3`\ ; Poldrack, Russell A. \ :sup:`1`\ ; Esteban, Oscar \ :sup:`7`\ .
 
     Affiliations:
 
     1. Department of Psychology, Stanford University
-    2. Perelman School of Medicine, University of Pennsylvania, PA, USA
-    3. Cyceron, UMS 3408 (CNRS - UCBN), France
-    4. Speech & Hearing Bioscience & Technology Program, Harvard University
-    5. Center for Lifespan Changes in Brain and Cognition, University of Oslo
-    6. Dept. of Radiology, Lausanne University Hospital, University of Lausanne
+    2. Department of Neuroimaging, King's College London
+    3. Perelman School of Medicine, University of Pennsylvania, PA, USA
+    4. Cyceron, UMS 3408 (CNRS - UCBN), France
+    5. Speech & Hearing Bioscience & Technology Program, Harvard University
+    6. Center for Lifespan Changes in Brain and Cognition, University of Oslo
+    7. Dept. of Radiology, Lausanne University Hospital, University of Lausanne
 
 1.3.x series
 ============
