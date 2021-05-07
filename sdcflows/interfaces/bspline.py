@@ -133,15 +133,15 @@ class BSplineApprox(SimpleInterface):
                 if weights is None
                 else sparse_vstack((weights, gbsw(fmapnii, level)))
             )
-        weights = weights.toarray()
-        regressors = weights[:, mask.reshape(-1)]
+
+        regressors = weights.T.tocsr()[mask.reshape(-1), :]
 
         # Fit the model
         model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
-        model.fit(regressors.T, data[mask])
+        model.fit(regressors, data[mask])
 
         interp_data = np.zeros_like(data)
-        interp_data[mask] = np.array(model.coef_) @ regressors  # Interpolation
+        interp_data[mask] = np.array(model.coef_) @ regressors.T  # Interpolation
 
         # Store outputs
         out_name = fname_presuffix(
@@ -179,7 +179,7 @@ class BSplineApprox(SimpleInterface):
             self._results["out_extrapolated"] = self._results["out_field"]
             return runtime
 
-        extrapolators = weights[:, ~mask.reshape(-1)]
+        extrapolators = weights.tocsc()[:, ~mask.reshape(-1)]
         interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
         self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
         fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(
