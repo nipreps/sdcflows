@@ -2,11 +2,9 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
-from math import pi
 import numpy as np
 import nibabel as nb
-from nibabel.affines import apply_affine, obliquity, voxel_sizes
-from nibabel.orientations import io_orientation
+from nibabel.affines import apply_affine
 
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
@@ -19,6 +17,8 @@ from nipype.interfaces.base import (
     InputMultiObject,
     OutputMultiObject,
 )
+
+from sdcflows.transform import grid_bspline_weights as gbsw, B0FieldTransform
 
 
 LOW_MEM_BLOCK_SIZE = 1000
@@ -119,31 +119,29 @@ class BSplineApprox(SimpleInterface):
         elif self.inputs.recenter == "mean":
             data -= np.mean(data[mask])
 
-        # Calculate spatial location of voxels, and normalize per B-Spline grid
-        mask_indices = np.argwhere(mask)
-        fmap_points = apply_affine(fmapnii.affine.astype("float32"), mask_indices)
-
         # Calculate the spatial location of control points
         bs_levels = []
         ncoeff = []
-        regressors = None
+        weights = None
         for sp in bs_spacing:
             level = bspline_grid(fmapnii, control_zooms_mm=sp)
             bs_levels.append(level)
             ncoeff.append(level.dataobj.size)
 
-            regressors = (
-                bspline_weights(fmap_points, level)
-                if regressors is None
-                else sparse_vstack((regressors, bspline_weights(fmap_points, level)))
+            weights = (
+                gbsw(fmapnii, level)
+                if weights is None
+                else sparse_vstack((weights, gbsw(fmapnii, level)))
             )
+
+        regressors = weights.T.tocsr()[mask.reshape(-1), :]
 
         # Fit the model
         model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
-        model.fit(regressors.T, data[mask])
+        model.fit(regressors, data[mask])
 
         interp_data = np.zeros_like(data)
-        interp_data[mask] = np.array(model.coef_) @ regressors  # Interpolation
+        interp_data[mask] = np.array(model.coef_) @ regressors.T  # Interpolation
 
         # Store outputs
         out_name = fname_presuffix(
@@ -177,15 +175,11 @@ class BSplineApprox(SimpleInterface):
         if not self.inputs.extrapolate:
             return runtime
 
-        bg_indices = np.argwhere(~mask)
-        if not bg_indices.size:
+        if np.all(mask):
             self._results["out_extrapolated"] = self._results["out_field"]
             return runtime
 
-        bg_points = apply_affine(fmapnii.affine.astype("float32"), bg_indices)
-        extrapolators = sparse_vstack(
-            [bspline_weights(bg_points, level) for level in bs_levels]
-        )
+        extrapolators = weights.tocsc()[:, ~mask.reshape(-1)]
         interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
         self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
         fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(
@@ -223,75 +217,29 @@ class _Coefficients2WarpOutputSpec(TraitedSpec):
 
 
 class Coefficients2Warp(SimpleInterface):
-    r"""
-    Convert a set of B-Spline coefficients to a full displacements map.
-
-    Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
-    for all voxels in the target-image's extent.
-    When the readout time is known, the displacements field can be calculated
-    following `Eq. (2) in the fieldmap fitting section
-    <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
-
-    """
+    """Convert a set of B-Spline coefficients to a full displacements map."""
 
     input_spec = _Coefficients2WarpInputSpec
     output_spec = _Coefficients2WarpOutputSpec
 
     def _run_interface(self, runtime):
-        from scipy.sparse import vstack as sparse_vstack
-
-        # Calculate the physical coordinates of target grid
-        targetnii = nb.load(self.inputs.in_target)
-        allmask = np.ones_like(targetnii.dataobj, dtype="uint8")
-
-        weights = []
-        coeffs = []
-
-        for cname in self.inputs.in_coeff:
-            coeff_nii = nb.load(cname)
-            wmat = grid_bspline_weights(targetnii, coeff_nii)
-            weights.append(wmat)
-            coeffs.append(coeff_nii.get_fdata(dtype="float32").reshape(-1))
-
-        data = np.zeros(targetnii.shape, dtype="float32")
-        data[allmask == 1] = np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)
-
-        hdr = targetnii.header.copy()
-        hdr.set_data_dtype("float32")
+        # Prepare output names
         self._results["out_field"] = fname_presuffix(
             self.inputs.in_target, suffix="_field", newpath=runtime.cwd
         )
-        targetnii.__class__(data, targetnii.affine, hdr).to_filename(
-            self._results["out_field"]
+        self._results["out_warp"] = self._results["out_field"].replace(
+            "_field.nii", "_xfm.nii"
         )
 
-        # Generate warp field
-        pe_axis = "ijk".index(self.inputs.pe_dir[0])
-        pe_sign = -1.0 if self.inputs.pe_dir.endswith("-") else 1.0
-        pe_size = targetnii.header.get_zooms()[pe_axis]
-        data *= pe_sign * self.inputs.ro_time * pe_size
-
-        fieldshape = tuple(list(data.shape[:3]) + [3])
-        self._results["out_warp"] = fname_presuffix(
-            self.inputs.in_target, suffix="_xfm", newpath=runtime.cwd
+        xfm = B0FieldTransform(
+            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
         )
-        # Compose a vector field
-        field = np.zeros((data.size, 3), dtype="float32")
-        field[..., pe_axis] = data.reshape(-1)
-
-        # If coordinate system is oblique, project displacements through directions matrix
-        aff = targetnii.affine
-        if obliquity(aff).max() * 180 / pi > 0.01:
-            dirmat = np.eye(4)
-            dirmat[:3, :3] = aff[:3, :3] / (voxel_sizes(aff) * io_orientation(aff)[:, 1])
-            field = nb.affines.apply_affine(dirmat, field)
-
-        warpnii = targetnii.__class__(
-            field.reshape(fieldshape)[:, :, :, np.newaxis, :], targetnii.affine, None
-        )
-        warpnii.header.set_intent("vector", (), "")
-        warpnii.header.set_xyzt_units("mm")
-        warpnii.to_filename(self._results["out_warp"])
+        xfm.fit(self.inputs.in_target)
+        xfm.shifts.to_filename(self._results["out_field"])
+        xfm.to_displacements(
+            ro_time=self.inputs.ro_time,
+            pe_dir=self.inputs.pe_dir,
+        ).to_filename(self._results["out_warp"])
         return runtime
 
 
@@ -340,6 +288,7 @@ class _TOPUPCoeffReorientInputSpec(BaseInterfaceInputSpec):
         desc="the polarity of the phase-encoding direction corresponding to fmap_ref",
     )
 
+
 class _TOPUPCoeffReorientOutputSpec(TraitedSpec):
     out_coeff = OutputMultiObject(File(exists=True), desc="patched coefficients")
 
@@ -380,7 +329,9 @@ class TOPUPCoeffReorient(SimpleInterface):
                     in_coeff,
                     self.inputs.fmap_ref,
                     refpe_reversed=self.inputs.pe_dir.endswith("-"),
-                    out_file=fname_presuffix(in_coeff, suffix="_fixed", newpath=runtime.cwd),
+                    out_file=fname_presuffix(
+                        in_coeff, suffix="_fixed", newpath=runtime.cwd
+                    ),
                 )
             )
             for in_coeff in self.inputs.in_coeff
@@ -414,176 +365,6 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     )
 
     return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
-
-
-def grid_bspline_weights(target_nii, ctrl_nii):
-    """Fast, gridded evaluation."""
-    from scipy.sparse import csr_matrix, vstack
-
-    if isinstance(target_nii, (str, bytes, Path)):
-        target_nii = nb.load(target_nii)
-    if isinstance(ctrl_nii, (str, bytes, Path)):
-        ctrl_nii = nb.load(ctrl_nii)
-
-    shape = target_nii.shape[:3]
-    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
-    ras2ijk = np.linalg.inv(ctrl_nii.affine)
-    origin = apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
-
-    wd = []
-    for i, (o, n, sp) in enumerate(
-        zip(origin, shape, target_nii.header.get_zooms()[:3])
-    ):
-        locations = np.arange(0, n, dtype="float32") * sp / ctrl_sp[i] + o
-        knots = np.arange(0, ctrl_nii.shape[i], dtype="float32")
-        distance = (locations[np.newaxis, ...] - knots[..., np.newaxis]).astype(
-            "float32"
-        )
-        weights = np.zeros_like(distance, dtype="float32")
-        within_support = np.abs(distance) < 2.0
-        d = np.abs(distance[within_support])
-        weights[within_support] = np.piecewise(
-            d,
-            [d < 1.0, d >= 1.0],
-            [
-                lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
-                lambda d: (2.0 - d) ** 3 / 6.0,
-            ],
-        )
-        wd.append(weights)
-
-    ctrl_shape = ctrl_nii.shape[:3]
-    data_size = np.prod(shape)
-    wmat = None
-    for i in range(ctrl_shape[0]):
-        sparse_mat = (
-            wd[0][i, np.newaxis, np.newaxis, :, np.newaxis, np.newaxis]
-            * wd[1][np.newaxis, :, np.newaxis, np.newaxis, :, np.newaxis]
-            * wd[2][np.newaxis, np.newaxis, :, np.newaxis, np.newaxis, :]
-        ).reshape((-1, data_size))
-        sparse_mat[sparse_mat < 1e-9] = 0
-
-        if wmat is None:
-            wmat = csr_matrix(sparse_mat)
-        else:
-            wmat = vstack((wmat, csr_matrix(sparse_mat)))
-
-    return wmat
-
-
-def bspline_weights(points, ctrl_nii, blocksize=None, mem_percent=None):
-    r"""
-    Calculate the tensor-product cubic B-Spline kernel weights for a list of 3D points.
-
-    For each of the *N* input samples :math:`(s_1, s_2, s_3)` and *K* control
-    points or *knots* :math:`\mathbf{k} =(k_1, k_2, k_3)`, the tensor-product
-    cubic B-Spline kernel weights are calculated:
-
-    .. math::
-
-        \Psi^3(\mathbf{k}, \mathbf{s}) =
-        \beta^3(s_1 - k_1) \cdot \beta^3(s_2 - k_2) \cdot \beta^3(s_3 - k_3),
-        \label{eq:2}\tag{2}
-
-    where each :math:`\beta^3` represents the cubic B-Spline for one dimension.
-    The 1D B-Spline kernel implementation uses :obj:`numpy.piecewise`, and is based on the
-    closed-form given by Eq. (6) of [Unser1999]_.
-
-    By iterating over dimensions, the data samples that fall outside of the compact
-    support of the tensor-product kernel associated to each control point can be filtered
-    out and dismissed to lighten computation.
-
-    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
-    can be easily identified in Eq. :math:`\eqref{eq:1}` and used as the design matrix
-    for approximation of data.
-
-    Parameters
-    ----------
-    points : :obj:`numpy.ndarray`; :math:`N \times 3`
-        Array of 3D coordinates of samples from the data to be approximated,
-        in index (i,j,k) coordinates with respect to the control points grid.
-    ctrl_nii : :obj:`nibabel.spatialimages`
-        An spatial image object (typically, a :obj:`~nibabel.nifti1.Nifti1Image`)
-        embedding the location of the control points of the B-Spline grid.
-        The data array should contain a total of :math:`K` knots (control points).
-
-    Returns
-    -------
-    weights : :obj:`numpy.ndarray` (:math:`K \times N`)
-        A sparse matrix of interpolating weights :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
-        for the *N* samples in ``points``, for each of the total *K* knots.
-        This sparse matrix can be directly used as design matrix for the fitting
-        step of approximation/extrapolation.
-
-    """
-    from scipy.sparse import csc_matrix, hstack
-    from ..utils.misc import get_free_mem
-
-    if isinstance(ctrl_nii, (str, bytes, Path)):
-        ctrl_nii = nb.load(ctrl_nii)
-    ncoeff = np.prod(ctrl_nii.shape[:3])
-    knots = np.argwhere(np.ones(ctrl_nii.shape[:3], dtype="uint8") == 1)
-    ras2ijk = np.linalg.inv(ctrl_nii.affine).astype("float32")
-
-    if blocksize is None:
-        blocksize = len(points)
-
-    # Try to probe the free memory
-    _free_mem = get_free_mem()
-    suggested_blocksize = (
-        int(np.round((_free_mem * (mem_percent or 0.9)) / (3 * 4 * ncoeff)))
-        if _free_mem
-        else blocksize
-    )
-    blocksize = min(blocksize, suggested_blocksize)
-    LOGGER.debug(
-        f"Determined a block size of {blocksize}, for interpolating "
-        f"an image of {len(points)} voxels with a grid of {ncoeff} "
-        f"coefficients ({_free_mem / 1024**3:.2f} GiB free memory)."
-    )
-
-    idx = 0
-    wmatrix = None
-    while True:
-        end = idx + blocksize
-        subsample = points[idx:end, ...]
-        if subsample.shape[0] == 0:
-            break
-
-        ctl_points = apply_affine(ras2ijk, subsample)
-        weights = np.ones((ncoeff, len(subsample)), dtype="float32")
-        for i in range(3):
-            nonzeros = weights > 1e-6
-            distance = np.squeeze(
-                np.abs(
-                    (
-                        knots[:, np.newaxis, i].astype("float32")
-                        - ctl_points[np.newaxis, :, i]
-                    )[nonzeros]
-                )
-            )
-            within_support = distance < BSPLINE_SUPPORT
-            d = distance[within_support]
-            distance[~within_support] = 0
-            distance[within_support] = np.piecewise(
-                d,
-                [d < 1.0, d >= 1.0],
-                [
-                    lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
-                    lambda d: (2.0 - d) ** 3 / 6.0,
-                ],
-            )
-            weights[nonzeros] *= distance
-
-        weights[weights < 1e-6] = 0.0
-
-        wmatrix = (
-            csc_matrix(weights)
-            if wmatrix is None
-            else hstack((wmatrix, csc_matrix(weights)))
-        )
-        idx = end
-    return wmatrix.tocsr()
 
 
 def _move_coeff(in_coeff, fmap_ref, transform):
