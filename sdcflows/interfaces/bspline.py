@@ -441,7 +441,5 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, refpe_reversed=False, out_file=Non
     coeffnii.header.set_qform(coeffnii.header.get_qform(coded=False), code=0)
     coeffnii.header.set_sform(newaff, code=1)
 
-    # If the reference is reversed encoded, flip the displacements
-    coeffs = (1.0 - 2.0 * refpe_reversed) * np.asanyarray(coeffnii.dataobj)
-    coeffnii.__class__(coeffs, newaff, header).to_filename(out_file)
+    coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
     return out_file
