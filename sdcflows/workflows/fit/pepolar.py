@@ -128,7 +128,7 @@ def init_topup_wf(
 
     brainextraction_wf = init_brainextraction_wf()
 
-    def _getpe(in_meta):
+    def _getfirstpe(in_meta):
         if isinstance(in_meta, list):
             in_meta = in_meta[0]
         return in_meta["PhaseEncodingDirection"]
@@ -144,7 +144,7 @@ def init_topup_wf(
         (readout_time, topup, [("readout_time", "readout_times")]),
         (concat_blips, topup, [("out_file", "in_file")]),
         (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
-                              (("out_meta", _getpe), "pe_dir")]),
+                              (("out_meta", _getfirstpe), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -168,6 +168,7 @@ def init_topup_wf(
     from ...interfaces.bspline import ApplyCoeffsField
 
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
+    unwarp.interface._always_run = True
 
     def _getpe(inlist):
         if isinstance(inlist, dict):
