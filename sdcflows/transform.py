@@ -103,7 +103,7 @@ class B0FieldTransform:
         """
         # Ensure the vsm has been computed
         self.fit(spatialimage)
-        vsm = self.shifts.get_fdata()
+        vsm = self.shifts.get_fdata().copy()
 
         # Reverse shifts if reversed blips
         if pe_dir.endswith("-"):
@@ -164,7 +164,7 @@ class B0FieldTransform:
         from nibabel.orientations import io_orientation
 
         # Generate warp field
-        data = self.shifts.get_fdata(dtype="float32")
+        data = self.shifts.get_fdata(dtype="float32").copy()
         pe_axis = "ijk".index(pe_dir[0])
         pe_sign = -1.0 if pe_dir.endswith("-") else 1.0
         pe_size = self.shifts.header.get_zooms()[pe_axis]
