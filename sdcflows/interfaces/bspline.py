@@ -251,8 +251,6 @@ class ApplyCoeffsField(SimpleInterface):
             pe_dir = [pe_dir[0]] * n_inputs
 
         for fname, pe, ro in zip(self.inputs.in_target, pe_dir, ro_time):
-            xfm.fit(fname)
-
             # Generate warpfield
             warp_name = filename(fname, suffix="_xfm")
             xfm.to_displacements(ro_time=ro, pe_dir=pe).to_filename(warp_name)
