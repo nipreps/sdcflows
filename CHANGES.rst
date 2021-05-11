@@ -1,10 +1,11 @@
-2.0.2 (May 07, 2021)
+2.0.2 (May 11, 2021)
 ====================
 A patch release including hot-fixes and some relevant improvements inteded for the reliability
 of the new API.
 The most relevant advance is the new :math:`B_0` fieldmap unwarping object which is compatible
 with *NiTranforms* and evades the problem of fiddling with the target image's x-forms.
 
+* FIX: Make sure the VSM is not modified when accessing it (#207)
 * FIX: Normalize phase-encoding polarity of coefficients after TOPUP (#202)
 * FIX: Revise generation of the displacements field from coefficients (#199)
 * FIX: Inconsistency left after renaming inputs to SDC-SyN (removing "BOLD") (#182)
