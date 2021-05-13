@@ -145,7 +145,6 @@ def init_topup_wf(
         (regrid, concat_blips, [("out_data", "in_files")]),
         (readout_time, topup, [("readout_time", "readout_times"),
                                ("pe_dir_fsl", "encoding_direction")]),
-        (concat_blips, topup, [("out_file", "in_file")]),
         (regrid, fix_coeff, [("reference", "fmap_ref")]),
         (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
@@ -161,6 +160,7 @@ def init_topup_wf(
     if not debug:
         # fmt: off
         workflow.connect([
+            (concat_blips, topup, [("out_file", "in_file")]),
             (topup, merge_corrected, [("out_corrected", "in_files")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
@@ -168,15 +168,25 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
+    from nipype.interfaces.afni.preprocess import Volreg
+    from niworkflows.interfaces.nibabel import SplitSeries
     from ...interfaces.bspline import ApplyCoeffsField
 
+    realign = pe.Node(
+        Volreg(args=f"-base {grid_reference}", outputtype="NIFTI_GZ"),
+        name="realign_blips",
+    )
+    split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
 
     # fmt:off
     workflow.connect([
+        (concat_blips, realign, [("out_file", "in_file")]),
+        (realign, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (regrid, unwarp, [("out_data", "in_target")]),
+        (realign, split_blips, [("out_file", "in_file")]),
+        (split_blips, unwarp, [("out_files", "in_target")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
