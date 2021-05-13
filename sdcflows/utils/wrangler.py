@@ -51,20 +51,15 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     [FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
                         bids_id='auto_00000')]
 
-    OpenNeuro's dataset with fake :math:`B_0` maps derived from two *PEPOLAR* acquisitions
-    has a total of 4 possible estimations: the two original *PEPOLAR* acquisitions and the
-    corresponding two that are just renamed versions of the former:
+    OpenNeuro's dataset with four *PEPOLAR* EPI files, two runs per phase-encoding direction
+    (AP, PA):
 
     >>> find_estimators(
     ...     layout=layouts['ds001771'],
     ...     subject="36",
     ... )  # doctest: +ELLIPSIS
-    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='auto_00001'),
-     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>, bids_id='auto_00002'),
-     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00003'),
-     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00004')]
+    [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='auto_00001')]
 
     OpenNeuro's ``ds001600`` is an SDC test-dataset containing many different possibilities
     for fieldmap estimation:
@@ -74,13 +69,13 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     subject="1",
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00005'),
+                        bids_id='auto_00002'),
      FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00006'),
+                        bids_id='auto_00003'),
      FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00007'),
+                        bids_id='auto_00004'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00008')]
+                        bids_id='auto_00005')]
 
     We can also pick one (simplified) HCP subject for testing purposes:
 
@@ -89,9 +84,9 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     subject="101006",
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00009'),
+                        bids_id='auto_00006'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00010')]
+                        bids_id='auto_00007')]
 
     Finally, *SDCFlows*' "*dataset A*" contains a BIDS structure with zero-bytes
     NIfTI files and some corresponding metadata:
@@ -101,15 +96,15 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     subject="01",
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>,
-                        bids_id='auto_00011'),
+                        bids_id='auto_00008'),
      FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00012'),
+                        bids_id='auto_00009'),
      FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00013'),
+                        bids_id='auto_00010'),
      FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00014'),
+                        bids_id='auto_00011'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00015')]
+                        bids_id='auto_00012')]
 
     After cleaning the registry, we can see how the "*fieldmap-less*" estimation
     can be forced:
@@ -134,20 +129,14 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     subject="36",
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
-    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>,
+    [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
                        bids_id='auto_00002'),
-    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>,
-                       bids_id='auto_00003'),
-    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                       bids_id='auto_00004'),
-    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                       bids_id='auto_00005'),
     FieldmapEstimation(sources=<7 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00006'),
+                       bids_id='auto_00003'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00007'),
+                       bids_id='auto_00004'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00008')]
+                       bids_id='auto_00005')]
 
     Because "*dataset A*" contains very few metadata fields available, "*fieldmap-less*"
     heuristics come back empty (BOLD and DWI files are missing
@@ -159,15 +148,15 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.MAPPED: 4>,
-                        bids_id='auto_00009'),
+                        bids_id='auto_00006'),
      FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00010'),
+                        bids_id='auto_00007'),
      FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00011'),
+                        bids_id='auto_00008'),
      FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00012'),
+                        bids_id='auto_00009'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00013')]
+                        bids_id='auto_00010')]
 
     This function should also correctly investigate multi-session datasets:
 
@@ -186,9 +175,9 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     ...     force_fmapless=False,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                        bids_id='auto_00014'),
+                        bids_id='auto_00011'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00015')]
+                       bids_id='auto_00012')]
 
     """
     from .. import fieldmaps as fm

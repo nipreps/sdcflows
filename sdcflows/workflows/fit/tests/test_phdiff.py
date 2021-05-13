@@ -18,7 +18,9 @@ from ..fieldmap import init_fmap_wf, Workflow
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase1.nii.gz",
             "ds001600/sub-1/fmap/sub-1_acq-v2_phase2.nii.gz",
         ),
-        ("ds001771/sub-36/fmap/sub-36_acq-topup1_fieldmap.nii.gz",),
+        (
+            "ds001771/derivatives/openneuro/sub-36/fmap/sub-36_acq-topup1_fieldmap.nii.gz",
+        ),
         ("HCP101006/sub-101006/fmap/sub-101006_phasediff.nii.gz",),
     ],
 )
