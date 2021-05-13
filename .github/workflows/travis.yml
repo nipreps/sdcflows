@@ -134,8 +134,9 @@ jobs:
 
         # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
-        datalad update --merge -d ds001771/
+        datalad update -r --merge -d ds001771/
         datalad get -r -d ds001771/ ds001771/sub-36/*
+        datalad get -r -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
 
         # ds000054
         datalad install -r https://github.com/nipreps-data/ds000054.git

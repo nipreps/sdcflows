@@ -10,43 +10,26 @@ from ..pepolar import init_topup_wf
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
-@pytest.mark.parametrize(
-    "epi_file",
-    [
-        (
-            "ds001771/sub-36/fmap/sub-36_acq-topup1_dir-01_epi.nii.gz",
-            "ds001771/sub-36/fmap/sub-36_acq-topup1_dir-02_epi.nii.gz",
-        ),
-        (
-            "ds001771/sub-36/fmap/sub-36_acq-topup2_dir-01_epi.nii.gz",
-            "ds001771/sub-36/fmap/sub-36_acq-topup2_dir-02_epi.nii.gz",
-        ),
-        (
-            "HCP101006/sub-101006/fmap/sub-101006_dir-LR_epi.nii.gz",
-            "HCP101006/sub-101006/fmap/sub-101006_dir-RL_epi.nii.gz",
-        ),
-    ],
-)
-def test_topup_wf(tmpdir, datadir, workdir, outdir, epi_file):
+@pytest.mark.parametrize("ds", ("ds001771", "HCP101006"))
+def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     """Test preparation workflow."""
-    epi_path = [datadir / f for f in epi_file]
-    in_data = [str(f.absolute()) for f in epi_path]
-
-    wf = pe.Workflow(
-        name=f"topup_{epi_path[0].name.replace('.nii.gz', '').replace('-', '_')}"
+    layout = bids_layouts[ds]
+    epi_path = sorted(
+        layout.get(suffix="epi", extension=["nii", "nii.gz"]), key=lambda k: k.path
     )
+    in_data = [f.path for f in epi_path]
 
+    wf = pe.Workflow(name=f"topup_{ds}")
     topup_wf = init_topup_wf(omp_nthreads=2, debug=True, sloppy=True)
-    metadata = [
-        loads(Path(str(f).replace(".nii.gz", ".json")).read_text()) for f in in_data
-    ]
+    metadata = [layout.get_metadata(f.path) for f in epi_path]
+
     topup_wf.inputs.inputnode.in_data = in_data
     topup_wf.inputs.inputnode.metadata = metadata
 
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        outdir = outdir / "unittests" / epi_file[0].split("/")[0]
+        outdir = outdir / "unittests" / f"topup_{ds}"
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
