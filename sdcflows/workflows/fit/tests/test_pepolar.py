@@ -15,7 +15,8 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     """Test preparation workflow."""
     layout = bids_layouts[ds]
     epi_path = sorted(
-        layout.get(suffix="epi", extension=["nii", "nii.gz"]), key=lambda k: k.path
+        layout.get(suffix="epi", extension=["nii", "nii.gz"], scope="raw"),
+        key=lambda k: k.path,
     )
     in_data = [f.path for f in epi_path]
 
