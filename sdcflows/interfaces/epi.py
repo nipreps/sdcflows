@@ -18,6 +18,7 @@ class _GetReadoutTimeInputSpec(BaseInterfaceInputSpec):
 class _GetReadoutTimeOutputSpec(TraitedSpec):
     readout_time = traits.Float
     pe_direction = traits.Enum("i", "i-", "j", "j-", "k", "k-")
+    pe_dir_fsl = traits.Enum("x", "x-", "y", "y-", "z", "z-")
 
 
 class GetReadoutTime(SimpleInterface):
@@ -34,4 +35,10 @@ class GetReadoutTime(SimpleInterface):
             self.inputs.in_file if isdefined(self.inputs.in_file) else None,
         )
         self._results["pe_direction"] = self.inputs.metadata["PhaseEncodingDirection"]
+        self._results["pe_dir_fsl"] = (
+            self.inputs.metadata["PhaseEncodingDirection"]
+            .replace("i", "x")
+            .replace("j", "y")
+            .replace("k", "z")
+        )
         return runtime

@@ -128,11 +128,6 @@ def init_topup_wf(
 
     brainextraction_wf = init_brainextraction_wf()
 
-    def _getfirstpe(in_meta):
-        if isinstance(in_meta, list):
-            in_meta = in_meta[0]
-        return in_meta["PhaseEncodingDirection"]
-
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
@@ -140,11 +135,11 @@ def init_topup_wf(
         (flatten, readout_time, [("out_data", "in_file"),
                                  ("out_meta", "metadata")]),
         (flatten, concat_blips, [("out_data", "in_files")]),
-        (flatten, topup, [(("out_meta", _pe2fsl), "encoding_direction")]),
-        (readout_time, topup, [("readout_time", "readout_times")]),
+        (readout_time, topup, [("readout_time", "readout_times"),
+                               ("pe_dir_fsl", "encoding_direction")]),
         (concat_blips, topup, [("out_file", "in_file")]),
-        (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
-                              (("out_meta", _getfirstpe), "pe_dir")]),
+        (flatten, fix_coeff, [(("out_data", _front), "fmap_ref")]),
+        (readout_time, topup, [(("pe_direction", _front), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -170,18 +165,12 @@ def init_topup_wf(
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
 
-    def _getpe(inlist):
-        if isinstance(inlist, dict):
-            inlist = [inlist]
-
-        return [m["PhaseEncodingDirection"] for m in inlist]
-
     # fmt:off
     workflow.connect([
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (flatten, unwarp, [("out_data", "in_target"),
-                           (("out_meta", _getpe), "pe_dir")]),
-        (readout_time, unwarp, [("readout_time", "ro_time")]),
+        (flatten, unwarp, [("out_data", "in_target")]),
+        (readout_time, unwarp, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
                               ("out_field", "fmap")]),
         (unwarp, merge_corrected, [("out_corrected", "in_files")]),
@@ -445,26 +434,8 @@ def init_prepare_blips_wf(*, omp_nthreads=1, name="prepare_blips_wf"):
         (concat_blips, merge_blips, [("out", "in_files")]),
         (merge_blips, outputnode, [("out_file", 'reg_blips')]),
     ])
+    # fmt: on
     return workflow
-
-
-def _pe2fsl(metadata):
-    """
-    Convert ijk notation to xyz.
-
-    Example
-    -------
-    >>> _pe2fsl([{"PhaseEncodingDirection": "j-"}, {"PhaseEncodingDirection": "i"}])
-    ['y-', 'x']
-
-    """
-    return [
-        m["PhaseEncodingDirection"]
-        .replace("i", "x")
-        .replace("j", "y")
-        .replace("k", "z")
-        for m in metadata
-    ]
 
 
 def _sorted_pe(inlist):
@@ -520,7 +491,7 @@ def _sorted_pe(inlist):
 
 
 def _separate_first(in_files):
-    """Take in a list of files and separate the first from the rest"""
+    """Take in a list of files and separate the first from the rest."""
     # TODO: check for best resolution image?
     if isinstance(in_files, (list, tuple)):
         return in_files[0], in_files[1:]
