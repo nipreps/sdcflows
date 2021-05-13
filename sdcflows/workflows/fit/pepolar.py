@@ -176,7 +176,7 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (flatten, unwarp, [("out_data", "in_target")]),
+        (regrid, unwarp, [("out_data", "in_target")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
