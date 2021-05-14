@@ -66,6 +66,67 @@ class Flatten(SimpleInterface):
         return runtime
 
 
+class _UniformGridInputSpec(BaseInterfaceInputSpec):
+    in_data = InputMultiObject(
+        File(exists=True),
+        mandatory=True,
+        desc="list of input data",
+    )
+    reference = traits.Int(0, usedefault=True, desc="reference index")
+
+
+class _UniformGridOutputSpec(TraitedSpec):
+    out_data = OutputMultiObject(File(exists=True))
+    reference = File(exists=True)
+
+
+class UniformGrid(SimpleInterface):
+    """Ensure all images in input have the same spatial parameters."""
+
+    input_spec = _UniformGridInputSpec
+    output_spec = _UniformGridOutputSpec
+
+    def _run_interface(self, runtime):
+        import nibabel as nb
+        import numpy as np
+        from nitransforms.linear import Affine
+        from nipype.utils.filemanip import fname_presuffix
+
+        retval = [None] * len(self.inputs.in_data)
+        self._results["reference"] = self.inputs.in_data[self.inputs.reference]
+        retval[self.inputs.reference] = self._results["reference"]
+
+        refnii = nb.load(self._results["reference"])
+        refshape = refnii.shape[:3]
+        refaff = refnii.affine
+
+        resampler = Affine(reference=refnii)
+        for i, fname in enumerate(self.inputs.in_data):
+            if retval[i] is not None:
+                continue
+
+            nii = nb.load(fname)
+            retval[i] = fname_presuffix(
+                fname, suffix=f"_regrid{i:03d}", newpath=runtime.cwd
+            )
+
+            if np.allclose(nii.shape[:3], refshape) and np.allclose(nii.affine, refaff):
+                if np.all(nii.affine == refaff):
+                    retval[i] = fname
+                else:
+                    # Set reference's affine if difference is small
+                    nii.__class__(nii.dataobj, refaff, nii.header).to_filename(
+                        retval[i]
+                    )
+                continue
+
+            resampler.apply(nii).to_filename(retval[i])
+
+        self._results["out_data"] = retval
+
+        return runtime
+
+
 class _ConvertWarpInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc="output of 3dQwarp")
 

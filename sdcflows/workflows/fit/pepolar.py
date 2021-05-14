@@ -24,7 +24,11 @@ echo-planar imaging (EPI) references """
 
 
 def init_topup_wf(
-    omp_nthreads=1, sloppy=False, debug=False, name="pepolar_estimate_wf"
+    grid_reference=0,
+    omp_nthreads=1,
+    sloppy=False,
+    debug=False,
+    name="pepolar_estimate_wf",
 ):
     """
     Create the PEPOLAR field estimation workflow based on FSL's ``topup``.
@@ -39,6 +43,8 @@ def init_topup_wf(
 
     Parameters
     ----------
+    grid_reference : :obj:`int`
+        Index of the volume (after flattening) that will be taken for gridding reference.
     sloppy : :obj:`bool`
         Whether a fast configuration of topup (less accurate) should be applied.
     debug : :obj:`bool`
@@ -76,7 +82,7 @@ def init_topup_wf(
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.utils import Flatten
+    from ...interfaces.utils import Flatten, UniformGrid
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -104,6 +110,7 @@ def init_topup_wf(
     outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
     flatten = pe.Node(Flatten(), name="flatten")
+    regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
     concat_blips = pe.Node(MergeSeries(), name="concat_blips")
     readout_time = pe.MapNode(
         GetReadoutTime(),
@@ -128,23 +135,18 @@ def init_topup_wf(
 
     brainextraction_wf = init_brainextraction_wf()
 
-    def _getfirstpe(in_meta):
-        if isinstance(in_meta, list):
-            in_meta = in_meta[0]
-        return in_meta["PhaseEncodingDirection"]
-
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
                               ("metadata", "in_meta")]),
         (flatten, readout_time, [("out_data", "in_file"),
                                  ("out_meta", "metadata")]),
-        (flatten, concat_blips, [("out_data", "in_files")]),
-        (flatten, topup, [(("out_meta", _pe2fsl), "encoding_direction")]),
-        (readout_time, topup, [("readout_time", "readout_times")]),
-        (concat_blips, topup, [("out_file", "in_file")]),
-        (flatten, fix_coeff, [(("out_data", _front), "fmap_ref"),
-                              (("out_meta", _getfirstpe), "pe_dir")]),
+        (flatten, regrid, [("out_data", "in_data")]),
+        (regrid, concat_blips, [("out_data", "in_files")]),
+        (readout_time, topup, [("readout_time", "readout_times"),
+                               ("pe_dir_fsl", "encoding_direction")]),
+        (regrid, fix_coeff, [("reference", "fmap_ref")]),
+        (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -158,6 +160,7 @@ def init_topup_wf(
     if not debug:
         # fmt: off
         workflow.connect([
+            (concat_blips, topup, [("out_file", "in_file")]),
             (topup, merge_corrected, [("out_corrected", "in_files")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
@@ -165,23 +168,27 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
+    from nipype.interfaces.afni.preprocess import Volreg
+    from niworkflows.interfaces.nibabel import SplitSeries
     from ...interfaces.bspline import ApplyCoeffsField
 
+    realign = pe.Node(
+        Volreg(args=f"-base {grid_reference}", outputtype="NIFTI_GZ"),
+        name="realign_blips",
+    )
+    split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
 
-    def _getpe(inlist):
-        if isinstance(inlist, dict):
-            inlist = [inlist]
-
-        return [m["PhaseEncodingDirection"] for m in inlist]
-
     # fmt:off
     workflow.connect([
+        (concat_blips, realign, [("out_file", "in_file")]),
+        (realign, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (flatten, unwarp, [("out_data", "in_target"),
-                           (("out_meta", _getpe), "pe_dir")]),
-        (readout_time, unwarp, [("readout_time", "ro_time")]),
+        (realign, split_blips, [("out_file", "in_file")]),
+        (split_blips, unwarp, [("out_files", "in_target")]),
+        (readout_time, unwarp, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
                               ("out_field", "fmap")]),
         (unwarp, merge_corrected, [("out_corrected", "in_files")]),
@@ -341,25 +348,6 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
     ])
     # fmt: on
     return workflow
-
-
-def _pe2fsl(metadata):
-    """
-    Convert ijk notation to xyz.
-
-    Example
-    -------
-    >>> _pe2fsl([{"PhaseEncodingDirection": "j-"}, {"PhaseEncodingDirection": "i"}])
-    ['y-', 'x']
-
-    """
-    return [
-        m["PhaseEncodingDirection"]
-        .replace("i", "x")
-        .replace("j", "y")
-        .replace("k", "z")
-        for m in metadata
-    ]
 
 
 def _sorted_pe(inlist):
