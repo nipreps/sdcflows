@@ -2,8 +2,10 @@
 nibabel==3.0.1
 nipype==1.5.1
 niworkflows==1.4.0rc5
+nitransforms==20.0.0rc4
 numpy
 pybids==0.11.1
 scikit-image==0.18
+scipy==1.6.1
 svgutils!=0.3.2
 templateflow==0.6
