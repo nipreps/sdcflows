@@ -1,3 +1,12 @@
+2.0.3 (May 14, 2021)
+====================
+A patch release including some improvements to the PEPOLAR/TOPUP implementation,
+along with corresponding updates to the CI tests.
+
+* ENH: Uniformize the grid&affine across EPI "blips" before TOPUP (#197)
+* MAINT: Fix PEPOLAR workflow test with HCP data (#210)
+* MAINT: Update tests after changes in ds001771's structure (#209)
+
 2.0.2 (May 11, 2021)
 ====================
 A patch release including hot-fixes and some relevant improvements inteded for the reliability
