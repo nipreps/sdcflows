@@ -98,7 +98,7 @@ def init_topup_wf(
     """
     from nipype.interfaces.fsl.epi import TOPUP
     from niworkflows.interfaces.nibabel import MergeSeries
-    from niworkflows.interfaces.images import IntraModalMerge
+    from niworkflows.interfaces.images import RobustAverage
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
@@ -145,9 +145,7 @@ def init_topup_wf(
         ),
         name="topup",
     )
-    merge_corrected = pe.Node(
-        IntraModalMerge(hmc=False, to_ras=False), name="merge_corrected"
-    )
+    ref_average = pe.Node(RobustAverage(), name="ref_average")
 
     fix_coeff = pe.Node(
         TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
@@ -170,9 +168,11 @@ def init_topup_wf(
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
-        (merge_corrected, brainextraction_wf, [("out_avg", "inputnode.in_file")]),
-        (merge_corrected, outputnode, [("out_avg", "fmap_ref")]),
-        (brainextraction_wf, outputnode, [("outputnode.out_mask", "fmap_mask")]),
+        (ref_average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
+        (brainextraction_wf, outputnode, [
+            ("outputnode.out_file", "fmap_ref"),
+            ("outputnode.out_mask", "fmap_mask")
+        ]),
         (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
@@ -181,7 +181,7 @@ def init_topup_wf(
         # fmt: off
         workflow.connect([
             (concat_blips, topup, [("out_file", "in_file")]),
-            (topup, merge_corrected, [("out_corrected", "in_files")]),
+            (topup, ref_average, [("out_corrected", "in_file")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
         ])
@@ -199,6 +199,7 @@ def init_topup_wf(
     split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
+    concat_corrected = pe.Node(MergeSeries(), name="concat_corrected")
 
     # fmt:off
     workflow.connect([
@@ -211,7 +212,8 @@ def init_topup_wf(
                                 ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
                               ("out_field", "fmap")]),
-        (unwarp, merge_corrected, [("out_corrected", "in_files")]),
+        (unwarp, concat_corrected, [("out_corrected", "in_files")]),
+        (concat_corrected, ref_average, [("out_file", "in_file")]),
     ])
     # fmt:on
 
