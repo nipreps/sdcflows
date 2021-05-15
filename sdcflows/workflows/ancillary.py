@@ -59,8 +59,8 @@ def init_brainextraction_wf(name="brainextraction_wf"):
 
     """
     from nipype.interfaces.ants import N4BiasFieldCorrection
+    from niworkflows.interfaces.nibabel import IntensityClip
     from ..interfaces.brainmask import BrainExtraction
-    from ..interfaces.utils import IntensityClip
 
     wf = Workflow(name=name)
 
@@ -92,7 +92,7 @@ def init_brainextraction_wf(name="brainextraction_wf"):
         n_procs=8,
         name="n4",
     )
-    clipper_post = pe.Node(IntensityClip(p_max=100.0), name="clipper_post")
+    clipper_post = pe.Node(IntensityClip(p_min=0.01, p_max=99.9), name="clipper_post")
     masker = pe.Node(BrainExtraction(), name="masker")
 
     # fmt:off
