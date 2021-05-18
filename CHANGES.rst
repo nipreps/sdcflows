@@ -1,3 +1,13 @@
+2.0.4 (May 18, 2021)
+====================
+A hotfix release including some enhancements that should have been released within
+the previous 2.0.3 release.
+
+* ENH: Fine-tune the registration parameters in ``coeff2epi`` workflow (#215)
+* ENH: Finalize upstreaming to *NiWorkflows* of ``IntensityClip`` (#216)
+* ENH: Use new ``RobustAverage`` interface to merge corrected blips (#214)
+* DOC: Insert copyright notice in header comments as per Apache-2.0 (#212)
+
 2.0.3 (May 14, 2021)
 ====================
 A patch release including some improvements to the PEPOLAR/TOPUP implementation,
