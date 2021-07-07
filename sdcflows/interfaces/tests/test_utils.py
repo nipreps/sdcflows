@@ -25,7 +25,7 @@ import pytest
 import numpy as np
 import nibabel as nb
 
-from ..utils import Flatten, ConvertWarp, Deoblique, Reoblique
+from ..utils import Flatten, ConvertWarp, Deoblique, Reoblique, PadSlices
 
 
 def test_Flatten(tmpdir):
@@ -106,3 +106,21 @@ def test_Xeoblique(tmpdir, angles, oblique):
     )
 
     assert np.allclose(nb.load(reoblique.out_epi).affine, affine)
+
+
+@pytest.mark.parametrize("in_shape,expected_shape,padded", [
+    ((2,2,2), (2,2,2), False),
+    ((2,2,3), (2,2,4), True),
+    ((3,3,2,2), (3,3,2,2), False),
+    ((3,3,3,2), (3,3,4,2), True),
+])
+def test_pad_slices(tmpdir, in_shape, expected_shape, padded):
+    tmpdir.chdir()
+
+    img = nb.Nifti1Image(np.zeros(in_shape), np.eye(4))
+    img.to_filename("epi.nii.gz")
+    res = PadSlices(in_file="epi.nii.gz").run().outputs
+
+    out_file = nb.load(res.out_file)
+    assert out_file.shape == expected_shape
+    assert res.padded == padded
