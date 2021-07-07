@@ -102,7 +102,7 @@ def init_topup_wf(
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.utils import Flatten, UniformGrid
+    from ...interfaces.utils import Flatten, UniformGrid, PadSlices
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -138,6 +138,7 @@ def init_topup_wf(
         iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
+    pad_slices = pe.Node(PadSlices(), name="pad_slices")
 
     topup = pe.Node(
         TOPUP(
@@ -180,7 +181,8 @@ def init_topup_wf(
     if not debug:
         # fmt: off
         workflow.connect([
-            (concat_blips, topup, [("out_file", "in_file")]),
+            (concat_blips, pad_slices, [("out_file", "in_file")]),
+            (pad_slices, topup, [("out_file", "in_file")]),
             (topup, ref_average, [("out_corrected", "in_file")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
@@ -204,7 +206,8 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (concat_blips, realign, [("out_file", "in_file")]),
-        (realign, topup, [("out_file", "in_file")]),
+        (realign, pad_slices, [("out_file", "in_file")]),
+        (pad_slices, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
         (realign, split_blips, [("out_file", "in_file")]),
         (split_blips, unwarp, [("out_files", "in_target")]),
