@@ -269,6 +269,11 @@ class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
 
 class _PadSlicesInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc="3D or 4D NIfTI image")
+    axis = traits.Int(
+        2,
+        usedefault=True,
+        desc="The axis through which slices are stacked in the input data"
+    )
 
 
 class _PadSlicesOutputSpec(TraitedSpec):
@@ -277,12 +282,17 @@ class _PadSlicesOutputSpec(TraitedSpec):
 
 
 class PadSlices(SimpleInterface):
+    """
+    Check an image for uneven slices, and add an empty slice if necessary
+
+    This intends to avoid TOPUP's segfault without changing the standard configuration
+    """
     input_spec = _PadSlicesInputSpec
     output_spec = _PadSlicesOutputSpec
 
     def _run_interface(self, runtime):
         self._results["out_file"], self._results["padded"] = _pad_num_slices(
-            self.inputs.in_file, runtime.cwd,
+            self.inputs.in_file, self.inputs.axis, runtime.cwd,
         )
         return runtime
 
@@ -409,7 +419,7 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
 def _pad_num_slices(in_file, ax=2, newpath=None):
     """
     Ensure the image has even number of slices to avert TOPUP's segfault.
-    
+
     Check if image has an even number of slices.
     If it does, return the image unaltered.
     Otherwise, return the image with an empty slice added.
