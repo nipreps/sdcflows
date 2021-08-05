@@ -22,7 +22,7 @@ RUN apt-get update && \
 # Installing Neurodebian packages (FSL, AFNI, git)
 RUN curl -sSL "http://neuro.debian.net/lists/$( lsb_release -c | cut -f2 ).us-ca.full" >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /usr/local/etc/neurodebian.gpg && \
-    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
+    (apt-key adv --refresh-keys --keyserver hkps://keys.openpgp.org 0xA5D32F012649A5A9 || true) && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
                     fsl-core=5.0.9-5~nd16.04+1 \
