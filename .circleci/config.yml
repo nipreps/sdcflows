@@ -56,7 +56,7 @@ jobs:
           name: Setup git-annex
           command: |
             if [[ ! -d /usr/lib/git-annex.linux ]]; then
-              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+              wget -O- http://neuro.debian.net/lists/focal.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
               apt-key adv --recv-keys --keyserver hkps://keys.openpgp.org 0xA5D32F012649A5A9
               apt update && apt-get install -y --no-install-recommends git-annex-standalone
             fi
@@ -142,7 +142,7 @@ jobs:
 
   build_n_pytest:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/tests
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
@@ -169,14 +169,14 @@ jobs:
             set -e
             if [[ "$success" = "0" ]]; then
                 echo "Pulling from local registry"
-                docker tag localhost:5000/ubuntu ubuntu:xenial-20191010
+                docker tag localhost:5000/ubuntu ubuntu:xenial-20201030
                 docker pull localhost:5000/sdcflows
                 docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
                 echo "Pulling from Docker Hub"
-                docker pull ubuntu:xenial-20191010
-                docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
+                docker pull ubuntu:xenial-20201030
+                docker tag ubuntu:xenial-20201030 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
                 docker pull nipreps/sdcflows:latest
             fi
@@ -187,8 +187,10 @@ jobs:
           no_output_timeout: 60m
           command: |
             cd /tmp/src/sdcflows
-            pyenv local 3.7.0
-            python3 -m pip install "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4" "pip>=10.0.1"
+            export PY3=$(pyenv versions | grep '3\.' |
+                         sed -e 's/.* 3\./3./' -e 's/ .*//')
+            pyenv local $PY3
+            python3 -m pip install "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4" "pip>=10.0.1"
 
             # Get version, update files.
             THISVERSION=$( python3 setup.py --version )
@@ -199,15 +201,13 @@ jobs:
               echo "them to your fork with ``git push origin --tags``"
             fi
             # Build docker image
-            e=1 && for i in {1..5}; do
-              docker build --rm \
+            docker build --rm \
                 --cache-from=nipreps/sdcflows \
                 -t nipreps/sdcflows:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
-              && e=0 && break || sleep 15
-            done && [ "$e" -eq "0" ]
+                | tee build-output.log
             echo "${CIRCLE_TAG:-$THISVERSION}" >> /tmp/.local-version.txt
       - run:
           name: Docker push to local registry
@@ -315,7 +315,7 @@ jobs:
           name: Install deps
           command: |
             pip install --no-cache-dir -r docs/requirements.txt
-            pip install --no-cache-dir "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4"
+            pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
             python setup.py --version
       - run:
           name: Build only this commit
@@ -360,7 +360,7 @@ jobs:
 
   deploy_docker:
     machine:
-      image: circleci/classic:201711-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/
     steps:
       - restore_cache:
@@ -403,7 +403,7 @@ jobs:
           command: |
             python3 -m venv /tmp/buildenv
             source /tmp/buildenv/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" wheel "setuptools_scm[toml] >= 3.4" \
+            python3 -m pip install "setuptools ~= 45.0" wheel "setuptools_scm[toml] >= 3.4" \
                 "pip>=10.0.1" twine docutils
             python setup.py sdist bdist_wheel
             twine check dist/sdcflows*
@@ -417,7 +417,7 @@ jobs:
           command: |
             python3 -m venv /tmp/install_sdist
             source /tmp/install_sdist/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
+            python3 -m pip install "setuptools ~= 45.0" "pip>=10.0.1"
             THISVERSION=$( python3 setup.py --version )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             python3 -m pip install dist/sdcflows*.tar.gz
@@ -430,7 +430,7 @@ jobs:
           command: |
             python3 -m venv /tmp/install_wheel
             source /tmp/install_wheel/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
+            python3 -m pip install "setuptools ~= 45.0" "pip>=10.0.1"
             THISVERSION=$( python3 setup.py --version )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             python3 -m pip install dist/sdcflows*.whl
