@@ -267,18 +267,18 @@ class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
     _copy_header_map = {"output_image": "input_image"}
 
 
-class PadSlicesInputSpec(BaseInterfaceInputSpec):
+class _PadSlicesInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc="3D or 4D NIfTI image")
 
 
-class PadSlicesOutputSpec(TraitedSpec):
+class _PadSlicesOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc="The output file with even number of slices")
     padded = traits.Bool(desc="Indicator if the input image was padded")
 
 
 class PadSlices(SimpleInterface):
-    input_spec = PadSlicesInputSpec
-    output_spec = PadSlicesOutputSpec
+    input_spec = _PadSlicesInputSpec
+    output_spec = _PadSlicesOutputSpec
 
     def _run_interface(self, runtime):
         self._results["out_file"], self._results["padded"] = _pad_num_slices(
@@ -406,8 +406,10 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
     return out_files
 
 
-def _pad_num_slices(in_file, newpath=None):
+def _pad_num_slices(in_file, ax=2, newpath=None):
     """
+    Ensure the image has even number of slices to avert TOPUP's segfault.
+    
     Check if image has an even number of slices.
     If it does, return the image unaltered.
     Otherwise, return the image with an empty slice added.
@@ -416,6 +418,8 @@ def _pad_num_slices(in_file, newpath=None):
     ----------
     img : :obj:`str` or :py:class:`~nibabel.spatialimages.SpatialImage`
         3D or 4D NIfTI image
+    ax : :obj:`int`
+        The axis through which slices are stacked in the input data.
 
     Returns
     -------
@@ -430,11 +434,11 @@ def _pad_num_slices(in_file, newpath=None):
     import numpy as np
 
     img = nb.load(in_file)
-    if img.shape[2] % 2 == 0:
+    if img.shape[ax] % 2 == 0:
         return in_file, False
 
     pwidth = [(0,0)] * len(img.shape)
-    pwidth[2] = (0, 1)
+    pwidth[ax] = (0, 1)
     padded = np.pad(img.dataobj, pwidth)
     hdr = img.header
     hdr.set_data_shape(padded.shape)
