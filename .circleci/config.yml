@@ -51,13 +51,15 @@ jobs:
             - data-v4-{{ .Branch }}-
             - data-v4-master-
             - data-v4-
-
+      - checkout:
+          path: /tmp/src/sdcflows
       - run:
           name: Setup git-annex
           command: |
             if [[ ! -d /usr/lib/git-annex.linux ]]; then
               wget -O- http://neuro.debian.net/lists/focal.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-              apt-key adv --recv-keys --keyserver hkps://keys.openpgp.org 0xA5D32F012649A5A9
+              apt-key add /tmp/src/sdcflows/.docker/files/neurodebian.gpg
+              apt-key adv --recv-keys --keyserver hkps://keys.openpgp.org 0xA5D32F012649A5A9 || true
               apt update && apt-get install -y --no-install-recommends git-annex-standalone
             fi
             git config --global user.name 'NiPreps Bot'
