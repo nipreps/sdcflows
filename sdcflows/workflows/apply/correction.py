@@ -27,7 +27,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
 def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
-    """
+    r"""
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
     Workflow Graph
@@ -59,6 +59,10 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     Outputs
     -------
     fieldmap
+        the actual B\ :sub:`0` inhomogeneity map (also called *fieldmap*)
+        interpolated from the B-Spline coefficients into the target EPI's
+        grid, given in Hz units.
+    fieldwarp
         the displacements field interpolated from the B-Spline coefficients
         and scaled by the appropriate parameters (readout time of the EPI
         target and voxel size along PE).
@@ -78,7 +82,9 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["corrected", "fieldmap", "corrected_mask"]),
+        niu.IdentityInterface(
+            fields=["fieldmap", "fieldwarp", "corrected", "corrected_mask"]
+        ),
         name="outputnode",
     )
 
@@ -97,7 +103,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
         (resample, outputnode, [("out_field", "fieldmap"),
-                                ("out_warp", "transforms")]),
+                                ("out_warp", "fieldwarp")]),
         (resample, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected"),
