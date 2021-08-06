@@ -41,7 +41,9 @@ def init_sdc_unwarp_report_wf(name='sdc_unwarp_report_wf', forcedsyn=False):
         Affine transform from T1 space to BOLD space (ITK format)
 
     """
-    from niworkflows.interfaces import SimpleBeforeAfter
+    from niworkflows.interfaces.reportlets.registration import (
+        SimpleBeforeAfterRPT as SimpleBeforeAfter,
+    )
     from niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
     from niworkflows.utils.images import dseg_label as _dseg_label
 
