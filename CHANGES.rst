@@ -1,3 +1,10 @@
+2.0.5 (August 24, 2021)
+=======================
+A bugfix release, adds the fieldwarp as an output to the unwarping workflow.
+
+* FIX: The calculated displacements field not exposed by unwarp workflow (#224)
+* MAINT: Use keys.openpgp.org over sks-keyservers (#223)
+
 2.0.4 (May 18, 2021)
 ====================
 A hotfix release including some enhancements that should have been released within
