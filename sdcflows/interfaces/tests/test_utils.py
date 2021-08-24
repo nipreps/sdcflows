@@ -117,10 +117,25 @@ def test_Xeoblique(tmpdir, angles, oblique):
 def test_pad_slices(tmpdir, in_shape, expected_shape, padded):
     tmpdir.chdir()
 
-    img = nb.Nifti1Image(np.zeros(in_shape), np.eye(4))
-    img.to_filename("epi.nii.gz")
-    res = PadSlices(in_file="epi.nii.gz").run().outputs
+    data = np.random.rand(*in_shape)
+    aff = np.eye(4)
 
-    out_file = nb.load(res.out_file)
-    assert out_file.shape == expected_shape
+    # RAS
+    img = nb.Nifti1Image(data, aff)
+    img.to_filename("epi-ras.nii.gz")
+    res = PadSlices(in_file="epi-ras.nii.gz").run().outputs
+
+    # LPS
+    newaff = aff.copy()
+    newaff[0, 0] *= -1.0
+    newaff[1, 1] *= -1.0
+    newaff[:2, 3] = aff.dot(np.hstack((np.array(img.shape[:3]) - 1, 1.0)))[:2]
+    img2 = nb.Nifti1Image(np.flip(np.flip(data, 0), 1), newaff)
+    img2.to_filename("epi-lps.nii.gz")
+    res2 = PadSlices(in_file="epi-lps.nii.gz").run().outputs
+
+
+    out_ras = nb.load(res.out_file)
+    out_lps = nb.load(res2.out_file)
+    assert out_ras.shape == out_lps.shape == expected_shape
     assert res.padded == padded
