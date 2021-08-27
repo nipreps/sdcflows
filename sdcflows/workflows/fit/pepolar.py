@@ -102,7 +102,7 @@ def init_topup_wf(
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.utils import Flatten, UniformGrid
+    from ...interfaces.utils import Flatten, UniformGrid, PadSlices
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -138,6 +138,8 @@ def init_topup_wf(
         iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
+    pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
+    pad_ref_slices = pe.Node(PadSlices(), name="pad_ref_slices")
 
     topup = pe.Node(
         TOPUP(
@@ -163,7 +165,8 @@ def init_topup_wf(
         (regrid, concat_blips, [("out_data", "in_files")]),
         (readout_time, topup, [("readout_time", "readout_times"),
                                ("pe_dir_fsl", "encoding_direction")]),
-        (regrid, fix_coeff, [("reference", "fmap_ref")]),
+        (regrid, pad_ref_slices, [("reference", "in_file")]),
+        (pad_ref_slices, fix_coeff, [("out_file", "fmap_ref")]),
         (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
@@ -180,7 +183,8 @@ def init_topup_wf(
     if not debug:
         # fmt: off
         workflow.connect([
-            (concat_blips, topup, [("out_file", "in_file")]),
+            (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
+            (pad_blip_slices, topup, [("out_file", "in_file")]),
             (topup, ref_average, [("out_corrected", "in_file")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
@@ -204,7 +208,8 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (concat_blips, realign, [("out_file", "in_file")]),
-        (realign, topup, [("out_file", "in_file")]),
+        (realign, pad_blip_slices, [("out_file", "in_file")]),
+        (pad_blip_slices, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
         (realign, split_blips, [("out_file", "in_file")]),
         (split_blips, unwarp, [("out_files", "in_target")]),

@@ -267,6 +267,36 @@ class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
     _copy_header_map = {"output_image": "input_image"}
 
 
+class _PadSlicesInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="3D or 4D NIfTI image")
+    axis = traits.Int(
+        2,
+        usedefault=True,
+        desc="The axis through which slices are stacked in the input data"
+    )
+
+
+class _PadSlicesOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="The output file with even number of slices")
+    padded = traits.Bool(desc="Indicator if the input image was padded")
+
+
+class PadSlices(SimpleInterface):
+    """
+    Check an image for uneven slices, and add an empty slice if necessary
+
+    This intends to avoid TOPUP's segfault without changing the standard configuration
+    """
+    input_spec = _PadSlicesInputSpec
+    output_spec = _PadSlicesOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results["out_file"], self._results["padded"] = _pad_num_slices(
+            self.inputs.in_file, self.inputs.axis, runtime.cwd,
+        )
+        return runtime
+
+
 def _flatten(inlist, max_trs=50, out_dir=None):
     """
     Split the input EPIs and generate a flattened list with corresponding metadata.
@@ -384,3 +414,44 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
         masknii.__class__(masknii.dataobj, epinii.affine, hdr).to_filename(out_files[2])
 
     return out_files
+
+
+def _pad_num_slices(in_file, ax=2, newpath=None):
+    """
+    Ensure the image has even number of slices to avert TOPUP's segfault.
+
+    Check if image has an even number of slices.
+    If it does, return the image unaltered.
+    Otherwise, return the image with an empty slice added.
+
+    Parameters
+    ----------
+    img : :obj:`str` or :py:class:`~nibabel.spatialimages.SpatialImage`
+        3D or 4D NIfTI image
+    ax : :obj:`int`
+        The axis through which slices are stacked in the input data.
+
+    Returns
+    -------
+    file : :obj:`str`
+        The output file with even number of slices
+    padded : :obj:`bool`
+        Indicator if the input image was padded.
+
+    """
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+    import numpy as np
+
+    img = nb.load(in_file)
+    if img.shape[ax] % 2 == 0:
+        return in_file, False
+
+    pwidth = [(0,0)] * len(img.shape)
+    pwidth[ax] = (0, 1)
+    padded = np.pad(img.dataobj, pwidth)
+    hdr = img.header
+    hdr.set_data_shape(padded.shape)
+    out_file = fname_presuffix(in_file, suffix="_padded", newpath=newpath)
+    img.__class__(padded, img.affine, header=hdr).to_filename(out_file)
+    return out_file, True
