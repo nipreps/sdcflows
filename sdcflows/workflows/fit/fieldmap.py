@@ -388,7 +388,7 @@ def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
 
     workflow = Workflow(name=name)
     workflow.__postdesc__ = f"""\
-The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE.version}).
+The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE().version}).
 """
 
     inputnode = pe.Node(
