@@ -1,3 +1,9 @@
+2.0.6 (September 1, 2021)
+=========================
+A patch release to address a problem with TOPUP and an odd number of slices.
+
+* ENH: Add slice padding to TOPUP (#217)
+
 2.0.5 (August 24, 2021)
 =======================
 A bugfix release, adds the fieldwarp as an output to the unwarping workflow.
