@@ -209,6 +209,8 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         "scope": "raw",  # Ensure derivatives are not captured
     }
 
+    subject_root = Path(layout.root) / f"sub-{subject}"
+
     fmapless = fmapless or {}
     if fmapless is True:
         fmapless = {"bold", "dwi"}
@@ -252,7 +254,6 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         if epi_fmap.path in fm._estimators.sources:
             continue  # skip EPI images already considered above
 
-        subject_root = Path(epi_fmap.path.rpartition("/sub-")[0]).parent
         targets = [epi_fmap] + [
             layout.get_file(str(subject_root / intent))
             for intent in epi_fmap.get_metadata()["IntendedFor"]
@@ -278,10 +279,6 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         return estimators
 
     from .epimanip import get_trt
-
-    intended_root = Path(anat_file[0].path).parent.parent
-    if sessions:
-        intended_root = intended_root.parent
 
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
@@ -311,7 +308,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
                 fmfiles, fmpaths = tuple(
                     zip(
                         *[
-                            (target, str(Path(target.path).relative_to(intended_root)))
+                            (target, str(Path(target.path).relative_to(subject_root)))
                             for i, target in enumerate(epi_targets)
                             if pe_dirs[i] == pe_dir and ro_totals[i] == ro_time
                         ]
