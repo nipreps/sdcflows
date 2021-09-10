@@ -26,7 +26,7 @@ from contextlib import suppress
 from pathlib import Path
 
 
-def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
+def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False, default_pedir=None):
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -50,6 +50,10 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
+    default_pedir : :obj:`str` or :obj:`None`
+        Impute a default phase-encoding direction if none is available. Must be one
+        of ``{"i", "i-", "j", "j-", "k", "k-"}``. This is only used for fieldmap-less
+        heuristics.
 
     Returns
     -------
@@ -305,7 +309,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
         for candidate in candidates:
             meta = candidate.get_metadata()
-            pe_dir = meta.get("PhaseEncodingDirection")
+            pe_dir = meta.get("PhaseEncodingDirection", default_pedir)
             if not pe_dir:
                 continue
 
