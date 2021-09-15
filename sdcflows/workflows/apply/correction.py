@@ -76,7 +76,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     """
     from sdcflows.interfaces.epi import GetReadoutTime
     from sdcflows.interfaces.bspline import ApplyCoeffsField
-    from sdcflows.ancillary import init_brainextraction_wf
+    from sdcflows.workflows.ancillary import init_brainextraction_wf
     from sdcflows.utils.misc import front as _pop
 
     workflow = Workflow(name=name)

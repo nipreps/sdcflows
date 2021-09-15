@@ -253,7 +253,7 @@ class ApplyCoeffsField(SimpleInterface):
 
     def _run_interface(self, runtime):
         from nitransforms.linear import Affine
-        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
+        from nitransforms.io.itk import ITKLinearTransformArray as XFMLoader
 
         # Prepare output names
         filename = partial(fname_presuffix, newpath=runtime.cwd)
@@ -272,7 +272,15 @@ class ApplyCoeffsField(SimpleInterface):
         # Load head-motion correction matrices
         hmc_mats = None
         if isdefined(self.inputs.in_xfms):
-            hmc_mats = self.inputs.in_xfms
+            hmc_mats = []
+
+            for in_xfm in self.inputs.in_xfms:
+                xfm = XFMLoader.from_filename(in_xfm)
+
+                if hasattr(xfm, "xforms"):
+                    hmc_mats += [Affine(x.to_ras()) for x in xfm.xforms]
+                else:
+                    hmc_mats.append(Affine(xfm.to_ras()))
         else:
             unwarp.fit(self.inputs.in_target[0])
             hmc_mats = [None] * n_inputs
@@ -294,7 +302,7 @@ class ApplyCoeffsField(SimpleInterface):
         for fname, pe, ro, hmc in zip(self.inputs.in_target, pe_dir, ro_time, hmc_mats):
             # Apply hmc
             if hmc is not None:
-                unwarp.xfm = Affine(XFMLoader.from_filename(hmc).to_ras())
+                unwarp.xfm = hmc
                 unwarp.fit(fname)
 
                 # Write out a new field for this particular frame
