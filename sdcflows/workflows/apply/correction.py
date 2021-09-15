@@ -74,9 +74,10 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         a fast mask calculated from the corrected EPI reference.
 
     """
-    from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.bspline import ApplyCoeffsField
-    from ..ancillary import init_brainextraction_wf
+    from sdcflows.interfaces.epi import GetReadoutTime
+    from sdcflows.interfaces.bspline import ApplyCoeffsField
+    from sdcflows.ancillary import init_brainextraction_wf
+    from sdcflows.utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(
@@ -100,7 +101,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
 
     # fmt:off
     workflow.connect([
-        (inputnode, rotime, [("distorted", "in_file"),
+        (inputnode, rotime, [(("distorted", _pop), "in_file"),
                              ("metadata", "metadata")]),
         (inputnode, resample, [("distorted", "in_target"),
                                ("fmap_coeff", "in_coeff"),
