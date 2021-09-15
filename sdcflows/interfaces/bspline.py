@@ -34,6 +34,7 @@ from nipype.interfaces.base import (
     TraitedSpec,
     File,
     traits,
+    isdefined,
     SimpleInterface,
     InputMultiObject,
     OutputMultiObject,
@@ -218,6 +219,9 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="input coefficients, after alignment to the EPI data",
     )
+    in_xfms = InputMultiObject(
+        File(exists=True), desc="list of head-motion correction matrices"
+    )
     ro_time = InputMultiObject(
         traits.Float(mandatory=True, desc="EPI readout time (s).")
     )
@@ -237,7 +241,7 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
 
 class _ApplyCoeffsFieldOutputSpec(TraitedSpec):
     out_corrected = OutputMultiObject(File(exists=True))
-    out_field = File(exists=True)
+    out_field = OutputMultiObject(File(exists=True))
     out_warp = OutputMultiObject(File(exists=True))
 
 
@@ -248,20 +252,37 @@ class ApplyCoeffsField(SimpleInterface):
     output_spec = _ApplyCoeffsFieldOutputSpec
 
     def _run_interface(self, runtime):
+        from nitransforms.linear import Affine
+        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
+
         # Prepare output names
         filename = partial(fname_presuffix, newpath=runtime.cwd)
 
-        self._results["out_field"] = filename(self.inputs.in_coeff[0], suffix="_field")
+        self._results["out_field"] = []
         self._results["out_warp"] = []
         self._results["out_corrected"] = []
 
-        xfm = B0FieldTransform(
+        # Prepare a transform object
+        unwarp = B0FieldTransform(
             coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
         )
-        xfm.fit(self.inputs.in_target[0])
-        xfm.shifts.to_filename(self._results["out_field"])
-
+        # Retrieve the number of target 3D EPIs
         n_inputs = len(self.inputs.in_target)
+
+        # Load head-motion correction matrices
+        hmc_mats = None
+        if isdefined(self.inputs.in_xfms):
+            hmc_mats = self.inputs.in_xfms
+        else:
+            unwarp.fit(self.inputs.in_target[0])
+            hmc_mats = [None] * n_inputs
+
+            # Displacements field is constant through time
+            self._results["out_field"] = filename(
+                self.inputs.in_target[0], suffix="_field"
+            )
+            unwarp.shifts.to_filename(self._results["out_field"])
+
         ro_time = self.inputs.ro_time
         if len(ro_time) == 1:
             ro_time = [ro_time[0]] * n_inputs
@@ -270,15 +291,24 @@ class ApplyCoeffsField(SimpleInterface):
         if len(pe_dir) == 1:
             pe_dir = [pe_dir[0]] * n_inputs
 
-        for fname, pe, ro in zip(self.inputs.in_target, pe_dir, ro_time):
+        for fname, pe, ro, hmc in zip(self.inputs.in_target, pe_dir, ro_time, hmc_mats):
+            # Apply hmc
+            if hmc is not None:
+                unwarp.xfm = Affine(XFMLoader.from_filename(hmc).to_ras())
+                unwarp.fit(fname)
+
+                # Write out a new field for this particular frame
+                self._results["out_field"].append(filename(fname, suffix="_field"))
+                unwarp.shifts.to_filename(self._results["out_field"][-1])
+
             # Generate warpfield
             warp_name = filename(fname, suffix="_xfm")
-            xfm.to_displacements(ro_time=ro, pe_dir=pe).to_filename(warp_name)
+            unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(warp_name)
             self._results["out_warp"].append(warp_name)
 
             # Generate resampled
             out_name = filename(fname, suffix="_unwarped")
-            xfm.apply(nb.load(fname), ro_time=ro, pe_dir=pe).to_filename(out_name)
+            unwarp.apply(nb.load(fname), ro_time=ro, pe_dir=pe).to_filename(out_name)
             self._results["out_corrected"].append(out_name)
 
         return runtime
@@ -303,11 +333,21 @@ class TransformCoefficients(SimpleInterface):
     output_spec = _TransformCoefficientsOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_coeff"] = _move_coeff(
-            self.inputs.in_coeff,
-            self.inputs.fmap_ref,
-            self.inputs.transform,
-        )
+        from sdcflows.transform import _move_coeff
+
+        self._results["out_coeff"] = []
+
+        for level in self.inputs.in_coeff:
+            movednii = _move_coeff(
+                level,
+                self.inputs.fmap_ref,
+                self.inputs.transform,
+            )
+            out_file = fname_presuffix(
+                level, suffix="_space-target", newpath=runtime.cwd
+            )
+            movednii.to_filename(out_file)
+            self._results["out_coeff"].append(out_file)
         return runtime
 
 
@@ -406,30 +446,6 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
     )
 
     return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
-
-
-def _move_coeff(in_coeff, fmap_ref, transform):
-    """Read in a rigid transform from ANTs, and update the coefficients field affine."""
-    from pathlib import Path
-    import nibabel as nb
-    import nitransforms as nt
-
-    if isinstance(in_coeff, str):
-        in_coeff = [in_coeff]
-
-    xfm = nt.linear.Affine(
-        nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
-        reference=fmap_ref,
-    )
-
-    out = []
-    for i, c in enumerate(in_coeff):
-        out.append(str(Path(f"moved_coeff_{i:03d}.nii.gz").absolute()))
-        img = nb.load(c)
-        newaff = xfm.matrix @ img.affine
-        img.__class__(img.dataobj, newaff, img.header).to_filename(out[-1])
-
-    return out
 
 
 def _fix_topup_fieldcoeff(in_coeff, fmap_ref, refpe_reversed=False, out_file=None):

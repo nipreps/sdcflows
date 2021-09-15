@@ -29,7 +29,13 @@ from scipy import ndimage as ndi
 from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
 
 import nibabel as nb
+import nitransforms as nt
 from bids.utils import listify
+
+
+def _clear_shifts(instance, attribute, value):
+    instance.shifts = None
+    return value
 
 
 @attr.s(slots=True)
@@ -37,6 +43,7 @@ class B0FieldTransform:
     """Represents and applies the transform to correct for susceptibility distortions."""
 
     coeffs = attr.ib(default=None)
+    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_shifts)
     shifts = attr.ib(default=None, init=False)
 
     def fit(self, spatialimage):
@@ -65,7 +72,11 @@ class B0FieldTransform:
 
         # Generate tensor-product B-Spline weights
         for level in listify(self.coeffs):
-            wmat = grid_bspline_weights(spatialimage, level)
+            self.xfm.reference = spatialimage
+            moved_cs = level.__class__(
+                level.dataobj, self.xfm.matrix @ level.affine, level.header
+            )
+            wmat = grid_bspline_weights(spatialimage, moved_cs)
             weights.append(wmat)
             coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
 
@@ -294,3 +305,14 @@ def grid_bspline_weights(target_nii, ctrl_nii):
         wd.append(csr_matrix(weights))
 
     return kron(kron(wd[0], wd[1]), wd[2])
+
+
+def _move_coeff(in_coeff, fmap_ref, transform):
+    """Read in a rigid transform from ANTs, and update the coefficients field affine."""
+    xfm = nt.linear.Affine(
+        nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
+        reference=fmap_ref,
+    )
+    coeff = nb.load(in_coeff)
+    newaff = xfm.matrix @ coeff.affine
+    return coeff.__class__(coeff.dataobj, newaff, coeff.header)
