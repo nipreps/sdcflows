@@ -55,6 +55,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         dictionary of metadata corresponding to the target EPI image
     fmap_coeff
         fieldmap coefficients in distorted EPI space.
+    hmc_xforms
+        list of head-motion correction matrices (in ITK format)
 
     Outputs
     -------
@@ -78,7 +80,9 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["distorted", "metadata", "fmap_coeff"]),
+        niu.IdentityInterface(
+            fields=["distorted", "metadata", "fmap_coeff", "hmc_xforms"]
+        ),
         name="inputnode",
     )
     outputnode = pe.Node(
@@ -99,7 +103,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         (inputnode, rotime, [("distorted", "in_file"),
                              ("metadata", "metadata")]),
         (inputnode, resample, [("distorted", "in_target"),
-                               ("fmap_coeff", "in_coeff")]),
+                               ("fmap_coeff", "in_coeff"),
+                               ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
         (resample, outputnode, [("out_field", "fieldmap"),
