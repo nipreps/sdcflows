@@ -42,7 +42,6 @@ from nipype.interfaces.base import (
 
 from sdcflows.transform import grid_bspline_weights as gbsw, B0FieldTransform
 
-
 LOW_MEM_BLOCK_SIZE = 1000
 DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)  # For human adults (mid-frequency), in mm
 DEFAULT_LF_ZOOMS_MM = (100.0, 100.0, 40.0)  # For human adults (low-frequency), in mm
@@ -253,7 +252,8 @@ class ApplyCoeffsField(SimpleInterface):
 
     def _run_interface(self, runtime):
         from nitransforms.linear import Affine
-        from nitransforms.io.itk import ITKLinearTransformArray as XFMLoader
+        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
+        import gc
 
         # Prepare output names
         filename = partial(fname_presuffix, newpath=runtime.cwd)
@@ -262,28 +262,25 @@ class ApplyCoeffsField(SimpleInterface):
         self._results["out_warp"] = []
         self._results["out_corrected"] = []
 
-        # Prepare a transform object
-        unwarp = B0FieldTransform(
-            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
-        )
         # Retrieve the number of target 3D EPIs
         n_inputs = len(self.inputs.in_target)
 
         # Load head-motion correction matrices
         hmc_mats = None
+        unwarp = None
+
         if isdefined(self.inputs.in_xfms):
-            hmc_mats = []
-
-            for in_xfm in self.inputs.in_xfms:
-                xfm = XFMLoader.from_filename(in_xfm)
-
-                if hasattr(xfm, "xforms"):
-                    hmc_mats += [Affine(x.to_ras()) for x in xfm.xforms]
-                else:
-                    hmc_mats.append(Affine(xfm.to_ras()))
+            hmc_mats = (
+                list(_split_itk_file(self.inputs.in_xfms[0]))
+                if len(self.inputs.in_xfms) == 1
+                else self.inputs.in_xfms
+            )
         else:
+            # Prepare a transform object
+            unwarp = B0FieldTransform(
+                coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
+            )
             unwarp.fit(self.inputs.in_target[0])
-            hmc_mats = [None] * n_inputs
 
             # Displacements field is constant through time
             self._results["out_field"] = filename(
@@ -299,10 +296,17 @@ class ApplyCoeffsField(SimpleInterface):
         if len(pe_dir) == 1:
             pe_dir = [pe_dir[0]] * n_inputs
 
-        for fname, pe, ro, hmc in zip(self.inputs.in_target, pe_dir, ro_time, hmc_mats):
+        for i, fname in enumerate(self.inputs.in_target):
+            pe = pe_dir[i]
+            ro = ro_time[i]
+
             # Apply hmc
-            if hmc is not None:
-                unwarp.xfm = hmc
+            if hmc_mats:
+                # Create a new unwarp object
+                unwarp = B0FieldTransform(
+                    coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
+                    xfm=Affine(XFMLoader.from_filename(hmc_mats[i]).to_ras()),
+                )
                 unwarp.fit(fname)
 
                 # Write out a new field for this particular frame
@@ -318,6 +322,10 @@ class ApplyCoeffsField(SimpleInterface):
             out_name = filename(fname, suffix="_unwarped")
             unwarp.apply(nb.load(fname), ro_time=ro, pe_dir=pe).to_filename(out_name)
             self._results["out_corrected"].append(out_name)
+
+            if hmc_mats:
+                unwarp = None
+                gc.collect()
 
         return runtime
 
@@ -487,3 +495,19 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, refpe_reversed=False, out_file=Non
 
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
     return out_file
+
+
+def _split_itk_file(in_file):
+    from pathlib import Path
+
+    lines = Path(in_file).read_text().splitlines()
+    header = lines.pop(0)
+
+    def _chunks(inlist, chunksize):
+        for i in range(0, len(inlist), chunksize):
+            yield "\n".join([header] + inlist[i : i + chunksize])
+
+    for i, xfm in enumerate(_chunks(lines, 4)):
+        p = Path(f"{i:05}")
+        p.write_text(xfm)
+        yield str(p)
