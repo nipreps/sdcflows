@@ -30,6 +30,7 @@ from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
 
 import nibabel as nb
 import nitransforms as nt
+from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
 
@@ -135,6 +136,9 @@ class B0FieldTransform:
 
         """
         # Ensure the vsm has been computed
+        if isinstance(spatialimage, (str, bytes, Path)):
+            spatialimage = nb.load(spatialimage)
+
         self.fit(spatialimage)
         vsm = self.shifts.get_fdata().copy()
 
@@ -146,9 +150,22 @@ class B0FieldTransform:
         pe_axis = "ijk".index(pe_dir[0])
 
         # Map voxel coordinates applying the VSM
-        ijk_axis = tuple([np.arange(s) for s in vsm.shape])
-        voxcoords = np.array(np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32")
-        voxcoords[pe_axis, ...] += vsm * ro_time
+        if self.xfm is None:
+            ijk_axis = tuple([np.arange(s) for s in vsm.shape])
+            voxcoords = np.array(
+                np.meshgrid(*ijk_axis, indexing="ij"),
+                dtype="float32"
+            ).reshape(3, -1)
+        else:
+            # Map coordinates from reference to time-step
+            hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
+            # Convert from RAS to voxel coordinates
+            voxcoords = (
+                np.linalg.inv(self.xfm.reference.affine)
+                @ _as_homogeneous(np.vstack(hmc_xyz), dim=self.xfm.reference.ndim).T
+            )[:3, ...]
+
+        voxcoords[pe_axis, ...] += vsm.reshape(-1) * ro_time
 
         # Prepare data
         data = np.squeeze(np.asanyarray(spatialimage.dataobj))
@@ -157,7 +174,7 @@ class B0FieldTransform:
         # Resample
         resampled = ndi.map_coordinates(
             data,
-            voxcoords.reshape(3, -1),
+            voxcoords,
             output=output_dtype,
             order=order,
             mode=mode,
