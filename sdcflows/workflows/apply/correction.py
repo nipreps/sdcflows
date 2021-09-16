@@ -74,6 +74,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         a fast mask calculated from the corrected EPI reference.
 
     """
+    from niworkflows.interfaces.images import RobustAverage
+    from niworkflows.interfaces.nibabel import MergeSeries
     from sdcflows.interfaces.epi import GetReadoutTime
     from sdcflows.interfaces.bspline import ApplyCoeffsField
     from sdcflows.workflows.ancillary import init_brainextraction_wf
@@ -88,7 +90,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["fieldmap", "fieldwarp", "corrected", "corrected_mask"]
+            fields=["fieldmap", "fieldwarp", "corrected", "corrected_ref", "corrected_mask"]
         ),
         name="outputnode",
     )
@@ -96,6 +98,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     rotime = pe.Node(GetReadoutTime(), name="rotime")
     rotime.interface._always_run = debug
     resample = pe.Node(ApplyCoeffsField(), name="resample")
+    merge = pe.Node(MergeSeries(), name="merge")
+    average = pe.Node(RobustAverage(mc_method=None), name="average")
 
     brainextraction_wf = init_brainextraction_wf()
 
@@ -108,11 +112,14 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
                                ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
+        (resample, merge, [("out_corrected", "in_files")]),
+        (merge, average, [("out_file", "in_file")]),
+        (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
+        (merge, outputnode, [("out_file", "corrected")]),
         (resample, outputnode, [("out_field", "fieldmap"),
                                 ("out_warp", "fieldwarp")]),
-        (resample, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
         (brainextraction_wf, outputnode, [
-            ("outputnode.out_file", "corrected"),
+            ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
         ]),
     ])
