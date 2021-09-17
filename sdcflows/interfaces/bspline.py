@@ -212,7 +212,7 @@ class BSplineApprox(SimpleInterface):
 
 
 class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
-    in_target = InputMultiObject(
+    in_data = InputMultiObject(
         File(exist=True, mandatory=True, desc="input EPI data to be corrected")
     )
     in_coeff = InputMultiObject(
@@ -235,7 +235,7 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
             "k",
             "k-",
             mandatory=True,
-            desc="the phase-encoding direction corresponding to in_target",
+            desc="the phase-encoding direction corresponding to in_data",
         )
     )
 
@@ -279,18 +279,18 @@ class ApplyCoeffsField(SimpleInterface):
             unwarp = B0FieldTransform(
                 coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
             )
-            unwarp.fit(self.inputs.in_target[0])
+            unwarp.fit(self.inputs.in_data[0])
 
             # Displacements field is constant through time
             self._results["out_field"] = filename(
-                self.inputs.in_target[0], suffix="_field"
+                self.inputs.in_data[0], suffix="_field"
             )
             unwarp.shifts.to_filename(self._results["out_field"])
 
         ro_time = defaultlist(self.inputs.ro_time)
         pe_dir = defaultlist(self.inputs.pe_dir)
 
-        for i, fname in enumerate(self.inputs.in_target):
+        for i, fname in enumerate(self.inputs.in_data):
             pe = pe_dir[i]
             ro = ro_time[i]
 

@@ -212,7 +212,7 @@ def init_topup_wf(
         (pad_blip_slices, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
         (realign, split_blips, [("out_file", "in_file")]),
-        (split_blips, unwarp, [("out_files", "in_target")]),
+        (split_blips, unwarp, [("out_files", "in_data")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),

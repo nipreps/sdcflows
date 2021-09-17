@@ -107,7 +107,7 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     workflow.connect([
         (inputnode, rotime, [(("distorted", _pop), "in_file"),
                              ("metadata", "metadata")]),
-        (inputnode, resample, [("distorted", "in_target"),
+        (inputnode, resample, [("distorted", "in_data"),
                                ("fmap_coeff", "in_coeff"),
                                ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
