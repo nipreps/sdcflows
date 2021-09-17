@@ -54,6 +54,12 @@ class B0FieldTransform:
         Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
         for all voxels in the target-image's extent.
 
+        Returns
+        -------
+        updated : :obj:`bool`
+            ``True`` if the internal field representation was fit,
+            ``False`` if cache was valid and will be reused.
+
         """
         # Calculate the physical coordinates of target grid
         if isinstance(spatialimage, (str, bytes, Path)):
@@ -66,7 +72,7 @@ class B0FieldTransform:
             if np.all(newshape == self.shifts.shape) and np.allclose(
                 newaff, self.shifts.affine
             ):
-                return
+                return False
 
         weights = []
         coeffs = []
@@ -89,6 +95,7 @@ class B0FieldTransform:
 
         # Cache
         self.shifts = nb.Nifti1Image(vsm, spatialimage.affine, None)
+        return True
 
     def apply(
         self,
@@ -153,8 +160,7 @@ class B0FieldTransform:
         if self.xfm is None:
             ijk_axis = tuple([np.arange(s) for s in vsm.shape])
             voxcoords = np.array(
-                np.meshgrid(*ijk_axis, indexing="ij"),
-                dtype="float32"
+                np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
             ).reshape(3, -1)
         else:
             # Map coordinates from reference to time-step

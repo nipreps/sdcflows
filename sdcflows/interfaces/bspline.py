@@ -40,7 +40,7 @@ from nipype.interfaces.base import (
     OutputMultiObject,
 )
 
-from sdcflows.transform import grid_bspline_weights as gbsw, B0FieldTransform
+from sdcflows.transform import grid_bspline_weights as gbsw
 from sdcflows.utils.misc import defaultlist
 
 
@@ -253,21 +253,12 @@ class ApplyCoeffsField(SimpleInterface):
     output_spec = _ApplyCoeffsFieldOutputSpec
 
     def _run_interface(self, runtime):
-        from nitransforms.linear import Affine
-        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
-        import gc
-
-        # Prepare output names
-        filename = partial(fname_presuffix, newpath=runtime.cwd)
-
-        self._results["out_field"] = []
-        self._results["out_warp"] = []
-        self._results["out_corrected"] = []
-
         # Load head-motion correction matrices
-        hmc_mats = None
-        unwarp = None
+        ro_time = defaultlist(self.inputs.ro_time)
+        pe_dir = defaultlist(self.inputs.pe_dir)
 
+        unwarp = None
+        hmc_mats = defaultlist([None])
         if isdefined(self.inputs.in_xfms):
             hmc_mats = (
                 list(_split_itk_file(self.inputs.in_xfms[0]))
@@ -275,51 +266,34 @@ class ApplyCoeffsField(SimpleInterface):
                 else self.inputs.in_xfms
             )
         else:
-            # Prepare a transform object
+            from sdcflows.transform import B0FieldTransform
+
             unwarp = B0FieldTransform(
-                coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
+                coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
             )
-            unwarp.fit(self.inputs.in_data[0])
 
-            # Displacements field is constant through time
-            self._results["out_field"] = filename(
-                self.inputs.in_data[0], suffix="_field"
+        outputs = [
+            _b0_resampler(
+                fname,
+                self.inputs.in_coeff,
+                pe_dir[i],
+                ro_time[i],
+                hmc_mats[i],
+                unwarp,
+                runtime.cwd,
             )
-            unwarp.shifts.to_filename(self._results["out_field"])
+            for i, fname in enumerate(self.inputs.in_data)
+        ]
 
-        ro_time = defaultlist(self.inputs.ro_time)
-        pe_dir = defaultlist(self.inputs.pe_dir)
+        (
+            self._results["out_corrected"],
+            self._results["out_warp"],
+            self._results["out_field"],
+        ) = zip(*outputs)
 
-        for i, fname in enumerate(self.inputs.in_data):
-            pe = pe_dir[i]
-            ro = ro_time[i]
-
-            # Apply hmc
-            if hmc_mats:
-                # Create a new unwarp object
-                unwarp = B0FieldTransform(
-                    coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
-                    xfm=Affine(XFMLoader.from_filename(hmc_mats[i]).to_ras()),
-                )
-                unwarp.fit(fname)
-
-                # Write out a new field for this particular frame
-                self._results["out_field"].append(filename(fname, suffix="_field"))
-                unwarp.shifts.to_filename(self._results["out_field"][-1])
-
-            # Generate warpfield
-            warp_name = filename(fname, suffix="_xfm")
-            unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(warp_name)
-            self._results["out_warp"].append(warp_name)
-
-            # Generate resampled
-            out_name = filename(fname, suffix="_unwarped")
-            unwarp.apply(nb.load(fname), ro_time=ro, pe_dir=pe).to_filename(out_name)
-            self._results["out_corrected"].append(out_name)
-
-            if hmc_mats:
-                unwarp = None
-                gc.collect()
+        out_fields = set(self._results["out_field"]) - set([None])
+        if len() == 1:
+            self._results["out_field"] = out_fields.pop()
 
         return runtime
 
@@ -505,3 +479,33 @@ def _split_itk_file(in_file):
         p = Path(f"{i:05}")
         p.write_text(xfm)
         yield str(p)
+
+
+def _b0_resampler(data, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
+    # Prepare output names
+    filename = partial(fname_presuffix, newpath=newpath)
+    retval = tuple([filename(data, suffix=s) for s in ("_unwarped", "_xfm", "_field")])
+
+    if unwarp is None:
+        from sdcflows.transform import B0FieldTransform
+
+        # Create a new unwarp object
+        unwarp = B0FieldTransform(
+            coeffs=[nb.load(cname) for cname in coeffs],
+        )
+
+    if hmc_xfm is not None:
+        from nitransforms.linear import Affine
+        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
+
+        unwarp.xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
+
+    if unwarp.fit(data):
+        unwarp.shifts.to_filename(retval[2])
+    else:
+        retval[2] = None
+
+    unwarp.apply(nb.load(data), ro_time=ro, pe_dir=pe).to_filename(retval[0])
+    unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(retval[1])
+
+    return retval
