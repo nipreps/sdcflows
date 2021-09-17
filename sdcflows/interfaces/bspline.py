@@ -22,7 +22,6 @@
 #
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from pathlib import Path
-from functools import partial
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
@@ -41,7 +40,6 @@ from nipype.interfaces.base import (
 )
 
 from sdcflows.transform import grid_bspline_weights as gbsw
-from sdcflows.utils.misc import defaultlist
 
 
 LOW_MEM_BLOCK_SIZE = 1000
@@ -238,6 +236,7 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
             desc="the phase-encoding direction corresponding to in_data",
         )
     )
+    num_threads = traits.Int(nohash=True, desc="number of threads")
 
 
 class _ApplyCoeffsFieldOutputSpec(TraitedSpec):
@@ -253,13 +252,20 @@ class ApplyCoeffsField(SimpleInterface):
     output_spec = _ApplyCoeffsFieldOutputSpec
 
     def _run_interface(self, runtime):
-        # Load head-motion correction matrices
-        ro_time = defaultlist(self.inputs.ro_time)
-        pe_dir = defaultlist(self.inputs.pe_dir)
+        n = len(self.inputs.in_data)
+
+        ro_time = self.inputs.ro_time
+        if len(ro_time) == 1:
+            ro_time *= n
+
+        pe_dir = self.inputs.pe_dir
+        if len(pe_dir) == 1:
+            pe_dir *= n
 
         unwarp = None
-        hmc_mats = defaultlist([None])
+        hmc_mats = [None] * n
         if isdefined(self.inputs.in_xfms):
+            # Split ITK matrices in separate files if they come collated
             hmc_mats = (
                 list(_split_itk_file(self.inputs.in_xfms[0]))
                 if len(self.inputs.in_xfms) == 1
@@ -268,22 +274,41 @@ class ApplyCoeffsField(SimpleInterface):
         else:
             from sdcflows.transform import B0FieldTransform
 
+            # Pre-cached interpolator object
             unwarp = B0FieldTransform(
                 coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
             )
 
-        outputs = [
-            _b0_resampler(
-                fname,
-                self.inputs.in_coeff,
-                pe_dir[i],
-                ro_time[i],
-                hmc_mats[i],
-                unwarp,
-                runtime.cwd,
-            )
-            for i, fname in enumerate(self.inputs.in_data)
-        ]
+        if not isdefined(self.inputs.num_threads) or self.inputs.num_threads < 2:
+            # Linear execution (1 core)
+            outputs = [
+                _b0_resampler(
+                    fname,
+                    self.inputs.in_coeff,
+                    pe_dir[i],
+                    ro_time[i],
+                    hmc_mats[i],
+                    unwarp,  # if no HMC matrices, interpolator can be shared
+                    runtime.cwd,
+                )
+                for i, fname in enumerate(self.inputs.in_data)
+            ]
+        else:
+            # Embarrasingly parallel execution
+            from concurrent.futures import ProcessPoolExecutor
+
+            outputs = [None] * len(self.inputs.in_data)
+            with ProcessPoolExecutor(max_workers=self.inputs.num_threads) as ex:
+                outputs = ex.map(
+                    _b0_resampler,
+                    self.inputs.in_data,
+                    [self.inputs.in_coeff] * n,
+                    pe_dir,
+                    ro_time,
+                    hmc_mats,
+                    [None] * n,  # force a new interpolator for each process
+                    [runtime.cwd] * n,
+                )
 
         (
             self._results["out_corrected"],
@@ -292,7 +317,7 @@ class ApplyCoeffsField(SimpleInterface):
         ) = zip(*outputs)
 
         out_fields = set(self._results["out_field"]) - set([None])
-        if len() == 1:
+        if len(out_fields) == 1:
             self._results["out_field"] = out_fields.pop()
 
         return runtime
@@ -482,9 +507,12 @@ def _split_itk_file(in_file):
 
 
 def _b0_resampler(data, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
+    """Outsource the resampler into a separate callable function to allow parallelization."""
+    from functools import partial
+
     # Prepare output names
     filename = partial(fname_presuffix, newpath=newpath)
-    retval = tuple([filename(data, suffix=s) for s in ("_unwarped", "_xfm", "_field")])
+    retval = [filename(data, suffix=s) for s in ("_unwarped", "_xfm", "_field")]
 
     if unwarp is None:
         from sdcflows.transform import B0FieldTransform

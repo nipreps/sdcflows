@@ -90,14 +90,20 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["fieldmap", "fieldwarp", "corrected", "corrected_ref", "corrected_mask"]
+            fields=[
+                "fieldmap",
+                "fieldwarp",
+                "corrected",
+                "corrected_ref",
+                "corrected_mask",
+            ]
         ),
         name="outputnode",
     )
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
     rotime.interface._always_run = debug
-    resample = pe.Node(ApplyCoeffsField(), name="resample")
+    resample = pe.Node(ApplyCoeffsField(num_threads=omp_nthreads), name="resample")
     merge = pe.Node(MergeSeries(), name="merge")
     average = pe.Node(RobustAverage(mc_method=None), name="average")
 

@@ -67,35 +67,3 @@ def get_free_mem():
         return round(virtual_memory().free, 1)
     except Exception:
         return None
-
-
-class defaultlist(list):
-    """
-    A sort of default dict for lists.
-
-    Examples
-    --------
-    >>> defaultlist(range(3))
-    [0, 1, 2]
-
-    >>> defaultlist(["abc"])[100]
-    'abc'
-
-    >>> defaultlist(range(3))[1]
-    1
-
-    >>> l = defaultlist(reversed(range(3)))
-    >>> l[0]
-    2
-
-    >>> _ = l.pop(0)
-    >>> _ = l.pop(0)
-    >>> l[4]
-    0
-
-    """
-
-    def __getitem__(self, i):
-        if len(self) == 1:
-            i = 0
-        return super().__getitem__(i)
