@@ -41,6 +41,8 @@ from nipype.interfaces.base import (
 )
 
 from sdcflows.transform import grid_bspline_weights as gbsw, B0FieldTransform
+from sdcflows.utils.misc import defaultlist
+
 
 LOW_MEM_BLOCK_SIZE = 1000
 DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)  # For human adults (mid-frequency), in mm
@@ -262,9 +264,6 @@ class ApplyCoeffsField(SimpleInterface):
         self._results["out_warp"] = []
         self._results["out_corrected"] = []
 
-        # Retrieve the number of target 3D EPIs
-        n_inputs = len(self.inputs.in_target)
-
         # Load head-motion correction matrices
         hmc_mats = None
         unwarp = None
@@ -288,13 +287,8 @@ class ApplyCoeffsField(SimpleInterface):
             )
             unwarp.shifts.to_filename(self._results["out_field"])
 
-        ro_time = self.inputs.ro_time
-        if len(ro_time) == 1:
-            ro_time = [ro_time[0]] * n_inputs
-
-        pe_dir = self.inputs.pe_dir
-        if len(pe_dir) == 1:
-            pe_dir = [pe_dir[0]] * n_inputs
+        ro_time = defaultlist(self.inputs.ro_time)
+        pe_dir = defaultlist(self.inputs.pe_dir)
 
         for i, fname in enumerate(self.inputs.in_target):
             pe = pe_dir[i]
