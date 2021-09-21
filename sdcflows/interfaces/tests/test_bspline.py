@@ -63,7 +63,7 @@ def test_bsplines(tmp_path, testnum):
     os.chdir(tmp_path)
     # Check that we can interpolate the coefficients on a target
     test1 = ApplyCoeffsField(
-        in_target=str(tmp_path / "target.nii.gz"),
+        in_data=str(tmp_path / "target.nii.gz"),
         in_coeff=str(tmp_path / "coeffs.nii.gz"),
         pe_dir="j-",
         ro_time=1.0,
@@ -114,7 +114,7 @@ def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
     """Check that our interpolation is not far away from TOPUP's."""
     tmpdir.chdir()
     result = ApplyCoeffsField(
-        in_target=[str(testdata_dir / "epi.nii.gz")] * 2,
+        in_data=[str(testdata_dir / "epi.nii.gz")] * 2,
         in_coeff=str(testdata_dir / "topup-coeff-fixed.nii.gz"),
         pe_dir="j-",
         ro_time=1.0,

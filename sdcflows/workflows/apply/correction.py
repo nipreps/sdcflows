@@ -55,6 +55,8 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         dictionary of metadata corresponding to the target EPI image
     fmap_coeff
         fieldmap coefficients in distorted EPI space.
+    hmc_xforms
+        list of head-motion correction matrices (in ITK format)
 
     Outputs
     -------
@@ -72,41 +74,58 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
         a fast mask calculated from the corrected EPI reference.
 
     """
-    from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.bspline import ApplyCoeffsField
-    from ..ancillary import init_brainextraction_wf
+    from niworkflows.interfaces.images import RobustAverage
+    from niworkflows.interfaces.nibabel import MergeSeries
+    from sdcflows.interfaces.epi import GetReadoutTime
+    from sdcflows.interfaces.bspline import ApplyCoeffsField
+    from sdcflows.workflows.ancillary import init_brainextraction_wf
+    from sdcflows.utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["distorted", "metadata", "fmap_coeff"]),
+        niu.IdentityInterface(
+            fields=["distorted", "metadata", "fmap_coeff", "hmc_xforms"]
+        ),
         name="inputnode",
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["fieldmap", "fieldwarp", "corrected", "corrected_mask"]
+            fields=[
+                "fieldmap",
+                "fieldwarp",
+                "corrected",
+                "corrected_ref",
+                "corrected_mask",
+            ]
         ),
         name="outputnode",
     )
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
     rotime.interface._always_run = debug
-    resample = pe.Node(ApplyCoeffsField(), name="resample")
+    resample = pe.Node(ApplyCoeffsField(num_threads=omp_nthreads), name="resample")
+    merge = pe.Node(MergeSeries(), name="merge")
+    average = pe.Node(RobustAverage(mc_method=None), name="average")
 
     brainextraction_wf = init_brainextraction_wf()
 
     # fmt:off
     workflow.connect([
-        (inputnode, rotime, [("distorted", "in_file"),
+        (inputnode, rotime, [(("distorted", _pop), "in_file"),
                              ("metadata", "metadata")]),
-        (inputnode, resample, [("distorted", "in_target"),
-                               ("fmap_coeff", "in_coeff")]),
+        (inputnode, resample, [("distorted", "in_data"),
+                               ("fmap_coeff", "in_coeff"),
+                               ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
+        (resample, merge, [("out_corrected", "in_files")]),
+        (merge, average, [("out_file", "in_file")]),
+        (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
+        (merge, outputnode, [("out_file", "corrected")]),
         (resample, outputnode, [("out_field", "fieldmap"),
                                 ("out_warp", "fieldwarp")]),
-        (resample, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
         (brainextraction_wf, outputnode, [
-            ("outputnode.out_file", "corrected"),
+            ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
         ]),
     ])

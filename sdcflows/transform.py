@@ -29,7 +29,14 @@ from scipy import ndimage as ndi
 from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
 
 import nibabel as nb
+import nitransforms as nt
+from nitransforms.base import _as_homogeneous
 from bids.utils import listify
+
+
+def _clear_shifts(instance, attribute, value):
+    instance.shifts = None
+    return value
 
 
 @attr.s(slots=True)
@@ -37,6 +44,7 @@ class B0FieldTransform:
     """Represents and applies the transform to correct for susceptibility distortions."""
 
     coeffs = attr.ib(default=None)
+    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_shifts)
     shifts = attr.ib(default=None, init=False)
 
     def fit(self, spatialimage):
@@ -45,6 +53,12 @@ class B0FieldTransform:
 
         Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
         for all voxels in the target-image's extent.
+
+        Returns
+        -------
+        updated : :obj:`bool`
+            ``True`` if the internal field representation was fit,
+            ``False`` if cache was valid and will be reused.
 
         """
         # Calculate the physical coordinates of target grid
@@ -58,14 +72,18 @@ class B0FieldTransform:
             if np.all(newshape == self.shifts.shape) and np.allclose(
                 newaff, self.shifts.affine
             ):
-                return
+                return False
 
         weights = []
         coeffs = []
 
         # Generate tensor-product B-Spline weights
         for level in listify(self.coeffs):
-            wmat = grid_bspline_weights(spatialimage, level)
+            self.xfm.reference = spatialimage
+            moved_cs = level.__class__(
+                level.dataobj, self.xfm.matrix @ level.affine, level.header
+            )
+            wmat = grid_bspline_weights(spatialimage, moved_cs)
             weights.append(wmat)
             coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
 
@@ -77,6 +95,7 @@ class B0FieldTransform:
 
         # Cache
         self.shifts = nb.Nifti1Image(vsm, spatialimage.affine, None)
+        return True
 
     def apply(
         self,
@@ -124,6 +143,9 @@ class B0FieldTransform:
 
         """
         # Ensure the vsm has been computed
+        if isinstance(spatialimage, (str, bytes, Path)):
+            spatialimage = nb.load(spatialimage)
+
         self.fit(spatialimage)
         vsm = self.shifts.get_fdata().copy()
 
@@ -135,9 +157,21 @@ class B0FieldTransform:
         pe_axis = "ijk".index(pe_dir[0])
 
         # Map voxel coordinates applying the VSM
-        ijk_axis = tuple([np.arange(s) for s in vsm.shape])
-        voxcoords = np.array(np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32")
-        voxcoords[pe_axis, ...] += vsm * ro_time
+        if self.xfm is None:
+            ijk_axis = tuple([np.arange(s) for s in vsm.shape])
+            voxcoords = np.array(
+                np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
+            ).reshape(3, -1)
+        else:
+            # Map coordinates from reference to time-step
+            hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
+            # Convert from RAS to voxel coordinates
+            voxcoords = (
+                np.linalg.inv(self.xfm.reference.affine)
+                @ _as_homogeneous(np.vstack(hmc_xyz), dim=self.xfm.reference.ndim).T
+            )[:3, ...]
+
+        voxcoords[pe_axis, ...] += vsm.reshape(-1) * ro_time
 
         # Prepare data
         data = np.squeeze(np.asanyarray(spatialimage.dataobj))
@@ -146,7 +180,7 @@ class B0FieldTransform:
         # Resample
         resampled = ndi.map_coordinates(
             data,
-            voxcoords.reshape(3, -1),
+            voxcoords,
             output=output_dtype,
             order=order,
             mode=mode,
@@ -294,3 +328,14 @@ def grid_bspline_weights(target_nii, ctrl_nii):
         wd.append(csr_matrix(weights))
 
     return kron(kron(wd[0], wd[1]), wd[2])
+
+
+def _move_coeff(in_coeff, fmap_ref, transform):
+    """Read in a rigid transform from ANTs, and update the coefficients field affine."""
+    xfm = nt.linear.Affine(
+        nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
+        reference=fmap_ref,
+    )
+    coeff = nb.load(in_coeff)
+    newaff = xfm.matrix @ coeff.affine
+    return coeff.__class__(coeff.dataobj, newaff, coeff.header)
