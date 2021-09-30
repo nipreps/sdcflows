@@ -234,6 +234,7 @@ class B0FieldTransform:
         aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
         xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
         if itk_format:
+            # ITK displacement vectors are in LPS orientation
             xyz_deltas[..., (0, 1)] *= -1.0
 
         xyz_nii = nb.Nifti1Image(
