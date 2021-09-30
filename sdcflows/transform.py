@@ -229,12 +229,15 @@ class B0FieldTransform:
         ijk_deltas[..., pe_axis] = vsm.reshape(-1)
 
         # To convert from VSM to RAS field we just apply the affine
-        aff = self.shifts.affine
+        aff = self.shifts.affine.copy()
+        aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
         xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
         xyz_nii = nb.Nifti1Image(
             # WARNING: ITK NIfTI fields are 5D (have an empty 4th dim).
             #          Hence, the ``np.newaxis``.
-            xyz_deltas.reshape(fieldshape)[:, :, :, np.newaxis, :], aff, None
+            xyz_deltas.reshape(fieldshape)[:, :, :, np.newaxis, :],
+            self.shifts.affine,
+            None,
         )
         xyz_nii.header.set_intent("vector", (), "")
         xyz_nii.header.set_xyzt_units("mm")
