@@ -215,38 +215,30 @@ class B0FieldTransform:
             A NIfTI 1.0 object containing the distortion.
 
         """
-        from math import pi
-        from nibabel.affines import voxel_sizes, obliquity
-        from nibabel.orientations import io_orientation
-
-        # Generate warp field
-        data = self.shifts.get_fdata(dtype="float32").copy()
+        # Set polarity & scale VSM (voxel-shift-map) by readout time
+        vsm = self.shifts.get_fdata().copy()
         pe_axis = "ijk".index(pe_dir[0])
-        pe_sign = -1.0 if pe_dir.endswith("-") else 1.0
-        pe_size = self.shifts.header.get_zooms()[pe_axis]
-        data *= pe_sign * ro_time * pe_size
+        vsm *= -1.0 if pe_dir.endswith("-") else 1.0
+        vsm *= ro_time
 
-        fieldshape = tuple(list(data.shape[:3]) + [3])
+        # Shape of displacements field
+        fieldshape = tuple(list(vsm.shape[:3]) + [3])
 
-        # Compose a vector field
-        field = np.zeros((data.size, 3), dtype="float32")
-        field[..., pe_axis] = data.reshape(-1)
+        # Convert VSM to voxel displacements
+        ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
+        ijk_deltas[..., pe_axis] = vsm.reshape(-1)
 
-        # If coordinate system is oblique, project displacements through directions matrix
+        # To convert from VSM to RAS field we just apply the affine
         aff = self.shifts.affine
-        if obliquity(aff).max() * 180 / pi > 0.01:
-            dirmat = np.eye(4)
-            dirmat[:3, :3] = aff[:3, :3] / (
-                voxel_sizes(aff) * io_orientation(aff)[:, 1]
-            )
-            field = nb.affines.apply_affine(dirmat, field)
-
-        warpnii = nb.Nifti1Image(
-            field.reshape(fieldshape)[:, :, :, np.newaxis, :], aff, None
+        xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
+        xyz_nii = nb.Nifti1Image(
+            # WARNING: ITK NIfTI fields are 5D (have an empty 4th dim).
+            #          Hence, the ``np.newaxis``.
+            xyz_deltas.reshape(fieldshape)[:, :, :, np.newaxis, :], aff, None
         )
-        warpnii.header.set_intent("vector", (), "")
-        warpnii.header.set_xyzt_units("mm")
-        return warpnii
+        xyz_nii.header.set_intent("vector", (), "")
+        xyz_nii.header.set_xyzt_units("mm")
+        return xyz_nii
 
 
 def _cubic_bspline(d):
