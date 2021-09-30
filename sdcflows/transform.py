@@ -194,7 +194,7 @@ class B0FieldTransform:
         moved.header.set_data_dtype(output_dtype)
         return moved
 
-    def to_displacements(self, ro_time, pe_dir):
+    def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
         Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.
 
@@ -232,6 +232,9 @@ class B0FieldTransform:
         aff = self.shifts.affine.copy()
         aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
         xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
+        if itk_format:
+            xyz_deltas[..., (0, 1)] *= -1.0
+
         xyz_nii = nb.Nifti1Image(
             # WARNING: ITK NIfTI fields are 5D (have an empty 4th dim).
             #          Hence, the ``np.newaxis``.
