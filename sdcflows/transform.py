@@ -222,11 +222,12 @@ class B0FieldTransform:
         vsm *= ro_time
 
         # Shape of displacements field
-        fieldshape = tuple(list(vsm.shape[:3]) + [3])
+        # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
+        fieldshape = tuple(list(vsm.shape[:3]) + [1, 3])
 
         # Convert VSM to voxel displacements
         ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
-        ijk_deltas[..., pe_axis] = vsm.reshape(-1)
+        ijk_deltas[:, pe_axis] = vsm.reshape(-1)
 
         # To convert from VSM to RAS field we just apply the affine
         aff = self.shifts.affine.copy()
@@ -236,9 +237,7 @@ class B0FieldTransform:
             xyz_deltas[..., (0, 1)] *= -1.0
 
         xyz_nii = nb.Nifti1Image(
-            # WARNING: ITK NIfTI fields are 5D (have an empty 4th dim).
-            #          Hence, the ``np.newaxis``.
-            xyz_deltas.reshape(fieldshape)[:, :, :, np.newaxis, :],
+            xyz_deltas.reshape(fieldshape),
             self.shifts.affine,
             None,
         )
