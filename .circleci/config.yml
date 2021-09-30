@@ -48,9 +48,9 @@ jobs:
             - env-v2-
       - restore_cache:
           keys:
-            - data-v4-{{ .Branch }}-
-            - data-v4-master-
-            - data-v4-
+            - data-v5-{{ .Branch }}-
+            - data-v5-master-
+            - data-v5-
       - checkout:
           path: /tmp/src/sdcflows
       - run:
@@ -129,7 +129,7 @@ jobs:
             datalad get -r -J 2 -d brain-extraction-tests
 
       - save_cache:
-          key: data-v4-{{ .Branch }}-{{ .BuildNum }}
+          key: data-v5-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/data
             - /tmp/templateflow
@@ -272,9 +272,9 @@ jobs:
             - freesurfer-v1-
       - restore_cache:
           keys:
-            - data-v4-{{ .Branch }}-
-            - data-v4-master-
-            - data-v4-
+            - data-v5-{{ .Branch }}-
+            - data-v5-master-
+            - data-v5-
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
