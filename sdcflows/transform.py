@@ -194,7 +194,7 @@ class B0FieldTransform:
         moved.header.set_data_dtype(output_dtype)
         return moved
 
-    def to_displacements(self, ro_time, pe_dir):
+    def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
         Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.
 
@@ -215,38 +215,36 @@ class B0FieldTransform:
             A NIfTI 1.0 object containing the distortion.
 
         """
-        from math import pi
-        from nibabel.affines import voxel_sizes, obliquity
-        from nibabel.orientations import io_orientation
-
-        # Generate warp field
-        data = self.shifts.get_fdata(dtype="float32").copy()
+        # Set polarity & scale VSM (voxel-shift-map) by readout time
+        vsm = self.shifts.get_fdata().copy()
         pe_axis = "ijk".index(pe_dir[0])
-        pe_sign = -1.0 if pe_dir.endswith("-") else 1.0
-        pe_size = self.shifts.header.get_zooms()[pe_axis]
-        data *= pe_sign * ro_time * pe_size
+        vsm *= -1.0 if pe_dir.endswith("-") else 1.0
+        vsm *= ro_time
 
-        fieldshape = tuple(list(data.shape[:3]) + [3])
+        # Shape of displacements field
+        # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
+        fieldshape = tuple(list(vsm.shape[:3]) + [1, 3])
 
-        # Compose a vector field
-        field = np.zeros((data.size, 3), dtype="float32")
-        field[..., pe_axis] = data.reshape(-1)
+        # Convert VSM to voxel displacements
+        ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
+        ijk_deltas[:, pe_axis] = vsm.reshape(-1)
 
-        # If coordinate system is oblique, project displacements through directions matrix
-        aff = self.shifts.affine
-        if obliquity(aff).max() * 180 / pi > 0.01:
-            dirmat = np.eye(4)
-            dirmat[:3, :3] = aff[:3, :3] / (
-                voxel_sizes(aff) * io_orientation(aff)[:, 1]
-            )
-            field = nb.affines.apply_affine(dirmat, field)
+        # To convert from VSM to RAS field we just apply the affine
+        aff = self.shifts.affine.copy()
+        aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
+        xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
+        if itk_format:
+            # ITK displacement vectors are in LPS orientation
+            xyz_deltas[..., (0, 1)] *= -1.0
 
-        warpnii = nb.Nifti1Image(
-            field.reshape(fieldshape)[:, :, :, np.newaxis, :], aff, None
+        xyz_nii = nb.Nifti1Image(
+            xyz_deltas.reshape(fieldshape),
+            self.shifts.affine,
+            None,
         )
-        warpnii.header.set_intent("vector", (), "")
-        warpnii.header.set_xyzt_units("mm")
-        return warpnii
+        xyz_nii.header.set_intent("vector", (), "")
+        xyz_nii.header.set_xyzt_units("mm")
+        return xyz_nii
 
 
 def _cubic_bspline(d):
