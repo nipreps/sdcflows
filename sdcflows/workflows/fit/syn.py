@@ -161,14 +161,20 @@ def init_syn_sdc_wf(
     """
     from pkg_resources import resource_filename as pkgrf
     from packaging.version import parse as parseversion, Version
+    from nipype.interfaces.ants import ImageMath
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
         FixHeaderRegistration as Registration,
     )
-    from niworkflows.interfaces.header import CopyXForm
-    from niworkflows.interfaces.nibabel import Binarize, RegridToZooms
-    from ...utils.misc import front as _pop
+    from niworkflows.interfaces.nibabel import (
+        Binarize,
+        IntensityClip,
+        RegridToZooms,
+    )
+    from ...utils.misc import front as _pop, last as _pull
+    from ...interfaces.epi import GetReadoutTime
     from ...interfaces.bspline import (
+        ApplyCoeffsField,
         BSplineApprox,
         DEFAULT_LF_ZOOMS_MM,
         DEFAULT_HF_ZOOMS_MM,
@@ -197,22 +203,51 @@ template [@fieldmapless3].
 """
     inputnode = pe.Node(niu.IdentityInterface(INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(["fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "method"]),
+        niu.IdentityInterface(
+            ["fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "out_warp", "method"]
+        ),
         name="outputnode",
     )
     outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
+
+    readout_time = pe.Node(
+        GetReadoutTime(),
+        name="readout_time",
+        run_without_submitting=True,
+    )
 
     warp_dir = pe.Node(
         niu.Function(function=_warp_dir),
         run_without_submitting=True,
         name="warp_dir",
     )
-
     atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
     anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
     amask2epi = pe.Node(
         ApplyTransforms(interpolation="MultiLabel", transforms="identity"),
         name="amask2epi",
+    )
+
+    # Calculate laplacian maps
+    lap_anat = pe.Node(
+        ImageMath(operation="Laplacian", op2="1.5 1", copy_header=True), name="lap_anat"
+    )
+    lap_anat_norm = pe.Node(niu.Function(function=_norm_lap), name="lap_anat_norm")
+    anat_merge = pe.Node(
+        niu.Merge(2),
+        name="anat_merge",
+        run_without_submitting=True,
+    )
+
+    clip_epi = pe.Node(IntensityClip(p_min=35.0, p_max=99.9), name="clip_epi")
+    lap_epi = pe.Node(
+        ImageMath(operation="Laplacian", op2="1.5 1", copy_header=True), name="lap_epi"
+    )
+    lap_epi_norm = pe.Node(niu.Function(function=_norm_lap), name="lap_epi_norm")
+    epi_merge = pe.Node(
+        niu.Merge(2),
+        name="epi_merge",
+        run_without_submitting=True,
     )
 
     epi_umask = pe.Node(Union(), name="epi_umask")
@@ -221,8 +256,6 @@ template [@fieldmapless3].
         name="moving_masks",
         run_without_submitting=True,
     )
-    moving_masks.inputs.in1 = "NULL"
-    moving_masks.inputs.in2 = "NULL"
 
     fixed_masks = pe.Node(
         niu.Merge(3),
@@ -230,14 +263,13 @@ template [@fieldmapless3].
         mem_gb=DEFAULT_MEMORY_MIN_GB,
         run_without_submitting=True,
     )
-    deoblique = pe.Node(CopyXForm(fields=["epi_ref"]), name="deoblique")
 
     # Set a manageable size for the epi reference
     find_zooms = pe.Node(niu.Function(function=_adjust_zooms), name="find_zooms")
     zooms_epi = pe.Node(RegridToZooms(), name="zooms_epi")
 
-    histmatch = pe.Node(niu.Function(function=match_histogram),
-                        name="histmatch")
+    # histmatch = pe.Node(niu.Function(function=match_histogram),
+    #                     name="histmatch")
 
     # SyN Registration Core
     syn = pe.Node(
@@ -251,23 +283,24 @@ template [@fieldmapless3].
     syn.inputs.output_inverse_warped_image = debug
 
     if debug:
-        syn.inputs.args = "--write-interval-volumes 5"
+        syn.inputs.args = "--write-interval-volumes 2"
 
-    unwarp_ref = pe.Node(
-        ApplyTransforms(interpolation="BSpline", args="-u float"),
-        name="unwarp_ref",
-    )
+    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
 
     # Extract nonzero component
     extract_field = pe.Node(niu.Function(function=_extract_field), name="extract_field")
 
     # Check zooms (avoid very expensive B-Splines fitting)
     zooms_field = pe.Node(
-        ApplyTransforms(interpolation="BSpline", transforms="identity", args="-u float"),
+        ApplyTransforms(
+            interpolation="BSpline", transforms="identity", args="-u float"
+        ),
         name="zooms_field",
     )
     zooms_bmask = pe.Node(
-        ApplyTransforms(interpolation="MultiLabel", transforms="identity", args="-u uchar"),
+        ApplyTransforms(
+            interpolation="MultiLabel", transforms="identity", args="-u uchar"
+        ),
         name="zooms_bmask",
     )
 
@@ -281,49 +314,56 @@ template [@fieldmapless3].
 
     # fmt: off
     workflow.connect([
-        (inputnode, extract_field, [("epi_ref", "epi_meta"),
-                                    ("anat_mask", "in_mask")]),
+        (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
+                                   (("epi_ref", _pull), "metadata")]),
+        (inputnode, extract_field, [("epi_ref", "epi_meta")]),
         (inputnode, atlas_msk, [("sd_prior", "in_file")]),
-        (inputnode, deoblique, [(("epi_ref", _pop), "epi_ref"),
-                                ("epi_mask", "hdr_file")]),
+        (inputnode, clip_epi, [(("epi_ref", _pop), "in_file")]),
+        (inputnode, unwarp, [(("epi_ref", _pop), "in_data")]),
         (inputnode, amask2epi, [("epi_mask", "reference_image")]),
         (inputnode, zooms_bmask, [("anat_mask", "input_image")]),
         (inputnode, fixed_masks, [("anat_mask", "in1"),
                                   ("anat_mask", "in2")]),
         (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
         (inputnode, warp_dir, [("epi_ref", "intuple")]),
-        (inputnode, histmatch, [("anat_ref", "reference")]),
-        (inputnode, syn, [("anat_ref", "fixed_image")]),
-        (inputnode, epi_umask, [("epi_mask", "in1")]),
-        # (zooms_bmask, moving_masks, [("output_image", "in3")]),
-        (anat_dilmsk, histmatch, [("out_file", "ref_mask")]),
-        (warp_dir, syn, [("out", "restrict_deformation")]),
+        (inputnode, anat_merge, [("anat_ref", "in1")]),
+        (inputnode, lap_anat, [("anat_ref", "op1")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
                                  (("epi_ref", _pop), "in_epi")]),
-        (deoblique, histmatch, [("epi_ref", "image")]),
-        (deoblique, zooms_epi, [("epi_ref", "in_file")]),
-        (deoblique, unwarp_ref, [("epi_ref", "input_image")]),
+        (inputnode, zooms_field, [(("epi_ref", _pop), "reference_image")]),
+        (lap_anat, lap_anat_norm, [("output_image", "in_file")]),
+        (lap_anat_norm, anat_merge, [("out", "in2")]),
+        (inputnode, epi_umask, [("epi_mask", "in1")]),
+        (epi_umask, moving_masks, [("out_file", "in1"),
+                                   ("out_file", "in2"),
+                                   ("out_file", "in3")]),
+        (clip_epi, epi_merge, [("out_file", "in1")]),
+        (clip_epi, lap_epi, [("out_file", "op1")]),
+        (clip_epi, zooms_epi, [("out_file", "in_file")]),
+        (lap_epi, lap_epi_norm, [("output_image", "in_file")]),
+        (lap_epi_norm, epi_merge, [("out", "in2")]),
         (find_zooms, zooms_epi, [("out", "zooms")]),
-        (zooms_epi, unwarp_ref, [("out_file", "reference_image")]),
         (atlas_msk, fixed_masks, [("out_mask", "in3")]),
-        (fixed_masks, syn, [("out", "fixed_image_masks")]),
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
-        (epi_umask, histmatch, [("out_file", "img_mask")]),
-        # (moving_masks, syn, [("out", "moving_image_masks")]),
-        (histmatch, syn, [("out", "moving_image")]),
+        (warp_dir, syn, [("out", "restrict_deformation")]),
+        (anat_merge, syn, [("out", "fixed_image")]),
+        (fixed_masks, syn, [("out", "fixed_image_masks")]),
+        (epi_merge, syn, [("out", "moving_image")]),
+        (moving_masks, syn, [("out", "moving_image_masks")]),
         (syn, extract_field, [("forward_transforms", "in_file")]),
-        (syn, unwarp_ref, [("forward_transforms", "transforms")]),
-        (unwarp_ref, zooms_field, [("output_image", "reference_image")]),
         (extract_field, zooms_field, [("out", "input_image")]),
         (zooms_field, zooms_bmask, [("output_image", "reference_image")]),
         (zooms_field, bs_filter, [("output_image", "in_data")]),
         (zooms_bmask, bs_filter, [("output_image", "in_mask")]),
-        (unwarp_ref, outputnode, [("output_image", "fmap_ref")]),
+        (bs_filter, unwarp, [("out_coeff", "in_coeff")]),
+        (readout_time, unwarp, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
         (zooms_bmask, outputnode, [("output_image", "fmap_mask")]),
-        (bs_filter, outputnode, [
-            ("out_extrapolated" if not debug else "out_field", "fmap"),
-            ("out_coeff", "fmap_coeff")]),
+        (bs_filter, outputnode, [("out_coeff", "fmap_coeff")]),
+        (unwarp, outputnode, [("out_corrected", "fmap_ref"),
+                              ("out_field", "fmap"),
+                              ("out_warp", "out_warp")]),
     ])
     # fmt: on
 
@@ -484,11 +524,10 @@ def init_syn_preprocessing_wf(
         run_without_submitting=True,
     )
     mask_anat = pe.Node(ApplyMask(), name="mask_anat")
-    clip_anat = pe.Node(
-        IntensityClip(p_min=0.0, p_max=99.8, invert=t1w_inversion), name="clip_anat"
+    clip_anat = pe.Node(IntensityClip(p_min=0.0, p_max=99.8), name="clip_anat")
+    ref_anat = pe.Node(
+        DenoiseImage(copy_header=True), name="ref_anat", n_procs=omp_nthreads
     )
-    ref_anat = pe.Node(DenoiseImage(copy_header=True), name="ref_anat",
-                       n_procs=omp_nthreads)
 
     epi2anat = pe.Node(
         Registration(from_file=resource_filename("sdcflows", "data/affine.json")),
@@ -499,10 +538,6 @@ def init_syn_preprocessing_wf(
     epi2anat.inputs.output_inverse_warped_image = debug
     if debug:
         epi2anat.inputs.args = "--write-interval-volumes 5"
-
-    clip_anat_final = pe.Node(
-        IntensityClip(p_min=0.0, p_max=100), name="clip_anat_final"
-    )
 
     def _remove_first_mask(in_file):
         if not isinstance(in_file, list):
@@ -525,9 +560,10 @@ def init_syn_preprocessing_wf(
         (inputnode, mask_anat, [("in_anat", "in_file"),
                                 ("mask_anat", "in_mask")]),
         (inputnode, mask2epi, [("mask_anat", "input_image")]),
-        (epi_reference_wf, merge_output, [("outputnode.epi_ref_file", "epi_ref")]),
         (epi_reference_wf, deob_epi, [("outputnode.epi_ref_file", "in_file")]),
+        (deob_epi, merge_output, [("out_file", "epi_ref")]),
         (mask_anat, clip_anat, [("out_file", "in_file")]),
+        (clip_anat, ref_anat, [("out_file", "input_image")]),
         (deob_epi, epi_brain, [("out_file", "in_file")]),
         (epi_brain, epi_dilmsk, [("out_mask", "in_file")]),
         (ref_anat, epi2anat, [("output_image", "fixed_image")]),
@@ -539,37 +575,19 @@ def init_syn_preprocessing_wf(
         (epi2anat, transform_list, [("forward_transforms", "in1")]),
         (transform_list, prior2epi, [("out", "transforms")]),
         (sampling_ref, prior2epi, [("out_file", "reference_image")]),
+        (ref_anat, anat2epi, [("output_image", "input_image")]),
         (epi2anat, anat2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, anat2epi, [("out_file", "reference_image")]),
-        (ref_anat, anat2epi, [("output_image", "input_image")]),
         (epi2anat, mask2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, mask2epi, [("out_file", "reference_image")]),
         (mask2epi, mask_dtype, [("output_image", "in_file")]),
-        (anat2epi, clip_anat_final, [("output_image", "in_file")]),
+        (anat2epi, outputnode, [("output_image", "anat_ref")]),
+        (mask_dtype, outputnode, [("out", "anat_mask")]),
         (merge_output, outputnode, [("out", "epi_ref")]),
         (epi_brain, outputnode, [("out_mask", "epi_mask")]),
-        (clip_anat_final, outputnode, [("out_file", "anat_ref")]),
-        (mask_dtype, outputnode, [("out", "anat_mask")]),
         (prior2epi, outputnode, [("output_image", "sd_prior")]),
     ])
     # fmt:on
-
-    if t1w_inversion:
-        # Mask out non-brain zeros.
-        mask_inverted = pe.Node(ApplyMask(), name="mask_inverted")
-        # fmt:off
-        workflow.connect([
-            (inputnode, mask_inverted, [("mask_anat", "in_mask")]),
-            (clip_anat, mask_inverted, [("out_file", "in_file")]),
-            (mask_inverted, ref_anat, [("out_file", "input_image")]),
-        ])
-        # fmt:on
-    else:
-        # fmt:off
-        workflow.connect([
-            (clip_anat, ref_anat, [("out_file", "input_image")]),
-        ])
-        # fmt:on
 
     if debug:
         from niworkflows.interfaces.nibabel import RegridToZooms
@@ -610,7 +628,7 @@ def _warp_dir(intuple, nlevels=3):
 
     """
     pe = intuple[1]["PhaseEncodingDirection"][0]
-    return nlevels * [[int(pe == ax) for ax in "ijk"]]
+    return nlevels * [[1 if pe == ax else 0.1 for ax in "ijk"]]
 
 
 def _extract_field(in_file, epi_meta, in_mask=None):
@@ -646,6 +664,9 @@ def _extract_field(in_file, epi_meta, in_mask=None):
         / trt
         * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
     )
+
+    if ["PhaseEncodingDirection"][0] in "ij":
+        data *= -1.0  # ITK/ANTs is an LPS system, flip direction
 
     if in_mask is None:
         mask = np.ones_like(data, dtype=bool)
@@ -710,18 +731,18 @@ def match_histogram(reference, image, ref_mask=None, img_mask=None):
     ref_data = np.asanyarray(nb.load(reference).dataobj)
 
     ref_mask = (
-        np.ones_like(ref_data, dtype=bool) if ref_mask is None
+        np.ones_like(ref_data, dtype=bool)
+        if ref_mask is None
         else np.asanyarray(nb.load(ref_mask).dataobj) > 0
     )
 
     img_mask = (
-        np.ones_like(img_data, dtype=bool) if img_mask is None
+        np.ones_like(img_data, dtype=bool)
+        if img_mask is None
         else np.asanyarray(nb.load(img_mask).dataobj) > 0
     )
 
-    out_file = fname_presuffix(
-        image, suffix="_matched", newpath=os.getcwd()
-    )
+    out_file = fname_presuffix(image, suffix="_matched", newpath=os.getcwd())
     img_data[img_mask] = match_histograms(
         img_data[img_mask],
         ref_data[ref_mask],
@@ -732,4 +753,29 @@ def match_histogram(reference, image, ref_mask=None, img_mask=None):
         nii_img.affine,
         nii_img.header,
     ).to_filename(out_file)
+    return out_file
+
+
+def _norm_lap(in_file):
+    """Brought over from nirodents."""
+    from pathlib import Path
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    img = nb.load(in_file)
+    data = img.get_fdata()
+    data -= np.median(data)
+    l_max = np.percentile(data[data > 0], 99.8)
+    l_min = np.percentile(data[data < 0], 0.2)
+    data[data < 0] *= -1.0 / l_min
+    data[data > 0] *= 1.0 / l_max
+    data = np.clip(data, a_min=-1.0, a_max=1.0)
+
+    out_file = fname_presuffix(
+        Path(in_file).name, suffix="_norm", newpath=str(Path.cwd().absolute())
+    )
+    hdr = img.header.copy()
+    hdr.set_data_dtype("float32")
+    img.__class__(data.astype("float32"), img.affine, hdr).to_filename(out_file)
     return out_file
