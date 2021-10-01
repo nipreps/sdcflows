@@ -1,3 +1,12 @@
+2.0.7 (September 30, 2021)
+==========================
+A patch release with important bugfixes discovered during the integration with *fMRIPrep*.
+
+* FIX: Generation of *RAS* displacements fields from *VSM*\ s (#237)
+* FIX: Use subject root to resolve ``IntendedFor`` paths (#228)
+* ENH: Improve support of 4D in ``sdcflows.interfaces.bspline.ApplyCoeffsField`` (#234)
+* MAINT: Update node and ``gh-pages``, push docs without history (#230)
+
 2.0.6 (September 1, 2021)
 =========================
 A patch release to address a problem with TOPUP and an odd number of slices.
