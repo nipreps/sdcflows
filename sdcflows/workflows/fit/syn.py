@@ -621,17 +621,17 @@ def _warp_dir(intuple, nlevels=3):
     Example
     -------
     >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "i-"}))
-    [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+    [[1, 0.1, 0.1], [1, 0.1, 0.1], [1, 0.1, 0.1]]
 
     >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "j-"}), nlevels=2)
-    [[0, 1, 0], [0, 1, 0]]
+    [[0.1, 1, 0.1], [0.1, 1, 0.1]]
 
     """
     pe = intuple[1]["PhaseEncodingDirection"][0]
     return nlevels * [[1 if pe == ax else 0.1 for ax in "ijk"]]
 
 
-def _extract_field(in_file, epi_meta, in_mask=None):
+def _extract_field(in_file, epi_meta, in_mask=None, demean=True):
     """
     Extract the nonzero component of the deformation field estimated by ANTs.
 
@@ -640,7 +640,9 @@ def _extract_field(in_file, epi_meta, in_mask=None):
     >>> nii = nb.load(
     ...     _extract_field(
     ...         ["field.nii.gz"],
-    ...         ("epi.nii.gz", {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005}))
+    ...         ("epi.nii.gz", {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005}),
+    ...         demean=False,
+    ...     )
     ... )
     >>> nii.shape
     (10, 10, 10)
@@ -668,13 +670,13 @@ def _extract_field(in_file, epi_meta, in_mask=None):
     if ["PhaseEncodingDirection"][0] in "ij":
         data *= -1.0  # ITK/ANTs is an LPS system, flip direction
 
-    if in_mask is None:
-        mask = np.ones_like(data, dtype=bool)
-    else:
-        mask = np.asanyarray(nb.load(in_mask).dataobj, dtype=bool)
-
-    # De-mean the result
-    data -= np.median(data[mask])
+    if demean:
+        mask = (
+            np.ones_like(data, dtype=bool) if in_mask is None
+            else np.asanyarray(nb.load(in_mask).dataobj, dtype=bool)
+        )
+        # De-mean the result
+        data -= np.median(data[mask])
 
     out_file = Path(fname_presuffix(Path(in_file[0]).name, suffix="_fieldmap"))
     nii = nb.Nifti1Image(data, fieldnii.affine, None)
