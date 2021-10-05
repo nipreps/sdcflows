@@ -95,6 +95,8 @@ class B0FieldTransform:
 
         # Cache
         self.shifts = nb.Nifti1Image(vsm, spatialimage.affine, None)
+        self.shifts.header.set_intent("estimate", name="Voxel shift")
+        self.shifts.header.set_xyzt_units("mm")
         return True
 
     def apply(
@@ -265,7 +267,7 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
         fmap_nii.affine,
         None,
     )
-    xyz_nii.header.set_intent("vector", (), "")
+    xyz_nii.header.set_intent("vector", name="SDC")
     xyz_nii.header.set_xyzt_units("mm")
     return xyz_nii
 
@@ -314,6 +316,7 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
         xyz_nii.affine,
         None,
     )
+    ijk_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
     ijk_nii.header.set_xyzt_units("mm")
     return ijk_nii
 
