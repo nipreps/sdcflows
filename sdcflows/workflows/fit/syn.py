@@ -286,10 +286,12 @@ template [@fieldmapless3].
     if debug:
         syn.inputs.args = "--write-interval-volumes 2"
 
-    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
+    # Extract the corresponding fieldmap in Hz
+    extract_field = pe.Node(
+        DisplacementsField2Fieldmap(demean=True), name="extract_field"
+    )
 
-    # Extract nonzero component
-    extract_field = pe.Node(DisplacementsField2Fieldmap(), name="extract_field")
+    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
 
     # Check zooms (avoid very expensive B-Splines fitting)
     zooms_field = pe.Node(

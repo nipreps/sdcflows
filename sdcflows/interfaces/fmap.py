@@ -160,6 +160,7 @@ class _DisplacementsField2FieldmapInputSpec(BaseInterfaceInputSpec):
     pe_dir = traits.Enum(
         "j-", "j", "i", "i-", "k", "k-", mandatory=True, desc="phase encoding direction"
     )
+    demean = traits.Bool(False, usedefault=True, desc="regress field to the mean")
     itk_transform = traits.Bool(
         True, usedefault=True, desc="whether this is an ITK/ANTs transform"
     )
@@ -181,10 +182,22 @@ class DisplacementsField2Fieldmap(SimpleInterface):
         self._results["out_file"] = fname_presuffix(
             self.inputs.transform, suffix="_Hz", newpath=runtime.cwd
         )
-        disp_to_fmap(
+        fmapnii = disp_to_fmap(
             nb.load(self.inputs.transform),
             ro_time=self.inputs.ro_time,
             pe_dir=self.inputs.pe_dir,
             itk_format=self.inputs.itk_transform,
-        ).to_filename(self._results["out_file"])
+        )
+
+        if self.inputs.demean:
+            data = np.asanyarray(fmapnii.dataobj)
+            data -= np.median(data)
+
+            fmapnii = fmapnii.__class__(
+                data.astype("float32"),
+                fmapnii.affine,
+                fmapnii.header,
+            )
+
+        fmapnii.to_filename(self._results["out_file"])
         return runtime
