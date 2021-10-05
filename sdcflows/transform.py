@@ -233,9 +233,9 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
     fmap_nii : :obj:`os.pathlike`
         Path to a voxel-shift-map (VSM) in NIfTI format
     ro_time : :obj:`float`
-        The total readout time in seconds (only if ``vsm=False``).
+        The total readout time in seconds
     pe_dir : :obj:`str`
-        The ``PhaseEncodingDirection`` metadata value (only if ``vsm=False``).
+        The ``PhaseEncodingDirection`` metadata value
 
     Returns
     -------
@@ -248,11 +248,12 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
 
     # Shape of displacements field
     # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
-    fieldshape = tuple(list(vsm.shape[:3]) + [1, 3])
+    fieldshape = vsm.shape[:3] + (1, 3)
 
     # Convert VSM to voxel displacements
+    pe_axis = "ijk".index(pe_dir[0])
     ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
-    ijk_deltas[:, "ijk".index(pe_dir[0])] = vsm.reshape(-1)
+    ijk_deltas[:, pe_axis] = vsm.reshape(-1)
 
     # To convert from VSM to RAS field we just apply the affine
     aff = fmap_nii.affine.copy()
@@ -262,11 +263,7 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
         # ITK displacement vectors are in LPS orientation
         xyz_deltas[..., (0, 1)] *= -1.0
 
-    xyz_nii = nb.Nifti1Image(
-        xyz_deltas.reshape(fieldshape),
-        fmap_nii.affine,
-        None,
-    )
+    xyz_nii = nb.Nifti1Image(xyz_deltas.reshape(fieldshape), fmap_nii.affine)
     xyz_nii.header.set_intent("vector", name="SDC")
     xyz_nii.header.set_xyzt_units("mm")
     return xyz_nii
@@ -276,16 +273,16 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     """
     Convert a displacements field into a fieldmap in Hz.
 
-    This is the dual operation to the previous function.
+    This is the inverse operation to the previous function.
 
     Parameters
     ----------
     xyz_nii : :obj:`os.pathlike`
         Path to a displacements field in NIfTI format.
     ro_time : :obj:`float`
-        The total readout time in seconds (only if ``vsm=False``).
+        The total readout time in seconds.
     pe_dir : :obj:`str`
-        The ``PhaseEncodingDirection`` metadata value (only if ``vsm=False``).
+        The ``PhaseEncodingDirection`` metadata value.
 
     Returns
     -------
@@ -305,20 +302,14 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     # Convert displacements from mm to voxel units
     # Using the inverse affine accounts for reordering of axes, etc.
     ijk_deltas = nb.affines.apply_affine(inv_aff, xyz_deltas).astype("float32")
-    ijk_deltas = (
-        ijk_deltas[:, "ijk".index(pe_dir[0])]
-        * (-1.0 if pe_dir.endswith("-") else 1.0)
-        / ro_time
-    )
+    pe_axis = "ijk".index(pe_dir[0])
+    vsm = ijk_deltas[:, pe_axis].reshape(xyz_nii.shape[:3])
+    scale_factor = -ro_time if pe_dir.endswith("-") else ro_time
 
-    ijk_nii = nb.Nifti1Image(
-        ijk_deltas.reshape(xyz_nii.shape[:3]),
-        xyz_nii.affine,
-        None,
-    )
-    ijk_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
-    ijk_nii.header.set_xyzt_units("mm")
-    return ijk_nii
+    fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
+    fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
+    fmap_nii.header.set_xyzt_units("mm")
+    return fmap_nii
 
 
 def _cubic_bspline(d):

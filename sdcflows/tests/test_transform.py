@@ -138,7 +138,7 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
 
 @pytest.mark.parametrize("pe_dir", ["j", "j-", "i", "i-", "k", "k-"])
 def test_conversions(tmpdir, testdata_dir, pe_dir):
-    """Check idempotency."""
+    """Check inverse functions."""
     tmpdir.chdir()
 
     fmap_nii = nb.load(testdata_dir / "topup-field.nii.gz")
