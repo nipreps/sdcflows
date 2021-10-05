@@ -173,6 +173,7 @@ def init_syn_sdc_wf(
     )
     from ...utils.misc import front as _pop, last as _pull
     from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.fmap import DisplacementsField2Fieldmap
     from ...interfaces.bspline import (
         ApplyCoeffsField,
         BSplineApprox,
@@ -288,7 +289,7 @@ template [@fieldmapless3].
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
 
     # Extract nonzero component
-    extract_field = pe.Node(niu.Function(function=_extract_field), name="extract_field")
+    extract_field = pe.Node(DisplacementsField2Fieldmap(), name="extract_field")
 
     # Check zooms (avoid very expensive B-Splines fitting)
     zooms_field = pe.Node(
@@ -316,7 +317,6 @@ template [@fieldmapless3].
     workflow.connect([
         (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
                                    (("epi_ref", _pull), "metadata")]),
-        (inputnode, extract_field, [("epi_ref", "epi_meta")]),
         (inputnode, atlas_msk, [("sd_prior", "in_file")]),
         (inputnode, clip_epi, [(("epi_ref", _pop), "in_file")]),
         (inputnode, unwarp, [(("epi_ref", _pop), "in_data")]),
@@ -351,8 +351,10 @@ template [@fieldmapless3].
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
         (epi_merge, syn, [("out", "moving_image")]),
         (moving_masks, syn, [("out", "moving_image_masks")]),
-        (syn, extract_field, [("forward_transforms", "in_file")]),
-        (extract_field, zooms_field, [("out", "input_image")]),
+        (syn, extract_field, [(("forward_transforms", _pop), "transform")]),
+        (readout_time, extract_field, [("readout_time", "ro_time"),
+                                       ("pe_direction", "pe_dir")]),
+        (extract_field, zooms_field, [("out_file", "input_image")]),
         (zooms_field, zooms_bmask, [("output_image", "reference_image")]),
         (zooms_field, bs_filter, [("output_image", "in_data")]),
         (zooms_bmask, bs_filter, [("output_image", "in_mask")]),
@@ -629,60 +631,6 @@ def _warp_dir(intuple, nlevels=3):
     """
     pe = intuple[1]["PhaseEncodingDirection"][0]
     return nlevels * [[1 if pe == ax else 0.1 for ax in "ijk"]]
-
-
-def _extract_field(in_file, epi_meta, in_mask=None, demean=True):
-    """
-    Extract the nonzero component of the deformation field estimated by ANTs.
-
-    Examples
-    --------
-    >>> nii = nb.load(
-    ...     _extract_field(
-    ...         ["field.nii.gz"],
-    ...         ("epi.nii.gz", {"PhaseEncodingDirection": "j-", "TotalReadoutTime": 0.005}),
-    ...         demean=False,
-    ...     )
-    ... )
-    >>> nii.shape
-    (10, 10, 10)
-
-    >>> np.allclose(nii.get_fdata(), -200)
-    True
-
-    """
-    from pathlib import Path
-    from nipype.utils.filemanip import fname_presuffix
-    import numpy as np
-    import nibabel as nb
-    from sdcflows.utils.epimanip import get_trt
-
-    fieldnii = nb.load(in_file[0])
-    trt = get_trt(epi_meta[1], in_file=epi_meta[0])
-    data = (
-        np.squeeze(fieldnii.get_fdata(dtype="float32"))[
-            ..., "ijk".index(epi_meta[1]["PhaseEncodingDirection"][0])
-        ]
-        / trt
-        * (-1.0 if epi_meta[1]["PhaseEncodingDirection"].endswith("-") else 1.0)
-    )
-
-    if ["PhaseEncodingDirection"][0] in "ij":
-        data *= -1.0  # ITK/ANTs is an LPS system, flip direction
-
-    if demean:
-        mask = (
-            np.ones_like(data, dtype=bool) if in_mask is None
-            else np.asanyarray(nb.load(in_mask).dataobj, dtype=bool)
-        )
-        # De-mean the result
-        data -= np.median(data[mask])
-
-    out_file = Path(fname_presuffix(Path(in_file[0]).name, suffix="_fieldmap"))
-    nii = nb.Nifti1Image(data, fieldnii.affine, None)
-    nii.header.set_xyzt_units(fieldnii.header.get_xyzt_units()[0])
-    nii.to_filename(out_file)
-    return str(out_file.absolute())
 
 
 def _merge_meta(epi_ref, meta_list):

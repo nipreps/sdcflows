@@ -89,7 +89,7 @@ class B0FieldTransform:
 
         # Interpolate the VSM (voxel-shift map)
         vsm = np.zeros(spatialimage.shape[:3], dtype="float32")
-        vsm = (np.squeeze(np.vstack(coeffs).T) @ sparse_vstack(weights)).reshape(
+        vsm = (np.squeeze(np.hstack(coeffs).T) @ sparse_vstack(weights)).reshape(
             vsm.shape
         )
 
@@ -215,36 +215,107 @@ class B0FieldTransform:
             A NIfTI 1.0 object containing the distortion.
 
         """
-        # Set polarity & scale VSM (voxel-shift-map) by readout time
-        vsm = self.shifts.get_fdata().copy()
-        pe_axis = "ijk".index(pe_dir[0])
-        vsm *= -1.0 if pe_dir.endswith("-") else 1.0
-        vsm *= ro_time
+        return fmap_to_disp(self.shifts, ro_time, pe_dir, itk_format=itk_format)
 
-        # Shape of displacements field
-        # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
-        fieldshape = tuple(list(vsm.shape[:3]) + [1, 3])
 
-        # Convert VSM to voxel displacements
-        ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
-        ijk_deltas[:, pe_axis] = vsm.reshape(-1)
+def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
+    """
+    Convert a fieldmap in Hz into an ITK/ANTs-compatible displacements field.
 
-        # To convert from VSM to RAS field we just apply the affine
-        aff = self.shifts.affine.copy()
-        aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
-        xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
-        if itk_format:
-            # ITK displacement vectors are in LPS orientation
-            xyz_deltas[..., (0, 1)] *= -1.0
+    The displacements field can be calculated following
+    `Eq. (2) in the fieldmap fitting section
+    <sdcflows.workflows.fit.fieldmap.html#mjx-eqn-eq%3Afieldmap-2>`__.
 
-        xyz_nii = nb.Nifti1Image(
-            xyz_deltas.reshape(fieldshape),
-            self.shifts.affine,
-            None,
-        )
-        xyz_nii.header.set_intent("vector", (), "")
-        xyz_nii.header.set_xyzt_units("mm")
-        return xyz_nii
+    Parameters
+    ----------
+    fmap_nii : :obj:`os.pathlike`
+        Path to a voxel-shift-map (VSM) in NIfTI format
+    ro_time : :obj:`float`
+        The total readout time in seconds (only if ``vsm=False``).
+    pe_dir : :obj:`str`
+        The ``PhaseEncodingDirection`` metadata value (only if ``vsm=False``).
+
+    Returns
+    -------
+    spatialimage : :obj:`nibabel.nifti.Nifti1Image`
+        A NIfTI 1.0 object containing the distortion.
+
+    """
+    # Set polarity & scale VSM (voxel-shift-map) by readout time
+    vsm = fmap_nii.get_fdata().copy() * (-ro_time if pe_dir.endswith("-") else ro_time)
+
+    # Shape of displacements field
+    # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
+    fieldshape = tuple(list(vsm.shape[:3]) + [1, 3])
+
+    # Convert VSM to voxel displacements
+    ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
+    ijk_deltas[:, "ijk".index(pe_dir[0])] = vsm.reshape(-1)
+
+    # To convert from VSM to RAS field we just apply the affine
+    aff = fmap_nii.affine.copy()
+    aff[:3, 3] = 0  # Translations MUST NOT be applied, though.
+    xyz_deltas = nb.affines.apply_affine(aff, ijk_deltas)
+    if itk_format:
+        # ITK displacement vectors are in LPS orientation
+        xyz_deltas[..., (0, 1)] *= -1.0
+
+    xyz_nii = nb.Nifti1Image(
+        xyz_deltas.reshape(fieldshape),
+        fmap_nii.affine,
+        None,
+    )
+    xyz_nii.header.set_intent("vector", (), "")
+    xyz_nii.header.set_xyzt_units("mm")
+    return xyz_nii
+
+
+def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
+    """
+    Convert a displacements field into a fieldmap in Hz.
+
+    This is the dual operation to the previous function.
+
+    Parameters
+    ----------
+    xyz_nii : :obj:`os.pathlike`
+        Path to a displacements field in NIfTI format.
+    ro_time : :obj:`float`
+        The total readout time in seconds (only if ``vsm=False``).
+    pe_dir : :obj:`str`
+        The ``PhaseEncodingDirection`` metadata value (only if ``vsm=False``).
+
+    Returns
+    -------
+    spatialimage : :obj:`nibabel.nifti.Nifti1Image`
+        A NIfTI 1.0 object containing the field in Hz.
+
+    """
+    xyz_deltas = np.squeeze(xyz_nii.get_fdata(dtype="float32")).reshape((-1, 3))
+
+    if itk_format:
+        # ITK displacement vectors are in LPS orientation
+        xyz_deltas[:, (0, 1)] *= -1
+
+    inv_aff = np.linalg.inv(xyz_nii.affine)
+    inv_aff[:3, 3] = 0  # Translations MUST NOT be applied.
+
+    # Convert displacements from mm to voxel units
+    # Using the inverse affine accounts for reordering of axes, etc.
+    ijk_deltas = nb.affines.apply_affine(inv_aff, xyz_deltas).astype("float32")
+    ijk_deltas = (
+        ijk_deltas[:, "ijk".index(pe_dir[0])]
+        * (-1.0 if pe_dir.endswith("-") else 1.0)
+        / ro_time
+    )
+
+    ijk_nii = nb.Nifti1Image(
+        ijk_deltas.reshape(xyz_nii.shape[:3]),
+        xyz_nii.affine,
+        None,
+    )
+    ijk_nii.header.set_xyzt_units("mm")
+    return ijk_nii
 
 
 def _cubic_bspline(d):
