@@ -52,7 +52,7 @@ LOGGER = logging.getLogger("nipype.interface")
 
 class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     in_data = File(exists=True, mandatory=True, desc="path to a fieldmap")
-    in_mask = File(exists=True, mandatory=True, desc="path to a brain mask")
+    in_mask = File(exists=True, desc="path to a brain mask")
     bs_spacing = InputMultiObject(
         [DEFAULT_ZOOMS_MM],
         traits.Tuple(traits.Float, traits.Float, traits.Float),
@@ -127,7 +127,11 @@ class BSplineApprox(SimpleInterface):
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
         data = fmapnii.get_fdata(dtype="float32")
-        mask = nb.load(self.inputs.in_mask).get_fdata() > 0
+        mask = (
+            nb.load(self.inputs.in_mask).get_fdata() > 0
+            if isdefined(self.inputs.in_mask)
+            else np.ones_like(data, dtype=bool)
+        )
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
         # Recenter the fieldmap

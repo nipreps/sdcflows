@@ -357,7 +357,9 @@ template [@fieldmapless3].
         (extract_field, zooms_field, [("out_file", "input_image")]),
         (zooms_field, zooms_bmask, [("output_image", "reference_image")]),
         (zooms_field, bs_filter, [("output_image", "in_data")]),
-        (zooms_bmask, bs_filter, [("output_image", "in_mask")]),
+        # Setting a mask ends up over-fitting the field
+        # - it's better to have all those ~zero around.
+        # (zooms_bmask, bs_filter, [("output_image", "in_mask")]),
         (bs_filter, unwarp, [("out_coeff", "in_coeff")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
