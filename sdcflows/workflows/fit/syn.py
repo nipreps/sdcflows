@@ -254,6 +254,7 @@ template [@fieldmapless3].
         run_without_submitting=True,
         name="warp_dir",
     )
+    warp_dir.inputs.nlevels = 2
     atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
     anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
     amask2epi = pe.Node(
@@ -356,15 +357,15 @@ template [@fieldmapless3].
         (inputnode, fixed_masks, [("anat_mask", "in1"),
                                   ("anat_mask", "in2")]),
         (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
-        (inputnode, warp_dir, [("epi_ref", "intuple")]),
+        (inputnode, warp_dir, [("anat_ref", "fixed_image")]),
         (inputnode, anat_merge, [("anat_ref", "in1")]),
         (inputnode, lap_anat, [("anat_ref", "op1")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
                                  (("epi_ref", _pop), "in_epi")]),
         (inputnode, zooms_field, [(("epi_ref", _pop), "reference_image")]),
+        (inputnode, epi_umask, [("epi_mask", "in1")]),
         (lap_anat, lap_anat_norm, [("output_image", "in_file")]),
         (lap_anat_norm, anat_merge, [("out", "in2")]),
-        (inputnode, epi_umask, [("epi_mask", "in1")]),
         (epi_umask, moving_masks, [("out_file", "in1"),
                                    ("out_file", "in2"),
                                    ("out_file", "in3")]),
@@ -377,6 +378,7 @@ template [@fieldmapless3].
         (atlas_msk, fixed_masks, [("out_mask", "in3")]),
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
+        (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (anat_merge, syn, [("out", "fixed_image")]),
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
@@ -649,21 +651,25 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(intuple, nlevels=3):
-    """
-    Extract the ``restrict_deformation`` argument from metadata.
+def _warp_dir(fixed_image, pe_dir, nlevels=3):
+    """Extract the ``restrict_deformation`` argument from metadata."""
+    import numpy as np
+    import nibabel as nb
 
-    Example
-    -------
-    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "i-"}))
-    [[1, 0.1, 0.1], [1, 0.1, 0.1], [1, 0.1, 0.1]]
+    img = nb.load(fixed_image)
 
-    >>> _warp_dir(("epi.nii.gz", {"PhaseEncodingDirection": "j-"}), nlevels=2)
-    [[0.1, 1, 0.1], [0.1, 1, 0.1]]
+    if np.any(nb.affines.obliquity(img.affine) > 0.05):
+        from nipype import logging
 
-    """
-    pe = intuple[1]["PhaseEncodingDirection"][0]
-    return nlevels * [[1 if pe == ax else 0.1 for ax in "ijk"]]
+        logging.getLogger("nipype.interface").warn(
+            "Running fieldmap-less registration on an oblique dataset"
+        )
+
+    vs = nb.affines.voxel_sizes(img.affine)
+    order = np.around(np.abs(img.affine[:3, :3] / vs))
+    retval = order @ [1 if pe_dir[0] == ax else 0.1 for ax in "ijk"]
+
+    return nlevels * [retval.tolist()]
 
 
 def _merge_meta(epi_ref, meta_list):
