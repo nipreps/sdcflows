@@ -152,3 +152,52 @@ class CheckB0Units(SimpleInterface):
             self._results["out_file"]
         )
         return runtime
+
+
+class _DisplacementsField2FieldmapInputSpec(BaseInterfaceInputSpec):
+    transform = File(exists=True, mandatory=True, desc="input displacements field")
+    ro_time = traits.Float(mandatory=True, desc="total readout time")
+    pe_dir = traits.Enum(
+        "j-", "j", "i", "i-", "k", "k-", mandatory=True, desc="phase encoding direction"
+    )
+    demean = traits.Bool(False, usedefault=True, desc="regress field to the mean")
+    itk_transform = traits.Bool(
+        True, usedefault=True, desc="whether this is an ITK/ANTs transform"
+    )
+
+
+class _DisplacementsField2FieldmapOutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc="output fieldmap in Hz")
+
+
+class DisplacementsField2Fieldmap(SimpleInterface):
+    """Convert from a transform to a B0 fieldmap in Hz."""
+
+    input_spec = _DisplacementsField2FieldmapInputSpec
+    output_spec = _DisplacementsField2FieldmapOutputSpec
+
+    def _run_interface(self, runtime):
+        from sdcflows.transform import disp_to_fmap
+
+        self._results["out_file"] = fname_presuffix(
+            self.inputs.transform, suffix="_Hz", newpath=runtime.cwd
+        )
+        fmapnii = disp_to_fmap(
+            nb.load(self.inputs.transform),
+            ro_time=self.inputs.ro_time,
+            pe_dir=self.inputs.pe_dir,
+            itk_format=self.inputs.itk_transform,
+        )
+
+        if self.inputs.demean:
+            data = np.asanyarray(fmapnii.dataobj)
+            data -= np.median(data)
+
+            fmapnii = fmapnii.__class__(
+                data.astype("float32"),
+                fmapnii.affine,
+                fmapnii.header,
+            )
+
+        fmapnii.to_filename(self._results["out_file"])
+        return runtime

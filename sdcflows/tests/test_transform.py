@@ -134,3 +134,26 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
                 f"_y-{rotation[1] or 0}_z-{rotation[2] or 0}.svg"
             ),
         ).run()
+
+
+@pytest.mark.parametrize("pe_dir", ["j", "j-", "i", "i-", "k", "k-"])
+def test_conversions(tmpdir, testdata_dir, pe_dir):
+    """Check inverse functions."""
+    tmpdir.chdir()
+
+    fmap_nii = nb.load(testdata_dir / "topup-field.nii.gz")
+    new_nii = tf.disp_to_fmap(
+        tf.fmap_to_disp(
+            fmap_nii,
+            ro_time=0.2,
+            pe_dir=pe_dir,
+        ),
+        ro_time=0.2,
+        pe_dir=pe_dir,
+    )
+
+    new_nii.to_filename("test.nii.gz")
+    assert np.allclose(
+        fmap_nii.get_fdata(dtype="float32"),
+        new_nii.get_fdata(dtype="float32"),
+    )
