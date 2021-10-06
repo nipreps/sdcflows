@@ -44,8 +44,8 @@ inhomogeneity map, researchers resort to nonlinear registration to an
 :abbr:`T1w (T1-weighted)`, or :abbr:`T2w (T2-weighted)` sequences).
 One of the most prominent proposals of this approach is found in [Studholme2000]_.
 
-*SDCFlows* includes an (experimental) procedure (see :py:func:`init_syn_sdc_wf` below),
-based on nonlinear image registration with ANTs' symmetric normalization (SyN) technique.
+*SDCFlows* includes an (experimental) procedure, based on nonlinear image registration
+with ANTs' symmetric normalization (SyN) technique.
 This workflow takes a skull-stripped :abbr:`T1w (T1-weighted)` image and
 a reference :abbr:`EPI (Echo-Planar Imaging)` image, and estimates a field of nonlinear
 displacements that accounts for susceptibility-derived distortions.
@@ -53,7 +53,36 @@ To more accurately estimate the warping on typically distorted regions, this
 implementation uses an average :math:`B_0` mapping described in [Treiber2016]_.
 The implementation is a variation on those developed in [Huntenburg2014]_ and
 [Wang2017]_.
-Feedback will be enthusiastically received.
+
+The process is divided in two steps.
+First, the two images to be aligned (anatomical and one or more EPI sources) are prepared for
+registration, including a linear pre-alignment of both, calculation of a 3D EPI *reference* map,
+intensity/histogram enhancement, and *deobliquing* (meaning, for images were the physical
+coordinates axes and the data array axes are not aligned, the physical coordinates are
+rotated to align with the data array).
+Such a preprocessing is implemented in :py:func:`init_syn_preprocessing_wf`.
+Second, the outputs of the preprocessing workflow are fed into :py:func:`init_syn_sdc_wf`,
+which executes the nonlinear, SyN registration.
+To aid the *Mattes* mutual information cost function, the registration scheme is set up
+in *multi-channel* mode, and laplacian-filtered derivatives of both anatomical and EPI
+reference are introduced as a second registration channel.
+The optimization gradients of the registration process are weighted, so that deformations
+effectively possible only along the :abbr:`PE (phase-encoding)` axis.
+Given that ANTs' registration framework performs on physical coordinates, it is necessary
+that input images are not *oblique*.
+The anatomical image is used as *fixed image*, and therefore, the registration process
+estimates the transformation function from *unwarped* (anatomically *correct*) coordinates
+to *distorted* coordinates.
+If fed into ``antsApplyTransforms``, the resulting transform will effectively *unwarp* a distorted
+EPI given as input into its *unwarped* mapping.
+The estimated transform is then converted into a :math:`B_0` fieldmap in Hz, which can be
+stored within the derivatives folder.
+
+.. danger :: Experimental feature
+
+    This procedure is experimental, and the outcomes should be scrutinized one-by-one
+    and used with caution.
+    Feedback will be enthusiastically received.
 
 References
 ----------
@@ -155,6 +184,9 @@ def init_syn_sdc_wf(
         The path of an unwarped conversion of files in ``epi_ref``.
     fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
         The path(s) of the B-Spline coefficients supporting the fieldmap.
+    out_warp : :obj:`str`
+        The path of the corresponding displacements field transform to unwarp
+        susceptibility distortions.
     method: :obj:`str`
         Short description of the estimation method that was run.
 
@@ -268,9 +300,6 @@ template [@fieldmapless3].
     # Set a manageable size for the epi reference
     find_zooms = pe.Node(niu.Function(function=_adjust_zooms), name="find_zooms")
     zooms_epi = pe.Node(RegridToZooms(), name="zooms_epi")
-
-    # histmatch = pe.Node(niu.Function(function=match_histogram),
-    #                     name="histmatch")
 
     # SyN Registration Core
     syn = pe.Node(
