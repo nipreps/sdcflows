@@ -5,7 +5,7 @@
     "dimension": 3,
     "interpolation": "Linear",
     "metric": [ ["Mattes", "Mattes"], ["Mattes", "Mattes"] ],
-    "metric_weight": [ [0.5, 0.5], [0.5, 0.5], [0.5, 0.5] ],
+    "metric_weight": [ [0.5, 0.5], [0.5, 0.5] ],
     "number_of_iterations": [ [ 200, 100 ], [ 10 ] ],
     "output_transform_prefix": "fmap_syn",
     "radius_or_number_of_bins": [ [48, 48], [48, 48] ],
