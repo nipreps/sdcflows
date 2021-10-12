@@ -29,16 +29,16 @@ release = version
 # -- General configuration ---------------------------------------------------
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
     "sphinxcontrib.apidoc",
-    "nipype.sphinxext.plot_workflow",
     "nipype.sphinxext.apidoc",
+    "nipype.sphinxext.plot_workflow",
 ]
 
 autodoc_mock_imports = [
@@ -56,8 +56,6 @@ autodoc_mock_imports = [
 
 # Accept custom section names to be parsed for numpy-style docstrings
 # of parameters.
-# Requires pinning sphinxcontrib-napoleon to a specific commit while
-# https://github.com/sphinx-contrib/napoleon/pull/10 is merged.
 napoleon_use_param = False
 napoleon_custom_sections = [
     ("Inputs", "Parameters"),
