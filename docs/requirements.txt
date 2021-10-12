@@ -4,7 +4,9 @@ niworkflows >= 1.4.0rc5
 packaging
 pydot>=1.2.3
 pydotplus
-sphinx-argparse
 sphinx~=4.2
+sphinx-argparse
 sphinx_rtd_theme
+sphinxcontrib-apidoc
+sphinxcontrib-napoleon
 templateflow

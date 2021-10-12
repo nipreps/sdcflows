@@ -28,7 +28,6 @@ release = version
 
 # -- General configuration ---------------------------------------------------
 extensions = [
-    "sphinx.ext.apidoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
@@ -37,6 +36,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.apidoc",
     "nipype.sphinxext.apidoc",
     "nipype.sphinxext.plot_workflow",
 ]
