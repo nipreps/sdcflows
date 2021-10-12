@@ -221,6 +221,17 @@ ENV PATH="/opt/conda/bin:$PATH" \
 ENV MKL_NUM_THREADS=1 \
     OMP_NUM_THREADS=1
 
+# Open a hook to patch FreeSurfer in
+ENV FREESURFER_HOME="/opt/freesurfer" \
+    MINC_LIB_DIR="/opt/freesurfer/mni/lib"
+ENV SUBJECTS_DIR="$FREESURFER_HOME/subjects" \
+    FUNCTIONALS_DIR="$FREESURFER_HOME/sessions" \
+    MNI_DIR="$FREESURFER_HOME/mni" \
+    LOCAL_DIR="$FREESURFER_HOME/local" \
+    MINC_BIN_DIR="$FREESURFER_HOME/mni/bin" \
+    MNI_DATAPATH="$FREESURFER_HOME/mni/data" \
+    PATH="$FREESURFER_HOME/bin:$MINC_BIN_DIR:$PATH"
+
 # Create a shared $HOME directory
 RUN useradd -m -s /bin/bash -G users sdcflows
 WORKDIR /home/sdcflows
