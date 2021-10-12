@@ -3,7 +3,7 @@ attrs==20.1.0
 nibabel==3.0.1
 nipype==1.5.1
 niworkflows@ git+https://github.com/nipreps/niworkflows.git@master
-nitransforms==20.0.0rc4
+nitransforms==21.0.0
 numpy
 pybids==0.12.1
 scikit-image==0.18
