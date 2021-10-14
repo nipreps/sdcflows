@@ -1,7 +1,0 @@
-sdcflows.interfaces.fmap module
-===============================
-
-.. automodule:: sdcflows.interfaces.fmap
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,7 +1,0 @@
-sdcflows.workflows.gre module
-=============================
-
-.. automodule:: sdcflows.workflows.gre
-   :members:
-   :undoc-members:
-   :show-inheritance:

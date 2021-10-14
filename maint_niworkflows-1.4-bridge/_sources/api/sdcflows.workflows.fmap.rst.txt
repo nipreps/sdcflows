@@ -1,7 +1,0 @@
-sdcflows.workflows.fmap module
-==============================
-
-.. automodule:: sdcflows.workflows.fmap
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,7 +1,0 @@
-sdcflows.workflows.phdiff module
-================================
-
-.. automodule:: sdcflows.workflows.phdiff
-   :members:
-   :undoc-members:
-   :show-inheritance:

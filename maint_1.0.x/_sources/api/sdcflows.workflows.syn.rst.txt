@@ -1,7 +1,0 @@
-sdcflows.workflows.syn module
-=============================
-
-.. automodule:: sdcflows.workflows.syn
-   :members:
-   :undoc-members:
-   :show-inheritance:

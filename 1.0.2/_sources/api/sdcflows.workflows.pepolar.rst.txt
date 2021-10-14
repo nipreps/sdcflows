@@ -1,7 +1,0 @@
-sdcflows.workflows.pepolar module
-=================================
-
-.. automodule:: sdcflows.workflows.pepolar
-   :members:
-   :undoc-members:
-   :show-inheritance:

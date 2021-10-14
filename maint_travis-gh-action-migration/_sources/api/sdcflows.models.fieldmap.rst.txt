@@ -1,7 +1,0 @@
-sdcflows.models.fieldmap module
-===============================
-
-.. automodule:: sdcflows.models.fieldmap
-   :members:
-   :undoc-members:
-   :show-inheritance:
