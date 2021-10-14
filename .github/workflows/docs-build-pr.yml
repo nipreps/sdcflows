@@ -40,6 +40,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r docs/requirements.txt
+        pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
+        python setup.py --version
 
     - name: Build docs
       run: |
