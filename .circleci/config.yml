@@ -318,7 +318,7 @@ jobs:
 
   build_docs:
     docker:
-      - image: circleci/python:3.8.5
+      - image: python:3.8.5
     working_directory: /tmp/gh-pages
     environment:
       - FSLOUTPUTTYPE: NIFTI
@@ -330,7 +330,9 @@ jobs:
           command: mkdir -p $SUBJECTS_DIR
       - run:
           name: Install Graphviz
-          command: apt update && apt -y install graphviz
+          command: |
+            apt-get update -y
+            apt-get install -y --no-install-recommends graphviz
       - run:
           name: Install deps
           command: |
