@@ -22,8 +22,6 @@
 #
 """Test pepolar type of fieldmaps."""
 import os
-from pathlib import Path
-from json import loads
 import pytest
 from nipype.pipeline import engine as pe
 

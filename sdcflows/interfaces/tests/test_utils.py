@@ -134,7 +134,6 @@ def test_pad_slices(tmpdir, in_shape, expected_shape, padded):
     img2.to_filename("epi-lps.nii.gz")
     res2 = PadSlices(in_file="epi-lps.nii.gz").run().outputs
 
-
     out_ras = nb.load(res.out_file)
     out_lps = nb.load(res2.out_file)
     assert out_ras.shape == out_lps.shape == expected_shape
