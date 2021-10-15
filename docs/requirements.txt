@@ -1,12 +1,14 @@
-git+https://github.com/rwblair/sphinxcontrib-versioning.git@39b40b0b84bf872fc398feff05344051bbce0f63#egg=sphinxcontrib-versioning
-nipype>=1.5.1,<2.0
-niworkflows >= 1.4.0rc5
+attrs >= 20.1.0
+furo ~= 2021.10.09
+matplotlib >= 2.2.0
+nibabel
+nipype >= 1.5.1
+niworkflows ~= 1.4.0
+numpy
 packaging
-pydot>=1.2.3
+pydot >= 1.2.3
 pydotplus
-sphinx~=4.2
-sphinx-argparse
-sphinx_rtd_theme
+sphinx ~= 4.2
 sphinxcontrib-apidoc
 sphinxcontrib-napoleon
 templateflow
