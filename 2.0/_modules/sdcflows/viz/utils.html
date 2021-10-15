@@ -1,186 +1,255 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <title>sdcflows.viz.utils &mdash; sdcflows 2.0.7.dev3 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/banner.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.viz.utils - sdcflows 2.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/version-switch.css" />
     
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/language_data.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
-    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
     
-    <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" /> 
-</head>
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
 
-<body class="wy-body-for-nav">
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
 
-   
-  <div class="wy-grid-for-nav">
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
 
-          
-            <a href="../../../index.html" class="icon icon-home"> sdcflows
-          
 
-          
-          </a>
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">sdcflows 2.0.8 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+    <span class="sidebar-brand-text">sdcflows</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.8</span>
+</a>
 
-          
-            
-            
-              <div id="version-slug" class="version">
-                2.0.7.dev3
-              </div>
-            
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <ul>
+<!-- Versions dropdown -->
+<div id="version-menu" class="version-tree">
+  <ul>
+  <li class="toctree-l1 has-children">
+  <span class="sidebar-brand-text">2.0.8</span>
+  <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
+  <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
+  <ul id="v-tags"></ul>
+  </ul>
+</div><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Library API (application program interface)</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.brainmask.html">sdcflows.interfaces.brainmask module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.bspline.html">sdcflows.interfaces.bspline module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.epi.html">sdcflows.interfaces.epi module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.fmap.html">sdcflows.interfaces.fmap module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.reportlets.html">sdcflows.interfaces.reportlets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.interfaces.utils.html">sdcflows.interfaces.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.transform.html">sdcflows.transform module</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.utils.html">sdcflows.utils package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.bimap.html">sdcflows.utils.bimap module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.viz.html">sdcflows.viz package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.viz.utils.html">sdcflows.viz.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.html">sdcflows.workflows package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.apply.correction.html">sdcflows.workflows.apply.correction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.apply.registration.html">sdcflows.workflows.apply.registration module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.workflows.ancillary.html">sdcflows.workflows.ancillary module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.workflows.base.html">sdcflows.workflows.base module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.workflows.outputs.html">sdcflows.workflows.outputs module</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changes.html">What’s new?</a></li>
 </ul>
 
-            
-          
-        </div>
-        
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">sdcflows</a>
-        
-      </nav>
-
-
-      <div class="wy-nav-content">
-        
-        <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-        
-      <li>sdcflows.viz.utils</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-      </li>
-    
-  </ul>
-
-  
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  
-
-
-    
-    
-
-
-
-    <p class="scv-banner scv-sphinx_rtd_theme"><b>Warning:</b> This document is for an old version of sdcflows.</p>
-<h1>Source code for sdcflows.viz.utils</h1><div class="highlight"><pre>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for sdcflows.viz.utils</h1><div class="highlight"><pre>
 <span></span><span class="c1"># emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-</span>
 <span class="c1"># vi: set ft=python sts=4 ts=4 sw=4 et:</span>
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -190,34 +259,34 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Visualization tooling.&quot;&quot;&quot;</span>
+<span class="sd">"""Visualization tooling."""</span>
 
 
 <div class="viewcode-block" id="plot_registration"><a class="viewcode-back" href="../../../api/sdcflows.viz.utils.html#sdcflows.viz.utils.plot_registration">[docs]</a><span class="k">def</span> <span class="nf">plot_registration</span><span class="p">(</span>
     <span class="n">anat_nii</span><span class="p">,</span>
     <span class="n">div_id</span><span class="p">,</span>
     <span class="n">plot_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span>
+    <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">),</span>
     <span class="n">cuts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">estimate_brightness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">contour</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">compress</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
     <span class="n">overlay</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">overlay_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">"""</span>
 <span class="sd">    Plot the foreground and background views.</span>
 
 <span class="sd">    Default order is: axial, coronal, sagittal</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">uuid4</span>
 
-    <span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+    <span class="kn">from</span> <span class="nn">lxml</span> <span class="k">import</span> <span class="n">etree</span>
     <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-    <span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="kn">import</span> <span class="n">plot_anat</span>
-    <span class="kn">from</span> <span class="nn">svgutils.transform</span> <span class="kn">import</span> <span class="n">SVGFigure</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.viz.utils</span> <span class="kn">import</span> <span class="n">robust_set_limits</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">SVGNS</span>
+    <span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="k">import</span> <span class="n">plot_anat</span>
+    <span class="kn">from</span> <span class="nn">svgutils.transform</span> <span class="k">import</span> <span class="n">SVGFigure</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.viz.utils</span> <span class="k">import</span> <span class="n">robust_set_limits</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">SVGNS</span>
 
     <span class="n">plot_params</span> <span class="o">=</span> <span class="n">plot_params</span> <span class="ow">or</span> <span class="p">{}</span>
 
@@ -228,39 +297,39 @@
     <span class="n">out_files</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">estimate_brightness</span><span class="p">:</span>
         <span class="n">plot_params</span> <span class="o">=</span> <span class="n">robust_set_limits</span><span class="p">(</span>
-            <span class="n">anat_nii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">plot_params</span>
+            <span class="n">anat_nii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">plot_params</span>
         <span class="p">)</span>
 
     <span class="c1"># Plot each cut axis</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">order</span><span class="p">)):</span>
-        <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;display_mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
-        <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;cut_coords&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
+        <span class="n">plot_params</span><span class="p">[</span><span class="s2">"display_mode"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="n">plot_params</span><span class="p">[</span><span class="s2">"cut_coords"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">plot_params</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">plot_params</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Generate nilearn figure</span>
         <span class="n">display</span> <span class="o">=</span> <span class="n">plot_anat</span><span class="p">(</span><span class="n">anat_nii</span><span class="p">,</span> <span class="o">**</span><span class="n">plot_params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">overlay</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_overlay_params</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;vmin&quot;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
-                <span class="s2">&quot;vmax&quot;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
-                <span class="s2">&quot;cmap&quot;</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">,</span>
-                <span class="s2">&quot;interpolation&quot;</span><span class="p">:</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+                <span class="s2">"vmin"</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="s2">"vmax"</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                <span class="s2">"cmap"</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">,</span>
+                <span class="s2">"interpolation"</span><span class="p">:</span> <span class="s2">"nearest"</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">_overlay_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overlay_params</span><span class="p">)</span>
             <span class="n">display</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="o">**</span><span class="n">_overlay_params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">contour</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">display</span><span class="o">.</span><span class="n">add_contours</span><span class="p">(</span><span class="n">contour</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">display</span><span class="o">.</span><span class="n">add_contours</span><span class="p">(</span><span class="n">contour</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">"g"</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
         <span class="n">svg</span> <span class="o">=</span> <span class="n">extract_svg</span><span class="p">(</span><span class="n">display</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
         <span class="n">display</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="c1"># Find and replace the figure_1 id.</span>
         <span class="n">xml_data</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">svg</span><span class="p">)</span>
-        <span class="n">find_text</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">ETXPath</span><span class="p">(</span><span class="s2">&quot;//{</span><span class="si">%s</span><span class="s2">}g[@id=&#39;figure_1&#39;]&quot;</span> <span class="o">%</span> <span class="n">SVGNS</span><span class="p">)</span>
-        <span class="n">find_text</span><span class="p">(</span><span class="n">xml_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">div_id</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">uuid4</span><span class="p">()))</span>
+        <span class="n">find_text</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">ETXPath</span><span class="p">(</span><span class="s2">"//{</span><span class="si">%s</span><span class="s2">}g[@id='figure_1']"</span> <span class="o">%</span> <span class="n">SVGNS</span><span class="p">)</span>
+        <span class="n">find_text</span><span class="p">(</span><span class="n">xml_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">div_id</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">uuid4</span><span class="p">()))</span>
 
         <span class="n">svg_fig</span> <span class="o">=</span> <span class="n">SVGFigure</span><span class="p">()</span>
         <span class="n">svg_fig</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">xml_data</span>
@@ -270,10 +339,10 @@
 
 
 <div class="viewcode-block" id="coolwarm_transparent"><a class="viewcode-back" href="../../../api/sdcflows.viz.utils.html#sdcflows.viz.utils.coolwarm_transparent">[docs]</a><span class="k">def</span> <span class="nf">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">opaque_perc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">transparent_perc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Modify the coolwarm color scale to have full transparency around the middle.&quot;&quot;&quot;</span>
+    <span class="sd">"""Modify the coolwarm color scale to have full transparency around the middle."""</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">pl</span>
-    <span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ListedColormap</span>
+    <span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="k">import</span> <span class="n">ListedColormap</span>
 
     <span class="c1"># Choose colormap</span>
     <span class="n">cmap</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">coolwarm</span>
@@ -297,108 +366,36 @@
     <span class="n">my_cmap</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
     <span class="k">return</span> <span class="n">ListedColormap</span><span class="p">(</span><span class="n">my_cmap</span><span class="p">)</span></div>
 </pre></div>
-
-           </div>
-           
-          </div>
-          <footer>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &#169; Copyright 2020, The NiPreps developers.
-
-    </p>
-  </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-        </div>
+        </article>
       </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
 
-    </section>
-
-  </div>
-  
-<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
-    <span class="rst-current-version" data-toggle="rst-current-version">
-        <span class="fa fa-book"> Other Versions</span>
-        v: 2.0.6
-        <span class="fa fa-caret-down"></span>
-    </span>
-    <div class="rst-other-versions">
-        <dl>
-            <dt>Tags</dt>
-            <dd><a href="../../../../1.0.0/index.html">1.0.0</a></dd>
-            <dd><a href="../../../../1.0.0rc1/index.html">1.0.0rc1</a></dd>
-            <dd><a href="../../../../1.0.1/index.html">1.0.1</a></dd>
-            <dd><a href="../../../../1.0.2/index.html">1.0.2</a></dd>
-            <dd><a href="../../../../1.0.3/index.html">1.0.3</a></dd>
-            <dd><a href="../../../../1.0.4/index.html">1.0.4</a></dd>
-            <dd><a href="../../../../1.0.5/index.html">1.0.5</a></dd>
-            <dd><a href="../../../../1.0.6/index.html">1.0.6</a></dd>
-            <dd><a href="../../../../1.1.0/index.html">1.1.0</a></dd>
-            <dd><a href="../../../../1.2.0/index.html">1.2.0</a></dd>
-            <dd><a href="../../../../1.2.1/index.html">1.2.1</a></dd>
-            <dd><a href="../../../../1.2.2/index.html">1.2.2</a></dd>
-            <dd><a href="../../../../1.2.3/index.html">1.2.3</a></dd>
-            <dd><a href="../../../../1.3.0/index.html">1.3.0</a></dd>
-            <dd><a href="../../../../1.3.1/index.html">1.3.1</a></dd>
-            <dd><a href="../../../../1.3.2/index.html">1.3.2</a></dd>
-            <dd><a href="../../../../1.3.3/index.html">1.3.3</a></dd>
-            <dd><a href="../../../../1.4.0rc0/index.html">1.4.0rc0</a></dd>
-            <dd><a href="../../../../2.0.0/index.html">2.0.0</a></dd>
-            <dd><a href="../../../../2.0.0rc1/index.html">2.0.0rc1</a></dd>
-            <dd><a href="../../../../2.0.0rc2/index.html">2.0.0rc2</a></dd>
-            <dd><a href="../../../../2.0.0rc3/index.html">2.0.0rc3</a></dd>
-            <dd><a href="../../../../2.0.0rc4/index.html">2.0.0rc4</a></dd>
-            <dd><a href="../../../../2.0.0rc5/index.html">2.0.0rc5</a></dd>
-            <dd><a href="../../../../2.0.1/index.html">2.0.1</a></dd>
-            <dd><a href="../../../../2.0.2/index.html">2.0.2</a></dd>
-            <dd><a href="../../../../2.0.2.post1/index.html">2.0.2.post1</a></dd>
-            <dd><a href="../../../../2.0.3/index.html">2.0.3</a></dd>
-            <dd><a href="../../../../2.0.4/index.html">2.0.4</a></dd>
-            <dd><a href="../../../../2.0.5/index.html">2.0.5</a></dd>
-            <dd><a href="utils.html">2.0.6</a></dd>
-        </dl>
-        <dl>
-            <dt>Branches</dt>
-            <dd><a href="../../../../dev_1.4.0/index.html">dev/1.4.0</a></dd>
-            <dd><a href="../../../../enh_outputnode-method/index.html">enh/outputnode-method</a></dd>
-            <dd><a href="../../../../enh_pad-topup/index.html">enh/pad-topup</a></dd>
-            <dd><a href="../../../../feat_new-api/index.html">feat/new-api</a></dd>
-            <dd><a href="../../../../fix_field-direction/index.html">fix/field-direction</a></dd>
-            <dd><a href="../../../../maint_1.0.x/index.html">maint/1.0.x</a></dd>
-            <dd><a href="../../../../maint_1.2.x/index.html">maint/1.2.x</a></dd>
-            <dd><a href="../../../../maint_1.3.x/index.html">maint/1.3.x</a></dd>
-            <dd><a href="../../../../maint_niworkflows-1.4-bridge/index.html">maint/niworkflows-1.4-bridge</a></dd>
-            <dd><a href="../../../../maint_travis-gh-action-migration/index.html">maint/travis-gh-action-migration</a></dd>
-            <dd><a href="../../../../master/index.html">master</a></dd>
-            <dd><a href="../../../../rel_2.0.0/index.html">rel/2.0.0</a></dd>
-            <dd><a href="../../../../rel_2.0.0rc3/index.html">rel/2.0.0rc3</a></dd>
-        </dl>
+        <div class="related-information">
+              Copyright &#169; 2020, The NiPreps developers |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+        </div>
+        
+      </footer>
     </div>
-</div>
-
-
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script>
-
-  
-  
-    
-   
-
-</body>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/main.js"></script>
+    <script src="../../../_static/js/version-switch.js"></script>
+    </body>
 </html>

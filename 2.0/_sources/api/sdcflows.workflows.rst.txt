@@ -10,6 +10,7 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 1
 
    sdcflows.workflows.apply
    sdcflows.workflows.fit
@@ -18,6 +19,7 @@ Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 1
 
    sdcflows.workflows.ancillary
    sdcflows.workflows.base

@@ -10,6 +10,7 @@ Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 1
 
    sdcflows.workflows.apply.correction
    sdcflows.workflows.apply.registration

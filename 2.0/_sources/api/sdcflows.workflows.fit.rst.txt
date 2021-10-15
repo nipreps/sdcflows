@@ -10,6 +10,7 @@ Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 1
 
    sdcflows.workflows.fit.fieldmap
    sdcflows.workflows.fit.pepolar
