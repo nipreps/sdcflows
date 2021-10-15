@@ -1,3 +1,11 @@
+2.0.8 (October 15, 2021)
+========================
+A patch release with a deep revision of the new implementation of the fieldmap-less "*SDC-SyN*" toward integration with *fMRIPrep*.
+
+* FIX: *SDC-SyN* ("fieldmap-less") overhaul (#239)
+* DOC: Self-hosted & multiversion documentation overhaul (#243)
+* MAINT: Standardization of containers across *NiPreps* (#240)
+
 2.0.7 (September 30, 2021)
 ==========================
 A patch release with important bugfixes discovered during the integration with *fMRIPrep*.
