@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.fieldmap - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.workflows.fit.fieldmap - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -355,9 +355,9 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
-<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="k">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="k">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"magnitude"</span><span class="p">,</span> <span class="s2">"fieldmap"</span><span class="p">)</span>
 
@@ -417,7 +417,7 @@
 <span class="sd">        Short description of the estimation method that was run.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">BSplineApprox</span><span class="p">,</span>
         <span class="n">DEFAULT_LF_ZOOMS_MM</span><span class="p">,</span>
         <span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">,</span>
@@ -475,8 +475,8 @@
         <span class="p">])</span>
         <span class="c1"># fmt: on</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="kn">import</span> <span class="n">IntraModalMerge</span>
-        <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="kn">import</span> <span class="n">CheckB0Units</span>
+        <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="k">import</span> <span class="n">IntraModalMerge</span>
+        <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="k">import</span> <span class="n">CheckB0Units</span>
 
         <span class="n">workflow</span><span class="o">.</span><span class="n">__postdesc__</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
 <span class="s2">A *B&lt;sub&gt;0&lt;/sub&gt;* nonuniformity map (or *fieldmap*) was directly measured with</span>
@@ -539,8 +539,8 @@
 <span class="sd">        Path to a binary brain mask corresponding to the reference above.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="kn">import</span> <span class="n">IntraModalMerge</span>
-    <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="k">import</span> <span class="n">IntraModalMerge</span>
+    <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="k">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"magnitude"</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"inputnode"</span><span class="p">)</span>
@@ -622,12 +622,12 @@
 <span class="sd">        The estimated fieldmap in Hz.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces.fsl</span> <span class="kn">import</span> <span class="n">PRELUDE</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="kn">import</span> <span class="n">Phasediff2Fieldmap</span><span class="p">,</span> <span class="n">PhaseMap2rads</span><span class="p">,</span> <span class="n">SubtractPhases</span>
+    <span class="kn">from</span> <span class="nn">nipype.interfaces.fsl</span> <span class="k">import</span> <span class="n">PRELUDE</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="k">import</span> <span class="n">Phasediff2Fieldmap</span><span class="p">,</span> <span class="n">PhaseMap2rads</span><span class="p">,</span> <span class="n">SubtractPhases</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__postdesc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
-<span class="s2">The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL </span><span class="si">{</span><span class="n">PRELUDE</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">).</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__postdesc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="se">\</span>
+<span class="s2">The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL </span><span class="si">{PRELUDE.version}</span><span class="s2">).</span>
 <span class="s2">"""</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>

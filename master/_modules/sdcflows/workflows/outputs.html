@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.workflows.outputs - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.workflows.outputs - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -260,9 +260,9 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Writing out outputs."""</span>
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
-<span class="kn">from</span> <span class="nn">niworkflows.interfaces.bids</span> <span class="kn">import</span> <span class="n">DerivativesDataSink</span> <span class="k">as</span> <span class="n">_DDS</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="k">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span> <span class="nn">niworkflows.interfaces.bids</span> <span class="k">import</span> <span class="n">DerivativesDataSink</span> <span class="k">as</span> <span class="n">_DDS</span>
 
 
 <div class="viewcode-block" id="DerivativesDataSink"><a class="viewcode-back" href="../../../api/sdcflows.workflows.outputs.html#sdcflows.workflows.outputs.DerivativesDataSink">[docs]</a><span class="k">class</span> <span class="nc">DerivativesDataSink</span><span class="p">(</span><span class="n">_DDS</span><span class="p">):</span>
@@ -310,7 +310,7 @@
 <span class="sd">        A brain mask in the fieldmap's space.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">..interfaces.reportlets</span> <span class="kn">import</span> <span class="n">FieldmapReportlet</span>
+    <span class="kn">from</span> <span class="nn">..interfaces.reportlets</span> <span class="k">import</span> <span class="n">FieldmapReportlet</span>
 
     <span class="n">custom_entities</span> <span class="o">=</span> <span class="n">custom_entities</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">bids_fmap_id</span><span class="p">:</span>
@@ -501,7 +501,7 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">infiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"coeff"</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"coeff</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">infiles</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="s2">"coeff</span><span class="si">{i}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">infiles</span><span class="p">)]</span>
 
 
 <span class="k">def</span> <span class="nf">_getname</span><span class="p">(</span><span class="n">infile</span><span class="p">):</span>
@@ -517,7 +517,7 @@
 <span class="sd">    ['filename.txt', 'filename2.txt']</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">infile</span><span class="p">]</span>
@@ -537,7 +537,7 @@
 <span class="sd">    'magnitude'</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 
     <span class="n">fname</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">infiles</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">name</span>
     <span class="k">return</span> <span class="s2">"epi"</span> <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">"_epi.nii.gz"</span><span class="p">,</span> <span class="s2">"_epi.nii"</span><span class="p">))</span> <span class="k">else</span> <span class="s2">"magnitude"</span>
@@ -568,7 +568,7 @@
 <span class="sd">    ['file1.txt', 'file2.txt', 'just/one/file.txt']</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
+    <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="k">import</span> <span class="n">listify</span>
 
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="nb">set</span><span class="p">([</span><span class="n">el</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"IntendedFor"</span><span class="p">,</span> <span class="p">[]))])</span>

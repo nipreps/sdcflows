@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.fieldmaps - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.fieldmaps - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -260,16 +260,16 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Utilities for fieldmap estimation."""</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">attr</span>
-<span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">loads</span>
-<span class="kn">from</span> <span class="nn">bids.layout</span> <span class="kn">import</span> <span class="n">parse_file_entities</span>
-<span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
-<span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="kn">import</span> <span class="n">relative_to_root</span>
-<span class="kn">from</span> <span class="nn">.utils.bimap</span> <span class="kn">import</span> <span class="n">EstimatorRegistry</span>
+<span class="kn">from</span> <span class="nn">json</span> <span class="k">import</span> <span class="n">loads</span>
+<span class="kn">from</span> <span class="nn">bids.layout</span> <span class="k">import</span> <span class="n">parse_file_entities</span>
+<span class="kn">from</span> <span class="nn">bids.utils</span> <span class="k">import</span> <span class="n">listify</span>
+<span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="k">import</span> <span class="n">relative_to_root</span>
+<span class="kn">from</span> <span class="nn">.utils.bimap</span> <span class="k">import</span> <span class="n">EstimatorRegistry</span>
 
 
 <span class="n">_estimators</span> <span class="o">=</span> <span class="n">EstimatorRegistry</span><span class="p">()</span>
@@ -312,7 +312,7 @@
     <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot change determined method </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Cannot change determined method </span><span class="si">{obj.method}</span><span class="s2"> to </span><span class="si">{value}</span><span class="s2">."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
@@ -320,7 +320,7 @@
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid estimation method type </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Invalid estimation method type </span><span class="si">{value}</span><span class="s2">."</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">value</span>
 
@@ -440,16 +440,16 @@
         <span class="sd">"""Validate a fieldmap path."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not exist, is a broken link, or it is not a file"</span>
+                <span class="n">f</span><span class="s2">"File path &lt;</span><span class="si">{value}</span><span class="s2">&gt; does not exist, is a broken link, or it is not a file"</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">".nii"</span><span class="p">,</span> <span class="s2">".nii.gz"</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not look like a NIfTI file."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"File path &lt;</span><span class="si">{value}</span><span class="s2">&gt; does not look like a NIfTI file."</span><span class="p">)</span>
 
         <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?&lt;=_)\w+(?=\.nii)"</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">MODALITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; with suffix &lt;</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&gt; is not a valid "</span>
+                <span class="n">f</span><span class="s2">"File path &lt;</span><span class="si">{value}</span><span class="s2">&gt; with suffix &lt;</span><span class="si">{suffix}</span><span class="s2">&gt; is not a valid "</span>
                 <span class="s2">"fieldmap sourcefile."</span>
             <span class="p">)</span></div>
 
@@ -483,30 +483,30 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bold"</span><span class="p">,</span> <span class="s2">"dwi"</span><span class="p">,</span> <span class="s2">"epi"</span><span class="p">,</span> <span class="s2">"sbref"</span><span class="p">):</span>
             <span class="k">if</span> <span class="s2">"PhaseEncodingDirection"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Missing 'PhaseEncodingDirection' for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;."</span>
+                    <span class="n">f</span><span class="s2">"Missing 'PhaseEncodingDirection' for &lt;</span><span class="si">{self.path}</span><span class="s2">&gt;."</span>
                 <span class="p">)</span>
 
-            <span class="kn">from</span> <span class="nn">.utils.epimanip</span> <span class="kn">import</span> <span class="n">get_trt</span>
+            <span class="kn">from</span> <span class="nn">.utils.epimanip</span> <span class="k">import</span> <span class="n">get_trt</span>
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Missing readout timing information for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;."</span>
+                    <span class="n">f</span><span class="s2">"Missing readout timing information for &lt;</span><span class="si">{self.path}</span><span class="s2">&gt;."</span>
                 <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">"fieldmap"</span> <span class="ow">and</span> <span class="s2">"Units"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing 'Units' for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Missing 'Units' for &lt;</span><span class="si">{self.path}</span><span class="s2">&gt;."</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">"phasediff"</span> <span class="ow">and</span> <span class="p">(</span>
             <span class="s2">"EchoTime1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="s2">"EchoTime2"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Missing 'EchoTime1' and/or 'EchoTime2' for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;."</span>
+                <span class="n">f</span><span class="s2">"Missing 'EchoTime1' and/or 'EchoTime2' for &lt;</span><span class="si">{self.path}</span><span class="s2">&gt;."</span>
             <span class="p">)</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"phase1"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">"EchoTime"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing 'EchoTime' for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;."</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Missing 'EchoTime' for &lt;</span><span class="si">{self.path}</span><span class="s2">&gt;."</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FieldmapEstimation"><a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -527,7 +527,7 @@
             <span class="n">FieldmapFile</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FieldmapFile</span><span class="p">)</span> <span class="k">else</span> <span class="n">f</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="p">],</span>
-        <span class="nb">repr</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2"> files&gt;"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">f</span><span class="s2">"&lt;{len(v)} files&gt;"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="sd">"""File path or list of paths indicating the source data to estimate a fieldmap."""</span>
 
@@ -550,7 +550,7 @@
             <span class="p">(</span><span class="s2">"fieldmap"</span><span class="p">,</span> <span class="s2">"phasediff"</span><span class="p">,</span> <span class="s2">"phase1"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="s2">"phase1"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Incompatible suffices found: &lt;</span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Incompatible suffices found: &lt;{','.join(fmap_types)}&gt;."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">fmap_types</span><span class="p">:</span>
             <span class="n">sources</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
@@ -572,7 +572,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">fmap_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
 
             <span class="c1"># Determine the name of the corresponding (first) magnitude file(s)</span>
-            <span class="n">magnitude</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"magnitude</span><span class="si">{</span><span class="s1">''</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span> <span class="k">else</span> <span class="s1">'1'</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"magnitude{'' if self.method == EstimatorType.MAPPED else '1'}"</span>
             <span class="k">if</span> <span class="n">magnitude</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -586,7 +586,7 @@
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="s2">"A fieldmap or phase-difference estimation type was found, "</span>
-                        <span class="sa">f</span><span class="s2">"but an anatomical reference (</span><span class="si">{</span><span class="n">magnitude</span><span class="si">}</span><span class="s2"> file) is missing."</span>
+                        <span class="n">f</span><span class="s2">"but an anatomical reference (</span><span class="si">{magnitude}</span><span class="s2"> file) is missing."</span>
                     <span class="p">)</span>
 
             <span class="c1"># Check presence and try to find (if necessary) the second magnitude file</span>
@@ -622,7 +622,7 @@
             <span class="n">_pe</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Only one phase-encoding direction &lt;</span><span class="si">{</span><span class="n">_pe</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="si">}</span><span class="s2">&gt; found across sources."</span>
+                    <span class="n">f</span><span class="s2">"Only one phase-encoding direction &lt;{_pe.pop()}&gt; found across sources."</span>
                 <span class="p">)</span>
         <span class="k">elif</span> <span class="n">anat_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">anat_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
@@ -654,7 +654,7 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Multiple ``B0FieldIdentifier`` set: &lt;</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;"</span>
+                    <span class="n">f</span><span class="s2">"Multiple ``B0FieldIdentifier`` set: &lt;{', '.join(bids_ids)}&gt;"</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="n">bids_ids</span><span class="p">:</span>
                 <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"bids_id"</span><span class="p">,</span> <span class="n">bids_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
@@ -679,10 +679,10 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span>
 
         <span class="c1"># Override workflow name</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"wf_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"wf_</span><span class="si">{self.bids_id}</span><span class="s2">"</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">):</span>
-            <span class="kn">from</span> <span class="nn">.workflows.fit.fieldmap</span> <span class="kn">import</span> <span class="n">init_fmap_wf</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.fieldmap</span> <span class="k">import</span> <span class="n">init_fmap_wf</span>
 
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"mode"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_fmap_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -695,11 +695,11 @@
                 <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"fieldmap"</span><span class="p">,</span> <span class="s2">"phasediff"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">,</span> <span class="s2">"phase1"</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">.workflows.fit.pepolar</span> <span class="kn">import</span> <span class="n">init_topup_wf</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.pepolar</span> <span class="k">import</span> <span class="n">init_topup_wf</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_topup_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">.workflows.fit.syn</span> <span class="kn">import</span> <span class="n">init_syn_sdc_wf</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.syn</span> <span class="k">import</span> <span class="n">init_syn_sdc_wf</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_syn_sdc_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 

@@ -2,10 +2,11 @@
 <html class="no-js">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.workflows.ancillary module" href="sdcflows.workflows.ancillary.html" /><link rel="prev" title="sdcflows.workflows.fit.pepolar module" href="sdcflows.workflows.fit.pepolar.html" />
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.workflows.ancillary module" href="sdcflows.workflows.ancillary.html" /><link rel="prev" title="sdcflows.workflows.fit.pepolar module" href="sdcflows.workflows.fit.pepolar.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.syn module - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.workflows.fit.syn module - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -236,10 +237,10 @@
           </label>
         </div>
         <article role="main">
-          <div class="section" id="module-sdcflows.workflows.fit.syn">
+          <section id="module-sdcflows.workflows.fit.syn">
 <span id="sdcflows-workflows-fit-syn-module"></span><h1>sdcflows.workflows.fit.syn module<a class="headerlink" href="#module-sdcflows.workflows.fit.syn" title="Permalink to this headline">¶</a></h1>
 <p>Estimating the susceptibility distortions without fieldmaps.</p>
-<div class="section" id="fieldmap-less-approaches">
+<section id="fieldmap-less-approaches">
 <span id="sdc-fieldmapless"></span><h2>Fieldmap-less approaches<a class="headerlink" href="#fieldmap-less-approaches" title="Permalink to this headline">¶</a></h2>
 <p>Many studies acquired (especially with legacy MRI protocols) do not have any
 information to estimate susceptibility-derived distortions.
@@ -316,9 +317,9 @@ Berlin: Master Thesis, Freie Universität.</p>
 <span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.fit.syn.</span></span><span class="sig-name descname"><span class="pre">init_syn_preprocessing_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'syn_preprocessing_wf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omp_nthreads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_bold_nss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1w_inversion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/fit/syn.html#init_syn_preprocessing_wf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.fit.syn.init_syn_preprocessing_wf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prepare EPI references and co-registration to anatomical for SyN.</p>
 <dl>
-<dt>Workflow Graph</dt><dd><div class="figure align-default">
+<dt>Workflow Graph</dt><dd><figure class="align-default">
 <img alt="../_images/sdcflows-workflows-fit-syn-1.png" src="../_images/sdcflows-workflows-fit-syn-1.png"/>
-</div>
+</figure>
 <p>(<a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.py">Source code</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.png">png</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.svg">svg</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-1.pdf">pdf</a>)</p>
 </dd>
 </dl>
@@ -367,9 +368,9 @@ If no PE direction is specified, anterior-posterior PE is assumed.</p>
 <p>SyN deformation is also restricted to regions that are expected to have a
 &gt;3mm (approximately 1 voxel) warp, based on the fieldmap atlas.</p>
 <dl>
-<dt>Workflow Graph</dt><dd><div class="figure align-default">
+<dt>Workflow Graph</dt><dd><figure class="align-default">
 <img alt="../_images/sdcflows-workflows-fit-syn-2.png" src="../_images/sdcflows-workflows-fit-syn-2.png"/>
-</div>
+</figure>
 <p>(<a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.py">Source code</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.png">png</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.svg">svg</a>, <a class="reference external" href="../api/sdcflows-workflows-fit-syn-2.pdf">pdf</a>)</p>
 </dd>
 </dl>
@@ -413,8 +414,8 @@ susceptibility distortions.</p></li>
 <span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.fit.syn.</span></span><span class="sig-name descname"><span class="pre">match_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/fit/syn.html#match_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.fit.syn.match_histogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Match the histogram of the T2-like anatomical with the EPI.</p>
 </dd></dl>
-</div>
-</div>
+</section>
+</section>
 
         </article>
       </div>

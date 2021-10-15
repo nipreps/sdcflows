@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.syn - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.workflows.fit.syn - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -344,10 +344,10 @@
 <span class="sd">    Berlin: Master Thesis, Freie Universität.</span>
 
 <span class="sd">"""</span>
-<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">resource_filename</span>
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
-<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="k">import</span> <span class="n">resource_filename</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="k">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="k">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="n">DEFAULT_MEMORY_MIN_GB</span> <span class="o">=</span> <span class="mf">0.01</span>
 <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span>
@@ -430,45 +430,45 @@
 <span class="sd">        Short description of the estimation method that was run.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">pkgrf</span>
-    <span class="kn">from</span> <span class="nn">packaging.version</span> <span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parseversion</span><span class="p">,</span> <span class="n">Version</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces.ants</span> <span class="kn">import</span> <span class="n">ImageMath</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="k">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">pkgrf</span>
+    <span class="kn">from</span> <span class="nn">packaging.version</span> <span class="k">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parseversion</span><span class="p">,</span> <span class="n">Version</span>
+    <span class="kn">from</span> <span class="nn">nipype.interfaces.ants</span> <span class="k">import</span> <span class="n">ImageMath</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
         <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">Binarize</span><span class="p">,</span>
         <span class="n">IntensityClip</span><span class="p">,</span>
         <span class="n">RegridToZooms</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_pop</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_pull</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="kn">import</span> <span class="n">GetReadoutTime</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="kn">import</span> <span class="n">DisplacementsField2Fieldmap</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="k">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_pop</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_pull</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="k">import</span> <span class="n">GetReadoutTime</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.fmap</span> <span class="k">import</span> <span class="n">DisplacementsField2Fieldmap</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">ApplyCoeffsField</span><span class="p">,</span>
         <span class="n">BSplineApprox</span><span class="p">,</span>
         <span class="n">DEFAULT_LF_ZOOMS_MM</span><span class="p">,</span>
         <span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">,</span>
         <span class="n">DEFAULT_ZOOMS_MM</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.brainmask</span> <span class="kn">import</span> <span class="n">BinaryDilation</span><span class="p">,</span> <span class="n">Union</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.brainmask</span> <span class="k">import</span> <span class="n">BinaryDilation</span><span class="p">,</span> <span class="n">Union</span>
 
     <span class="n">ants_version</span> <span class="o">=</span> <span class="n">Registration</span><span class="p">()</span><span class="o">.</span><span class="n">version</span>
     <span class="k">if</span> <span class="n">ants_version</span> <span class="ow">and</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ants_version</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="s2">"2.2.0"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Please upgrade ANTs to 2.2 or older (</span><span class="si">{</span><span class="n">ants_version</span><span class="si">}</span><span class="s2"> found)."</span>
+            <span class="n">f</span><span class="s2">"Please upgrade ANTs to 2.2 or older (</span><span class="si">{ants_version}</span><span class="s2"> found)."</span>
         <span class="p">)</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">A deformation field to correct for susceptibility distortions was estimated</span>
 <span class="s2">based on *fMRIPrep*'s *fieldmap-less* approach.</span>
 <span class="s2">The deformation field is that resulting from co-registering the EPI reference</span>
 <span class="s2">to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;</span>
 <span class="s2">@fieldmapless2].</span>
 <span class="s2">Registration is performed with `antsRegistration`</span>
-<span class="s2">(ANTs </span><span class="si">{</span><span class="n">ants_version</span> <span class="ow">or</span> <span class="s2">"-- version unknown"</span><span class="si">}</span><span class="s2">), and</span>
+<span class="s2">(ANTs {ants_version or "-- version unknown"}), and</span>
 <span class="s2">the process regularized by constraining deformation to be nonzero only</span>
 <span class="s2">along the phase-encoding direction, and modulated with an average fieldmap</span>
 <span class="s2">template [@fieldmapless3].</span>
@@ -544,7 +544,7 @@
     <span class="c1"># SyN Registration Core</span>
     <span class="n">syn</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">Registration</span><span class="p">(</span>
-            <span class="n">from_file</span><span class="o">=</span><span class="n">pkgrf</span><span class="p">(</span><span class="s2">"sdcflows"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data/sd_syn</span><span class="si">{</span><span class="s1">'_sloppy'</span> <span class="o">*</span> <span class="n">sloppy</span><span class="si">}</span><span class="s2">.json"</span><span class="p">)</span>
+            <span class="n">from_file</span><span class="o">=</span><span class="n">pkgrf</span><span class="p">(</span><span class="s2">"sdcflows"</span><span class="p">,</span> <span class="n">f</span><span class="s2">"data/sd_syn{'_sloppy' * sloppy}.json"</span><span class="p">)</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"syn"</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
@@ -711,19 +711,19 @@
 <span class="sd">        the cost function of SyN.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">pkgrf</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="k">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">pkgrf</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">IntensityClip</span><span class="p">,</span>
         <span class="n">ApplyMask</span><span class="p">,</span>
         <span class="n">GenerateSamplingReference</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="k">import</span> <span class="p">(</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
         <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.workflows.epi.refmap</span> <span class="kn">import</span> <span class="n">init_epi_reference_wf</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">Deoblique</span><span class="p">,</span> <span class="n">DenoiseImage</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.brainmask</span> <span class="kn">import</span> <span class="n">BrainExtraction</span><span class="p">,</span> <span class="n">BinaryDilation</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.workflows.epi.refmap</span> <span class="k">import</span> <span class="n">init_epi_reference_wf</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="k">import</span> <span class="n">Deoblique</span><span class="p">,</span> <span class="n">DenoiseImage</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.brainmask</span> <span class="k">import</span> <span class="n">BrainExtraction</span><span class="p">,</span> <span class="n">BinaryDilation</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
@@ -866,7 +866,7 @@
     <span class="c1"># fmt:on</span>
 
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">RegridToZooms</span>
+        <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="n">RegridToZooms</span>
 
         <span class="n">regrid_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
             <span class="n">RegridToZooms</span><span class="p">(</span><span class="n">zooms</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"regrid_anat"</span>
@@ -898,7 +898,7 @@
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fixed_image</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">logging</span>
+        <span class="kn">from</span> <span class="nn">nipype</span> <span class="k">import</span> <span class="n">logging</span>
 
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"nipype.interface"</span><span class="p">)</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"Running fieldmap-less registration on an oblique dataset"</span>
@@ -925,9 +925,9 @@
     <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_data_dtype</span><span class="p">()</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">in_file</span>
 
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
 
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">f</span><span class="s2">"_</span><span class="si">{dtype}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
@@ -951,8 +951,8 @@
     <span class="kn">import</span> <span class="nn">os</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
-    <span class="kn">from</span> <span class="nn">skimage.exposure</span> <span class="kn">import</span> <span class="n">match_histograms</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">skimage.exposure</span> <span class="k">import</span> <span class="n">match_histograms</span>
 
     <span class="n">nii_img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">img_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">nii_img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span>
@@ -986,10 +986,10 @@
 
 <span class="k">def</span> <span class="nf">_norm_lap</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
     <span class="sd">"""Brought over from nirodents."""</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span>

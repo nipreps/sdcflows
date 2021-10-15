@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <meta name="generator" content="sphinx-4.2.0+/336605b8e, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.reportlets - sdcflows 2.0.1.dev50+g95a9dfce4 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>sdcflows.interfaces.reportlets - sdcflows 2.0.7.dev64+gbeed68f2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.0.1.dev50+g95a9dfce4 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.0.7.dev64+gbeed68f2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.1.dev50 (dev)</span>
+  <span class="sidebar-brand-text">2.0.7.dev64 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -262,14 +262,14 @@
 <span class="sd">"""Interfaces to generate speciality reportlets."""</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-<span class="kn">from</span> <span class="nn">nilearn.image</span> <span class="kn">import</span> <span class="n">threshold_img</span><span class="p">,</span> <span class="n">load_img</span>
-<span class="kn">from</span> <span class="nn">niworkflows</span> <span class="kn">import</span> <span class="n">NIWORKFLOWS_LOG</span>
-<span class="kn">from</span> <span class="nn">niworkflows.utils.images</span> <span class="kn">import</span> <span class="n">rotation2canonical</span><span class="p">,</span> <span class="n">rotate_affine</span>
-<span class="kn">from</span> <span class="nn">niworkflows.viz.utils</span> <span class="kn">import</span> <span class="n">cuts_from_bbox</span><span class="p">,</span> <span class="n">compose_view</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">isdefined</span><span class="p">,</span> <span class="n">traits</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.mixins</span> <span class="kn">import</span> <span class="n">reporting</span>
+<span class="kn">from</span> <span class="nn">nilearn.image</span> <span class="k">import</span> <span class="n">threshold_img</span><span class="p">,</span> <span class="n">load_img</span>
+<span class="kn">from</span> <span class="nn">niworkflows</span> <span class="k">import</span> <span class="n">NIWORKFLOWS_LOG</span>
+<span class="kn">from</span> <span class="nn">niworkflows.utils.images</span> <span class="k">import</span> <span class="n">rotation2canonical</span><span class="p">,</span> <span class="n">rotate_affine</span>
+<span class="kn">from</span> <span class="nn">niworkflows.viz.utils</span> <span class="k">import</span> <span class="n">cuts_from_bbox</span><span class="p">,</span> <span class="n">compose_view</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="k">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">isdefined</span><span class="p">,</span> <span class="n">traits</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.mixins</span> <span class="k">import</span> <span class="n">reporting</span>
 
-<span class="kn">from</span> <span class="nn">..viz.utils</span> <span class="kn">import</span> <span class="n">plot_registration</span><span class="p">,</span> <span class="n">coolwarm_transparent</span>
+<span class="kn">from</span> <span class="nn">..viz.utils</span> <span class="k">import</span> <span class="n">plot_registration</span><span class="p">,</span> <span class="n">coolwarm_transparent</span>
 
 
 <span class="k">class</span> <span class="nc">_FieldmapReportletInputSpec</span><span class="p">(</span><span class="n">reporting</span><span class="o">.</span><span class="n">ReportCapableInputSpec</span><span class="p">):</span>
@@ -300,7 +300,7 @@
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_FieldmapReportletInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">reporting</span><span class="o">.</span><span class="n">ReportCapableOutputSpec</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">"""Instantiate FieldmapReportlet."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"n_cuts"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FieldmapReportlet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">generate_report</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
