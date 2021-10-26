@@ -103,6 +103,11 @@ already been calculated (see `the corresponding section of BIDS
 
 :abbr:`PEPOLAR (Phase Encoding POLARity)` techniques
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternatively, it is possible to estimate the field by exploiting the symmetry of the
+distortion when the PE polarity is reversed.
+*SDCFlows* integrates two implementations based on FSL ``topup`` [Andersson2003]_,
+and AFNI ``3dQwarp`` [Cox1997]_.
+
 This corresponds to `this section of the BIDS specification
 <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
 
@@ -152,11 +157,17 @@ EPI given as input into its *unwarped* mapping.
 The estimated transform is then converted into a :math:`B_0` fieldmap in Hz, which can be
 stored within the derivatives folder.
 
-.. danger :: Experimental feature
+.. danger ::
 
     This procedure is experimental, and the outcomes should be scrutinized one-by-one
     and used with caution.
     Feedback will be enthusiastically received.
+
+Other (unsupported) approaches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There exist some alternative options to estimate the fieldmap, such as mapping the
+point-spread-function [Zaitsev2004]_, or by means of nonlinear registration of brain
+surfaces onto the distorted :abbr:`EPI (echo-planar imaging)` data [Esteban2016]_.
 
 Estimation tooling
 ~~~~~~~~~~~~~~~~~~
@@ -209,15 +220,21 @@ It is possible to force the fieldmap-less estimation by passing ``force_fmapless
 
 References
 ----------
-.. [Jezzard1995] Jezzard, P. & Balaban, R. S. Correction for geometric distortion in
-    echo planar images from B0 field variations. Magn. Reson. Med. 34:65–73, 1995
+.. [Jezzard1995] Jezzard, P. & Balaban, R. S. (1995) Correction for geometric distortion in
+    echo planar images from B0 field variations. Magn. Reson. Med. 34:65–73.
     doi:`10.1002/mrm.1910340111 <https://doi.org/10.1002/mrm.1910340111>`__.
-.. [Hutton2002] Hutton et al., Image Distortion Correction in fMRI: A Quantitative
-    Evaluation, NeuroImage 16(1):217-240, 2002. doi:`10.1006/nimg.2001.1054
+.. [Hutton2002] Hutton et al., (2002) Image Distortion Correction in fMRI: A Quantitative
+    Evaluation, NeuroImage 16(1):217-240. doi:`10.1006/nimg.2001.1054
     <https://doi.org/10.1006/nimg.2001.1054>`__.
 .. [Jenkinson2003] Jenkinson, M. (2003) Fast, automated, N-dimensional phase-unwrapping
     algorithm. MRM 49(1):193-197. doi:`10.1002/mrm.10354
     <https://doi.org/10.1002/mrm.10354>`__.
+.. [Andersson2003] Andersson, J. (2003) How to correct susceptibility distortions in spin-echo
+    echo-planar images: application to diffusion tensor imaging. NeuroImage 20:870–888.
+    doi:`10.1016/s1053-8119(03)00336-7 <https://doi.org/10.1016/s1053-8119(03)00336-7>`__.
+.. [Cox1997] Cox, R. (1997) Software tools for analysis and visualization of fMRI data. NMR Biomed.
+    10:171–178, doi:`10.1002/(sici)1099-1492(199706/08)10:4/5%3C171::aid-nbm453%3E3.0.co;2-l
+    <https://doi.org/10.1002/(sici)1099-1492(199706/08)10:4/5%3C171::aid-nbm453%3E3.0.co;2-l>`__.
 .. [Studholme2000] Studholme et al. (2000) Accurate alignment of functional EPI data to
     anatomical MRI using a physics-based distortion model,
     IEEE Trans Med Imag 19(11):1115-1127, 2000, doi: `10.1109/42.896788
@@ -235,3 +252,9 @@ References
     Coregistration of BOLD EPI and T1w Images
     <http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf>`__,
     Berlin: Master Thesis, Freie Universität.
+.. [Zaitsev2004] Zaitsev, M. (2004) Point spread function mapping with parallel imaging techniques and
+    high acceleration factors: Fast, robust, and flexible method for echo-planar imaging distortion correction,
+    MRM 52(5):1156-1166. doi:`10.1002/mrm.20261 <https://doi.org/10.1002/mrm.20261>`__.
+.. [Esteban2016] Esteban, O. (2016) Surface-driven registration method for the structure-informed segmentation
+    of diffusion MR images. NeuroImage 139:450-461.
+    doi:`10.1016/j.neuroimage.2016.05.011 <https://doi.org/10.1016/j.neuroimage.2016.05.011>`__.
