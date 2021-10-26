@@ -48,6 +48,9 @@ we obtain the nonzero component of the associated displacements field
     \Delta D_\text{PE} (i, j, k) = V(i, j, k) \cdot T_\text{ro} \cdot s_\text{PE}.
     \label{eq:fieldmap-2}\tag{2}
 
+.. image:: _static/sdcflows-OHBM21-fig1.png
+   :width: 500
+
 .. _sdc_direct_b0 :
 
 Direct B0 mapping sequences
