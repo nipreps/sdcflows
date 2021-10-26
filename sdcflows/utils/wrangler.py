@@ -260,7 +260,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
     b0_ids = tuple()
     with suppress(BIDSEntityError):
-        b0_ids = layout.get_B0FieldIdentifiers()
+        b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
 
     for b0_id in b0_ids:
         # Found B0FieldIdentifier metadata entries
@@ -283,9 +283,9 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        sessions = layout.get_sessions()
-        acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
-        contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
+        sessions = layout.get_sessions(subject=subject)
+        acqs = tuple(layout.get_acquisitions(subject=subject, suffix="epi") + [None])
+        contrasts = tuple(layout.get_ceagents(subject=subject, suffix="epi") + [None])
 
         for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
             entities = base_entities.copy()
@@ -339,7 +339,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     from .epimanip import get_trt
 
     # Sessions may not be defined at this point if some id was found.
-    sessions = layout.get_sessions()
+    sessions = layout.get_sessions(subject=subject)
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
 
