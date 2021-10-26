@@ -233,7 +233,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
     estimators = []
 
-    b0_ids = None
+    b0_ids = tuple()
     with suppress(BIDSEntityError):
         b0_ids = layout.get_B0FieldIdentifiers()
 
