@@ -217,6 +217,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     """
     from .. import fieldmaps as fm
     from bids.layout import Query
+    from bids.exceptions import BIDSEntityError
 
     base_entities = {
         "subject": subject,
@@ -232,57 +233,74 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
     estimators = []
 
-    # Set up B0 fieldmap strategies:
-    for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
-        e = fm.FieldmapEstimation(
-            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-        )
-        estimators.append(e)
+    b0_ids = None
+    with suppress(BIDSEntityError):
+        b0_ids = layout.get_B0FieldIdentifiers()
 
-    # A bunch of heuristics to select EPI fieldmaps
-    sessions = layout.get_sessions()
-    acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
-    contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
-
-    for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
+    for b0_id in b0_ids:
+        # Found B0FieldIdentifier metadata entries
         entities = base_entities.copy()
-        entities.update(
-            {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
-        )
-        dirs = layout.get_directions(**entities)
-        if len(dirs) > 1:
+        entities["B0FieldIdentifier"] = b0_id
+
+        _e = fm.FieldmapEstimation([
+            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+            for fmap in layout.get(**entities)
+        ])
+        estimators.append(_e)
+
+    # As no B0FieldIdentifier(s) were found, try several heuristics
+    if not estimators:
+        # Set up B0 fieldmap strategies:
+        for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
             e = fm.FieldmapEstimation(
-                [
-                    fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                    for fmap in layout.get(direction=dirs, **entities)
-                ]
+                fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
             estimators.append(e)
 
-    # At this point, only single-PE _epi files WITH ``IntendedFor`` can be automatically processed
-    # (this will be easier with bids-standard/bids-specification#622 in).
-    has_intended = tuple()
-    with suppress(ValueError):
-        has_intended = layout.get(suffix="epi", IntendedFor=Query.ANY, **base_entities)
+        # A bunch of heuristics to select EPI fieldmaps
+        sessions = layout.get_sessions()
+        acqs = tuple(layout.get_acquisitions(suffix="epi") + [None])
+        contrasts = tuple(layout.get_ceagents(suffix="epi") + [None])
 
-    for epi_fmap in has_intended:
-        if epi_fmap.path in fm._estimators.sources:
-            continue  # skip EPI images already considered above
-
-        targets = [epi_fmap] + [
-            layout.get_file(str(subject_root / intent))
-            for intent in epi_fmap.get_metadata()["IntendedFor"]
-        ]
-
-        epi_sources = []
-        for fmap in targets:
-            with suppress(fm.MetadataError):
-                epi_sources.append(
-                    fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+        for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
+            entities = base_entities.copy()
+            entities.update(
+                {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
+            )
+            dirs = layout.get_directions(**entities)
+            if len(dirs) > 1:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                        for fmap in layout.get(direction=dirs, **entities)
+                    ]
                 )
+                estimators.append(e)
 
-        with suppress(ValueError, TypeError):
-            estimators.append(fm.FieldmapEstimation(epi_sources))
+        # At this point, only single-PE _epi files WITH ``IntendedFor`` can
+        # be automatically processed.
+        has_intended = tuple()
+        with suppress(ValueError):
+            has_intended = layout.get(suffix="epi", IntendedFor=Query.ANY, **base_entities)
+
+        for epi_fmap in has_intended:
+            if epi_fmap.path in fm._estimators.sources:
+                continue  # skip EPI images already considered above
+
+            targets = [epi_fmap] + [
+                layout.get_file(str(subject_root / intent))
+                for intent in epi_fmap.get_metadata()["IntendedFor"]
+            ]
+
+            epi_sources = []
+            for fmap in targets:
+                with suppress(fm.MetadataError):
+                    epi_sources.append(
+                        fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                    )
+
+            with suppress(ValueError, TypeError):
+                estimators.append(fm.FieldmapEstimation(epi_sources))
 
     if estimators and not force_fmapless:
         fmapless = False
