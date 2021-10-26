@@ -214,6 +214,31 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_00012')]
 
+    When the ``B0FieldIdentifier`` metadata is set for one or more fieldmaps, then
+    the heuristics that use ``IntendedFor`` are dismissed:
+
+    >>> find_estimators(
+    ...     layout=layouts['dsC'],
+    ...     subject="01",
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<5 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='pepolar4pe')]
+
+    The only exception to the priority of ``B0FieldIdentifier`` is when fieldmaps
+    are searched with the ``force_fmapless`` argument on:
+
+    >>> fm.clear_registry()  # Necessary as `pepolar4pe` is not changing.
+    >>> find_estimators(
+    ...     layout=layouts['dsC'],
+    ...     subject="01",
+    ...     fmapless=True,
+    ...     force_fmapless=True,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<5 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='pepolar4pe'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_00000')]
+
     """
     from .. import fieldmaps as fm
     from bids.layout import Query
@@ -313,6 +338,8 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
     from .epimanip import get_trt
 
+    # Sessions may not be defined at this point if some id was found.
+    sessions = layout.get_sessions()
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
 
@@ -324,6 +351,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         for candidate in candidates:
             meta = candidate.get_metadata()
             pe_dir = meta.get("PhaseEncodingDirection")
+
             if not pe_dir:
                 continue
 
