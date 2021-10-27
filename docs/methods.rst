@@ -6,7 +6,8 @@ the problem of susceptibility distortions (SD) into two stages:
 #. **Estimation**:
    the MRI acquisitions in the protocol for :abbr:`SD (susceptibility distortions)` are
    discovered and preprocessed to estimate a map of B\ :sub:`0` non-uniformity in Hz (:math:`\Delta B_0`).
-   The theory behind these distortions is well described in the literature [Jezzard1995]_ [Hutton2002]_ (Fig. 1).
+   The theory behind these distortions is well described in the literature ([Jezzard1995]_, [Hutton2002]_),
+   and further discussed below (see a summary in :numref:`fig-1`).
    *SDCFlows* builds on freely-available software to implement three major strategies for estimating
    :math:`\Delta B_0` (Eq. :math:`\eqref{eq:fieldmap-1}`).
    These strategies are described below, and implemented within :py:mod:`sdcflows.workflows.fit`\ .
@@ -16,14 +17,16 @@ the problem of susceptibility distortions (SD) into two stages:
    target :abbr:`EPI (echo-planar imaging)` scan to be corrected, and a displacement field in NIfTI
    format that is compatible with ANTs is interpolated from the B-Spline basis.
    The voxel location error along the :abbr:`PE (phase-encoding)` will be proportional to :math:`\Delta B_0 \cdot T_\text{ro}`,
-   where :math:`T_\text{ro}` is the *total readout time* of the target :abbr:`EPI (echo-planar imaging)` (Fig. 1).
+   where :math:`T_\text{ro}` is the *total readout time* of the target :abbr:`EPI (echo-planar imaging)` (:numref:`fig-1`).
    The implementation of these workflows is found in the submodule :py:mod:`sdcflows.workflows.apply`\ .
+
+.. _fig-1:
 
 .. figure:: _static/sdcflows-OHBM21-fig1.png
    :width: 100%
    :align: center
 
-   **Figure 1**. Susceptibility distortions in a nutshell
+   Susceptibility distortions in a nutshell
 
 .. admonition:: BIDS Specification
 
@@ -93,7 +96,7 @@ Phase-difference B0 estimation
 The fieldmap variation in T, :math:`\Delta B_0 (i, j, k)`, that is necessary to obtain
 :math:`\Delta_\text{PE} (i, j, k)` in Eq. :math:`\eqref{eq:fieldmap-1}` can be
 calculated from two subsequent :abbr:`GRE (Gradient-Recalled Echo)` echoes,
-via eq. (1) of [Hutton2002]_:
+via Eq. (1) of [Hutton2002]_:
 
 .. math::
 
