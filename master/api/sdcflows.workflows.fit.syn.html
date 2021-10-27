@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.workflows.ancillary module" href="sdcflows.workflows.ancillary.html" /><link rel="prev" title="sdcflows.workflows.fit.pepolar module" href="sdcflows.workflows.fit.pepolar.html" />
 
     <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.syn module - sdcflows 2.0.9.dev5+gafc110d4 documentation</title>
+        <title>sdcflows.workflows.fit.syn module - sdcflows 2.0.9.dev15+gc802b4de documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.0.9.dev5+gafc110d4 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.0.9.dev15+gc802b4de documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -135,7 +135,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.9.dev5 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.9.dev15 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.9.dev5 (dev)</span>
+  <span class="sidebar-brand-text">2.0.9.dev15 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -166,6 +166,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../methods.html">Methods and implementation</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -231,7 +232,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -240,78 +241,6 @@
           <section id="module-sdcflows.workflows.fit.syn">
 <span id="sdcflows-workflows-fit-syn-module"></span><h1>sdcflows.workflows.fit.syn module<a class="headerlink" href="#module-sdcflows.workflows.fit.syn" title="Permalink to this headline">¶</a></h1>
 <p>Estimating the susceptibility distortions without fieldmaps.</p>
-<section id="fieldmap-less-approaches">
-<span id="sdc-fieldmapless"></span><h2>Fieldmap-less approaches<a class="headerlink" href="#fieldmap-less-approaches" title="Permalink to this headline">¶</a></h2>
-<p>Many studies acquired (especially with legacy MRI protocols) do not have any
-information to estimate susceptibility-derived distortions.
-In the absence of data with the specific purpose of estimating the <span class="math notranslate nohighlight">\(B_0\)</span>
-inhomogeneity map, researchers resort to nonlinear registration to an
-«<em>anatomically correct</em>» map of the same individual (normally acquired with
-<abbr title="T1-weighted">T1w</abbr>, or <abbr title="T2-weighted">T2w</abbr> sequences).
-One of the most prominent proposals of this approach is found in <a class="reference internal" href="#studholme2000" id="id1"><span>[Studholme2000]</span></a>.</p>
-<p><em>SDCFlows</em> includes an (experimental) procedure, based on nonlinear image registration
-with ANTs’ symmetric normalization (SyN) technique.
-This workflow takes a skull-stripped <abbr title="T1-weighted">T1w</abbr> image and
-a reference <abbr title="Echo-Planar Imaging">EPI</abbr> image, and estimates a field of nonlinear
-displacements that accounts for susceptibility-derived distortions.
-To more accurately estimate the warping on typically distorted regions, this
-implementation uses an average <span class="math notranslate nohighlight">\(B_0\)</span> mapping described in <a class="reference internal" href="#treiber2016" id="id2"><span>[Treiber2016]</span></a>.
-The implementation is a variation on those developed in <a class="reference internal" href="#huntenburg2014" id="id3"><span>[Huntenburg2014]</span></a> and
-<a class="reference internal" href="#wang2017" id="id4"><span>[Wang2017]</span></a>.</p>
-<p>The process is divided in two steps.
-First, the two images to be aligned (anatomical and one or more EPI sources) are prepared for
-registration, including a linear pre-alignment of both, calculation of a 3D EPI <em>reference</em> map,
-intensity/histogram enhancement, and <em>deobliquing</em> (meaning, for images were the physical
-coordinates axes and the data array axes are not aligned, the physical coordinates are
-rotated to align with the data array).
-Such a preprocessing is implemented in <a class="reference internal" href="#sdcflows.workflows.fit.syn.init_syn_preprocessing_wf" title="sdcflows.workflows.fit.syn.init_syn_preprocessing_wf"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_syn_preprocessing_wf()</span></code></a>.
-Second, the outputs of the preprocessing workflow are fed into <a class="reference internal" href="#sdcflows.workflows.fit.syn.init_syn_sdc_wf" title="sdcflows.workflows.fit.syn.init_syn_sdc_wf"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_syn_sdc_wf()</span></code></a>,
-which executes the nonlinear, SyN registration.
-To aid the <em>Mattes</em> mutual information cost function, the registration scheme is set up
-in <em>multi-channel</em> mode, and laplacian-filtered derivatives of both anatomical and EPI
-reference are introduced as a second registration channel.
-The optimization gradients of the registration process are weighted, so that deformations
-effectively possible only along the <abbr title="phase-encoding">PE</abbr> axis.
-Given that ANTs’ registration framework performs on physical coordinates, it is necessary
-that input images are not <em>oblique</em>.
-The anatomical image is used as <em>fixed image</em>, and therefore, the registration process
-estimates the transformation function from <em>unwarped</em> (anatomically <em>correct</em>) coordinates
-to <em>distorted</em> coordinates.
-If fed into <code class="docutils literal notranslate"><span class="pre">antsApplyTransforms</span></code>, the resulting transform will effectively <em>unwarp</em> a distorted
-EPI given as input into its <em>unwarped</em> mapping.
-The estimated transform is then converted into a <span class="math notranslate nohighlight">\(B_0\)</span> fieldmap in Hz, which can be
-stored within the derivatives folder.</p>
-<div class="admonition danger">
-<p class="admonition-title">Danger</p>
-<p>Experimental feature</p>
-<p>This procedure is experimental, and the outcomes should be scrutinized one-by-one
-and used with caution.
-Feedback will be enthusiastically received.</p>
-</div>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="studholme2000"><span class="brackets"><a class="fn-backref" href="#id1">Studholme2000</a></span></dt>
-<dd><p>Studholme et al. (2000) Accurate alignment of functional EPI data to
-anatomical MRI using a physics-based distortion model,
-IEEE Trans Med Imag 19(11):1115-1127, 2000, doi: <a class="reference external" href="https://doi.org/10.1109/42.896788">10.1109/42.896788</a>.</p>
-</dd>
-<dt class="label" id="treiber2016"><span class="brackets"><a class="fn-backref" href="#id2">Treiber2016</a></span></dt>
-<dd><p>Treiber, J. M. et al. (2016) Characterization and Correction
-of Geometric Distortions in 814 Diffusion Weighted Images,
-PLoS ONE 11(3): e0152472. doi:<a class="reference external" href="https://doi.org/10.1371/journal.pone.0152472">10.1371/journal.pone.0152472</a>.</p>
-</dd>
-<dt class="label" id="wang2017"><span class="brackets"><a class="fn-backref" href="#id4">Wang2017</a></span></dt>
-<dd><p>Wang S, et al. (2017) Evaluation of Field Map and Nonlinear
-Registration Methods for Correction of Susceptibility Artifacts
-in Diffusion MRI. Front. Neuroinform. 11:17.
-doi:<a class="reference external" href="https://doi.org/10.3389/fninf.2017.00017">10.3389/fninf.2017.00017</a>.</p>
-</dd>
-<dt class="label" id="huntenburg2014"><span class="brackets"><a class="fn-backref" href="#id3">Huntenburg2014</a></span></dt>
-<dd><p>Huntenburg, J. M. (2014) <a class="reference external" href="http://pubman.mpdl.mpg.de/pubman/item/escidoc:2327525:5/component/escidoc:2327523/master_thesis_huntenburg_4686947.pdf">Evaluating Nonlinear
-Coregistration of BOLD EPI and T1w Images</a>,
-Berlin: Master Thesis, Freie Universität.</p>
-</dd>
-</dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.workflows.fit.syn.init_syn_preprocessing_wf">
 <span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.fit.syn.</span></span><span class="sig-name descname"><span class="pre">init_syn_preprocessing_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'syn_preprocessing_wf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omp_nthreads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_bold_nss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1w_inversion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/fit/syn.html#init_syn_preprocessing_wf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.fit.syn.init_syn_preprocessing_wf" title="Permalink to this definition">¶</a></dt>
@@ -415,7 +344,6 @@ susceptibility distortions.</p></li>
 <dd><p>Match the histogram of the T2-like anatomical with the EPI.</p>
 </dd></dl>
 </section>
-</section>
 
         </article>
       </div>
@@ -458,27 +386,8 @@ susceptibility distortions.</p></li>
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            Contents
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">sdcflows.workflows.fit.syn module</a><ul>
-<li><a class="reference internal" href="#fieldmap-less-approaches">Fieldmap-less approaches</a></li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>
@@ -488,7 +397,6 @@ susceptibility distortions.</p></li>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/scripts/main.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/version-switch.js"></script>
     </body>
 </html>
