@@ -1,0 +1,11 @@
+{
+    "Name": "Test Dataset A, only empty files",
+    "BIDSVersion": "",
+    "License": "CC0",
+    "Authors": ["Esteban O."],
+    "Acknowledgements": "",
+    "HowToAcknowledge": "",
+    "Funding": "",
+    "ReferencesAndLinks": [""],
+    "DatasetDOI": ""
+}

@@ -1,0 +1,10 @@
+{
+    "PhaseEncodingDirection": "j",
+    "TotalReadoutTime": 0.005,
+    "IntendedFor": [
+        "dwi/sub-01_dir-AP_dwi.nii.gz",
+        "dwi/sub-01_dir-AP_sbref.nii.gz",
+        "func/sub-01_task-rest_bold.nii.gz",
+        "func/sub-01_task-rest_sbref.nii.gz"
+    ]
+}
