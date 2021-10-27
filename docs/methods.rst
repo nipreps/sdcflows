@@ -97,7 +97,7 @@ It is necessary to find the integer number of offsets that make a region
 continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
 
 This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#two-phase-images-and-two-magnitude-images>`__.
+<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images>`__.
 Some scanners produce one ``phasediff`` map, where the drift between the two echos has
 already been calculated (see `the corresponding section of BIDS
 <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
@@ -189,7 +189,7 @@ Unwarping the distorted data
 :py:mod:`sdcflows.apply` contains workflows to project fieldmaps represented by B-Spline
 basis into the space of the target :abbr:`EPI (echo-planar imaging)` data.
 
-Discovering fieldmaps on a BIDS dataset
+Discovering fieldmaps in a BIDS dataset
 ---------------------------------------
 To ease the implementation of higher-level pipelines integrating :abbr:`SDC (susceptibility distortion correction)`,
 *SDCFlows* provides :py:func:`sdcflows.utils.wrangler.find_estimators`.
@@ -212,7 +212,7 @@ If none of the two previous options yielded any workable estimation strategy, an
 the argument ``fmapless`` is set to ``True``, then :py:func:`sdcflows.utils.wrangler.find_estimators`
 will attempt to find :abbr:`BOLD (blood-oxygen level-dependent)` or :abbr:`DWI (diffusion-weighted imaging)`
 instances within single sessions that are consistent in :abbr:`PE (phase-encoding)` direction and
-*total readout time*, assumming they have been acquired with the same shimming settings.
+*total readout time*, assuming they have been acquired with the same shimming settings.
 
 If one or more anatomical images are found, and if the search for candidate
 :abbr:`BOLD (blood-oxygen level-dependent)` or :abbr:`DWI (diffusion-weighted imaging)` data
