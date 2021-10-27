@@ -20,17 +20,7 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""
-Datasets with multiple phase encoded directions.
-
-.. _sdc_pepolar :
-
-:abbr:`PEPOLAR (Phase Encoding POLARity)` techniques
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
-
-"""
+"""Datasets with multiple phase encoded directions."""
 from pkg_resources import resource_filename as _pkg_fname
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
