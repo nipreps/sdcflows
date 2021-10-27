@@ -49,7 +49,8 @@ we obtain the nonzero component of the associated displacements field
     \label{eq:fieldmap-2}\tag{2}
 
 .. image:: _static/sdcflows-OHBM21-fig1.png
-   :width: 500
+   :width: 100%
+   :align: center
 
 .. _sdc_direct_b0 :
 
