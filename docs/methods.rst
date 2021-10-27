@@ -56,18 +56,29 @@ we obtain the nonzero component of the associated displacements field
 
 Direct B0 mapping sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. admonition:: BIDS Specification
+
+    See `this section of the BIDS specification
+    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
+
 Some MR schemes such as :abbr:`SEI (spiral-echo imaging)` can directly
 reconstruct an estimate of *the fieldmap in Hz*, :math:`V(i,j,k)`.
 These *fieldmaps* are described with more detail `here
 <https://cni.stanford.edu/wiki/GE_Processing#Fieldmaps>`__.
 
-This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
-
 .. _sdc_phasediff :
 
 Phase-difference B0 estimation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. admonition:: BIDS Specification
+
+    See `this section of the BIDS specification
+    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images>`__.
+
+    Some scanners produce one ``phasediff`` map, where the drift between the two echos has
+    already been calculated, see `the corresponding section of BIDS
+    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__.
+
 The fieldmap variation in T, :math:`\Delta B_0 (i, j, k)`, that is necessary to obtain
 :math:`\Delta_\text{PE} (i, j, k)` in Eq. :math:`\eqref{eq:fieldmap-1}` can be
 calculated from two subsequient :abbr:`GRE (Gradient-Recalled Echo)` echoes,
@@ -97,23 +108,20 @@ the range :math:`[0 \dotsb 2\pi )`.
 It is necessary to find the integer number of offsets that make a region
 continuously smooth with its neighbors (*phase-unwrapping*, [Jenkinson2003]_).
 
-This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images>`__.
-Some scanners produce one ``phasediff`` map, where the drift between the two echos has
-already been calculated (see `the corresponding section of BIDS
-<https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__).
-
 .. _sdc_pepolar :
 
 :abbr:`PEPOLAR (Phase Encoding POLARity)` techniques
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. admonition:: BIDS Specification
+
+    See `this section of the BIDS specification
+    <https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
+
 Alternatively, it is possible to estimate the field by exploiting the symmetry of the
 distortion when the PE polarity is reversed.
 *SDCFlows* integrates two implementations based on FSL ``topup`` [Andersson2003]_,
 and AFNI ``3dQwarp`` [Cox1997]_.
-
-This corresponds to `this section of the BIDS specification
-<https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar>`__.
+By default, FSL ``topup`` will be used.
 
 .. _sdc_fieldmapless :
 
