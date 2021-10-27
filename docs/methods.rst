@@ -1,7 +1,7 @@
 Methods and implementation
 ==========================
 *SDCFlows* defines a clear :abbr:`API (application programming interface)` that divides
-"*the problem of susceptibility distortions (SD)*" into two stages:
+the problem of susceptibility distortions (SD) into two stages:
 
 #. **Estimation**:
    the MRI acquisitions in the protocol for :abbr:`SD (susceptibility distortions)` are
@@ -36,8 +36,8 @@ where
 :math:`T_\text{ro}` is the readout time of one slice of the EPI dataset
 we want to correct for distortions.
 
-Let :math:`V` represent the «*fieldmap in Hz*» (or equivalently,
-«*voxel-shift-velocity map*» as Hz are equivalent to voxels/s), with
+Let :math:`V` represent the *fieldmap* in Hz (or equivalently,
+*voxel-shift-velocity map*, as Hz are equivalent to voxels/s), with
 :math:`V(i,j,k) = \gamma \cdot \Delta B_0 (i, j, k)`, then, introducing
 the voxel zoom along the phase-encoding direction, :math:`s_\text{PE}`,
 we obtain the nonzero component of the associated displacements field
@@ -58,8 +58,9 @@ Direct B0 mapping sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. admonition:: BIDS Specification
 
-    See `this section of the BIDS specification
-    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__.
+    See the section `Types of fieldmaps - Case 3: Direct field mapping
+    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping>`__
+    in the BIDS specification.
 
 Some MR schemes such as :abbr:`SEI (spiral-echo imaging)` can directly
 reconstruct an estimate of *the fieldmap in Hz*, :math:`V(i,j,k)`.
@@ -72,11 +73,13 @@ Phase-difference B0 estimation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. admonition:: BIDS Specification
 
-    See `this section of the BIDS specification
-    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images>`__.
+    See the section `Types of fieldmaps - Case 2: Two phase maps and two magnitude images
+    <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images>`__
+    in the BIDS specification.
 
     Some scanners produce one ``phasediff`` map, where the drift between the two echos has
-    already been calculated, see `the corresponding section of BIDS
+    already been calculated, see the section
+    `Types of fieldmaps - Case 1: Phase-difference map and at least one magnitude image
     <https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-1-phase-difference-map-and-at-least-one-magnitude-image>`__.
 
 The fieldmap variation in T, :math:`\Delta B_0 (i, j, k)`, that is necessary to obtain
@@ -148,7 +151,7 @@ The implementation is a variation on those developed in [Huntenburg2014]_ and
 The process is divided in two steps.
 First, the two images to be aligned (anatomical and one or more EPI sources) are prepared for
 registration, including a linear pre-alignment of both, calculation of a 3D EPI *reference* map,
-intensity/histogram enhancement, and *deobliquing* (meaning, for images were the physical
+intensity/histogram enhancement, and *deobliquing* (meaning, for images where the physical
 coordinates axes and the data array axes are not aligned, the physical coordinates are
 rotated to align with the data array).
 Such a preprocessing is implemented in :py:func:`init_syn_preprocessing_wf`.
@@ -184,9 +187,9 @@ surfaces onto the distorted :abbr:`EPI (echo-planar imaging)` data [Esteban2016]
 Estimation tooling
 ~~~~~~~~~~~~~~~~~~
 The workflows provided by :py:mod:`sdcflows.fit` make use of several utilities.
-Perhaps, the centerpiece of these tools is the fieldmap representation with B-Splines
+The cornerstone of these tools is the fieldmap representation with B-Splines
 (:py:mod:`sdcflows.interfaces.bspline`).
-B-Splines are very adequate to plausibly smooth the fieldmap and provide a compact
+B-Splines are well-suited to plausibly smooth the fieldmap and provide a compact
 representation of the field with fewer parameters.
 This representation is also more accurate in the case the images that were used for estimation
 are not aligned with the target images to be corrected because the fieldmap is not directly
