@@ -1,3 +1,10 @@
+2.0.9 (November 16, 2021)
+=========================
+A patch release improving documentation and implementing ``B0Field*`` BIDS metadata.
+
+  * DOC: Bring implementation details to the foreground of documentation (#248)
+  * FIX: Implement ``B0FieldIdentifier`` / ``B0FieldSource`` (#247)
+
 2.0.8 (October 15, 2021)
 ========================
 A patch release with a deep revision of the new implementation of the fieldmap-less "*SDC-SyN*" toward integration with *fMRIPrep*.
