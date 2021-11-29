@@ -476,7 +476,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, refpe_reversed=False, out_file=Non
     coeff_shape = np.array(coeffnii.shape[:3])
     factors = np.array(coeffnii.header.get_zooms()[:3])
     ref_shape = np.array(refnii.shape[:3])
-    exp_shape = ref_shape // factors + 3 if np.all(factors >= 1.0) else ref_shape
+    exp_shape = ref_shape // factors + 3 if np.all(factors > 1.0) else ref_shape
     if not np.all(coeff_shape == exp_shape):
         raise ValueError(
             f"Shape of coefficients file {coeff_shape} does not meet the "
