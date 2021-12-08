@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.interfaces package" href="sdcflows.interfaces.html" /><link rel="prev" title="Library API (application program interface)" href="../api.html" />
 
-    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
-        <title>sdcflows.fieldmaps module - sdcflows 2.0.9.dev15+gc802b4de documentation</title>
+    <meta name="generator" content="sphinx-4.3.1, furo 2021.10.09"/>
+        <title>sdcflows.fieldmaps module - sdcflows 2.0.10.dev4+g853951e4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.0.9.dev15+gc802b4de documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.0.10.dev4+g853951e4 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.9.dev15 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.10.dev4 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.9.dev15 (dev)</span>
+  <span class="sidebar-brand-text">2.0.10.dev4 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -243,33 +243,33 @@
 <p>Utilities for fieldmap estimation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">EstimatorType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#EstimatorType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">EstimatorType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#EstimatorType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
 <p>Represents different types of fieldmap estimation approach.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.ANAT">
-<span class="sig-name descname"><span class="pre">ANAT</span></span><em class="property"> <span class="pre">=</span> <span class="pre">5</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.ANAT" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ANAT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.ANAT" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.MAPPED">
-<span class="sig-name descname"><span class="pre">MAPPED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">4</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.MAPPED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">MAPPED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.MAPPED" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.PEPOLAR">
-<span class="sig-name descname"><span class="pre">PEPOLAR</span></span><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PEPOLAR" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">PEPOLAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PEPOLAR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.PHASEDIFF">
-<span class="sig-name descname"><span class="pre">PHASEDIFF</span></span><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PHASEDIFF" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">PHASEDIFF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PHASEDIFF" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.UNKNOWN">
-<span class="sig-name descname"><span class="pre">UNKNOWN</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">UNKNOWN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.UNKNOWN" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.FieldmapEstimation">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">FieldmapEstimation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bids_id</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapEstimation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapEstimation" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">FieldmapEstimation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bids_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapEstimation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapEstimation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Represent fieldmap estimation strategies.</p>
 <p>This class provides a consistent interface to all types of fieldmap estimation
@@ -304,7 +304,7 @@ and collects all the available metadata.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.FieldmapFile">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">FieldmapFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">find_meta</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapFile" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">FieldmapFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">find_meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Represent a file that can be used in some fieldmap estimation method.</p>
 <p>The class will read metadata from a sidecar JSON with filename matching that
@@ -431,7 +431,7 @@ will overwrite metadata read from sidecar JSON.</p>
 </dd></dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.MetadataError">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">MetadataError</span></span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#MetadataError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.MetadataError" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">MetadataError</span></span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#MetadataError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.MetadataError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a></p>
 <p>A better name for a specific value error.</p>
 </dd></dl>
