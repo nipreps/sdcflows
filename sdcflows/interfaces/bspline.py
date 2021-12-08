@@ -474,12 +474,13 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, refpe_reversed=False, out_file=Non
     refnii = nb.load(fmap_ref)
 
     coeff_shape = np.array(coeffnii.shape[:3])
+    factors = np.array(coeffnii.header.get_zooms()[:3])
     ref_shape = np.array(refnii.shape[:3])
-    factors = coeffnii.header.get_zooms()[:3]
-    if not np.all(coeff_shape == ref_shape // factors + 3):
+    exp_shape = ref_shape // factors + 3 * (factors > 1)
+    if not np.all(coeff_shape == exp_shape):
         raise ValueError(
             f"Shape of coefficients file {coeff_shape} does not meet the "
-            f"expectation given the reference's shape {ref_shape}."
+            f"expected shape {exp_shape} (toupup factors are {factors})."
         )
     newaff = np.eye(4)
     newaff[:3, :3] = refnii.affine[:3, :3] * factors
