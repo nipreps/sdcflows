@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
     <meta name="generator" content="sphinx-4.3.1, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.0.10.dev4+g853951e4 documentation</title>
+        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.0.10.dev7+gfb950a3a documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.10.dev4+g853951e4 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.0.10.dev7+gfb950a3a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.10.dev4 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.10.dev7 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.10.dev4 (dev)</span>
+  <span class="sidebar-brand-text">2.0.10.dev7 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -337,7 +337,7 @@
     <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="k">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__postdesc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="si">{_PEPOLAR_DESC}</span><span class="s2"> with `topup` (@topup; FSL {TOPUP().version}).</span>
 <span class="s2">"""</span>
 
@@ -505,7 +505,7 @@
     <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="k">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">ConvertWarp</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__postdesc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="si">{_PEPOLAR_DESC}</span><span class="s2"> </span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="si">{_PEPOLAR_DESC}</span><span class="s2"> </span><span class="se">\</span>
 <span class="s2">with `3dQwarp` (@afni; AFNI {''.join(['</span><span class="si">%02d</span><span class="s2">' % v for v in afni.Info().version() or []])}).</span>
 <span class="s2">"""</span>
 
