@@ -97,7 +97,7 @@ def init_topup_wf(
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
-    workflow.__postdesc__ = f"""\
+    workflow.__desc__ = f"""\
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
 
@@ -265,7 +265,7 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     from ...interfaces.utils import Flatten, ConvertWarp
 
     workflow = Workflow(name=name)
-    workflow.__postdesc__ = f"""{_PEPOLAR_DESC} \
+    workflow.__desc__ = f"""{_PEPOLAR_DESC} \
 with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
 """
 
