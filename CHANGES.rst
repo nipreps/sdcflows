@@ -1,9 +1,16 @@
+2.0.10 (December 13, 2021)
+==========================
+Patch release in the 2.0.x series.
+
+* FIX: Update boilerplate ordering directives (#229)
+* FIX: ishandling of ``topup`` coefficients with higher resolution EPIs (#251)
+
 2.0.9 (November 16, 2021)
 =========================
 A patch release improving documentation and implementing ``B0Field*`` BIDS metadata.
 
-  * DOC: Bring implementation details to the foreground of documentation (#248)
-  * FIX: Implement ``B0FieldIdentifier`` / ``B0FieldSource`` (#247)
+* DOC: Bring implementation details to the foreground of documentation (#248)
+* FIX: Implement ``B0FieldIdentifier`` / ``B0FieldSource`` (#247)
 
 2.0.8 (October 15, 2021)
 ========================
