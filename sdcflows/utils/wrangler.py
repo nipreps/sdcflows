@@ -24,6 +24,7 @@
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
+from bids.utils import listify
 
 
 def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
@@ -314,7 +315,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
             targets = [epi_fmap] + [
                 layout.get_file(str(subject_root / intent))
-                for intent in epi_fmap.get_metadata()["IntendedFor"]
+                for intent in listify(epi_fmap.get_metadata()["IntendedFor"])
             ]
 
             epi_sources = []
