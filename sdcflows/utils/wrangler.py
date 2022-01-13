@@ -330,12 +330,13 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
                 estimator_md["IntendedFor"] = [intent]
-                estimators.append(
-                    fm.FieldmapEstimation(
-                        [fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
-                         fm.FieldmapFile(target.path, metadata=target.get_metadata())]
+                with suppress(ValueError, TypeError, fm.MetadataError):
+                    estimators.append(
+                        fm.FieldmapEstimation(
+                            [fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
+                             fm.FieldmapFile(target.path, metadata=target.get_metadata())]
+                        )
                     )
-                )
 
     if estimators and not force_fmapless:
         fmapless = False
