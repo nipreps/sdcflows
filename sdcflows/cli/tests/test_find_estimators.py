@@ -7,7 +7,8 @@ from ...fieldmaps import clear_registry
 OUTPUT = """\
 Estimation for <{path}> complete. Found:
 \tsub-01
-\t\tFieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, bids_id='{estimator_id}')
+\t\tFieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, \
+bids_id='{estimator_id}')
 \tsub-02
 \t\tNo estimators found
 """
