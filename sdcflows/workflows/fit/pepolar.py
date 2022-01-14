@@ -27,7 +27,7 @@ from nipype.interfaces import utility as niu
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-INPUT_FIELDS = ("metadata", "in_data")
+INPUT_FIELDS = ("metadata", "in_data", "max_trs")
 _PEPOLAR_DESC = """\
 A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
 echo-planar imaging (EPI) references """
@@ -71,6 +71,8 @@ def init_topup_wf(
     metadata : :obj:`list` of :obj:`dict`
         A list of dictionaries containing the metadata corresponding to each file
         in ``in_data``.
+    max_trs : :obj:`int`
+        Maximum number of volumes from each blip to use in estimation.
 
     Outputs
     -------
@@ -148,7 +150,8 @@ def init_topup_wf(
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
-                              ("metadata", "in_meta")]),
+                              ("metadata", "in_meta"),
+                              ("max_trs", "max_trs")]),
         (flatten, readout_time, [("out_data", "in_file"),
                                  ("out_meta", "metadata")]),
         (flatten, regrid, [("out_data", "in_data")]),
@@ -244,6 +247,11 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     ------
     in_data : :obj:`list` of :obj:`str`
         A list of two EPI files, the first of which will be taken as reference.
+    metadata : :obj:`list` of :obj:`dict`
+        A list of dictionaries containing the metadata corresponding to each file
+        in ``in_data``.
+    max_trs : :obj:`int`
+        Maximum number of volumes from each blip to use in estimation.
 
     Outputs
     -------
@@ -269,9 +277,7 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
 """
 
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=["in_data", "metadata"]), name="inputnode"
-    )
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
@@ -344,7 +350,8 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
     # fmt: off
     workflow.connect([
         (inputnode, flatten, [("in_data", "in_data"),
-                              ("metadata", "in_meta")]),
+                              ("metadata", "in_meta"),
+                              ("max_trs", "max_trs")]),
         (flatten, sort_pe, [("out_list", "inlist")]),
         (sort_pe, qwarp, [("qwarp_args", "args")]),
         (sort_pe, merge_pes, [("sorted", "in_files")]),
