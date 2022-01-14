@@ -51,7 +51,7 @@ class _FlattenInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="list of metadata",
     )
-    max_trs = traits.Int(50, usedefault=True, desc="only pick first TRs")
+    max_trs = traits.Int(5, usedefault=True, desc="only pick first TRs")
 
 
 class _FlattenOutputSpec(TraitedSpec):
