@@ -24,6 +24,7 @@
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
+from bids.utils import listify
 
 
 def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
@@ -312,20 +313,30 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
             if epi_fmap.path in fm._estimators.sources:
                 continue  # skip EPI images already considered above
 
-            targets = [epi_fmap] + [
-                layout.get_file(str(subject_root / intent))
-                for intent in epi_fmap.get_metadata()["IntendedFor"]
-            ]
+            epi_base_md = epi_fmap.get_metadata()
 
-            epi_sources = []
-            for fmap in targets:
-                with suppress(fm.MetadataError):
-                    epi_sources.append(
-                        fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+            # There are two possible interpretations of an IntendedFor list:
+            # 1) The fieldmap and each intended target are combined separately
+            # 2) The fieldmap and all intended targets are combined at once
+            #
+            # (1) has been the historical interpretation of NiPreps,
+            # so construct a separate estimator for each target.
+            for intent in listify(epi_base_md["IntendedFor"]):
+                target = layout.get_file(str(subject_root / intent))
+                if target is None:
+                    continue
+
+                # The new estimator is IntendedFor the individual targets,
+                # even if the EPI file is IntendedFor multiple
+                estimator_md = epi_base_md.copy()
+                estimator_md["IntendedFor"] = [intent]
+                with suppress(ValueError, TypeError, fm.MetadataError):
+                    estimators.append(
+                        fm.FieldmapEstimation(
+                            [fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
+                             fm.FieldmapFile(target.path, metadata=target.get_metadata())]
+                        )
                     )
-
-            with suppress(ValueError, TypeError):
-                estimators.append(fm.FieldmapEstimation(epi_sources))
 
     if estimators and not force_fmapless:
         fmapless = False
