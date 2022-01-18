@@ -104,6 +104,8 @@ def init_topup_wf(
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
+    # Set default so not overridden by `Undefined`. Can be overridden by connection.
+    inputnode.inputs.max_trs = 5
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
@@ -278,6 +280,9 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
+    # Old fMRIPrep default behavior; unused as of 21.0.0 and free to be changed
+    # to something sensible.
+    inputnode.inputs.max_trs = 50
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
