@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <meta name="generator" content="sphinx-4.3.2, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.0.11.dev2+g72bdbe09 documentation</title>
+    <meta name="generator" content="sphinx-4.4.0, furo 2021.10.09"/>
+        <title>sdcflows.utils.wrangler - sdcflows 2.0.11.dev7+gb82b872a documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.0.11.dev2+g72bdbe09 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.0.11.dev7+gb82b872a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.11.dev2 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.11.dev7 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.11.dev2 (dev)</span>
+  <span class="sidebar-brand-text">2.0.11.dev7 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -264,6 +264,7 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">bids.utils</span> <span class="k">import</span> <span class="n">listify</span>
 
 
 <div class="viewcode-block" id="find_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_estimators</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -552,20 +553,30 @@
             <span class="k">if</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">path</span> <span class="ow">in</span> <span class="n">fm</span><span class="o">.</span><span class="n">_estimators</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
                 <span class="k">continue</span>  <span class="c1"># skip EPI images already considered above</span>
 
-            <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">epi_fmap</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
-                <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">subject_root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">))</span>
-                <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()[</span><span class="s2">"IntendedFor"</span><span class="p">]</span>
-            <span class="p">]</span>
+            <span class="n">epi_base_md</span> <span class="o">=</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
 
-            <span class="n">epi_sources</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">MetadataError</span><span class="p">):</span>
-                    <span class="n">epi_sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
+            <span class="c1"># There are two possible interpretations of an IntendedFor list:</span>
+            <span class="c1"># 1) The fieldmap and each intended target are combined separately</span>
+            <span class="c1"># 2) The fieldmap and all intended targets are combined at once</span>
+            <span class="c1">#</span>
+            <span class="c1"># (1) has been the historical interpretation of NiPreps,</span>
+            <span class="c1"># so construct a separate estimator for each target.</span>
+            <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">epi_base_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]):</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">subject_root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># The new estimator is IntendedFor the individual targets,</span>
+                <span class="c1"># even if the EPI file is IntendedFor multiple</span>
+                <span class="n">estimator_md</span> <span class="o">=</span> <span class="n">epi_base_md</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">estimator_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">intent</span><span class="p">]</span>
+                <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="n">fm</span><span class="o">.</span><span class="n">MetadataError</span><span class="p">):</span>
+                    <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">epi_fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">estimator_md</span><span class="p">),</span>
+                             <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">target</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())]</span>
+                        <span class="p">)</span>
                     <span class="p">)</span>
-
-            <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span><span class="n">epi_sources</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">estimators</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_fmapless</span><span class="p">:</span>
         <span class="n">fmapless</span> <span class="o">=</span> <span class="kc">False</span>
