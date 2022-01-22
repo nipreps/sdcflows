@@ -1,3 +1,10 @@
+2.0.11 (January 22, 2022)
+==========================
+Patch release in the 2.0.x series.
+
+* FIX: Create one fieldmap estimator per EPI-IntendedFor pair (#258)
+* DOCKER: Build with FSL 6 (#254)
+
 2.0.10 (December 13, 2021)
 ==========================
 Patch release in the 2.0.x series.

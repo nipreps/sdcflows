@@ -1,6 +1,6 @@
 """SDCflows - :abbr:`SDC (susceptibility distortion correction)` by DUMMIES, for dummies."""
 __packagename__ = "sdcflows"
-__copyright__ = "2020, The NiPreps developers"
+__copyright__ = "2022, The NiPreps developers"
 try:
     from ._version import __version__
 except ModuleNotFoundError:
