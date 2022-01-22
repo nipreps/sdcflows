@@ -1,4 +1,4 @@
-2.0.11 (January 21, 2022)
+2.0.11 (January 22, 2022)
 ==========================
 Patch release in the 2.0.x series.
 
