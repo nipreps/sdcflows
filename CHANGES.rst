@@ -1,3 +1,10 @@
+2.0.12 (February 08, 2022)
+==========================
+Patch release in the 2.0.x series. This allows compatibility with the next minor release of `niworkflows`.
+
+  * MAINT: Allow compatibility with new niworkflows minor (#262)
+  * DOC: Update scipy intersphinx url (#263)
+
 2.0.11 (January 22, 2022)
 ==========================
 Patch release in the 2.0.x series.
