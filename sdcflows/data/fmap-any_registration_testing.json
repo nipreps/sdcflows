@@ -3,7 +3,7 @@
     "convergence_threshold": [ 1e-07, 1e-08 ],
     "convergence_window_size": [ 5, 3 ],
     "dimension": 3,
-    "initial_moving_transform_com": 2,
+    "initial_moving_transform_com": 1,
     "interpolation": "LanczosWindowedSinc",
     "metric": [ "Mattes", "Mattes" ],
     "metric_weight": [ 1.0, 1.0 ],
