@@ -27,7 +27,7 @@ from pathlib import Path
 from bids.utils import listify
 
 
-def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
+def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmapless=False):
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -43,6 +43,8 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
         An initialized PyBIDS layout.
     subject : :obj:`str`
         Participant label for this single-subject workflow.
+    sessions : :obj:`list` or None
+        One of more session identifiers. If None, all sessions will be used.
     fmapless : :obj:`bool` or :obj:`set`
         Indicates if fieldmap-less heuristics should be executed.
         When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffices
@@ -252,6 +254,7 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
     }
 
     subject_root = Path(layout.root) / f"sub-{subject}"
+    sessions = sessions if sessions else layout.get_sessions(subject=subject)
 
     fmapless = fmapless or {}
     if fmapless is True:
@@ -284,7 +287,6 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        sessions = layout.get_sessions(subject=subject)
         acqs = tuple(layout.get_acquisitions(subject=subject, suffix="epi") + [None])
         contrasts = tuple(layout.get_ceagents(subject=subject, suffix="epi") + [None])
 
@@ -349,8 +351,6 @@ def find_estimators(*, layout, subject, fmapless=True, force_fmapless=False):
 
     from .epimanip import get_trt
 
-    # Sessions may not be defined at this point if some id was found.
-    sessions = layout.get_sessions(subject=subject)
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
         candidates = layout.get(suffix=suffix, session=ses, **base_entities)
 
