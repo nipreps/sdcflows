@@ -121,7 +121,7 @@ def init_topup_wf(
 
     flatten = pe.Node(Flatten(), name="flatten")
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
-    concat_blips = pe.Node(MergeSeries(), name="concat_blips")
+    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     readout_time = pe.MapNode(
         GetReadoutTime(),
         name="readout_time",
