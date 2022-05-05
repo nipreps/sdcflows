@@ -7,5 +7,5 @@ nitransforms==21.0.0
 numpy
 pybids==0.12.1
 scikit-image==0.18
-scipy==1.6
+scipy==1.6.0
 templateflow==0.6

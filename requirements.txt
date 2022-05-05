@@ -2,10 +2,10 @@
 attrs>=20.1.0
 nibabel>=3.0.1
 nipype<2.0,>=1.5.1
-niworkflows~=1.4.2
-nitransforms~=21.0.0
+niworkflows<1.6,>=1.4.2
+nitransforms>=21.0.0
 numpy
 pybids>=0.12.1
 scikit-image>=0.18
-scipy~=1.6
+scipy>=1.6.0
 templateflow>=0.6
