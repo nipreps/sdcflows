@@ -86,15 +86,16 @@ jobs:
         path: |
           /usr/share/miniconda/pkgs
           /home/runner/.cache/pip
-        key: python-${{ matrix.python-version }}-v2
+        key: python-${{ matrix.python-version }}-v3
         restore-keys: |
-          python-${{ matrix.python-version }}-
+          python-${{ matrix.python-version }}-v3
     - name: Install DataLad
       run: |
         $CONDA/bin/conda install -c conda-forge git-annex datalad pip
         $CONDA/bin/pip install datalad-osf
     - uses: actions/checkout@v2
     - name: Install minimal dependencies
+      timeout-minutes: 5
       run: |
         $CONDA/bin/pip install -r min-requirements.txt
         $CONDA/bin/pip install .[tests]
