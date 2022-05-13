@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.0.13.dev6+gd245dfdd documentation</title>
+        <title>sdcflows.utils.wrangler - sdcflows 2.0.13.dev8+ge92373d1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.0.13.dev6+gd245dfdd documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.0.13.dev8+ge92373d1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.0.13.dev6 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.0.13.dev8 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.0.13.dev6 (dev)</span>
+  <span class="sidebar-brand-text">2.0.13.dev8 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -267,7 +267,7 @@
 <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="k">import</span> <span class="n">listify</span>
 
 
-<div class="viewcode-block" id="find_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_estimators</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="find_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_estimators</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">sessions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Apply basic heuristics to automatically find available data for fieldmap estimation.</span>
 
@@ -283,6 +283,8 @@
 <span class="sd">        An initialized PyBIDS layout.</span>
 <span class="sd">    subject : :obj:`str`</span>
 <span class="sd">        Participant label for this single-subject workflow.</span>
+<span class="sd">    sessions : :obj:`list` or None</span>
+<span class="sd">        One of more session identifiers. If None, all sessions will be used.</span>
 <span class="sd">    fmapless : :obj:`bool` or :obj:`set`</span>
 <span class="sd">        Indicates if fieldmap-less heuristics should be executed.</span>
 <span class="sd">        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffices</span>
@@ -492,6 +494,7 @@
     <span class="p">}</span>
 
     <span class="n">subject_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">f</span><span class="s2">"sub-</span><span class="si">{subject}</span><span class="s2">"</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span> <span class="k">if</span> <span class="n">sessions</span> <span class="k">else</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span>
 
     <span class="n">fmapless</span> <span class="o">=</span> <span class="n">fmapless</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">fmapless</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -524,7 +527,6 @@
             <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># A bunch of heuristics to select EPI fieldmaps</span>
-        <span class="n">sessions</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span>
         <span class="n">acqs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">get_acquisitions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
         <span class="n">contrasts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">get_ceagents</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
 
@@ -589,8 +591,6 @@
 
     <span class="kn">from</span> <span class="nn">.epimanip</span> <span class="k">import</span> <span class="n">get_trt</span>
 
-    <span class="c1"># Sessions may not be defined at this point if some id was found.</span>
-    <span class="n">sessions</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">ses</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">sessions</span> <span class="ow">or</span> <span class="p">(</span><span class="kc">None</span><span class="p">,),</span> <span class="n">fmapless</span><span class="p">)):</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="n">ses</span><span class="p">,</span> <span class="o">**</span><span class="n">base_entities</span><span class="p">)</span>
 
