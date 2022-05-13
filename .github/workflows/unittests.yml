@@ -1,6 +1,10 @@
 name: Deps & CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: 0 0 * * 0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,7 +37,7 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
 
     steps:
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: /var/lib/apt
         key: apt-cache-v2
@@ -53,7 +57,7 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends fsl
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: /opt/afni
         key: afni-v1
@@ -66,7 +70,7 @@ jobs:
           tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
         fi
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: /opt/ants
         key: ants-v1
@@ -87,7 +91,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: conda
       with:
         path: |
@@ -108,7 +112,7 @@ jobs:
         $CONDA/bin/pip install .[tests]
 
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: ~/.cache/templateflow
         key: tf-cache-v1
@@ -118,7 +122,7 @@ jobs:
       run: |
         $CONDA/bin/python tools/cache_templateflow.py
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         path: ${{ env.TEST_DATA_HOME }}
         key: data-cache-v1
