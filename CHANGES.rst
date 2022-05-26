@@ -1,3 +1,11 @@
+2.1.0 (May 26, 2022)
+====================
+A new minor release to support the newest niworkflows minor series.
+
+  * ENH: Add optional session distinction to wrangler (#261)
+  * FIX: Align centers of mass, rather than origins (#253)
+  * MAINT: Loosen installation restrictions (#269)
+
 2.0.12 (February 08, 2022)
 ==========================
 Patch release in the 2.0.x series. This allows compatibility with the next minor release of `niworkflows`.
