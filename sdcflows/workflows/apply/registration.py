@@ -103,7 +103,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["target_ref", "fmap_coeff"]), name="outputnode"
+        niu.IdentityInterface(fields=["target_ref", "fmap_coeff", "transforms"]), name="outputnode"
     )
 
     # Register the reference of the fieldmap to the reference
@@ -148,6 +148,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
                                 ("fmap_ref", "fmap_ref")]),
         (coregister, map_coeff, [(("forward_transforms", _pop), "transform")]),
+        (coregister, outputnode, [("forward_transforms", "transforms")]),
         (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
