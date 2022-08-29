@@ -1,3 +1,10 @@
+2.1.1 (August 29, 2022)
+=======================
+Patch release in the 2.1.x series. This release incorporates the fix in 2.0.13 in
+the 2.1.x series.
+
+* FIX: Relax tolerance for different affines when concatenating blips (#265)
+
 2.1.0 (May 26, 2022)
 ====================
 A new minor release to support the newest niworkflows minor series.
