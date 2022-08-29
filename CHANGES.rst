@@ -6,12 +6,18 @@ A new minor release to support the newest niworkflows minor series.
   * FIX: Align centers of mass, rather than origins (#253)
   * MAINT: Loosen installation restrictions (#269)
 
+2.0.13 (April 08, 2022)
+=======================
+Patch release in the 2.0.x series. This release resolves an issue in fMRIPrep 21.0.x.
+
+* FIX: Relax tolerance for different affines when concatenating blips (#265)
+
 2.0.12 (February 08, 2022)
 ==========================
-Patch release in the 2.0.x series. This allows compatibility with the next minor release of `niworkflows`.
+Patch release in the 2.0.x series. This allows compatibility with the next minor release of ``niworkflows``.
 
-  * MAINT: Allow compatibility with new niworkflows minor (#262)
-  * DOC: Update scipy intersphinx url (#263)
+* MAINT: Allow compatibility with new niworkflows minor (#262)
+* DOC: Update scipy intersphinx url (#263)
 
 2.0.11 (January 22, 2022)
 ==========================
