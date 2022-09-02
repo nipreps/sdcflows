@@ -157,7 +157,6 @@ def init_topup_wf(
                                ("pe_dir_fsl", "encoding_direction")]),
         (regrid, pad_ref_slices, [("reference", "in_file")]),
         (pad_ref_slices, fix_coeff, [("out_file", "fmap_ref")]),
-        (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
