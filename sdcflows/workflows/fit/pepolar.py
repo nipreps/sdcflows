@@ -90,7 +90,6 @@ def init_topup_wf(
     from niworkflows.interfaces.nibabel import MergeSeries
     from niworkflows.interfaces.images import RobustAverage
 
-    from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
     from ...interfaces.utils import Flatten, UniformGrid, PadSlices
     from ...interfaces.bspline import TOPUPCoeffReorient
