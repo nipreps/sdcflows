@@ -297,6 +297,29 @@ class PadSlices(SimpleInterface):
         return runtime
 
 
+class _PositiveDirectionCosinesInputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="input image")
+
+
+class _PositiveDirectionCosinesOutputSpec(TraitedSpec):
+    out_file = File(exists=True)
+
+
+class PositiveDirectionCosines(SimpleInterface):
+    """Reorient axes polarity to have all positive direction cosines."""
+
+    input_spec = _PositiveDirectionCosinesInputSpec
+    output_spec = _PositiveDirectionCosinesOutputSpec
+
+    def _run_interface(self, runtime):
+        self._results["out_file"] = _ensure_positive_cosines(
+            self.inputs.in_file,
+            newpath=runtime.cwd,
+        )
+
+        return runtime
+
+
 def _flatten(inlist, max_trs=50, out_dir=None):
     """
     Split the input EPIs and generate a flattened list with corresponding metadata.
@@ -455,3 +478,26 @@ def _pad_num_slices(in_file, ax=2, newpath=None):
     out_file = fname_presuffix(in_file, suffix="_padded", newpath=newpath)
     img.__class__(padded, img.affine, header=hdr).to_filename(out_file)
     return out_file, True
+
+
+def _ensure_positive_cosines(in_file: str, newpath: str = None):
+    """
+    Reorient axes polarity to have all positive direction cosines.
+
+    In other words, this interface will reorient the image polarities to be all
+    *positive*, respecting the axes ordering.
+    For instance, *LAS* -> *RAS* or *ALS* -> *ARS*.
+
+    """
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    img = nb.load(in_file)
+    img_axcodes = nb.aff2axcodes(img.affine)
+    in_ornt = nb.orientations.axcodes2ornt(img_axcodes)
+    out_ornt = in_ornt.copy()
+    out_ornt[:, 1] = 1
+    ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
+    out_file = fname_presuffix(in_file, suffix="_flipfree", newpath=newpath)
+    img.as_reoriented(ornt_xfm).to_filename(out_file)
+    return out_file

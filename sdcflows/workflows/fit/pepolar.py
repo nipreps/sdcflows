@@ -91,7 +91,7 @@ def init_topup_wf(
     from niworkflows.interfaces.images import RobustAverage
 
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.utils import Flatten, UniformGrid, PadSlices
+    from ...interfaces.utils import Flatten, UniformGrid, PadSlices, PositiveDirectionCosines
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -120,6 +120,7 @@ def init_topup_wf(
 
     epis_avg = pe.MapNode(RobustAverage(), name="epis_avg", iterfield="in_file")
     flatten = pe.Node(Flatten(), name="flatten")
+    reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     readout_time = pe.MapNode(
@@ -149,7 +150,8 @@ def init_topup_wf(
     workflow.connect([
         (inputnode, epis_avg, [("in_data", "in_file")]),
         (inputnode, flatten, [("metadata", "in_meta")]),
-        (epis_avg, flatten, [("out_file", "in_data")]),
+        (epis_avg, reorient, [("out_file", "in_file")]),
+        (reorient, flatten, [("out_file", "in_data")]),
         (flatten, readout_time, [("out_data", "in_file"),
                                  ("out_meta", "metadata")]),
         (flatten, regrid, [("out_data", "in_data")]),
