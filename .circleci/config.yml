@@ -93,7 +93,7 @@ jobs:
       - run:
           name: Install Brain extraction tests
           command: |
-            datalad install -r https://github.com/nipreps-data/brain-extraction-tests.git
+            datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests.git
             datalad update --merge -d brain-extraction-tests/
             datalad get -r -J 2 -d brain-extraction-tests
 
