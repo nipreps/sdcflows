@@ -91,7 +91,7 @@ def init_topup_wf(
     from niworkflows.interfaces.images import RobustAverage
 
     from ...utils.misc import front as _front
-    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.epi import GetReadoutTime, SortPEBlips
     from ...interfaces.utils import UniformGrid, PadSlices, PositiveDirectionCosines
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
@@ -136,6 +136,8 @@ def init_topup_wf(
     reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
     # Regrid all to the reference (grid_reference=0 means first averaged run)
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
+    # Sort PE blips to ensure reproducibility
+    sort_pe_blips = pe.Node(SortPEBlips(), name="sort_pe_blips", run_without_submitting=True)
     # Merge into one 4D file
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     # Pad dimensions so that they meet TOPUP's expectations
@@ -166,12 +168,15 @@ def init_topup_wf(
         (inputnode, readout_time, [("metadata", "metadata")]),
         (runwise_avg, reorient, [("out_file", "in_file")]),
         (reorient, regrid, [("out_file", "in_data")]),
-        (reorient, readout_time, [("out_file", "in_file")]),
-        (regrid, concat_blips, [("out_data", "in_files")]),
-        (readout_time, topup, [("readout_time", "readout_times"),
-                               ("pe_dir_fsl", "encoding_direction")]),
-        (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
+        (regrid, readout_time, [("out_data", "in_file")]),
+        (regrid, sort_pe_blips, [("out_data", "in_data")]),
+        (readout_time, sort_pe_blips, [("readout_time", "readout_times"),
+                                       ("pe_dir_fsl", "pe_dirs_fsl")]),
+        (sort_pe_blips, topup, [("readout_times", "readout_times"),
+                                ("pe_dirs_fsl", "encoding_direction")]),
+        (sort_pe_blips, fix_coeff, [(("pe_dirs", _front), "pe_dir")]),
         (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
+        (sort_pe_blips, concat_blips, [("out_data", "in_files")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
         (setwise_avg, topup, [("out_hmc_volumes", "in_file")]),
@@ -211,8 +216,8 @@ def init_topup_wf(
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
         (setwise_avg, split_blips, [("out_hmc_volumes", "in_file")]),
         (split_blips, unwarp, [("out_files", "in_data")]),
-        (readout_time, unwarp, [("readout_time", "ro_time"),
-                                ("pe_direction", "pe_dir")]),
+        (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
+                                 ("pe_dirs", "pe_dir")]),
         (unwarp, outputnode, [("out_warp", "out_warps"),
                               ("out_field", "fmap")]),
         (unwarp, concat_corrected, [("out_corrected", "in_files")]),

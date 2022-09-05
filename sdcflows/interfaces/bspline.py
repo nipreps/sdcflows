@@ -558,7 +558,7 @@ def _b0_resampler(data, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None)
         unwarp.xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
 
     if unwarp.fit(data):
-        unwarp.shifts.to_filename(retval[2])
+        unwarp.mapped.to_filename(retval[2])
     else:
         retval[2] = None
 
