@@ -90,6 +90,7 @@ def init_topup_wf(
     from niworkflows.interfaces.nibabel import MergeSeries
     from niworkflows.interfaces.images import RobustAverage
 
+    from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime
     from ...interfaces.utils import UniformGrid, PadSlices, PositiveDirectionCosines
     from ...interfaces.bspline import TOPUPCoeffReorient
@@ -169,6 +170,7 @@ def init_topup_wf(
         (regrid, concat_blips, [("out_data", "in_files")]),
         (readout_time, topup, [("readout_time", "readout_times"),
                                ("pe_dir_fsl", "encoding_direction")]),
+        (readout_time, fix_coeff, [(("pe_direction", _front), "pe_dir")]),
         (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
