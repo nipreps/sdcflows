@@ -91,7 +91,7 @@ def init_topup_wf(
     from niworkflows.interfaces.images import RobustAverage
 
     from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.utils import Flatten, UniformGrid, PadSlices, PositiveDirectionCosines
+    from ...interfaces.utils import UniformGrid, PadSlices, PositiveDirectionCosines
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -118,48 +118,57 @@ def init_topup_wf(
     )
     outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
-    epis_avg = pe.MapNode(RobustAverage(), name="epis_avg", iterfield="in_file")
-    flatten = pe.Node(Flatten(), name="flatten")
-    reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
-    regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
-    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
+    # Calculate the total readout time of each run
     readout_time = pe.MapNode(
         GetReadoutTime(),
         name="readout_time",
         iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
+    # Average each run so that topup is not overwhelmed (see #279)
+    runwise_avg = pe.MapNode(RobustAverage(), name="runwise_avg", iterfield="in_file")
+    # Make sure the dataset is oriented with positive largest cosines: RAS, ARS, RSA, etc.
+    reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
+    # Regrid all to the reference (grid_reference=0 means first averaged run)
+    regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
+    # Merge into one 4D file
+    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
+    # Pad dimensions so that they meet TOPUP's expectations
     pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
-    pad_ref_slices = pe.Node(PadSlices(), name="pad_ref_slices")
-
+    # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
+    # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
+    setwise_avg = pe.Node(RobustAverage(), name="setwise_avg")
+    # The core of the implementation
     topup = pe.Node(
         TOPUP(
             config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
         ),
         name="topup",
     )
-    ref_average = pe.Node(RobustAverage(), name="ref_average")
-
+    # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
     fix_coeff = pe.Node(
         TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
     )
+    # Average the output
+    ref_average = pe.Node(RobustAverage(), name="ref_average")
 
+    # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
 
     # fmt: off
     workflow.connect([
-        (inputnode, epis_avg, [("in_data", "in_file")]),
-        (inputnode, flatten, [("metadata", "in_meta")]),
-        (epis_avg, reorient, [("out_file", "in_file")]),
-        (reorient, flatten, [("out_file", "in_data")]),
-        (flatten, readout_time, [("out_data", "in_file"),
-                                 ("out_meta", "metadata")]),
-        (flatten, regrid, [("out_data", "in_data")]),
+        (inputnode, runwise_avg, [("in_data", "in_file")]),
+        (inputnode, readout_time, [("metadata", "metadata")]),
+        (runwise_avg, reorient, [("out_file", "in_file")]),
+        (reorient, regrid, [("out_file", "in_data")]),
+        (reorient, readout_time, [("out_file", "in_file")]),
         (regrid, concat_blips, [("out_data", "in_files")]),
         (readout_time, topup, [("readout_time", "readout_times"),
                                ("pe_dir_fsl", "encoding_direction")]),
-        (regrid, pad_ref_slices, [("reference", "in_file")]),
-        (pad_ref_slices, fix_coeff, [("out_file", "fmap_ref")]),
+        (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
+        (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
+        (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
+        (setwise_avg, topup, [("out_volumes", "in_file")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -175,8 +184,6 @@ def init_topup_wf(
     if not debug:
         # fmt: off
         workflow.connect([
-            (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
-            (pad_blip_slices, topup, [("out_file", "in_file")]),
             (topup, ref_average, [("out_corrected", "in_file")]),
             (topup, outputnode, [("out_field", "fmap"),
                                  ("out_warps", "out_warps")]),
@@ -184,14 +191,10 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
-    from nipype.interfaces.afni.preprocess import Volreg
     from niworkflows.interfaces.nibabel import SplitSeries
     from ...interfaces.bspline import ApplyCoeffsField
 
-    realign = pe.Node(
-        Volreg(args=f"-base {grid_reference}", outputtype="NIFTI_GZ"),
-        name="realign_blips",
-    )
+    # Separate the runs again, as our ApplyCoeffsField corrects them separatelly
     split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
@@ -199,11 +202,8 @@ def init_topup_wf(
 
     # fmt:off
     workflow.connect([
-        (concat_blips, realign, [("out_file", "in_file")]),
-        (realign, pad_blip_slices, [("out_file", "in_file")]),
-        (pad_blip_slices, topup, [("out_file", "in_file")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (realign, split_blips, [("out_file", "in_file")]),
+        (setwise_avg, split_blips, [("out_volumes", "in_file")]),
         (split_blips, unwarp, [("out_files", "in_data")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
