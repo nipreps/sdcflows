@@ -126,7 +126,11 @@ def init_topup_wf(
         run_without_submitting=True,
     )
     # Average each run so that topup is not overwhelmed (see #279)
-    runwise_avg = pe.MapNode(RobustAverage(), name="runwise_avg", iterfield="in_file")
+    runwise_avg = pe.MapNode(
+        RobustAverage(num_threads=omp_nthreads),
+        name="runwise_avg",
+        iterfield="in_file",
+    )
     # Make sure the dataset is oriented with positive largest cosines: RAS, ARS, RSA, etc.
     reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
     # Regrid all to the reference (grid_reference=0 means first averaged run)
@@ -137,7 +141,7 @@ def init_topup_wf(
     pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
     # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    setwise_avg = pe.Node(RobustAverage(), name="setwise_avg")
+    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
     # The core of the implementation
     topup = pe.Node(
         TOPUP(
@@ -150,7 +154,7 @@ def init_topup_wf(
         TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
     )
     # Average the output
-    ref_average = pe.Node(RobustAverage(), name="ref_average")
+    ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name="ref_average")
 
     # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
@@ -168,7 +172,7 @@ def init_topup_wf(
         (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
-        (setwise_avg, topup, [("out_volumes", "in_file")]),
+        (setwise_avg, topup, [("out_hmc_volumes", "in_file")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -203,7 +207,7 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (setwise_avg, split_blips, [("out_volumes", "in_file")]),
+        (setwise_avg, split_blips, [("out_hmc_volumes", "in_file")]),
         (split_blips, unwarp, [("out_files", "in_data")]),
         (readout_time, unwarp, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
