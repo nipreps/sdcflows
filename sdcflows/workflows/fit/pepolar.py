@@ -132,8 +132,6 @@ def init_topup_wf(
         name="runwise_avg",
         iterfield="in_file",
     )
-    # Make sure the dataset is oriented with positive largest cosines: RAS, ARS, RSA, etc.
-    reorient = pe.MapNode(PositiveDirectionCosines(), name="reorient", iterfield="in_file")
     # Regrid all to the reference (grid_reference=0 means first averaged run)
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
     # Sort PE blips to ensure reproducibility
@@ -146,6 +144,8 @@ def init_topup_wf(
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
     setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
     # The core of the implementation
+    # Make sure the dataset is oriented with positive largest cosines: RAS, ARS, RSA, etc.
+    reorient = pe.Node(PositiveDirectionCosines(), name="reorient")
     topup = pe.Node(
         TOPUP(
             config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
@@ -166,8 +166,7 @@ def init_topup_wf(
     workflow.connect([
         (inputnode, runwise_avg, [("in_data", "in_file")]),
         (inputnode, readout_time, [("metadata", "metadata")]),
-        (runwise_avg, reorient, [("out_file", "in_file")]),
-        (reorient, regrid, [("out_file", "in_data")]),
+        (runwise_avg, regrid, [("out_file", "in_data")]),
         (regrid, readout_time, [("out_data", "in_file")]),
         (regrid, sort_pe_blips, [("out_data", "in_data")]),
         (readout_time, sort_pe_blips, [("readout_time", "readout_times"),
@@ -179,7 +178,8 @@ def init_topup_wf(
         (sort_pe_blips, concat_blips, [("out_data", "in_files")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
-        (setwise_avg, topup, [("out_hmc_volumes", "in_file")]),
+        (setwise_avg, reorient, [("out_hmc_volumes", "in_file")]),
+        (reorient, topup, [("out_file", "in_file")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),

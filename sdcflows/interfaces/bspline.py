@@ -396,6 +396,8 @@ class TOPUPCoeffReorient(SimpleInterface):
     The q-form of these NIfTI files is always diagonal, with the decimation factors
     set on the diagonal (and hence, the voxel zooms).
     The origin of the q-form is set to the reference image's shape.
+    All the director cosines of the output coefficients will be positive.
+    In other words, the output orientation is either RAS, ARS, ASR, SAR, or SRA.
 
     This interface modifies these coefficient files to be fully-fledged NIfTI images
     aligned with the reference image.
@@ -460,6 +462,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     from pathlib import Path
     import numpy as np
     import nibabel as nb
+    from sdcflows.utils.tools import ensure_positive_cosines
 
     if out_file is None:
         out_file = Path("coefficients.nii.gz").absolute()
@@ -473,7 +476,8 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     # Internal data orientation of FSL is LAS, so coefficients will be LR flipped,
     # and because the affine does not encode orientation (factors instead), this flip
     # always is implicit.
-    # If the PE direction is x/i, then the fieldmap estimation will also be sign-reversed
+    # If the PE direction is x/i, the flip in the axis direction causes that the
+    # fieldmap estimation must also be inverted in direction (multiply by -1.0)
     reverse_pe = -1.0 if "i" in pe_dir.replace("x", "i") else 1.0
     lr_axis = "".join(nb.aff2axcodes(coeffnii.affine)).index("R")
     coeffnii = coeffnii.__class__(
@@ -481,13 +485,8 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
         coeffnii.affine,
         coeffnii.header,
     )
-    # Coefficients - ensure consistent orientation with reference
-    ref_axcodes = nb.aff2axcodes(refnii.affine)
-    coeff_axcodes = nb.aff2axcodes(coeffnii.affine)
-    in_ornt = nb.orientations.axcodes2ornt(coeff_axcodes)
-    out_ornt = nb.orientations.axcodes2ornt(ref_axcodes)
-    ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
-    coeffnii = coeffnii.as_reoriented(ornt_xfm)
+    # Ensure reference has positive director cosines
+    refnii, ref_axcodes = ensure_positive_cosines(refnii)
 
     # Get matrix of B-Spline control knots
     coeff_shape = np.array(coeffnii.shape[:3])
@@ -535,13 +534,15 @@ def _split_itk_file(in_file):
         yield str(p)
 
 
-def _b0_resampler(data, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
+def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
     """Outsource the resampler into a separate callable function to allow parallelization."""
     from functools import partial
+    from niworkflows.interfaces.nibabel import reorient_image
+    from sdcflows.utils.tools import ensure_positive_cosines
 
     # Prepare output names
     filename = partial(fname_presuffix, newpath=newpath)
-    retval = [filename(data, suffix=s) for s in ("_unwarped", "_xfm", "_field")]
+    retval = [filename(in_file, suffix=s) for s in ("_unwarped", "_xfm", "_field")]
 
     if unwarp is None:
         from sdcflows.transform import B0FieldTransform
@@ -557,12 +558,23 @@ def _b0_resampler(data, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None)
 
         unwarp.xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
 
-    if unwarp.fit(data):
+    # Reorient input to match that of the coefficients, i.e., to have positive director cosines
+    reoriented_img, axcodes = ensure_positive_cosines(nb.load(in_file))
+
+    if unwarp.fit(reoriented_img):
         unwarp.mapped.to_filename(retval[2])
     else:
         retval[2] = None
 
-    unwarp.apply(nb.load(data), ro_time=ro, pe_dir=pe).to_filename(retval[0])
+    # Unwarp the reoriented image, and restore original orientation
+    unwarped_img = reorient_image(
+        unwarp.apply(reoriented_img, ro_time=ro, pe_dir=pe),
+        axcodes,
+    )
+    # Write out to disk
+    unwarped_img.to_filename(retval[0])
+
+    # Store the corresponding spatial transformation
     unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(retval[1])
 
     return retval

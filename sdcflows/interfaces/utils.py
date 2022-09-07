@@ -303,6 +303,7 @@ class _PositiveDirectionCosinesInputSpec(BaseInterfaceInputSpec):
 
 class _PositiveDirectionCosinesOutputSpec(TraitedSpec):
     out_file = File(exists=True)
+    in_orientation = traits.Str()
 
 
 class PositiveDirectionCosines(SimpleInterface):
@@ -312,7 +313,10 @@ class PositiveDirectionCosines(SimpleInterface):
     output_spec = _PositiveDirectionCosinesOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_file"] = _ensure_positive_cosines(
+        (
+            self._results["out_file"],
+            self._results["in_orientation"]
+        ) = _ensure_positive_cosines(
             self.inputs.in_file,
             newpath=runtime.cwd,
         )
@@ -491,13 +495,9 @@ def _ensure_positive_cosines(in_file: str, newpath: str = None):
     """
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
+    from sdcflows.utils.tools import ensure_positive_cosines
 
-    img = nb.load(in_file)
-    img_axcodes = nb.aff2axcodes(img.affine)
-    in_ornt = nb.orientations.axcodes2ornt(img_axcodes)
-    out_ornt = in_ornt.copy()
-    out_ornt[:, 1] = 1
-    ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
     out_file = fname_presuffix(in_file, suffix="_flipfree", newpath=newpath)
-    img.as_reoriented(ornt_xfm).to_filename(out_file)
-    return out_file
+    reoriented, axcodes = ensure_positive_cosines(nb.load(in_file))
+    reoriented.to_filename(out_file)
+    return out_file, "".join(axcodes)

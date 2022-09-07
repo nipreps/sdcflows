@@ -23,6 +23,26 @@
 """Image processing tools."""
 
 
+def ensure_positive_cosines(img):
+    """
+    Reorient axes polarity to have all positive direction cosines.
+
+    In other words, this interface will reorient the image polarities to be all
+    *positive*, respecting the axes ordering.
+    For instance, *LAS* -> *RAS* or *ALS* -> *ARS*.
+
+    """
+    import nibabel as nb
+
+    img_axcodes = nb.aff2axcodes(img.affine)
+    in_ornt = nb.orientations.axcodes2ornt(img_axcodes)
+    out_ornt = in_ornt.copy()
+    out_ornt[:, 1] = 1
+    ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
+
+    return img.as_reoriented(ornt_xfm), img_axcodes
+
+
 def brain_masker(in_file, out_file=None, padding=5):
     """Use grayscale morphological operations to obtain a quick mask of EPI data."""
     from pathlib import Path

@@ -33,6 +33,9 @@ import nitransforms as nt
 from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
+from niworkflows.interfaces.nibabel import reorient_image
+from sdcflows.utils.tools import ensure_positive_cosines
+
 
 def _clear_mapped(instance, attribute, value):
     instance.mapped = None
@@ -154,6 +157,8 @@ class B0FieldTransform:
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
+        spatialimage, axcodes = ensure_positive_cosines(spatialimage)
+
         self.fit(spatialimage)
         fmap = self.mapped.get_fdata().copy()
 
@@ -203,7 +208,7 @@ class B0FieldTransform:
             resampled, spatialimage.affine, spatialimage.header
         )
         moved.header.set_data_dtype(output_dtype)
-        return moved
+        return reorient_image(moved, axcodes)
 
     def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
