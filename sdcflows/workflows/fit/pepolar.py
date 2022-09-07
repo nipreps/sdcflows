@@ -87,12 +87,12 @@ def init_topup_wf(
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
-    from niworkflows.interfaces.nibabel import MergeSeries
+    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
     from niworkflows.interfaces.images import RobustAverage
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import UniformGrid, PadSlices, PositiveDirectionCosines
+    from ...interfaces.utils import UniformGrid, PadSlices
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -144,8 +144,8 @@ def init_topup_wf(
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
     setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
     # The core of the implementation
-    # Make sure the dataset is oriented with positive largest cosines: RAS, ARS, RSA, etc.
-    reorient = pe.Node(PositiveDirectionCosines(), name="reorient")
+    # Feed the input images in LAS orientation, so FSL does not run funky reorientations
+    to_las = pe.Node(ReorientImage(target_orientation="LAS"), name="to_las")
     topup = pe.Node(
         TOPUP(
             config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
@@ -156,6 +156,7 @@ def init_topup_wf(
     fix_coeff = pe.Node(
         TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
     )
+
     # Average the output
     ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name="ref_average")
 
@@ -178,8 +179,8 @@ def init_topup_wf(
         (sort_pe_blips, concat_blips, [("out_data", "in_files")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
-        (setwise_avg, reorient, [("out_hmc_volumes", "in_file")]),
-        (reorient, topup, [("out_file", "in_file")]),
+        (setwise_avg, to_las, [("out_hmc_volumes", "in_file")]),
+        (to_las, topup, [("out_file", "in_file")]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
@@ -193,11 +194,18 @@ def init_topup_wf(
     # fmt: on
 
     if not debug:
+        # Roll orientation back to original
+        from_las = pe.Node(ReorientImage(), name="from_las")
+        from_las_fmap = pe.Node(ReorientImage(), name="from_las_fmap")
         # fmt: off
         workflow.connect([
-            (topup, ref_average, [("out_corrected", "in_file")]),
-            (topup, outputnode, [("out_field", "fmap"),
-                                 ("out_warps", "out_warps")]),
+            (setwise_avg, from_las, [("out_file", "target_file")]),
+            (setwise_avg, from_las_fmap, [("out_file", "target_file")]),
+            (topup, from_las, [("out_corrected", "in_file")]),
+            (from_las, ref_average, [("out_file", "in_file")]),
+            (topup, from_las_fmap, [("out_field", "in_file")]),
+            (topup, outputnode, [("out_warps", "out_warps")]),
+            (from_las_fmap, outputnode, [("out_file", "fmap")]),
         ])
         # fmt: on
         return workflow
