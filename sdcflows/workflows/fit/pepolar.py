@@ -213,7 +213,7 @@ def init_topup_wf(
     from niworkflows.interfaces.nibabel import SplitSeries
     from ...interfaces.bspline import ApplyCoeffsField
 
-    # Separate the runs again, as our ApplyCoeffsField corrects them separatelly
+    # Separate the runs again, as our ApplyCoeffsField corrects them separately
     split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True

@@ -302,7 +302,7 @@ class _PositiveDirectionCosinesInputSpec(BaseInterfaceInputSpec):
 
 
 class _PositiveDirectionCosinesOutputSpec(TraitedSpec):
-    out_file = File(exists=True)
+    out_file = File()
     in_orientation = traits.Str()
 
 

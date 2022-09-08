@@ -88,7 +88,7 @@ class _SortPEBlipsInputSpec(BaseInterfaceInputSpec):
 
 class _SortPEBlipsOutputSpec(TraitedSpec):
     out_data = OutputMultiObject(
-        File(exists=True),
+        File(),
         desc="list of input data",
     )
     pe_dirs = InputMultiObject(
