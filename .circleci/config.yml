@@ -5,7 +5,7 @@ orbs:
 jobs:
   cache_test_data:
     docker: # executor type
-      - image: nipreps/miniconda:py39_2205.0
+      - image: nipreps/miniconda:py39_2209.01
         auth:
           username: $DOCKER_USER
           password: $DOCKER_PAT
@@ -23,17 +23,6 @@ jobs:
             git config --global user.name "First Last"
             git config --global user.email "email@domain.com"
 
-      - run:
-          name: Ensure some templates are cached
-          command: |
-            python -c "from templateflow import api as tfapi; \
-                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
-                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
-
-      - run:
-          name: Install datalad-osf
-          command: python -m pip install -U datalad-osf
-
       - restore_cache:
           keys:
             - data-v6-{{ .Branch }}-{{ .Revision }}
@@ -41,6 +30,13 @@ jobs:
             - data-v6-{{ .Branch }}-
             - data-v6-main-
             - data-v6-
+
+      - run:
+          name: Ensure some templates are cached
+          command: |
+            python -c "from templateflow import api as tfapi; \
+                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
+                       tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
 
       - run:
           name: Install ds001600
