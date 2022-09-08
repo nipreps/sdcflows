@@ -4,7 +4,7 @@ matplotlib >= 2.2.0
 nibabel
 nipype >= 1.5.1
 traits < 6.4
-niworkflows ~= 1.6.0
+niworkflows ~= 1.6.3
 numpy
 packaging
 pydot >= 1.2.3
