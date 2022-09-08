@@ -4,55 +4,43 @@ orbs:
 
 jobs:
   cache_test_data:
-    docker:
-      - image: python:3.7.4
+    docker: # executor type
+      - image: nipreps/miniconda:py39_2205.0
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PAT
+
     working_directory: /tmp/data
     environment:
       - TEMPLATEFLOW_HOME: /tmp/templateflow
     steps:
-      - restore_cache:
-          keys:
-            - env-v2-{{ .Branch }}-
-            - env-v2-master-
-            - env-v2-
-      - restore_cache:
-          keys:
-            - data-v5-{{ .Branch }}-
-            - data-v5-master-
-            - data-v5-
       - checkout:
           path: /tmp/src/sdcflows
-      - run:
-          name: Setup git-annex
+
+      - run: 
+          name: Configure git (pacify datalad)
           command: |
-            if [[ ! -d /usr/lib/git-annex.linux ]]; then
-              wget -O- http://neuro.debian.net/lists/focal.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-              apt-key add /tmp/src/sdcflows/.docker/files/neurodebian.gpg
-              apt-key adv --recv-keys --keyserver hkps://keys.openpgp.org 0xA5D32F012649A5A9 || true
-              apt update && apt-get install -y --no-install-recommends git-annex-standalone
-            fi
-            git config --global user.name 'NiPreps Bot'
-            git config --global user.email 'nipreps@gmail.com'
+            git config --global user.name "First Last"
+            git config --global user.email "email@domain.com"
 
       - run:
-          name: Setup DataLad & TemplateFlow
+          name: Ensure some templates are cached
           command: |
-            python -m pip install --no-cache-dir -U pip
-            python -m pip install --no-cache-dir -U datalad datalad-osf
-            python -m pip install --no-cache-dir -U templateflow
             python -c "from templateflow import api as tfapi; \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
 
-      - save_cache:
-          key: env-v2-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - /tmp/cache/git-annex-standalone.tar.gz
-            - /usr/local/bin
-            - /usr/local/lib/python3.7/site-packages
-            - /usr/bin/git-annex
-            - /usr/bin/git-annex-shell
-            - /usr/lib/git-annex.linux
+      - run:
+          name: Install datalad-osf
+          command: python -m pip install -U datalad-osf
+
+      - restore_cache:
+          keys:
+            - data-v6-{{ .Branch }}-{{ .Revision }}
+            - data-v6--{{ .Revision }}
+            - data-v6-{{ .Branch }}-
+            - data-v6-main-
+            - data-v6-
 
       - run:
           name: Install ds001600
@@ -98,7 +86,7 @@ jobs:
             datalad get -r -J 2 -d brain-extraction-tests
 
       - save_cache:
-          key: data-v5-{{ .Branch }}-{{ .BuildNum }}
+          key: data-v6-{{ .Branch }}-{{ .Revision }}
           paths:
             - /tmp/data
             - /tmp/templateflow
@@ -190,7 +178,7 @@ jobs:
             export PY3=$(pyenv versions | grep '3\.' |
                          sed -e 's/.* 3\./3./' -e 's/ .*//')
             pyenv local $PY3
-            python3 -m pip install "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4" "pip>=10.0.1"
+            python3 -m pip install "setuptools ~= 45.0" "setuptools_scm >= 6.2" "pip>=10.0.1"
 
             # Get version, update files.
             THISVERSION=$( python3 setup.py --version )
@@ -241,9 +229,12 @@ jobs:
             - freesurfer-v1-
       - restore_cache:
           keys:
-            - data-v5-{{ .Branch }}-
-            - data-v5-master-
-            - data-v5-
+            - data-v6-{{ .Branch }}-{{ .Revision }}
+            - data-v6--{{ .Revision }}
+            - data-v6-{{ .Branch }}-
+            - data-v6-main-
+            - data-v6-
+
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
@@ -336,12 +327,16 @@ jobs:
       - run:
           name: Install deps
           command: |
+            python -m venv /tmp/venv
+            source /tmp/venv/bin/activate
+            python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
+                          setuptools_scm_git_archive pip twine docutils
             pip install --no-cache-dir -r docs/requirements.txt
-            pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
-            python setup.py --version
       - run:
           name: Build only this commit
           command: |
+            source /tmp/venv/bin/activate
+            python -m setuptools_scm
             BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
             make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
       - store_artifacts:
@@ -383,55 +378,39 @@ jobs:
 
   test_package:
     docker:
-      - image: circleci/python:3.7.4
+      - image: cimg/python:3.8.5
     working_directory: /tmp/src/sdcflows
     steps:
       - checkout
       - run:
           name: Prepare environment & build
           command: |
-            python3 -m venv /tmp/buildenv
+            python -m venv /tmp/buildenv
             source /tmp/buildenv/bin/activate
-            python3 -m pip install "setuptools ~= 45.0" wheel "setuptools_scm[toml] >= 3.4" \
-                "pip>=10.0.1" twine docutils
-            python setup.py sdist bdist_wheel
-            twine check dist/sdcflows*
+            python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
+                          setuptools_scm_git_archive pip twine docutils
+            python -m build -s -w
+            python -m twine check dist/*
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
       - persist_to_workspace:
           root: /tmp/src/sdcflows
           paths: dist
+
       - run:
-          name: Install on separate environment and check version [sdist]
+          name: Validate version
           command: |
-            python3 -m venv /tmp/install_sdist
-            source /tmp/install_sdist/bin/activate
-            python3 -m pip install -U pip
-            python3 -m pip install "setuptools ~= 45.0"
-            THISVERSION=$( python3 setup.py --version )
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            python3 -m pip install dist/sdcflows*.tar.gz
-            INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
-            echo "VERSION: \"${THISVERSION}\""
-            echo "INSTALLED: \"${INSTALLED_VERSION}\""
-            test "${INSTALLED_VERSION}" = "${THISVERSION}"
-      - run:
-          name: Install on separate environment and check version [wheel]
-          command: |
-            python3 -m venv /tmp/install_wheel
-            source /tmp/install_wheel/bin/activate
-            python3 -m pip install "setuptools ~= 45.0" "pip>=10.0.1"
-            THISVERSION=$( python3 setup.py --version )
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            python3 -m pip install dist/sdcflows*.whl
-            INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
-            echo "VERSION: \"${THISVERSION}\""
-            echo "INSTALLED: \"${INSTALLED_VERSION}\""
-            test "${INSTALLED_VERSION}" = "${THISVERSION}"
+            source /tmp/buildenv/bin/activate
+            THISVERSION=$( python -m setuptools_scm )
+            python -m pip install dist/*.tar.gz
+            mkdir empty
+            cd empty
+            INSTALLED=$( python -c 'import sdcflows; print(sdcflows.__version__)' )
+            test "${CIRCLE_TAG:-$THISVERSION}" == "$INSTALLED"
 
   deploy_pypi:
     docker:
-      - image: circleci/python:3.7.4
+      - image: cimg/python:3.8.5
     working_directory: /tmp/src/sdcflows
     steps:
       - attach_workspace:
@@ -439,11 +418,11 @@ jobs:
       - run:
           name: Upload to Pypi
           command: |
-            python3 -m venv /tmp/upload
+            python -m venv /tmp/upload
             source /tmp/upload/bin/activate
-            python3 -m pip install twine
-            python3 -m twine check dist/*
-            python3 -m twine upload dist/* --non-interactive
+            python -m pip install twine
+            python -m twine check dist/*
+            python -m twine upload dist/* --non-interactive
 
 workflows:
   version: 2
