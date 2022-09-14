@@ -1,5 +1,5 @@
 import pytest
-from niworkflows.utils.tests.bids import generate_bids_skeleton
+from niworkflows.utils.testing import generate_bids_skeleton
 
 from ..find_estimators import main as find_estimators
 from ...fieldmaps import clear_registry
