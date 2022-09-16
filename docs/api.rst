@@ -6,6 +6,7 @@ Information on specific functions, classes, and methods.
 .. toctree::
    :glob:
 
+   api/sdcflows.cli
    api/sdcflows.fieldmaps
    api/sdcflows.interfaces
    api/sdcflows.transform
