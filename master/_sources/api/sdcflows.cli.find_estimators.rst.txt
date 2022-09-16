@@ -1,0 +1,7 @@
+sdcflows.cli.find\_estimators module
+====================================
+
+.. automodule:: sdcflows.cli.find_estimators
+   :members:
+   :undoc-members:
+   :show-inheritance:

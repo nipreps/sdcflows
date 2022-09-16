@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.epi - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.cli.find_estimators - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -241,73 +241,105 @@
           </label>
         </div>
         <article role="main">
-          <h1>Source code for sdcflows.interfaces.epi</h1><div class="highlight"><pre>
-<span></span><span class="c1"># emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-</span>
-<span class="c1"># vi: set ft=python sts=4 ts=4 sw=4 et:</span>
-<span class="c1">#</span>
-<span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
-<span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
-<span class="c1"># you may not use this file except in compliance with the License.</span>
-<span class="c1"># You may obtain a copy of the License at</span>
-<span class="c1">#</span>
-<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c1">#</span>
-<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
-<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c1"># See the License for the specific language governing permissions and</span>
-<span class="c1"># limitations under the License.</span>
-<span class="c1">#</span>
-<span class="c1"># We support and encourage derived works from this project, please read</span>
-<span class="c1"># about our expectations at</span>
-<span class="c1">#</span>
-<span class="c1">#     https://www.nipreps.org/community/licensing/</span>
-<span class="c1">#</span>
-<span class="sd">"""Interfaces to deal with the various types of fieldmap sources."""</span>
-
-<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">BaseInterfaceInputSpec</span><span class="p">,</span>
-    <span class="n">TraitedSpec</span><span class="p">,</span>
-    <span class="n">File</span><span class="p">,</span>
-    <span class="n">isdefined</span><span class="p">,</span>
-    <span class="n">traits</span><span class="p">,</span>
-    <span class="n">SimpleInterface</span><span class="p">,</span>
-<span class="p">)</span>
+          <h1>Source code for sdcflows.cli.find_estimators</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 
 
-<span class="k">class</span> <span class="nc">_GetReadoutTimeInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"EPI image corresponding to the metadata"</span><span class="p">)</span>
-    <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"metadata corresponding to the inputs"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_drop_sub</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"sub-"</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
 
 
-<span class="k">class</span> <span class="nc">_GetReadoutTimeOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">readout_time</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span>
-    <span class="n">pe_direction</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="s2">"i-"</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">,</span> <span class="s2">"j-"</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">,</span> <span class="s2">"k-"</span><span class="p">)</span>
-    <span class="n">pe_dir_fsl</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"x-"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"y-"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"z-"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_parser</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Parse a BIDS directory and show what estimators are available"</span><span class="p">,</span>
+        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawDescriptionHelpFormatter</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"bids_dir"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"The input BIDS directory to parse"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-s"</span><span class="p">,</span>
+        <span class="s2">"--subjects"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">_drop_sub</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"+"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"One or more subject identifiers"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--fmapless"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Allow fieldmap-less estimation"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--bids-database-dir"</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"PATH"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Path to a PyBIDS database folder, for faster indexing (especially "</span>
+             <span class="s2">"useful for large datasets). Will be created if not present."</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span>
 
 
-<div class="viewcode-block" id="GetReadoutTime"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.epi.html#sdcflows.interfaces.epi.GetReadoutTime">[docs]</a><span class="k">class</span> <span class="nc">GetReadoutTime</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-    <span class="sd">"""Calculate the readout time from available metadata."""</span>
+<div class="viewcode-block" id="gen_layout"><a class="viewcode-back" href="../../../api/sdcflows.cli.find_estimators.html#sdcflows.cli.find_estimators.gen_layout">[docs]</a><span class="k">def</span> <span class="nf">gen_layout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="n">database_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">re</span>
+    <span class="kn">from</span> <span class="nn">bids.layout</span> <span class="k">import</span> <span class="n">BIDSLayout</span><span class="p">,</span> <span class="n">BIDSLayoutIndexer</span>
 
-    <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_GetReadoutTimeInputSpec</span>
-    <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_GetReadoutTimeOutputSpec</span>
+    <span class="n">_indexer</span> <span class="o">=</span> <span class="n">BIDSLayoutIndexer</span><span class="p">(</span>
+        <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">ignore</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"code"</span><span class="p">,</span>
+            <span class="s2">"stimuli"</span><span class="p">,</span>
+            <span class="s2">"sourcedata"</span><span class="p">,</span>
+            <span class="s2">"models"</span><span class="p">,</span>
+            <span class="s2">"derivatives"</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\."</span><span class="p">),</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|micr|perf)"</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">..utils.epimanip</span> <span class="k">import</span> <span class="n">get_trt</span>
+    <span class="n">layout_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'indexer'</span><span class="p">:</span> <span class="n">_indexer</span><span class="p">}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"readout_time"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_trt</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span> <span class="k">if</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="k">if</span> <span class="n">database_dir</span><span class="p">:</span>
+        <span class="n">layout_kwargs</span><span class="p">[</span><span class="s1">'database_path'</span><span class="p">]</span> <span class="o">=</span> <span class="n">database_dir</span>
+
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">BIDSLayout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">layout_kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">layout</span></div>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../api/sdcflows.cli.find_estimators.html#sdcflows.cli.find_estimators.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Parse a BIDS directory and print subject estimators</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="k">import</span> <span class="n">collect_participants</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.utils.wrangler</span> <span class="k">import</span> <span class="n">find_estimators</span>
+
+    <span class="n">pargs</span> <span class="o">=</span> <span class="n">_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+    <span class="n">bids_dir</span> <span class="o">=</span> <span class="n">pargs</span><span class="o">.</span><span class="n">bids_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">gen_layout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="n">pargs</span><span class="o">.</span><span class="n">bids_database_dir</span><span class="p">)</span>
+    <span class="n">subjects</span> <span class="o">=</span> <span class="n">collect_participants</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">pargs</span><span class="o">.</span><span class="n">subjects</span><span class="p">)</span>
+    <span class="n">estimators_record</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">subjects</span><span class="p">:</span>
+        <span class="n">estimators_record</span><span class="p">[</span><span class="n">subject</span><span class="p">]</span> <span class="o">=</span> <span class="n">find_estimators</span><span class="p">(</span>
+            <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">fmapless</span><span class="o">=</span><span class="n">pargs</span><span class="o">.</span><span class="n">fmapless</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_direction"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dir_fsl"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">]</span>
-            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">runtime</span></div>
+
+    <span class="c1"># pretty print results</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Estimation for &lt;{str(bids_dir)}&gt; complete. Found:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">subject</span><span class="p">,</span> <span class="n">estimators</span> <span class="ow">in</span> <span class="n">estimators_record</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"</span><span class="se">\t</span><span class="s2">sub-</span><span class="si">{subject}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">estimators</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\t\t</span><span class="s2">No estimators found"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">estimator</span> <span class="ow">in</span> <span class="n">estimators</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"</span><span class="se">\t\t</span><span class="si">{estimator}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">fl</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+                <span class="n">fl_relpath</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">bids_dir</span> <span class="o">/</span> <span class="n">f</span><span class="s1">'sub-</span><span class="si">{subject}</span><span class="s1">'</span><span class="p">))</span>
+                <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"</span><span class="se">\t\t\t</span><span class="si">{pe_dir}</span><span class="se">\t</span><span class="si">{fl_relpath}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
         </article>
       </div>

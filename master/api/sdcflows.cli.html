@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.workflows.base module" href="sdcflows.workflows.base.html" /><link rel="prev" title="sdcflows.workflows.fit.syn module" href="sdcflows.workflows.fit.syn.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.cli.find_estimators module" href="sdcflows.cli.find_estimators.html" /><link rel="prev" title="Library API (application program interface)" href="../api.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.workflows.ancillary module - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.cli package - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -135,7 +135,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -168,7 +168,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../methods.html">Methods and implementation</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">sdcflows.cli package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
 </ul>
 </li>
@@ -196,7 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.viz.utils.html">sdcflows.viz.utils module</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current has-children"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.apply.correction.html">sdcflows.workflows.apply.correction module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.apply.registration.html">sdcflows.workflows.apply.registration module</a></li>
@@ -208,7 +208,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sdcflows.workflows.ancillary module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.workflows.ancillary.html">sdcflows.workflows.ancillary module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.workflows.base.html">sdcflows.workflows.base module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.workflows.outputs.html">sdcflows.workflows.outputs module</a></li>
 </ul>
@@ -236,40 +236,22 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="module-sdcflows.workflows.ancillary">
-<span id="sdcflows-workflows-ancillary-module"></span><h1>sdcflows.workflows.ancillary module<a class="headerlink" href="#module-sdcflows.workflows.ancillary" title="Permalink to this headline">¶</a></h1>
-<p>Estimate fieldmaps for <abbr title="susceptibility distortion correction">SDC</abbr>.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="sdcflows.workflows.ancillary.init_brainextraction_wf">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.ancillary.</span></span><span class="sig-name descname"><span class="pre">init_brainextraction_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brainextraction_wf'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/ancillary.html#init_brainextraction_wf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.ancillary.init_brainextraction_wf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove nonbrain tissue from images.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>, optional) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">"brainextraction_wf"</span></code>)</p>
-</dd>
-<dt class="field-even">Inputs</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>in_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – the GRE magnitude or EPI reference to be brain-extracted</p></li>
-<li><p><strong>bspline_dist</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – Integer to replace default distance of b-spline separation for N4</p></li>
+          <section id="module-sdcflows.cli">
+<span id="sdcflows-cli-package"></span><h1>sdcflows.cli package<a class="headerlink" href="#module-sdcflows.cli" title="Permalink to this headline">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
 </ul>
-</dd>
-<dt class="field-odd">Outputs</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>out_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – the input file after N4 and smart clipping</p></li>
-<li><p><strong>out_brain</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – the output file, just the brain extracted</p></li>
-<li><p><strong>out_mask</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – the calculated mask</p></li>
-<li><p><strong>out_probseg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – a probability map that the random walker reached
-a given voxel (some sort of “soft” brainmask)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
+</div>
+</section>
 </section>
 
         </article>
@@ -277,23 +259,23 @@ a given voxel (some sort of “soft” brainmask)</p></li>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="sdcflows.workflows.base.html">
+          <a class="next-page" href="sdcflows.cli.find_estimators.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">sdcflows.workflows.base module</div>
+                <div class="title">sdcflows.cli.find_estimators module</div>
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="sdcflows.workflows.fit.syn.html">
+          <a class="prev-page" href="../api.html">
               <svg><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">sdcflows.workflows.fit.syn module</div>
+                <div class="title">Library API (application program interface)</div>
                 
               </div>
             </a>
@@ -305,7 +287,7 @@ a given voxel (some sort of “soft” brainmask)</p></li>
               and
               <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
               <a href="https://github.com/pradyunsg/furo">Furo theme</a>. |
-            <a class="muted-link" href="../_sources/api/sdcflows.workflows.ancillary.rst.txt"
+            <a class="muted-link" href="../_sources/api/sdcflows.cli.rst.txt"
                rel="nofollow">
               Show Source
             </a>
@@ -313,8 +295,27 @@ a given voxel (some sort of “soft” brainmask)</p></li>
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sdcflows.cli package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
