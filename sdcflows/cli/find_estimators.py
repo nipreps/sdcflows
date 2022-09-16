@@ -48,7 +48,7 @@ def gen_layout(bids_dir, database_dir=None):
             "models",
             "derivatives",
             re.compile(r"^\."),
-            re.compile(r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|perf)"),
+            re.compile(r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(anat|beh|eeg|ieeg|meg|micr|perf)"),
         ),
     )
 
