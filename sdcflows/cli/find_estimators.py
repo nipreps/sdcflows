@@ -25,10 +25,17 @@ def _parser():
         default=False,
         help="Allow fieldmap-less estimation",
     )
+    parser.add_argument(
+        "--bids-database-dir",
+        metavar="PATH",
+        type=Path,
+        help="Path to a PyBIDS database folder, for faster indexing (especially "
+             "useful for large datasets). Will be created if not present."
+    )
     return parser
 
 
-def gen_layout(bids_dir):
+def gen_layout(bids_dir, database_dir=None):
     import re
     from bids.layout import BIDSLayout, BIDSLayoutIndexer
 
@@ -41,10 +48,16 @@ def gen_layout(bids_dir):
             "models",
             "derivatives",
             re.compile(r"^\."),
-            re.compile(r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|dwi|eeg|ieeg|meg|perf)"),
+            re.compile(r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|perf)"),
         ),
     )
-    layout = BIDSLayout(bids_dir, indexer=_indexer)
+
+    layout_kwargs = {'indexer': _indexer}
+
+    if database_dir:
+        layout_kwargs['database_path'] = database_dir
+
+    layout = BIDSLayout(bids_dir, **layout_kwargs)
     return layout
 
 
@@ -58,7 +71,7 @@ def main(argv=None):
     pargs = _parser().parse_args(argv)
 
     bids_dir = pargs.bids_dir.resolve(strict=True)
-    layout = gen_layout(bids_dir)
+    layout = gen_layout(bids_dir, pargs.bids_database_dir)
     subjects = collect_participants(layout, pargs.subjects)
     estimators_record = {}
     for subject in subjects:
@@ -75,6 +88,10 @@ def main(argv=None):
             continue
         for estimator in estimators:
             print(f"\t\t{estimator}")
+            for fl in estimator.sources:
+                fl_relpath = fl.path.relative_to(str(bids_dir / f'sub-{subject}'))
+                pe_dir = fl.metadata.get("PhaseEncodingDirection")
+                print(f"\t\t\t{pe_dir}\t{fl_relpath}")
 
 
 if __name__ == "__main__":

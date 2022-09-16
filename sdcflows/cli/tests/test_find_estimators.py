@@ -9,6 +9,8 @@ Estimation for <{path}> complete. Found:
 \tsub-01
 \t\tFieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>, \
 bids_id='{estimator_id}')
+\t\t\tj-\tfmap/sub-01_dir-AP_epi.nii.gz
+\t\t\tj\tfmap/sub-01_dir-PA_epi.nii.gz
 \tsub-02
 \t\tNo estimators found
 """
