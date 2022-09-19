@@ -91,7 +91,7 @@ class _SortPEBlipsOutputSpec(TraitedSpec):
         File(),
         desc="list of input data",
     )
-    pe_dirs = InputMultiObject(
+    pe_dirs = OutputMultiObject(
         traits.Enum("i", "i-", "j", "j-", "k", "k-"),
         desc="list of PE directions, in BIDS's conventions",
     )
