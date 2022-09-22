@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils package" href="sdcflows.utils.html" /><link rel="prev" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.transform module - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.transform module - sdcflows 2.1.2.dev37+g6061ed8a documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev22+g670323e3 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev37+g6061ed8a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -286,7 +286,8 @@ input.</p></li>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.coeffs">
 <span class="sig-name descname"><span class="pre">coeffs</span></span><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.coeffs" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>B-Spline coefficients (one value per control point).</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spatialimage</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.fit" title="Permalink to this definition">¶</a></dt>
@@ -304,9 +305,11 @@ for all voxels in the target-image’s extent.</p>
 </dl>
 </dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.shifts">
-<span class="sig-name descname"><span class="pre">shifts</span></span><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.shifts" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.mapped">
+<span class="sig-name descname"><span class="pre">mapped</span></span><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.mapped" title="Permalink to this definition">¶</a></dt>
+<dd><p>A cache of the interpolated field in Hz (i.e., the fieldmap <em>mapped</em> on to the
+target image we want to correct).</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.to_displacements">
 <span class="sig-name descname"><span class="pre">to_displacements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ro_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itk_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.to_displacements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.to_displacements" title="Permalink to this definition">¶</a></dt>
@@ -331,7 +334,8 @@ for all voxels in the target-image’s extent.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.xfm">
 <span class="sig-name descname"><span class="pre">xfm</span></span><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.xfm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>A rigid-body transform to prepend to the unwarping displacements field.</p>
+</dd></dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.transform.disp_to_fmap">

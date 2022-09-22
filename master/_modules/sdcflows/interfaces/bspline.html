@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev37+g6061ed8a documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev22+g670323e3 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev37+g6061ed8a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,6 +265,7 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Filtering of :math:`B_0` field mappings with B-Splines."""</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
@@ -613,6 +614,11 @@
         <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"input coefficients file(s) from TOPUP"</span>
     <span class="p">)</span>
     <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"the fieldmap reference"</span><span class="p">)</span>
+    <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span>
+        <span class="o">*</span><span class="p">[</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="s2">"ijkxyz"</span><span class="p">,</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">))],</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"phase encoding direction"</span>
+    <span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_TOPUPCoeffReorientOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
@@ -634,6 +640,8 @@
 <span class="sd">    The q-form of these NIfTI files is always diagonal, with the decimation factors</span>
 <span class="sd">    set on the diagonal (and hence, the voxel zooms).</span>
 <span class="sd">    The origin of the q-form is set to the reference image's shape.</span>
+<span class="sd">    All the director cosines of the output coefficients will be positive.</span>
+<span class="sd">    In other words, the output orientation is either RAS, ARS, ASR, SAR, or SRA.</span>
 
 <span class="sd">    This interface modifies these coefficient files to be fully-fledged NIfTI images</span>
 <span class="sd">    aligned with the reference image.</span>
@@ -654,6 +662,7 @@
                 <span class="n">_fix_topup_fieldcoeff</span><span class="p">(</span>
                     <span class="n">in_coeff</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_ref</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">pe_dir</span><span class="p">,</span>
                     <span class="n">out_file</span><span class="o">=</span><span class="n">fname_presuffix</span><span class="p">(</span>
                         <span class="n">in_coeff</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"_fixed"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
                     <span class="p">),</span>
@@ -692,20 +701,42 @@
     <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bs_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">),</span> <span class="n">bs_affine</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_fix_topup_fieldcoeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_fix_topup_fieldcoeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">"""Read in a coefficients file generated by TOPUP and fix x-form headers."""</span>
     <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="k">import</span> <span class="n">ensure_positive_cosines</span>
 
     <span class="k">if</span> <span class="n">out_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"coefficients.nii.gz"</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 
-    <span class="n">coeffnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">)</span>
+    <span class="c1"># Load reference image</span>
     <span class="n">refnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmap_ref</span><span class="p">)</span>
 
+    <span class="c1"># Load coefficients</span>
+    <span class="n">coeffnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">)</span>
+    <span class="c1"># Coefficients - flip LR and overwrite coeffnii variable</span>
+    <span class="c1"># Internal data orientation of FSL is LAS, so coefficients will be LR flipped,</span>
+    <span class="c1"># and because the affine does not encode orientation (factors instead), this flip</span>
+    <span class="c1"># always is implicit.</span>
+    <span class="c1"># If the PE direction is x/i, the flip in the axis direction causes that the</span>
+    <span class="c1"># fieldmap estimation must also be inverted in direction (multiply by -1.0)</span>
+    <span class="n">reverse_pe</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="s2">"i"</span> <span class="ow">in</span> <span class="n">pe_dir</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"i"</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">lr_axis</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"R"</span><span class="p">)</span>
+    <span class="n">coeffnii</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+        <span class="n">reverse_pe</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">lr_axis</span><span class="p">),</span>
+        <span class="n">coeffnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
+        <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Ensure reference has positive director cosines</span>
+    <span class="n">refnii</span><span class="p">,</span> <span class="n">ref_axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">refnii</span><span class="p">)</span>
+
+    <span class="c1"># Get matrix of B-Spline control knots</span>
     <span class="n">coeff_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+    <span class="c1"># Get factors (w.r.t. reference's pixel sizes) to calculate separation btw control points</span>
     <span class="n">factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[:</span><span class="mi">3</span><span class="p">])</span>
+    <span class="c1"># Shape checking</span>
     <span class="n">ref_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">refnii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
     <span class="n">exp_shape</span> <span class="o">=</span> <span class="n">ref_shape</span> <span class="o">//</span> <span class="n">factors</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">factors</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">coeff_shape</span> <span class="o">==</span> <span class="n">exp_shape</span><span class="p">):</span>
@@ -713,15 +744,20 @@
             <span class="n">f</span><span class="s2">"Shape of coefficients file </span><span class="si">{coeff_shape}</span><span class="s2"> does not meet the "</span>
             <span class="n">f</span><span class="s2">"expected shape </span><span class="si">{exp_shape}</span><span class="s2"> (toupup factors are </span><span class="si">{factors}</span><span class="s2">)."</span>
         <span class="p">)</span>
+
+    <span class="c1"># Contextualize the control points in space with a proper NIfTI affine</span>
     <span class="n">newaff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
     <span class="n">newaff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">refnii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">factors</span>
     <span class="n">c_ref</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">refnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">ref_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">c_coeff</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">coeff_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">newaff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">c_ref</span> <span class="o">-</span> <span class="n">c_coeff</span>
-    <span class="n">header</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">set_qform</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_qform</span><span class="p">(</span><span class="n">coded</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">set_sform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
+    <span class="c1"># Edit coefficient's header</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">set_qform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">set_sform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Write out fixed (generalized) coefficients</span>
     <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newaff</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_file</span>
 
@@ -742,13 +778,15 @@
         <span class="k">yield</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_b0_resampler</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">ro</span><span class="p">,</span> <span class="n">hmc_xfm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwarp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_b0_resampler</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">ro</span><span class="p">,</span> <span class="n">hmc_xfm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwarp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">"""Outsource the resampler into a separate callable function to allow parallelization."""</span>
     <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="n">reorient_image</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="k">import</span> <span class="n">ensure_positive_cosines</span>
 
     <span class="c1"># Prepare output names</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">fname_presuffix</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">newpath</span><span class="p">)</span>
-    <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"_unwarped"</span><span class="p">,</span> <span class="s2">"_xfm"</span><span class="p">,</span> <span class="s2">"_field"</span><span class="p">)]</span>
+    <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"_unwarped"</span><span class="p">,</span> <span class="s2">"_xfm"</span><span class="p">,</span> <span class="s2">"_field"</span><span class="p">)]</span>
 
     <span class="k">if</span> <span class="n">unwarp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">sdcflows.transform</span> <span class="k">import</span> <span class="n">B0FieldTransform</span>
@@ -764,12 +802,23 @@
 
         <span class="n">unwarp</span><span class="o">.</span><span class="n">xfm</span> <span class="o">=</span> <span class="n">Affine</span><span class="p">(</span><span class="n">XFMLoader</span><span class="o">.</span><span class="n">from_filename</span><span class="p">(</span><span class="n">hmc_xfm</span><span class="p">)</span><span class="o">.</span><span class="n">to_ras</span><span class="p">())</span>
 
-    <span class="k">if</span> <span class="n">unwarp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="n">unwarp</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># Reorient input to match that of the coefficients, i.e., to have positive director cosines</span>
+    <span class="n">reoriented_img</span><span class="p">,</span> <span class="n">axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">unwarp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">reoriented_img</span><span class="p">):</span>
+        <span class="n">unwarp</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">retval</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="n">unwarp</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">ro_time</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">pe_dir</span><span class="o">=</span><span class="n">pe</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># Unwarp the reoriented image, and restore original orientation</span>
+    <span class="n">unwarped_img</span> <span class="o">=</span> <span class="n">reorient_image</span><span class="p">(</span>
+        <span class="n">unwarp</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">reoriented_img</span><span class="p">,</span> <span class="n">ro_time</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">pe_dir</span><span class="o">=</span><span class="n">pe</span><span class="p">),</span>
+        <span class="n">axcodes</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Write out to disk</span>
+    <span class="n">unwarped_img</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Store the corresponding spatial transformation</span>
     <span class="n">unwarp</span><span class="o">.</span><span class="n">to_displacements</span><span class="p">(</span><span class="n">ro_time</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">pe_dir</span><span class="o">=</span><span class="n">pe</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">retval</span>

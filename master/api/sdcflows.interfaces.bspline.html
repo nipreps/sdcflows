@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.interfaces.epi module" href="sdcflows.interfaces.epi.html" /><link rel="prev" title="sdcflows.interfaces.brainmask module" href="sdcflows.interfaces.brainmask.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.bspline module - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.interfaces.bspline module - sdcflows 2.1.2.dev37+g6061ed8a documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev22+g670323e3 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev37+g6061ed8a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -342,7 +342,9 @@ input image has odd number of voxels along one or more directions.</p>
 (as in, aligned with cardinal/imaging axes).
 The q-form of these NIfTI files is always diagonal, with the decimation factors
 set on the diagonal (and hence, the voxel zooms).
-The origin of the q-form is set to the reference image’s shape.</p>
+The origin of the q-form is set to the reference image’s shape.
+All the director cosines of the output coefficients will be positive.
+In other words, the output orientation is either RAS, ARS, ASR, SAR, or SRA.</p>
 <p>This interface modifies these coefficient files to be fully-fledged NIfTI images
 aligned with the reference image.
 Therefore, the s-form header of the coefficients file is updated to match that
@@ -354,6 +356,7 @@ The s-form header is used because the imaging axes may be oblique.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fmap_ref</strong> (<em>a pathlike object or string representing an existing file</em>) – The fieldmap reference.</p></li>
 <li><p><strong>in_coeff</strong> (<em>a list of items which are a pathlike object or string representing a file</em>) – Input coefficients file(s) from TOPUP.</p></li>
+<li><p><strong>pe_dir</strong> (<em>‘i’ or ‘i-’ or ‘j’ or ‘j-’ or ‘k’ or ‘k-’ or ‘x’ or ‘x-’ or ‘y’ or ‘y-’ or ‘z’ or ‘z-’</em>) – Phase encoding direction.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Outputs</dt>

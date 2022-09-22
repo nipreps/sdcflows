@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.epi - sdcflows 2.1.2.dev22+g670323e3 documentation</title>
+        <title>sdcflows.interfaces.epi - sdcflows 2.1.2.dev37+g6061ed8a documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev22+g670323e3 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev37+g6061ed8a documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev22 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev37 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -268,11 +268,13 @@
 
 <span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="k">import</span> <span class="p">(</span>
     <span class="n">BaseInterfaceInputSpec</span><span class="p">,</span>
-    <span class="n">TraitedSpec</span><span class="p">,</span>
     <span class="n">File</span><span class="p">,</span>
+    <span class="n">InputMultiObject</span><span class="p">,</span>
+    <span class="n">OutputMultiObject</span><span class="p">,</span>
+    <span class="n">SimpleInterface</span><span class="p">,</span>
+    <span class="n">TraitedSpec</span><span class="p">,</span>
     <span class="n">isdefined</span><span class="p">,</span>
     <span class="n">traits</span><span class="p">,</span>
-    <span class="n">SimpleInterface</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -307,6 +309,79 @@
             <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">)</span>
             <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">runtime</span></div>
+
+
+<span class="k">class</span> <span class="nc">_SortPEBlipsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+    <span class="n">in_data</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of input data"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pe_dirs_fsl</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"x-"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"y-"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"z-"</span><span class="p">),</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of PE directions, in FSL's conventions"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">readout_times</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of total readout times"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_SortPEBlipsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+    <span class="n">out_data</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">(),</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of input data"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pe_dirs</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="s2">"i-"</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">,</span> <span class="s2">"j-"</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">,</span> <span class="s2">"k-"</span><span class="p">),</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of PE directions, in BIDS's conventions"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pe_dirs_fsl</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"x-"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"y-"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"z-"</span><span class="p">),</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of PE directions, in FSL's conventions"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">readout_times</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"list of total readout times"</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="SortPEBlips"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.epi.html#sdcflows.interfaces.epi.SortPEBlips">[docs]</a><span class="k">class</span> <span class="nc">SortPEBlips</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+    <span class="sd">"""Sort PE blips so they are consistently fed into TOPUP."""</span>
+
+    <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_SortPEBlipsInputSpec</span>
+    <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_SortPEBlipsOutputSpec</span>
+
+    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+        <span class="c1"># Put sign first</span>
+        <span class="n">blips</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">f</span><span class="s2">"+</span><span class="si">{pe[0]}</span><span class="s2">"</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">f</span><span class="s2">"-</span><span class="si">{pe[0]}</span><span class="s2">"</span>
+            <span class="k">for</span> <span class="n">pe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">pe_dirs_fsl</span>
+        <span class="p">]</span>
+        <span class="n">sorted_inputs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+            <span class="n">blips</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">readout_times</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span>
+        <span class="p">))</span>
+
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dirs_fsl"</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"readout_times"</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"out_data"</span><span class="p">],</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">sorted_inputs</span><span class="p">)</span>
+
+        <span class="c1"># Put sign back last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dirs_fsl"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">pe</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">pe</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)</span> <span class="k">else</span> <span class="n">f</span><span class="s2">"</span><span class="si">{pe[1]}</span><span class="s2">-"</span>
+            <span class="k">for</span> <span class="n">pe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dirs_fsl"</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dirs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">pe</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"i"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"pe_dirs_fsl"</span><span class="p">]</span>
+        <span class="p">]</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 </pre></div>
         </article>
