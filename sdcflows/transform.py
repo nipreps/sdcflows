@@ -105,7 +105,7 @@ class B0FieldTransform:
         # Cache
         self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, None)
         self.mapped.header.set_intent("estimate", name="Voxel shift")
-        self.mapped.header.set_xyzt_units("mm")
+        self.mapped.header.set_xyzt_units(spatialimage.header.get_xyzt_units())
         return True
 
     def apply(
