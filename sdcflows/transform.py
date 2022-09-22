@@ -33,9 +33,12 @@ import nitransforms as nt
 from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
+from niworkflows.interfaces.nibabel import reorient_image
+from sdcflows.utils.tools import ensure_positive_cosines
 
-def _clear_shifts(instance, attribute, value):
-    instance.shifts = None
+
+def _clear_mapped(instance, attribute, value):
+    instance.mapped = None
     return value
 
 
@@ -44,8 +47,14 @@ class B0FieldTransform:
     """Represents and applies the transform to correct for susceptibility distortions."""
 
     coeffs = attr.ib(default=None)
-    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_shifts)
-    shifts = attr.ib(default=None, init=False)
+    """B-Spline coefficients (one value per control point)."""
+    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_mapped)
+    """A rigid-body transform to prepend to the unwarping displacements field."""
+    mapped = attr.ib(default=None, init=False)
+    """
+    A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
+    target image we want to correct).
+    """
 
     def fit(self, spatialimage):
         r"""
@@ -65,12 +74,12 @@ class B0FieldTransform:
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
-        if self.shifts is not None:
+        if self.mapped is not None:
             newaff = spatialimage.affine
             newshape = spatialimage.shape
 
-            if np.all(newshape == self.shifts.shape) and np.allclose(
-                newaff, self.shifts.affine
+            if np.all(newshape == self.mapped.shape) and np.allclose(
+                newaff, self.mapped.affine
             ):
                 return False
 
@@ -94,9 +103,9 @@ class B0FieldTransform:
         )
 
         # Cache
-        self.shifts = nb.Nifti1Image(vsm, spatialimage.affine, None)
-        self.shifts.header.set_intent("estimate", name="Voxel shift")
-        self.shifts.header.set_xyzt_units("mm")
+        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, None)
+        self.mapped.header.set_intent("estimate", name="Voxel shift")
+        self.mapped.header.set_xyzt_units(*spatialimage.header.get_xyzt_units())
         return True
 
     def apply(
@@ -144,23 +153,25 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
-        # Ensure the vsm has been computed
+        # Ensure the fmap has been computed
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
-        self.fit(spatialimage)
-        vsm = self.shifts.get_fdata().copy()
+        spatialimage, axcodes = ensure_positive_cosines(spatialimage)
 
-        # Reverse shifts if reversed blips
+        self.fit(spatialimage)
+        fmap = self.mapped.get_fdata().copy()
+
+        # Reverse mapped if reversed blips
         if pe_dir.endswith("-"):
-            vsm *= -1.0
+            fmap *= -1.0
 
         # Generate warp field
         pe_axis = "ijk".index(pe_dir[0])
 
         # Map voxel coordinates applying the VSM
         if self.xfm is None:
-            ijk_axis = tuple([np.arange(s) for s in vsm.shape])
+            ijk_axis = tuple([np.arange(s) for s in fmap.shape])
             voxcoords = np.array(
                 np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
             ).reshape(3, -1)
@@ -173,7 +184,10 @@ class B0FieldTransform:
                 @ _as_homogeneous(np.vstack(hmc_xyz), dim=self.xfm.reference.ndim).T
             )[:3, ...]
 
-        voxcoords[pe_axis, ...] += vsm.reshape(-1) * ro_time
+        # fmap * ro_time is the voxel-shift map (VSM)
+        # The VSM is just the displacements field given in index coordinates
+        # voxcoords is the deformation field, i.e., the target position of each voxel
+        voxcoords[pe_axis, ...] += fmap.reshape(-1) * ro_time
 
         # Prepare data
         data = np.squeeze(np.asanyarray(spatialimage.dataobj))
@@ -194,7 +208,7 @@ class B0FieldTransform:
             resampled, spatialimage.affine, spatialimage.header
         )
         moved.header.set_data_dtype(output_dtype)
-        return moved
+        return reorient_image(moved, axcodes)
 
     def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
@@ -217,7 +231,7 @@ class B0FieldTransform:
             A NIfTI 1.0 object containing the distortion.
 
         """
-        return fmap_to_disp(self.shifts, ro_time, pe_dir, itk_format=itk_format)
+        return fmap_to_disp(self.mapped, ro_time, pe_dir, itk_format=itk_format)
 
 
 def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):

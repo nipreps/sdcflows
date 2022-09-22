@@ -24,11 +24,13 @@
 
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
-    TraitedSpec,
     File,
+    InputMultiObject,
+    OutputMultiObject,
+    SimpleInterface,
+    TraitedSpec,
     isdefined,
     traits,
-    SimpleInterface,
 )
 
 
@@ -63,4 +65,77 @@ class GetReadoutTime(SimpleInterface):
             .replace("j", "y")
             .replace("k", "z")
         )
+        return runtime
+
+
+class _SortPEBlipsInputSpec(BaseInterfaceInputSpec):
+    in_data = InputMultiObject(
+        File(exists=True),
+        mandatory=True,
+        desc="list of input data",
+    )
+    pe_dirs_fsl = InputMultiObject(
+        traits.Enum("x", "x-", "y", "y-", "z", "z-"),
+        mandatory=True,
+        desc="list of PE directions, in FSL's conventions",
+    )
+    readout_times = InputMultiObject(
+        traits.Float,
+        mandatory=True,
+        desc="list of total readout times"
+    )
+
+
+class _SortPEBlipsOutputSpec(TraitedSpec):
+    out_data = OutputMultiObject(
+        File(),
+        desc="list of input data",
+    )
+    pe_dirs = OutputMultiObject(
+        traits.Enum("i", "i-", "j", "j-", "k", "k-"),
+        desc="list of PE directions, in BIDS's conventions",
+    )
+    pe_dirs_fsl = OutputMultiObject(
+        traits.Enum("x", "x-", "y", "y-", "z", "z-"),
+        desc="list of PE directions, in FSL's conventions",
+    )
+    readout_times = OutputMultiObject(
+        traits.Float,
+        desc="list of total readout times"
+    )
+
+
+class SortPEBlips(SimpleInterface):
+    """Sort PE blips so they are consistently fed into TOPUP."""
+
+    input_spec = _SortPEBlipsInputSpec
+    output_spec = _SortPEBlipsOutputSpec
+
+    def _run_interface(self, runtime):
+        # Put sign first
+        blips = [
+            f"+{pe[0]}" if len(pe) == 1 else f"-{pe[0]}"
+            for pe in self.inputs.pe_dirs_fsl
+        ]
+        sorted_inputs = sorted(zip(
+            blips,
+            self.inputs.readout_times,
+            self.inputs.in_data,
+        ))
+
+        (
+            self._results["pe_dirs_fsl"],
+            self._results["readout_times"],
+            self._results["out_data"],
+        ) = zip(*sorted_inputs)
+
+        # Put sign back last
+        self._results["pe_dirs_fsl"] = [
+            pe[1] if pe.startswith("+") else f"{pe[1]}-"
+            for pe in self._results["pe_dirs_fsl"]
+        ]
+        self._results["pe_dirs"] = [
+            pe.replace("x", "i").replace("y", "j").replace("z", "k")
+            for pe in self._results["pe_dirs_fsl"]
+        ]
         return runtime

@@ -88,6 +88,7 @@ def test_topup_coeffs(tmpdir, testdata_dir):
     result = TOPUPCoeffReorient(
         in_coeff=str(testdata_dir / "topup-coeff.nii.gz"),
         fmap_ref=str(testdata_dir / "epi.nii.gz"),
+        pe_dir="j",
     ).run()
 
     nii = nb.load(result.outputs.out_coeff)
@@ -102,11 +103,12 @@ def test_topup_coeffs(tmpdir, testdata_dir):
         TOPUPCoeffReorient(
             in_coeff="failing.nii.gz",
             fmap_ref=str(testdata_dir / "epi.nii.gz"),
+            pe_dir="j",
         ).run()
 
     # Test automatic output file name generation, just for coverage
     with pytest.raises(ValueError):
-        _fix_topup_fieldcoeff("failing.nii.gz", str(testdata_dir / "epi.nii.gz"))
+        _fix_topup_fieldcoeff("failing.nii.gz", str(testdata_dir / "epi.nii.gz"), "i")
 
 
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
