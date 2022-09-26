@@ -32,6 +32,12 @@ def _parser():
         help="Path to a PyBIDS database folder, for faster indexing (especially "
              "useful for large datasets). Will be created if not present."
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print information while finding estimators (Useful for debugging)",
+    )
     return parser
 
 
@@ -76,7 +82,7 @@ def main(argv=None):
     estimators_record = {}
     for subject in subjects:
         estimators_record[subject] = find_estimators(
-            layout=layout, subject=subject, fmapless=pargs.fmapless
+            layout=layout, subject=subject, fmapless=pargs.fmapless, verbose=pargs.verbose,
         )
 
     # pretty print results
