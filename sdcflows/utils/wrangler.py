@@ -21,13 +21,26 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
+import logging
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
+from typing import Optional, Union, List
+from bids.layout import BIDSLayout
 from bids.utils import listify
 
+from .. import fieldmaps as fm
 
-def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmapless=False):
+
+def find_estimators(
+    *,
+    layout: BIDSLayout,
+    subject: str,
+    sessions: Optional[List[str]] = None,
+    fmapless: Union[bool, set] = True,
+    force_fmapless: bool = False,
+    logger: Optional[logging.Logger] = None,
+) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -53,6 +66,8 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
+    logger
+        The logger used to relay messages. If not provided, one will be created.
 
     Returns
     -------
@@ -243,9 +258,12 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
                        bids_id='auto_00000')]
 
     """
-    from .. import fieldmaps as fm
+    from .misc import create_logger
     from bids.layout import Query
     from bids.exceptions import BIDSEntityError
+
+    # The created logger is set to ERROR log level
+    logger = logger or create_logger('sdcflows.wrangler')
 
     base_entities = {
         "subject": subject,
@@ -254,36 +272,43 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     }
 
     subject_root = Path(layout.root) / f"sub-{subject}"
-    sessions = sessions if sessions else layout.get_sessions(subject=subject)
-
+    sessions = sessions or layout.get_sessions(subject=subject)
     fmapless = fmapless or {}
     if fmapless is True:
         fmapless = {"bold", "dwi"}
 
     estimators = []
 
+    # Step 1. Use B0FieldIdentifier metadata
     b0_ids = tuple()
     with suppress(BIDSEntityError):
         b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
 
-    for b0_id in b0_ids:
-        # Found B0FieldIdentifier metadata entries
-        entities = base_entities.copy()
-        entities["B0FieldIdentifier"] = b0_id
+    if b0_ids:
+        logger.debug(
+            "Dataset includes `B0FieldIdentifier` metadata."
+            "Any data missing this metadata will be ignored."
+        )
+        for b0_id in b0_ids:
+            # Found B0FieldIdentifier metadata entries
+            b0_entities = base_entities.copy()
+            b0_entities["B0FieldIdentifier"] = b0_id
 
-        _e = fm.FieldmapEstimation([
-            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-            for fmap in layout.get(**entities)
-        ])
-        estimators.append(_e)
+            e = fm.FieldmapEstimation([
+                fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                for fmap in layout.get(**b0_entities)
+            ])
+            _log_debug_estimation(logger, e, layout.root)
+            estimators.append(e)
 
-    # As no B0FieldIdentifier(s) were found, try several heuristics
+    # Step 2. If no B0FieldIdentifiers were found, try several heuristics
     if not estimators:
         # Set up B0 fieldmap strategies:
         for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
+            _log_debug_estimation(logger, e, layout.root)
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
@@ -303,18 +328,21 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
                         for fmap in layout.get(direction=dirs, **entities)
                     ]
                 )
+                _log_debug_estimation(logger, e, layout.root)
                 estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
         has_intended = tuple()
         with suppress(ValueError):
-            has_intended = layout.get(suffix="epi", IntendedFor=Query.ANY, **base_entities)
+            has_intended = layout.get(suffix="epi", IntendedFor=Query.REQUIRED, **base_entities)
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
+                logger.debug("Skipping fieldmap %s (already in use)", epi_fmap.relpath)
                 continue  # skip EPI images already considered above
 
+            logger.debug("Found single PE fieldmap %s", epi_fmap.relpath)
             epi_base_md = epi_fmap.get_metadata()
 
             # There are two possible interpretations of an IntendedFor list:
@@ -326,19 +354,23 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
             for intent in listify(epi_base_md["IntendedFor"]):
                 target = layout.get_file(str(subject_root / intent))
                 if target is None:
+                    logger.debug("Single PE target %s not found", target)
                     continue
 
+                logger.debug("Found single PE target %s", target.relpath)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
                 estimator_md["IntendedFor"] = [intent]
                 with suppress(ValueError, TypeError, fm.MetadataError):
-                    estimators.append(
-                        fm.FieldmapEstimation(
-                            [fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
-                             fm.FieldmapFile(target.path, metadata=target.get_metadata())]
-                        )
+                    e = fm.FieldmapEstimation(
+                        [
+                            fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
+                            fm.FieldmapFile(target.path, metadata=target.get_metadata())
+                        ]
                     )
+                    _log_debug_estimation(logger, e, layout.root)
+                    estimators.append(e)
 
     if estimators and not force_fmapless:
         fmapless = False
@@ -347,8 +379,10 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     anat_file = layout.get(suffix="T1w", **base_entities)
 
     if not fmapless or not anat_file:
+        logger.debug("Skipping fmap-less estimation")
         return estimators
 
+    logger.debug("Attempting fmap-less estimation")
     from .epimanip import get_trt
 
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
@@ -386,15 +420,29 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
                         ]
                     )
                 )
-                estimators.append(
-                    fm.FieldmapEstimation(
-                        [
-                            fm.FieldmapFile(
-                                anat_file[0], metadata={"IntendedFor": fmpaths}
-                            ),
-                            *fmfiles,
-                        ]
-                    )
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            anat_file[0], metadata={"IntendedFor": fmpaths}
+                        ),
+                        *fmfiles,
+                    ]
                 )
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
 
     return estimators
+
+
+def _log_debug_estimation(
+    logger: logging.Logger,
+    estimation: fm.FieldmapEstimation,
+    bids_root: str,
+) -> None:
+    """A helper function to log estimation information when running with verbosity."""
+    logger.debug(
+        "Found %s estimation from %d sources:\n- %s",
+        estimation.method.name,
+        len(estimation.sources),
+        "\n- ".join([str(s.path.relative_to(bids_root)) for s in estimation.sources]),
+    )

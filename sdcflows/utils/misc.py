@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Basic miscellaneous utilities."""
+import logging
 
 
 def front(inlist):
@@ -67,3 +68,17 @@ def get_free_mem():
         return round(virtual_memory().free, 1)
     except Exception:
         return None
+
+
+def create_logger(name: str, level: int = 40) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    # clear any existing handlers
+    logger.handlers.clear()
+    handler = logging.StreamHandler()
+    handler.setLevel(level)
+    # formatter = logging.Formatter('[%(name)s %(asctime)s] - %(levelname)s: %(message)s')
+    formatter = logging.Formatter('[%(name)s - %(levelname)s]: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
