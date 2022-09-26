@@ -24,10 +24,20 @@
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
+from typing import Optional, Union
+from bids.layout import BIDSLayout
 from bids.utils import listify
 
 
-def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmapless=False):
+
+def find_estimators(*,
+    layout: BIDSLayout,
+    subject: str,
+    sessions: Optional[list[str]] = None,
+    fmapless: Union[bool, set] = True,
+    force_fmapless: bool = False,
+    verbose: bool = False,
+):
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -53,6 +63,8 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
+    verbose
+        If enabled, display steps taken to find estimators.
 
     Returns
     -------
@@ -244,8 +256,12 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
 
     """
     from .. import fieldmaps as fm
+    from .misc import create_logger
     from bids.layout import Query
     from bids.exceptions import BIDSEntityError
+
+    # Set up logger (logs only visable if verbose)
+    logger = create_logger('sdcflows.wrangler', level=10 if verbose else 40)
 
     base_entities = {
         "subject": subject,
@@ -254,36 +270,41 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     }
 
     subject_root = Path(layout.root) / f"sub-{subject}"
-    sessions = sessions if sessions else layout.get_sessions(subject=subject)
-
+    sessions = sessions or layout.get_sessions(subject=subject)
     fmapless = fmapless or {}
     if fmapless is True:
         fmapless = {"bold", "dwi"}
 
     estimators = []
 
-    b0_ids = tuple()
+    # Step 1. Use B0FieldIdentifier metadata
+    has_B0FI = False
     with suppress(BIDSEntityError):
         b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
+        has_B0FI = True
 
-    for b0_id in b0_ids:
-        # Found B0FieldIdentifier metadata entries
-        entities = base_entities.copy()
-        entities["B0FieldIdentifier"] = b0_id
+    if has_B0FI:
+        logger.debug("Dataset includes B0FieldIdentifier metadata. All `IntendedFor` metadata will be ignored.")
+        for b0_id in b0_ids:
+            # Found B0FieldIdentifier metadata entries
+            b0_entities = base_entities.copy()
+            b0_entities["B0FieldIdentifier"] = b0_id
 
-        _e = fm.FieldmapEstimation([
-            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-            for fmap in layout.get(**entities)
-        ])
-        estimators.append(_e)
+            _e = fm.FieldmapEstimation([
+                fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                for fmap in layout.get(**b0_entities)
+            ])
+            logger.debug("Found PEPOLAR estimation %s from sources %s", _e, [x.path for x in _e.sources])
+            estimators.append(_e)
 
-    # As no B0FieldIdentifier(s) were found, try several heuristics
+    # Step 2. If no B0FieldIdentifiers were found, try several heuristics
     if not estimators:
         # Set up B0 fieldmap strategies:
         for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
+            logger.debug("Found estimation %s from fmap %s", e, fmap.path)
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
@@ -303,18 +324,21 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
                         for fmap in layout.get(direction=dirs, **entities)
                     ]
                 )
+                logger.debug("Found PEPOLAR estimation %s from sources %s", e, [x.path for x in e.sources])
                 estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
         has_intended = tuple()
         with suppress(ValueError):
-            has_intended = layout.get(suffix="epi", IntendedFor=Query.ANY, **base_entities)
+            has_intended = layout.get(suffix="epi", IntendedFor=Query.REQUIRED, **base_entities)
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
+                logger.debug("Single PE fieldmap %s already in use", epi_fmap.path)
                 continue  # skip EPI images already considered above
 
+            logger.debug("Found single PE fieldmap %s", epi_fmap.path)
             epi_base_md = epi_fmap.get_metadata()
 
             # There are two possible interpretations of an IntendedFor list:
@@ -326,19 +350,23 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
             for intent in listify(epi_base_md["IntendedFor"]):
                 target = layout.get_file(str(subject_root / intent))
                 if target is None:
+                    logger.debug("Single PE target %s not found", target)
                     continue
 
+                logger.debug("Found single PE target %s", target.path)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
                 estimator_md["IntendedFor"] = [intent]
                 with suppress(ValueError, TypeError, fm.MetadataError):
-                    estimators.append(
-                        fm.FieldmapEstimation(
-                            [fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
-                             fm.FieldmapFile(target.path, metadata=target.get_metadata())]
-                        )
+                    e = fm.FieldmapEstimation(
+                        [
+                            fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
+                            fm.FieldmapFile(target.path, metadata=target.get_metadata())
+                        ]
                     )
+                    logger.debug("Found estimation %s from fmap %s", e, epi_fmap.path)
+                    estimators.append(e)
 
     if estimators and not force_fmapless:
         fmapless = False
@@ -347,6 +375,7 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
     anat_file = layout.get(suffix="T1w", **base_entities)
 
     if not fmapless or not anat_file:
+        logger.debug("Skipping fmap-less estimation")
         return estimators
 
     from .epimanip import get_trt
@@ -386,15 +415,15 @@ def find_estimators(*, layout, subject, sessions=None, fmapless=True, force_fmap
                         ]
                     )
                 )
-                estimators.append(
-                    fm.FieldmapEstimation(
-                        [
-                            fm.FieldmapFile(
-                                anat_file[0], metadata={"IntendedFor": fmpaths}
-                            ),
-                            *fmfiles,
-                        ]
-                    )
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            anat_file[0], metadata={"IntendedFor": fmpaths}
+                        ),
+                        *fmfiles,
+                    ]
                 )
+                logger.debug("Fieldmap-less estimation %s with sources %s", e, [x.path for x in e.sources])
+                estimators.append(e)
 
     return estimators
