@@ -29,8 +29,8 @@ from bids.layout import BIDSLayout
 from bids.utils import listify
 
 
-
-def find_estimators(*,
+def find_estimators(
+    *,
     layout: BIDSLayout,
     subject: str,
     sessions: Optional[List[str]] = None,
@@ -284,7 +284,10 @@ def find_estimators(*,
         has_B0FI = True
 
     if has_B0FI:
-        logger.debug("Dataset includes B0FieldIdentifier metadata. All `IntendedFor` metadata will be ignored.")
+        logger.debug(
+            "Dataset includes `B0FieldIdentifier` metadata."
+            "Any data missing this metadata will be ignored."
+        )
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
             b0_entities = base_entities.copy()
