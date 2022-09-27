@@ -24,7 +24,7 @@
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, List
 from bids.layout import BIDSLayout
 from bids.utils import listify
 
@@ -33,7 +33,7 @@ from bids.utils import listify
 def find_estimators(*,
     layout: BIDSLayout,
     subject: str,
-    sessions: Optional[list[str]] = None,
+    sessions: Optional[List[str]] = None,
     fmapless: Union[bool, set] = True,
     force_fmapless: bool = False,
     verbose: bool = False,
