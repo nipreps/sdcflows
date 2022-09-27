@@ -21,12 +21,15 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
+import logging
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional, Union, List
 from bids.layout import BIDSLayout
 from bids.utils import listify
+
+from .. import fieldmaps as fm
 
 
 def find_estimators(
@@ -37,7 +40,7 @@ def find_estimators(
     fmapless: Union[bool, set] = True,
     force_fmapless: bool = False,
     verbose: bool = False,
-):
+) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
 
@@ -255,7 +258,6 @@ def find_estimators(
                        bids_id='auto_00000')]
 
     """
-    from .. import fieldmaps as fm
     from .misc import create_logger
     from bids.layout import Query
     from bids.exceptions import BIDSEntityError
@@ -297,12 +299,7 @@ def find_estimators(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
                 for fmap in layout.get(**b0_entities)
             ])
-            logger.debug(
-                "Found %s estimation from %d sources:\n- %s",
-                e.method.name,
-                len(e.sources),
-                "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
-            )
+            _log_debug_estimation(logger, e, layout.root)
             estimators.append(e)
 
     # Step 2. If no B0FieldIdentifiers were found, try several heuristics
@@ -312,12 +309,7 @@ def find_estimators(
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
-            logger.debug(
-                "Found %s estimation from %d sources:\n- %s",
-                e.method.name,
-                len(e.sources),
-                "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
-            )
+            _log_debug_estimation(logger, e, layout.root)
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
@@ -337,12 +329,7 @@ def find_estimators(
                         for fmap in layout.get(direction=dirs, **entities)
                     ]
                 )
-                logger.debug(
-                    "Found %s estimation from %d sources:\n- %s",
-                    e.method.name,
-                    len(e.sources),
-                    "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
-                )
+                _log_debug_estimation(logger, e, layout.root)
                 estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
@@ -383,12 +370,7 @@ def find_estimators(
                             fm.FieldmapFile(target.path, metadata=target.get_metadata())
                         ]
                     )
-                    logger.debug(
-                        "Found %s estimation from %d sources:\n- %s",
-                        e.method.name,
-                        len(e.sources),
-                        "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
-                    )
+                    _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
 
     if estimators and not force_fmapless:
@@ -447,12 +429,21 @@ def find_estimators(
                         *fmfiles,
                     ]
                 )
-                logger.debug(
-                    "Found %s estimation from %d sources:\n- %s",
-                    e.method.name,
-                    len(e.sources),
-                    "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
-                )
+                _log_debug_estimation(logger, e, layout.root)
                 estimators.append(e)
 
     return estimators
+
+
+def _log_debug_estimation(
+    logger: logging.Logger,
+    estimation: fm.FieldmapEstimation,
+    bids_root: str,
+) -> None:
+    """A helper function to log estimation information when running with verbosity."""
+    logger.debug(
+        "Found %s estimation from %d sources:\n- %s",
+        estimation.method.name,
+        len(estimation.sources),
+        "\n- ".join([str(s.path.relative_to(bids_root)) for s in estimation.sources]),
+    )
