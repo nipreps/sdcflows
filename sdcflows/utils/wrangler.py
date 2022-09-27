@@ -290,12 +290,17 @@ def find_estimators(*,
             b0_entities = base_entities.copy()
             b0_entities["B0FieldIdentifier"] = b0_id
 
-            _e = fm.FieldmapEstimation([
+            e = fm.FieldmapEstimation([
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
                 for fmap in layout.get(**b0_entities)
             ])
-            logger.debug("Found PEPOLAR estimation %s from sources %s", _e, [x.path for x in _e.sources])
-            estimators.append(_e)
+            logger.debug(
+                "Found %s estimation from %d sources:\n- %s",
+                e.method.name,
+                len(e.sources),
+                "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
+            )
+            estimators.append(e)
 
     # Step 2. If no B0FieldIdentifiers were found, try several heuristics
     if not estimators:
@@ -304,7 +309,12 @@ def find_estimators(*,
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
-            logger.debug("Found estimation %s from fmap %s", e, fmap.path)
+            logger.debug(
+                "Found %s estimation from %d sources:\n- %s",
+                e.method.name,
+                len(e.sources),
+                "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
+            )
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
@@ -324,7 +334,12 @@ def find_estimators(*,
                         for fmap in layout.get(direction=dirs, **entities)
                     ]
                 )
-                logger.debug("Found PEPOLAR estimation %s from sources %s", e, [x.path for x in e.sources])
+                logger.debug(
+                    "Found %s estimation from %d sources:\n- %s",
+                    e.method.name,
+                    len(e.sources),
+                    "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
+                )
                 estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
@@ -335,10 +350,10 @@ def find_estimators(*,
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
-                logger.debug("Single PE fieldmap %s already in use", epi_fmap.path)
+                logger.debug("Skipping fieldmap %s (already in use)", epi_fmap.relpath)
                 continue  # skip EPI images already considered above
 
-            logger.debug("Found single PE fieldmap %s", epi_fmap.path)
+            logger.debug("Found single PE fieldmap %s", epi_fmap.relpath)
             epi_base_md = epi_fmap.get_metadata()
 
             # There are two possible interpretations of an IntendedFor list:
@@ -353,7 +368,7 @@ def find_estimators(*,
                     logger.debug("Single PE target %s not found", target)
                     continue
 
-                logger.debug("Found single PE target %s", target.path)
+                logger.debug("Found single PE target %s", target.relpath)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
@@ -365,7 +380,12 @@ def find_estimators(*,
                             fm.FieldmapFile(target.path, metadata=target.get_metadata())
                         ]
                     )
-                    logger.debug("Found estimation %s from fmap %s", e, epi_fmap.path)
+                    logger.debug(
+                        "Found %s estimation from %d sources:\n- %s",
+                        e.method.name,
+                        len(e.sources),
+                        "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
+                    )
                     estimators.append(e)
 
     if estimators and not force_fmapless:
@@ -378,6 +398,7 @@ def find_estimators(*,
         logger.debug("Skipping fmap-less estimation")
         return estimators
 
+    logger.debug("Attempting fmap-less estimation")
     from .epimanip import get_trt
 
     for ses, suffix in sorted(product(sessions or (None,), fmapless)):
@@ -423,7 +444,12 @@ def find_estimators(*,
                         *fmfiles,
                     ]
                 )
-                logger.debug("Fieldmap-less estimation %s with sources %s", e, [x.path for x in e.sources])
+                logger.debug(
+                    "Found %s estimation from %d sources:\n- %s",
+                    e.method.name,
+                    len(e.sources),
+                    "\n- ".join([str(x.path.relative_to(layout.root)) for x in e.sources]),
+                )
                 estimators.append(e)
 
     return estimators
