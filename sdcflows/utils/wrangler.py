@@ -39,7 +39,7 @@ def find_estimators(
     sessions: Optional[List[str]] = None,
     fmapless: Union[bool, set] = True,
     force_fmapless: bool = False,
-    verbose: bool = False,
+    logger: Optional[logging.Logger] = None,
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
@@ -66,8 +66,8 @@ def find_estimators(
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
-    verbose
-        If enabled, display steps taken to find estimators.
+    logger
+        The logger used to relay messages. If not provided, one will be created.
 
     Returns
     -------
@@ -262,8 +262,8 @@ def find_estimators(
     from bids.layout import Query
     from bids.exceptions import BIDSEntityError
 
-    # Set up logger (logs only visable if verbose)
-    logger = create_logger('sdcflows.wrangler', level=10 if verbose else 40)
+    # The created logger is set to ERROR log level
+    logger = logger or create_logger('sdcflows.wrangler')
 
     base_entities = {
         "subject": subject,
@@ -280,12 +280,11 @@ def find_estimators(
     estimators = []
 
     # Step 1. Use B0FieldIdentifier metadata
-    has_B0FI = False
+    b0_ids = tuple()
     with suppress(BIDSEntityError):
         b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
-        has_B0FI = True
 
-    if has_B0FI:
+    if b0_ids:
         logger.debug(
             "Dataset includes `B0FieldIdentifier` metadata."
             "Any data missing this metadata will be ignored."
