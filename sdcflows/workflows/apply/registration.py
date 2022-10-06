@@ -37,6 +37,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 def init_coeff2epi_wf(
     omp_nthreads,
+    sloppy=False,
     debug=False,
     write_coeff=False,
     name="coeff2epi_wf",
@@ -56,8 +57,10 @@ def init_coeff2epi_wf(
     ----------
     omp_nthreads : :obj:`int`
         Maximum number of threads an individual process may use.
-    debug : :obj:`bool`
+    sloppy : :obj:`bool`
         Run fast configurations of registrations.
+    debug : :obj:`bool`
+        Run in debug mode, that is, generating additional traces of performance.
     name : :obj:`str`
         Unique name of this workflow.
     write_coeff : :obj:`bool`
@@ -109,13 +112,14 @@ The field coefficients were mapped on to the reference EPI using the transform.
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
     ants_settings = pkgrf(
-        "sdcflows", f"data/fmap-any_registration{'_testing' * debug}.json"
+        "sdcflows", f"data/fmap-any_registration{'_testing' * sloppy}.json"
     )
 
     coregister = pe.Node(
         Registration(
             from_file=ants_settings,
-            output_warped_image=True,
+            output_warped_image=debug,
+            output_inverse_warped_image=debug,
         ),
         name="coregister",
         n_procs=omp_nthreads,

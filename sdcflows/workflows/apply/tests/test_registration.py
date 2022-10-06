@@ -51,7 +51,7 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
 
     gen_coeff = pe.Node(niu.Function(function=_gen_coeff), name="gen_coeff")
 
-    reg_wf = init_coeff2epi_wf(2, debug=True, write_coeff=True)
+    reg_wf = init_coeff2epi_wf(2, debug=True, sloppy=True, write_coeff=True)
 
     workflow = pe.Workflow(name="test_registration_wf")
     # fmt: off

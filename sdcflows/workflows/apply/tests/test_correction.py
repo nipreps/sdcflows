@@ -48,7 +48,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     epi_ref_wf = init_magnitude_wf(2, name="epi_ref_wf")
     epi_ref_wf.inputs.inputnode.magnitude = distorted
 
-    reg_wf = init_coeff2epi_wf(2, debug=True, write_coeff=True)
+    reg_wf = init_coeff2epi_wf(2, debug=True, sloppy=True, write_coeff=True)
     reg_wf.inputs.inputnode.fmap_coeff = [Path(__file__).parent / "fieldcoeff.nii.gz"]
 
     unwarp_wf = init_unwarp_wf(omp_nthreads=2, debug=True)
