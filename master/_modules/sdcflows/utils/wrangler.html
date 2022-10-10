@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.1.2.dev41+g9c0f94f6 documentation</title>
+        <title>sdcflows.utils.wrangler - sdcflows 2.1.2.dev51+g34796681 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev41+g9c0f94f6 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev51+g34796681 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev41 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev51 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev41 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev51 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,13 +265,26 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">bids.layout</span> <span class="k">import</span> <span class="n">BIDSLayout</span>
 <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="k">import</span> <span class="n">listify</span>
 
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
 
-<div class="viewcode-block" id="find_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_estimators</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">sessions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="find_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_estimators</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">BIDSLayout</span><span class="p">,</span>
+    <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sessions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fmapless</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">force_fmapless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Apply basic heuristics to automatically find available data for fieldmap estimation.</span>
 
@@ -297,6 +310,8 @@
 <span class="sd">    force_fmapless : :obj:`bool`</span>
 <span class="sd">        When some other fieldmap estimation methods have been found, fieldmap-less</span>
 <span class="sd">        estimation will be skipped except if ``force_fmapless`` is ``True``.</span>
+<span class="sd">    logger</span>
+<span class="sd">        The logger used to relay messages. If not provided, one will be created.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -487,9 +502,12 @@
 <span class="sd">                       bids_id='auto_00000')]</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
+    <span class="kn">from</span> <span class="nn">.misc</span> <span class="k">import</span> <span class="n">create_logger</span>
     <span class="kn">from</span> <span class="nn">bids.layout</span> <span class="k">import</span> <span class="n">Query</span>
     <span class="kn">from</span> <span class="nn">bids.exceptions</span> <span class="k">import</span> <span class="n">BIDSEntityError</span>
+
+    <span class="c1"># The created logger is set to ERROR log level</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">create_logger</span><span class="p">(</span><span class="s1">'sdcflows.wrangler'</span><span class="p">)</span>
 
     <span class="n">base_entities</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"subject"</span><span class="p">:</span> <span class="n">subject</span><span class="p">,</span>
@@ -498,36 +516,43 @@
     <span class="p">}</span>
 
     <span class="n">subject_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">f</span><span class="s2">"sub-</span><span class="si">{subject}</span><span class="s2">"</span>
-    <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span> <span class="k">if</span> <span class="n">sessions</span> <span class="k">else</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span>
-
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span> <span class="ow">or</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span>
     <span class="n">fmapless</span> <span class="o">=</span> <span class="n">fmapless</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">fmapless</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">fmapless</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"bold"</span><span class="p">,</span> <span class="s2">"dwi"</span><span class="p">}</span>
 
     <span class="n">estimators</span> <span class="o">=</span> <span class="p">[]</span>
 
+    <span class="c1"># Step 1. Use B0FieldIdentifier metadata</span>
     <span class="n">b0_ids</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">BIDSEntityError</span><span class="p">):</span>
         <span class="n">b0_ids</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_B0FieldIdentifiers</span><span class="p">(</span><span class="o">**</span><span class="n">base_entities</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">b0_id</span> <span class="ow">in</span> <span class="n">b0_ids</span><span class="p">:</span>
-        <span class="c1"># Found B0FieldIdentifier metadata entries</span>
-        <span class="n">entities</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">entities</span><span class="p">[</span><span class="s2">"B0FieldIdentifier"</span><span class="p">]</span> <span class="o">=</span> <span class="n">b0_id</span>
+    <span class="k">if</span> <span class="n">b0_ids</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">"Dataset includes `B0FieldIdentifier` metadata."</span>
+            <span class="s2">"Any data missing this metadata will be ignored."</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">b0_id</span> <span class="ow">in</span> <span class="n">b0_ids</span><span class="p">:</span>
+            <span class="c1"># Found B0FieldIdentifier metadata entries</span>
+            <span class="n">b0_entities</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">b0_entities</span><span class="p">[</span><span class="s2">"B0FieldIdentifier"</span><span class="p">]</span> <span class="o">=</span> <span class="n">b0_id</span>
 
-        <span class="n">_e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">([</span>
-            <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
-            <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">entities</span><span class="p">)</span>
-        <span class="p">])</span>
-        <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_e</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">([</span>
+                <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">b0_entities</span><span class="p">)</span>
+            <span class="p">])</span>
+            <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+            <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
-    <span class="c1"># As no B0FieldIdentifier(s) were found, try several heuristics</span>
+    <span class="c1"># Step 2. If no B0FieldIdentifiers were found, try several heuristics</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">estimators</span><span class="p">:</span>
         <span class="c1"># Set up B0 fieldmap strategies:</span>
         <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="p">[</span><span class="s2">"fieldmap"</span><span class="p">,</span> <span class="s2">"phasediff"</span><span class="p">,</span> <span class="s2">"phase1"</span><span class="p">],</span> <span class="o">**</span><span class="n">base_entities</span><span class="p">):</span>
             <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
                 <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
             <span class="p">)</span>
+            <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
             <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># A bunch of heuristics to select EPI fieldmaps</span>
@@ -547,18 +572,21 @@
                         <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="n">dirs</span><span class="p">,</span> <span class="o">**</span><span class="n">entities</span><span class="p">)</span>
                     <span class="p">]</span>
                 <span class="p">)</span>
+                <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
                 <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># At this point, only single-PE _epi files WITH ``IntendedFor`` can</span>
         <span class="c1"># be automatically processed.</span>
         <span class="n">has_intended</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-            <span class="n">has_intended</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">,</span> <span class="n">IntendedFor</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span> <span class="o">**</span><span class="n">base_entities</span><span class="p">)</span>
+            <span class="n">has_intended</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">,</span> <span class="n">IntendedFor</span><span class="o">=</span><span class="n">Query</span><span class="o">.</span><span class="n">REQUIRED</span><span class="p">,</span> <span class="o">**</span><span class="n">base_entities</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">epi_fmap</span> <span class="ow">in</span> <span class="n">has_intended</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">path</span> <span class="ow">in</span> <span class="n">fm</span><span class="o">.</span><span class="n">_estimators</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Skipping fieldmap </span><span class="si">%s</span><span class="s2"> (already in use)"</span><span class="p">,</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
                 <span class="k">continue</span>  <span class="c1"># skip EPI images already considered above</span>
 
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Found single PE fieldmap </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
             <span class="n">epi_base_md</span> <span class="o">=</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
 
             <span class="c1"># There are two possible interpretations of an IntendedFor list:</span>
@@ -570,19 +598,23 @@
             <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">epi_base_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]):</span>
                 <span class="n">target</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">subject_root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Single PE target </span><span class="si">%s</span><span class="s2"> not found"</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
                     <span class="k">continue</span>
 
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Found single PE target </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
                 <span class="c1"># The new estimator is IntendedFor the individual targets,</span>
                 <span class="c1"># even if the EPI file is IntendedFor multiple</span>
                 <span class="n">estimator_md</span> <span class="o">=</span> <span class="n">epi_base_md</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">estimator_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">intent</span><span class="p">]</span>
                 <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="n">fm</span><span class="o">.</span><span class="n">MetadataError</span><span class="p">):</span>
-                    <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
-                            <span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">epi_fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">estimator_md</span><span class="p">),</span>
-                             <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">target</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())]</span>
-                        <span class="p">)</span>
+                    <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">epi_fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">estimator_md</span><span class="p">),</span>
+                            <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">target</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
+                        <span class="p">]</span>
                     <span class="p">)</span>
+                    <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+                    <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">estimators</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_fmapless</span><span class="p">:</span>
         <span class="n">fmapless</span> <span class="o">=</span> <span class="kc">False</span>
@@ -591,8 +623,10 @@
     <span class="n">anat_file</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">"T1w"</span><span class="p">,</span> <span class="o">**</span><span class="n">base_entities</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">fmapless</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">anat_file</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Skipping fmap-less estimation"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">estimators</span>
 
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Attempting fmap-less estimation"</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">.epimanip</span> <span class="k">import</span> <span class="n">get_trt</span>
 
     <span class="k">for</span> <span class="n">ses</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">sessions</span> <span class="ow">or</span> <span class="p">(</span><span class="kc">None</span><span class="p">,),</span> <span class="n">fmapless</span><span class="p">)):</span>
@@ -630,18 +664,32 @@
                         <span class="p">]</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
-                        <span class="p">[</span>
-                            <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span>
-                                <span class="n">anat_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"IntendedFor"</span><span class="p">:</span> <span class="n">fmpaths</span><span class="p">}</span>
-                            <span class="p">),</span>
-                            <span class="o">*</span><span class="n">fmfiles</span><span class="p">,</span>
-                        <span class="p">]</span>
-                    <span class="p">)</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span>
+                            <span class="n">anat_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"IntendedFor"</span><span class="p">:</span> <span class="n">fmpaths</span><span class="p">}</span>
+                        <span class="p">),</span>
+                        <span class="o">*</span><span class="n">fmfiles</span><span class="p">,</span>
+                    <span class="p">]</span>
                 <span class="p">)</span>
+                <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+                <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">estimators</span></div>
+
+
+<span class="k">def</span> <span class="nf">_log_debug_estimation</span><span class="p">(</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">estimation</span><span class="p">:</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">,</span>
+    <span class="n">bids_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">"""A helper function to log estimation information when running with verbosity."""</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">"Found </span><span class="si">%s</span><span class="s2"> estimation from </span><span class="si">%d</span><span class="s2"> sources:</span><span class="se">\n</span><span class="s2">- </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">estimation</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">estimation</span><span class="o">.</span><span class="n">sources</span><span class="p">),</span>
+        <span class="s2">"</span><span class="se">\n</span><span class="s2">- "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">bids_root</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">estimation</span><span class="o">.</span><span class="n">sources</span><span class="p">]),</span>
+    <span class="p">)</span>
 </pre></div>
         </article>
       </div>
