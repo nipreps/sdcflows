@@ -32,6 +32,12 @@ def _parser():
         help="Path to a PyBIDS database folder, for faster indexing (especially "
              "useful for large datasets). Will be created if not present."
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print information while finding estimators (Useful for debugging)",
+    )
     return parser
 
 
@@ -67,16 +73,21 @@ def main(argv=None):
     """
     from niworkflows.utils.bids import collect_participants
     from sdcflows.utils.wrangler import find_estimators
+    from sdcflows.utils.misc import create_logger
 
     pargs = _parser().parse_args(argv)
 
     bids_dir = pargs.bids_dir.resolve(strict=True)
     layout = gen_layout(bids_dir, pargs.bids_database_dir)
     subjects = collect_participants(layout, pargs.subjects)
+    logger = create_logger('sdcflow.wrangler', level=10 if pargs.verbose else 40)
     estimators_record = {}
     for subject in subjects:
         estimators_record[subject] = find_estimators(
-            layout=layout, subject=subject, fmapless=pargs.fmapless
+            layout=layout,
+            subject=subject,
+            fmapless=pargs.fmapless,
+            logger=logger,
         )
 
     # pretty print results
