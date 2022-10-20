@@ -1,4 +1,3 @@
-from turtle import clear
 import pytest
 
 from niworkflows.utils.testing import generate_bids_skeleton
