@@ -265,7 +265,6 @@ def find_estimators(
     from .misc import create_logger
     from bids.layout import Query
     from bids.exceptions import BIDSEntityError
-    from bids.utils import listify
 
     # The created logger is set to ERROR log level
     logger = logger or create_logger('sdcflows.wrangler')
@@ -277,8 +276,6 @@ def find_estimators(
     }
 
     if bids_filters:
-        from bids.utils import listify
-
         if 'session' in bids_filters and sessions is not None:
             raise ValueError("Filters include session, but session is already defined.")
         sessions = listify(bids_filters.pop('session', None))
@@ -318,7 +315,10 @@ def find_estimators(
     if not estimators:
         # Set up B0 fieldmap strategies:
         for fmap in layout.get(
-            **{**base_entities, **{'suffix': ["fieldmap", "phasediff", "phase1"], 'session': sessions}}
+            **{
+                **base_entities,
+                **{'suffix': ["fieldmap", "phasediff", "phase1"], 'session': sessions}
+            }
         ):
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
@@ -327,9 +327,16 @@ def find_estimators(
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        acqs = base_entities.get('acquisitions') or tuple(layout.get_acquisitions(subject=subject, suffix="epi") + [None])
-        contrasts = base_entities.get('ceagent') or tuple(layout.get_ceagents(subject=subject, suffix="epi") + [None])
-
+        acqs = (
+            base_entities.get('acquisitions')
+            or layout.get_acquisitions(subject=subject, suffix="epi")
+            or [None]
+        )
+        contrasts = (
+            base_entities.get('ceagent')
+            or layout.get_ceagents(subject=subject, suffix="epi")
+            or [None]
+        )
         for ses, acq, ce in product(sessions, acqs, contrasts):
             entities = base_entities.copy()
             entities.update(
@@ -350,7 +357,9 @@ def find_estimators(
         # be automatically processed.
         has_intended = tuple()
         with suppress(ValueError):
-            has_intended = layout.get(**{**base_entities, **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED}})
+            has_intended = layout.get(
+                **{**base_entities, **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED}}
+            )
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
