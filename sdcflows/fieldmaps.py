@@ -315,7 +315,7 @@ class FieldmapEstimation:
 
         if fmap_types:
             sources = sorted(
-                str(f.path)
+                f.path
                 for f in self.sources
                 if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2")
             )
@@ -325,7 +325,7 @@ class FieldmapEstimation:
             if sum(missing_phases) == 1:
                 mis_ph = "phase1" if missing_phases[0] else "phase2"
                 hit_ph = "phase2" if missing_phases[0] else "phase1"
-                new_source = sources[0].replace(hit_ph, mis_ph)
+                new_source = sources[0].parent / sources[0].name.replace(hit_ph, mis_ph)
                 self.sources.append(FieldmapFile(new_source))
                 sources.insert(int(missing_phases[1]), new_source)
 
@@ -336,14 +336,13 @@ class FieldmapEstimation:
             magnitude = f"magnitude{'' if self.method == EstimatorType.MAPPED else '1'}"
             if magnitude not in suffix_set:
                 try:
-                    self.sources.append(
-                        FieldmapFile(
-                            sources[0]
-                            .replace("fieldmap", "magnitude")
-                            .replace("diff", "1")
-                            .replace("phase", "magnitude")
-                        )
+                    new_path = (
+                        sources[0].parent / sources[0].name
+                        .replace("fieldmap", "magnitude")
+                        .replace("diff", "1")
+                        .replace("phase", "magnitude")
                     )
+                    self.sources.append(FieldmapFile(new_path))
                 except Exception:
                     raise ValueError(
                         "A fieldmap or phase-difference estimation type was found, "
@@ -356,13 +355,12 @@ class FieldmapEstimation:
                 and "magnitude2" not in suffix_set
             ):
                 try:
-                    self.sources.append(
-                        FieldmapFile(
-                            sources[-1]
-                            .replace("diff", "2")
-                            .replace("phase", "magnitude")
-                        )
+                    new_path = (
+                        sources[-1].parent / sources[-1].name
+                        .replace("diff", "2")
+                        .replace("phase", "magnitude")
                     )
+                    self.sources.append(FieldmapFile(new_path))
                 except Exception:
                     if "phase2" in suffix_set:
                         raise ValueError(
