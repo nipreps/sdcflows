@@ -106,8 +106,13 @@ phasediff = {
             "session": "01",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "phasediff", "metadata": {
-                    "EchoTime1": 1.2, "EchoTime2": 1.4, "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz"}
+                {
+                    "suffix": "phasediff",
+                    "metadata": {
+                        "EchoTime1": 1.2,
+                        "EchoTime2": 1.4,
+                        "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz"
+                    }
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
                 {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
@@ -128,8 +133,13 @@ phasediff = {
             "session": "02",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "phasediff", "metadata": {
-                    "EchoTime1": 1.2, "EchoTime2": 1.4, "IntendedFor": "ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"}
+                {
+                    "suffix": "phasediff",
+                    "metadata": {
+                        "EchoTime1": 1.2,
+                        "EchoTime2": 1.4,
+                        "IntendedFor": "ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                    }
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
                 {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
@@ -150,8 +160,13 @@ phasediff = {
             "session": "03",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "phasediff", "metadata": {
-                    "EchoTime1": 1.2, "EchoTime2": 1.4, "IntendedFor": "ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"}
+                {
+                    "suffix": "phasediff",
+                    "metadata": {
+                        "EchoTime1": 1.2,
+                        "EchoTime2": 1.4,
+                        "IntendedFor": "ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                    }
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
                 {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
@@ -174,20 +189,21 @@ phasediff = {
 
 filters = {
     "fmap": {
-            "datatype": "fmap",
-            "session": "01",
+        "datatype": "fmap",
+        "session": "01",
     },
     "t1w": {
-            "datatype": "anat",
-            "session": "01",
-            "suffix": "T1w"
+        "datatype": "anat",
+        "session": "01",
+        "suffix": "T1w"
     },
     "bold": {
-            "datatype": "func",
-            "session": "01",
-            "suffix": "bold"
+        "datatype": "func",
+        "session": "01",
+        "suffix": "bold"
     }
 }
+
 
 @pytest.mark.parametrize('name,skeleton,estimations', [
     ('pepolar', pepolar, 1),
