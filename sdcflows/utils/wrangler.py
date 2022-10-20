@@ -276,10 +276,11 @@ def find_estimators(
     }
 
     if bids_filters:
+        filters = bids_filters.copy()  # copy to avoid altering in place
         if 'session' in bids_filters and sessions is not None:
             raise ValueError("Filters include session, but session is already defined.")
-        sessions = listify(bids_filters.pop('session', None))
-        base_entities.update(bids_filters)
+        sessions = listify(filters.pop('session', None))
+        base_entities.update(filters)
 
     subject_root = Path(layout.root) / f"sub-{subject}"
     sessions = sessions or layout.get_sessions(subject=subject) or [None]
@@ -358,7 +359,10 @@ def find_estimators(
         has_intended = tuple()
         with suppress(ValueError):
             has_intended = layout.get(
-                **{**base_entities, **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED}}
+                **{
+                    **base_entities,
+                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions}
+                }
             )
 
         for epi_fmap in has_intended:
@@ -400,7 +404,7 @@ def find_estimators(
         fmapless = False
 
     # Find fieldmap-less schemes
-    anat_file = layout.get(**{**base_entities, **{'suffix': 'T1w'}})
+    anat_file = layout.get(**{**base_entities, **{'suffix': 'T1w', 'session': sessions}})
 
     if not fmapless or not anat_file:
         logger.debug("Skipping fmap-less estimation")
