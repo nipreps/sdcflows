@@ -330,13 +330,11 @@ def find_estimators(
         # A bunch of heuristics to select EPI fieldmaps
         acqs = (
             base_entities.get('acquisitions')
-            or layout.get_acquisitions(subject=subject, suffix="epi")
-            or [None]
+            or layout.get_acquisitions(subject=subject, suffix="epi") + [None]
         )
         contrasts = (
             base_entities.get('ceagent')
-            or layout.get_ceagents(subject=subject, suffix="epi")
-            or [None]
+            or layout.get_ceagents(subject=subject, suffix="epi") + [None]
         )
         for ses, acq, ce in product(sessions, acqs, contrasts):
             entities = base_entities.copy()
