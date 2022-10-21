@@ -335,3 +335,4 @@ def test_FieldmapFile_filename(tmp_path, dsA_dir):
     fm.FieldmapEstimation(
         fm.FieldmapFile(datadir / "sub-01_phasediff.nii.gz")
     )
+    fm.clear_registry()
