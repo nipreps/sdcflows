@@ -317,3 +317,22 @@ def test_FieldmapEstimation_missing_files(tmpdir, dsA_dir):
                 ),
             ]
         )
+
+
+def test_FieldmapFile_filename(tmp_path, dsA_dir):
+    datadir = tmp_path / "phasediff"
+    datadir.mkdir(exist_ok=True)
+
+    fmap_path = dsA_dir / "sub-01" / "fmap"
+    for fl in fmap_path.glob("*"):
+        base = fl.name
+        if 'magnitude1' in base or 'magnitude2' in base or 'phasediff' in base:
+            print(fl.absolute(), str(datadir / base))
+
+            shutil.copy(fl.absolute(), str(datadir / base))
+
+    # Ensure the correct linked files (magnitude 1/2) are found
+    fm.FieldmapEstimation(
+        fm.FieldmapFile(datadir / "sub-01_phasediff.nii.gz")
+    )
+    fm.clear_registry()
