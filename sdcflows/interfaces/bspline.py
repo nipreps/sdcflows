@@ -295,6 +295,7 @@ class ApplyCoeffsField(SimpleInterface):
 
         unwarp = None
         hmc_mats = [None] * n
+
         if isdefined(self.inputs.in_xfms):
             # Split ITK matrices in separate files if they come collated
             hmc_mats = (
@@ -360,6 +361,7 @@ class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     )
     fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
     transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
+    fmap_target = File(exists=True, desc="the distorted EPI target (feed to set debug mode on)")
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
@@ -382,12 +384,17 @@ class TransformCoefficients(SimpleInterface):
                 level,
                 self.inputs.fmap_ref,
                 self.inputs.transform,
+                fmap_target=(
+                    self.inputs.fmap_target if isdefined(self.inputs.fmap_target)
+                    else None
+                ),
             )
             out_file = fname_presuffix(
                 level, suffix="_space-target", newpath=runtime.cwd
             )
             movednii.to_filename(out_file)
             self._results["out_coeff"].append(out_file)
+
         return runtime
 
 
@@ -538,6 +545,12 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
+    header["cal_max"] = max((
+        abs(np.asanyarray(coeffnii.dataobj).min()),
+        np.asanyarray(coeffnii.dataobj).max(),
+    ))
+    header["cal_min"] = - header["cal_max"]
+    header.set_intent("estimate", tuple(), name="B-Spline coefficients")
 
     # Write out fixed (generalized) coefficients
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
@@ -563,8 +576,8 @@ def _split_itk_file(in_file):
 def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
     """Outsource the resampler into a separate callable function to allow parallelization."""
     from functools import partial
-    from niworkflows.interfaces.nibabel import reorient_image
-    from sdcflows.utils.tools import ensure_positive_cosines
+    # from niworkflows.interfaces.nibabel import reorient_image
+    # from sdcflows.utils.tools import ensure_positive_cosines
 
     # Prepare output names
     filename = partial(fname_presuffix, newpath=newpath)
@@ -584,19 +597,17 @@ def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=No
 
         unwarp.xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
 
-    # Reorient input to match that of the coefficients, i.e., to have positive director cosines
-    reoriented_img, axcodes = ensure_positive_cosines(nb.load(in_file))
+    # Load distorted image
+    distorted_img = nb.load(in_file)
 
-    if unwarp.fit(reoriented_img):
+    if unwarp.fit(distorted_img):
         unwarp.mapped.to_filename(retval[2])
     else:
         retval[2] = None
 
-    # Unwarp the reoriented image, and restore original orientation
-    unwarped_img = reorient_image(
-        unwarp.apply(reoriented_img, ro_time=ro, pe_dir=pe),
-        axcodes,
-    )
+    # Unwarp
+    unwarped_img = unwarp.apply(distorted_img, ro_time=ro, pe_dir=pe)
+
     # Write out to disk
     unwarped_img.to_filename(retval[0])
 
