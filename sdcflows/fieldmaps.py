@@ -411,7 +411,8 @@ class FieldmapEstimation:
             ]
 
             # intersection of B0FieldIdentifiers (in case of lists)
-            bids_ids = bids_ids[0].intersection(*bids_ids[1:])
+            if len(bids_ids) > 1:
+                bids_ids = bids_ids[0].intersection(*bids_ids[1:])
             if len(bids_ids) > 1:
                 raise ValueError(
                     f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"
