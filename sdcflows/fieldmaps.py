@@ -404,13 +404,14 @@ class FieldmapEstimation:
         # Register this estimation method
         if not self.bids_id:
             # If not manually set, try to get it from BIDS metadata
-            bids_ids = set(
-                [
-                    f.metadata.get("B0FieldIdentifier")
-                    for f in self.sources
-                    if f.metadata.get("B0FieldIdentifier")
-                ]
-            )
+            bids_ids = [
+                set(listify(f.metadata.get("B0FieldIdentifier")))
+                for f in self.sources
+                if f.metadata.get("B0FieldIdentifier")
+            ]
+
+            # intersection of B0FieldIdentifiers (in case of lists)
+            bids_ids = bids_ids[0].intersection(*bids_ids[1:])
             if len(bids_ids) > 1:
                 raise ValueError(
                     f"Multiple ``B0FieldIdentifier`` set: <{', '.join(bids_ids)}>"

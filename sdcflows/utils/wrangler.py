@@ -283,6 +283,8 @@ def find_estimators(
     b0_ids = tuple()
     with suppress(BIDSEntityError):
         b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
+        # flatten lists from json (tupled in pybids for hashing), then unique 
+        b0_ids = set(sum([(b0_id if isinstance(b0_id, tuple) else (b0_id,)) for b0_id in b0_ids ],()))
 
     if b0_ids:
         logger.debug(
@@ -296,7 +298,8 @@ def find_estimators(
 
             e = fm.FieldmapEstimation([
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                for fmap in layout.get(**b0_entities)
+                for fmap in layout.get(**base_entities, B0FieldIdentifier=b0_id) + 
+                layout.get(**base_entities, B0FieldIdentifier=f'"{b0_id}"', regex_search=True)
             ])
             _log_debug_estimation(logger, e, layout.root)
             estimators.append(e)
