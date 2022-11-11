@@ -26,7 +26,7 @@ from pathlib import Path
 import attr
 import numpy as np
 from scipy import ndimage as ndi
-from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
+from scipy.sparse import csr_matrix, kron
 
 import nibabel as nb
 import nitransforms as nt
@@ -34,6 +34,9 @@ from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
 from niworkflows.interfaces.nibabel import reorient_image
+from sdcflows.lib.bspline import bs_eval as _bseval
+
+bseval = np.frompyfunc(_bseval, 1, 1)
 
 
 def _clear_mapped(instance, attribute, value):
@@ -413,19 +416,11 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float16"):
         ijk_knots = np.arange(0, knots_shape[axis], dtype=dtype)
 
         # Distances of every sample w.r.t. every knot
-        distance = np.abs(ijk_samples[np.newaxis, ...] - ijk_knots[..., np.newaxis])
+        distance = ijk_samples[np.newaxis, ...] - ijk_knots[..., np.newaxis]
 
-        # Optimization: calculate B-Splines only for samples within the kernel spread
-        within_support = distance < 2.0
-        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-
-        # Calculate univariate B-Spline weight for samples within kernel spread
-        bs_w = _cubic_bspline(d_vals)
-
-        # Densify and build csr matrix (probably, we could avoid densifying)
-        weights = np.zeros_like(distance, dtype="float32")
-        weights[within_support] = bs_w[d_idxs]
-        wd.append(csr_matrix(weights))
+        # Build CSR (compressed sparse row) matrix
+        weights = csr_matrix(bseval(distance), dtype="float32")
+        wd.append(weights)
 
     # Efficiently calculate tensor product of the weights
     return kron(kron(wd[0], wd[1]), wd[2])
@@ -456,3 +451,67 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     ))
     hdr["cal_min"] = - hdr["cal_max"]
     return coeff.__class__(coeff.dataobj, newaff, hdr)
+
+
+def grid_bspline_weights_3d(target_nii, ctrl_nii):
+    """Calculate ijk distances of the samples in one axis of the target w.r.t. the knots."""
+    import pdb; pdb.set_trace()
+
+    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
+    # return bsplines_1d(target_nii.shape, ctrl_nii.shape, target_to_grid)
+
+    sample_ijk = _indexes(target_nii.shape[:3])
+    grid_ijk = (target_to_grid @ sample_ijk)[:3, ...]
+    knots_ijk = _indexes(ctrl_nii.shape[:3])[:3, ...]
+
+    blocks_samples = np.array_split(grid_ijk, 1000, axis=1)
+    blocks_knots = np.array_split(knots_ijk, 2, axis=1)
+
+    blocks = 0
+    for samples in blocks_samples:
+        for knots in blocks_knots:
+            print(f"samples = {samples.shape}, knots = {knots.shape}")
+            blocks += 1
+
+            deltas = np.full((knots.shape[-1], samples.shape[-1], 3), 2.0, dtype="float16")
+            within_support = np.ones((knots.shape[-1], samples.shape[-1]), dtype="bool")
+            for axis in range(3):
+                axis_delta = np.abs(np.subtract(
+                    samples[np.newaxis, axis, :],
+                    knots.T[:, axis, np.newaxis],
+                    dtype="float16",
+                    where=within_support,
+                ))
+                within_support[axis_delta >= 2.0] = False
+                total = within_support.sum()
+                if not total:
+                    continue
+
+                deltas[within_support, axis] = axis_delta[within_support]
+
+            if not total:
+                continue
+
+            d_vals, d_idxs = np.unique(
+                deltas[within_support],
+                return_inverse=True,
+            )
+            # Calculate univariate B-Spline weight for samples within kernel spread
+            bs_w = bseval(d_vals)
+
+            # Densify and build csr matrix (probably, we could avoid densifying)
+            weights = np.zeros_like(within_support, dtype="float32")
+            weights[within_support] = np.prod(
+                bs_w[d_idxs].reshape(deltas[within_support].shape),
+                axis=1,
+            )
+
+    return None
+
+
+def _indexes(shape, dtype="float16"):
+    indexes = tuple([np.arange(s) for s in shape])
+    return np.vstack((
+        np.array(np.meshgrid(*indexes, indexing="ij")).reshape(len(shape), -1),
+        np.ones((np.prod(shape), )),
+    )).astype(dtype)
