@@ -76,6 +76,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="generate a field, extrapolated outside the brain mask",
     )
+    debug = traits.Bool(False, usedefault=True, desc="generate extra assets for debugging")
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -128,11 +129,21 @@ class BSplineApprox(SimpleInterface):
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
         data = fmapnii.get_fdata(dtype="float32")
+
+        # Generate the output naming base
+        out_name = fname_presuffix(
+            self.inputs.in_data, suffix="_field", newpath=runtime.cwd
+        )
+        # Create a copy of the header for use below
+        hdr = fmapnii.header.copy()
+        hdr.set_data_dtype("float32")
         mask = (
             nb.load(self.inputs.in_mask).get_fdata() > 0
             if isdefined(self.inputs.in_mask)
             else np.ones_like(data, dtype=bool)
         )
+
+        # Massage bs_spacing input
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
         # Recenter the fieldmap
@@ -145,57 +156,70 @@ class BSplineApprox(SimpleInterface):
         elif self.inputs.recenter == "mean":
             data -= np.mean(data[mask])
 
-        # Calculate the spatial location of control points
-        bs_levels = []
-        ncoeff = []
-        weights = None
-        for sp in bs_spacing:
-            level = bspline_grid(fmapnii, control_zooms_mm=sp)
-            bs_levels.append(level)
-            ncoeff.append(level.dataobj.size)
+        self._results["out_coeff"] = []
 
-            weights = (
-                gbsw(fmapnii, level)
-                if weights is None
-                else sparse_vstack((weights, gbsw(fmapnii, level)))
+        regressors = None
+        coefficients = None
+        residuals = data.copy()
+        interpolated = np.zeros_like(data) if self.inputs.debug else None
+        for i, sp in enumerate(bs_spacing):
+            # Calculate the spatial location of control points
+            level = bspline_grid(fmapnii, control_zooms_mm=sp)
+            # Calculate collocation matrix
+            level_weights = gbsw(fmapnii, level).T.tocsr()[mask.reshape(-1), :]
+            # Fit the model on the residuals
+            model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
+            model.fit(level_weights, residuals[mask])
+
+            # Generate a fieldmap of this level
+            interp_data = np.zeros_like(data)
+            interp_data[mask] = level_weights @ np.array(model.coef_).T  # Interpolation
+            residuals -= interp_data
+
+            # Write coefficients out
+            out_level = out_name.replace("_field.", f"_level-{i:03}_coeff.")
+            level.__class__(
+                np.array(model.coef_, dtype="float32").reshape(level.shape),
+                level.affine,
+                level.header,
+            ).to_filename(out_level)
+            self._results["out_coeff"].append(out_level)
+
+            if self.inputs.debug:
+                interpolated += interp_data
+                level.__class__(
+                    interp_data,
+                    fmapnii.affine,
+                    hdr,
+                ).to_filename(out_name.replace("_field.", f"_level-{i:03}_field."))
+
+                level.__class__(
+                    residuals,
+                    fmapnii.affine,
+                    hdr,
+                ).to_filename(out_name.replace("_field.", f"_level-{i:03}_residuals."))
+
+            regressors = (
+                level_weights if regressors is None
+                else sparse_vstack((regressors, level_weights))
+            )
+            coefficients = (
+                np.array(model.coef_, dtype="float32") if coefficients is None
+                else np.vstack((coefficients, np.array(model.coef_, dtype="float32")))
             )
 
-        regressors = weights.T.tocsr()[mask.reshape(-1), :]
-
-        # Fit the model
-        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
-        model.fit(regressors, data[mask])
-
+        # Interpolate all levels at once
         interp_data = np.zeros_like(data)
-        interp_data[mask] = np.array(model.coef_) @ regressors.T  # Interpolation
+        interp_data[mask] = regressors @ coefficients.T
 
         # Store outputs
-        out_name = fname_presuffix(
-            self.inputs.in_data, suffix="_field", newpath=runtime.cwd
-        )
-        hdr = fmapnii.header.copy()
-        hdr.set_data_dtype("float32")
         fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(out_name)
         self._results["out_field"] = out_name
-
-        index = 0
-        self._results["out_coeff"] = []
-        for i, (n, bsl) in enumerate(zip(ncoeff, bs_levels)):
-            out_level = out_name.replace("_field.", f"_coeff{i:03}.")
-            bsl.__class__(
-                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
-                    bsl.shape
-                ),
-                bsl.affine,
-                bsl.header,
-            ).to_filename(out_level)
-            index += n
-            self._results["out_coeff"].append(out_level)
 
         # Write out fitting-error map
         self._results["out_error"] = out_name.replace("_field.", "_error.")
         fmapnii.__class__(
-            data * mask - interp_data, fmapnii.affine, fmapnii.header
+            residuals, fmapnii.affine, fmapnii.header
         ).to_filename(self._results["out_error"])
 
         if not self.inputs.extrapolate:
@@ -205,8 +229,8 @@ class BSplineApprox(SimpleInterface):
             self._results["out_extrapolated"] = self._results["out_field"]
             return runtime
 
-        extrapolators = weights.tocsc()[:, ~mask.reshape(-1)]
-        interp_data[~mask] = np.array(model.coef_) @ extrapolators  # Extrapolation
+        extrapolators = regressors.tocsc()[:, ~mask.reshape(-1)]
+        interp_data[~mask] = coefficients @ extrapolators  # Extrapolation
         self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
         fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(
             self._results["out_extrapolated"]
