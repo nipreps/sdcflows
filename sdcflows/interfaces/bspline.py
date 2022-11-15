@@ -124,7 +124,7 @@ class BSplineApprox(SimpleInterface):
 
     def _run_interface(self, runtime):
         from sklearn import linear_model as lm
-        from scipy.sparse import vstack as sparse_vstack
+        from scipy.sparse import hstack as sparse_hstack
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
@@ -199,13 +199,15 @@ class BSplineApprox(SimpleInterface):
                     hdr,
                 ).to_filename(out_name.replace("_field.", f"_level-{i:03}_residuals."))
 
+            import pdb; pdb.set_trace()
+
             regressors = (
                 level_weights if regressors is None
-                else sparse_vstack((regressors, level_weights))
+                else sparse_hstack((regressors, level_weights))
             )
             coefficients = (
                 np.array(model.coef_, dtype="float32") if coefficients is None
-                else np.vstack((coefficients, np.array(model.coef_, dtype="float32")))
+                else np.hstack((coefficients, np.array(model.coef_, dtype="float32")))
             )
 
         # Interpolate all levels at once
