@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils package" href="sdcflows.utils.html" /><link rel="prev" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.transform module - sdcflows 2.1.2.dev56+g83b064ee documentation</title>
+        <title>sdcflows.transform module - sdcflows 2.1.2.dev58+g69abb77c documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev56+g83b064ee documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev58+g69abb77c documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev56 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev58 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev56 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev58 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -248,7 +248,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">B0FieldTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coeffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([[1.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">0.],</span> <span class="pre">[0.,</span> <span class="pre">1.,</span> <span class="pre">0.,</span> <span class="pre">0.],</span> <span class="pre">[0.,</span> <span class="pre">0.,</span> <span class="pre">1.,</span> <span class="pre">0.],</span> <span class="pre">[0.,</span> <span class="pre">0.,</span> <span class="pre">0.,</span> <span class="pre">1.]])</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Represents and applies the transform to correct for susceptibility distortions.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.apply">
@@ -300,7 +300,7 @@ for all voxels in the target-image’s extent.</p>
 <code class="docutils literal notranslate"><span class="pre">False</span></code> if cache was valid and will be reused.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -319,8 +319,8 @@ target image we want to correct).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
-<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
+<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
+<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value (only if <code class="docutils literal notranslate"><span class="pre">vsm=False</span></code>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -346,8 +346,8 @@ target image we want to correct).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xyz_nii</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">os.pathlike</span></code>) – Path to a displacements field in NIfTI format.</p></li>
-<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds.</p></li>
-<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value.</p></li>
+<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds.</p></li>
+<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -368,8 +368,8 @@ target image we want to correct).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fmap_nii</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">os.pathlike</span></code>) – Path to a voxel-shift-map (VSM) in NIfTI format</p></li>
-<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds</p></li>
-<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value</p></li>
+<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds</p></li>
+<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
