@@ -399,9 +399,15 @@ def grid_bspline_weights(target_nii, ctrl_nii):
 
         within_support = distance < 2.0
         d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-        bs_w = _cubic_bspline(d_vals)
-        weights = np.zeros_like(distance, dtype="float32")
-        weights[within_support] = bs_w[d_idxs]
+        # Calculate univariate B-Spline weight for samples within kernel spread
+        weights_vals = _cubic_bspline(d_vals)[d_idxs].astype("float32")
+
+        # Build csr matrix
+        rows, cols = np.where(within_support)
+        weights = csr_matrix(
+            (weights_vals, (rows, cols)),
+            shape=distance.shape,
+        )
         wd.append(csr_matrix(weights))
 
     return kron(kron(wd[0], wd[1]), wd[2])
