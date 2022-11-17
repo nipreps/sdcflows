@@ -76,6 +76,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="generate a field, extrapolated outside the brain mask",
     )
+    debug = traits.Bool(False, usedefault=True, desc="generate extra assets for debugging")
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -128,11 +129,22 @@ class BSplineApprox(SimpleInterface):
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
         data = fmapnii.get_fdata(dtype="float32")
+
+        # Generate the output naming base
+        out_name = fname_presuffix(
+            self.inputs.in_data, suffix="_field", newpath=runtime.cwd
+        )
+        # Create a copy of the header for use below
+        hdr = fmapnii.header.copy()
+        hdr.set_data_dtype("float32")
+
         mask = (
             nb.load(self.inputs.in_mask).get_fdata() > 0
             if isdefined(self.inputs.in_mask)
             else np.ones_like(data, dtype=bool)
         )
+
+        # Massage bs_spacing input
         bs_spacing = [np.array(sp, dtype="float32") for sp in self.inputs.bs_spacing]
 
         # Recenter the fieldmap
@@ -334,6 +346,7 @@ class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     )
     fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
     transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
+    fmap_target = File(exists=True, desc="the distorted EPI target (feed to set debug mode on)")
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
@@ -356,6 +369,10 @@ class TransformCoefficients(SimpleInterface):
                 level,
                 self.inputs.fmap_ref,
                 self.inputs.transform,
+                fmap_target=(
+                    self.inputs.fmap_target if isdefined(self.inputs.fmap_target)
+                    else None
+                ),
             )
             out_file = fname_presuffix(
                 level, suffix="_space-target", newpath=runtime.cwd
@@ -512,6 +529,12 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
+    header["cal_max"] = max((
+        abs(np.asanyarray(coeffnii.dataobj).min()),
+        np.asanyarray(coeffnii.dataobj).max(),
+    ))
+    header["cal_min"] = - header["cal_max"]
+    header.set_intent("estimate", tuple(), name="B-Spline coefficients")
 
     # Write out fixed (generalized) coefficients
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
