@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev58+g69abb77c documentation</title>
+        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev60+gfd53565e documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev58+g69abb77c documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev60+gfd53565e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev58 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev60 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev58 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev60 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -320,6 +320,7 @@
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">desc</span><span class="o">=</span><span class="s2">"generate a field, extrapolated outside the brain mask"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">debug</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"generate extra assets for debugging"</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_BSplineApproxOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
@@ -372,11 +373,22 @@
         <span class="c1"># Load in the fieldmap</span>
         <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span>
+
+        <span class="c1"># Generate the output naming base</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"_field"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
+        <span class="p">)</span>
+        <span class="c1"># Create a copy of the header for use below</span>
+        <span class="n">hdr</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
+
         <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span><span class="p">)</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="k">if</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
         <span class="p">)</span>
+
+        <span class="c1"># Massage bs_spacing input</span>
         <span class="n">bs_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">bs_spacing</span><span class="p">]</span>
 
         <span class="c1"># Recenter the fieldmap</span>
@@ -578,6 +590,7 @@
     <span class="p">)</span>
     <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"the fieldmap reference"</span><span class="p">)</span>
     <span class="n">transform</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"rigid-body transform file"</span><span class="p">)</span>
+    <span class="n">fmap_target</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"the distorted EPI target (feed to set debug mode on)"</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_TransformCoefficientsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
@@ -600,6 +613,10 @@
                 <span class="n">level</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_ref</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+                <span class="n">fmap_target</span><span class="o">=</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_target</span> <span class="k">if</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_target</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
                 <span class="n">level</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"_space-target"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
@@ -756,6 +773,12 @@
     <span class="n">header</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">header</span><span class="o">.</span><span class="n">set_qform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">header</span><span class="o">.</span><span class="n">set_sform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">header</span><span class="p">[</span><span class="s2">"cal_max"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+    <span class="p">))</span>
+    <span class="n">header</span><span class="p">[</span><span class="s2">"cal_min"</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">header</span><span class="p">[</span><span class="s2">"cal_max"</span><span class="p">]</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s2">"estimate"</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"B-Spline coefficients"</span><span class="p">)</span>
 
     <span class="c1"># Write out fixed (generalized) coefficients</span>
     <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newaff</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
