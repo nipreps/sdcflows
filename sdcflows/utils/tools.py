@@ -50,7 +50,7 @@ def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
     hdr.set_sform(affine, scode)
     hdr.set_qform(affine, qcode)
     newref = in_file.__class__(
-        np.zeros(new_shape, dtype=hdr.get_data_dtype()),
+        np.zeros(new_shape.astype(int), dtype=hdr.get_data_dtype()),
         affine,
         hdr,
     )

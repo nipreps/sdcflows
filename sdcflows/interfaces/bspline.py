@@ -23,7 +23,6 @@
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from itertools import product
 from pathlib import Path
-from contextlib import suppress
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
@@ -152,14 +151,12 @@ class BSplineApprox(SimpleInterface):
         if need_resize:
             from sdcflows.utils.tools import resample_to_zooms
 
-            zooms_min = self.inputs.zooms_min
-
-            with suppress(TypeError):
-                zooms_min = [float(zooms_min)] * 3
+            zooms_min = np.maximum(zooms, self.inputs.zooms_min)
 
             LOGGER.info(
                 "Resampling image with resolution exceeding 'zooms_min' "
-                f"({'x'.join(str(s) for s in zooms)})."
+                f"({'x'.join(str(s) for s in zooms)} → "
+                f"{'x'.join(str(s) for s in zooms_min)})."
             )
             fmapnii = resample_to_zooms(fmapnii, zooms_min)
 
