@@ -23,6 +23,54 @@
 """Image processing tools."""
 
 
+def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
+    """Resample the input data to a new grid with the requested zooms."""
+    from pathlib import Path
+    import numpy as np
+    import nibabel as nb
+    from nibabel.affines import apply_affine
+    from nitransforms.linear import Affine
+
+    if isinstance(in_file, (str, Path)):
+        in_file = nb.load(in_file)
+
+    # Prepare output x-forms
+    sform, scode = in_file.get_sform(coded=True)
+    qform, qcode = in_file.get_qform(coded=True)
+
+    hdr = in_file.header.copy()
+    zooms = np.array(zooms)
+
+    # Calculate the factors to normalize voxel size to the specific zooms
+    pre_zooms = np.array(in_file.header.get_zooms()[:3])
+    pre_shape = np.array(in_file.shape[:3])
+    pre_affine = in_file.affine
+
+    # Calculate new affine and shape
+    affine = np.eye(4)
+    affine[:-1, :-1] = zooms * pre_affine[:-1, :-1] / pre_zooms
+
+    extremes = apply_affine(pre_affine, [(0, 0, 0), pre_shape - 1])
+    extent = np.abs(extremes[1] - extremes[0])
+
+    new_shape = np.ceil(extent / zooms).astype(int)
+    affine[:-1, -1] = apply_affine(pre_affine, (pre_shape - 1) * 0.5) - affine[
+        :-1, :-1
+    ] @ ((new_shape - 1) * 0.5)
+
+    # Generate new reference
+    hdr.set_sform(affine, scode)
+    hdr.set_qform(affine, qcode)
+    newref = in_file.__class__(
+        np.zeros(new_shape, dtype=hdr.get_data_dtype()),
+        affine,
+        hdr,
+    )
+
+    # Resample via identity transform
+    return Affine(reference=newref).apply(in_file, order=order, prefilter=prefilter)
+
+
 def ensure_positive_cosines(img):
     """
     Reorient axes polarity to have all positive direction cosines.
