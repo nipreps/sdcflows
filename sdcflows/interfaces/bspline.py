@@ -83,6 +83,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
+    debug = traits.Bool(False, usedefault=True, desc="generate extra assets for debugging")
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -380,6 +381,7 @@ class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     )
     fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
     transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
+    fmap_target = File(exists=True, desc="the distorted EPI target (feed to set debug mode on)")
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
@@ -402,6 +404,10 @@ class TransformCoefficients(SimpleInterface):
                 level,
                 self.inputs.fmap_ref,
                 self.inputs.transform,
+                fmap_target=(
+                    self.inputs.fmap_target if isdefined(self.inputs.fmap_target)
+                    else None
+                ),
             )
             out_file = fname_presuffix(
                 level, suffix="_space-target", newpath=runtime.cwd
@@ -576,6 +582,12 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
+    header["cal_max"] = max((
+        abs(np.asanyarray(coeffnii.dataobj).min()),
+        np.asanyarray(coeffnii.dataobj).max(),
+    ))
+    header["cal_min"] = - header["cal_max"]
+    header.set_intent("estimate", tuple(), name="B-Spline coefficients")
 
     # Write out fixed (generalized) coefficients
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
