@@ -170,7 +170,7 @@ class BSplineApprox(SimpleInterface):
 
         # Generate a numpy array with the mask
         mask = (
-            np.ones_like(fmapnii.dataobj, dtype=bool) if masknii is None
+            np.ones(fmapnii.shape, dtype=bool) if masknii is None
             else np.asanyarray(masknii.dataobj) > 1e-4
         )
 

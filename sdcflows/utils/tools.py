@@ -28,7 +28,7 @@ def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
     from pathlib import Path
     import numpy as np
     import nibabel as nb
-    from nibabel.affines import apply_affine
+    from nibabel.affines import rescale_affine
     from nitransforms.linear import Affine
 
     if isinstance(in_file, (str, Path)):
@@ -41,22 +41,10 @@ def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
     hdr = in_file.header.copy()
     zooms = np.array(zooms)
 
-    # Calculate the factors to normalize voxel size to the specific zooms
     pre_zooms = np.array(in_file.header.get_zooms()[:3])
-    pre_shape = np.array(in_file.shape[:3])
-    pre_affine = in_file.affine
-
-    # Calculate new affine and shape
-    affine = np.eye(4)
-    affine[:-1, :-1] = zooms * pre_affine[:-1, :-1] / pre_zooms
-
-    extremes = apply_affine(pre_affine, [(0, 0, 0), pre_shape - 1])
-    extent = np.abs(extremes[1] - extremes[0])
-
-    new_shape = np.ceil(extent / zooms).astype(int)
-    affine[:-1, -1] = apply_affine(pre_affine, (pre_shape - 1) * 0.5) - affine[
-        :-1, :-1
-    ] @ ((new_shape - 1) * 0.5)
+    # Could use `np.ceil` if we prefer
+    new_shape = np.rint(np.array(in_file.shape[:3]) * pre_zooms / zooms)
+    affine = rescale_affine(in_file.affine, in_file.shape[:3], zooms, new_shape)
 
     # Generate new reference
     hdr.set_sform(affine, scode)
