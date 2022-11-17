@@ -23,6 +23,7 @@
 """Filtering of :math:`B_0` field mappings with B-Splines."""
 from itertools import product
 from pathlib import Path
+from contextlib import suppress
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
@@ -75,8 +76,10 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="generate a field, extrapolated outside the brain mask",
     )
-    zooms_min = traits.Float(
-        1.4,
+    zooms_min = traits.Union(
+        traits.Float,
+        traits.Tuple(traits.Float, traits.Float, traits.Float),
+        default_value=1.95,
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
@@ -148,14 +151,19 @@ class BSplineApprox(SimpleInterface):
         if need_resize:
             from niworkflows.utils.images import resample_by_spacing
 
+            zooms_min = self.inputs.zooms_min
+
+            with suppress(TypeError):
+                zooms_min = [float(zooms_min)] * 3
+
             LOGGER.info(
                 "Resampling image with resolution exceeding 'zooms_min' "
                 f"({'x'.join(str(s) for s in zooms)})."
             )
-            fmapnii = resample_by_spacing(fmapnii, [self.inputs.zooms_min] * 3)
+            fmapnii = resample_by_spacing(fmapnii, zooms_min)
 
             if masknii is not None:
-                masknii = resample_by_spacing(masknii, [self.inputs.zooms_min] * 3)
+                masknii = resample_by_spacing(masknii, zooms_min)
 
         data = fmapnii.get_fdata(dtype="float32")
 
