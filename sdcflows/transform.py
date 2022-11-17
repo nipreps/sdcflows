@@ -340,7 +340,7 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     return fmap_nii
 
 
-def grid_bspline_weights(target_nii, ctrl_nii, dtype="float16"):
+def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
 
@@ -386,21 +386,29 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float16"):
         step of approximation/extrapolation.
 
     """
-    shape = target_nii.shape[:3]
-    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
-    ras2ijk = np.linalg.inv(ctrl_nii.affine)
-    origin = nb.affines.apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
+    sample_shape = target_nii.shape[:3]
+    knots_shape = ctrl_nii.shape[:3]
 
+    # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
+    if not np.allclose(np.linalg.norm(
+        np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
+        axis=1,
+    ), 0, atol=1e-3):
+        raise RuntimeError("Image's and B-Spline's grids are not aligned.")
+
+    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []
-    for i, (o, n, sp) in enumerate(
-        zip(origin, shape, target_nii.header.get_zooms()[:3])
-    ):
-        # Calculate N locations of samples along one axis, in knot coordinates
-        x = np.arange(0, n, dtype=dtype) * sp / ctrl_sp[i] + o
+    for axis in range(3):
+        # 3D ijk coordinates of current axis
+        coords = np.zeros((3, sample_shape[axis]), dtype=dtype)
+        coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
+
+        # Calculate the index component of samples w.r.t. B-Spline knots along current axis
+        x = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
 
         # BSpline.design_matrix requires all x be within -4 and 4 padding
         # This padding results from the B-Spline degree (3) plus one
-        t = np.arange(-4, ctrl_nii.shape[i] + 4, dtype=dtype)
+        t = np.arange(-4, knots_shape[axis] + 4, dtype=dtype)
 
         # Calculate K x N collocation matrix (discarding extra padding)
         colloc_ax = BSpline.design_matrix(x, t, 3)[:, 2:-2]
