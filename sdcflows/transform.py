@@ -25,6 +25,7 @@ from pathlib import Path
 
 import attr
 import numpy as np
+from warnings import warn
 from scipy import ndimage as ndi
 from scipy.interpolate import BSpline
 from scipy.sparse import vstack as sparse_vstack, kron
@@ -394,7 +395,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
         axis=1,
     ), 0, atol=1e-3):
-        raise RuntimeError("Image's and B-Spline's grids are not aligned.")
+        warn("Image's and B-Spline's grids are not aligned.")
 
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []
