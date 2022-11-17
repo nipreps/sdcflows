@@ -156,4 +156,11 @@ The field coefficients were mapped on to the reference EPI using the transform.
     ])
     # fmt: on
 
+    if debug:
+        # fmt: off
+        workflow.connect([
+            (inputnode, map_coeff, [("target_ref", "fmap_target")]),
+        ])
+        # fmt: on
+
     return workflow

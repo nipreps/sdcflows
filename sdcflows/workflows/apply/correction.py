@@ -103,7 +103,9 @@ def init_unwarp_wf(omp_nthreads=1, debug=False, name="unwarp_wf"):
 
     rotime = pe.Node(GetReadoutTime(), name="rotime")
     rotime.interface._always_run = debug
-    resample = pe.Node(ApplyCoeffsField(num_threads=omp_nthreads), name="resample")
+    resample = pe.Node(ApplyCoeffsField(
+        num_threads=omp_nthreads if not debug else 1
+    ), name="resample")
     merge = pe.Node(MergeSeries(), name="merge")
     average = pe.Node(RobustAverage(mc_method=None), name="average")
 

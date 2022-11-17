@@ -34,7 +34,6 @@ from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
 from niworkflows.interfaces.nibabel import reorient_image
-from sdcflows.utils.tools import ensure_positive_cosines
 
 
 def _clear_mapped(instance, attribute, value):
@@ -48,7 +47,7 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_mapped)
+    xfm = attr.ib(default=None, on_setattr=_clear_mapped)
     """A rigid-body transform to prepend to the unwarping displacements field."""
     mapped = attr.ib(default=None, init=False)
     """
@@ -74,6 +73,9 @@ class B0FieldTransform:
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
+        # Initialize xform (or set identity)
+        xfm = self.xfm if self.xfm is not None else nt.linear.Affine()
+
         if self.mapped is not None:
             newaff = spatialimage.affine
             newshape = spatialimage.shape
@@ -88,9 +90,9 @@ class B0FieldTransform:
 
         # Generate tensor-product B-Spline weights
         for level in listify(self.coeffs):
-            self.xfm.reference = spatialimage
+            xfm.reference = spatialimage
             moved_cs = level.__class__(
-                level.dataobj, self.xfm.matrix @ level.affine, level.header
+                level.dataobj, xfm.matrix @ level.affine, level.header
             )
             wmat = grid_bspline_weights(spatialimage, moved_cs)
             weights.append(wmat)
@@ -103,9 +105,12 @@ class B0FieldTransform:
         )
 
         # Cache
-        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, None)
-        self.mapped.header.set_intent("estimate", name="Voxel shift")
-        self.mapped.header.set_xyzt_units(*spatialimage.header.get_xyzt_units())
+        hdr = spatialimage.header.copy()
+        hdr.set_intent("estimate", name="Voxel shift")
+        hdr.set_data_dtype("float32")
+        hdr["cal_max"] = max((abs(vsm.min()), vsm.max()))
+        hdr["cal_min"] = - hdr["cal_max"]
+        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, hdr)
         return True
 
     def apply(
@@ -153,6 +158,8 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
+        from sdcflows.utils.tools import ensure_positive_cosines
+
         # Ensure the fmap has been computed
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
@@ -177,6 +184,7 @@ class B0FieldTransform:
             ).reshape(3, -1)
         else:
             # Map coordinates from reference to time-step
+            self.xfm.reference = spatialimage
             hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
             # Convert from RAS to voxel coordinates
             voxcoords = (
@@ -323,6 +331,11 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
     fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
     fmap_nii.header.set_xyzt_units("mm")
+    fmap_nii.header["cal_max"] = max((
+        abs(np.asanyarray(fmap_nii.dataobj).min()),
+        np.asanyarray(fmap_nii.dataobj).max(),
+    ))
+    fmap_nii.header["cal_min"] = - fmap_nii.header["cal_max"]
     return fmap_nii
 
 
@@ -413,12 +426,33 @@ def grid_bspline_weights(target_nii, ctrl_nii):
     return kron(kron(wd[0], wd[1]), wd[2])
 
 
-def _move_coeff(in_coeff, fmap_ref, transform):
+def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
     xfm = nt.linear.Affine(
         nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
         reference=fmap_ref,
     )
     coeff = nb.load(in_coeff)
-    newaff = xfm.matrix @ coeff.affine
-    return coeff.__class__(coeff.dataobj, newaff, coeff.header)
+    hdr = coeff.header.copy()
+
+    if fmap_target is not None:  # Debug mode: generate fieldmap reference
+        nii_target = nb.load(fmap_target)
+        debug_ref = (~xfm).apply(fmap_ref, reference=nii_target)
+        debug_ref.header.set_qform(nii_target.affine, code=1)
+        debug_ref.header.set_sform(nii_target.affine, code=1)
+        debug_ref.to_filename(Path() / "debug_fmapref.nii.gz")
+
+    # Generate a new transform
+    newaff = np.linalg.inv(np.linalg.inv(coeff.affine) @ (~xfm).matrix)
+
+    # Prepare output file
+    hdr.set_qform(newaff, code=1)
+    hdr.set_sform(newaff, code=1)
+
+    # Make it easy on viz software to render proper range
+    hdr["cal_max"] = max((
+        abs(np.asanyarray(coeff.dataobj).min()),
+        np.asanyarray(coeff.dataobj).max(),
+    ))
+    hdr["cal_min"] = - hdr["cal_max"]
+    return coeff.__class__(coeff.dataobj, newaff, hdr)
