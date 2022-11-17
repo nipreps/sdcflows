@@ -41,7 +41,7 @@ from nipype.interfaces.base import (
     OutputMultiObject,
 )
 
-from sdcflows.transform import grid_bspline_weights as gbsw
+from sdcflows.transform import grid_bspline_weights
 
 
 LOW_MEM_BLOCK_SIZE = 1000
@@ -513,9 +513,9 @@ def _collocation_matrix(image, knot_spacing):
         bs_levels.append(level)
 
         weights = (
-            gbsw(image, level)
+            grid_bspline_weights(image, level)
             if weights is None
-            else sparse_vstack((weights, gbsw(image, level)))
+            else sparse_vstack((weights, grid_bspline_weights(image, level)))
         )
 
     return weights.T.tocsr(), bs_levels
