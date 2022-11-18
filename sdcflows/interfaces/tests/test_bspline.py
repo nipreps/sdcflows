@@ -121,15 +121,13 @@ def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
         pe_dir="j-",
         ro_time=1.0,
     ).run()
+    interpolated = nb.as_closest_canonical(
+        nb.load(result.outputs.out_field)
+    ).get_fdata()
+    reference = nb.as_closest_canonical(
+        nb.load(testdata_dir / "topup-field.nii.gz")
+    ).get_fdata()
     assert (
-        np.sqrt(
-            np.mean(
-                (
-                    nb.load(result.outputs.out_field).get_fdata()
-                    - nb.load(testdata_dir / "topup-field.nii.gz").get_fdata()
-                )
-                ** 2
-            )
-        )
+        np.sqrt(np.mean((interpolated - reference) ** 2))
         < 3
     )
