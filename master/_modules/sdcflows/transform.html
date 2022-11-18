@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.transform - sdcflows 2.1.2.dev68+g36aa50d3 documentation</title>
+        <title>sdcflows.transform - sdcflows 2.1.2.dev75+g843acf21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">sdcflows 2.1.2.dev68+g36aa50d3 documentation</div></a>
+      <a href="../../index.html"><div class="brand">sdcflows 2.1.2.dev75+g843acf21 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev75 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev75 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -269,8 +269,10 @@
 
 <span class="kn">import</span> <span class="nn">attr</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="k">import</span> <span class="n">warn</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">ndimage</span> <span class="k">as</span> <span class="n">ndi</span>
-<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">vstack</span> <span class="k">as</span> <span class="n">sparse_vstack</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">,</span> <span class="n">kron</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">BSpline</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">vstack</span> <span class="k">as</span> <span class="n">sparse_vstack</span><span class="p">,</span> <span class="n">kron</span>
 
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">nitransforms</span> <span class="k">as</span> <span class="nn">nt</span>
@@ -583,19 +585,7 @@
     <span class="k">return</span> <span class="n">fmap_nii</span></div>
 
 
-<span class="k">def</span> <span class="nf">_cubic_bspline</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
-    <span class="sd">"""Evaluate the cubic bspline at distance d from the center."""</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">piecewise</span><span class="p">(</span>
-        <span class="n">d</span><span class="p">,</span>
-        <span class="p">[</span><span class="n">d</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">d</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">],</span>
-        <span class="p">[</span>
-            <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">-</span> <span class="mf">6.0</span> <span class="o">*</span> <span class="n">d</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">d</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">-</span> <span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">,</span>
-        <span class="p">],</span>
-    <span class="p">)</span>
-
-
-<div class="viewcode-block" id="grid_bspline_weights"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.grid_bspline_weights">[docs]</a><span class="k">def</span> <span class="nf">grid_bspline_weights</span><span class="p">(</span><span class="n">target_nii</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="p">):</span>
+<div class="viewcode-block" id="grid_bspline_weights"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.grid_bspline_weights">[docs]</a><span class="k">def</span> <span class="nf">grid_bspline_weights</span><span class="p">(</span><span class="n">target_nii</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Evaluate tensor-product B-Spline weights on a grid.</span>
 
@@ -641,33 +631,37 @@
 <span class="sd">        step of approximation/extrapolation.</span>
 
 <span class="sd">    """</span>
-    <span class="n">shape</span> <span class="o">=</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
-    <span class="n">ctrl_sp</span> <span class="o">=</span> <span class="n">ctrl_nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[:</span><span class="mi">3</span><span class="p">]</span>
-    <span class="n">ras2ijk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
-    <span class="n">origin</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">ras2ijk</span><span class="p">,</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">])])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">knots_shape</span> <span class="o">=</span> <span class="n">ctrl_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
 
+    <span class="c1"># Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">"Image's and B-Spline's grids are not aligned."</span><span class="p">)</span>
+
+    <span class="n">target_to_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">@</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span>
     <span class="n">wd</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">sp</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-        <span class="nb">zip</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[:</span><span class="mi">3</span><span class="p">])</span>
-    <span class="p">):</span>
-        <span class="n">locations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float16"</span><span class="p">)</span> <span class="o">*</span> <span class="n">sp</span> <span class="o">/</span> <span class="n">ctrl_sp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">o</span>
-        <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float16"</span><span class="p">)</span>
-        <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">locations</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-</span> <span class="n">knots</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="c1"># 3D ijk coordinates of current axis</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="n">within_support</span> <span class="o">=</span> <span class="n">distance</span> <span class="o">&lt;</span> <span class="mf">2.0</span>
-        <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">distance</span><span class="p">[</span><span class="n">within_support</span><span class="p">],</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="c1"># Calculate univariate B-Spline weight for samples within kernel spread</span>
-        <span class="n">weights_vals</span> <span class="o">=</span> <span class="n">_cubic_bspline</span><span class="p">(</span><span class="n">d_vals</span><span class="p">)[</span><span class="n">d_idxs</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
+        <span class="c1"># Calculate the index component of samples w.r.t. B-Spline knots along current axis</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">target_to_grid</span><span class="p">,</span> <span class="n">coords</span><span class="o">.</span><span class="n">T</span><span class="p">)[:,</span> <span class="n">axis</span><span class="p">]</span>
 
-        <span class="c1"># Build csr matrix</span>
-        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">within_support</span><span class="p">)</span>
-        <span class="n">weights</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">weights_vals</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
-            <span class="n">shape</span><span class="o">=</span><span class="n">distance</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">wd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
+        <span class="c1"># BSpline.design_matrix requires all x be within -4 and 4 padding</span>
+        <span class="c1"># This padding results from the B-Spline degree (3) plus one</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="n">knots_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">kron</span><span class="p">(</span><span class="n">kron</span><span class="p">(</span><span class="n">wd</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wd</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">wd</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+        <span class="c1"># Calculate K x N collocation matrix (discarding extra padding)</span>
+        <span class="n">colloc_ax</span> <span class="o">=</span> <span class="n">BSpline</span><span class="o">.</span><span class="n">design_matrix</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="mi">3</span><span class="p">)[:,</span> <span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># Design matrix returns K x N and we want N x K</span>
+        <span class="n">wd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">colloc_ax</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tocsr</span><span class="p">())</span>
+
+    <span class="c1"># Calculate the tensor product of the three design matrices</span>
+    <span class="k">return</span> <span class="n">kron</span><span class="p">(</span><span class="n">kron</span><span class="p">(</span><span class="n">wd</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wd</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">wd</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_move_coeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">fmap_target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils package" href="sdcflows.utils.html" /><link rel="prev" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.transform module - sdcflows 2.1.2.dev68+g36aa50d3 documentation</title>
+        <title>sdcflows.transform module - sdcflows 2.1.2.dev75+g843acf21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev68+g36aa50d3 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev75+g843acf21 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev75 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev75 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -382,7 +382,7 @@ target image we want to correct).</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.transform.grid_bspline_weights">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">grid_bspline_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_nii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_nii</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#grid_bspline_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.grid_bspline_weights" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">grid_bspline_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_nii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_nii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#grid_bspline_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.grid_bspline_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate tensor-product B-Spline weights on a grid.</p>
 <p>For each of the <em>N</em> input samples <span class="math notranslate nohighlight">\((s_1, s_2, s_3)\)</span> and <em>K</em> control
 points or <em>knots</em> <span class="math notranslate nohighlight">\(\mathbf{k} =(k_1, k_2, k_3)\)</span>, the tensor-product
