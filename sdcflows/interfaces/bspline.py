@@ -70,6 +70,11 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="strategy to recenter the distribution of the input fieldmap",
     )
+    interp_resized = traits.Bool(
+        True,
+        usedefault=True,
+        desc="interpolate to full grid if resizing was done",
+    )
     extrapolate = traits.Bool(
         True,
         usedefault=True,
@@ -216,7 +221,8 @@ class BSplineApprox(SimpleInterface):
             self._results["out_coeff"].append(out_level)
 
         # Interpolating in the original grid will require a new collocation matrix
-        if need_resize:
+        if need_resize and self.inputs.interp_resized:
+            LOGGER.info("Interpolating field at full resolution")
             fmapnii = nb.load(self.inputs.in_data)
             data = fmapnii.get_fdata(dtype="float32")
             mask = (

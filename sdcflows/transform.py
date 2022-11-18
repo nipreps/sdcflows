@@ -389,15 +389,30 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     """
     sample_shape = target_nii.shape[:3]
     knots_shape = ctrl_nii.shape[:3]
+    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
 
     # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
     if not np.allclose(np.linalg.norm(
         np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
         axis=1,
     ), 0, atol=1e-3):
-        warn("Image's and B-Spline's grids are not aligned.")
+        from scipy.sparse import csr_matrix, vstack
+        from sdcflows.lib.bspline import design_matrix
 
-    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
+
+        # Calculate the index coordinates of the knots
+        t = _ndindex(knots_shape).astype("float32")
+    
+        # Calculate the index component of samples w.r.t. B-Spline knots
+        x = nb.affines.apply_affine(
+            target_to_grid, _ndindex(sample_shape)
+        ).astype("float32")
+        
+        # Calculate the tensor product of the three design matrices
+        return vstack([
+            csr_matrix(design_matrix(x, ti)) for ti in t
+        ])
+
     wd = []
     for axis in range(3):
         # 3D ijk coordinates of current axis
@@ -418,7 +433,6 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
     # Calculate the tensor product of the three design matrices
     return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
-
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
@@ -450,3 +464,9 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     ))
     hdr["cal_min"] = - hdr["cal_max"]
     return coeff.__class__(coeff.dataobj, newaff, hdr)
+
+
+def _ndindex(shape):
+    ndim = len(shape)
+    indexes = tuple([np.arange(s) for s in shape])
+    return np.array(np.meshgrid(*indexes, indexing="ij")).reshape(ndim, -1).T

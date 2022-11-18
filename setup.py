@@ -7,10 +7,21 @@
 
 def main():
     """Install entry-point."""
-    from setuptools import setup
+    from setuptools import setup, Extension
+    from Cython.Build import cythonize
+    from numpy import get_include
+
+    extensions = [
+        Extension(
+            "sdcflows.lib.bspline",
+            ["sdcflows/lib/bspline.pyx"])
+    ]
 
     setup(
-        name="sdcflows", use_scm_version=True,
+        name="sdcflows",
+        use_scm_version=True,
+        ext_modules=cythonize(extensions),
+        include_dirs=[get_include()],
     )
 
 
