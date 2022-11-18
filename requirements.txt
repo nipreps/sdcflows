@@ -8,5 +8,5 @@ nitransforms>=21.0.0
 numpy>=1.21.0
 pybids>=0.15.1
 scikit-image>=0.18
-scipy>=1.6.0
+scipy>=1.8.1
 templateflow

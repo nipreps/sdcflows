@@ -25,8 +25,10 @@ from pathlib import Path
 
 import attr
 import numpy as np
+from warnings import warn
 from scipy import ndimage as ndi
-from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
+from scipy.interpolate import BSpline
+from scipy.sparse import vstack as sparse_vstack, kron
 
 import nibabel as nb
 import nitransforms as nt
@@ -339,19 +341,7 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     return fmap_nii
 
 
-def _cubic_bspline(d):
-    """Evaluate the cubic bspline at distance d from the center."""
-    return np.piecewise(
-        d,
-        [d < 1.0, d >= 1.0],
-        [
-            lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
-            lambda d: (2.0 - d) ** 3 / 6.0,
-        ],
-    )
-
-
-def grid_bspline_weights(target_nii, ctrl_nii):
+def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
 
@@ -397,33 +387,37 @@ def grid_bspline_weights(target_nii, ctrl_nii):
         step of approximation/extrapolation.
 
     """
-    shape = target_nii.shape[:3]
-    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
-    ras2ijk = np.linalg.inv(ctrl_nii.affine)
-    origin = nb.affines.apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
+    sample_shape = target_nii.shape[:3]
+    knots_shape = ctrl_nii.shape[:3]
 
+    # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
+    if not np.allclose(np.linalg.norm(
+        np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
+        axis=1,
+    ), 0, atol=1e-3):
+        warn("Image's and B-Spline's grids are not aligned.")
+
+    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []
-    for i, (o, n, sp) in enumerate(
-        zip(origin, shape, target_nii.header.get_zooms()[:3])
-    ):
-        locations = np.arange(0, n, dtype="float16") * sp / ctrl_sp[i] + o
-        knots = np.arange(0, ctrl_nii.shape[i], dtype="float16")
-        distance = np.abs(locations[np.newaxis, ...] - knots[..., np.newaxis])
+    for axis in range(3):
+        # 3D ijk coordinates of current axis
+        coords = np.zeros((3, sample_shape[axis]), dtype=dtype)
+        coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
 
-        within_support = distance < 2.0
-        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-        # Calculate univariate B-Spline weight for samples within kernel spread
-        weights_vals = _cubic_bspline(d_vals)[d_idxs].astype("float32")
+        # Calculate the index component of samples w.r.t. B-Spline knots along current axis
+        x = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
 
-        # Build csr matrix
-        rows, cols = np.where(within_support)
-        weights = csr_matrix(
-            (weights_vals, (rows, cols)),
-            shape=distance.shape,
-        )
-        wd.append(csr_matrix(weights))
+        # BSpline.design_matrix requires all x be within -4 and 4 padding
+        # This padding results from the B-Spline degree (3) plus one
+        t = np.arange(-4, knots_shape[axis] + 4, dtype=dtype)
 
-    return kron(kron(wd[0], wd[1]), wd[2])
+        # Calculate K x N collocation matrix (discarding extra padding)
+        colloc_ax = BSpline.design_matrix(x, t, 3)[:, 2:-2]
+        # Design matrix returns K x N and we want N x K
+        wd.append(colloc_ax.T.tocsr())
+
+    # Calculate the tensor product of the three design matrices
+    return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
 
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):

@@ -30,6 +30,7 @@ from skimage.morphology import ball
 import scipy.ndimage as nd
 
 from sdcflows import transform as tf
+from sdcflows.interfaces.bspline import bspline_grid
 
 
 def generate_oracle(
@@ -47,9 +48,6 @@ def generate_oracle(
     affine = np.diag(zooms + [1])
     affine[:3, 3] = -affine[:3, :3] @ ((np.array(data.shape) - 1) * 0.5)
 
-    coeff_nii = nb.load(coeff_file)
-    coeff_aff = np.diag([5.0 if not f else -5.0 for f in flip] + [1])
-
     if any(rotation):
         R = nb.affines.from_matvec(
             nb.eulerangles.euler2mat(
@@ -59,16 +57,22 @@ def generate_oracle(
             )
         )
         affine = R @ affine
-        coeff_aff = R @ coeff_aff
 
     phantom_nii = nb.Nifti1Image(
         data.astype(np.uint8),
         affine,
         None,
     )
+
+    # Generate the grid with our tools, but fill data with cached file
+    coeff_data = nb.load(coeff_file).get_fdata(dtype="float32")
+    coeff_nii = bspline_grid(
+        phantom_nii,
+        np.array(nb.load(coeff_file).header.get_zooms()),
+    )
     coeff_nii = nb.Nifti1Image(
-        coeff_nii.dataobj,
-        coeff_aff,
+        coeff_data,
+        coeff_nii.affine,
         coeff_nii.header,
     )
     return phantom_nii, coeff_nii
@@ -83,7 +87,7 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
 
     # Generate test oracle
     phantom_nii, coeff_nii = generate_oracle(
-        testdata_dir / "topup-coeff-fixed.nii.gz",
+        testdata_dir / "field-coeff-tests.nii.gz",
         rotation=rotation,
     )
 
