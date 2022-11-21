@@ -87,7 +87,9 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
-    debug = traits.Bool(False, usedefault=True, desc="generate extra assets for debugging")
+    debug = traits.Bool(
+        False, usedefault=True, desc="generate extra assets for debugging"
+    )
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -147,9 +149,7 @@ class BSplineApprox(SimpleInterface):
 
         # Get a mask (or define on the spot to cover the full extent)
         masknii = (
-            nb.load(self.inputs.in_mask)
-            if isdefined(self.inputs.in_mask)
-            else None
+            nb.load(self.inputs.in_mask) if isdefined(self.inputs.in_mask) else None
         )
 
         need_resize = np.any(np.array(zooms) < self.inputs.zooms_min)
@@ -172,7 +172,8 @@ class BSplineApprox(SimpleInterface):
 
         # Generate a numpy array with the mask
         mask = (
-            np.ones(fmapnii.shape, dtype=bool) if masknii is None
+            np.ones(fmapnii.shape, dtype=bool)
+            if masknii is None
             else np.asanyarray(masknii.dataobj) > 1e-4
         )
 
@@ -192,7 +193,7 @@ class BSplineApprox(SimpleInterface):
         # Calculate collocation matrix & the spatial location of control points
         colmat, bs_levels = _collocation_matrix(fmapnii, bs_spacing)
 
-        bs_levels_str = ['x'.join(str(s) for s in level.shape) for level in bs_levels]
+        bs_levels_str = ["x".join(str(s) for s in level.shape) for level in bs_levels]
         bs_levels_str[-1] = f"and {bs_levels_str[-1]}"
         LOGGER.info(
             f"Approximating B-Splines grids ({', '.join(bs_levels_str)} [knots]) on a grid of "
@@ -211,7 +212,7 @@ class BSplineApprox(SimpleInterface):
             n = bsl.dataobj.size
             out_level = out_name.replace("_field.", f"_coeff{i:03}.")
             bsl.__class__(
-                np.array(model.coef_, dtype="float32")[index:index + n].reshape(
+                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
                     bsl.shape
                 ),
                 bsl.affine,
@@ -226,7 +227,8 @@ class BSplineApprox(SimpleInterface):
             fmapnii = nb.load(self.inputs.in_data)
             data = fmapnii.get_fdata(dtype="float32")
             mask = (
-                np.ones_like(fmapnii.dataobj, dtype=bool) if masknii is None
+                np.ones_like(fmapnii.dataobj, dtype=bool)
+                if masknii is None
                 else np.asanyarray(nb.load(self.inputs.in_mask).dataobj) > 1e-4
             )
             colmat, _ = _collocation_matrix(fmapnii, bs_spacing)
@@ -308,8 +310,7 @@ class ApplyCoeffsField(SimpleInterface):
 
     def _run_interface(self, runtime):
         n = len(self.inputs.in_data)
-
-        ro_time = self.inputs.ro_time
+        ro_time = list(self.inputs.ro_time)
         if len(ro_time) == 1:
             ro_time *= n
 
@@ -317,8 +318,7 @@ class ApplyCoeffsField(SimpleInterface):
         if len(pe_dir) == 1:
             pe_dir *= n
 
-        unwarp = None
-        hmc_mats = [None] * n
+        hmc_mats = None
         if isdefined(self.inputs.in_xfms):
             # Split ITK matrices in separate files if they come collated
             hmc_mats = (
@@ -326,54 +326,24 @@ class ApplyCoeffsField(SimpleInterface):
                 if len(self.inputs.in_xfms) == 1
                 else self.inputs.in_xfms
             )
-        else:
-            from sdcflows.transform import B0FieldTransform
-
-            # Pre-cached interpolator object
-            unwarp = B0FieldTransform(
-                coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
-            )
-
-        if not isdefined(self.inputs.num_threads) or self.inputs.num_threads < 2:
-            # Linear execution (1 core)
-            outputs = [
-                _b0_resampler(
-                    fname,
-                    self.inputs.in_coeff,
-                    pe_dir[i],
-                    ro_time[i],
-                    hmc_mats[i],
-                    unwarp,  # if no HMC matrices, interpolator can be shared
-                    runtime.cwd,
-                )
-                for i, fname in enumerate(self.inputs.in_data)
-            ]
-        else:
-            # Embarrasingly parallel execution
-            from concurrent.futures import ProcessPoolExecutor
-
-            outputs = [None] * len(self.inputs.in_data)
-            with ProcessPoolExecutor(max_workers=self.inputs.num_threads) as ex:
-                outputs = ex.map(
-                    _b0_resampler,
-                    self.inputs.in_data,
-                    [self.inputs.in_coeff] * n,
-                    pe_dir,
-                    ro_time,
-                    hmc_mats,
-                    [None] * n,  # force a new interpolator for each process
-                    [runtime.cwd] * n,
-                )
 
         (
             self._results["out_corrected"],
             self._results["out_warp"],
             self._results["out_field"],
-        ) = zip(*outputs)
-
-        out_fields = set(self._results["out_field"]) - set([None])
-        if len(out_fields) == 1:
-            self._results["out_field"] = out_fields.pop()
+        ) = _b0_resampler(
+            self.inputs.in_data,
+            self.inputs.in_coeff,
+            pe_dir,
+            ro_time,
+            hmc_mats=hmc_mats,
+            newpath=runtime.cwd,
+            num_threads=(
+                1
+                if not isdefined(self.inputs.num_threads) or self.inputs.num_threads < 2
+                else self.inputs.num_threads
+            ),
+        )
 
         return runtime
 
@@ -384,7 +354,9 @@ class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     )
     fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
     transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
-    fmap_target = File(exists=True, desc="the distorted EPI target (feed to set debug mode on)")
+    fmap_target = File(
+        exists=True, desc="the distorted EPI target (feed to set debug mode on)"
+    )
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
@@ -408,7 +380,8 @@ class TransformCoefficients(SimpleInterface):
                 self.inputs.fmap_ref,
                 self.inputs.transform,
                 fmap_target=(
-                    self.inputs.fmap_target if isdefined(self.inputs.fmap_target)
+                    self.inputs.fmap_target
+                    if isdefined(self.inputs.fmap_target)
                     else None
                 ),
             )
@@ -428,7 +401,7 @@ class _TOPUPCoeffReorientInputSpec(BaseInterfaceInputSpec):
     pe_dir = traits.Enum(
         *["".join(p) for p in product("ijkxyz", ("", "-"))],
         mandatory=True,
-        desc="phase encoding direction"
+        desc="phase encoding direction",
     )
 
 
@@ -585,11 +558,13 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
-    header["cal_max"] = max((
-        abs(np.asanyarray(coeffnii.dataobj).min()),
-        np.asanyarray(coeffnii.dataobj).max(),
-    ))
-    header["cal_min"] = - header["cal_max"]
+    header["cal_max"] = max(
+        (
+            abs(np.asanyarray(coeffnii.dataobj).min()),
+            np.asanyarray(coeffnii.dataobj).max(),
+        )
+    )
+    header["cal_min"] = -header["cal_max"]
     header.set_intent("estimate", tuple(), name="B-Spline coefficients")
 
     # Write out fixed (generalized) coefficients
@@ -613,43 +588,80 @@ def _split_itk_file(in_file):
         yield str(p)
 
 
-def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=None):
+def _b0_resampler(
+    in_files, coeffs, pe_dir, ro_time, hmc_mats=None, newpath=None, num_threads=None
+):
     """Outsource the resampler into a separate callable function to allow parallelization."""
+    from sdcflows.transform import B0FieldTransform
     from functools import partial
 
     # Prepare output names
-    filename = partial(fname_presuffix, newpath=newpath)
-    retval = [filename(in_file, suffix=s) for s in ("_unwarped", "_xfm", "_field")]
+    filename = partial(fname_presuffix, newpath=newpath, suffix="_unwarped")
 
-    if unwarp is None:
-        from sdcflows.transform import B0FieldTransform
+    # Create a new unwarp object
+    unwarp = B0FieldTransform(
+        coeffs=[nb.load(cname) for cname in coeffs],
+    )
 
-        # Create a new unwarp object
-        unwarp = B0FieldTransform(
-            coeffs=[nb.load(cname) for cname in coeffs],
+    LOGGER.info(
+        "Reconstructing fieldmap on the target EPI's space - this may take a while"
+    )
+    # Fit transform (i.e., interpolate field), and write out field
+    unwarp.fit(in_files[0])
+    out_fmap = fname_presuffix(in_files[0], newpath=newpath, suffix="_field")
+    unwarp.mapped.to_filename(out_fmap)
+
+    # Store the corresponding spatial transformation (for the first file only)
+    out_disp = fname_presuffix(in_files[0], newpath=newpath, suffix="_xfm")
+    unwarp.to_displacements(ro_time=ro_time[0], pe_dir=pe_dir[0]).to_filename(out_disp)
+
+    def _apply(timepoint, pe, ro, out_name, hmc_xfm=None):
+        """Apply the unwarping field."""
+
+        if hmc_xfm is not None:
+            from nitransforms.linear import Affine
+            from nitransforms.io.itk import ITKLinearTransform as XFMLoader
+
+            hmc_xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
+
+        # Unwarp
+        unwarped_img = unwarp.apply(
+            nb.load(timepoint),
+            pe_dir=pe,
+            ro_time=ro,
+            hmc_xfm=hmc_xfm,
         )
+        unwarped_img.to_filename(out_name)
+        return out_name
 
-    if hmc_xfm is not None:
-        from nitransforms.linear import Affine
-        from nitransforms.io.itk import ITKLinearTransform as XFMLoader
-
-        unwarp.xfm = Affine(XFMLoader.from_filename(hmc_xfm).to_ras())
-
-    # Load distorted image
-    distorted_img = nb.load(in_file)
-
-    if unwarp.fit(distorted_img):
-        unwarp.mapped.to_filename(retval[2])
+    if num_threads == 1:
+        LOGGER.info(
+            f"Unwarping a dataset of {len(in_files)} time-points, single-threaded."
+        )
+        outputs = [
+            _apply(
+                *params,
+                filename(params[0]),
+                hmc_mats[i] if hmc_mats is not None else None,
+            )
+            for i, params in enumerate(zip(in_files, pe_dir, ro_time))
+        ]
     else:
-        retval[2] = None
+        # Embarrasingly parallel execution
+        from concurrent.futures import ProcessPoolExecutor
 
-    # Unwarp
-    unwarped_img = unwarp.apply(distorted_img, ro_time=ro, pe_dir=pe)
-
-    # Write out to disk
-    unwarped_img.to_filename(retval[0])
-
-    # Store the corresponding spatial transformation
-    unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(retval[1])
-
-    return retval
+        n = len(in_files)
+        LOGGER.info(
+            f"Unwarping a dataset of {n} time-points, parallelizing up to {num_threads} tasks."
+        )
+        outputs = [None] * n
+        with ProcessPoolExecutor(max_workers=min(num_threads, n)) as ex:
+            outputs = ex.map(
+                _apply,
+                in_files,
+                pe_dir,
+                ro_time,
+                [filename(f) for f in in_files],
+                [None] * n if hmc_mats is None else hmc_mats,
+            )
+    return (outputs, out_disp, out_fmap)

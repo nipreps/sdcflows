@@ -25,22 +25,13 @@ from pathlib import Path
 
 import attr
 import numpy as np
-from warnings import warn
 from scipy import ndimage as ndi
 from scipy.interpolate import BSpline
 from scipy.sparse import vstack as sparse_vstack, kron
 
 import nibabel as nb
 import nitransforms as nt
-from nitransforms.base import _as_homogeneous
 from bids.utils import listify
-
-from niworkflows.interfaces.nibabel import reorient_image
-
-
-def _clear_mapped(instance, attribute, value):
-    instance.mapped = None
-    return value
 
 
 @attr.s(slots=True)
@@ -49,8 +40,6 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    xfm = attr.ib(default=None, on_setattr=_clear_mapped)
-    """A rigid-body transform to prepend to the unwarping displacements field."""
     mapped = attr.ib(default=None, init=False)
     """
     A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
@@ -75,29 +64,19 @@ class B0FieldTransform:
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
-        # Initialize xform (or set identity)
-        xfm = self.xfm if self.xfm is not None else nt.linear.Affine()
-
-        if self.mapped is not None:
-            newaff = spatialimage.affine
-            newshape = spatialimage.shape
-
-            if np.all(newshape == self.mapped.shape) and np.allclose(
-                newaff, self.mapped.affine
-            ):
-                return False
+        if (
+            self.mapped is not None
+            and np.all(spatialimage.shape == self.mapped.shape)
+            and np.allclose(spatialimage.affine, self.mapped.affine)
+        ):
+            return False
 
         weights = []
         coeffs = []
 
         # Generate tensor-product B-Spline weights
         for level in listify(self.coeffs):
-            xfm.reference = spatialimage
-            moved_cs = level.__class__(
-                level.dataobj, xfm.matrix @ level.affine, level.header
-            )
-            wmat = grid_bspline_weights(spatialimage, moved_cs)
-            weights.append(wmat)
+            weights.append(grid_bspline_weights(spatialimage, level))
             coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
 
         # Interpolate the VSM (voxel-shift map)
@@ -111,7 +90,7 @@ class B0FieldTransform:
         hdr.set_intent("estimate", name="Voxel shift")
         hdr.set_data_dtype("float32")
         hdr["cal_max"] = max((abs(vsm.min()), vsm.max()))
-        hdr["cal_min"] = - hdr["cal_max"]
+        hdr["cal_min"] = -hdr["cal_max"]
         self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, hdr)
         return True
 
@@ -120,6 +99,7 @@ class B0FieldTransform:
         spatialimage,
         pe_dir,
         ro_time,
+        hmc_xfm=None,
         order=3,
         mode="constant",
         cval=0.0,
@@ -160,14 +140,10 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
-        from sdcflows.utils.tools import ensure_positive_cosines
-
-        # Ensure the fmap has been computed
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
-        spatialimage, axcodes = ensure_positive_cosines(spatialimage)
-
+        # Ensure the fmap has been computed
         self.fit(spatialimage)
         fmap = self.mapped.get_fdata().copy()
 
@@ -175,29 +151,31 @@ class B0FieldTransform:
         if pe_dir.endswith("-"):
             fmap *= -1.0
 
+        # Map voxel coordinates applying the VSM
+        voxcoords = _ndindex(fmap.shape).astype("float32")
+        if hmc_xfm is not None:
+            invxfm = ~hmc_xfm
+            invxfm.reference = spatialimage
+            # Move fieldmap to the *moved* position of the head through the
+            # inverse of the HMC matrix.
+            fmap = invxfm.apply(self.mapped).get_fdata()
+            # Map the physical coordinates of all voxels to their projected
+            # location in the *moved* image (i.e., requires the forward HMC transform)
+            hmc_xyz = hmc_xfm.map(
+                nb.affines.apply_affine(spatialimage.affine, voxcoords)
+            )
+            # Convert from RAS to voxel coordinates
+            voxcoords = nb.affines.apply_affine(
+                np.linalg.inv(spatialimage.affine), hmc_xyz
+            )
+
         # Generate warp field
         pe_axis = "ijk".index(pe_dir[0])
-
-        # Map voxel coordinates applying the VSM
-        if self.xfm is None:
-            ijk_axis = tuple([np.arange(s) for s in fmap.shape])
-            voxcoords = np.array(
-                np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
-            ).reshape(3, -1)
-        else:
-            # Map coordinates from reference to time-step
-            self.xfm.reference = spatialimage
-            hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
-            # Convert from RAS to voxel coordinates
-            voxcoords = (
-                np.linalg.inv(self.xfm.reference.affine)
-                @ _as_homogeneous(np.vstack(hmc_xyz), dim=self.xfm.reference.ndim).T
-            )[:3, ...]
 
         # fmap * ro_time is the voxel-shift map (VSM)
         # The VSM is just the displacements field given in index coordinates
         # voxcoords is the deformation field, i.e., the target position of each voxel
-        voxcoords[pe_axis, ...] += fmap.reshape(-1) * ro_time
+        voxcoords[..., pe_axis] += fmap.reshape(-1) * ro_time
 
         # Prepare data
         data = np.squeeze(np.asanyarray(spatialimage.dataobj))
@@ -206,7 +184,7 @@ class B0FieldTransform:
         # Resample
         resampled = ndi.map_coordinates(
             data,
-            voxcoords,
+            voxcoords.T,
             output=output_dtype,
             order=order,
             mode=mode,
@@ -218,7 +196,7 @@ class B0FieldTransform:
             resampled, spatialimage.affine, spatialimage.header
         )
         moved.header.set_data_dtype(output_dtype)
-        return reorient_image(moved, axcodes)
+        return moved
 
     def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
@@ -333,11 +311,13 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
     fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
     fmap_nii.header.set_xyzt_units("mm")
-    fmap_nii.header["cal_max"] = max((
-        abs(np.asanyarray(fmap_nii.dataobj).min()),
-        np.asanyarray(fmap_nii.dataobj).max(),
-    ))
-    fmap_nii.header["cal_min"] = - fmap_nii.header["cal_max"]
+    fmap_nii.header["cal_max"] = max(
+        (
+            abs(np.asanyarray(fmap_nii.dataobj).min()),
+            np.asanyarray(fmap_nii.dataobj).max(),
+        )
+    )
+    fmap_nii.header["cal_min"] = -fmap_nii.header["cal_max"]
     return fmap_nii
 
 
@@ -392,26 +372,27 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
 
     # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
-    if not np.allclose(np.linalg.norm(
-        np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
-        axis=1,
-    ), 0, atol=1e-3):
+    if not np.allclose(
+        np.linalg.norm(
+            np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
+            axis=1,
+        ),
+        0,
+        atol=1e-3,
+    ):
         from scipy.sparse import csr_matrix, vstack
         from sdcflows.lib.bspline import design_matrix
 
-
         # Calculate the index coordinates of the knots
         t = _ndindex(knots_shape).astype("float32")
-    
+
         # Calculate the index component of samples w.r.t. B-Spline knots
-        x = nb.affines.apply_affine(
-            target_to_grid, _ndindex(sample_shape)
-        ).astype("float32")
-        
+        x = nb.affines.apply_affine(target_to_grid, _ndindex(sample_shape)).astype(
+            "float32"
+        )
+
         # Calculate the tensor product of the three design matrices
-        return vstack([
-            csr_matrix(design_matrix(x, ti)) for ti in t
-        ])
+        return vstack([csr_matrix(design_matrix(x, ti)) for ti in t])
 
     wd = []
     for axis in range(3):
@@ -433,6 +414,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
     # Calculate the tensor product of the three design matrices
     return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
+
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
@@ -458,11 +440,13 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     hdr.set_sform(newaff, code=1)
 
     # Make it easy on viz software to render proper range
-    hdr["cal_max"] = max((
-        abs(np.asanyarray(coeff.dataobj).min()),
-        np.asanyarray(coeff.dataobj).max(),
-    ))
-    hdr["cal_min"] = - hdr["cal_max"]
+    hdr["cal_max"] = max(
+        (
+            abs(np.asanyarray(coeff.dataobj).min()),
+            np.asanyarray(coeff.dataobj).max(),
+        )
+    )
+    hdr["cal_min"] = -hdr["cal_max"]
     return coeff.__class__(coeff.dataobj, newaff, hdr)
 
 
