@@ -98,8 +98,8 @@ jobs:
       timeout-minutes: 5
       run: |
         $CONDA/bin/pip install -r min-requirements.txt
-        $CONDA/bin/pip install .[tests]
-
+        $CONDA/bin/python setup.py build_ext --inplace
+        $CONDA/bin/pip install -e .[tests]
 
     - uses: actions/cache@v2
       with:
