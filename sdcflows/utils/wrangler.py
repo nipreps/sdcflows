@@ -40,6 +40,7 @@ def find_estimators(
     fmapless: Union[bool, set] = True,
     force_fmapless: bool = False,
     logger: Optional[logging.Logger] = None,
+    bids_filters: Optional[dict] = None,
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
@@ -68,6 +69,9 @@ def find_estimators(
         estimation will be skipped except if ``force_fmapless`` is ``True``.
     logger
         The logger used to relay messages. If not provided, one will be created.
+    bids_filters
+        Optional dictionary of key/values to filter the entities on.
+        This allows lower level file inclusion/exclusion.
 
     Returns
     -------
@@ -271,8 +275,15 @@ def find_estimators(
         "scope": "raw",  # Ensure derivatives are not captured
     }
 
+    if bids_filters:
+        filters = bids_filters.copy()  # copy to avoid altering in place
+        if 'session' in bids_filters and sessions is not None:
+            raise ValueError("Filters include session, but session is already defined.")
+        sessions = listify(filters.pop('session', None))
+        base_entities.update(filters)
+
     subject_root = Path(layout.root) / f"sub-{subject}"
-    sessions = sessions or layout.get_sessions(subject=subject)
+    sessions = sessions or layout.get_sessions(subject=subject) or [None]
     fmapless = fmapless or {}
     if fmapless is True:
         fmapless = {"bold", "dwi"}
@@ -304,7 +315,12 @@ def find_estimators(
     # Step 2. If no B0FieldIdentifiers were found, try several heuristics
     if not estimators:
         # Set up B0 fieldmap strategies:
-        for fmap in layout.get(suffix=["fieldmap", "phasediff", "phase1"], **base_entities):
+        for fmap in layout.get(
+            **{
+                **base_entities,
+                **{'suffix': ["fieldmap", "phasediff", "phase1"], 'session': sessions}
+            }
+        ):
             e = fm.FieldmapEstimation(
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
             )
@@ -312,10 +328,15 @@ def find_estimators(
             estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        acqs = tuple(layout.get_acquisitions(subject=subject, suffix="epi") + [None])
-        contrasts = tuple(layout.get_ceagents(subject=subject, suffix="epi") + [None])
-
-        for ses, acq, ce in product(sessions or (None,), acqs, contrasts):
+        acqs = (
+            base_entities.get('acquisitions')
+            or layout.get_acquisitions(subject=subject, suffix="epi") + [None]
+        )
+        contrasts = (
+            base_entities.get('ceagent')
+            or layout.get_ceagents(subject=subject, suffix="epi") + [None]
+        )
+        for ses, acq, ce in product(sessions, acqs, contrasts):
             entities = base_entities.copy()
             entities.update(
                 {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
@@ -325,7 +346,7 @@ def find_estimators(
                 e = fm.FieldmapEstimation(
                     [
                         fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                        for fmap in layout.get(direction=dirs, **entities)
+                        for fmap in layout.get(**{**entities, **{'direction': dirs}})
                     ]
                 )
                 _log_debug_estimation(logger, e, layout.root)
@@ -335,7 +356,12 @@ def find_estimators(
         # be automatically processed.
         has_intended = tuple()
         with suppress(ValueError):
-            has_intended = layout.get(suffix="epi", IntendedFor=Query.REQUIRED, **base_entities)
+            has_intended = layout.get(
+                **{
+                    **base_entities,
+                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions}
+                }
+            )
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
@@ -376,7 +402,7 @@ def find_estimators(
         fmapless = False
 
     # Find fieldmap-less schemes
-    anat_file = layout.get(suffix="T1w", **base_entities)
+    anat_file = layout.get(**{**base_entities, **{'suffix': 'T1w', 'session': sessions}})
 
     if not fmapless or not anat_file:
         logger.debug("Skipping fmap-less estimation")
@@ -385,8 +411,8 @@ def find_estimators(
     logger.debug("Attempting fmap-less estimation")
     from .epimanip import get_trt
 
-    for ses, suffix in sorted(product(sessions or (None,), fmapless)):
-        candidates = layout.get(suffix=suffix, session=ses, **base_entities)
+    for ses, suffix in sorted(product(sessions, fmapless)):
+        candidates = layout.get(**{**base_entities, **{'suffix': suffix, 'session': ses}})
 
         # Filter out candidates without defined PE direction
         epi_targets = []
