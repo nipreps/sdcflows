@@ -411,7 +411,7 @@ class FieldmapEstimation:
             ]
             bids_ids = set.intersection(*map(set, b0_ids))
             
-            if not bids_ids:
+            if not bids_ids and any(ids for ids in b0_ids):
                 raise ValueError(
                     f"No common ``B0FieldIdentifier`` found: <{', '.join(b0_ids)}>"
                 )
