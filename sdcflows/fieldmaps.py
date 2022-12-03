@@ -409,7 +409,7 @@ class FieldmapEstimation:
                 for f in self.sources
                 if f.metadata.get("B0FieldIdentifier")
             ]
-            bids_ids = set.intersection(*b0_ids)
+            bids_ids = set.intersection(*map(set, b0_ids))
             
             if not bids_ids:
                 raise ValueError(
