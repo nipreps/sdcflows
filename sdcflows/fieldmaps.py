@@ -409,26 +409,26 @@ class FieldmapEstimation:
                 for f in self.sources
                 if f.metadata.get("B0FieldIdentifier")
             ]
-            bids_ids = set.intersection(*map(set, b0_ids))
-            
-            if not bids_ids and any(ids for ids in b0_ids):
-                raise ValueError(
-                    f"No common ``B0FieldIdentifier`` found: <{', '.join(b0_ids)}>"
-                )
-            elif len(bids_ids) > 1:
-                raise ValueError(
-                    f"Multiple common ``B0FieldIdentifier``s found: <{', '.join(bids_ids)}>"
-                )
-            elif bids_ids:
-                object.__setattr__(self, "bids_id", bids_ids.pop())
-            else:
-                bids_id = _estimators.add(self.paths())
-                object.__setattr__(self, "bids_id", bids_id)
-                for intent_file in intents_meta:
-                    _intents[intent_file].add(bids_id)
-                return
 
-        _estimators[self.bids_id] = self.paths()
+            if b0_ids:
+                # Find common IDs
+                bids_ids = set(b0_ids[0]).intersection(*b0_ids[1:])
+                if not bids_ids:
+                    raise ValueError(
+                        f"No common ``B0FieldIdentifier`` found: <{', '.join(map(str, b0_ids))}>"
+                    )
+                elif len(bids_ids) > 1:
+                    raise ValueError(
+                        f"Multiple common ``B0FieldIdentifier``s found: <{', '.join(bids_ids)}>"
+                    )
+                object.__setattr__(self, "bids_id", bids_ids.pop())
+
+        if self.bids_id:
+            _estimators[self.bids_id] = self.paths()
+        else:
+            bids_id = _estimators.add(self.paths())
+            object.__setattr__(self, "bids_id", bids_id)
+
         for intent_file in intents_meta:
             _intents[intent_file].add(self.bids_id)
 
