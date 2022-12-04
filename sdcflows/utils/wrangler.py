@@ -22,6 +22,7 @@
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
 import logging
+from functools import reduce
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
@@ -283,8 +284,10 @@ def find_estimators(
     b0_ids = tuple()
     with suppress(BIDSEntityError):
         # flatten lists from json (tupled in pybids for hashing), then unique
-        b0_ids = set.union(
-            set(listify(ids)) for ids in layout.get_B0FieldIdentifiers(**base_entities)
+        b0_ids = reduce(
+            set.union,
+            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            set()
         )
 
     if b0_ids:
