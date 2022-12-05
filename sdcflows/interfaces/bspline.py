@@ -156,17 +156,17 @@ class BSplineApprox(SimpleInterface):
         if need_resize:
             from sdcflows.utils.tools import resample_to_zooms
 
-            zooms_min = np.maximum(zooms, self.inputs.zooms_min)
+            target_zooms = np.maximum(zooms, self.inputs.zooms_min)
 
             LOGGER.info(
                 "Resampling image with resolution exceeding 'zooms_min' "
                 f"({'x'.join(str(s) for s in zooms)} → "
-                f"{'x'.join(str(s) for s in zooms_min)})."
+                f"{'x'.join(str(s) for s in target_zooms)})."
             )
-            fmapnii = resample_to_zooms(fmapnii, zooms_min)
+            fmapnii = resample_to_zooms(fmapnii, target_zooms)
 
             if masknii is not None:
-                masknii = resample_to_zooms(masknii, zooms_min)
+                masknii = resample_to_zooms(masknii, target_zooms)
 
         data = fmapnii.get_fdata(dtype="float32")
 
