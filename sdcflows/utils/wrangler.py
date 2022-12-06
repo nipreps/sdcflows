@@ -303,7 +303,7 @@ def find_estimators(
             bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
                 **base_entities,
-                B0FieldIdentifier=repr(b0_id),
+                B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
             e = fm.FieldmapEstimation([
