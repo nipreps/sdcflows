@@ -499,28 +499,23 @@ def find_estimators(
             meta.update({"TotalReadoutTime": ro})
             epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
 
-        for pe_dir in sorted(set(pe_dirs)):
-            pe_ro = [ro for ro, pe in zip(ro_totals, pe_dirs) if pe == pe_dir]
-            for ro_time in sorted(set(pe_ro)):
-                fmfiles, fmpaths = tuple(
-                    zip(
-                        *[
-                            (target, str(Path(target.path).relative_to(subject_root)))
-                            for i, target in enumerate(epi_targets)
-                            if pe_dirs[i] == pe_dir and ro_totals[i] == ro_time
-                        ]
-                    )
-                )
-                e = fm.FieldmapEstimation(
-                    [
-                        fm.FieldmapFile(
-                            anat_file[0], metadata={"IntendedFor": fmpaths}
-                        ),
-                        *fmfiles,
-                    ]
-                )
-                _log_debug_estimation(logger, e, layout.root)
-                estimators.append(e)
+        trivial_estimators = [
+            [
+                fm.FieldmapFile(
+                    anat_file[0],
+                    metadata={"IntendedFor": str(Path(epi.path).relative_to(subject_root))},
+                ),
+                epi,
+            ] for epi in epi_targets
+        ]
+
+        # TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
+        syn_estimators = [fm.FieldmapEstimation(e) for e in trivial_estimators]
+
+        for e in syn_estimators:
+            _log_debug_estimation(logger, e, layout.root)
+
+        estimators.extend(syn_estimators)
 
     return estimators
 
