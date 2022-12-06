@@ -22,6 +22,7 @@
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
 import logging
+from functools import reduce
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
@@ -293,7 +294,12 @@ def find_estimators(
     # Step 1. Use B0FieldIdentifier metadata
     b0_ids = tuple()
     with suppress(BIDSEntityError):
-        b0_ids = layout.get_B0FieldIdentifiers(**base_entities)
+        # flatten lists from json (tupled in pybids for hashing), then unique
+        b0_ids = reduce(
+            set.union,
+            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            set()
+        )
 
     if b0_ids:
         logger.debug(
@@ -305,9 +311,15 @@ def find_estimators(
             b0_entities = base_entities.copy()
             b0_entities["B0FieldIdentifier"] = b0_id
 
+            bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
+            listed_ids = layout.get(
+                **base_entities,
+                B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
+                regex_search=True,
+            )
             e = fm.FieldmapEstimation([
                 fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                for fmap in layout.get(**b0_entities)
+                for fmap in bare_ids + listed_ids
             ])
             _log_debug_estimation(logger, e, layout.root)
             estimators.append(e)
