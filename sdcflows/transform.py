@@ -25,8 +25,10 @@ from pathlib import Path
 
 import attr
 import numpy as np
+from warnings import warn
 from scipy import ndimage as ndi
-from scipy.sparse import vstack as sparse_vstack, csr_matrix, kron
+from scipy.interpolate import BSpline
+from scipy.sparse import vstack as sparse_vstack, kron
 
 import nibabel as nb
 import nitransforms as nt
@@ -34,7 +36,6 @@ from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
 from niworkflows.interfaces.nibabel import reorient_image
-from sdcflows.utils.tools import ensure_positive_cosines
 
 
 def _clear_mapped(instance, attribute, value):
@@ -48,7 +49,7 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    xfm = attr.ib(default=nt.linear.Affine(), on_setattr=_clear_mapped)
+    xfm = attr.ib(default=None, on_setattr=_clear_mapped)
     """A rigid-body transform to prepend to the unwarping displacements field."""
     mapped = attr.ib(default=None, init=False)
     """
@@ -74,6 +75,9 @@ class B0FieldTransform:
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
 
+        # Initialize xform (or set identity)
+        xfm = self.xfm if self.xfm is not None else nt.linear.Affine()
+
         if self.mapped is not None:
             newaff = spatialimage.affine
             newshape = spatialimage.shape
@@ -88,9 +92,9 @@ class B0FieldTransform:
 
         # Generate tensor-product B-Spline weights
         for level in listify(self.coeffs):
-            self.xfm.reference = spatialimage
+            xfm.reference = spatialimage
             moved_cs = level.__class__(
-                level.dataobj, self.xfm.matrix @ level.affine, level.header
+                level.dataobj, xfm.matrix @ level.affine, level.header
             )
             wmat = grid_bspline_weights(spatialimage, moved_cs)
             weights.append(wmat)
@@ -103,9 +107,12 @@ class B0FieldTransform:
         )
 
         # Cache
-        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, None)
-        self.mapped.header.set_intent("estimate", name="Voxel shift")
-        self.mapped.header.set_xyzt_units(*spatialimage.header.get_xyzt_units())
+        hdr = spatialimage.header.copy()
+        hdr.set_intent("estimate", name="Voxel shift")
+        hdr.set_data_dtype("float32")
+        hdr["cal_max"] = max((abs(vsm.min()), vsm.max()))
+        hdr["cal_min"] = - hdr["cal_max"]
+        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, hdr)
         return True
 
     def apply(
@@ -153,6 +160,8 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
+        from sdcflows.utils.tools import ensure_positive_cosines
+
         # Ensure the fmap has been computed
         if isinstance(spatialimage, (str, bytes, Path)):
             spatialimage = nb.load(spatialimage)
@@ -177,6 +186,7 @@ class B0FieldTransform:
             ).reshape(3, -1)
         else:
             # Map coordinates from reference to time-step
+            self.xfm.reference = spatialimage
             hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
             # Convert from RAS to voxel coordinates
             voxcoords = (
@@ -323,22 +333,15 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
     fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
     fmap_nii.header.set_xyzt_units("mm")
+    fmap_nii.header["cal_max"] = max((
+        abs(np.asanyarray(fmap_nii.dataobj).min()),
+        np.asanyarray(fmap_nii.dataobj).max(),
+    ))
+    fmap_nii.header["cal_min"] = - fmap_nii.header["cal_max"]
     return fmap_nii
 
 
-def _cubic_bspline(d):
-    """Evaluate the cubic bspline at distance d from the center."""
-    return np.piecewise(
-        d,
-        [d < 1.0, d >= 1.0],
-        [
-            lambda d: (4.0 - 6.0 * d ** 2 + 3.0 * d ** 3) / 6.0,
-            lambda d: (2.0 - d) ** 3 / 6.0,
-        ],
-    )
-
-
-def grid_bspline_weights(target_nii, ctrl_nii):
+def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
 
@@ -384,35 +387,66 @@ def grid_bspline_weights(target_nii, ctrl_nii):
         step of approximation/extrapolation.
 
     """
-    shape = target_nii.shape[:3]
-    ctrl_sp = ctrl_nii.header.get_zooms()[:3]
-    ras2ijk = np.linalg.inv(ctrl_nii.affine)
-    origin = nb.affines.apply_affine(ras2ijk, [tuple(target_nii.affine[:3, 3])])[0]
+    sample_shape = target_nii.shape[:3]
+    knots_shape = ctrl_nii.shape[:3]
 
+    # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
+    if not np.allclose(np.linalg.norm(
+        np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
+        axis=1,
+    ), 0, atol=1e-3):
+        warn("Image's and B-Spline's grids are not aligned.")
+
+    target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []
-    for i, (o, n, sp) in enumerate(
-        zip(origin, shape, target_nii.header.get_zooms()[:3])
-    ):
-        locations = np.arange(0, n, dtype="float16") * sp / ctrl_sp[i] + o
-        knots = np.arange(0, ctrl_nii.shape[i], dtype="float16")
-        distance = np.abs(locations[np.newaxis, ...] - knots[..., np.newaxis])
+    for axis in range(3):
+        # 3D ijk coordinates of current axis
+        coords = np.zeros((3, sample_shape[axis]), dtype=dtype)
+        coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
 
-        within_support = distance < 2.0
-        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-        bs_w = _cubic_bspline(d_vals)
-        weights = np.zeros_like(distance, dtype="float32")
-        weights[within_support] = bs_w[d_idxs]
-        wd.append(csr_matrix(weights))
+        # Calculate the index component of samples w.r.t. B-Spline knots along current axis
+        x = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
 
-    return kron(kron(wd[0], wd[1]), wd[2])
+        # BSpline.design_matrix requires all x be within -4 and 4 padding
+        # This padding results from the B-Spline degree (3) plus one
+        t = np.arange(-4, knots_shape[axis] + 4, dtype=dtype)
+
+        # Calculate K x N collocation matrix (discarding extra padding)
+        colloc_ax = BSpline.design_matrix(x, t, 3)[:, 2:-2]
+        # Design matrix returns K x N and we want N x K
+        wd.append(colloc_ax.T.tocsr())
+
+    # Calculate the tensor product of the three design matrices
+    return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
 
 
-def _move_coeff(in_coeff, fmap_ref, transform):
+def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     """Read in a rigid transform from ANTs, and update the coefficients field affine."""
     xfm = nt.linear.Affine(
         nt.io.itk.ITKLinearTransform.from_filename(transform).to_ras(),
         reference=fmap_ref,
     )
     coeff = nb.load(in_coeff)
-    newaff = xfm.matrix @ coeff.affine
-    return coeff.__class__(coeff.dataobj, newaff, coeff.header)
+    hdr = coeff.header.copy()
+
+    if fmap_target is not None:  # Debug mode: generate fieldmap reference
+        nii_target = nb.load(fmap_target)
+        debug_ref = (~xfm).apply(fmap_ref, reference=nii_target)
+        debug_ref.header.set_qform(nii_target.affine, code=1)
+        debug_ref.header.set_sform(nii_target.affine, code=1)
+        debug_ref.to_filename(Path() / "debug_fmapref.nii.gz")
+
+    # Generate a new transform
+    newaff = np.linalg.inv(np.linalg.inv(coeff.affine) @ (~xfm).matrix)
+
+    # Prepare output file
+    hdr.set_qform(newaff, code=1)
+    hdr.set_sform(newaff, code=1)
+
+    # Make it easy on viz software to render proper range
+    hdr["cal_max"] = max((
+        abs(np.asanyarray(coeff.dataobj).min()),
+        np.asanyarray(coeff.dataobj).max(),
+    ))
+    hdr["cal_min"] = - hdr["cal_max"]
+    return coeff.__class__(coeff.dataobj, newaff, hdr)

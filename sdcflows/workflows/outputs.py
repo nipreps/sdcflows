@@ -24,6 +24,7 @@
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.bids import DerivativesDataSink as _DDS
+from niworkflows.interfaces.nibabel import MergeSeries
 
 
 class DerivativesDataSink(_DDS):
@@ -71,7 +72,8 @@ def init_fmap_reports_wf(
         A brain mask in the fieldmap's space.
 
     """
-    from ..interfaces.reportlets import FieldmapReportlet
+    from sdcflows.interfaces.reportlets import FieldmapReportlet
+    from sdcflows.utils.misc import front as _pop
 
     custom_entities = custom_entities or {}
     if bids_fmap_id:
@@ -104,7 +106,7 @@ def init_fmap_reports_wf(
 
     # fmt:off
     workflow.connect([
-        (inputnode, fmap_rpt, [("fieldmap", "fieldmap"),
+        (inputnode, fmap_rpt, [(("fieldmap", _pop), "fieldmap"),
                                ("fmap_ref", "reference"),
                                ("fmap_mask", "mask")]),
         (fmap_rpt, ds_fmap_report, [("out_report", "in_file")]),
@@ -164,6 +166,8 @@ def init_fmap_derivatives_wf(
         name="inputnode",
     )
 
+    merge_fmap = pe.Node(MergeSeries(), name="merge_fmap")
+
     ds_reference = pe.Node(
         DerivativesDataSink(
             base_directory=output_dir,
@@ -197,12 +201,13 @@ def init_fmap_derivatives_wf(
 
     # fmt:off
     workflow.connect([
+        (inputnode, merge_fmap, [("fieldmap", "in_files")]),
         (inputnode, ds_reference, [("source_files", "source_file"),
                                    ("fmap_ref", "in_file"),
                                    (("source_files", _getsourcetype), "desc")]),
         (inputnode, ds_fieldmap, [("source_files", "source_file"),
-                                  ("fieldmap", "in_file"),
                                   ("source_files", "RawSources")]),
+        (merge_fmap, ds_fieldmap, [("out_file", "in_file")]),
         (ds_reference, ds_fieldmap, [
             (("out_file", _getname), "AnatomicalReference"),
         ]),

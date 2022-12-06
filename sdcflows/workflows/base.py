@@ -75,10 +75,10 @@ def init_fmap_preproc_wf(
         The preprocessed fieldmap coefficients.
 
     """
-    from .fit.pepolar import INPUT_FIELDS as _pepolar_fields
-    from .fit.syn import INPUT_FIELDS as _syn_fields
-    from .outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
-    from ..fieldmaps import EstimatorType
+    from sdcflows.workflows.fit.pepolar import INPUT_FIELDS as _pepolar_fields
+    from sdcflows.workflows.fit.syn import INPUT_FIELDS as _syn_fields
+    from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
+    from sdcflows.fieldmaps import EstimatorType
 
     INPUT_FIELDS = {
         EstimatorType.ANAT: _syn_fields,
