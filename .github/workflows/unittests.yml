@@ -2,6 +2,13 @@ name: Deps & CI
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build-linux:
     if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
@@ -77,7 +84,7 @@ jobs:
         git config --global user.name 'NiPreps Bot'
         git config --global user.email 'nipreps@gmail.com'
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - uses: actions/cache@v2
@@ -93,7 +100,7 @@ jobs:
       run: |
         $CONDA/bin/conda install -c conda-forge git-annex datalad pip
         $CONDA/bin/pip install datalad-osf
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install minimal dependencies
       timeout-minutes: 5
       run: |
