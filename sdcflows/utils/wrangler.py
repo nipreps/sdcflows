@@ -178,9 +178,11 @@ def find_estimators(
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00000'),
-     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.ANAT: 5>,
-                        bids_id='auto_00001')]
+                        bids_id='auto_...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_...')]
 
     Likewise in a more comprehensive dataset:
 
@@ -190,13 +192,23 @@ def find_estimators(
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
-                       bids_id='auto_00002'),
-    FieldmapEstimation(sources=<7 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00003'),
+                       bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00004'),
+                       bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00005')]
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...')]
 
     Because "*dataset A*" contains very few metadata fields available, "*fieldmap-less*"
     heuristics come back empty (BOLD and DWI files are missing
@@ -235,9 +247,9 @@ def find_estimators(
     ...     force_fmapless=False,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                        bids_id='auto_00011'),
+                        bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00012')]
+                       bids_id='auto_...')]
 
     When the ``B0FieldIdentifier`` metadata is set for one or more fieldmaps, then
     the heuristics that use ``IntendedFor`` are dismissed:
@@ -262,7 +274,7 @@ def find_estimators(
     [FieldmapEstimation(sources=<5 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='pepolar4pe'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00000')]
+                       bids_id='auto_...')]
 
     """
     from .misc import create_logger
