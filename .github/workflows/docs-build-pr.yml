@@ -5,6 +5,13 @@ on:
   pull_request:
     branches: [ master, 'maint/*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     if: "(github.repository_owner != 'nipreps') && !contains(github.event.head_commit.message, '[skip ci]')"
