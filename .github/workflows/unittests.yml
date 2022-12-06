@@ -9,7 +9,7 @@ on:
 jobs:
   build-linux:
     if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       TEST_DATA_HOME: /home/runner/sdcflows-tests
       FSLDIR: /usr/share/fsl/5.0
