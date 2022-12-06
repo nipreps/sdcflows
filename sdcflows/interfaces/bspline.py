@@ -78,7 +78,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     zooms_min = traits.Union(
         traits.Float,
         traits.Tuple(traits.Float, traits.Float, traits.Float),
-        default_value=1.95,
+        default_value=4.0,
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
