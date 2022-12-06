@@ -178,7 +178,7 @@ class BSplineApprox(SimpleInterface):
         if self.inputs.recenter == "mode":
             from scipy.stats import mode
 
-            data -= mode(data[mask], axis=None)[0][0]
+            data -= mode(data[mask], keepdims=False).mode
         elif self.inputs.recenter == "median":
             data -= np.median(data[mask])
         elif self.inputs.recenter == "mean":
