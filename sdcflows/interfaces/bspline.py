@@ -178,7 +178,10 @@ class BSplineApprox(SimpleInterface):
         if self.inputs.recenter == "mode":
             from scipy.stats import mode
 
-            data -= mode(data[mask], keepdims=False).mode
+            # Handle pre- and post-1.9 mode behavior.
+            # squeeze can be dropped when the minimum version reaches 1.9
+            # Will become: data -= mode(data[mask], keepdims=False).mode
+            data -= np.squeeze(mode(data[mask]).mode)
         elif self.inputs.recenter == "median":
             data -= np.median(data[mask])
         elif self.inputs.recenter == "mean":
