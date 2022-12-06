@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev93+g2350d4b3 documentation</title>
+        <title>sdcflows.interfaces.bspline - sdcflows 2.1.2.dev97+g82e75933 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev93+g2350d4b3 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev97+g82e75933 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev93 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev97 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev93 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev97 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -374,6 +374,7 @@
 
     <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">linear_model</span> <span class="k">as</span> <span class="n">lm</span>
+        <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">vstack</span> <span class="k">as</span> <span class="n">sparse_vstack</span>
 
         <span class="c1"># Output name baseline</span>
         <span class="n">out_name</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
@@ -391,21 +392,25 @@
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
 
+        <span class="c1"># Determine the shape of bspline coefficients</span>
+        <span class="c1"># This should not change with resizing, so do it first</span>
+        <span class="n">bs_grids</span> <span class="o">=</span> <span class="p">[</span><span class="n">bspline_grid</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">control_zooms_mm</span><span class="o">=</span><span class="n">sp</span><span class="p">)</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">bs_spacing</span><span class="p">]</span>
+
         <span class="n">need_resize</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">zooms</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">zooms_min</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">need_resize</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">resample_to_zooms</span>
 
-            <span class="n">zooms_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">zooms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">zooms_min</span><span class="p">)</span>
+            <span class="n">target_zooms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">zooms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">zooms_min</span><span class="p">)</span>
 
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">"Resampling image with resolution exceeding 'zooms_min' "</span>
                 <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">zooms</span><span class="p">)</span><span class="si">}</span><span class="s2"> → "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">zooms_min</span><span class="p">)</span><span class="si">}</span><span class="s2">)."</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">target_zooms</span><span class="p">)</span><span class="si">}</span><span class="s2">)."</span>
             <span class="p">)</span>
-            <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">zooms_min</span><span class="p">)</span>
+            <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">target_zooms</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">masknii</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">masknii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">masknii</span><span class="p">,</span> <span class="n">zooms_min</span><span class="p">)</span>
+                <span class="n">masknii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">masknii</span><span class="p">,</span> <span class="n">target_zooms</span><span class="p">)</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span>
 
@@ -414,9 +419,6 @@
             <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="n">masknii</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">masknii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-4</span>
         <span class="p">)</span>
-
-        <span class="c1"># Convert spacings to numpy arrays</span>
-        <span class="n">bs_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">bs_spacing</span><span class="p">]</span>
 
         <span class="c1"># Recenter the fieldmap</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s2">"mode"</span><span class="p">:</span>
@@ -431,13 +433,13 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
 
-        <span class="c1"># Calculate collocation matrix &amp; the spatial location of control points</span>
-        <span class="n">colmat</span><span class="p">,</span> <span class="n">bs_levels</span> <span class="o">=</span> <span class="n">_collocation_matrix</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">bs_spacing</span><span class="p">)</span>
+        <span class="c1"># Calculate collocation matrix from (possibly resized) image and knot grids</span>
+        <span class="n">colmat</span> <span class="o">=</span> <span class="n">sparse_vstack</span><span class="p">(</span><span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
 
-        <span class="n">bs_levels_str</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">level</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">bs_levels</span><span class="p">]</span>
-        <span class="n">bs_levels_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"and </span><span class="si">{</span><span class="n">bs_levels_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">bs_grids_str</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span><span class="p">]</span>
+        <span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"and </span><span class="si">{</span><span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Approximating B-Splines grids (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bs_levels_str</span><span class="p">)</span><span class="si">}</span><span class="s2"> [knots]) on a grid of "</span>
+            <span class="sa">f</span><span class="s2">"Approximating B-Splines grids (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bs_grids_str</span><span class="p">)</span><span class="si">}</span><span class="s2"> [knots]) on a grid of "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">) voxels,"</span>
             <span class="sa">f</span><span class="s2">" of which </span><span class="si">{</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> fall within the mask."</span>
         <span class="p">)</span>
@@ -449,7 +451,7 @@
         <span class="c1"># Store coefficients</span>
         <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"out_coeff"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bsl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bs_levels</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bsl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bs_grids</span><span class="p">):</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">bsl</span><span class="o">.</span><span class="n">dataobj</span><span class="o">.</span><span class="n">size</span>
             <span class="n">out_level</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_field."</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"_coeff</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
             <span class="n">bsl</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
@@ -470,7 +472,9 @@
                 <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">fmapnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="n">masknii</span> <span class="ow">is</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span><span class="p">)</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-4</span>
             <span class="p">)</span>
-            <span class="n">colmat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_collocation_matrix</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">bs_spacing</span><span class="p">)</span>
+            <span class="n">colmat</span> <span class="o">=</span> <span class="n">sparse_vstack</span><span class="p">(</span>
+                <span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
 
         <span class="n">regressors</span> <span class="o">=</span> <span class="n">colmat</span><span class="p">[</span><span class="n">mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">:]</span>
         <span class="n">interp_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -751,24 +755,6 @@
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bs_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">),</span> <span class="n">bs_affine</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_collocation_matrix</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">knot_spacing</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">vstack</span> <span class="k">as</span> <span class="n">sparse_vstack</span>
-
-    <span class="n">bs_levels</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">knot_spacing</span><span class="p">:</span>
-        <span class="n">level</span> <span class="o">=</span> <span class="n">bspline_grid</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">control_zooms_mm</span><span class="o">=</span><span class="n">sp</span><span class="p">)</span>
-        <span class="n">bs_levels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
-
-        <span class="n">weights</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">sparse_vstack</span><span class="p">((</span><span class="n">weights</span><span class="p">,</span> <span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">level</span><span class="p">)))</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">weights</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tocsr</span><span class="p">(),</span> <span class="n">bs_levels</span>
 
 
 <span class="k">def</span> <span class="nf">_fix_topup_fieldcoeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
