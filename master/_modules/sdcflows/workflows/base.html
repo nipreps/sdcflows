@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.workflows.base - sdcflows 2.1.2.dev90+ga2bc54c9 documentation</title>
+        <title>sdcflows.workflows.base - sdcflows 2.1.2.dev91+gf7d9095e documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev90+ga2bc54c9 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev91+gf7d9095e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,10 +265,10 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""</span>
-<span class="kn">from</span> <span class="nn">nipype</span> <span class="k">import</span> <span class="n">logging</span>
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="k">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
-<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="k">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">logging</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"nipype.workflow"</span><span class="p">)</span>
 <span class="n">DEFAULT_MEMORY_MIN_GB</span> <span class="o">=</span> <span class="mf">0.01</span>
@@ -319,10 +319,10 @@
 <span class="sd">        The preprocessed fieldmap coefficients.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.workflows.fit.pepolar</span> <span class="k">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_pepolar_fields</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.workflows.fit.syn</span> <span class="k">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_syn_fields</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.workflows.outputs</span> <span class="k">import</span> <span class="n">init_fmap_derivatives_wf</span><span class="p">,</span> <span class="n">init_fmap_reports_wf</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.fieldmaps</span> <span class="k">import</span> <span class="n">EstimatorType</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.workflows.fit.pepolar</span> <span class="kn">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_pepolar_fields</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.workflows.fit.syn</span> <span class="kn">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_syn_fields</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.workflows.outputs</span> <span class="kn">import</span> <span class="n">init_fmap_derivatives_wf</span><span class="p">,</span> <span class="n">init_fmap_reports_wf</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.fieldmaps</span> <span class="kn">import</span> <span class="n">EstimatorType</span>
 
     <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span> <span class="n">_syn_fields</span><span class="p">,</span>
@@ -333,7 +333,7 @@
 
     <span class="n">out_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"fmap"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">,</span> <span class="s2">"fmap_coeff"</span><span class="p">,</span> <span class="s2">"fmap_mask"</span><span class="p">,</span> <span class="s2">"fmap_id"</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">)</span>
     <span class="n">out_merge</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">f</span><span class="p">:</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimators</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="s2">"out_merge_</span><span class="si">{f}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">:</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimators</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"out_merge_</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">out_fields</span>
     <span class="p">}</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"outputnode"</span><span class="p">)</span>
@@ -356,7 +356,7 @@
         <span class="p">]</span>
 
         <span class="n">out_map</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-            <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="s2">"out_</span><span class="si">{estimator.bids_id}</span><span class="s2">"</span>
+            <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"out_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">out_map</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_id</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span>
 
@@ -364,7 +364,7 @@
             <span class="n">output_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span>
             <span class="n">write_coeff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="s2">"fmap_derivatives_wf_</span><span class="si">{estimator.bids_id}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"fmap_derivatives_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fmap_derivatives_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_files</span>
         <span class="n">fmap_derivatives_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fmap_meta</span> <span class="o">=</span> <span class="p">[</span>
@@ -375,7 +375,7 @@
             <span class="n">output_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span>
             <span class="n">fmap_type</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
             <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="s2">"fmap_reports_wf_</span><span class="si">{estimator.bids_id}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"fmap_reports_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fmap_reports_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_files</span>
 
@@ -383,11 +383,11 @@
             <span class="n">fields</span> <span class="o">=</span> <span class="n">INPUT_FIELDS</span><span class="p">[</span><span class="n">estimator</span><span class="o">.</span><span class="n">method</span><span class="p">]</span>
             <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
                 <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">),</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="s2">"in_</span><span class="si">{estimator.bids_id}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"in_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="c1"># fmt:off</span>
             <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-                <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">est_wf</span><span class="p">,</span> <span class="p">[(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="s2">"inputnode.</span><span class="si">{f}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">])</span>
+                <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">est_wf</span><span class="p">,</span> <span class="p">[(</span><span class="n">f</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"inputnode.</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">])</span>
             <span class="p">])</span>
             <span class="c1"># fmt:on</span>
 
@@ -414,7 +414,7 @@
         <span class="c1"># fmt:on</span>
 
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span> <span class="ow">in</span> <span class="n">out_merge</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">out_map</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span><span class="p">,</span> <span class="n">f</span><span class="s2">"in</span><span class="si">{n}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">out_map</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"in</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 </pre></div>

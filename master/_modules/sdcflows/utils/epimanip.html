@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.epimanip - sdcflows 2.1.2.dev90+ga2bc54c9 documentation</title>
+        <title>sdcflows.utils.epimanip - sdcflows 2.1.2.dev91+gf7d9095e documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev90+ga2bc54c9 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev91+gf7d9095e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -429,7 +429,7 @@
     <span class="k">if</span> <span class="s2">"TotalReadoutTime"</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
         <span class="n">trt</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"TotalReadoutTime"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">trt</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"'</span><span class="si">{trt}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">trt</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">trt</span>
 
@@ -474,11 +474,11 @@
 
 <div class="viewcode-block" id="epi_mask"><a class="viewcode-back" href="../../../api/sdcflows.utils.epimanip.html#sdcflows.utils.epimanip.epi_mask">[docs]</a><span class="k">def</span> <span class="nf">epi_mask</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">"""Use grayscale morphological operations to obtain a quick mask of EPI data."""</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-    <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">ndimage</span>
-    <span class="kn">from</span> <span class="nn">skimage.morphology</span> <span class="k">import</span> <span class="n">ball</span>
+    <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+    <span class="kn">from</span> <span class="nn">skimage.morphology</span> <span class="kn">import</span> <span class="n">ball</span>
 
     <span class="k">if</span> <span class="n">out_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"mask.nii.gz"</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>

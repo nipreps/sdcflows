@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.1.2.dev90+ga2bc54c9 documentation</title>
+        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.1.2.dev91+gf7d9095e documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.1.2.dev90+ga2bc54c9 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.1.2.dev91+gf7d9095e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,11 +265,11 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Datasets with multiple phase encoded directions."""</span>
-<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="k">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">_pkg_fname</span>
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="k">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">resource_filename</span> <span class="k">as</span> <span class="n">_pkg_fname</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
 
-<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="k">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)</span>
 <span class="n">_PEPOLAR_DESC</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
@@ -330,19 +330,19 @@
 <span class="sd">        Short description of the estimation method that was run.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces.fsl.epi</span> <span class="k">import</span> <span class="n">TOPUP</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="k">import</span> <span class="n">RobustAverage</span>
+    <span class="kn">from</span> <span class="nn">nipype.interfaces.fsl.epi</span> <span class="kn">import</span> <span class="n">TOPUP</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="kn">import</span> <span class="n">RobustAverage</span>
 
-    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="k">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="k">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="k">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="k">import</span> <span class="n">TOPUPCoeffReorient</span>
-    <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="k">import</span> <span class="n">init_brainextraction_wf</span>
+    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="n">TOPUPCoeffReorient</span>
+    <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="se">\</span>
-<span class="si">{_PEPOLAR_DESC}</span><span class="s2"> with `topup` (@topup; FSL {TOPUP().version}).</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
+<span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> with `topup` (@topup; FSL </span><span class="si">{</span><span class="n">TOPUP</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">).</span>
 <span class="s2">"""</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"inputnode"</span><span class="p">)</span>
@@ -392,7 +392,7 @@
     <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s2">"LAS"</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"to_las"</span><span class="p">)</span>
     <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">TOPUP</span><span class="p">(</span>
-            <span class="n">config</span><span class="o">=</span><span class="n">_pkg_fname</span><span class="p">(</span><span class="s2">"sdcflows"</span><span class="p">,</span> <span class="n">f</span><span class="s2">"data/flirtsch/b02b0{'_quick' * sloppy}.cnf"</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">_pkg_fname</span><span class="p">(</span><span class="s2">"sdcflows"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data/flirtsch/b02b0</span><span class="si">{</span><span class="s1">'_quick'</span> <span class="o">*</span> <span class="n">sloppy</span><span class="si">}</span><span class="s2">.cnf"</span><span class="p">)</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"topup"</span><span class="p">,</span>
     <span class="p">)</span>
@@ -454,8 +454,8 @@
         <span class="c1"># fmt: on</span>
         <span class="k">return</span> <span class="n">workflow</span>
 
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="k">import</span> <span class="n">SplitSeries</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="k">import</span> <span class="n">ApplyCoeffsField</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">SplitSeries</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
     <span class="c1"># Separate the runs again, as our ApplyCoeffsField corrects them separately</span>
     <span class="n">split_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SplitSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"split_blips"</span><span class="p">)</span>
@@ -518,20 +518,20 @@
 <span class="sd">        The path of an unwarped conversion of the first element of ``in_data``.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="k">import</span> <span class="n">afni</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.header</span> <span class="k">import</span> <span class="n">CopyHeader</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">afni</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.header</span> <span class="kn">import</span> <span class="n">CopyHeader</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="kn">import</span> <span class="p">(</span>
         <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span><span class="p">,</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.freesurfer</span> <span class="k">import</span> <span class="n">StructuralReference</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.func.util</span> <span class="k">import</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span>
-    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="k">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_last</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="k">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">ConvertWarp</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.freesurfer</span> <span class="kn">import</span> <span class="n">StructuralReference</span>
+    <span class="kn">from</span> <span class="nn">niworkflows.func.util</span> <span class="kn">import</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span>
+    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_last</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">ConvertWarp</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="n">f</span><span class="s2">"""</span><span class="si">{_PEPOLAR_DESC}</span><span class="s2"> </span><span class="se">\</span>
-<span class="s2">with `3dQwarp` (@afni; AFNI {''.join(['</span><span class="si">%02d</span><span class="s2">' % v for v in afni.Info().version() or []])}).</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> </span><span class="se">\</span>
+<span class="s2">with `3dQwarp` (@afni; AFNI </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">'</span><span class="si">%02d</span><span class="s1">'</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">afni</span><span class="o">.</span><span class="n">Info</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="p">()</span> <span class="ow">or</span> <span class="p">[]])</span><span class="si">}</span><span class="s2">).</span>
 <span class="s2">"""</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
@@ -583,7 +583,7 @@
     <span class="n">qwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">afni</span><span class="o">.</span><span class="n">QwarpPlusMinus</span><span class="p">(</span>
             <span class="n">blur</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">environ</span><span class="o">=</span><span class="p">{</span><span class="s2">"OMP_NUM_THREADS"</span><span class="p">:</span> <span class="n">f</span><span class="s2">"{min(omp_nthreads, 4)}"</span><span class="p">},</span>
+            <span class="n">environ</span><span class="o">=</span><span class="p">{</span><span class="s2">"OMP_NUM_THREADS"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
             <span class="n">minpatch</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
             <span class="n">nopadWARP</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">noweight</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

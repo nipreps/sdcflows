@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.utils - sdcflows 2.1.2.dev90+ga2bc54c9 documentation</title>
+        <title>sdcflows.interfaces.utils - sdcflows 2.1.2.dev91+gf7d9095e documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev90+ga2bc54c9 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.1.2.dev91+gf7d9095e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,7 +265,7 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Utilities."""</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseInterfaceInputSpec</span><span class="p">,</span>
     <span class="n">TraitedSpec</span><span class="p">,</span>
     <span class="n">File</span><span class="p">,</span>
@@ -275,11 +275,11 @@
     <span class="n">OutputMultiObject</span><span class="p">,</span>
     <span class="n">isdefined</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.ants.segmentation</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.ants.segmentation</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">DenoiseImage</span> <span class="k">as</span> <span class="n">_DenoiseImageBase</span><span class="p">,</span>
     <span class="n">DenoiseImageInputSpec</span> <span class="k">as</span> <span class="n">_DenoiseImageInputSpecBase</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.mixins</span> <span class="k">import</span> <span class="n">CopyHeaderInterface</span> <span class="k">as</span> <span class="n">_CopyHeaderInterface</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.mixins</span> <span class="kn">import</span> <span class="n">CopyHeaderInterface</span> <span class="k">as</span> <span class="n">_CopyHeaderInterface</span>
 
 <span class="n">OBLIQUE_THRESHOLD_DEG</span> <span class="o">=</span> <span class="mf">0.5</span>
 
@@ -353,8 +353,8 @@
     <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
         <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-        <span class="kn">from</span> <span class="nn">nitransforms.linear</span> <span class="k">import</span> <span class="n">Affine</span>
-        <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+        <span class="kn">from</span> <span class="nn">nitransforms.linear</span> <span class="kn">import</span> <span class="n">Affine</span>
+        <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
 
         <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">reference</span><span class="p">]</span>
@@ -371,7 +371,7 @@
 
             <span class="n">nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
             <span class="n">retval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
-                <span class="n">fname</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">f</span><span class="s2">"_regrid</span><span class="si">{i:03d}</span><span class="s2">"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
+                <span class="n">fname</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"_regrid</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">refshape</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">refaff</span><span class="p">):</span>
@@ -581,7 +581,7 @@
 <span class="sd">        from the input images.</span>
 
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
 
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">out_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">()</span>
@@ -596,7 +596,7 @@
             <span class="n">stem</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">".nii"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
             <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">nii</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">splitnii</span><span class="p">):</span>
-                <span class="n">out_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="n">f</span><span class="s2">"</span><span class="si">{stem}</span><span class="s2">_idx-</span><span class="si">{j:03}</span><span class="s2">.nii.gz"</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+                <span class="n">out_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_idx-</span><span class="si">{</span><span class="n">j</span><span class="si">:</span><span class="s2">03</span><span class="si">}</span><span class="s2">.nii.gz"</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
                 <span class="n">nii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_name</span><span class="p">)</span>
                 <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">out_name</span><span class="p">),</span> <span class="n">meta</span><span class="p">))</span>
 
@@ -607,7 +607,7 @@
     <span class="sd">"""Ensure the data type and intent of a warp is acceptable by ITK-based tools."""</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -622,7 +622,7 @@
 <span class="k">def</span> <span class="nf">_deoblique</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">in_affine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">OBLIQUE_THRESHOLD_DEG</span><span class="p">:</span>
@@ -655,7 +655,7 @@
 <span class="k">def</span> <span class="nf">_reoblique</span><span class="p">(</span><span class="n">in_epi</span><span class="p">,</span> <span class="n">in_plumb</span><span class="p">,</span> <span class="n">in_field</span><span class="p">,</span> <span class="n">in_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">epinii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_epi</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">epinii</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">OBLIQUE_THRESHOLD_DEG</span><span class="p">:</span>
@@ -711,7 +711,7 @@
 
 <span class="sd">    """</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
@@ -738,8 +738,8 @@
 
 <span class="sd">    """</span>
     <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="k">import</span> <span class="n">fname_presuffix</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="k">import</span> <span class="n">ensure_positive_cosines</span>
+    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
 
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">"_flipfree"</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">newpath</span><span class="p">)</span>
     <span class="n">reoriented</span><span class="p">,</span> <span class="n">axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">))</span>

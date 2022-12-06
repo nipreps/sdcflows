@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils.tools module" href="sdcflows.utils.tools.html" /><link rel="prev" title="sdcflows.utils.misc module" href="sdcflows.utils.misc.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.phasemanip module - sdcflows 2.1.2.dev90+ga2bc54c9 documentation</title>
+        <title>sdcflows.utils.phasemanip module - sdcflows 2.1.2.dev91+gf7d9095e documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev90+ga2bc54c9 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.1.2.dev91+gf7d9095e documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev90 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev91 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -256,12 +256,12 @@
 <dd><p>Read <span class="math notranslate nohighlight">\(\Delta_\text{TE}\)</span> from BIDS metadata dict.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s2">"EchoTime1"</span><span class="p">:</span> <span class="mf">0.00522</span><span class="p">,</span> <span class="s2">"EchoTime2"</span><span class="p">:</span> <span class="mf">0.00768</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="s2">"</span><span class="si">{t:.5f}</span><span class="s2">"</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span>
 <span class="go">'0.00246'</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s1">'EchoTimeDifference'</span><span class="p">:</span> <span class="mf">0.00246</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="s2">"</span><span class="si">{t:.5f}</span><span class="s2">"</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span>
 <span class="go">'0.00246'</span>
 </pre></div>
 </div>
