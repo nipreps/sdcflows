@@ -62,5 +62,15 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
     if workdir:
         wf.base_dir = str(workdir)
 
-    if os.getenv("GITHUB_ACTIONS") != "true":
-        wf.run(plugin="Linear")
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        return
+
+    res = wf.run(plugin="Linear")
+
+    # Regression test for when out_merge_fmap_coeff was flattened and would
+    # have twice as many elements as the other nodes
+    assert all(
+        len(node.result.outputs.out) == len(estimators)
+        for node in res.nodes
+        if node.name.startswith("out_merge_")
+    )
