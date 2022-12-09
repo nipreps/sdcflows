@@ -1,3 +1,47 @@
+2.2.0 (December 09, 2022)
+=========================
+New feature release in the 2.2.x series.
+
+This series supports fMRIPrep 22.1.x and Nibabies 22.2.x.
+
+This release includes fixes for a number of SDC use cases.
+
+With thanks to Basile Pinsard for adding support for fieldmaps
+that contribute to multiple ``B0FieldIdentifier``\s.
+
+.. attention::
+
+    *SDCFlows* drops Python 3.7 starting with 2.2.x series.
+
+* FIX: Collate fieldmap coefficients into list of lists (#317)
+* FIX: Pad BSpline design matrix (#319)
+* FIX: Calculate bspline grids separately from colocation matrices (#308)
+* FIX: Support scipy 1.8 (#311)
+* FIX: Pacify deprecation warning from scipy.stats (#309)
+* FIX: Do not reorient distorted image in apply (#303)
+* FIX: Do not create a dense matrix along the way (#299)
+* FIX: Ensure ``replace()`` calls only alter the file basename (#293)
+* FIX: Update tests after merge of #287 (#288)
+* FIX: Revise debug/sloppy operations of the ``coeff2epi`` workflow (#287)
+* FIX: Revise the TOPUP workflow and related utilities (#278)
+* ENH: Default to 4mm re-zoom for b-spline approximation (#314)
+* ENH: Drop n_procs tag from BSplineApprox (#315)
+* ENH: Find B0FieldIdentifiers when one image contributes to multiple (#298)
+* ENH: Allow bids filtering during ``get()`` calls. (#292)
+* ENH: Evaluate B-Splines using scipy (#304)
+* ENH: Integrate downsampling in ``BSplineApprox`` when the input is high-res (#301)
+* ENH: Make wrangler more verbose (#284)
+* ENH: Add CLI to detect usable estimators within a BIDS dataset (#257)
+* ENH: Calculate robust average of EPI inputs to TOPUP workflow (#280)
+* MAINT: Housekeeping and more verbose debugging outputs (#302)
+* MAINT: Simplify build tests on GH Actions to latest standards (#282)
+* MAINT: Keep CircleCI settings up to date (#281)
+* MAINT: Unavilable data from OSF remote (datalad) for CircleCI tests. (#277)
+* MAINT: Remove unused argument from ``topup`` related interface (#276)
+* CI: Update concurrency, permissions and actions (#313)
+* CI: Roll unittests runner back to Ubuntu 20.04 (#310)
+* CI: Ensure builds are triggered weekly (#270)
+
 2.1.1 (August 29, 2022)
 =======================
 Patch release in the 2.1.x series. This release incorporates the fix in 2.0.13 in
