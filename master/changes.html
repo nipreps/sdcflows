@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="sdcflows.workflows.outputs module" href="api/sdcflows.workflows.outputs.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>What’s new? - sdcflows 2.1.2.dev104+g4b271a5e documentation</title>
+        <title>What’s new? - sdcflows 2.1.2.dev105+ga5717869 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">sdcflows 2.1.2.dev104+g4b271a5e documentation</div></a>
+      <a href="index.html"><div class="brand">sdcflows 2.1.2.dev105+ga5717869 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev104 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.1.2.dev105 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.1.2.dev104 (dev)</span>
+  <span class="sidebar-brand-text">2.1.2.dev105 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -244,6 +244,48 @@
         <article role="main">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Permalink to this headline">¶</a></h1>
+<section id="december-09-2022">
+<h2>2.2.0 (December 09, 2022)<a class="headerlink" href="#december-09-2022" title="Permalink to this headline">¶</a></h2>
+<p>New feature release in the 2.2.x series.</p>
+<p>This series supports fMRIPrep 22.1.x and Nibabies 22.2.x.</p>
+<p>This release includes fixes for a number of SDC use cases.</p>
+<p>With thanks to Basile Pinsard for adding support for fieldmaps
+that contribute to multiple <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code>s.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p><em>SDCFlows</em> drops Python 3.7 starting with 2.2.x series.</p>
+</div>
+<ul class="simple">
+<li><p>FIX: Collate fieldmap coefficients into list of lists (#317)</p></li>
+<li><p>FIX: Pad BSpline design matrix (#319)</p></li>
+<li><p>FIX: Calculate bspline grids separately from colocation matrices (#308)</p></li>
+<li><p>FIX: Support scipy 1.8 (#311)</p></li>
+<li><p>FIX: Pacify deprecation warning from scipy.stats (#309)</p></li>
+<li><p>FIX: Do not reorient distorted image in apply (#303)</p></li>
+<li><p>FIX: Do not create a dense matrix along the way (#299)</p></li>
+<li><p>FIX: Ensure <code class="docutils literal notranslate"><span class="pre">replace()</span></code> calls only alter the file basename (#293)</p></li>
+<li><p>FIX: Update tests after merge of #287 (#288)</p></li>
+<li><p>FIX: Revise debug/sloppy operations of the <code class="docutils literal notranslate"><span class="pre">coeff2epi</span></code> workflow (#287)</p></li>
+<li><p>FIX: Revise the TOPUP workflow and related utilities (#278)</p></li>
+<li><p>ENH: Default to 4mm re-zoom for b-spline approximation (#314)</p></li>
+<li><p>ENH: Drop n_procs tag from BSplineApprox (#315)</p></li>
+<li><p>ENH: Find B0FieldIdentifiers when one image contributes to multiple (#298)</p></li>
+<li><p>ENH: Allow bids filtering during <code class="docutils literal notranslate"><span class="pre">get()</span></code> calls. (#292)</p></li>
+<li><p>ENH: Evaluate B-Splines using scipy (#304)</p></li>
+<li><p>ENH: Integrate downsampling in <code class="docutils literal notranslate"><span class="pre">BSplineApprox</span></code> when the input is high-res (#301)</p></li>
+<li><p>ENH: Make wrangler more verbose (#284)</p></li>
+<li><p>ENH: Add CLI to detect usable estimators within a BIDS dataset (#257)</p></li>
+<li><p>ENH: Calculate robust average of EPI inputs to TOPUP workflow (#280)</p></li>
+<li><p>MAINT: Housekeeping and more verbose debugging outputs (#302)</p></li>
+<li><p>MAINT: Simplify build tests on GH Actions to latest standards (#282)</p></li>
+<li><p>MAINT: Keep CircleCI settings up to date (#281)</p></li>
+<li><p>MAINT: Unavilable data from OSF remote (datalad) for CircleCI tests. (#277)</p></li>
+<li><p>MAINT: Remove unused argument from <code class="docutils literal notranslate"><span class="pre">topup</span></code> related interface (#276)</p></li>
+<li><p>CI: Update concurrency, permissions and actions (#313)</p></li>
+<li><p>CI: Roll unittests runner back to Ubuntu 20.04 (#310)</p></li>
+<li><p>CI: Ensure builds are triggered weekly (#270)</p></li>
+</ul>
+</section>
 <section id="august-29-2022">
 <h2>2.1.1 (August 29, 2022)<a class="headerlink" href="#august-29-2022" title="Permalink to this headline">¶</a></h2>
 <p>Patch release in the 2.1.x series. This release incorporates the fix in 2.0.13 in
@@ -714,6 +756,7 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#december-09-2022">2.2.0 (December 09, 2022)</a></li>
 <li><a class="reference internal" href="#august-29-2022">2.1.1 (August 29, 2022)</a></li>
 <li><a class="reference internal" href="#may-26-2022">2.1.0 (May 26, 2022)</a></li>
 <li><a class="reference internal" href="#april-08-2022">2.0.13 (April 08, 2022)</a></li>
