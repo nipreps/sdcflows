@@ -406,13 +406,15 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
         # Calculate the index component of samples w.r.t. B-Spline knots along current axis
         x = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
+        pad_left = max(int(-np.rint(x.min())), 0)
+        pad_right = max(int(np.rint(x.max()) - knots_shape[axis]), 0)
 
         # BSpline.design_matrix requires all x be within -4 and 4 padding
         # This padding results from the B-Spline degree (3) plus one
-        t = np.arange(-4, knots_shape[axis] + 4, dtype=dtype)
+        t = np.arange(-4 - pad_left, knots_shape[axis] + 4 + pad_right, dtype=dtype)
 
         # Calculate K x N collocation matrix (discarding extra padding)
-        colloc_ax = BSpline.design_matrix(x, t, 3)[:, 2:-2]
+        colloc_ax = BSpline.design_matrix(x, t, 3)[:, (2 + pad_left):-(2 + pad_right)]
         # Design matrix returns K x N and we want N x K
         wd.append(colloc_ax.T.tocsr())
 
