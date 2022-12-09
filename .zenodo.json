@@ -8,17 +8,23 @@
       "name": "Oscar Esteban"
     },
     {
-      "orcid": "0000-0002-6533-164X",
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
-      "name": "Christopher J. Markiewicz"
-    },
-    {
       "orcid": "0000-0002-7252-7771",
       "affiliation": "Department of Psychology, Stanford University, CA, USA",
       "name": "Mathias Goncalves"
+    },
+    {
+      "orcid": "0000-0002-6533-164X",
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Christopher J. Markiewicz"
     }
   ],
   "contributors": [
+    {
+      "orcid": "0000-0002-4391-3075",
+      "affiliation": "University of Montréal, Montréal, Canada",
+      "name": "Basile Pinsard",
+      "type": "Researcher"
+    },
     {
       "orcid": "0000-0003-3715-7012",
       "affiliation": "Department of Neuroimaging, King's College London",
@@ -52,7 +58,7 @@
     {
       "orcid": "0000-0001-6948-9068",
       "affiliation": "Cyceron, UMS 3408 (CNRS - UCBN), France",
-      "name": "Mika\u00ebl Naveau",
+      "name": "Mikaël Naveau",
       "type": "Researcher"
     },
     {

@@ -117,10 +117,12 @@ def get_git_lines(fname="line-contributors.txt"):
         print("WARNING: Reusing existing line-contributors.txt file.", file=sys.stderr)
         lines = contrib_file.read_text().splitlines()
 
-    git_line_summary_path = shutil.which("git-line-summary")
-    if not lines and git_line_summary_path:
-        print("Running git-line-summary on repo")
-        lines = sp.check_output([git_line_summary_path]).decode().splitlines()
+    cmd = [shutil.which("git-line-summary")]
+    if cmd == [None]:
+        cmd = [shutil.which("git-summary"), "--line"]
+    if not lines and cmd[0]:
+        print(f"Running {' '.join(cmd)!r} on repo")
+        lines = sp.check_output(cmd).decode().splitlines()
         lines = [l for l in lines if "Not Committed Yet" not in l]
         contrib_file.write_text("\n".join(lines))
 
@@ -130,7 +132,7 @@ def get_git_lines(fname="line-contributors.txt"):
 Could not find line-contributors from git repository.%s"""
             % """ \
 git-line-summary not found, please install git-extras. """
-            * (git_line_summary_path is None)
+            * (cmd[0] is None)
         )
     return [" ".join(line.strip().split()[1:-1]) for line in lines if "%" in line]
 
@@ -227,7 +229,7 @@ def zenodo(
             creator["affiliation"] = creator["affiliation"][0]
 
     Path(zenodo_file).write_text(
-        "%s\n" % json.dumps(zenodo, indent=2)
+        "%s\n" % json.dumps(zenodo, indent=2, ensure_ascii=False)
     )
 
 
