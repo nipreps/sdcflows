@@ -87,11 +87,15 @@ def init_fmap_preproc_wf(
 
     workflow = Workflow(name=name)
 
-    out_fields = ("fmap", "fmap_ref", "fmap_coeff", "fmap_mask", "fmap_id", "method")
+    out_fields = ("fmap", "fmap_coeff", "fmap_ref", "fmap_mask", "fmap_id", "method")
     out_merge = {
         f: pe.Node(niu.Merge(len(estimators)), name=f"out_merge_{f}")
         for f in out_fields
     }
+    # Fieldmaps and coefficient files can come in pairs, ensure they are not flattened
+    out_merge["fmap"].inputs.no_flatten = True
+    out_merge["fmap_coeff"].inputs.no_flatten = True
+
     outputnode = pe.Node(niu.IdentityInterface(fields=out_fields), name="outputnode")
 
     workflow.connect(
