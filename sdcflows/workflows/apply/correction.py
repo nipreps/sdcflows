@@ -26,7 +26,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
+def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
     r"""
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
