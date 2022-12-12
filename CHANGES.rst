@@ -1,3 +1,13 @@
+2.2.1 (December 12, 2022)
+=========================
+Patch release in the 2.2.x series.
+
+This release enables dynamic estimation of memory and CPU needs for a
+particularly resource-intensive node.
+
+* ENH: Dynamically choose number of resampling threads to adapt to memory constraints (#321)
+
+
 2.2.0 (December 09, 2022)
 =========================
 New feature release in the 2.2.x series.
