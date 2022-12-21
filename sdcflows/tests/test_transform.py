@@ -161,3 +161,23 @@ def test_conversions(tmpdir, testdata_dir, pe_dir):
         fmap_nii.get_fdata(dtype="float32"),
         new_nii.get_fdata(dtype="float32"),
     )
+
+
+def test_grid_bspline_weights():
+    target_shape = (10, 10, 10)
+    target_aff = [[1, 0, 0, -5], [0, 1, 0, -5], [0, 0, 1, -5], [0, 0, 0, 1]]
+    ctrl_shape = (4, 4, 4)
+    ctrl_aff = [[3, 0, 0, -6], [0, 3, 0, -6], [0, 0, 3, -6], [0, 0, 0, 1]]
+
+    weights = tf.grid_bspline_weights(
+        nb.Nifti1Image(np.zeros(target_shape), target_aff),
+        nb.Nifti1Image(np.zeros(ctrl_shape), ctrl_aff),
+    ).tocsr()
+    assert weights.shape == (64, 1000)
+    # Empirically determined numbers intended to indicate that something
+    # significant has changed. If it turns out we've been doing this wrong,
+    # these numbers will probably change.
+    assert np.isclose(weights[0, 0], 0.18919244)
+    assert np.isclose(weights[-1, -1], 0.18919244)
+    assert np.isclose(weights.sum(axis=1).max(), 26.833675)
+    assert np.isclose(weights.sum(axis=1).min(), 1.5879614)
