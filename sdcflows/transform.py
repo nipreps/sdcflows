@@ -28,7 +28,7 @@ import numpy as np
 from warnings import warn
 from scipy import ndimage as ndi
 from scipy.signal import cubic
-from scipy.sparse import vstack as sparse_vstack, kron, csr_matrix, lil_matrix
+from scipy.sparse import vstack as sparse_vstack, kron, lil_array
 
 import nibabel as nb
 import nitransforms as nt
@@ -413,10 +413,10 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
         bs_w = cubic(d_vals)
 
-        colloc_ax = lil_matrix((knots_shape[axis], sample_shape[axis]), dtype=dtype)
+        colloc_ax = lil_array((knots_shape[axis], sample_shape[axis]), dtype=dtype)
         colloc_ax[within_support] = bs_w[d_idxs]
 
-        wd.append(csr_matrix(colloc_ax))
+        wd.append(colloc_ax)
 
     # Calculate the tensor product of the three design matrices
     return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
