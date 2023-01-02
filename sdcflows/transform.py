@@ -27,8 +27,8 @@ import attr
 import numpy as np
 from warnings import warn
 from scipy import ndimage as ndi
-from scipy.interpolate import BSpline
-from scipy.sparse import vstack as sparse_vstack, kron
+from scipy.signal import cubic
+from scipy.sparse import vstack as sparse_vstack, kron, lil_array
 
 import nibabel as nb
 import nitransforms as nt
@@ -405,18 +405,18 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
 
         # Calculate the index component of samples w.r.t. B-Spline knots along current axis
-        x = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
-        pad_left = max(int(-np.rint(x.min())), 0)
-        pad_right = max(int(np.rint(x.max()) - knots_shape[axis]), 0)
+        locs = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
+        knots = np.arange(knots_shape[axis], dtype=dtype)
 
-        # BSpline.design_matrix requires all x be within -4 and 4 padding
-        # This padding results from the B-Spline degree (3) plus one
-        t = np.arange(-4 - pad_left, knots_shape[axis] + 4 + pad_right, dtype=dtype)
+        distance = np.abs(locs[np.newaxis, ...] - knots[..., np.newaxis])
+        within_support = distance < 2.0
+        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
+        bs_w = cubic(d_vals)
 
-        # Calculate K x N collocation matrix (discarding extra padding)
-        colloc_ax = BSpline.design_matrix(x, t, 3)[:, (2 + pad_left):-(2 + pad_right)]
-        # Design matrix returns K x N and we want N x K
-        wd.append(colloc_ax.T.tocsr())
+        colloc_ax = lil_array((knots_shape[axis], sample_shape[axis]), dtype=dtype)
+        colloc_ax[within_support] = bs_w[d_idxs]
+
+        wd.append(colloc_ax)
 
     # Calculate the tensor product of the three design matrices
     return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)

@@ -110,3 +110,6 @@ venv.bak/
 
 # Mac OSX
 .DS_Store
+
+.*.swp
+line-contributors.txt
