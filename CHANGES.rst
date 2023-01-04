@@ -1,3 +1,13 @@
+2.2.2 (January 04, 2023)
+========================
+Patch release in the 2.2.x series.
+
+This release resolves a bug affecting some oblique datasets.
+
+* RF: Generate the B-spline design matrix directly for efficiency (#324)
+* DOC: Add a notebook about susceptibility distortions (#285)
+
+
 2.2.1 (December 12, 2022)
 =========================
 Patch release in the 2.2.x series.
