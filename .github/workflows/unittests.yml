@@ -31,7 +31,7 @@ jobs:
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
       ANTSPATH: /opt/ants
-      DEPS: ${{ matrix.deps }}
+      DEPS: ${{ matrix.deps }}.txt
     strategy:
       max-parallel: 5
       matrix:
