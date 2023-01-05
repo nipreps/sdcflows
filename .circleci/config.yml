@@ -156,7 +156,6 @@ jobs:
             - build-v3-{{ .Branch }}-{{ epoch }}
             - build-v3-{{ .Branch }}-
             - build-v3-maint/1.3.x-
-            - build-v3-
           paths:
             - /tmp/docker
       - run:
