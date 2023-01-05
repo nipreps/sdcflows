@@ -59,9 +59,9 @@ jobs:
           name: Setup git-annex
           command: |
             if [[ ! -d /usr/lib/git-annex.linux ]]; then
-              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-              apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-              apt update && apt-get install -y --no-install-recommends git-annex-standalone
+              wget -O- http://neuro.debian.net/lists/jammy.us-nh.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+              sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+              sudo apt-get update && sudo apt-get install -y --no-install-recommends git-annex-standalone
             fi
             git config --global user.name 'NiPreps Bot'
             git config --global user.email 'nipreps@gmail.com'
@@ -313,7 +313,7 @@ jobs:
           command: mkdir -p $SUBJECTS_DIR
       - run:
           name: Install Graphviz
-          command: apt update && apt -y install graphviz
+          command: sudo apt-get update && sudo apt-get -y install --no-install-recommends graphviz
       - run:
           name: Install deps
           command: |
