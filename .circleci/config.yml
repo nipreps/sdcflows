@@ -145,7 +145,7 @@ jobs:
   build_n_pytest:
     machine:
       image: ubuntu-2204:2022.10.2
-    working_directory: /tmp/tests
+    working_directory: /tmp/src/sdcflows
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     steps:
@@ -190,7 +190,6 @@ jobs:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
-            cd /tmp/src/sdcflows
             python3 -m pip install --upgrade pip
             python3 -m pip install --upgrade "setuptools_scm[toml]"
 
@@ -256,7 +255,6 @@ jobs:
       - run:
           name: Refreshing cached intermediate results
           command: |
-            cd /tmp/src/sdcflows
             COMMIT_MSG=$( git log --format=oneline -n 1 $CIRCLE_SHA1 )
             set +e
             do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[refresh[ _]?cache\]' )"
