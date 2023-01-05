@@ -316,13 +316,13 @@ jobs:
           name: Install deps
           command: |
             pip install --no-cache-dir -r docs/requirements.txt
-            pip install --no-cache-dir "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4"
-            python setup.py --version
+            pip install --no-cache-dir "setuptools_scm[toml]"
+            python -m setuptools_scm
       - run:
           name: Build only this commit
-          command: make -C docs SPHINXOPTS="-W" BUILDDIR="_build/no_version_html" html
+          command: make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=no_version_html html
       - store_artifacts:
-          path: ./docs/_build/no_version_html/html
+          path: /home/circleci/docs/no_version_html
           destination: noversion
       - run:
           name: Stop or generate versioned docs?
@@ -347,7 +347,9 @@ jobs:
             - ./docs/_build
       - run:
           name: Generate Versioned Docs
-          command: make -f ./docs/Makefile versioned CURBRANCH=${CIRCLE_TAG:-$CIRCLE_BRANCH}
+          command: |
+            BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
+            make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
       - save_cache:
           key: docs-v2-{{ .Branch }}-{{ .Revision }}
           paths:
@@ -458,9 +460,6 @@ jobs:
   deploy_docs_tag:
     <<: *docs
 
-  deploy_docs_master:
-    <<: *docs
-
 workflows:
   version: 2
   build_deploy:
@@ -519,17 +518,6 @@ workflows:
                 - /tests?\/.*/
             tags:
               only: /.*/
-
-      - deploy_docs_master:
-          requires:
-            - build_n_pytest
-            - test_package
-            - build_docs
-          filters:
-            branches:
-              only: /master/
-            tags:
-              ignore: /.*/
 
       - deploy_docs_tag:
           requires:
