@@ -393,7 +393,6 @@ jobs:
           command: |
             if [[ -n "$DOCKER_PAT" ]]; then
               docker login -u $DOCKER_USER -p $DOCKER_PAT
-              docker push nipreps/sdcflows:latest
               docker tag nipreps/sdcflows nipreps/sdcflows:$CIRCLE_TAG
               docker push nipreps/sdcflows:$CIRCLE_TAG
             fi
