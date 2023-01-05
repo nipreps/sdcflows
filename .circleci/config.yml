@@ -153,10 +153,10 @@ jobs:
           path: /tmp/src/sdcflows
       - restore_cache:
           keys:
-            - build-v2-{{ .Branch }}-{{ epoch }}
-            - build-v2-{{ .Branch }}-
-            - build-v2-maint/1.3.x-
-            - build-v2-
+            - build-v3-{{ .Branch }}-{{ epoch }}
+            - build-v3-{{ .Branch }}-
+            - build-v3-maint/1.3.x-
+            - build-v3-
           paths:
             - /tmp/docker
       - run:
@@ -225,7 +225,7 @@ jobs:
             docker exec -it registry /bin/registry garbage-collect --delete-untagged \
                 /etc/docker/registry/config.yml
       - save_cache:
-          key: build-v2-{{ .Branch }}-{{ epoch }}
+          key: build-v3-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/docker
       - run:
@@ -371,10 +371,10 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - build-v2-{{ .Branch }}-{{ epoch }}
-            - build-v2-{{ .Branch }}-
-            - build-v2-maint/1.3.x-
-            - build-v2-
+            - build-v3-{{ .Branch }}-{{ epoch }}
+            - build-v3-{{ .Branch }}-
+            - build-v3-maint/1.3.x-
+            - build-v3-
           paths:
             - /tmp/docker
       - run:
