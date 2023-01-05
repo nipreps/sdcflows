@@ -47,12 +47,12 @@ jobs:
       - restore_cache:
           keys:
             - env-v2-{{ .Branch }}-
-            - env-v2-master-
+            - env-v2-maint/1.3.x-
             - env-v2-
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
-            - data-v2-master-
+            - data-v2-maint/1.3.x-
             - data-v2-
 
       - run:
@@ -155,7 +155,7 @@ jobs:
           keys:
             - build-v2-{{ .Branch }}-{{ epoch }}
             - build-v2-{{ .Branch }}-
-            - build-v2-master-
+            - build-v2-maint/1.3.x-
             - build-v2-
           paths:
             - /tmp/docker
@@ -246,12 +246,12 @@ jobs:
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
-            - data-v2-master-
+            - data-v2-maint/1.3.x-
             - data-v2-
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
-            - workdir-v2-master-
+            - workdir-v2-maint/1.3.x-
             - workdir-v2-
       - run:
           name: Refreshing cached intermediate results
@@ -344,7 +344,7 @@ jobs:
           keys:
             - docs-v2-{{ .Branch }}-{{ .Revision }}
             - docs-v2-{{ .Branch }}-
-            - docs-v2-master
+            - docs-v2-maint/1.3.x
             - docs-v2-
           paths:
             - ./docs/_build
@@ -373,7 +373,7 @@ jobs:
           keys:
             - build-v2-{{ .Branch }}-{{ epoch }}
             - build-v2-{{ .Branch }}-
-            - build-v2-master-
+            - build-v2-maint/1.3.x-
             - build-v2-
           paths:
             - /tmp/docker
