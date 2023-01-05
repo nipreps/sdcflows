@@ -69,9 +69,9 @@ jobs:
       - run:
           name: Setup DataLad & TemplateFlow
           command: |
-            python -m pip install --no-cache-dir -U pip
-            python -m pip install --no-cache-dir -U datalad
-            python -m pip install --no-cache-dir -U templateflow
+            pip install --no-cache-dir -U pip
+            pip install --no-cache-dir -U datalad
+            pip install --no-cache-dir -U templateflow
             python -c "from templateflow import api as tfapi; \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
@@ -80,8 +80,6 @@ jobs:
           key: env-v2-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/cache/git-annex-standalone.tar.gz
-            - /usr/local/bin
-            - /usr/local/lib/python3.9/site-packages
             - /usr/bin/git-annex
             - /usr/bin/git-annex-shell
             - /usr/lib/git-annex.linux
