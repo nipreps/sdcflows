@@ -149,6 +149,8 @@ jobs:
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     steps:
+      - checkout:
+          path: /tmp/src/sdcflows
       - restore_cache:
           keys:
             - build-v2-{{ .Branch }}-{{ epoch }}
@@ -176,14 +178,14 @@ jobs:
                 docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
-                echo "Pulling from Docker Hub"
+                LATEST=$( git describe --abbrev=0 )
+                echo "Pulling nipreps/sdcflows:$LATEST from Docker Hub"
                 docker pull ubuntu:xenial-20191010
                 docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
-                docker pull nipreps/sdcflows:latest
+                docker pull nipreps/sdcflows:$LATEST
+                docker tag nipreps/sdcflows:$LATEST nipreps/sdcflows:latest
             fi
-      - checkout:
-          path: /tmp/src/sdcflows
       - run:
           name: Build Docker image
           no_output_timeout: 60m
