@@ -114,7 +114,8 @@ jobs:
                    --exclude='freesurfer/subjects/sample-*.mgz' \
                    --exclude='freesurfer/subjects/V1_average' \
                    --exclude='freesurfer/trctrain'
-              echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
+              pushd /tmp/freesurfer
+              echo "${FS_LICENSE_CONTENT}" | base64 -d | sh
             else
               echo "FreeSurfer was cached."
               circleci step halt
@@ -365,8 +366,8 @@ jobs:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
+            if [[ -n "$DOCKER_PAT" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PAT
               docker push nipreps/sdcflows:latest
               docker tag nipreps/sdcflows nipreps/sdcflows:$CIRCLE_TAG
               docker push nipreps/sdcflows:$CIRCLE_TAG
@@ -425,6 +426,9 @@ workflows:
   build_deploy:
     jobs:
       - cache_test_data:
+          context:
+            - nipreps-common
+            - fs-license
           filters:
             branches:
               ignore:
@@ -443,6 +447,8 @@ workflows:
               only: /.*/
 
       - test_package:
+          context:
+            - nipreps-common
           filters:
             branches:
               ignore:
@@ -452,6 +458,8 @@ workflows:
               only: /.*/
 
       - deploy_pypi:
+          context:
+            - nipreps-common
           requires:
             - build_docs
             - test_package
@@ -463,6 +471,8 @@ workflows:
               only: /.*/
 
       - deploy_docker:
+          context:
+            - nipreps-common
           requires:
             - deploy_pypi
           filters:
