@@ -6,6 +6,7 @@ Information on specific functions, classes, and methods.
 .. toctree::
    :glob:
 
+   api/sdcflows.cli
    api/sdcflows.interfaces
    api/sdcflows.viz
    api/sdcflows.workflows
