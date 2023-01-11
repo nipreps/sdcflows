@@ -16,7 +16,6 @@
     "smoothing_sigmas": [ [ 8.0 ], [ 2.0 ] ],
     "transform_parameters": [ [ 1.0 ], [ 0.5 ] ],
     "transforms": [ "Rigid", "Rigid" ],
-    "use_estimate_learning_rate_once": [ true, true ],
     "use_histogram_matching": [ true, true ],
     "winsorize_lower_quantile": 0.005,
     "winsorize_upper_quantile": 0.998
