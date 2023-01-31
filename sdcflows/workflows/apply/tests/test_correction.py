@@ -60,7 +60,10 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     workflow = pe.Workflow(name="test_unwarp_wf")
     # fmt: off
     workflow.connect([
-        (epi_ref_wf, unwarp_wf, [("outputnode.fmap_ref", "inputnode.distorted")]),
+        (epi_ref_wf, unwarp_wf, [
+            ("outputnode.fmap_ref", "inputnode.distorted"),
+            ("outputnode.fmap_ref", "inputnode.distorted_ref"),
+        ]),
         (epi_ref_wf, reg_wf, [
             ("outputnode.fmap_ref", "inputnode.target_ref"),
             ("outputnode.fmap_mask", "inputnode.target_mask"),
