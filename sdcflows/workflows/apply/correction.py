@@ -51,6 +51,8 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     ------
     distorted
         the target EPI image.
+    distorted_ref
+        the distorted reference EPI image to which each volume has been motion corrected
     metadata
         dictionary of metadata corresponding to the target EPI image
     fmap_coeff
@@ -72,6 +74,16 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         the target EPI reference image, after applying unwarping.
     corrected_mask
         a fast mask calculated from the corrected EPI reference.
+    fieldmap_ref
+        the actual B\ :sub:`0` inhomogeneity map (also called *fieldmap*)
+        interpolated from the B-Spline coefficients into the reference EPI's
+        grid, given in Hz units.
+        No motion is taken into account.
+    fieldwarp_ref
+        the displacements field interpolated from the B-Spline coefficients
+        and scaled by the appropriate parameters (readout time of the EPI
+        target and voxel size along PE).
+        No motion is taken into account.
 
     """
     from niworkflows.interfaces.images import RobustAverage
@@ -84,7 +96,7 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["distorted", "metadata", "fmap_coeff", "hmc_xforms"]
+            fields=["distorted", "distorted_ref", "metadata", "fmap_coeff", "hmc_xforms"]
         ),
         name="inputnode",
     )
@@ -96,6 +108,8 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
                 "corrected",
                 "corrected_ref",
                 "corrected_mask",
+                "fieldwarp_ref",
+                "fieldmap_ref",
             ]
         ),
         name="outputnode",
@@ -121,6 +135,8 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         name="resample",
     )
 
+    resample_ref = pe.Node(ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref")
+
     merge = pe.Node(MergeSeries(), name="merge")
     average = pe.Node(RobustAverage(mc_method=None), name="average")
 
@@ -135,12 +151,18 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
                                ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
+        (inputnode, resample_ref, [("distorted_ref", "in_data"),
+                                   ("fmap_coeff", "in_coeff")]),
+        (rotime, resample_ref, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
         (resample, merge, [("out_corrected", "in_files")]),
         (merge, average, [("out_file", "in_file")]),
         (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
         (merge, outputnode, [("out_file", "corrected")]),
         (resample, outputnode, [("out_field", "fieldmap"),
                                 ("out_warp", "fieldwarp")]),
+        (resample_ref, outputnode, [("out_field", "fieldmap_ref"),
+                                    ("out_warp", "fieldwarp_ref")]),
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
