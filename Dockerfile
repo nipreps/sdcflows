@@ -22,8 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Use Ubuntu 20.04 LTS
-FROM ubuntu:focal-20210416
+FROM python:slim AS src
+RUN pip install build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git
+COPY . /src/sdcflows
+RUN python -m build /src/sdcflows
+
+# Use Ubuntu 22.04 LTS
+FROM ubuntu:jammy-20221130
 
 # Prepare environment
 RUN apt-get update && \
@@ -35,8 +42,10 @@ RUN apt-get update && \
                     ca-certificates \
                     curl \
                     git \
+                    gnupg \
                     libtool \
                     lsb-release \
+                    netbase \
                     pkg-config \
                     unzip \
                     xvfb && \
@@ -138,10 +147,12 @@ RUN echo "Downloading Convert3D ..." \
 ENV C3DPATH="/opt/convert3d-1.0.0" \
     PATH="/opt/convert3d-1.0.0/bin:$PATH"
 
+# Configure PPA for libpng12
+RUN GNUPGHOME=/tmp gpg --keyserver hkps://keyserver.ubuntu.com --no-default-keyring --keyring /usr/share/keyrings/linuxuprising.gpg --recv 0xEA8CACC073C3DB2A \
+    && echo "deb [signed-by=/usr/share/keyrings/linuxuprising.gpg] https://ppa.launchpadcontent.net/linuxuprising/libpng12/ubuntu jammy main" > /etc/apt/sources.list.d/linuxuprising.list
 # AFNI latest (neurodocker build)
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
-           apt-utils \
            ed \
            gsl-bin \
            libglib2.0-0 \
@@ -149,6 +160,7 @@ RUN apt-get update -qq \
            libglw1-mesa \
            libgomp1 \
            libjpeg62 \
+           libpng12-0 \
            libxm4 \
            netpbm \
            tcsh \
@@ -156,15 +168,12 @@ RUN apt-get update -qq \
            xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL --retry 5 -o /tmp/multiarch.deb http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1.2_amd64.deb \
+    && curl -sSL --retry 5 -o /tmp/multiarch.deb http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1.5_amd64.deb \
     && dpkg -i /tmp/multiarch.deb \
     && rm /tmp/multiarch.deb \
     && curl -sSL --retry 5 -o /tmp/libxp6.deb http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
     && dpkg -i /tmp/libxp6.deb \
     && rm /tmp/libxp6.deb \
-    && curl -sSL --retry 5 -o /tmp/libpng.deb http://snapshot.debian.org/archive/debian-security/20160113T213056Z/pool/updates/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb \
-    && dpkg -i /tmp/libpng.deb \
-    && rm /tmp/libpng.deb \
     && apt-get install -f \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -242,13 +251,8 @@ COPY .docker/files/nipype.cfg $HOME/.nipype/nipype.cfg
 WORKDIR /src/sdcflows
 
 # Installing SDCFlows
-COPY . /src/sdcflows
-# Force static versioning within container
-ARG VERSION
-ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}
-RUN sed -i "s/fallback_version\s=\s\"0\.0\"/fallback_version = \"${VERSION}\"/g" pyproject.toml && \
-    pip install --no-cache-dir .[all] && \
-    rm -rf $HOME/.cache/pip
+COPY --from=src /src/sdcflows/dist/*.whl .
+RUN /opt/conda/bin/python -m pip install --no-cache-dir $( ls *.whl )[all]
 
 RUN find $HOME -type d -exec chmod go=u {} + && \
     find $HOME -type f -exec chmod go=u {} +
