@@ -1,3 +1,15 @@
+2.3.0 (March 01, 2023)
+======================
+New feature release in the 2.3.x series.
+
+This release supports fMRIPrep 23.0.x and Nibabies 23.0.x.
+
+* ENH: Calculate fieldwarps in reference space in unwarp_wf (#334)
+* TEST: Squeeze image before passing to SimpleBeforeAfter (#337)
+* MAINT: Rotate CircleCI secrets and setup up org-level context (#329)
+* CI: Run unit tests on Python 3.10 (#326)
+* CI: Switch to miniconda setup, install fsl tools through conda (#322)
+
 2.2.2 (January 04, 2023)
 ========================
 Patch release in the 2.2.x series.
