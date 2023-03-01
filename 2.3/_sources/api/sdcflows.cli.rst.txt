@@ -1,0 +1,15 @@
+sdcflows.cli package
+====================
+
+.. automodule:: sdcflows.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   sdcflows.cli.find_estimators
