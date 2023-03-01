@@ -23,6 +23,7 @@
 """Test unwarp."""
 from pathlib import Path
 from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
 
 from ...fit.fieldmap import init_magnitude_wf
 from ..correction import init_unwarp_wf
@@ -83,6 +84,8 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
 
+        squeeze = pe.Node(niu.Function(function=_squeeze), name="squeeze")
+
         report = pe.Node(
             SimpleBeforeAfter(
                 before_label="Distorted",
@@ -122,8 +125,9 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         # fmt: off
         workflow.connect([
             (epi_ref_wf, report, [("outputnode.fmap_ref", "before")]),
-            (unwarp_wf, report, [("outputnode.corrected", "after"),
-                                 ("outputnode.corrected_mask", "wm_seg")]),
+            (unwarp_wf, squeeze, [("outputnode.corrected", "in_file")]),
+            (unwarp_wf, report, [("outputnode.corrected_mask", "wm_seg")]),
+            (squeeze, report, [("out", "after")]),
             (report, ds_report, [("out_report", "in_file")]),
             (epi_ref_wf, rep, [("outputnode.fmap_ref", "reference"),
                                ("outputnode.fmap_mask", "mask")]),
@@ -135,3 +139,18 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     if workdir:
         workflow.base_dir = str(workdir)
     workflow.run(plugin="Linear")
+
+
+def _squeeze(in_file):
+    from pathlib import Path
+    import nibabel as nb
+
+    img = nb.load(in_file)
+    squeezed = nb.squeeze_image(img)
+
+    if squeezed.shape == img.shape:
+        return in_file
+
+    out_fname = Path.cwd() / Path(in_file).name
+    squeezed.to_filename(out_fname)
+    return str(out_fname)

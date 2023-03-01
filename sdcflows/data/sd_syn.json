@@ -16,7 +16,6 @@
     "smoothing_sigmas": [ [ 2, 0 ], [ 0 ] ],
     "transform_parameters": [ [ 0.8, 6.0, 3.0 ], [ 0.8, 2.0, 1.0 ] ],
     "transforms": [ "SyN", "SyN" ],
-    "use_estimate_learning_rate_once": [ true, true ],
     "use_histogram_matching": [ true, true ],
     "winsorize_lower_quantile": 0.001,
     "winsorize_upper_quantile": 0.998,

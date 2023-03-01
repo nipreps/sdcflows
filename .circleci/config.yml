@@ -1,6 +1,48 @@
+# reusable anchors
+_machine_defaults: &machine_defaults
+  environment:
+    TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+    SCRATCH: "/scratch"
+  machine:
+    image: ubuntu-2204:current
+    docker_layer_caching: true
+  working_directory: /tmp/src/sdcflows
+  resource_class: large
+
+_python_defaults: &python_defaults
+  docker:
+    - image: cimg/python:3.10.9
+  working_directory: /tmp/src/sdcflows
+
+_docker_auth: &docker_auth
+  name: Docker authentication
+  command: |
+    if [[ -n $DOCKER_PAT ]]; then
+      echo "$DOCKER_PAT" | docker login -u $DOCKER_USER --password-stdin
+    fi
+
+_setup_docker_registry: &setup_docker_registry
+  name: Set up Docker registry
+  command: |
+    if [[ -f /tmp/images/registry.tar.gz ]]; then
+      echo "Loading saved registry image"
+      docker load < /tmp/images/registry.tar.gz
+    else
+      echo "Pulling registry image from DockerHub"
+      docker pull registry:2
+    fi
+    docker run -d -p 5000:5000 --restart=always --name=registry \
+        -v /tmp/docker:/var/lib/registry registry:2
+
+_pull_from_registry: &pull_from_registry
+  name: Pull and tag image from local registry
+  command: |
+    docker pull localhost:5000/sdcflows
+    docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
+
 version: 2.1
 orbs:
-  docker: circleci/docker@1.6.0
+  docker: circleci/docker@2.1.4
 
 jobs:
   cache_test_data:
@@ -89,8 +131,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .BuildNum }}
-            - freesurfer-v1-
+            - freesurfer-v0-{{ .BuildNum }}
+            - freesurfer-v0-
       - run:
           name: Pull FreeSurfer down
           command: |
@@ -114,23 +156,19 @@ jobs:
                    --exclude='freesurfer/subjects/sample-*.mgz' \
                    --exclude='freesurfer/subjects/V1_average' \
                    --exclude='freesurfer/trctrain'
-              pushd /tmp/freesurfer
-              echo "${FS_LICENSE_CONTENT}" | base64 -d | sh
+              echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
             else
               echo "FreeSurfer was cached."
               circleci step halt
             fi
       - save_cache:
-          key: freesurfer-v1-{{ .BuildNum }}
+          key: freesurfer-v0-{{ .BuildNum }}
           paths:
             - /tmp/freesurfer
 
   build_n_pytest:
-    machine:
-      image: ubuntu-2004:202107-02
+    <<: *machine_defaults
     working_directory: /tmp/tests
-    environment:
-      TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     steps:
       - restore_cache:
           keys:
@@ -140,13 +178,11 @@ jobs:
             - build-v2-
           paths:
             - /tmp/docker
+      - docker/install-docker-credential-helper
+      - run: *docker_auth
+      - run: *setup_docker_registry
       - run:
-          name: Set-up a Docker registry
-          command: |
-            docker run -d -p 5000:5000 --restart=always --name=registry \
-                -v /tmp/docker:/var/lib/registry registry:2
-      - run:
-          name: Pull images
+          name: Pull Ubuntu/jammy image
           command: |
             set +e
             docker pull localhost:5000/ubuntu
@@ -154,31 +190,41 @@ jobs:
             set -e
             if [[ "$success" = "0" ]]; then
                 echo "Pulling from local registry"
-                docker tag localhost:5000/ubuntu ubuntu:xenial-20201030
-                docker pull localhost:5000/sdcflows
+                docker tag localhost:5000/ubuntu ubuntu:jammy
+            else
+                echo "Pulling from Docker Hub"
+                docker pull ubuntu:jammy
+                docker tag ubuntu:jammy localhost:5000/ubuntu
+                docker push localhost:5000/ubuntu
+            fi
+      - run:
+          name: Pull SDCFlows Docker image
+          command: |
+            set +e
+            docker pull localhost:5000/sdcflows
+            success=$?
+            set -e
+            if [[ "$success" = "0" ]]; then
+                echo "Pulling from local registry"
                 docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
                 echo "Pulling from Docker Hub"
-                docker pull ubuntu:xenial-20201030
-                docker tag ubuntu:xenial-20201030 localhost:5000/ubuntu
-                docker push localhost:5000/ubuntu
                 docker pull nipreps/sdcflows:latest
             fi
       - checkout:
           path: /tmp/src/sdcflows
       - run:
           name: Build Docker image
+          working_directory: /tmp/src/sdcflows
           no_output_timeout: 60m
           command: |
-            cd /tmp/src/sdcflows
-            export PY3=$(pyenv versions | grep '3\.' |
-                         sed -e 's/.* 3\./3./' -e 's/ .*//')
+            export PY3=$( pyenv versions | awk '/^\* 3/ { print $2 }' )
             pyenv local $PY3
-            python3 -m pip install "setuptools ~= 45.0" "setuptools_scm >= 6.2" "pip>=10.0.1"
+            python3 -m pip install --upgrade setuptools setuptools_scm pip
 
             # Get version, update files.
-            THISVERSION=$( python3 setup.py --version )
+            THISVERSION=$( python3 -m setuptools_scm )
             if [[ ${THISVERSION:0:1} == "0" ]] ; then
               echo "WARNING: latest git tag could not be found"
               echo "Please, make sure you fetch all tags from upstream with"
@@ -195,6 +241,20 @@ jobs:
                 | tee build-output.log
             echo "${CIRCLE_TAG:-$THISVERSION}" >> /tmp/.local-version.txt
       - run:
+          name: Check Docker image
+          working_directory: /tmp/src/sdcflows
+          command: |
+            export PY3=$( pyenv versions | awk '/^\* 3/ { print $2 }' )
+            pyenv local $PY3
+            # Get version, update files.
+            THISVERSION=$( python3 -m setuptools_scm )
+            BUILT_VERSION=$( docker run --rm --entrypoint=python nipreps/sdcflows:latest -c "import sdcflows; print(sdcflows.__version__)" )
+            BUILT_VERSION=${BUILT_VERSION%$'\r'}
+            echo "VERSION: \"$THISVERSION\""
+            echo "BUILT: \"$BUILT_VERSION\""
+            set -e
+            test "$BUILT_VERSION" = "$THISVERSION"
+      - run:
           name: Docker push to local registry
           no_output_timeout: 40m
           command: |
@@ -209,21 +269,11 @@ jobs:
           key: build-v2-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/docker
-      - run:
-          name: Check version packaged in Docker image
-          command: |
-              docker run --rm -v /tmp:/tmp -v /tmp/src/sdcflows/.circleci/version.py:/usr/share/version.py \
-                     --entrypoint=python nipreps/sdcflows /usr/share/version.py
-              THISVERSION=$( head -n1 /tmp/.local-version.txt )
-              INSTALLED_VERSION=$( head -n1 /tmp/.docker-version.txt )
-              echo "VERSION: \"${THISVERSION}\""
-              echo "INSTALLED: \"${INSTALLED_VERSION}\""
-              test "${INSTALLED_VERSION}" = "${THISVERSION}"
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .BuildNum }}
-            - freesurfer-v1-
+            - freesurfer-v0-{{ .BuildNum }}
+            - freesurfer-v0-
       - restore_cache:
           keys:
             - data-v6-{{ .Branch }}-{{ .Revision }}
@@ -239,8 +289,8 @@ jobs:
             - workdir-v2-
       - run:
           name: Refreshing cached intermediate results
+          working_directory: /tmp/src/sdcflows
           command: |
-            cd /tmp/src/sdcflows
             COMMIT_MSG=$( git log --format=oneline -n 1 $CIRCLE_SHA1 )
             set +e
             do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[refresh[ _]?cache\]' )"
@@ -295,12 +345,11 @@ jobs:
 
       - run:
           name: Submit unit test coverage
+          working_directory: /tmp/src/sdcflows
           command: |
-            export PY3=$(pyenv versions | grep '3\.' |
-                         sed -e 's/.* 3\./3./' -e 's/ .*//')
+            export PY3=$( pyenv versions | awk '/^\* 3/ { print $2 }' )
             pyenv local $PY3
             python3 -m pip install codecov
-            cd /tmp/src/sdcflows
             python3 -m codecov --file /tmp/tests/unittests.xml \
                 --flags unittests -e CIRCLE_JOB
 
@@ -326,8 +375,7 @@ jobs:
           command: |
             python -m venv /tmp/venv
             source /tmp/venv/bin/activate
-            python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
-                          setuptools_scm_git_archive pip twine docutils
+            python -m pip install -U pip setuptools_scm
             pip install --no-cache-dir -r docs/requirements.txt
       - run:
           name: Build only this commit
@@ -340,9 +388,7 @@ jobs:
           path: ~/docs/
 
   deploy_docker:
-    machine:
-      image: ubuntu-2004:202107-02
-    working_directory: /tmp/src/
+    <<: *machine_defaults
     steps:
       - restore_cache:
           keys:
@@ -352,31 +398,22 @@ jobs:
             - build-v2-
           paths:
             - /tmp/docker
-      - run:
-          name: Set-up a Docker registry
-          command: |
-            docker run -d -p 5000:5000 --restart=always --name=registry \
-                -v /tmp/docker:/var/lib/registry registry:2
-      - run:
-          name: Pull images from local registry
-          command: |
-            docker pull localhost:5000/sdcflows
-            docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
+      - docker/install-docker-credential-helper
+      - run: *docker_auth
+      - run: *setup_docker_registry
+      - run: *pull_from_registry
       - run:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
             if [[ -n "$DOCKER_PAT" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PAT
               docker push nipreps/sdcflows:latest
               docker tag nipreps/sdcflows nipreps/sdcflows:$CIRCLE_TAG
               docker push nipreps/sdcflows:$CIRCLE_TAG
             fi
 
   test_package:
-    docker:
-      - image: cimg/python:3.8.5
-    working_directory: /tmp/src/sdcflows
+    <<: *python_defaults
     steps:
       - checkout
       - run:
@@ -384,8 +421,7 @@ jobs:
           command: |
             python -m venv /tmp/buildenv
             source /tmp/buildenv/bin/activate
-            python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
-                          setuptools_scm_git_archive pip twine docutils
+            python -m pip install -U build twine setuptools_scm
             python -m build -s -w
             python -m twine check dist/*
       - store_artifacts:
@@ -399,24 +435,20 @@ jobs:
           command: |
             source /tmp/buildenv/bin/activate
             THISVERSION=$( python -m setuptools_scm )
-            python -m pip install dist/*.tar.gz
+            python -m pip install dist/*.whl
             mkdir empty
             cd empty
             INSTALLED=$( python -c 'import sdcflows; print(sdcflows.__version__)' )
             test "${CIRCLE_TAG:-$THISVERSION}" == "$INSTALLED"
 
   deploy_pypi:
-    docker:
-      - image: cimg/python:3.8.5
-    working_directory: /tmp/src/sdcflows
+    <<: *python_defaults
     steps:
       - attach_workspace:
           at: /tmp/src/sdcflows
       - run:
           name: Upload to Pypi
           command: |
-            python -m venv /tmp/upload
-            source /tmp/upload/bin/activate
             python -m pip install twine
             python -m twine check dist/*
             python -m twine upload dist/* --non-interactive
