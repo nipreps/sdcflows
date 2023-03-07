@@ -518,7 +518,6 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     from pathlib import Path
     import numpy as np
     import nibabel as nb
-    from sdcflows.utils.tools import ensure_positive_cosines
 
     if out_file is None:
         out_file = Path("coefficients.nii.gz").absolute()
@@ -528,28 +527,45 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
 
     # Load coefficients
     coeffnii = nb.load(in_coeff)
+
+    # Orientations are [[axis, flip], [axis, flip], [axis, flip]] arrays,
+    # where RAS is "no change"
+    # e.g. PSL == [[1, -1], [2, 1], [0, -1]]
+    ref_ornt = nb.io_orientation(refnii.affine)
+    coeff_ornt = nb.io_orientation(coeffnii.affine)
+    # Get ref_ornt relative to coeff_ornt instead of relative to RAS
+    ref2coeff = nb.orientations.ornt_transform(ref_ornt, coeff_ornt).astype(int)
+
+    # Find the axis index and flip of PE direction in reference space
+    ref_pe_axis = "ijk".find(pe_dir[0])
+    if ref_pe_axis == -1:
+        ref_pe_axis = "xyz".index(pe_dir[0])
+
+    # Transform to coefficient space
+    coeff_pe_axis = "ijk"[ref2coeff[ref_pe_axis, 0]]
+
     # Coefficients - flip LR and overwrite coeffnii variable
     # Internal data orientation of FSL is LAS, so coefficients will be LR flipped,
     # and because the affine does not encode orientation (factors instead), this flip
     # always is implicit.
     # If the PE direction is x/i, the flip in the axis direction causes that the
     # fieldmap estimation must also be inverted in direction (multiply by -1.0)
-    reverse_pe = -1.0 if "i" in pe_dir.replace("x", "i") else 1.0
-    lr_axis = "".join(nb.aff2axcodes(coeffnii.affine)).index("R")
+    reverse_pe = -1.0 if coeff_pe_axis == "i" else 1.0
+    lr_axis = np.nonzero(coeff_ornt[:, 0] == 0)[0]
     coeffnii = coeffnii.__class__(
         reverse_pe * np.flip(np.asanyarray(coeffnii.dataobj), axis=lr_axis),
         coeffnii.affine,
         coeffnii.header,
     )
     # Ensure reference has positive director cosines
-    refnii, ref_axcodes = ensure_positive_cosines(refnii)
+    refnii_ras = nb.as_closest_canonical(refnii)
 
     # Get matrix of B-Spline control knots
     coeff_shape = np.array(coeffnii.shape[:3])
     # Get factors (w.r.t. reference's pixel sizes) to calculate separation btw control points
     factors = np.array(coeffnii.header.get_zooms()[:3])
     # Shape checking
-    ref_shape = np.array(refnii.shape[:3])
+    ref_shape = np.array(refnii_ras.shape[:3])
     exp_shape = ref_shape // factors + 3 * (factors > 1)
     if not np.all(coeff_shape == exp_shape):
         raise ValueError(
@@ -559,8 +575,8 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
 
     # Contextualize the control points in space with a proper NIfTI affine
     newaff = np.eye(4)
-    newaff[:3, :3] = refnii.affine[:3, :3] * factors
-    c_ref = nb.affines.apply_affine(refnii.affine, 0.5 * (ref_shape - 1))
+    newaff[:3, :3] = refnii_ras.affine[:3, :3] * factors
+    c_ref = nb.affines.apply_affine(refnii_ras.affine, 0.5 * (ref_shape - 1))
     c_coeff = nb.affines.apply_affine(newaff, 0.5 * (coeff_shape - 1))
     newaff[:3, 3] = c_ref - c_coeff
 

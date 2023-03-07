@@ -70,8 +70,8 @@ def ensure_positive_cosines(img):
     """
     import nibabel as nb
 
-    img_axcodes = nb.aff2axcodes(img.affine)
-    in_ornt = nb.orientations.axcodes2ornt(img_axcodes)
+    in_ornt = nb.io_orientation(img.affine)
+    img_axcodes = nb.orientations.ornt2axcodes(in_ornt)
     out_ornt = in_ornt.copy()
     out_ornt[:, 1] = 1
     ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
