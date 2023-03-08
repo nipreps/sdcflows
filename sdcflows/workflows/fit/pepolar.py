@@ -92,7 +92,7 @@ def init_topup_wf(
 
     from ...utils.misc import front as _front
     from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import UniformGrid, PadSlices
+    from ...interfaces.utils import UniformGrid, PadSlices, ReorientImageAndMetadata
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
@@ -145,7 +145,7 @@ def init_topup_wf(
     setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
     # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
-    to_las = pe.Node(ReorientImage(target_orientation="LAS"), name="to_las")
+    to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
     topup = pe.Node(
         TOPUP(
             config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
@@ -172,16 +172,19 @@ def init_topup_wf(
         (regrid, sort_pe_blips, [("out_data", "in_data")]),
         (readout_time, sort_pe_blips, [("readout_time", "readout_times"),
                                        ("pe_dir_fsl", "pe_dirs_fsl")]),
-        (sort_pe_blips, topup, [("readout_times", "readout_times"),
-                                ("pe_dirs_fsl", "encoding_direction")]),
-        (sort_pe_blips, fix_coeff, [(("pe_dirs", _front), "pe_dir")]),
+        (sort_pe_blips, topup, [("readout_times", "readout_times")]),
         (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
         (sort_pe_blips, concat_blips, [("out_data", "in_files")]),
         (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
         (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
         (setwise_avg, to_las, [("out_hmc_volumes", "in_file")]),
-        (to_las, topup, [("out_file", "in_file")]),
+        (sort_pe_blips, to_las, [("pe_dirs_fsl", "pe_dir")]),
+        (to_las, topup, [
+            ("out_file", "in_file"),
+            ("pe_dir", "encoding_direction"),
+        ]),
         (topup, fix_coeff, [("out_fieldcoef", "in_coeff")]),
+        (to_las, fix_coeff, [(("pe_dir", _front), "pe_dir")]),
         (topup, outputnode, [("out_jacs", "jacobians"),
                              ("out_mats", "xfms")]),
         (ref_average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
