@@ -622,18 +622,24 @@ def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=No
     # Load distorted image
     distorted_img = nb.load(in_file)
 
-    if unwarp.fit(distorted_img):
+    # Reorient to RAS to ensure consistency with coefficients
+    # The b-spline weight matrix is sensitive to orientation
+    ornt = nb.io_orientation(distorted_img.affine)
+    distorted_ras = distorted_img.as_reoriented(ornt)
+    pe_ras = reorient_pedir(pe, ornt)
+
+    if unwarp.fit(distorted_ras):
         unwarp.mapped.to_filename(retval[2])
     else:
         retval[2] = None
 
     # Unwarp
-    unwarped_img = unwarp.apply(distorted_img, ro_time=ro, pe_dir=pe)
+    unwarped_img = unwarp.apply(distorted_ras, ro_time=ro, pe_dir=pe_ras)
 
     # Write out to disk
     unwarped_img.to_filename(retval[0])
 
     # Store the corresponding spatial transformation
-    unwarp.to_displacements(ro_time=ro, pe_dir=pe).to_filename(retval[1])
+    unwarp.to_displacements(ro_time=ro, pe_dir=pe_ras).to_filename(retval[1])
 
     return retval
