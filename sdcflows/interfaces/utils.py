@@ -38,6 +38,8 @@ from nipype.interfaces.ants.segmentation import (
 )
 from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 
+from sdcflows.utils.tools import reorient_pedir
+
 OBLIQUE_THRESHOLD_DEG = 0.5
 
 
@@ -202,17 +204,7 @@ class ReorientImageAndMetadata(SimpleInterface):
 
         reoriented = img.as_reoriented(img2target)
 
-        pe_dirs = []
-        for pe_dir in self.inputs.pe_dir:
-            directions = "ijk" if pe_dir[0] in "ijk" else "xyz"
-
-            orig_axis = directions.index(pe_dir[0])
-            orig_flip = pe_dir[1:] == "-"
-
-            reoriented_axis = directions[img2target[orig_axis, 0]]
-            reoriented_flip = orig_flip ^ (img2target[orig_axis, 1] == -1)
-
-            pe_dirs.append(reoriented_axis + ("-" if reoriented_flip else ""))
+        pe_dirs = [reorient_pedir(pe_dir, img2target) for pe_dir in self.inputs.pe_dir]
 
         self._results = dict(
             out_file=fname_presuffix(

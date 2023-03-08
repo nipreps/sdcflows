@@ -41,6 +41,7 @@ from nipype.interfaces.base import (
 )
 
 from sdcflows.transform import grid_bspline_weights
+from sdcflows.utils.tools import reorient_pedir
 
 
 LOW_MEM_BLOCK_SIZE = 1000
@@ -522,27 +523,14 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     if out_file is None:
         out_file = Path("coefficients.nii.gz").absolute()
 
-    # Load reference image
     refnii = nb.load(fmap_ref)
-
-    # Load coefficients
     coeffnii = nb.load(in_coeff)
 
-    # Orientations are [[axis, flip], [axis, flip], [axis, flip]] arrays,
-    # where RAS is "no change"
-    # e.g. PSL == [[1, -1], [2, 1], [0, -1]]
+    # Coefficients are in LAS space, and we will convert to RAS.
+    # Reorient the reference image and phase-encoding direction to RAS
     ref_ornt = nb.io_orientation(refnii.affine)
-    coeff_ornt = nb.io_orientation(coeffnii.affine)
-    # Get ref_ornt relative to coeff_ornt instead of relative to RAS
-    ref2coeff = nb.orientations.ornt_transform(ref_ornt, coeff_ornt).astype(int)
-
-    # Find the axis index and flip of PE direction in reference space
-    ref_pe_axis = "ijk".find(pe_dir[0])
-    if ref_pe_axis == -1:
-        ref_pe_axis = "xyz".index(pe_dir[0])
-
-    # Transform to coefficient space
-    coeff_pe_axis = "ijk"[ref2coeff[ref_pe_axis, 0]]
+    refnii_ras = refnii.as_reoriented(ref_ornt)
+    coeff_pe_dir = reorient_pedir(pe_dir, ref_ornt)
 
     # Coefficients - flip LR and overwrite coeffnii variable
     # Internal data orientation of FSL is LAS, so coefficients will be LR flipped,
@@ -550,15 +538,12 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     # always is implicit.
     # If the PE direction is x/i, the flip in the axis direction causes that the
     # fieldmap estimation must also be inverted in direction (multiply by -1.0)
-    reverse_pe = -1.0 if coeff_pe_axis == "i" else 1.0
-    lr_axis = np.nonzero(coeff_ornt[:, 0] == 0)[0]
+    reverse_pe = -1.0 if coeff_pe_dir[0] == "i" else 1.0
     coeffnii = coeffnii.__class__(
-        reverse_pe * np.flip(np.asanyarray(coeffnii.dataobj), axis=lr_axis),
+        reverse_pe * np.flip(np.asanyarray(coeffnii.dataobj), axis=0),
         coeffnii.affine,
         coeffnii.header,
     )
-    # Ensure reference has positive director cosines
-    refnii_ras = nb.as_closest_canonical(refnii)
 
     # Get matrix of B-Spline control knots
     coeff_shape = np.array(coeffnii.shape[:3])
