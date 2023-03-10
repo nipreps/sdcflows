@@ -186,7 +186,7 @@ class ReorientImageAndMetadata(SimpleInterface):
         target = self.inputs.target_orientation.upper()
         if not all(code in "RASLPI" for code in target):
             raise ValueError(
-                "Invalid orientation code {self.inputs.target_orientation}"
+                f"Invalid orientation code {self.inputs.target_orientation}"
             )
 
         img = nb.load(self.inputs.in_file)
@@ -201,6 +201,7 @@ class ReorientImageAndMetadata(SimpleInterface):
                 out_file=self.inputs.in_file,
                 pe_dir=self.inputs.pe_dir,
             )
+            return runtime
 
         reoriented = img.as_reoriented(img2target)
 
