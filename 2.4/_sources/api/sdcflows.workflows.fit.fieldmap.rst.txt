@@ -1,0 +1,7 @@
+sdcflows.workflows.fit.fieldmap module
+======================================
+
+.. automodule:: sdcflows.workflows.fit.fieldmap
+   :members:
+   :undoc-members:
+   :show-inheritance:
