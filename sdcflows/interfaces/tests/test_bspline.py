@@ -72,7 +72,6 @@ def test_bsplines(tmp_path, testnum):
     # Approximate the interpolated target
     test2 = BSplineApprox(
         in_data=test1.outputs.out_field,
-        in_mask=str(tmp_path / "target.nii.gz"),
         bs_spacing=[(4, 6, 8)],
         zooms_min=0,
         recenter=False,

@@ -70,8 +70,8 @@ def ensure_positive_cosines(img):
     """
     import nibabel as nb
 
-    img_axcodes = nb.aff2axcodes(img.affine)
-    in_ornt = nb.orientations.axcodes2ornt(img_axcodes)
+    in_ornt = nb.io_orientation(img.affine)
+    img_axcodes = nb.orientations.ornt2axcodes(in_ornt)
     out_ornt = in_ornt.copy()
     out_ornt[:, 1] = 1
     ornt_xfm = nb.orientations.ornt_transform(in_ornt, out_ornt)
@@ -154,3 +154,70 @@ def brain_masker(in_file, out_file=None, padding=5):
     img.__class__(data, img.affine, img.header).to_filename(out_brain)
 
     return str(out_brain), str(out_probseg), str(out_mask)
+
+
+def reorient_pedir(pe_dir, source_ornt, target_ornt=None):
+    """Return updated PhaseEncodingDirection to account for an image data array rotation
+
+    Orientations form a natural group with identity, product and inverse.
+    This function thus has the following properties (here ``e`` is the identity,
+    ``*`` the product and ``-`` the inverse; ``a`` and ``b`` are arbitrary orientations):
+
+        reorient(pe_dir, e, e) == pe_dir
+        reorient(pe_dir, a, e) == reorient(pe_dir, a)
+        reorient(pe_dir, e, b) == reorient(pe_dir, -b)
+        reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)
+
+    Therefore, this function accepts one or two orientations, and precomputed transforms
+    from a to b can be passed as the "source" orientation.
+
+    Passing only a source orientation will rotate into RAS:
+
+    >>> from nibabel.orientations import axcodes2ornt
+    >>> reorient_pedir("j", axcodes2ornt("RAS"))
+    'j'
+    >>> reorient_pedir("i", axcodes2ornt("PSL"))
+    'j-'
+
+    Passing only a target_ornt will rotate from RAS:
+
+    >>> reorient_pedir("j", source_ornt=None, target_ornt=axcodes2ornt("RAS"))
+    'j'
+    >>> reorient_pedir("i", source_ornt=None, target_ornt=axcodes2ornt("PSL"))
+    'k-'
+
+    Passing both will rotate from source to target.
+
+    >>> reorient_pedir("j", axcodes2ornt("LPS"), axcodes2ornt("AIR"))
+    'i-'
+
+    Passing a transform orientation as source_ornt will perform the transform,
+    and passing it as ``target_ornt`` will invert the transform:
+
+    >>> from nibabel.orientations import ornt_transform
+    >>> xfm = ornt_transform(axcodes2ornt("LPS"), axcodes2ornt("AIR"))
+    >>> reorient_pedir("j", xfm)
+    'i-'
+    >>> reorient_pedir("j", source_ornt=None, target_ornt=xfm)
+    'k-'
+    """
+    from nibabel.orientations import ornt_transform
+
+    if source_ornt is None:
+        source_ornt = [[0, 1], [1, 1], [2, 1]]
+    if target_ornt is None:
+        target_ornt = [[0, 1], [1, 1], [2, 1]]
+
+    xfm = ornt_transform(source_ornt, target_ornt).astype(int)  # shape: (3, 2)
+
+    directions = "ijk" if pe_dir[0] in "ijk" else "xyz"
+
+    source_axis = directions.index(pe_dir[0])
+    source_flip = pe_dir[1:] == "-"
+
+    axis_xfm = xfm[source_axis, :]  # shape: (2,)
+
+    target_axis = directions[axis_xfm[0]]
+    target_flip = source_flip ^ (axis_xfm[1] == -1)
+
+    return f"{target_axis}-" if target_flip else target_axis

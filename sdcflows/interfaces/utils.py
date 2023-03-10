@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Utilities."""
+from itertools import product
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     TraitedSpec,
@@ -36,6 +37,8 @@ from nipype.interfaces.ants.segmentation import (
     DenoiseImageInputSpec as _DenoiseImageInputSpecBase,
 )
 from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
+
+from sdcflows.utils.tools import reorient_pedir
 
 OBLIQUE_THRESHOLD_DEG = 0.5
 
@@ -143,6 +146,75 @@ class UniformGrid(SimpleInterface):
             resampler.apply(nii).to_filename(retval[i])
 
         self._results["out_data"] = retval
+
+        return runtime
+
+
+class _ReorientImageAndMetadataInputSpec(TraitedSpec):
+    in_file = File(exists=True, mandatory=True, desc="Input 3- or 4D image")
+    target_orientation = traits.Str(
+        desc="Axis codes of coordinate system to reorient to"
+    )
+    pe_dir = InputMultiObject(
+        traits.Enum(
+            *["".join(p) for p in product("ijkxyz", ("", "-"))],
+            mandatory=True,
+            desc="Phase encoding direction",
+        )
+    )
+
+
+class _ReorientImageAndMetadataOutputSpec(TraitedSpec):
+    out_file = File(desc="Reoriented image")
+    pe_dir = OutputMultiObject(
+        traits.Enum(
+            *["".join(p) for p in product("ijkxyz", ("", "-"))],
+            desc="Phase encoding direction in reoriented image",
+        )
+    )
+
+
+class ReorientImageAndMetadata(SimpleInterface):
+    input_spec = _ReorientImageAndMetadataInputSpec
+    output_spec = _ReorientImageAndMetadataOutputSpec
+
+    def _run_interface(self, runtime):
+        import numpy as np
+        import nibabel as nb
+        from nipype.utils.filemanip import fname_presuffix
+
+        target = self.inputs.target_orientation.upper()
+        if not all(code in "RASLPI" for code in target):
+            raise ValueError(
+                f"Invalid orientation code {self.inputs.target_orientation}"
+            )
+
+        img = nb.load(self.inputs.in_file)
+        img2target = nb.orientations.ornt_transform(
+            nb.io_orientation(img.affine),
+            nb.orientations.axcodes2ornt(self.inputs.target_orientation),
+        ).astype(int)
+
+        # Identity transform
+        if np.array_equal(img2target, [[0, 1], [1, 1], [2, 1]]):
+            self._results = dict(
+                out_file=self.inputs.in_file,
+                pe_dir=self.inputs.pe_dir,
+            )
+            return runtime
+
+        reoriented = img.as_reoriented(img2target)
+
+        pe_dirs = [reorient_pedir(pe_dir, img2target) for pe_dir in self.inputs.pe_dir]
+
+        self._results = dict(
+            out_file=fname_presuffix(
+                self.inputs.in_file, suffix=target, newpath=runtime.cwd
+            ),
+            pe_dir=pe_dirs,
+        )
+
+        reoriented.to_filename(self._results["out_file"])
 
         return runtime
 
