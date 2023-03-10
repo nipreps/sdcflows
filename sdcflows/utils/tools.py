@@ -156,10 +156,21 @@ def brain_masker(in_file, out_file=None, padding=5):
     return str(out_brain), str(out_probseg), str(out_mask)
 
 
-def reorient_pedir(pe_dir, source_ornt=None, target_ornt=None):
+def reorient_pedir(pe_dir, source_ornt, target_ornt=None):
     """Return updated PhaseEncodingDirection to account for an image data array rotation
 
-    This function can accept one or two orientations.
+    Orientations form a natural group with identity, product and inverse.
+    This function thus has the following properties (here ``e`` is the identity,
+    ``*`` the product and ``-`` the inverse; ``a`` and ``b`` are arbitrary orientations):
+
+        reorient(pe_dir, e, e) == pe_dir
+        reorient(pe_dir, a, e) == reorient(pe_dir, a)
+        reorient(pe_dir, e, b) == reorient(pe_dir, -b)
+        reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)
+
+    Therefore, this function accepts one or two orientations, and precomputed transforms
+    from a to b can be passed as the "source" orientation.
+
     Passing only a source orientation will rotate into RAS:
 
     >>> from nibabel.orientations import axcodes2ornt
@@ -170,9 +181,9 @@ def reorient_pedir(pe_dir, source_ornt=None, target_ornt=None):
 
     Passing only a target_ornt will rotate from RAS:
 
-    >>> reorient_pedir("j", target_ornt=axcodes2ornt("RAS"))
+    >>> reorient_pedir("j", source_ornt=None, target_ornt=axcodes2ornt("RAS"))
     'j'
-    >>> reorient_pedir("i", target_ornt=axcodes2ornt("PSL"))
+    >>> reorient_pedir("i", source_ornt=None, target_ornt=axcodes2ornt("PSL"))
     'k-'
 
     Passing both will rotate from source to target.
@@ -187,7 +198,7 @@ def reorient_pedir(pe_dir, source_ornt=None, target_ornt=None):
     >>> xfm = ornt_transform(axcodes2ornt("LPS"), axcodes2ornt("AIR"))
     >>> reorient_pedir("j", xfm)
     'i-'
-    >>> reorient_pedir("j", target_ornt=xfm)
+    >>> reorient_pedir("j", source_ornt=None, target_ornt=xfm)
     'k-'
     """
     from nibabel.orientations import ornt_transform
