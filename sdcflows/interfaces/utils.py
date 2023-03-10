@@ -381,7 +381,7 @@ def _deoblique(in_file, in_affine=None, newpath=None):
     from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
-    if np.all(nb.affines.obliquity(nii.affine)) < OBLIQUE_THRESHOLD_DEG:
+    if np.all(nb.affines.obliquity(nii.affine) < OBLIQUE_THRESHOLD_DEG):
         return in_file
 
     if in_affine is None:
@@ -414,7 +414,7 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
     from nipype.utils.filemanip import fname_presuffix
 
     epinii = nb.load(in_epi)
-    if np.all(nb.affines.obliquity(epinii.affine)) < OBLIQUE_THRESHOLD_DEG:
+    if np.all(nb.affines.obliquity(epinii.affine) < OBLIQUE_THRESHOLD_DEG):
         return in_plumb, in_field, in_mask
 
     out_files = [
