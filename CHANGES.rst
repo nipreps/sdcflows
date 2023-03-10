@@ -1,3 +1,12 @@
+2.4.0 (March 10, 2023)
+======================
+New feature release in the 2.4.x series.
+
+This release supports fMRIPrep 23.0.x and Nibabies 23.1.x.
+
+* FIX: Reorient phase-encoding directions along with fieldmaps when preparing inputs to TOPUP (#339)
+* FIX: Correct overly-sensitive obliqueness check (#335)
+
 2.3.0 (March 01, 2023)
 ======================
 New feature release in the 2.3.x series.
