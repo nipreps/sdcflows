@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils.wrangler module" href="sdcflows.utils.wrangler.html" /><link rel="prev" title="sdcflows.utils.phasemanip module" href="sdcflows.utils.phasemanip.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.tools module - sdcflows 2.2.3.dev20+gb047077e documentation</title>
+        <title>sdcflows.utils.tools module - sdcflows 2.3.1.dev11+g36c3d79d documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.2.3.dev20+gb047077e documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.3.1.dev11+g36c3d79d documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.2.3.dev20 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.3.1.dev11 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.2.3.dev20 (dev)</span>
+  <span class="sidebar-brand-text">2.3.1.dev11 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -257,6 +257,52 @@
 <p>In other words, this interface will reorient the image polarities to be all
 <em>positive</em>, respecting the axes ordering.
 For instance, <em>LAS</em> -&gt; <em>RAS</em> or <em>ALS</em> -&gt; <em>ARS</em>.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="sdcflows.utils.tools.reorient_pedir">
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">reorient_pedir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_ornt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ornt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#reorient_pedir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.reorient_pedir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return updated PhaseEncodingDirection to account for an image data array rotation</p>
+<p>Orientations form a natural group with identity, product and inverse.
+This function thus has the following properties (here <code class="docutils literal notranslate"><span class="pre">e</span></code> is the identity,
+<code class="docutils literal notranslate"><span class="pre">*</span></code> the product and <code class="docutils literal notranslate"><span class="pre">-</span></code> the inverse; <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> are arbitrary orientations):</p>
+<blockquote>
+<div><p>reorient(pe_dir, e, e) == pe_dir
+reorient(pe_dir, a, e) == reorient(pe_dir, a)
+reorient(pe_dir, e, b) == reorient(pe_dir, -b)
+reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)</p>
+</div></blockquote>
+<p>Therefore, this function accepts one or two orientations, and precomputed transforms
+from a to b can be passed as the “source” orientation.</p>
+<p>Passing only a source orientation will rotate into RAS:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nibabel.orientations</span> <span class="kn">import</span> <span class="n">axcodes2ornt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"RAS"</span><span class="p">))</span>
+<span class="go">'j'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"PSL"</span><span class="p">))</span>
+<span class="go">'j-'</span>
+</pre></div>
+</div>
+<p>Passing only a target_ornt will rotate from RAS:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"RAS"</span><span class="p">))</span>
+<span class="go">'j'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"PSL"</span><span class="p">))</span>
+<span class="go">'k-'</span>
+</pre></div>
+</div>
+<p>Passing both will rotate from source to target.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"LPS"</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"AIR"</span><span class="p">))</span>
+<span class="go">'i-'</span>
+</pre></div>
+</div>
+<p>Passing a transform orientation as source_ornt will perform the transform,
+and passing it as <code class="docutils literal notranslate"><span class="pre">target_ornt</span></code> will invert the transform:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nibabel.orientations</span> <span class="kn">import</span> <span class="n">ornt_transform</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xfm</span> <span class="o">=</span> <span class="n">ornt_transform</span><span class="p">(</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"LPS"</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"AIR"</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">xfm</span><span class="p">)</span>
+<span class="go">'i-'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">xfm</span><span class="p">)</span>
+<span class="go">'k-'</span>
+</pre></div>
+</div>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.resample_to_zooms">

@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.2.3.dev20+gb047077e documentation</title>
+        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.3.1.dev11+g36c3d79d documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.2.3.dev20+gb047077e documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.3.1.dev11+g36c3d79d documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.2.3.dev20 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.3.1.dev11 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.2.3.dev20 (dev)</span>
+  <span class="sidebar-brand-text">2.3.1.dev11 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -336,7 +336,7 @@
 
     <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
     <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span>
+    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span><span class="p">,</span> <span class="n">ReorientImageAndMetadata</span>
     <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="n">TOPUPCoeffReorient</span>
     <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
@@ -389,7 +389,7 @@
     <span class="n">setwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"setwise_avg"</span><span class="p">)</span>
     <span class="c1"># The core of the implementation</span>
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
-    <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s2">"LAS"</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"to_las"</span><span class="p">)</span>
+    <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s2">"LAS"</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"to_las"</span><span class="p">)</span>
     <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">TOPUP</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">_pkg_fname</span><span class="p">(</span><span class="s2">"sdcflows"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data/flirtsch/b02b0</span><span class="si">{</span><span class="s1">'_quick'</span> <span class="o">*</span> <span class="n">sloppy</span><span class="si">}</span><span class="s2">.cnf"</span><span class="p">)</span>
@@ -416,16 +416,19 @@
         <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_data"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_time"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">),</span>
                                        <span class="p">(</span><span class="s2">"pe_dir_fsl"</span><span class="p">,</span> <span class="s2">"pe_dirs_fsl"</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_times"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">"pe_dirs_fsl"</span><span class="p">,</span> <span class="s2">"encoding_direction"</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"pe_dirs"</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_times"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">concat_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_data"</span><span class="p">,</span> <span class="s2">"in_files"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">pad_blip_slices</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">pad_blip_slices</span><span class="p">,</span> <span class="n">setwise_avg</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_hmc_volumes"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_dirs_fsl"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"pe_dir"</span><span class="p">,</span> <span class="s2">"encoding_direction"</span><span class="p">),</span>
+        <span class="p">]),</span>
         <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_fieldcoef"</span><span class="p">,</span> <span class="s2">"in_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"pe_dir"</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_jacs"</span><span class="p">,</span> <span class="s2">"jacobians"</span><span class="p">),</span>
                              <span class="p">(</span><span class="s2">"out_mats"</span><span class="p">,</span> <span class="s2">"xfms"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">ref_average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"inputnode.in_file"</span><span class="p">)]),</span>
