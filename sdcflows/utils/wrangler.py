@@ -27,7 +27,7 @@ from itertools import product
 from contextlib import suppress
 from pathlib import Path
 from typing import Optional, Union, List
-from bids.layout import BIDSLayout
+from bids.layout import BIDSLayout, BIDSFile
 from bids.utils import listify
 
 from .. import fieldmaps as fm
@@ -317,12 +317,20 @@ def find_estimators(
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
-            e = fm.FieldmapEstimation([
-                fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                for fmap in bare_ids + listed_ids
-            ])
-            _log_debug_estimation(logger, e, layout.root)
-            estimators.append(e)
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                        for fmap in bare_ids + listed_ids
+                    ]
+                )
+            except ValueError as err:
+                _log_debug_estimator_fail(
+                    logger, b0_id, listed_ids, layout.root, str(err)
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
 
     # Step 2. If no B0FieldIdentifiers were found, try several heuristics
     if not estimators:
@@ -483,4 +491,21 @@ def _log_debug_estimation(
         estimation.method.name,
         len(estimation.sources),
         "\n- ".join([str(s.path.relative_to(bids_root)) for s in estimation.sources]),
+    )
+
+
+def _log_debug_estimator_fail(
+    logger: logging.Logger,
+    b0_id: str,
+    files: List[BIDSFile],
+    bids_root: str,
+    message: str
+) -> None:
+    """A helper function to log failures to build an estimator when running with verbosity."""
+    logger.debug(
+        "Failed to construct %s estimation from %d sources:\n- %s\nError: %s",
+        b0_id,
+        len(files),
+        "\n- ".join([str(s.path.relative_to(bids_root)) for s in files]),
+        message,
     )
