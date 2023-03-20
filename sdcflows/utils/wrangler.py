@@ -324,9 +324,9 @@ def find_estimators(
                         for fmap in bare_ids + listed_ids
                     ]
                 )
-            except ValueError as err:
+            except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
-                    logger, b0_id, listed_ids, layout.root, str(err)
+                    logger, b0_id, bare_ids + listed_ids, layout.root, str(err)
                 )
             else:
                 _log_debug_estimation(logger, e, layout.root)
@@ -363,14 +363,21 @@ def find_estimators(
             )
             dirs = layout.get_directions(**entities)
             if len(dirs) > 1:
-                e = fm.FieldmapEstimation(
-                    [
-                        fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                        for fmap in layout.get(**{**entities, **{'direction': dirs}})
-                    ]
-                )
-                _log_debug_estimation(logger, e, layout.root)
-                estimators.append(e)
+                fieldmaps = layout.get(**{**entities, **{"direction": dirs}})
+                try:
+                    e = fm.FieldmapEstimation(
+                        [
+                            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                            for fmap in fieldmaps
+                        ]
+                    )
+                except ValueError as err:
+                    _log_debug_estimator_fail(
+                        logger, "unnamed PEPOLAR", fieldmaps, layout.root, str(err)
+                    )
+                else:
+                    _log_debug_estimation(logger, e, layout.root)
+                    estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
@@ -408,13 +415,22 @@ def find_estimators(
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
                 estimator_md["IntendedFor"] = [intent]
-                with suppress(ValueError, TypeError, fm.MetadataError):
+                try:
                     e = fm.FieldmapEstimation(
                         [
                             fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
                             fm.FieldmapFile(target.path, metadata=target.get_metadata())
                         ]
                     )
+                except (ValueError, TypeError) as err:
+                    _log_debug_estimator_fail(
+                        logger,
+                        "unnamed PEPOLAR",
+                        [epi_fmap, target],
+                        layout.root,
+                        str(err)
+                    )
+                else:
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
 
@@ -490,7 +506,9 @@ def _log_debug_estimation(
         "Found %s estimation from %d sources:\n- %s",
         estimation.method.name,
         len(estimation.sources),
-        "\n- ".join([str(s.path.relative_to(bids_root)) for s in estimation.sources]),
+        "\n- ".join(
+            [str(Path(s.path).relative_to(bids_root)) for s in estimation.sources]
+        ),
     )
 
 
@@ -506,6 +524,6 @@ def _log_debug_estimator_fail(
         "Failed to construct %s estimation from %d sources:\n- %s\nError: %s",
         b0_id,
         len(files),
-        "\n- ".join([str(s.path.relative_to(bids_root)) for s in files]),
+        "\n- ".join([str(Path(s.path).relative_to(bids_root)) for s in files]),
         message,
     )
