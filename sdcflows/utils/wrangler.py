@@ -129,7 +129,9 @@ def find_estimators(
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PHASEDIFF: 3>,
                         bids_id='auto_00006'),
      FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='auto_00007')]
+                        bids_id='auto_00007'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='auto_00008')]
 
     Finally, *SDCFlows*' "*dataset A*" and "*dataset B*" contain BIDS structures
     with zero-byte NIfTI files and some corresponding metadata:
@@ -399,23 +401,43 @@ def find_estimators(
             logger.debug("Found single PE fieldmap %s", epi_fmap.relpath)
             epi_base_md = epi_fmap.get_metadata()
 
-            # There are two possible interpretations of an IntendedFor list:
-            # 1) The fieldmap and each intended target are combined separately
-            # 2) The fieldmap and all intended targets are combined at once
-            #
-            # (1) has been the historical interpretation of NiPreps,
-            # so construct a separate estimator for each target.
+            # Find existing IntendedFor targets and warn if missing
+            all_targets = []
             for intent in listify(epi_base_md["IntendedFor"]):
                 target = layout.get_file(str(subject_root / intent))
                 if target is None:
                     logger.debug("Single PE target %s not found", intent)
                     continue
+                all_targets.append(target)
 
+            # If sbrefs are targets, then the goal is generally to estimate with epi+sbref
+            # and correct bold/dwi
+            sbrefs = [
+                target for target in all_targets if target.entities["suffix"] == "sbref"
+            ]
+            if sbrefs:
+                targets = sbrefs
+                intent_map = []
+                for sbref in sbrefs:
+                    ents = sbref.entities.copy()
+                    ents["suffix"] = ["bold", "dwi"]
+                    intent_map.append(
+                        [
+                            target
+                            for target in layout.get(**ents)
+                            if target in all_targets
+                        ]
+                    )
+            else:
+                targets = all_targets
+                intent_map = [[target] for target in all_targets]
+
+            for target, intent in zip(targets, intent_map):
                 logger.debug("Found single PE target %s", target.relpath)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
-                estimator_md["IntendedFor"] = [intent]
+                estimator_md["IntendedFor"] = intent
                 try:
                     e = fm.FieldmapEstimation(
                         [
