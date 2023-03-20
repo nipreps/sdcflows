@@ -363,21 +363,22 @@ def find_estimators(
             )
             dirs = layout.get_directions(**entities)
             if len(dirs) > 1:
-                fieldmaps = layout.get(**{**entities, **{"direction": dirs}})
-                try:
-                    e = fm.FieldmapEstimation(
-                        [
-                            fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-                            for fmap in fieldmaps
-                        ]
-                    )
-                except ValueError as err:
-                    _log_debug_estimator_fail(
-                        logger, "unnamed PEPOLAR", fieldmaps, layout.root, str(err)
-                    )
-                else:
-                    _log_debug_estimation(logger, e, layout.root)
-                    estimators.append(e)
+                by_intent = {}
+                for fmap in layout.get(**{**entities, **{'direction': dirs}}):
+                    fmapfile = fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                    by_intent.setdefault(
+                        tuple(fmapfile.metadata.get('IntendedFor', ())), []
+                    ).append(fmapfile)
+                for collection in by_intent.values():
+                    try:
+                        e = fm.FieldmapEstimation(collection)
+                    except ValueError as err:
+                        _log_debug_estimator_fail(
+                            logger, "unnamed PEPOLAR", collection, layout.root, str(err)
+                        )
+                    else:
+                        _log_debug_estimation(logger, e, layout.root)
+                        estimators.append(e)
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
