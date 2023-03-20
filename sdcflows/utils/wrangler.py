@@ -374,7 +374,7 @@ def find_estimators(
                 for collection in by_intent.values():
                     try:
                         e = fm.FieldmapEstimation(collection)
-                    except ValueError as err:
+                    except (ValueError, TypeError) as err:
                         _log_debug_estimator_fail(
                             logger, "unnamed PEPOLAR", collection, layout.root, str(err)
                         )
