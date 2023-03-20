@@ -407,7 +407,7 @@ def find_estimators(
             for intent in listify(epi_base_md["IntendedFor"]):
                 target = layout.get_file(str(subject_root / intent))
                 if target is None:
-                    logger.debug("Single PE target %s not found", target)
+                    logger.debug("Single PE target %s not found", intent)
                     continue
 
                 logger.debug("Found single PE target %s", target.relpath)
