@@ -1,6 +1,6 @@
 2.4.1 (March 20, 2023)
 ======================
-New feature release in the 2.4.x series.
+Bug-fix release in the 2.4.x series.
 
 This release provides improved tolerance (and debugging output)
 for incomplete fieldmap inputs.
