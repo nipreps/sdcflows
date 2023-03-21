@@ -1,3 +1,13 @@
+2.4.1 (March 20, 2023)
+======================
+New feature release in the 2.4.x series.
+
+This release provides improved tolerance (and debugging output)
+for incomplete fieldmap inputs.
+
+* FIX: Log incomplete fieldmaps, rather than erroring (#341)
+* ENH: Consistently log failures to form fieldmaps (#343)
+
 2.4.0 (March 10, 2023)
 ======================
 New feature release in the 2.4.x series.
