@@ -131,14 +131,13 @@ jobs:
                    --exclude='freesurfer/subjects/sample-*.mgz' \
                    --exclude='freesurfer/subjects/V1_average' \
                    --exclude='freesurfer/trctrain'
-              pushd /tmp/freesurfer
-              echo "${FS_LICENSE_CONTENT}" | base64 -d | sh
+              echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
             else
               echo "FreeSurfer was cached."
               circleci step halt
             fi
       - save_cache:
-          key: freesurfer-v1-{{ .BuildNum }}
+          key: freesurfer-v0-{{ .BuildNum }}
           paths:
             - /tmp/freesurfer
 
