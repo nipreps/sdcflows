@@ -124,6 +124,7 @@ COPY . /src/sdcflows
 # Force static versioning within container
 ARG VERSION
 RUN sed -i "s/fallback_version\s=\s\"0\.0\"/fallback_version = \"${VERSION}\"/g" pyproject.toml && \
+    pip install --upgrade pip && \
     pip install --no-cache-dir .[all] && \
     rm -rf $HOME/.cache/pip
 

@@ -32,11 +32,14 @@ docs_deploy: &docs
         name: Deploy docs to gh-pages branch
         command: gh-pages --dotfiles --message "doc(update) [skip ci]" --dist docs/_build/html
 
-version: 2
+version: 2.1
+orbs:
+  docker: circleci/docker@1.6.0
+
 jobs:
   cache_test_data:
     docker:
-      - image: python:3.7.4
+      - image: cimg/python:3.9.16
     working_directory: /tmp/data
     environment:
       - TEMPLATEFLOW_HOME: /tmp/templateflow
@@ -44,21 +47,21 @@ jobs:
       - restore_cache:
           keys:
             - env-v2-{{ .Branch }}-
-            - env-v2-master-
+            - env-v2-maint/1.3.x-
             - env-v2-
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
-            - data-v2-master-
+            - data-v2-maint/1.3.x-
             - data-v2-
 
       - run:
           name: Setup git-annex
           command: |
             if [[ ! -d /usr/lib/git-annex.linux ]]; then
-              wget -O- http://neuro.debian.net/lists/trusty.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-              apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-              apt update && apt-get install -y --no-install-recommends git-annex-standalone
+              wget -O- http://neuro.debian.net/lists/jammy.us-nh.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+              sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+              sudo apt-get update && sudo apt-get install -y --no-install-recommends git-annex-standalone
             fi
             git config --global user.name 'NiPreps Bot'
             git config --global user.email 'nipreps@gmail.com'
@@ -66,9 +69,9 @@ jobs:
       - run:
           name: Setup DataLad & TemplateFlow
           command: |
-            python -m pip install --no-cache-dir -U pip
-            python -m pip install --no-cache-dir -U datalad
-            python -m pip install --no-cache-dir -U templateflow
+            pip install --no-cache-dir -U pip
+            pip install --no-cache-dir -U datalad
+            pip install --no-cache-dir -U templateflow
             python -c "from templateflow import api as tfapi; \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='brain', suffix='mask'); \
                        tfapi.get('MNI152NLin2009cAsym', resolution=2, desc='fMRIPrep', suffix='boldref');"
@@ -77,8 +80,6 @@ jobs:
           key: env-v2-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/cache/git-annex-standalone.tar.gz
-            - /usr/local/bin
-            - /usr/local/lib/python3.7/site-packages
             - /usr/bin/git-annex
             - /usr/bin/git-annex-shell
             - /usr/lib/git-annex.linux
@@ -130,7 +131,8 @@ jobs:
                    --exclude='freesurfer/subjects/sample-*.mgz' \
                    --exclude='freesurfer/subjects/V1_average' \
                    --exclude='freesurfer/trctrain'
-              echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > /tmp/freesurfer/license.txt
+              pushd /tmp/freesurfer
+              echo "${FS_LICENSE_CONTENT}" | base64 -d | sh
             else
               echo "FreeSurfer was cached."
               circleci step halt
@@ -142,17 +144,18 @@ jobs:
 
   build_n_pytest:
     machine:
-      image: circleci/classic:201808-01
-    working_directory: /tmp/tests
+      image: ubuntu-2204:2022.10.2
+    working_directory: /tmp/src/sdcflows
     environment:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     steps:
+      - checkout:
+          path: /tmp/src/sdcflows
       - restore_cache:
           keys:
-            - build-v2-{{ .Branch }}-{{ epoch }}
-            - build-v2-{{ .Branch }}-
-            - build-v2-master-
-            - build-v2-
+            - build-v3-{{ .Branch }}-{{ epoch }}
+            - build-v3-{{ .Branch }}-
+            - build-v3-maint/1.3.x-
           paths:
             - /tmp/docker
       - run:
@@ -174,24 +177,23 @@ jobs:
                 docker tag localhost:5000/sdcflows nipreps/sdcflows:latest
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
-                echo "Pulling from Docker Hub"
+                LATEST=$( git describe --abbrev=0 )
+                echo "Pulling nipreps/sdcflows:$LATEST from Docker Hub"
                 docker pull ubuntu:xenial-20191010
                 docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
-                docker pull nipreps/sdcflows:latest
+                docker pull nipreps/sdcflows:$LATEST
+                docker tag nipreps/sdcflows:$LATEST nipreps/sdcflows:latest
             fi
-      - checkout:
-          path: /tmp/src/sdcflows
       - run:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
-            cd /tmp/src/sdcflows
-            pyenv local 3.7.0
-            python3 -m pip install "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4" "pip>=10.0.1"
+            python3 -m pip install --upgrade pip
+            python3 -m pip install --upgrade "setuptools_scm[toml]"
 
             # Get version, update files.
-            THISVERSION=$( python3 setup.py --version )
+            THISVERSION=$( python3 -m setuptools_scm )
             if [[ ${THISVERSION:0:1} == "0" ]] ; then
               echo "WARNING: latest git tag could not be found"
               echo "Please, make sure you fetch all tags from upstream with"
@@ -221,7 +223,7 @@ jobs:
             docker exec -it registry /bin/registry garbage-collect --delete-untagged \
                 /etc/docker/registry/config.yml
       - save_cache:
-          key: build-v2-{{ .Branch }}-{{ epoch }}
+          key: build-v3-{{ .Branch }}-{{ epoch }}
           paths:
             - /tmp/docker
       - run:
@@ -242,17 +244,16 @@ jobs:
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
-            - data-v2-master-
+            - data-v2-maint/1.3.x-
             - data-v2-
       - restore_cache:
           keys:
             - workdir-v2-{{ .Branch }}-
-            - workdir-v2-master-
+            - workdir-v2-maint/1.3.x-
             - workdir-v2-
       - run:
           name: Refreshing cached intermediate results
           command: |
-            cd /tmp/src/sdcflows
             COMMIT_MSG=$( git log --format=oneline -n 1 $CIRCLE_SHA1 )
             set +e
             do_refresh="$( echo "${COMMIT_MSG}" | grep -i -E '\[refresh[ _]?cache\]' )"
@@ -298,7 +299,7 @@ jobs:
 
   build_docs:
     docker:
-      - image: python:3.7.4
+      - image: cimg/python:3.9.16
     working_directory: /tmp/gh-pages
     environment:
       - FSLOUTPUTTYPE: NIFTI
@@ -310,18 +311,18 @@ jobs:
           command: mkdir -p $SUBJECTS_DIR
       - run:
           name: Install Graphviz
-          command: apt update && apt -y install graphviz
+          command: sudo apt-get update && sudo apt-get -y install --no-install-recommends graphviz
       - run:
           name: Install deps
           command: |
             pip install --no-cache-dir -r docs/requirements.txt
-            pip install --no-cache-dir "setuptools ~= 42.0" "setuptools_scm[toml] >= 3.4"
-            python setup.py --version
+            pip install --no-cache-dir "setuptools_scm[toml]"
+            python -m setuptools_scm
       - run:
           name: Build only this commit
-          command: make -C docs SPHINXOPTS="-W" BUILDDIR="_build/no_version_html" html
+          command: make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=no_version_html html
       - store_artifacts:
-          path: ./docs/_build/no_version_html/html
+          path: /home/circleci/docs/no_version_html
           destination: noversion
       - run:
           name: Stop or generate versioned docs?
@@ -340,13 +341,15 @@ jobs:
           keys:
             - docs-v2-{{ .Branch }}-{{ .Revision }}
             - docs-v2-{{ .Branch }}-
-            - docs-v2-master
+            - docs-v2-maint/1.3.x
             - docs-v2-
           paths:
             - ./docs/_build
       - run:
           name: Generate Versioned Docs
-          command: make -f ./docs/Makefile versioned CURBRANCH=${CIRCLE_TAG:-$CIRCLE_BRANCH}
+          command: |
+            BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
+            make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
       - save_cache:
           key: docs-v2-{{ .Branch }}-{{ .Revision }}
           paths:
@@ -360,15 +363,15 @@ jobs:
 
   deploy_docker:
     machine:
-      image: circleci/classic:201711-01
+      image: ubuntu-2204:2022.10.2
     working_directory: /tmp/src/
     steps:
       - restore_cache:
           keys:
-            - build-v2-{{ .Branch }}-{{ epoch }}
-            - build-v2-{{ .Branch }}-
-            - build-v2-master-
-            - build-v2-
+            - build-v3-{{ .Branch }}-{{ epoch }}
+            - build-v3-{{ .Branch }}-
+            - build-v3-maint/1.3.x-
+            - build-v3-
           paths:
             - /tmp/docker
       - run:
@@ -385,16 +388,15 @@ jobs:
           name: Deploy to Docker Hub
           no_output_timeout: 40m
           command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker push nipreps/sdcflows:latest
+            if [[ -n "$DOCKER_PAT" ]]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PAT
               docker tag nipreps/sdcflows nipreps/sdcflows:$CIRCLE_TAG
               docker push nipreps/sdcflows:$CIRCLE_TAG
             fi
 
   test_package:
     docker:
-      - image: circleci/python:3.7.4
+      - image: cimg/python:3.9.16
     working_directory: /tmp/src/sdcflows
     steps:
       - checkout
@@ -403,9 +405,8 @@ jobs:
           command: |
             python3 -m venv /tmp/buildenv
             source /tmp/buildenv/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" wheel "setuptools_scm[toml] >= 3.4" \
-                "pip>=10.0.1" twine docutils
-            python setup.py sdist bdist_wheel
+            python3 -m pip install --upgrade pip build twine
+            python3 -m build
             twine check dist/sdcflows*
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
@@ -417,8 +418,8 @@ jobs:
           command: |
             python3 -m venv /tmp/install_sdist
             source /tmp/install_sdist/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
-            THISVERSION=$( python3 setup.py --version )
+            python3 -m pip install --upgrade pip setuptools_scm
+            THISVERSION=$( python3 -m setuptools_scm )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             python3 -m pip install dist/sdcflows*.tar.gz
             INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
@@ -430,8 +431,8 @@ jobs:
           command: |
             python3 -m venv /tmp/install_wheel
             source /tmp/install_wheel/bin/activate
-            python3 -m pip install "setuptools ~= 42.0" "pip>=10.0.1"
-            THISVERSION=$( python3 setup.py --version )
+            python3 -m pip install --upgrade pip setuptools_scm
+            THISVERSION=$( python3 -m setuptools_scm )
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             python3 -m pip install dist/sdcflows*.whl
             INSTALLED_VERSION=$(python3 -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
@@ -441,7 +442,7 @@ jobs:
 
   deploy_pypi:
     docker:
-      - image: circleci/python:3.7.4
+      - image: cimg/python:3.9.16
     working_directory: /tmp/src/sdcflows
     steps:
       - attach_workspace:
@@ -458,14 +459,14 @@ jobs:
   deploy_docs_tag:
     <<: *docs
 
-  deploy_docs_master:
-    <<: *docs
-
 workflows:
   version: 2
   build_deploy:
     jobs:
       - cache_test_data:
+          context:
+            - nipreps-common
+            - fs-license
           filters:
             branches:
               ignore:
@@ -484,6 +485,8 @@ workflows:
               only: /.*/
 
       - test_package:
+          context:
+            - nipreps-common
           filters:
             branches:
               ignore:
@@ -493,6 +496,8 @@ workflows:
               only: /.*/
 
       - deploy_pypi:
+          context:
+            - nipreps-common
           requires:
             - build_docs
             - test_package
@@ -504,6 +509,8 @@ workflows:
               only: /.*/
 
       - deploy_docker:
+          context:
+            - nipreps-common
           requires:
             - deploy_pypi
           filters:
@@ -519,17 +526,6 @@ workflows:
                 - /tests?\/.*/
             tags:
               only: /.*/
-
-      - deploy_docs_master:
-          requires:
-            - build_n_pytest
-            - test_package
-            - build_docs
-          filters:
-            branches:
-              only: /master/
-            tags:
-              ignore: /.*/
 
       - deploy_docs_tag:
           requires:
