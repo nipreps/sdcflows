@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.4.2.dev1+gacfb2d65 documentation</title>
+        <title>sdcflows.utils.wrangler - sdcflows 2.4.2.dev5+g891e81ba documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.4.2.dev1+gacfb2d65 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.4.2.dev5+g891e81ba documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.4.2.dev1 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.4.2.dev5 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.4.2.dev1 (dev)</span>
+  <span class="sidebar-brand-text">2.4.2.dev5 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -373,7 +373,9 @@
 <span class="sd">    [FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
 <span class="sd">                        bids_id='auto_00006'),</span>
 <span class="sd">     FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="sd">                        bids_id='auto_00007')]</span>
+<span class="sd">                        bids_id='auto_00007'),</span>
+<span class="sd">     FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
+<span class="sd">                        bids_id='auto_00008')]</span>
 
 <span class="sd">    Finally, *SDCFlows*' "*dataset A*" and "*dataset B*" contain BIDS structures</span>
 <span class="sd">    with zero-byte NIfTI files and some corresponding metadata:</span>
@@ -607,21 +609,22 @@
             <span class="p">)</span>
             <span class="n">dirs</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_directions</span><span class="p">(</span><span class="o">**</span><span class="n">entities</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">fieldmaps</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">"direction"</span><span class="p">:</span> <span class="n">dirs</span><span class="p">}})</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
-                        <span class="p">[</span>
-                            <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
-                            <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">fieldmaps</span>
-                        <span class="p">]</span>
-                    <span class="p">)</span>
-                <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                    <span class="n">_log_debug_estimator_fail</span><span class="p">(</span>
-                        <span class="n">logger</span><span class="p">,</span> <span class="s2">"unnamed PEPOLAR"</span><span class="p">,</span> <span class="n">fieldmaps</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
-                    <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">by_intent</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">'direction'</span><span class="p">:</span> <span class="n">dirs</span><span class="p">}}):</span>
+                    <span class="n">fmapfile</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
+                    <span class="n">by_intent</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                        <span class="nb">tuple</span><span class="p">(</span><span class="n">fmapfile</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'IntendedFor'</span><span class="p">,</span> <span class="p">())),</span> <span class="p">[]</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmapfile</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">collection</span> <span class="ow">in</span> <span class="n">by_intent</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span><span class="n">collection</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                        <span class="n">_log_debug_estimator_fail</span><span class="p">(</span>
+                            <span class="n">logger</span><span class="p">,</span> <span class="s2">"unnamed PEPOLAR"</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+                        <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># At this point, only single-PE _epi files WITH ``IntendedFor`` can</span>
         <span class="c1"># be automatically processed.</span>
@@ -642,23 +645,43 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Found single PE fieldmap </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
             <span class="n">epi_base_md</span> <span class="o">=</span> <span class="n">epi_fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
 
-            <span class="c1"># There are two possible interpretations of an IntendedFor list:</span>
-            <span class="c1"># 1) The fieldmap and each intended target are combined separately</span>
-            <span class="c1"># 2) The fieldmap and all intended targets are combined at once</span>
-            <span class="c1">#</span>
-            <span class="c1"># (1) has been the historical interpretation of NiPreps,</span>
-            <span class="c1"># so construct a separate estimator for each target.</span>
+            <span class="c1"># Find existing IntendedFor targets and warn if missing</span>
+            <span class="n">all_targets</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">epi_base_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]):</span>
                 <span class="n">target</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">subject_root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Single PE target </span><span class="si">%s</span><span class="s2"> not found"</span><span class="p">,</span> <span class="n">intent</span><span class="p">)</span>
                     <span class="k">continue</span>
+                <span class="n">all_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
+            <span class="c1"># If sbrefs are targets, then the goal is generally to estimate with epi+sbref</span>
+            <span class="c1"># and correct bold/dwi</span>
+            <span class="n">sbrefs</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">target</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">all_targets</span> <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="s2">"suffix"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sbref"</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">sbrefs</span><span class="p">:</span>
+                <span class="n">targets</span> <span class="o">=</span> <span class="n">sbrefs</span>
+                <span class="n">intent_map</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">sbref</span> <span class="ow">in</span> <span class="n">sbrefs</span><span class="p">:</span>
+                    <span class="n">ents</span> <span class="o">=</span> <span class="n">sbref</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">ents</span><span class="p">[</span><span class="s2">"suffix"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"bold"</span><span class="p">,</span> <span class="s2">"dwi"</span><span class="p">]</span>
+                    <span class="n">intent_map</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">target</span>
+                            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">ents</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">all_targets</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">targets</span> <span class="o">=</span> <span class="n">all_targets</span>
+                <span class="n">intent_map</span> <span class="o">=</span> <span class="p">[[</span><span class="n">target</span><span class="p">]</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">all_targets</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">intent</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">intent_map</span><span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Found single PE target </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
                 <span class="c1"># The new estimator is IntendedFor the individual targets,</span>
                 <span class="c1"># even if the EPI file is IntendedFor multiple</span>
                 <span class="n">estimator_md</span> <span class="o">=</span> <span class="n">epi_base_md</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">estimator_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">intent</span><span class="p">]</span>
+                <span class="n">estimator_md</span><span class="p">[</span><span class="s2">"IntendedFor"</span><span class="p">]</span> <span class="o">=</span> <span class="n">intent</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
                         <span class="p">[</span>
