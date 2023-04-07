@@ -38,31 +38,38 @@ from bids.utils import listify
 from niworkflows.interfaces.nibabel import reorient_image
 
 
-def _clear_mapped(instance, attribute, value):
-    instance.mapped = None
-    return value
-
-
 @attr.s(slots=True)
 class B0FieldTransform:
     """Represents and applies the transform to correct for susceptibility distortions."""
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    xfm = attr.ib(default=None, on_setattr=_clear_mapped)
-    """A rigid-body transform to prepend to the unwarping displacements field."""
     mapped = attr.ib(default=None, init=False)
     """
     A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
     target image we want to correct).
     """
 
-    def fit(self, spatialimage):
+    def fit(self, target_reference, affine=None, approx=True):
         r"""
         Generate the interpolation matrix (and the VSM with it).
 
         Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
         for all voxels in the target-image's extent.
+
+        Parameters
+        ----------
+        target_reference : `spatialimage`
+            The image object containing a reference grid (same as that of the data
+            to be resampled). If a 4D dataset is provided, then the fourth dimension
+            will be dropped.
+        affine : :obj:`nitransforms.linear.Affine`
+            Transform that maps coordinates on the target_reference on to the
+            fieldmap reference.
+        approx : :obj:`bool`
+            If ``True``, do not reconstruct the B-Spline field directly on the target
+            (which will likely not be aligned with the fieldmap's grid), but rather use
+            the fieldmap's grid and then use just regular interpolation.
 
         Returns
         -------
@@ -117,9 +124,10 @@ class B0FieldTransform:
 
     def apply(
         self,
-        spatialimage,
+        data,
         pe_dir,
         ro_time,
+        xfms=None,
         order=3,
         mode="constant",
         cval=0.0,
@@ -131,12 +139,12 @@ class B0FieldTransform:
 
         Parameters
         ----------
-        spatialimage : `spatialimage`
+        data : `spatialimage`
             The image object containing the data to be resampled in reference
             space
-        reference : spatial object, optional
-            The image, surface, or combination thereof containing the coordinates
-            of samples that will be sampled.
+        xfms : `None` or :obj:`list`
+            A list of rigid-body transformations previously estimated that will
+            realign the dataset (that is, compensate for head motion) after resampling.
         order : int, optional
             The order of the spline interpolation, default is 3.
             The order has to be in the range 0-5.

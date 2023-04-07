@@ -294,7 +294,11 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
     in_coeff = InputMultiObject(
         File(exists=True),
         mandatory=True,
-        desc="input coefficients, after alignment to the EPI data",
+        desc="input coefficients as calculated in the estimation stage",
+    )
+    fmap2data_xfm = File(
+        exists=True,
+        desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
     )
     in_xfms = InputMultiObject(
         File(exists=True), desc="list of head-motion correction matrices"
@@ -315,21 +319,60 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         )
     )
     num_threads = traits.Int(nohash=True, desc="number of threads")
+    approx = traits.Bool(
+        True,
+        usedefault=True,
+        desc=(
+            "reconstruct the fieldmap on it's original grid and then interpolate on the "
+            "rotated grid, rather than reconstructing directly on the rotated grid."
+        ),
+    )
 
 
 class _ApplyCoeffsFieldOutputSpec(TraitedSpec):
     out_corrected = OutputMultiObject(File(exists=True))
     out_field = OutputMultiObject(File(exists=True))
-    out_warp = OutputMultiObject(File(exists=True))
 
 
 class ApplyCoeffsField(SimpleInterface):
-    """Convert a set of B-Spline coefficients to a full displacements map."""
+    """
+    Undistort a target, distorted image with a fieldmap, formalized by its B-Spline coefficients.
+
+    Preconditions:
+
+    * We have a "target EPI" - a BOLD or DWI dataset (or even MPRAGE, same principle),
+      without having gone through HMC or SDC.
+    * We have also the list of HMC matrices that *accounts for* head-motion, so after resampling
+      the dataset through this list of transforms *the head does not move anymore*.
+    * We have estimated the fieldmap's coefficients
+    * We have the "fieldmap-to-data" affine transform that aligns the target dataset (e.g., EPI)
+      and the fieldmap's "magnitude" (phasediff et al.) or "reference" (pepolar, syn).
+
+    The algorithm is implemented in the :obj:`~sdcflows.transform.B0FieldTransform` object.
+    First, we will call :obj:`~sdcflows.transform.B0FieldTransform.fit`, which
+    results in:
+
+    1. The reference grid of the target dataset is projected onto the fieldmap space
+    2. The B-Spline coefficients are applied to reconstruct the field on the grid resulting
+       above.
+
+    After which, we can then call :obj:`~sdcflows.transform.B0FieldTransform.apply`.
+    This second step will:
+
+    3. Find the location of every voxel on each timepoint (meaning, after the head moved)
+       and progress (or recede) along the phase-encoding axis to find the actual (voxel)
+       coordinates of each voxel.
+       With those coordinates known, interpolation is trivial.
+    4. Generate a spatial image with the new data.
+
+    """
 
     input_spec = _ApplyCoeffsFieldInputSpec
     output_spec = _ApplyCoeffsFieldOutputSpec
 
     def _run_interface(self, runtime):
+        from sdcflows.transform import B0FieldTransform
+
         n = len(self.inputs.in_data)
 
         ro_time = self.inputs.ro_time
@@ -341,63 +384,36 @@ class ApplyCoeffsField(SimpleInterface):
             pe_dir *= n
 
         unwarp = None
-        hmc_mats = [None] * n
-        if isdefined(self.inputs.in_xfms):
-            # Split ITK matrices in separate files if they come collated
-            hmc_mats = (
-                list(_split_itk_file(self.inputs.in_xfms[0]))
-                if len(self.inputs.in_xfms) == 1
-                else self.inputs.in_xfms
-            )
-        else:
-            from sdcflows.transform import B0FieldTransform
 
-            # Pre-cached interpolator object
-            unwarp = B0FieldTransform(
-                coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
-            )
+        # Pre-cached interpolator object
+        unwarp = B0FieldTransform(
+            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
+            num_threads=(
+                None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
+            ),
+        )
 
-        if not isdefined(self.inputs.num_threads) or self.inputs.num_threads < 2:
-            # Linear execution (1 core)
-            outputs = [
-                _b0_resampler(
-                    fname,
-                    self.inputs.in_coeff,
-                    pe_dir[i],
-                    ro_time[i],
-                    hmc_mats[i],
-                    unwarp,  # if no HMC matrices, interpolator can be shared
-                    runtime.cwd,
-                )
-                for i, fname in enumerate(self.inputs.in_data)
-            ]
-        else:
-            # Embarrasingly parallel execution
-            from concurrent.futures import ProcessPoolExecutor
+        # Reconstruct the field from the coefficients, on the target dataset's grid.
+        unwarp.fit(
+            self.inputs.data,
+            affine=(
+                None if not isdefined(self.inputs.fmap2data_xfm) else self.inputs.fmap2data_xfm
+            ),
+            approx=self.inputs.approx,
+        )
 
-            outputs = [None] * len(self.inputs.in_data)
-            with ProcessPoolExecutor(max_workers=self.inputs.num_threads) as ex:
-                outputs = ex.map(
-                    _b0_resampler,
-                    self.inputs.in_data,
-                    [self.inputs.in_coeff] * n,
-                    pe_dir,
-                    ro_time,
-                    hmc_mats,
-                    [None] * n,  # force a new interpolator for each process
-                    [runtime.cwd] * n,
-                )
+        # We can now write out the fieldmap
+        # unwarp.mapped.to_filename(out_field)
+        # self._results["out_field"] = out_field
 
-        (
-            self._results["out_corrected"],
-            self._results["out_warp"],
-            self._results["out_field"],
-        ) = zip(*outputs)
-
-        out_fields = set(self._results["out_field"]) - set([None])
-        if len(out_fields) == 1:
-            self._results["out_field"] = out_fields.pop()
-
+        # HMC matrices are only necessary when reslicing the data (i.e., apply())
+        hmc_mats = None
+        self._results["out_corrected"] = unwarp.apply(
+            self.inputs.data,
+            pe_dir,
+            ro_time,
+            xfms=hmc_mats,
+        )
         return runtime
 
 
