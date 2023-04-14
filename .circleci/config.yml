@@ -42,7 +42,8 @@ _pull_from_registry: &pull_from_registry
 
 version: 2.1
 orbs:
-  docker: circleci/docker@2.1.4
+  docker: circleci/docker@2.2.0
+  codecov: codecov/codecov@3.2.4
 
 jobs:
   cache_test_data:
@@ -343,15 +344,9 @@ jobs:
       - store_test_results:
           path: /tmp/tests
 
-      - run:
-          name: Submit unit test coverage
-          working_directory: /tmp/src/sdcflows
-          command: |
-            export PY3=$( pyenv versions | awk '/^\* 3/ { print $2 }' )
-            pyenv local $PY3
-            python3 -m pip install codecov
-            python3 -m codecov --file /tmp/tests/unittests.xml \
-                --flags unittests -e CIRCLE_JOB
+      - codecov/upload:
+          file: /tmp/tests/unittests.xml
+          flags: unittests
 
   build_docs:
     docker:

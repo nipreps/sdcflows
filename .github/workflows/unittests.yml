@@ -183,7 +183,7 @@ jobs:
         export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
         pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
 
-    - name: Submit code coverage
-      run: |
-        pip install codecov
-        python -m codecov --flags travis --file cov.xml -e $GITHUB_RUN_NUMBER
+    - uses: codecov/codecov-action@v3
+      with:
+        file: cov.xml
+      if: ${{ always() }}
