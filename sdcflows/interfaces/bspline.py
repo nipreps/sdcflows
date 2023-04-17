@@ -140,6 +140,7 @@ class BSplineApprox(SimpleInterface):
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
+        fmapnii = nb.as_closest_canonical(fmapnii)
         zooms = fmapnii.header.get_zooms()
 
         # Get a mask (or define on the spot to cover the full extent)
@@ -148,6 +149,8 @@ class BSplineApprox(SimpleInterface):
             if isdefined(self.inputs.in_mask)
             else None
         )
+        if masknii is not None:
+            masknii = nb.as_closest_canonical(masknii)
 
         # Determine the shape of bspline coefficients
         # This should not change with resizing, so do it first
@@ -224,11 +227,14 @@ class BSplineApprox(SimpleInterface):
         # Interpolating in the original grid will require a new collocation matrix
         if need_resize:
             fmapnii = nb.load(self.inputs.in_data)
+            fmapnii = nb.as_closest_canonical(fmapnii)
             data = fmapnii.get_fdata(dtype="float32")
-            mask = (
-                np.ones_like(fmapnii.dataobj, dtype=bool) if masknii is None
-                else np.asanyarray(nb.load(self.inputs.in_mask).dataobj) > 1e-4
-            )
+            if masknii is not None:
+                masknii = nb.load(self.inputs.in_mask)
+                masknii = nb.as_closest_canonical(masknii)
+                mask = np.asanyarray(masknii.dataobj) > 1e-4
+            else:
+                mask = np.ones_like(fmapnii.dataobj, dtype=bool)
             colmat = sparse_vstack(
                 grid_bspline_weights(fmapnii, grid) for grid in bs_grids
             ).T.tocsr()
