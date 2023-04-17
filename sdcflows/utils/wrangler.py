@@ -33,6 +33,19 @@ from bids.utils import listify
 from .. import fieldmaps as fm
 
 
+def _resolve_intent(
+    intent: str,
+    layout: BIDSLayout,
+    subject: str
+) -> str | None:
+    root = Path(layout.root)
+    if intent.startswith("bids::"):
+        return str(root / intent[6:])
+    if not intent.startswith("bids:"):
+        return str(root / f"sub-{subject}" / intent)
+    return intent
+
+
 def find_estimators(
     *,
     layout: BIDSLayout,
@@ -404,7 +417,7 @@ def find_estimators(
             # Find existing IntendedFor targets and warn if missing
             all_targets = []
             for intent in listify(epi_base_md["IntendedFor"]):
-                target = layout.get_file(str(subject_root / intent))
+                target = layout.get_file(_resolve_intent(intent, layout, subject))
                 if target is None:
                     logger.debug("Single PE target %s not found", intent)
                     continue
