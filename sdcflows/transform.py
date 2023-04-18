@@ -88,7 +88,7 @@ class B0FieldTransform:
         # Project the reference's grid onto the fieldmap's
         target_reference = target_reference.__class__(
             target_reference.dataobj,
-            affine @ target_affine.T,
+            affine @ target_affine,
             target_reference.header,
         )
 
