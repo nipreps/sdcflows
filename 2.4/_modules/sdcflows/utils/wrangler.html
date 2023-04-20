@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.4.1 documentation</title>
+        <title>sdcflows.utils.wrangler - sdcflows 2.4.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.4.1 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.4.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.4.1</span>
+    <span id="version-slug" class="sidebar-brand-text">2.4.2</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.4.1</span>
+  <span class="sidebar-brand-text">2.4.2</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -585,11 +585,17 @@
                 <span class="o">**</span><span class="p">{</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="p">[</span><span class="s2">"fieldmap"</span><span class="p">,</span> <span class="s2">"phasediff"</span><span class="p">,</span> <span class="s2">"phase1"</span><span class="p">],</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">sessions</span><span class="p">}</span>
             <span class="p">}</span>
         <span class="p">):</span>
-            <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
-                <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
-            <span class="p">)</span>
-            <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
-            <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span>
+                    <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">fmap</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">())</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">_log_debug_estimator_fail</span><span class="p">(</span>
+                    <span class="n">logger</span><span class="p">,</span> <span class="s2">"unnamed fieldmap"</span><span class="p">,</span> <span class="p">[</span><span class="n">fmap</span><span class="p">],</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+                <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># A bunch of heuristics to select EPI fieldmaps</span>
         <span class="n">acqs</span> <span class="o">=</span> <span class="p">(</span>
