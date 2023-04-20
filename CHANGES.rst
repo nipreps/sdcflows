@@ -1,3 +1,12 @@
+2.4.2 (April 20, 2023)
+======================
+Bug-fix release in the 2.4.x series.
+
+Same fixes as 2.4.1, but this time for phase-difference and direct fieldmaps
+we missed last time.
+
+* FIX: Capture and report partial fieldmaps (#351)
+
 2.4.1 (March 20, 2023)
 ======================
 Bug-fix release in the 2.4.x series.
