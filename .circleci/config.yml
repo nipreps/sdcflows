@@ -422,8 +422,8 @@ jobs:
             python -m venv /tmp/buildenv
             source /tmp/buildenv/bin/activate
             python -m pip install -U build twine setuptools_scm
-            python -m build -s -w
-            python -m twine check dist/*
+            python3 -m build
+            twine check dist/sdcflows*
       - store_artifacts:
           path: /tmp/src/sdcflows/dist
       - persist_to_workspace:
