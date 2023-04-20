@@ -343,11 +343,17 @@ def find_estimators(
                 **{'suffix': ["fieldmap", "phasediff", "phase1"], 'session': sessions}
             }
         ):
-            e = fm.FieldmapEstimation(
-                fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
-            )
-            _log_debug_estimation(logger, e, layout.root)
-            estimators.append(e)
+            try:
+                e = fm.FieldmapEstimation(
+                    fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger, "unnamed fieldmap", [fmap], layout.root, str(err)
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
         acqs = (
