@@ -181,17 +181,20 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Recenter the fieldmap
+        center = 0
         if self.inputs.recenter == "mode":
             from scipy.stats import mode
 
             # Handle pre- and post-1.9 mode behavior.
             # squeeze can be dropped when the minimum version reaches 1.9
             # Will become: data -= mode(data[mask], keepdims=False).mode
-            data -= np.squeeze(mode(data[mask]).mode)
+            center = np.squeeze(mode(data[mask]).mode)
         elif self.inputs.recenter == "median":
-            data -= np.median(data[mask])
+            center = np.median(data[mask])
         elif self.inputs.recenter == "mean":
-            data -= np.mean(data[mask])
+            center = np.mean(data[mask])
+
+        data -= center
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
         colmat = sparse_vstack(grid_bspline_weights(fmapnii, grid) for grid in bs_grids).T.tocsr()
@@ -228,7 +231,7 @@ class BSplineApprox(SimpleInterface):
         if need_resize:
             fmapnii = nb.load(self.inputs.in_data)
             fmapnii = nb.as_closest_canonical(fmapnii)
-            data = fmapnii.get_fdata(dtype="float32")
+            data = fmapnii.get_fdata(dtype="float32") - center
             if masknii is not None:
                 masknii = nb.load(self.inputs.in_mask)
                 masknii = nb.as_closest_canonical(masknii)
