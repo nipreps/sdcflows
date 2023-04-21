@@ -42,6 +42,7 @@ def find_estimators(
     force_fmapless: bool = False,
     logger: Optional[logging.Logger] = None,
     bids_filters: Optional[dict] = None,
+    anat_suffix='T1w'
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
@@ -467,7 +468,7 @@ def find_estimators(
         fmapless = False
 
     # Find fieldmap-less schemes
-    anat_file = layout.get(**{**base_entities, **{'suffix': 'T1w', 'session': sessions}})
+    anat_file = layout.get(**{**base_entities, **{'suffix': anat_suffix, 'session': sessions}})
 
     if not fmapless or not anat_file:
         logger.debug("Skipping fmap-less estimation")
