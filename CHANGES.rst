@@ -1,3 +1,13 @@
+2.4.3 (April 24, 2023)
+======================
+Bug-fix release in the 2.4.x series.
+
+This fix resolves an inconsistency of treatment of phase-difference and
+scanner-calculated fieldmaps, relative to PEPolar and SyN. Fieldmaps in
+orientations other than RAS were impacted.
+
+* FIX: Reorient fieldmaps to RAS before estimating B-splines (#354)
+
 2.4.2 (April 20, 2023)
 ======================
 Bug-fix release in the 2.4.x series.
