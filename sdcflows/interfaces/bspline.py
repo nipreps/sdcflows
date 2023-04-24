@@ -140,6 +140,7 @@ class BSplineApprox(SimpleInterface):
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
+        fmapnii = nb.as_closest_canonical(fmapnii)
         zooms = fmapnii.header.get_zooms()
 
         # Get a mask (or define on the spot to cover the full extent)
@@ -148,6 +149,8 @@ class BSplineApprox(SimpleInterface):
             if isdefined(self.inputs.in_mask)
             else None
         )
+        if masknii is not None:
+            masknii = nb.as_closest_canonical(masknii)
 
         # Determine the shape of bspline coefficients
         # This should not change with resizing, so do it first
@@ -178,17 +181,20 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Recenter the fieldmap
+        center = 0
         if self.inputs.recenter == "mode":
             from scipy.stats import mode
 
             # Handle pre- and post-1.9 mode behavior.
             # squeeze can be dropped when the minimum version reaches 1.9
             # Will become: data -= mode(data[mask], keepdims=False).mode
-            data -= np.squeeze(mode(data[mask]).mode)
+            center = np.squeeze(mode(data[mask]).mode)
         elif self.inputs.recenter == "median":
-            data -= np.median(data[mask])
+            center = np.median(data[mask])
         elif self.inputs.recenter == "mean":
-            data -= np.mean(data[mask])
+            center = np.mean(data[mask])
+
+        data -= center
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
         colmat = sparse_vstack(grid_bspline_weights(fmapnii, grid) for grid in bs_grids).T.tocsr()
@@ -224,11 +230,14 @@ class BSplineApprox(SimpleInterface):
         # Interpolating in the original grid will require a new collocation matrix
         if need_resize:
             fmapnii = nb.load(self.inputs.in_data)
-            data = fmapnii.get_fdata(dtype="float32")
-            mask = (
-                np.ones_like(fmapnii.dataobj, dtype=bool) if masknii is None
-                else np.asanyarray(nb.load(self.inputs.in_mask).dataobj) > 1e-4
-            )
+            fmapnii = nb.as_closest_canonical(fmapnii)
+            data = fmapnii.get_fdata(dtype="float32") - center
+            if masknii is not None:
+                masknii = nb.load(self.inputs.in_mask)
+                masknii = nb.as_closest_canonical(masknii)
+                mask = np.asanyarray(masknii.dataobj) > 1e-4
+            else:
+                mask = np.ones_like(fmapnii.dataobj, dtype=bool)
             colmat = sparse_vstack(
                 grid_bspline_weights(fmapnii, grid) for grid in bs_grids
             ).T.tocsr()
