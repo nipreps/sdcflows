@@ -42,17 +42,15 @@ def test_deoblique_and_zooms(padding, factor):
 
     # Generate an example reference image
     ref_data = np.zeros((20, 30, 40), dtype=np.float32)
-    ref_affine = np.eye(4)
-    ref_affine[:3, :3] = np.diag([1.0, 1.2, 0.8])  # Set zooms to (2, 3, 4)
+    ref_affine = np.diag([1.0, 1.2, 0.8, 1.0])
     ref_img = nb.Nifti1Image(ref_data, ref_affine)
     ref_zooms = np.array(ref_img.header.get_zooms()[:3])
 
     # Generate an example oblique image
     ob_data = np.ones_like(ref_data)
-    rotate = np.eye(4)
 
     # Rotate 90 degrees around x-axis
-    rotate[:3, :3] = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+    rotate = np.array([[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1]])
     ob_img = nb.Nifti1Image(ob_data, rotate @ ref_affine)
 
     # Call function with default parameters
