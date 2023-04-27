@@ -36,22 +36,30 @@ def test_epi_mask(tmpdir, testdata_dir):
 
 
 @pytest.mark.parametrize("padding", [0, 1, 4])
-@pytest.mark.parametrize("factor", [1, 4, 0.5])
-def test_deoblique_and_zooms(padding, factor):
+@pytest.mark.parametrize("factor", [1, 4, 0.8])
+@pytest.mark.parametrize("centered", [True, False])
+@pytest.mark.parametrize("rotate", [
+    np.eye(4),
+    # Rotate 90 degrees around x-axis
+    np.array([[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1]]),
+])
+def test_deoblique_and_zooms(tmpdir, padding, factor, centered, rotate):
     """Check deoblique and denser."""
+    tmpdir.chdir()
 
     # Generate an example reference image
-    ref_data = np.zeros((20, 30, 40), dtype=np.float32)
-    ref_affine = np.diag([1.0, 1.2, 0.8, 1.0])
+    ref_data = np.zeros((20, 32, 40), dtype=np.float32)
+    ref_data[1:-2, 10:-11, 1:-2] = 1
+    ref_affine = np.diag([2.0, 1.25, 1.0, 1.0])
+    ref_zooms = nb.affines.voxel_sizes(ref_affine)
+    if centered:
+        ref_affine[:3, 3] -= nb.affines.apply_affine(
+            ref_affine, 0.5 * (np.array(ref_data.shape) - 1),
+        )
     ref_img = nb.Nifti1Image(ref_data, ref_affine)
-    ref_zooms = np.array(ref_img.header.get_zooms()[:3])
 
     # Generate an example oblique image
-    ob_data = np.ones_like(ref_data)
-
-    # Rotate 90 degrees around x-axis
-    rotate = np.array([[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1]])
-    ob_img = nb.Nifti1Image(ob_data, rotate @ ref_affine)
+    ob_img = nb.Nifti1Image(ref_data, rotate @ ref_affine)
 
     # Call function with default parameters
     out_img = deoblique_and_zooms(ref_img, ob_img, padding=padding, factor=factor)
@@ -59,8 +67,14 @@ def test_deoblique_and_zooms(padding, factor):
     # Check output shape and zooms
     assert np.allclose(out_img.header.get_zooms()[:3], ref_zooms / factor)
 
+    ref_resampled = Affine(reference=out_img).apply(ref_img, order=0)
     resampled = Affine(reference=out_img).apply(ob_img, order=0)
-    ref_volume = ref_data.size * ref_zooms.prod()
+    ref_img.to_filename("reference.nii.gz")
+    ob_img.to_filename("moving.nii.gz")
+    ref_resampled.to_filename("ref_resampled.nii.gz")
+    resampled.to_filename("resampled.nii.gz")
+    # import pdb; pdb.set_trace()
+    ref_volume = ref_data.sum() * ref_zooms.prod()
     res_volume = resampled.get_fdata().sum() * np.prod(resampled.header.get_zooms())
     # 20% of change in volume is too high, must be an error somewhere
     assert abs(ref_volume - res_volume) < ref_volume * 0.2
