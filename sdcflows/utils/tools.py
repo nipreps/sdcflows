@@ -43,24 +43,27 @@ def deoblique_and_zooms(in_reference, oblique, factor=4, padding=1):
     """
     from itertools import product
     import numpy as np
-    from nibabel.affines import apply_affine
+    from nibabel.affines import apply_affine, rescale_affine
 
     # Reference space metadata
     hdr = in_reference.header.copy()
-    affine = in_reference.affine
+    affine = in_reference.affine.copy()
     ref_shape = np.array(in_reference.shape[:3])
+    ref_zooms = np.array(hdr.get_zooms()[:3])
     _, scode = in_reference.get_sform(coded=True)
     _, qcode = in_reference.get_qform(coded=True)
 
     # Calculate the 8 most extreme coordinates of oblique in in_reference space
     extent = apply_affine(
         oblique.affine,
-        np.array(list(product((0, 1), repeat=3))) * (ref_shape - 1),
+        np.array(list(product((0, 1), repeat=3))) * (np.array(oblique.shape[:3]) - 1),
     )
     extent_ijk = apply_affine(np.linalg.inv(affine), extent)
 
     underflow = np.clip(extent_ijk.min(0) - padding, None, 0).astype(int)
-    overflow = np.ceil(np.clip(extent_ijk.max(0) + padding + 1 - ref_shape, 0, None)).astype(int)
+    overflow = np.ceil(
+        np.clip(extent_ijk.max(0) + padding + 1 - ref_shape, 0, None)
+    ).astype(int)
     if np.any(underflow < 0) or np.any(overflow > 0):
         # Add under/overflow voxels
         ref_shape += np.abs(underflow) + overflow
@@ -68,12 +71,10 @@ def deoblique_and_zooms(in_reference, oblique, factor=4, padding=1):
         affine[:-1, -1] = apply_affine(affine, underflow)
 
     # Make grid denser
-    if abs(1.0 - factor) > 1e-5:
-        cur_center = apply_affine(affine, 0.5 * (ref_shape - 1))
-        affine[:3, :3] /= factor
-        ref_shape = np.rint(ref_shape * factor)
-        new_center = affine[:3, :3] @ (0.5 * (ref_shape - 1))
-        affine[:3, 3] = cur_center - new_center
+    if abs(1.0 - factor) > 1e-4:
+        new_shape = np.rint(ref_shape * factor)
+        affine = rescale_affine(affine, ref_shape, ref_zooms / factor, new_shape)
+        ref_shape = new_shape
 
     # Generate new reference
     hdr.set_sform(affine, scode)
