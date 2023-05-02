@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.fmap - sdcflows 2.4.3.dev13+g0d97d9ef documentation</title>
+        <title>sdcflows.interfaces.fmap - sdcflows 2.4.3.dev16+g1edb8004 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.4.3.dev13+g0d97d9ef documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.4.3.dev16+g1edb8004 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.4.3.dev13 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.4.3.dev16 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.4.3.dev13 (dev)</span>
+  <span class="sidebar-brand-text">2.4.3.dev16 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -265,8 +265,10 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">"""Interfaces to deal with the various types of fieldmap sources."""</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+<span class="kn">import</span> <span class="nn">nitransforms</span> <span class="k">as</span> <span class="nn">nt</span>
 <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
 <span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">logging</span>
 <span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="p">(</span>
@@ -275,7 +277,10 @@
     <span class="n">File</span><span class="p">,</span>
     <span class="n">traits</span><span class="p">,</span>
     <span class="n">SimpleInterface</span><span class="p">,</span>
+    <span class="n">InputMultiObject</span><span class="p">,</span>
+    <span class="n">OutputMultiObject</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">freesurfer</span> <span class="k">as</span> <span class="n">fs</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"nipype.interface"</span><span class="p">)</span>
 
@@ -445,6 +450,188 @@
 
         <span class="n">fmapnii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">"out_file"</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
+
+
+<span class="k">class</span> <span class="nc">_CheckRegisterInputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+    <span class="n">mag_files</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">minlen</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">maxlen</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"Magnitude image(s) to verify registration"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fmap_files</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">minlen</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">maxlen</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"Phase(diff) or fieldmap image(s) to update affines"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">rot_thresh</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span>
+        <span class="mf">0.02</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"rotation threshold in radians"</span>
+    <span class="p">)</span>
+    <span class="n">trans_thresh</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span>
+        <span class="mf">1.</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"translation threshold in mm"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_CheckRegisterOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+    <span class="n">mag_files</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"Magnitude image(s) verified to be in register, with consistent affines"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fmap_files</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
+        <span class="n">File</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"Fieldmap files with consistent affines"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="CheckRegister"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.CheckRegister">[docs]</a><span class="k">class</span> <span class="nc">CheckRegister</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+    <span class="sd">"""Check registration of one or more images and paired files</span>
+
+<span class="sd">    Use cases:</span>
+
+<span class="sd">    Phase1 + Phase2:</span>
+
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phase1.nii.gz', '*_phase2.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']</span>
+
+<span class="sd">    Phasediff (2 magnitude):</span>
+
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phasediff.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']</span>
+
+<span class="sd">    Phasediff (1 magnitude):</span>
+
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phasediff.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz']</span>
+
+<span class="sd">    Fieldmap (1 magnitude):</span>
+
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_fieldmap.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude.nii.gz']</span>
+
+<span class="sd">    In general, we expect all files to have the same affine and shape,</span>
+<span class="sd">    and this will be a pass-through interface. If there are two magnitude</span>
+<span class="sd">    files where the affine differs, then we will register them and inspect</span>
+<span class="sd">    the registration parameters for evidence of significantly different FoV.</span>
+<span class="sd">    The default values of 0.02rad and 1mm both correspond to shifts of 1mm</span>
+<span class="sd">    (assuming 50mm radius brain).</span>
+
+<span class="sd">    This may run ``mri_robust_register``, so should not be run without</span>
+<span class="sd">    submitting.</span>
+<span class="sd">    """</span>
+
+    <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_CheckRegisterInputSpec</span>
+    <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_CheckRegisterOutputSpec</span>
+
+    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+        <span class="n">mag_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">mag_files</span>
+        <span class="n">fmap_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_files</span>
+
+        <span class="n">mag_imgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span> <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">mag_files</span><span class="p">]</span>
+        <span class="n">fmap_imgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span> <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fmap_files</span><span class="p">]</span>
+
+        <span class="c1"># Baseline check: paired magnitude/phase maps are basically the same</span>
+        <span class="k">for</span> <span class="n">mag</span><span class="p">,</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mag_imgs</span><span class="p">,</span> <span class="n">fmap_imgs</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">_check_gross_geometry</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="n">fmap</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># Verify images are in register before conforming affines</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mag_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">_check_gross_geometry</span><span class="p">(</span><span class="n">mag_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mag_imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c1"># If affines match, do not attempt to register</span>
+            <span class="c1"># Treat this as an assertion by the scanner or curator that they are aligned</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">mag_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">mag_imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">affine</span><span class="p">):</span>
+                <span class="n">reg</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">RobustRegister</span><span class="p">(</span>
+                    <span class="n">target_file</span><span class="o">=</span><span class="n">mag_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">source_file</span><span class="o">=</span><span class="n">mag_files</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">auto_sens</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="n">lta</span> <span class="o">=</span> <span class="n">nt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">lta</span><span class="o">.</span><span class="n">FSLinearTransform</span><span class="o">.</span><span class="n">from_filename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">out_reg_file</span><span class="p">)</span>
+                <span class="n">mat</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">to_matvec</span><span class="p">(</span><span class="n">lta</span><span class="o">.</span><span class="n">to_ras</span><span class="p">())</span>
+                <span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">eulerangles</span><span class="o">.</span><span class="n">mat2euler</span><span class="p">(</span><span class="n">mat</span><span class="p">))</span>
+                <span class="n">rot_thresh</span><span class="p">,</span> <span class="n">trans_thresh</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">rot_thresh</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trans_thresh</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">angles</span> <span class="o">&gt;</span> <span class="n">rot_thresh</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">vec</span> <span class="o">&gt;</span> <span class="n">trans_thresh</span><span class="p">):</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span>
+                        <span class="s2">"Magnitude files </span><span class="si">{mag_files}</span><span class="s2"> are not in register with rotation "</span>
+                        <span class="sa">f</span><span class="s2">"threshold </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">rot_thresh</span><span class="si">}</span><span class="s2"> and translation threshold "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trans_thresh</span><span class="si">}</span><span class="s2">. Please manually verify images "</span>
+                        <span class="s2">"are in register and update the image headers before running SDC."</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Magnitude 1/2 orientation mismatch too big to ignore."</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Probably redundant, but we could hit this error</span>
+        <span class="c1"># with phase1/magnitude1 + wonky phase2 + no magnitude2</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">_check_gross_geometry</span><span class="p">(</span><span class="n">fmap_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fmap_imgs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># Check/copy affines</span>
+        <span class="n">out_mags</span> <span class="o">=</span> <span class="p">[</span><span class="n">_conform_img</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="n">mag_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span> <span class="k">for</span> <span class="n">mag</span> <span class="ow">in</span> <span class="n">mag_imgs</span><span class="p">]</span>
+        <span class="n">out_fmaps</span> <span class="o">=</span> <span class="p">[</span><span class="n">_conform_img</span><span class="p">(</span><span class="n">fmap</span><span class="p">,</span> <span class="n">mag_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span> <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">fmap_imgs</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mag_files"</span><span class="p">:</span> <span class="n">out_mags</span><span class="p">,</span>
+            <span class="s2">"fmap_files"</span><span class="p">:</span> <span class="n">out_fmaps</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">runtime</span></div>
+
+
+<span class="k">def</span> <span class="nf">_conform_img</span><span class="p">(</span>
+    <span class="n">img</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+    <span class="n">target_img</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+    <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">"""Return path to image matching target_img geometry</span>
+
+<span class="sd">    Copy target_affine to a new image if necessary.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">target_img</span><span class="o">.</span><span class="n">affine</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span>
+
+    <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">get_filename</span><span class="p">())</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Copying affine to </span><span class="si">{</span><span class="n">basename</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">new_img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">target_img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
+    <span class="n">new_img</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out_file</span>
+
+
+<span class="k">def</span> <span class="nf">_check_gross_geometry</span><span class="p">(</span>
+    <span class="n">img1</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+    <span class="n">img2</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">"Images have shape mismatch: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img2</span><span class="o">.</span><span class="n">affine</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">"Images have orientation mismatch: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img2</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
 </pre></div>
         </article>
       </div>

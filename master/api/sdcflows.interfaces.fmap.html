@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.interfaces.reportlets module" href="sdcflows.interfaces.reportlets.html" /><link rel="prev" title="sdcflows.interfaces.epi module" href="sdcflows.interfaces.epi.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.interfaces.fmap module - sdcflows 2.4.3.dev13+g0d97d9ef documentation</title>
+        <title>sdcflows.interfaces.fmap module - sdcflows 2.4.3.dev16+g1edb8004 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.4.3.dev13+g0d97d9ef documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.4.3.dev16+g1edb8004 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.4.3.dev13 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.4.3.dev16 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.4.3.dev13 (dev)</span>
+  <span class="sidebar-brand-text">2.4.3.dev16 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -259,6 +259,59 @@
 </dd>
 <dt class="field-even">Outputs</dt>
 <dd class="field-even"><p><strong>out_file</strong> (<em>a pathlike object or string representing an existing file</em>) – Output fieldmap in Hz.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="sdcflows.interfaces.fmap.CheckRegister">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.fmap.</span></span><span class="sig-name descname"><span class="pre">CheckRegister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/fmap.html#CheckRegister"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.fmap.CheckRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.interfaces.base.core.SimpleInterface</span></code></p>
+<p>Check registration of one or more images and paired files</p>
+<p>Use cases:</p>
+<p>Phase1 + Phase2:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fmap_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_phase1.nii.gz'</span><span class="p">,</span> <span class="s1">'*_phase2.nii.gz'</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mag_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_magnitude1.nii.gz'</span><span class="p">,</span> <span class="s1">'*_magnitude2.nii.gz'</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Phasediff (2 magnitude):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fmap_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_phasediff.nii.gz'</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mag_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_magnitude1.nii.gz'</span><span class="p">,</span> <span class="s1">'*_magnitude2.nii.gz'</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Phasediff (1 magnitude):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fmap_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_phasediff.nii.gz'</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mag_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_magnitude1.nii.gz'</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Fieldmap (1 magnitude):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fmap_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_fieldmap.nii.gz'</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mag_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'*_magnitude.nii.gz'</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>In general, we expect all files to have the same affine and shape,
+and this will be a pass-through interface. If there are two magnitude
+files where the affine differs, then we will register them and inspect
+the registration parameters for evidence of significantly different FoV.
+The default values of 0.02rad and 1mm both correspond to shifts of 1mm
+(assuming 50mm radius brain).</p>
+<p>This may run <code class="docutils literal notranslate"><span class="pre">mri_robust_register</span></code>, so should not be run without
+submitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fmap_files</strong> (<em>a list of from 1 to 2 items which are a pathlike object or string representing an existing file</em>) – Phase(diff) or fieldmap image(s) to update affines.</p></li>
+<li><p><strong>mag_files</strong> (<em>a list of from 1 to 2 items which are a pathlike object or string representing an existing file</em>) – Magnitude image(s) to verify registration.</p></li>
+<li><p><strong>rot_thresh</strong> (<em>a float</em>) – Rotation threshold in radians.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">0.02</span></code>)</p></li>
+<li><p><strong>trans_thresh</strong> (<em>a float</em>) – Translation threshold in mm.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>fmap_files</strong> (<em>a list of items which are a pathlike object or string representing a file</em>) – Fieldmap files with consistent affines.</p></li>
+<li><p><strong>mag_files</strong> (<em>a list of items which are a pathlike object or string representing a file</em>) – Magnitude image(s) verified to be in register, with consistent affines.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
