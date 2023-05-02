@@ -21,6 +21,78 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Image processing tools."""
+import nibabel as nb
+
+
+def deoblique_and_zooms(
+    in_reference: nb.spatialimages.SpatialImage,
+    oblique: nb.spatialimages.SpatialImage,
+    factor: int = 4,
+    padding: int = 1,
+    factor_tol: float = 1e-4,
+):
+    """
+    Generate a sampling reference aligned with in_reference fully covering oblique.
+
+    Parameters
+    ----------
+    in_reference : :obj:`~nibabel.spatialimages.SpatialImage`
+        The sampling reference.
+    oblique : :obj:`~nibabel.spatialimages.SpatialImage`
+        The rotated coordinate system whose extent should be fully covered by the
+        generated reference.
+    factor : :obj:`int`
+        A factor to increase the resolution of the generated reference.
+    padding : :obj:`int`
+        Number of additional voxels around the most extreme positions of the projection of
+        oblique on to the reference.
+    factor_tol : :obj:`float`
+        Absolute tolerance to determine whether factor is one.
+
+    """
+    from itertools import product
+    import numpy as np
+    from nibabel.affines import apply_affine, rescale_affine
+
+    # Reference space metadata
+    hdr = in_reference.header.copy()
+    affine = in_reference.affine.copy()
+    ref_shape = np.array(in_reference.shape[:3])
+    ref_zooms = np.array(hdr.get_zooms()[:3])
+    _, scode = in_reference.get_sform(coded=True)
+    _, qcode = in_reference.get_qform(coded=True)
+
+    # Calculate the 8 most extreme coordinates of oblique in in_reference space
+    corners = np.array(list(product((0, 1), repeat=3))) * (
+        np.array(oblique.shape[:3]) - 1
+    )
+    extent_ijk = apply_affine(np.linalg.inv(affine) @ oblique.affine, corners)
+
+    underflow = np.clip(extent_ijk.min(0) - padding, None, 0).astype(int)
+    overflow = np.ceil(
+        np.clip(extent_ijk.max(0) + padding + 1 - ref_shape, 0, None)
+    ).astype(int)
+    if np.any(underflow < 0) or np.any(overflow > 0):
+        # Add under/overflow voxels
+        ref_shape += overflow - underflow
+        # Consistently update origin
+        affine[:-1, -1] = apply_affine(affine, underflow)
+
+    # Make grid denser
+    if abs(1.0 - factor) > factor_tol:
+        new_shape = np.rint(ref_shape * factor)
+        affine = rescale_affine(affine, ref_shape, ref_zooms / factor, new_shape)
+        ref_shape = new_shape
+
+    # Generate new reference
+    hdr.set_sform(affine, scode)
+    hdr.set_qform(affine, qcode)
+
+    return in_reference.__class__(
+        nb.fileslice.strided_scalar(ref_shape.astype(int)),
+        affine,
+        hdr,
+    )
 
 
 def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
