@@ -21,8 +21,10 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Interfaces to deal with the various types of fieldmap sources."""
+import os
 import numpy as np
 import nibabel as nb
+import nitransforms as nt
 from nipype.utils.filemanip import fname_presuffix
 from nipype import logging
 from nipype.interfaces.base import (
@@ -31,7 +33,10 @@ from nipype.interfaces.base import (
     File,
     traits,
     SimpleInterface,
+    InputMultiObject,
+    OutputMultiObject,
 )
+from nipype.interfaces import freesurfer as fs
 
 LOGGER = logging.getLogger("nipype.interface")
 
@@ -201,3 +206,185 @@ class DisplacementsField2Fieldmap(SimpleInterface):
 
         fmapnii.to_filename(self._results["out_file"])
         return runtime
+
+
+class _CheckRegisterInputSpec(TraitedSpec):
+    mag_files = InputMultiObject(
+        File(exists=True),
+        mandatory=True,
+        minlen=1,
+        maxlen=2,
+        desc="Magnitude image(s) to verify registration",
+    )
+    fmap_files = InputMultiObject(
+        File(exists=True),
+        mandatory=True,
+        minlen=1,
+        maxlen=2,
+        desc="Phase(diff) or fieldmap image(s) to update affines",
+    )
+    rot_thresh = traits.Float(
+        0.02, usedefault=True, mandatory=True, desc="rotation threshold in radians"
+    )
+    trans_thresh = traits.Float(
+        1., usedefault=True, mandatory=True, desc="translation threshold in mm"
+    )
+
+
+class _CheckRegisterOutputSpec(TraitedSpec):
+    mag_files = OutputMultiObject(
+        File,
+        desc="Magnitude image(s) verified to be in register, with consistent affines",
+    )
+    fmap_files = OutputMultiObject(
+        File,
+        desc="Fieldmap files with consistent affines",
+    )
+
+
+class CheckRegister(SimpleInterface):
+    """Check registration of one or more images and paired files
+
+    Use cases:
+
+    Phase1 + Phase2:
+
+        >>> fmap_files = ['*_phase1.nii.gz', '*_phase2.nii.gz']
+        >>> mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']
+
+    Phasediff (2 magnitude):
+
+        >>> fmap_files = ['*_phasediff.nii.gz']
+        >>> mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']
+
+    Phasediff (1 magnitude):
+
+        >>> fmap_files = ['*_phasediff.nii.gz']
+        >>> mag_files = ['*_magnitude1.nii.gz']
+
+    Fieldmap (1 magnitude):
+
+        >>> fmap_files = ['*_fieldmap.nii.gz']
+        >>> mag_files = ['*_magnitude.nii.gz']
+
+    In general, we expect all files to have the same affine and shape,
+    and this will be a pass-through interface. If there are two magnitude
+    files where the affine differs, then we will register them and inspect
+    the registration parameters for evidence of significantly different FoV.
+    The default values of 0.02rad and 1mm both correspond to shifts of 1mm
+    (assuming 50mm radius brain).
+
+    This may run ``mri_robust_register``, so should not be run without
+    submitting.
+    """
+
+    input_spec = _CheckRegisterInputSpec
+    output_spec = _CheckRegisterOutputSpec
+
+    def _run_interface(self, runtime):
+        mag_files = self.inputs.mag_files
+        fmap_files = self.inputs.fmap_files
+
+        mag_imgs = [nb.load(fname) for fname in mag_files]
+        fmap_imgs = [nb.load(fname) for fname in fmap_files]
+
+        # Baseline check: paired magnitude/phase maps are basically the same
+        for mag, fmap in zip(mag_imgs, fmap_imgs):
+            msg = _check_gross_geometry(mag, fmap)
+            if msg is not None:
+                LOGGER.critical(msg)
+                raise ValueError(msg)
+
+        # Verify images are in register before conforming affines
+        if len(mag_files) == 2:
+            msg = _check_gross_geometry(mag_imgs[0], mag_imgs[1])
+            if msg is not None:
+                LOGGER.critical(msg)
+                raise ValueError(msg)
+
+            # If affines match, do not attempt to register
+            # Treat this as an assertion by the scanner or curator that they are aligned
+            if not np.allclose(mag_imgs[0].affine, mag_imgs[1].affine):
+                reg = fs.RobustRegister(
+                    target_file=mag_files[0],
+                    source_file=mag_files[1],
+                    auto_sens=True,
+                )
+                result = reg.run()
+                lta = nt.io.lta.FSLinearTransform.from_filename(result.outputs.out_reg_file)
+                mat, vec = nb.affines.to_matvec(lta.to_ras())
+                angles = np.abs(nb.eulerangles.mat2euler(mat))
+                rot_thresh, trans_thresh = (
+                    self.inputs.rot_thresh,
+                    self.inputs.trans_thresh,
+                )
+
+                if np.any(angles > rot_thresh) or np.any(vec > trans_thresh):
+                    LOGGER.critical(
+                        "Magnitude files {mag_files} are not in register with rotation "
+                        f"threshold {self.inputs.rot_thresh} and translation threshold "
+                        f"{self.inputs.trans_thresh}. Please manually verify images "
+                        "are in register and update the image headers before running SDC."
+                    )
+                    raise ValueError(
+                        "Magnitude 1/2 orientation mismatch too big to ignore."
+                    )
+
+        # Probably redundant, but we could hit this error
+        # with phase1/magnitude1 + wonky phase2 + no magnitude2
+        if len(fmap_files) == 2:
+            msg = _check_gross_geometry(fmap_imgs[0], fmap_imgs[1])
+            if msg is not None:
+                LOGGER.critical(msg)
+                raise ValueError(msg)
+
+        # Check/copy affines
+        out_mags = [_conform_img(mag, mag_imgs[0], runtime.cwd) for mag in mag_imgs]
+        out_fmaps = [_conform_img(fmap, mag_imgs[0], runtime.cwd) for fmap in fmap_imgs]
+
+        self._results = {
+            "mag_files": out_mags,
+            "fmap_files": out_fmaps,
+        }
+
+        return runtime
+
+
+def _conform_img(
+    img: nb.spatialimages.SpatialImage,
+    target_img: nb.spatialimages.SpatialImage,
+    cwd: str,
+) -> str:
+    """Return path to image matching target_img geometry
+
+    Copy target_affine to a new image if necessary.
+    """
+    if np.allclose(img.affine, target_img.affine):
+        return img.get_filename()
+
+    basename = os.basename(img.get_filename())
+    out_file = os.path.join(cwd, basename)
+
+    LOGGER.info(f"Copying affine to {basename}")
+    new_img = img.__class__(img.dataobj, target_img.affine, img.header)
+    new_img.to_filename(out_file)
+
+    return out_file
+
+
+def _check_gross_geometry(
+    img1: nb.spatialimages.SpatialImage,
+    img2: nb.spatialimages.SpatialImage,
+):
+    if img1.shape[:3] != img2.shape[:3]:
+        return (
+            "Images have shape mismatch: "
+            f"{img1.get_filename()} {img1.shape}, "
+            f"{img2.get_filename()} {img2.shape}"
+        )
+    if nb.aff2axcodes(img1.affine) != nb.aff2axcodes(img2.affine):
+        return (
+            "Images have orientation mismatch: "
+            f"{img1.get_filename()} {''.join(nb.aff2axcodes(img1.affine))}, "
+            f"{img2.get_filename()} {''.join(nb.aff2axcodes(img2.affine))}"
+        )
