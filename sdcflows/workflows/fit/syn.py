@@ -328,8 +328,7 @@ template [@fieldmapless3].
         (zooms_bmask, outputnode, [("output_image", "fmap_mask")]),
         (bs_filter, outputnode, [("out_coeff", "fmap_coeff")]),
         (unwarp, outputnode, [("out_corrected", "fmap_ref"),
-                              ("out_field", "fmap"),
-                              ("out_warp", "out_warp")]),
+                              ("out_field", "fmap")]),
     ])
     # fmt: on
 

@@ -230,8 +230,7 @@ def init_topup_wf(
         (split_blips, unwarp, [("out_files", "in_data")]),
         (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
                                  ("pe_dirs", "pe_dir")]),
-        (unwarp, outputnode, [("out_warp", "out_warps"),
-                              ("out_field", "fmap")]),
+        (unwarp, outputnode, [("out_field", "fmap")]),
         (unwarp, concat_corrected, [("out_corrected", "in_files")]),
         (concat_corrected, ref_average, [("out_file", "in_file")]),
     ])

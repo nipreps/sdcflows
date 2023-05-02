@@ -164,7 +164,7 @@ class B0FieldTransform:
         cval: float = 0.0,
         prefilter: bool = True,
         output_dtype: Union[str, np.dtype] = None,
-        num_threads: int = None,
+        # num_threads: int = None,
     ):
         """
         Apply a transformation to an image, resampling on the reference spatial object.
@@ -202,8 +202,6 @@ class B0FieldTransform:
         output_dtype : :obj:`str` or :obj:`~numpy.dtype`
             Override the output data type, instead of propagating it from the
             moving image.
-        num_threads : :obj:`int`
-            Number of CPUs resampling can be parallelized on.
 
         Returns
         -------
@@ -236,13 +234,14 @@ class B0FieldTransform:
             np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
         ).reshape(3, -1)
 
-        if xfms is None:
+        if xfms is not None:
+            mov_ras2vox = np.linalg.inv(moving.affine)
             # Map coordinates from reference to time-step
             xfms.reference = moving
             hmc_xyz = xfms.map(xfms.reference.ndcoords.T)
             # Convert from RAS to voxel coordinates
             voxcoords = (
-                np.linalg.inv(xfms.reference.affine)
+                mov_ras2vox
                 @ _as_homogeneous(np.vstack(hmc_xyz), dim=xfms.reference.ndim).T
             )[:3, ...]
 

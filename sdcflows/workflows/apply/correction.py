@@ -159,10 +159,8 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         (merge, average, [("out_file", "in_file")]),
         (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
         (merge, outputnode, [("out_file", "corrected")]),
-        (resample, outputnode, [("out_field", "fieldmap"),
-                                ("out_warp", "fieldwarp")]),
-        (resample_ref, outputnode, [("out_field", "fieldmap_ref"),
-                                    ("out_warp", "fieldwarp_ref")]),
+        (resample, outputnode, [("out_field", "fieldmap")]),
+        (resample_ref, outputnode, [("out_field", "fieldmap_ref")]),
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),

@@ -386,16 +386,11 @@ class ApplyCoeffsField(SimpleInterface):
         unwarp = None
 
         # Pre-cached interpolator object
-        unwarp = B0FieldTransform(
-            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
-            num_threads=(
-                None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
-            ),
-        )
+        unwarp = B0FieldTransform(coeffs=[nb.load(cname) for cname in self.inputs.in_coeff])
 
         # Reconstruct the field from the coefficients, on the target dataset's grid.
         unwarp.fit(
-            self.inputs.data,
+            self.inputs.in_data,
             affine=(
                 None if not isdefined(self.inputs.fmap2data_xfm) else self.inputs.fmap2data_xfm
             ),
@@ -409,10 +404,13 @@ class ApplyCoeffsField(SimpleInterface):
         # HMC matrices are only necessary when reslicing the data (i.e., apply())
         hmc_mats = None
         self._results["out_corrected"] = unwarp.apply(
-            self.inputs.data,
+            self.inputs.in_data,
             pe_dir,
             ro_time,
             xfms=hmc_mats,
+            # num_threads=(
+            #     None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
+            # ),
         )
         return runtime
 
