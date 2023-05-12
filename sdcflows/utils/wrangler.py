@@ -74,6 +74,9 @@ def find_estimators(
     bids_filters
         Optional dictionary of key/values to filter the entities on.
         This allows lower level file inclusion/exclusion.
+    anat_suffix : :obj:`str` or :obj:`list`
+        String or list of strings to filter anatomical images for fieldmap-less
+        approaches. If not provided, ``T1w`` is used.
 
     Returns
     -------
