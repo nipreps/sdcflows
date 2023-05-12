@@ -42,7 +42,7 @@ def find_estimators(
     force_fmapless: bool = False,
     logger: Optional[logging.Logger] = None,
     bids_filters: Optional[dict] = None,
-    anat_suffix: Union[str, list] = 'T1w',
+    anat_suffix: Union[str, List[str]] = 'T1w',
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
