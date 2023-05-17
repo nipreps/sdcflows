@@ -317,9 +317,10 @@ def find_estimators(
             b0_entities = base_entities.copy()
             b0_entities["B0FieldIdentifier"] = b0_id
 
-            bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
+            bare_ids = layout.get(**base_entities, session=sessions, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
                 **base_entities,
+                session=sessions,
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
