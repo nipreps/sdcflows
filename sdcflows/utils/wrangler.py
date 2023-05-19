@@ -182,9 +182,11 @@ def find_estimators(
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<3 files>, method=<EstimatorType.PHASEDIFF: 3>,
-                        bids_id='auto_00000'),
-     FieldmapEstimation(sources=<3 files>, method=<EstimatorType.ANAT: 5>,
-                        bids_id='auto_00001')]
+                        bids_id='auto_...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_...'),
+     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                        bids_id='auto_...')]
 
     Likewise in a more comprehensive dataset:
 
@@ -194,13 +196,23 @@ def find_estimators(
     ...     force_fmapless=True,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<4 files>, method=<EstimatorType.PEPOLAR: 2>,
-                       bids_id='auto_00002'),
-    FieldmapEstimation(sources=<7 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00003'),
+                       bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00004'),
+                       bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00005')]
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
+                       bids_id='auto_...')]
 
     Because "*dataset A*" contains very few metadata fields available, "*fieldmap-less*"
     heuristics come back empty (BOLD and DWI files are missing
@@ -239,9 +251,9 @@ def find_estimators(
     ...     force_fmapless=False,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                        bids_id='auto_00011'),
+                        bids_id='auto_...'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00012')]
+                       bids_id='auto_...')]
 
     When the ``B0FieldIdentifier`` metadata is set for one or more fieldmaps, then
     the heuristics that use ``IntendedFor`` are dismissed:
@@ -266,7 +278,7 @@ def find_estimators(
     [FieldmapEstimation(sources=<5 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='pepolar4pe'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
-                       bids_id='auto_00000')]
+                       bids_id='auto_...')]
 
     """
     from .misc import create_logger
@@ -503,28 +515,23 @@ def find_estimators(
             meta.update({"TotalReadoutTime": ro})
             epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
 
-        for pe_dir in sorted(set(pe_dirs)):
-            pe_ro = [ro for ro, pe in zip(ro_totals, pe_dirs) if pe == pe_dir]
-            for ro_time in sorted(set(pe_ro)):
-                fmfiles, fmpaths = tuple(
-                    zip(
-                        *[
-                            (target, str(Path(target.path).relative_to(subject_root)))
-                            for i, target in enumerate(epi_targets)
-                            if pe_dirs[i] == pe_dir and ro_totals[i] == ro_time
-                        ]
-                    )
-                )
-                e = fm.FieldmapEstimation(
-                    [
-                        fm.FieldmapFile(
-                            anat_file[0], metadata={"IntendedFor": fmpaths}
-                        ),
-                        *fmfiles,
-                    ]
-                )
-                _log_debug_estimation(logger, e, layout.root)
-                estimators.append(e)
+        trivial_estimators = [
+            [
+                fm.FieldmapFile(
+                    anat_file[0],
+                    metadata={"IntendedFor": str(Path(epi.path).relative_to(subject_root))},
+                ),
+                epi,
+            ] for epi in epi_targets
+        ]
+
+        # TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
+        syn_estimators = [fm.FieldmapEstimation(e) for e in trivial_estimators]
+
+        for e in syn_estimators:
+            _log_debug_estimation(logger, e, layout.root)
+
+        estimators.extend(syn_estimators)
 
     return estimators
 
