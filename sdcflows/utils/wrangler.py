@@ -459,7 +459,10 @@ def find_estimators(
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
-                estimator_md["IntendedFor"] = intent
+                estimator_md["IntendedFor"] = [
+                    str(Path(pathlike).relative_to(subject_root))
+                    for pathlike in intent
+                ]
                 try:
                     e = fm.FieldmapEstimation(
                         [

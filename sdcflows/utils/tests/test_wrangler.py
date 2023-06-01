@@ -95,6 +95,43 @@ pepolar = {
                     }
                 }
             ]
+        },
+        {
+            "session": "04",
+            "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
+            "fmap": [
+                {"suffix": "epi", "dir": "AP", "metadata": {
+                    "EchoTime": 1.2,
+                    "PhaseEncodingDirection": "j-",
+                    "TotalReadoutTime": 0.8,
+                    "IntendedFor": [
+                        "ses-04/func/sub-01_ses-04_task-rest_run-1_bold.nii.gz",
+                        "ses-04/func/sub-01_ses-04_task-rest_run-2_bold.nii.gz",
+                    ],
+                }},
+            ],
+            "func": [
+                {
+                    "task": "rest",
+                    "run": 1,
+                    "suffix": "bold",
+                    "metadata": {
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j"
+                    }
+                },
+                {
+                    "task": "rest",
+                    "run": 2,
+                    "suffix": "bold",
+                    "metadata": {
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j"
+                    }
+                },
+            ]
         }
     ]
 }
@@ -216,3 +253,20 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     est = find_estimators(layout=layout, subject='01', bids_filters=filters['fmap'])
     assert len(est) == estimations
     clear_registry()
+
+
+def test_single_reverse_pedir(tmp_path):
+    bids_dir = tmp_path / "bids"
+    generate_bids_skeleton(bids_dir, pepolar)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject='01', bids_filters={'session': '04'})
+    assert len(est) == 2
+    subject_root = bids_dir / 'sub-01'
+    for estimator in est:
+        assert len(estimator.sources) == 2
+        epi, bold = estimator.sources
+        # Just checking order
+        assert epi.entities['fmap'] == 'epi'
+        # IntendedFor is a list of strings
+        # REGRESSION: The result was a PyBIDS BIDSFile (fmriprep#3020)
+        assert epi.metadata['IntendedFor'] == [str(bold.path.relative_to(subject_root))]
