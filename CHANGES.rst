@@ -1,3 +1,26 @@
+2.5.0 (June 01, 2023)
+=====================
+New feature release in the 2.5.x series.
+
+This release includes a number of changes to default behaviors.
+SyN-SDC will be performed per-BOLD/DWI image, unless specified otherwise with
+``B0FieldIdentifier``\s, and may now be specified with T2w images as anatomical
+references as well.
+Additionally, PEPolar fieldmaps will only be grouped if they share ``IntendedFor``
+metadata.
+
+Finally, as a small UX improvement, if magnitude1/magnitude2 images have differing
+affines but are in register, we will now copy the header rather than requiring the
+user to update the header themselves.
+
+* FIX: Ensure IntendedFor metadata is a subject-relative path (#360)
+* ENH: Split SyN fieldmap estimates per-EPI (#312)
+* ENH: Allow non-T1w anatomical estimators (#358)
+* ENH: Function to calculate reference grids aligned with the coefficients (#355)
+* ENH: Check registration of magnitude1/magnitude2 images and update headers (#356)
+* RF: Split PEPolar fieldmaps by intent, if available (#342)
+* CI: Use supported codecov uploaders (#348)
+
 2.4.3 (April 24, 2023)
 ======================
 Bug-fix release in the 2.4.x series.
