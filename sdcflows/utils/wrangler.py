@@ -495,7 +495,7 @@ def find_estimators(
     logger.debug("Attempting fmap-less estimation")
     from .epimanip import get_trt
 
-    hits = {*()}
+    hits = set()  # Avoid duplicates
     for ses, suffix in sorted(product(sessions, fmapless)):
         suffixes = ["sbref", suffix]  # Order indicates preference; prefer sbref
         datatype = {
@@ -534,33 +534,32 @@ def find_estimators(
 
         targets = []
         intent_map = []
+        base_estimators = []
         for target in all_targets:
             if str(target.path) in hits:
                 continue
-            targets.append(target)
             query = {**base_entities, **target.entities}
+
+            # Find all echos, so strip from query, if present
             query.pop("echo", None)
-            intent_map.append(layout.get(suffix=suffixes, **query))
-            hits.update(intent.path for intent in intent_map[-1])
 
-        trivial_estimators = [
-            [
-                fm.FieldmapFile(
-                    anat_file[0],
-                    metadata={
-                        "IntendedFor": [
-                            str(Path(epi.path).relative_to(subject_root))
-                            for epi in intent
-                        ]
-                    },
-                ),
-                target,
-            ]
-            for target, intent in zip(targets, intent_map)
-        ]
+            # Include sbref and EPI images in IntendedFor
+            # No harm in including sbrefs that won't be corrected,
+            # and ensures the hits set prevents doubling up
+            intent = layout.get(suffix=suffixes, **query)
+            metadata = {
+                "IntendedFor": [
+                    str(Path(epi.path).relative_to(subject_root)) for epi in intent
+                ]
+            }
+            base_estimators.append(
+                [fm.FieldmapFile(anat_file[0], metadata=metadata), target]
+            )
+            hits.update(epi.path for epi in intent)
 
-        # TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
-        syn_estimators = [fm.FieldmapEstimation(e) for e in trivial_estimators]
+        # Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
+
+        syn_estimators = [fm.FieldmapEstimation(e) for e in base_estimators]
 
         for e in syn_estimators:
             _log_debug_estimation(logger, e, layout.root)
