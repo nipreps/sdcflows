@@ -369,8 +369,14 @@ def test_fieldmapless(tmp_path):
     spec = {
         "01": {
             "anat": [T1w],
-            "func": [{"echo": i + 1, **bold, **{"metadata": me_metadata[i]}} for i in range(3)] +
-            [{"echo": i + 1, **sbref, **{"metadata": me_metadata[i]}} for i in range(3)],
+            "func": [
+                {"echo": i + 1, **bold, **{"metadata": me_metadata[i]}}
+                for i in range(3)
+            ]
+            + [
+                {"echo": i + 1, **sbref, **{"metadata": me_metadata[i]}}
+                for i in range(3)
+            ],
         },
     }
     generate_bids_skeleton(bids_dir, spec)
