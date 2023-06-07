@@ -500,22 +500,17 @@ def find_estimators(
 
         # Filter out candidates without defined PE direction
         epi_targets = []
-        pe_dirs = []
-        ro_totals = []
 
         for candidate in candidates:
             meta = candidate.get_metadata()
-            pe_dir = meta.get("PhaseEncodingDirection")
 
-            if not pe_dir:
+            if not meta.get("PhaseEncodingDirection"):
                 continue
 
-            pe_dirs.append(pe_dir)
-            ro = 1.0
+            trt = 1.0
             with suppress(ValueError):
-                ro = get_trt(meta, candidate.path)
-            ro_totals.append(ro)
-            meta.update({"TotalReadoutTime": ro})
+                trt = get_trt(meta, candidate.path)
+            meta.update({"TotalReadoutTime": trt})
             epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
 
         trivial_estimators = [
