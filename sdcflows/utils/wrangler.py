@@ -495,8 +495,19 @@ def find_estimators(
     logger.debug("Attempting fmap-less estimation")
     from .epimanip import get_trt
 
+    hits = {*()}
     for ses, suffix in sorted(product(sessions, fmapless)):
-        candidates = layout.get(**{**base_entities, **{'suffix': suffix, 'session': ses}})
+        suffixes = ["sbref", suffix]  # Order indicates preference; prefer sbref
+        datatype = {
+            "bold": "func",
+            "dwi": "dwi",
+        }[suffix]
+        candidates = layout.get(
+            **{
+                **base_entities,
+                **{"suffix": suffixes, "session": ses, "datatype": datatype},
+            }
+        )
 
         # Filter out candidates without defined PE direction
         epi_targets = []
@@ -513,14 +524,39 @@ def find_estimators(
             meta.update({"TotalReadoutTime": trt})
             epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
 
+        all_targets = sorted(
+            epi_targets,
+            key=lambda fmap: (
+                suffixes.index(fmap.suffix),  # sbref before DWI/BOLD
+                fmap.metadata.get("EchoTime", 1),  # shortest echo first
+            ),
+        )
+
+        targets = []
+        intent_map = []
+        for target in all_targets:
+            if str(target.path) in hits:
+                continue
+            targets.append(target)
+            query = {**base_entities, **target.entities}
+            query.pop("echo", None)
+            intent_map.append(layout.get(suffix=suffixes, **query))
+            hits.update(intent.path for intent in intent_map[-1])
+
         trivial_estimators = [
             [
                 fm.FieldmapFile(
                     anat_file[0],
-                    metadata={"IntendedFor": str(Path(epi.path).relative_to(subject_root))},
+                    metadata={
+                        "IntendedFor": [
+                            str(Path(epi.path).relative_to(subject_root))
+                            for epi in intent
+                        ]
+                    },
                 ),
-                epi,
-            ] for epi in epi_targets
+                target,
+            ]
+            for target, intent in zip(targets, intent_map)
         ]
 
         # TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
