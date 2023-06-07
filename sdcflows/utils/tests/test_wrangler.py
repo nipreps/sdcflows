@@ -326,7 +326,7 @@ def test_fieldmapless(tmp_path):
     generate_bids_skeleton(bids_dir, spec)
     layout = gen_layout(bids_dir)
     est = find_estimators(layout=layout, subject="01", fmapless=True)
-    assert len(est) == 3  # Should be 1
+    assert len(est) == 1
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
@@ -341,7 +341,7 @@ def test_fieldmapless(tmp_path):
     generate_bids_skeleton(bids_dir, spec)
     layout = gen_layout(bids_dir)
     est = find_estimators(layout=layout, subject="01", fmapless=True)
-    assert len(est) == 2  # Should be 1
+    assert len(est) == 1
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
@@ -372,7 +372,7 @@ def test_fieldmapless(tmp_path):
     generate_bids_skeleton(bids_dir, spec)
     layout = gen_layout(bids_dir)
     est = find_estimators(layout=layout, subject="01", fmapless=True)
-    assert len(est) == 6  # Should be 1
+    assert len(est) == 1
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
