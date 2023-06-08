@@ -441,7 +441,7 @@ def find_estimators(
                 targets = sbrefs
                 intent_map = []
                 for sbref in sbrefs:
-                    ents = sbref.entities.copy()
+                    ents = sbref.get_entities(metadata=False)
                     ents["suffix"] = ["bold", "dwi"]
                     intent_map.append(
                         [
