@@ -208,7 +208,7 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Fit the model
-        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
+        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False, solver='lsqr')
         for attempt in range(3):
             model.fit(colmat[mask.reshape(-1), :], data[mask])
             extreme = np.abs(model.coef_).max()
