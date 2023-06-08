@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler - sdcflows 2.5.0 documentation</title>
+        <title>sdcflows.utils.wrangler - sdcflows 2.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.0</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.1</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.0</span>
+  <span class="sidebar-brand-text">2.5.1</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -270,7 +270,7 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
 <span class="kn">from</span> <span class="nn">bids.layout</span> <span class="kn">import</span> <span class="n">BIDSLayout</span><span class="p">,</span> <span class="n">BIDSFile</span>
 <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
 
@@ -685,7 +685,7 @@
                 <span class="n">targets</span> <span class="o">=</span> <span class="n">sbrefs</span>
                 <span class="n">intent_map</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">sbref</span> <span class="ow">in</span> <span class="n">sbrefs</span><span class="p">:</span>
-                    <span class="n">ents</span> <span class="o">=</span> <span class="n">sbref</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">ents</span> <span class="o">=</span> <span class="n">sbref</span><span class="o">.</span><span class="n">get_entities</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                     <span class="n">ents</span><span class="p">[</span><span class="s2">"suffix"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"bold"</span><span class="p">,</span> <span class="s2">"dwi"</span><span class="p">]</span>
                     <span class="n">intent_map</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="p">[</span>
@@ -737,48 +737,111 @@
         <span class="k">return</span> <span class="n">estimators</span>
 
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Attempting fmap-less estimation"</span><span class="p">)</span>
+    <span class="n">estimator_specs</span> <span class="o">=</span> <span class="n">find_anatomical_estimators</span><span class="p">(</span>
+        <span class="n">anat_file</span><span class="o">=</span><span class="n">anat_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
+        <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span>
+        <span class="n">sessions</span><span class="o">=</span><span class="n">sessions</span><span class="p">,</span>
+        <span class="n">base_entities</span><span class="o">=</span><span class="n">base_entities</span><span class="p">,</span>
+        <span class="n">suffixes</span><span class="o">=</span><span class="n">fmapless</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">estimator_specs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">estimator</span> <span class="o">=</span> <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_log_debug_estimator_fail</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="s2">"ANAT"</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">estimator</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+            <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">estimator</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">estimators</span></div>
+
+
+<div class="viewcode-block" id="find_anatomical_estimators"><a class="viewcode-back" href="../../../api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_anatomical_estimators">[docs]</a><span class="k">def</span> <span class="nf">find_anatomical_estimators</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">anat_file</span><span class="p">:</span> <span class="n">BIDSFile</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">BIDSLayout</span><span class="p">,</span>
+    <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sessions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">base_entities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">suffixes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">]]:</span>
+    <span class="sa">r</span><span class="sd">"""Find anatomical estimators</span>
+
+<span class="sd">    Given an anatomical reference image, create lists of files for estimating</span>
+<span class="sd">    susceptibility distortion for the EPI images in a dataset.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    anat_file : :class:`bids.layout.BIDSFile`</span>
+<span class="sd">        Anatomical reference image to use in estimators.</span>
+<span class="sd">    layout : :class:`bids.layout.BIDSLayout`</span>
+<span class="sd">        An initialized PyBIDS layout.</span>
+<span class="sd">    subject : :class:`str`</span>
+<span class="sd">        Participant label for this single-subject workflow.</span>
+<span class="sd">    sessions : :class:`list`</span>
+<span class="sd">        One of more session identifiers. To use all, pass ``[None]``.</span>
+<span class="sd">    base_entities : :class:`dict`</span>
+<span class="sd">        Entities to use to query for images. These should include any filters.</span>
+<span class="sd">    suffixes : :class:`list`</span>
+<span class="sd">        EPI suffixes, for example ``["bold", "dwi"]``. Associated ``"sbref"``\s</span>
+<span class="sd">        will be found and used in place of BOLD/diffusion EPIs.</span>
+<span class="sd">    """</span>
+
     <span class="kn">from</span> <span class="nn">.epimanip</span> <span class="kn">import</span> <span class="n">get_trt</span>
 
-    <span class="k">for</span> <span class="n">ses</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">fmapless</span><span class="p">)):</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">base_entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="n">suffix</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">ses</span><span class="p">}})</span>
+    <span class="n">subject_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="n">hits</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># Avoid duplicates</span>
+    <span class="n">estimators</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ses</span><span class="p">,</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">)):</span>
+        <span class="n">suffixes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"sbref"</span><span class="p">,</span> <span class="n">suffix</span><span class="p">]</span>  <span class="c1"># Order indicates preference; prefer sbref</span>
+        <span class="n">datatype</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"bold"</span><span class="p">:</span> <span class="s2">"func"</span><span class="p">,</span>
+            <span class="s2">"dwi"</span><span class="p">:</span> <span class="s2">"dwi"</span><span class="p">,</span>
+        <span class="p">}[</span><span class="n">suffix</span><span class="p">]</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="o">**</span><span class="n">base_entities</span><span class="p">,</span>
+                <span class="o">**</span><span class="p">{</span><span class="s2">"suffix"</span><span class="p">:</span> <span class="n">suffixes</span><span class="p">,</span> <span class="s2">"session"</span><span class="p">:</span> <span class="n">ses</span><span class="p">,</span> <span class="s2">"datatype"</span><span class="p">:</span> <span class="n">datatype</span><span class="p">},</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
 
         <span class="c1"># Filter out candidates without defined PE direction</span>
         <span class="n">epi_targets</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">pe_dirs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">ro_totals</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">()</span>
-            <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">pe_dir</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PhaseEncodingDirection"</span><span class="p">):</span>
                 <span class="k">continue</span>
 
-            <span class="n">pe_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">)</span>
-            <span class="n">ro</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">trt</span> <span class="o">=</span> <span class="mf">1.0</span>
             <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-                <span class="n">ro</span> <span class="o">=</span> <span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-            <span class="n">ro_totals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ro</span><span class="p">)</span>
-            <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"TotalReadoutTime"</span><span class="p">:</span> <span class="n">ro</span><span class="p">})</span>
-            <span class="n">epi_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
+                <span class="n">trt</span> <span class="o">=</span> <span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"TotalReadoutTime"</span><span class="p">:</span> <span class="n">trt</span><span class="p">})</span>
+            <span class="n">epi_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
 
-        <span class="n">trivial_estimators</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">[</span>
-                <span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span>
-                    <span class="n">anat_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"IntendedFor"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">epi</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">subject_root</span><span class="p">))},</span>
-                <span class="p">),</span>
-                <span class="n">epi</span><span class="p">,</span>
-            <span class="p">]</span> <span class="k">for</span> <span class="n">epi</span> <span class="ow">in</span> <span class="n">epi_targets</span>
-        <span class="p">]</span>
+        <span class="k">def</span> <span class="nf">sort_key</span><span class="p">(</span><span class="n">fmap</span><span class="p">):</span>
+            <span class="c1"># Return sbref before DWI/BOLD and shortest echo first</span>
+            <span class="k">return</span> <span class="n">suffixes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">suffix</span><span class="p">),</span> <span class="n">fmap</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"EchoTime"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs</span>
-        <span class="n">syn_estimators</span> <span class="o">=</span> <span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapEstimation</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">trivial_estimators</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">epi_targets</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">sort_key</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">path</span> <span class="ow">in</span> <span class="n">hits</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base_entities</span><span class="p">,</span> <span class="o">**</span><span class="n">target</span><span class="o">.</span><span class="n">entities</span><span class="p">}</span>
 
-        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">syn_estimators</span><span class="p">:</span>
-            <span class="n">_log_debug_estimation</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+            <span class="c1"># Find all echos, so strip from query, if present</span>
+            <span class="n">query</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"echo"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="n">estimators</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">syn_estimators</span><span class="p">)</span>
+            <span class="c1"># Include sbref and EPI images in IntendedFor</span>
+            <span class="c1"># No harm in including sbrefs that won't be corrected,</span>
+            <span class="c1"># and ensures the hits set prevents doubling up</span>
+            <span class="n">intent</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">epi</span><span class="p">)</span> <span class="k">for</span> <span class="n">epi</span> <span class="ow">in</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="n">suffixes</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">)]</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"IntendedFor"</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">epi</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">subject_root</span><span class="p">))</span> <span class="k">for</span> <span class="n">epi</span> <span class="ow">in</span> <span class="n">intent</span><span class="p">]</span>
+            <span class="p">}</span>
+            <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">anat_file</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">),</span> <span class="n">target</span><span class="p">])</span>
+            <span class="n">hits</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">intent</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">estimators</span></div>
 
