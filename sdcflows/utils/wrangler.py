@@ -26,7 +26,7 @@ from functools import reduce
 from itertools import product
 from contextlib import suppress
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any
 from bids.layout import BIDSLayout, BIDSFile
 from bids.utils import listify
 
@@ -493,48 +493,111 @@ def find_estimators(
         return estimators
 
     logger.debug("Attempting fmap-less estimation")
+    estimator_specs = find_anatomical_estimators(
+        anat_file=anat_file[0],
+        layout=layout,
+        subject=subject,
+        sessions=sessions,
+        base_entities=base_entities,
+        suffixes=fmapless,
+    )
+    for spec in estimator_specs:
+        try:
+            estimator = fm.FieldmapEstimation(spec)
+        except (ValueError, TypeError) as err:
+            _log_debug_estimator_fail(logger, "ANAT", spec, layout.root, str(err))
+        else:
+            _log_debug_estimation(logger, estimator, layout.root)
+            estimators.append(estimator)
+    return estimators
+
+
+def find_anatomical_estimators(
+    *,
+    anat_file: BIDSFile,
+    layout: BIDSLayout,
+    subject: str,
+    sessions: List[str],
+    base_entities: Dict[str, Any],
+    suffixes: List[str],
+) -> List[List[fm.FieldmapFile]]:
+    r"""Find anatomical estimators
+
+    Given an anatomical reference image, create lists of files for estimating
+    susceptibility distortion for the EPI images in a dataset.
+
+    Parameters
+    ----------
+    anat_file : :class:`bids.layout.BIDSFile`
+        Anatomical reference image to use in estimators.
+    layout : :class:`bids.layout.BIDSLayout`
+        An initialized PyBIDS layout.
+    subject : :class:`str`
+        Participant label for this single-subject workflow.
+    sessions : :class:`list`
+        One of more session identifiers. To use all, pass ``[None]``.
+    base_entities : :class:`dict`
+        Entities to use to query for images. These should include any filters.
+    suffixes : :class:`list`
+        EPI suffixes, for example ``["bold", "dwi"]``. Associated ``"sbref"``\s
+        will be found and used in place of BOLD/diffusion EPIs.
+    """
+
     from .epimanip import get_trt
 
-    for ses, suffix in sorted(product(sessions, fmapless)):
-        candidates = layout.get(**{**base_entities, **{'suffix': suffix, 'session': ses}})
+    subject_root = Path(layout.root) / f"sub-{subject}"
+
+    hits = set()  # Avoid duplicates
+    estimators = []
+    for ses, suffix in sorted(product(sessions, suffixes)):
+        suffixes = ["sbref", suffix]  # Order indicates preference; prefer sbref
+        datatype = {
+            "bold": "func",
+            "dwi": "dwi",
+        }[suffix]
+        candidates = layout.get(
+            **{
+                **base_entities,
+                **{"suffix": suffixes, "session": ses, "datatype": datatype},
+            }
+        )
 
         # Filter out candidates without defined PE direction
         epi_targets = []
-        pe_dirs = []
-        ro_totals = []
 
         for candidate in candidates:
             meta = candidate.get_metadata()
-            pe_dir = meta.get("PhaseEncodingDirection")
 
-            if not pe_dir:
+            if not meta.get("PhaseEncodingDirection"):
                 continue
 
-            pe_dirs.append(pe_dir)
-            ro = 1.0
+            trt = 1.0
             with suppress(ValueError):
-                ro = get_trt(meta, candidate.path)
-            ro_totals.append(ro)
-            meta.update({"TotalReadoutTime": ro})
-            epi_targets.append(fm.FieldmapFile(candidate.path, metadata=meta))
+                trt = get_trt(meta, candidate.path)
+            meta.update({"TotalReadoutTime": trt})
+            epi_targets.append(fm.FieldmapFile(candidate, metadata=meta))
 
-        trivial_estimators = [
-            [
-                fm.FieldmapFile(
-                    anat_file[0],
-                    metadata={"IntendedFor": str(Path(epi.path).relative_to(subject_root))},
-                ),
-                epi,
-            ] for epi in epi_targets
-        ]
+        def sort_key(fmap):
+            # Return sbref before DWI/BOLD and shortest echo first
+            return suffixes.index(fmap.suffix), fmap.metadata.get("EchoTime", 1)
 
-        # TODO: Grouping could be done here; previously we grouped by (pe_dir, ro_time) pairs
-        syn_estimators = [fm.FieldmapEstimation(e) for e in trivial_estimators]
+        for target in sorted(epi_targets, key=sort_key):
+            if target.path in hits:
+                continue
+            query = {**base_entities, **target.entities}
 
-        for e in syn_estimators:
-            _log_debug_estimation(logger, e, layout.root)
+            # Find all echos, so strip from query, if present
+            query.pop("echo", None)
 
-        estimators.extend(syn_estimators)
+            # Include sbref and EPI images in IntendedFor
+            # No harm in including sbrefs that won't be corrected,
+            # and ensures the hits set prevents doubling up
+            intent = [Path(epi) for epi in layout.get(suffix=suffixes, **query)]
+            metadata = {
+                "IntendedFor": [str(epi.relative_to(subject_root)) for epi in intent]
+            }
+            estimators.append([fm.FieldmapFile(anat_file, metadata=metadata), target])
+            hits.update(intent)
 
     return estimators
 

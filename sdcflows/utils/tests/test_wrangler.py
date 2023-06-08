@@ -1,4 +1,5 @@
 import pytest
+from shutil import rmtree
 
 from niworkflows.utils.testing import generate_bids_skeleton
 
@@ -270,3 +271,118 @@ def test_single_reverse_pedir(tmp_path):
         # IntendedFor is a list of strings
         # REGRESSION: The result was a PyBIDS BIDSFile (fmriprep#3020)
         assert epi.metadata['IntendedFor'] == [str(bold.path.relative_to(subject_root))]
+
+
+def test_fieldmapless(tmp_path):
+    bids_dir = tmp_path / "bids"
+
+    T1w = {"suffix": "T1w"}
+    bold = {
+        "task": "rest",
+        "suffix": "bold",
+        "metadata": {
+            "RepetitionTime": 0.8,
+            "TotalReadoutTime": 0.5,
+            "PhaseEncodingDirection": "j",
+        },
+    }
+    me_metadata = [
+        {"EchoTime": 0.01 * i, **bold["metadata"]}
+        for i in range(1, 4)
+    ]
+    sbref = {**bold, **{"suffix": "sbref"}}
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [bold],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
+
+    # Multi-run generates one estimator per-run
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [{"run": i, **bold} for i in range(1, 3)],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 2
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
+
+    # Multi-echo should only generate one estimator
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [{"echo": i + 1, **bold, **{"metadata": me_metadata[i]}} for i in range(3)],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
+
+    # Matching bold+sbref should generate only one estimator
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [bold, sbref],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
+
+    # Mismatching bold+sbref should generate two sbrefs
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [{"acq": "A", **bold}, {"acq": "B", **sbref}],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 2
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
+
+    # Multiecho bold+sbref should generate only one estimator
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [
+                {"echo": i + 1, **bold, **{"metadata": me_metadata[i]}}
+                for i in range(3)
+            ]
+            + [
+                {"echo": i + 1, **sbref, **{"metadata": me_metadata[i]}}
+                for i in range(3)
+            ],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
