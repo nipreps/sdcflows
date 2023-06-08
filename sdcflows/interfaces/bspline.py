@@ -209,7 +209,19 @@ class BSplineApprox(SimpleInterface):
 
         # Fit the model
         model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
-        model.fit(colmat[mask.reshape(-1), :], data[mask])
+        for attempt in range(3):
+            model.fit(colmat[mask.reshape(-1), :], data[mask])
+            extreme = np.abs(model.coef_).max()
+            LOGGER.debug(f"Model fit attempt {attempt}: max(|coeffs|) = {extreme}")
+            # Normal values seem to be ~1e2, bad ~1e8. May want to tweak this if
+            # these distributions are wider than I think.
+            if extreme < 1e4:
+                break
+        else:
+            raise RuntimeError(
+                f"Spline fit of input file {self.inputs.in_data} failed. "
+                f"Extreme value {extreme:.2e} detected in spline coefficients."
+            )
 
         # Store coefficients
         index = 0
