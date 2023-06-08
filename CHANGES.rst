@@ -1,3 +1,12 @@
+2.5.1 (June 08, 2023)
+=====================
+Bug-fix release in the 2.5.x series.
+
+* FIX: Use ``lsqr`` solver for spline fit, rerun on extreme values (#366)
+* FIX: Ensure metadata is not present in entity query (#367)
+* RF/FIX: Prioritize sbref and shortest echo for SyN-SDC (#364)
+
+
 2.5.0 (June 01, 2023)
 =====================
 New feature release in the 2.5.x series.
