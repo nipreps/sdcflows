@@ -378,20 +378,30 @@ class ApplyCoeffsField(SimpleInterface):
         )
 
         # We can now write out the fieldmap
-        # unwarp.mapped.to_filename(out_field)
-        # self._results["out_field"] = out_field
+        self._results["out_field"] = fname_presuffix(
+            self.inputs.in_data,
+            suffix="_field",
+            newpath=runtime.cwd,
+        )
+        unwarp.mapped.to_filename(self._results["out_field"])
 
         # HMC matrices are only necessary when reslicing the data (i.e., apply())
         # Check the length of in_xfms matches that of in_data
-        self._results["out_corrected"] = unwarp.apply(
+        self._results["out_corrected"] = fname_presuffix(
+            self.inputs.in_data,
+            suffix="_sdc",
+            newpath=runtime.cwd,
+        )
+
+        unwarp.apply(
             self.inputs.in_data,
             self.inputs.pe_dir,
             self.inputs.ro_time,
-            xfms=self.inputs.in_xfms,
+            xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
             num_threads=(
                 None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
             ),
-        )
+        ).to_filename(self._results["out_corrected"])
         return runtime
 
 

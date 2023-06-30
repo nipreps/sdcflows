@@ -261,7 +261,7 @@ class B0FieldTransform:
         cval: float = 0.0,
         prefilter: bool = True,
         output_dtype: Union[str, np.dtype] = None,
-        num_threads: int = os.cpu_count(),
+        num_threads: int = None,
         allow_negative: bool = False,
     ):
         """
@@ -329,12 +329,13 @@ class B0FieldTransform:
 
         # Prepare data
         data = np.squeeze(np.asanyarray(moving.dataobj))
+        ndim = min(data.ndim, 3)
         output_dtype = output_dtype or moving.header.get_data_dtype()
 
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = nt.linear.Affine(
             reference=moving
-        ).reference.ndindex.reshape((data.ndim - 1, *data.shape[:-1])).astype("float32")
+        ).reference.ndindex.reshape((ndim, *data.shape[:ndim])).astype("float32")
 
         # The VSM is just the displacements field given in index coordinates
         # voxcoords is the deformation field, i.e., the target position of each voxel
@@ -358,7 +359,7 @@ class B0FieldTransform:
             mode=mode,
             cval=cval,
             prefilter=prefilter,
-            max_concurrent=num_threads,
+            max_concurrent=num_threads or min(os.cpu_count(), 12),
         ))
 
         if not allow_negative:
