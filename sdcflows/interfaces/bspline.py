@@ -386,11 +386,11 @@ class ApplyCoeffsField(SimpleInterface):
         self._results["out_corrected"] = unwarp.apply(
             self.inputs.in_data,
             self.inputs.pe_dir,
-            self.input.ro_time,
+            self.inputs.ro_time,
             xfms=self.inputs.in_xfms,
-            # num_threads=(
-            #     None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
-            # ),
+            num_threads=(
+                None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
+            ),
         )
         return runtime
 
