@@ -186,9 +186,7 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
-        approx = (
-            approx if affine is not None else False
-        )  # Approximate iff affine is defined
+        approx &= affine is not None  # Approximate iff affine is defined
         affine = affine if affine is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
 
