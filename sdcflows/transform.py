@@ -168,7 +168,7 @@ class B0FieldTransform:
             will be dropped.
         affine : :obj:`numpy.ndarray`
             Transform that maps coordinates on the target_reference on to the
-            fieldmap reference (that is, the affine through which the filedmap
+            fieldmap reference (that is, the affine through which the fieldmap can
             be resampled in register with the target_reference).
         approx : :obj:`bool`
             If ``True``, do not reconstruct the B-Spline field directly on the target
