@@ -326,7 +326,7 @@ class B0FieldTransform:
             ro_time *= -1.0
 
         # Squeeze non-spatial dimensions
-        newshape = data.shape[:3] + tuple(dim for dim in data.shape[3:] if dim > 1)
+        newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
         data = np.reshape(moving.dataobj, newshape)
         ndim = min(data.ndim, 3)
         output_dtype = output_dtype or moving.header.get_data_dtype()
