@@ -92,9 +92,6 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
     )
 
     b0 = tf.B0FieldTransform(coeffs=coeff_nii)
-    assert b0.fit(phantom_nii) is True
-    assert b0.fit(phantom_nii) is False
-
     b0.apply(
         phantom_nii,
         pe_dir=pe_dir,

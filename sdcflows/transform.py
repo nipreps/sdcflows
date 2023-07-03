@@ -42,17 +42,19 @@ from niworkflows.interfaces.nibabel import reorient_image
 
 
 def _sdc_unwarp(
-    data: np.ndarray,
-    coordinates: np.ndarray,
-    hmc_xfm: np.ndarray,
-    voxshift: np.ndarray,
+    data: np.array,
+    coordinates: np.array,
+    hmc_xfm: np.array,
+    voxshift: np.array,
     pe_axis: int,
     output_dtype: Union[type, np.dtype] = None,
     order: int = 3,
     mode: str = "constant",
     cval: float = 0.0,
     prefilter: bool = True,
-) -> np.ndarray:
+) -> np.array:
+    """Resample one volume, moving through a head motion correction affine if provided."""
+
     if hmc_xfm is not None:
         # Move image with the head
         coords_shape = coordinates.shape
@@ -77,12 +79,13 @@ def _sdc_unwarp(
 
 
 async def worker(
-    data: np.ndarray,
-    coordinates: np.ndarray,
-    hmc_xfm: np.ndarray,
+    data: np.array,
+    coordinates: np.array,
+    hmc_xfm: np.array,
     func: Callable,
     semaphore: asyncio.Semaphore,
-) -> np.ndarray:
+) -> np.array:
+    """Create one worker and attach it to the execution loop."""
     async with semaphore:
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, func, data, coordinates, hmc_xfm)
@@ -90,9 +93,9 @@ async def worker(
 
 
 async def unwarp_parallel(
-    fulldataset: np.ndarray,
-    coordinates: np.ndarray,
-    voxelshift_map: np.ndarray,
+    fulldataset: np.array,
+    coordinates: np.array,
+    voxelshift_map: np.array,
     pe_axis: int,
     xfms: Sequence[np.array],
     order: int = 3,
@@ -101,7 +104,54 @@ async def unwarp_parallel(
     prefilter: bool = True,
     output_dtype: Union[str, np.dtype] = None,
     max_concurrent: int = min(os.cpu_count(), 12),
-) -> List[np.ndarray]:
+) -> List[np.array]:
+    r"""
+    Unwarp an EPI dataset parallelizing across volumes.
+
+    Parameters
+    ----------
+    fulldataset : :obj:`~numpy.array`
+        A :math:`N_\text{i} \times N_\text{j} \times N_\text{k} \times N_\text{t}` array.
+        The full data array of the EPI that are wanted after correction.
+    coordinates : :obj:`~numpy.array`
+        A :math:`\text{3}\times N_\text{i} \times N_\text{j} \times N_\text{k}` array
+        providing the voxel (index) coordinates of the reference image (i.e., interpolated
+        points) before SDC/HMC.
+    voxelshift_map : :obj:`~numpy.array`
+        A :math:`N_\text{i} \times N_\text{j} \times N_\text{k}` array with the displacement
+        of each voxel in voxel units.
+    pe_axis : :obj:`int`
+        An integer indicating which of the three axes indexes the phase-encoding.
+    xfms : :obj:`list` of obj:`~numpy.array`
+        A list of 4\ :math:`\times`4 matrices, each one formalizing the estimated head motion
+        alignment to the scan's reference. Therefore, each of these matrices express the
+        transform of every voxel's RAS (physical) coordinates in the image used as reference
+        for realignment into the coordinates of each of the EPI series volume.
+    order : :obj:`int`, optional
+        The order of the spline interpolation, default is 3.
+        The order has to be in the range 0-5.
+    mode : {'constant', 'reflect', 'nearest', 'mirror', 'wrap'}, optional
+        Determines how the input image is extended when the resamplings overflows
+        a border. Default is 'constant'.
+    cval : float, optional
+        Constant value for ``mode='constant'``. Default is 0.0.
+    prefilter : :obj:`bool`, optional
+        Determines if the image's data array is prefiltered with
+        a spline filter before interpolation. The default is ``True``,
+        which will create a temporary *float64* array of filtered values
+        if *order > 1*. If setting this to ``False``, the output will be
+        slightly blurred if *order > 1*, unless the input is prefiltered,
+        i.e. it is the result of calling the spline filter on the original
+        input.
+    output_dtype : :obj:`str` or :obj:`~numpy.dtype`
+        Override the output data type, instead of propagating it from the
+        moving image.
+    max_concurrent : :obj:`int`
+        The maximum number of parallel resamplings at any given time of execution.
+        Use this parameter to set an upper bound to memory utilization.
+
+    """
+
     semaphore = asyncio.Semaphore(max_concurrent)
 
     if fulldataset.ndim == 3:
@@ -151,7 +201,7 @@ class B0FieldTransform:
     def fit(
         self,
         target_reference: nb.spatialimages.SpatialImage,
-        affine: np.array = None,
+        fmap2data_xfm: np.array = None,
         approx: bool = True,
     ) -> bool:
         r"""
@@ -166,10 +216,16 @@ class B0FieldTransform:
             The image object containing a reference grid (same as that of the data
             to be resampled). If a 4D dataset is provided, then the fourth dimension
             will be dropped.
-        affine : :obj:`numpy.ndarray`
-            Transform that maps coordinates on the target_reference on to the
-            fieldmap reference (that is, the affine through which the fieldmap can
-            be resampled in register with the target_reference).
+        fmap2data_xfm : :obj:`numpy.ndarray`
+            Transform that maps coordinates on the `target_reference` onto the
+            fieldmap reference (that is, the linear transform through which the fieldmap can
+            be resampled in register with the `target_reference`).
+            In other words, `fmap2data_xfm` is the result of calling a registration tool
+            such as ANTs configured for a linear transform with at most 12 degrees of freedom
+            and called with the image carrying `target_affine` as reference and the fieldmap
+            reference as moving.
+            The result of such a registration framework is an affine (our `fmap2data_xfm` here)
+            that maps coordinates in reference (target) RAS onto the fieldmap RAS.
         approx : :obj:`bool`
             If ``True``, do not reconstruct the B-Spline field directly on the target
             (which will likely not be aligned with the fieldmap's grid), but rather use
@@ -186,24 +242,26 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
-        approx &= affine is not None  # Approximate iff affine is defined
-        affine = affine if affine is not None else np.eye(4)
+        approx &= fmap2data_xfm is not None  # Approximate iff fmap2data_xfm is defined
+        fmap2data_xfm = fmap2data_xfm if fmap2data_xfm is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
 
         # Project the reference's grid onto the fieldmap's
         target_reference = target_reference.__class__(
             target_reference.dataobj,
-            affine @ target_affine,
+            fmap2data_xfm @ target_affine,
             target_reference.header,
         )
 
-        if self.mapped is not None:
-            newshape = target_reference.shape
+        # TODO Separate cache validation from here. With the resampling, this
+        # code will always  determine the cache must be recalculated.
+        # if self.mapped is not None:
+        #     newshape = target_reference.shape
 
-            if np.all(newshape == self.mapped.shape) and np.allclose(
-                target_affine, self.mapped.affine
-            ):
-                return False
+        #     if np.all(newshape == self.mapped.shape) and np.allclose(
+        #         target_affine, self.mapped.affine
+        #     ):
+        #         return False
 
         weights = []
         coeffs = []
@@ -254,6 +312,8 @@ class B0FieldTransform:
         pe_dir: str,
         ro_time: float,
         xfms: Sequence[np.array] = None,
+        fmap2data_xfm: np.array = None,
+        approx: bool = True,
         order: int = 3,
         mode: str = "constant",
         cval: float = 0.0,
@@ -262,7 +322,7 @@ class B0FieldTransform:
         num_threads: int = None,
         allow_negative: bool = False,
     ):
-        """
+        r"""
         Apply a transformation to an image, resampling on the reference spatial object.
 
         Handles parallelization to resample 4D images.
@@ -279,6 +339,20 @@ class B0FieldTransform:
         xfms : :obj:`None` or :obj:`list`
             A list of rigid-body transformations previously estimated that will
             realign the dataset (that is, compensate for head motion) after resampling.
+        fmap2data_xfm : :obj:`numpy.ndarray`
+            Transform that maps coordinates on the `target_reference` onto the
+            fieldmap reference (that is, the linear transform through which the fieldmap can
+            be resampled in register with the `target_reference`).
+            In other words, `fmap2data_xfm` is the result of calling a registration tool
+            such as ANTs configured for a linear transform with at most 12 degrees of freedom
+            and called with the image carrying `target_affine` as reference and the fieldmap
+            reference as moving.
+            The result of such a registration framework is an affine (our `fmap2data_xfm` here)
+            that maps coordinates in reference (target) RAS onto the fieldmap RAS.
+        approx : :obj:`bool`
+            If ``True``, do not reconstruct the B-Spline field directly on the target
+            (which will likely not be aligned with the fieldmap's grid), but rather use
+            the fieldmap's grid and then use just regular interpolation.
         order : :obj:`int`, optional
             The order of the spline interpolation, default is 3.
             The order has to be in the range 0-5.
@@ -298,6 +372,13 @@ class B0FieldTransform:
         output_dtype : :obj:`str` or :obj:`~numpy.dtype`
             Override the output data type, instead of propagating it from the
             moving image.
+        num_threads : :obj:`int`
+            The maximum number of parallel resamplings at any given time of execution.
+            Use this parameter to set an upper bound to memory utilization.
+        allow_negative : :obj:`bool`
+            Remove negative values introduced in interpolation (may happen for nonnegative data
+            when order :math:`\gt` 3). Set this value to `True` if your `moving` image does
+            have negative values.
 
         Returns
         -------
@@ -311,8 +392,14 @@ class B0FieldTransform:
         if isinstance(moving, (str, bytes, Path)):
             moving = nb.load(moving)
 
-        # Generate warp field (before ensuring positive cosines)
-        self.fit(moving)
+        if self.mapped is not None:
+            warn(
+                "The fieldmap has been already fit, the user is responsible for "
+                "ensuring the parameters of the EPI target are consistent."
+            )
+        else:
+            # Generate warp field (before ensuring positive cosines)
+            self.fit(moving, fmap2data_xfm=fmap2data_xfm, approx=approx)
 
         # Make sure the data array has all cosines positive (i.e., no axes are flipped)
         moving, axcodes = ensure_positive_cosines(moving)

@@ -368,22 +368,12 @@ class ApplyCoeffsField(SimpleInterface):
         # Pre-cached interpolator object
         unwarp = B0FieldTransform(coeffs=[nb.load(cname) for cname in self.inputs.in_coeff])
 
-        # Reconstruct the field from the coefficients, on the target dataset's grid.
-        unwarp.fit(
-            self.inputs.in_data,
-            affine=(
-                None if not isdefined(self.inputs.fmap2data_xfm) else self.inputs.fmap2data_xfm
-            ),
-            approx=self.inputs.approx,
-        )
-
         # We can now write out the fieldmap
         self._results["out_field"] = fname_presuffix(
             self.inputs.in_data,
             suffix="_field",
             newpath=runtime.cwd,
         )
-        unwarp.mapped.to_filename(self._results["out_field"])
 
         # HMC matrices are only necessary when reslicing the data (i.e., apply())
         # Check the length of in_xfms matches that of in_data
@@ -398,10 +388,15 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.pe_dir,
             self.inputs.ro_time,
             xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
+            fmap2data_xfm=(
+                None if not isdefined(self.inputs.fmap2data_xfm) else self.inputs.fmap2data_xfm
+            ),
+            approx=self.inputs.approx,
             num_threads=(
                 None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
             ),
         ).to_filename(self._results["out_corrected"])
+        unwarp.mapped.to_filename(self._results["out_field"])
         return runtime
 
 
