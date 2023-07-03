@@ -119,7 +119,7 @@ def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
     """Check that our interpolation is not far away from TOPUP's."""
     tmpdir.chdir()
     result = ApplyCoeffsField(
-        in_data=[str(testdata_dir / "epi.nii.gz")] * 2,
+        in_data=str(testdata_dir / "epi.nii.gz"),
         in_coeff=str(testdata_dir / "topup-coeff-fixed.nii.gz"),
         pe_dir="j-",
         ro_time=1.0,
