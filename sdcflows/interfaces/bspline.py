@@ -104,14 +104,8 @@ class BSplineApprox(SimpleInterface):
     This interface resolves the optimization problem of obtaining the B-Spline coefficients
     :math:`c(\mathbf{k})` that best approximate the data samples within the
     brain mask :math:`f(\mathbf{s})`, following Eq. (17) -- in that case for 2D --
-    of [Unser1999]_.
-    Here, and adapted to 3D:
-
-    .. math::
-
-        f(\mathbf{s}) =
-        \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
-        \label{eq:1}\tag{1}
+    of [Unser1999]_. Here, and for the case of 3D, the formulism is adapted in
+    `Eq. (1) of the transform module <sdcflows.transform.html#bspline-interpolation>`_.
 
     References
     ----------
@@ -121,8 +115,10 @@ class BSplineApprox(SimpleInterface):
 
     See Also
     --------
-    :py:func:`bspline_weights` - for Eq. :math:`\eqref{eq:2}` and the evaluation of
-    the tri-cubic B-Splines :math:`\Psi^3(\mathbf{k}, \mathbf{s})`.
+    :py:func:`~sdcflows.transform.grid_bspline_weights` - for the evaluation of
+    the tensor-product, cubic B-Splines (:math:`\Psi^3(\mathbf{k}, \mathbf{s})`)
+    formalized in
+    `Eq. (2) of the transform module <sdcflows.transform.html#bspline-tensor>`_.
 
     """
 

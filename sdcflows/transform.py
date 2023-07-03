@@ -20,7 +20,30 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""The :math:`B_0` unwarping transform formalism."""
+r"""
+The :math:`B_0` unwarping transform formalism.
+
+This module implements a data structure to represent the displacements field associated
+to the deformations caused by susceptibility-derived distortions.
+This implementation attempts to provide a single representation of such distortions independently
+of the estimation strategy (see :doc:`/methods`).
+
+.. _bspline-interpolation:
+
+That is achieved by implementing multi-level B-Spline cubic interpolators.
+For one given level, a function :math:`f(\mathbf{s})` can be represented as a linear combination
+of tensor-product cubic B-Spline basis (:math:`\Psi^3(\mathbf{k}, \mathbf{s})`;
+see Eq. :math:`\eqref{eq:2}`).
+
+
+.. math::
+
+    f(\mathbf{s}) =
+    \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
+    \label{eq:1}\tag{1}
+
+
+"""
 import os
 from functools import partial
 import asyncio
@@ -42,17 +65,17 @@ from niworkflows.interfaces.nibabel import reorient_image
 
 
 def _sdc_unwarp(
-    data: np.array,
-    coordinates: np.array,
-    hmc_xfm: np.array,
-    voxshift: np.array,
+    data: np.ndarray,
+    coordinates: np.ndarray,
+    hmc_xfm: np.ndarray,
+    voxshift: np.ndarray,
     pe_axis: int,
     output_dtype: Union[type, np.dtype] = None,
     order: int = 3,
     mode: str = "constant",
     cval: float = 0.0,
     prefilter: bool = True,
-) -> np.array:
+) -> np.ndarray:
     """Resample one volume, moving through a head motion correction affine if provided."""
 
     if hmc_xfm is not None:
@@ -79,12 +102,12 @@ def _sdc_unwarp(
 
 
 async def worker(
-    data: np.array,
-    coordinates: np.array,
-    hmc_xfm: np.array,
+    data: np.ndarray,
+    coordinates: np.ndarray,
+    hmc_xfm: np.ndarray,
     func: Callable,
     semaphore: asyncio.Semaphore,
-) -> np.array:
+) -> np.ndarray:
     """Create one worker and attach it to the execution loop."""
     async with semaphore:
         loop = asyncio.get_running_loop()
@@ -93,39 +116,39 @@ async def worker(
 
 
 async def unwarp_parallel(
-    fulldataset: np.array,
-    coordinates: np.array,
-    voxelshift_map: np.array,
+    fulldataset: np.ndarray,
+    coordinates: np.ndarray,
+    voxelshift_map: np.ndarray,
     pe_axis: int,
-    xfms: Sequence[np.array],
+    xfms: Sequence[np.ndarray],
     order: int = 3,
     mode: str = "constant",
     cval: float = 0.0,
     prefilter: bool = True,
     output_dtype: Union[str, np.dtype] = None,
     max_concurrent: int = min(os.cpu_count(), 12),
-) -> List[np.array]:
+) -> List[np.ndarray]:
     r"""
     Unwarp an EPI dataset parallelizing across volumes.
 
     Parameters
     ----------
-    fulldataset : :obj:`~numpy.array`
-        A :math:`N_\text{i} \times N_\text{j} \times N_\text{k} \times N_\text{t}` array.
+    fulldataset : :obj:`~numpy.ndarray`
+        An array of shape (I, J, K, T), where I, J, K are the dimensions of spatial axes
+        and T is the number of volumes.
         The full data array of the EPI that are wanted after correction.
-    coordinates : :obj:`~numpy.array`
-        A :math:`\text{3}\times N_\text{i} \times N_\text{j} \times N_\text{k}` array
-        providing the voxel (index) coordinates of the reference image (i.e., interpolated
-        points) before SDC/HMC.
-    voxelshift_map : :obj:`~numpy.array`
-        A :math:`N_\text{i} \times N_\text{j} \times N_\text{k}` array with the displacement
-        of each voxel in voxel units.
+    coordinates : :obj:`~numpy.ndarray`
+        An array of shape (3, I, J, K) array providing the voxel (index) coordinates of
+        the reference image (i.e., interpolated points) before SDC/HMC.
+    voxelshift_map : :obj:`~numpy.ndarray`
+        An array of shape (I, J, K) containing the displacement of each voxel in voxel units.
     pe_axis : :obj:`int`
         An integer indicating which of the three axes indexes the phase-encoding.
-    xfms : :obj:`list` of obj:`~numpy.array`
-        A list of 4\ :math:`\times`4 matrices, each one formalizing the estimated head motion
-        alignment to the scan's reference. Therefore, each of these matrices express the
-        transform of every voxel's RAS (physical) coordinates in the image used as reference
+    xfms : :obj:`list` of obj:`~numpy.ndarray`
+        A list of 4×4 matrices, each one formalizing
+        the estimated head motion alignment to the scan's reference.
+        Therefore, each of these matrices express the transform of every
+        voxel's RAS (physical) coordinates in the image used as reference
         for realignment into the coordinates of each of the EPI series volume.
     order : :obj:`int`, optional
         The order of the spline interpolation, default is 3.
@@ -133,7 +156,7 @@ async def unwarp_parallel(
     mode : {'constant', 'reflect', 'nearest', 'mirror', 'wrap'}, optional
         Determines how the input image is extended when the resamplings overflows
         a border. Default is 'constant'.
-    cval : float, optional
+    cval : :obj:`float`, optional
         Constant value for ``mode='constant'``. Default is 0.0.
     prefilter : :obj:`bool`, optional
         Determines if the image's data array is prefiltered with
@@ -201,7 +224,7 @@ class B0FieldTransform:
     def fit(
         self,
         target_reference: nb.spatialimages.SpatialImage,
-        fmap2data_xfm: np.array = None,
+        fmap2data_xfm: np.ndarray = None,
         approx: bool = True,
     ) -> bool:
         r"""
@@ -311,8 +334,8 @@ class B0FieldTransform:
         moving: nb.spatialimages.SpatialImage,
         pe_dir: str,
         ro_time: float,
-        xfms: Sequence[np.array] = None,
-        fmap2data_xfm: np.array = None,
+        xfms: Sequence[np.ndarray] = None,
+        fmap2data_xfm: np.ndarray = None,
         approx: bool = True,
         order: int = 3,
         mode: str = "constant",
@@ -337,8 +360,11 @@ class B0FieldTransform:
         ro_time : :obj:`float`
             The total readout time in seconds.
         xfms : :obj:`None` or :obj:`list`
-            A list of rigid-body transformations previously estimated that will
-            realign the dataset (that is, compensate for head motion) after resampling.
+            A list of 4×4 matrices, each one formalizing
+            the estimated head motion alignment to the scan's reference.
+            Therefore, each of these matrices express the transform of every
+            voxel's RAS (physical) coordinates in the image used as reference
+            for realignment into the coordinates of each of the EPI series volume.
         fmap2data_xfm : :obj:`numpy.ndarray`
             Transform that maps coordinates on the `target_reference` onto the
             fieldmap reference (that is, the linear transform through which the fieldmap can
@@ -582,6 +608,8 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
 
+    .. _bspline-tensor:
+
     For each of the *N* input samples :math:`(s_1, s_2, s_3)` and *K* control
     points or *knots* :math:`\mathbf{k} =(k_1, k_2, k_3)`, the tensor-product
     cubic B-Spline kernel weights are calculated:
@@ -600,9 +628,9 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     support of the tensor-product kernel associated to each control point can be filtered
     out and dismissed to lighten computation.
 
-    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
-    can be easily identified in Eq. :math:`\eqref{eq:1}` and used as the design matrix
-    for approximation of data.
+    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})` can easily be
+    identified in `Eq. (1) <sdcflows.interfaces.bspline.html#bspline-interpolation>`_,
+    and used as the design matrix for approximation of data.
 
     Parameters
     ----------
