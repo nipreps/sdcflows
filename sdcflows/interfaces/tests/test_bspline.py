@@ -34,6 +34,8 @@ from ..bspline import (
     _fix_topup_fieldcoeff,
 )
 
+rng = np.random.default_rng(seed=20160305)  # First commit in nipreps/sdcflows
+
 
 @pytest.mark.parametrize("testnum", range(100))
 def test_bsplines(tmp_path, testnum):
@@ -56,7 +58,7 @@ def test_bsplines(tmp_path, testnum):
 
     # Generate random coefficients
     gridnii = bspline_grid(targetnii, control_zooms_mm=(4, 6, 8))
-    coeff = (np.random.random(size=gridnii.shape) - 0.5) * 500
+    coeff = (rng.random(size=gridnii.shape) - 0.5) * 500
     coeffnii = nb.Nifti1Image(coeff.astype("float32"), gridnii.affine, gridnii.header)
     coeffnii.to_filename(tmp_path / "coeffs.nii.gz")
 
