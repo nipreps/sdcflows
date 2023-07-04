@@ -63,6 +63,8 @@ from bids.utils import listify
 
 from niworkflows.interfaces.nibabel import reorient_image
 
+from sdcflows.utils.tools import ensure_positive_cosines
+
 
 def _sdc_unwarp(
     data: np.ndarray,
@@ -275,6 +277,9 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
+        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
+        target_reference, _ = ensure_positive_cosines(target_reference)
+
         approx &= fmap2data_xfm is not None  # Approximate iff fmap2data_xfm is defined
         fmap2data_xfm = fmap2data_xfm if fmap2data_xfm is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
@@ -422,11 +427,13 @@ class B0FieldTransform:
             The data imaged after resampling to reference space.
 
         """
-        from sdcflows.utils.tools import ensure_positive_cosines
 
         # Ensure the fmap has been computed
         if isinstance(moving, (str, bytes, Path)):
             moving = nb.load(moving)
+
+        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
+        moving, axcodes = ensure_positive_cosines(moving)
 
         if self.mapped is not None:
             warn(
@@ -436,9 +443,6 @@ class B0FieldTransform:
         else:
             # Generate warp field (before ensuring positive cosines)
             self.fit(moving, fmap2data_xfm=fmap2data_xfm, approx=approx)
-
-        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
-        moving, axcodes = ensure_positive_cosines(moving)
 
         # Squeeze non-spatial dimensions
         newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
@@ -469,7 +473,7 @@ class B0FieldTransform:
             pe_info.append((
                 pe_axis,
                 # Displacements are reversed if either is true (after ensuring positive cosines)
-                -ro_time[volid] if axis_flip ^ pe_flip else ro_time[volid]
+                -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid]
             ))
 
         # Reference image's voxel coordinates (in voxel units)
