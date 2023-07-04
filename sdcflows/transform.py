@@ -48,7 +48,7 @@ import os
 from functools import partial
 import asyncio
 from pathlib import Path
-from typing import Callable, List, Sequence, Union
+from typing import Callable, List, Sequence, Tuple, Union
 
 import attr
 import numpy as np
@@ -67,9 +67,9 @@ from niworkflows.interfaces.nibabel import reorient_image
 def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
+    pe_info: Tuple[int, float],
     hmc_xfm: np.ndarray,
-    voxshift: np.ndarray,
-    pe_axis: int,
+    fmap_hz: np.ndarray,
     output_dtype: Union[type, np.dtype] = None,
     order: int = 3,
     mode: str = "constant",
@@ -86,7 +86,9 @@ def _sdc_unwarp(
         ).T.reshape(coords_shape)
 
     # Map voxel coordinates applying the VSM
-    coordinates[pe_axis, ...] += voxshift
+    # The VSM is just the displacements field given in index coordinates
+    # voxcoords is the deformation field, i.e., the target position of each voxel
+    coordinates[pe_info[0], ...] += fmap_hz * pe_info[1]
 
     resampled = ndi.map_coordinates(
         data,
@@ -104,6 +106,7 @@ def _sdc_unwarp(
 async def worker(
     data: np.ndarray,
     coordinates: np.ndarray,
+    pe_info: Tuple[int, float],
     hmc_xfm: np.ndarray,
     func: Callable,
     semaphore: asyncio.Semaphore,
@@ -111,15 +114,15 @@ async def worker(
     """Create one worker and attach it to the execution loop."""
     async with semaphore:
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, func, data, coordinates, hmc_xfm)
+        result = await loop.run_in_executor(None, func, data, coordinates, pe_info, hmc_xfm)
         return result
 
 
 async def unwarp_parallel(
     fulldataset: np.ndarray,
     coordinates: np.ndarray,
-    voxelshift_map: np.ndarray,
-    pe_axis: int,
+    fmap_hz: np.ndarray,
+    pe_info: Sequence[Tuple[int, float]],
     xfms: Sequence[np.ndarray],
     order: int = 3,
     mode: str = "constant",
@@ -140,10 +143,11 @@ async def unwarp_parallel(
     coordinates : :obj:`~numpy.ndarray`
         An array of shape (3, I, J, K) array providing the voxel (index) coordinates of
         the reference image (i.e., interpolated points) before SDC/HMC.
-    voxelshift_map : :obj:`~numpy.ndarray`
+    fmap_hz : :obj:`~numpy.ndarray`
         An array of shape (I, J, K) containing the displacement of each voxel in voxel units.
-    pe_axis : :obj:`int`
-        An integer indicating which of the three axes indexes the phase-encoding.
+    pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)
+        A tuple containing the index of the phase-encoding axis in the data array and
+        the readout time (including sign, if displacements must be reversed)
     xfms : :obj:`list` of obj:`~numpy.ndarray`
         A list of 4×4 matrices, each one formalizing
         the estimated head motion alignment to the scan's reference.
@@ -182,8 +186,7 @@ async def unwarp_parallel(
 
     func = partial(
         _sdc_unwarp,
-        voxshift=voxelshift_map,
-        pe_axis=pe_axis,
+        fmap_hz=fmap_hz,
         output_dtype=output_dtype,
         order=order,
         mode=mode,
@@ -197,7 +200,14 @@ async def unwarp_parallel(
         xfm = None if xfms is None else xfms[volid]
 
         # IMPORTANT - the coordinates array must be copied every time anew per thread
-        task = asyncio.create_task(worker(volume, coordinates.copy(), xfm, func, semaphore))
+        task = asyncio.create_task(worker(
+            volume,
+            coordinates.copy(),
+            pe_info[volid],
+            xfm,
+            func,
+            semaphore,
+        ))
         tasks.append(task)
 
     # Wait for all tasks to complete
@@ -332,8 +342,8 @@ class B0FieldTransform:
     def apply(
         self,
         moving: nb.spatialimages.SpatialImage,
-        pe_dir: str,
-        ro_time: float,
+        pe_dir: Union[str, Sequence[str]],
+        ro_time: Union[float, Sequence[float]],
         xfms: Sequence[np.ndarray] = None,
         fmap2data_xfm: np.ndarray = None,
         approx: bool = True,
@@ -355,9 +365,9 @@ class B0FieldTransform:
         moving : :obj:`~nibabel.spatialimages.SpatialImage`
             The image object containing the data to be resampled in reference
             space
-        pe_dir : :obj:`str`
+        pe_dir : :obj:`str` or :obj:`list` of :obj:`str`
             A valid ``PhaseEncodingDirection`` metadata value.
-        ro_time : :obj:`float`
+        ro_time : :obj:`float` or :obj:`list` of :obj:`float`
             The total readout time in seconds.
         xfms : :obj:`None` or :obj:`list`
             A list of 4×4 matrices, each one formalizing
@@ -430,31 +440,50 @@ class B0FieldTransform:
         # Make sure the data array has all cosines positive (i.e., no axes are flipped)
         moving, axcodes = ensure_positive_cosines(moving)
 
-        pe_axis = "ijk".index(pe_dir[0])
-        axis_flip = axcodes[pe_axis] in ("LPI")
-        pe_flip = pe_dir.endswith("-")
-
-        # Displacements are reversed if either is true (after ensuring positive cosines)
-        if axis_flip ^ pe_flip:
-            ro_time *= -1.0
-
         # Squeeze non-spatial dimensions
         newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
         data = np.reshape(moving.dataobj, newshape)
         ndim = min(data.ndim, 3)
+        n_volumes = data.shape[3] if data.ndim == 4 else 1
         output_dtype = output_dtype or moving.header.get_data_dtype()
+
+        # Prepare input parameters
+        if isinstance(pe_dir, str):
+            pe_dir = [pe_dir]
+
+        if isinstance(ro_time, float):
+            ro_time = [ro_time]
+
+        if n_volumes > 1 and len(pe_dir) == 1:
+            pe_dir *= n_volumes
+
+        if n_volumes > 1 and len(ro_time) == 1:
+            ro_time *= n_volumes
+
+        pe_info = []
+        for volid in range(n_volumes):
+            pe_axis = "ijk".index(pe_dir[volid][0])
+            axis_flip = axcodes[pe_axis] in ("LPI")
+            pe_flip = pe_dir[volid].endswith("-")
+
+            pe_info.append((
+                pe_axis,
+                # Displacements are reversed if either is true (after ensuring positive cosines)
+                -ro_time[volid] if axis_flip ^ pe_flip else ro_time[volid]
+            ))
 
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = nt.linear.Affine(
             reference=moving
         ).reference.ndindex.reshape((ndim, *data.shape[:ndim])).astype("float32")
 
-        # The VSM is just the displacements field given in index coordinates
-        # voxcoords is the deformation field, i.e., the target position of each voxel
-        vsm = self.mapped.get_fdata(dtype="float32") * ro_time
-
         # Convert head-motion transforms to voxel-to-voxel:
         if xfms is not None:
+            if len(xfms) != n_volumes:
+                raise RuntimeError(
+                    f"Number of head-motion estimates ({len(xfms)}) does not match the "
+                    f"number of volumes ({n_volumes})"
+                )
             vox2ras = moving.affine.copy()
             ras2vox = np.linalg.inv(vox2ras)
             xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
@@ -463,8 +492,8 @@ class B0FieldTransform:
         resampled = asyncio.run(unwarp_parallel(
             data,
             voxcoords,
-            vsm,
-            pe_axis,
+            self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
+            pe_info,
             xfms,
             output_dtype=output_dtype,
             order=order,
