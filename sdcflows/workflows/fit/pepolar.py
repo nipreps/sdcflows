@@ -214,11 +214,9 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
-    from niworkflows.interfaces.nibabel import SplitSeries
-    from ...interfaces.bspline import ApplyCoeffsField
+    from sdcflows.interfaces.bspline import ApplyCoeffsField
 
     # Separate the runs again, as our ApplyCoeffsField corrects them separately
-    split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
     concat_corrected = pe.Node(MergeSeries(), name="concat_corrected")
@@ -226,8 +224,7 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (setwise_avg, split_blips, [("out_hmc_volumes", "in_file")]),
-        (split_blips, unwarp, [("out_files", "in_data")]),
+        (setwise_avg, unwarp, [("out_hmc_volumes", "in_data")]),
         (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
                                  ("pe_dirs", "pe_dir")]),
         (unwarp, outputnode, [("out_field", "fmap")]),
