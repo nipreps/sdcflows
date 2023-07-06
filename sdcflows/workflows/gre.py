@@ -212,7 +212,7 @@ def _demean(in_file, in_mask=None, usemode=True):
 
     if usemode:
         from scipy.stats import mode
-        data[msk] -= mode(data[msk], axis=None)[0][0]
+        data[msk] -= mode(data[msk], axis=None).mode.item()
     else:
         data[msk] -= np.median(data[msk], axis=None)
 
