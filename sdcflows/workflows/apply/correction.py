@@ -96,7 +96,7 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["distorted", "distorted_ref", "metadata", "fmap_coeff", "hmc_xforms"]
+            fields=["distorted", "metadata", "fmap_coeff", "fmap2data_xfm", "hmc_xforms"]
         ),
         name="inputnode",
     )
@@ -135,8 +135,6 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         name="resample",
     )
 
-    resample_ref = pe.Node(ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref")
-
     merge = pe.Node(MergeSeries(), name="merge")
     average = pe.Node(RobustAverage(mc_method=None), name="average")
 
@@ -148,19 +146,17 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
                              ("metadata", "metadata")]),
         (inputnode, resample, [("distorted", "in_data"),
                                ("fmap_coeff", "in_coeff"),
+                               ("fmap2data_xfm", "fmap2data_xfm"),
                                ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),
-        (inputnode, resample_ref, [("distorted_ref", "in_data"),
-                                   ("fmap_coeff", "in_coeff")]),
-        (rotime, resample_ref, [("readout_time", "ro_time"),
-                                ("pe_direction", "pe_dir")]),
         (resample, merge, [("out_corrected", "in_files")]),
         (merge, average, [("out_file", "in_file")]),
         (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
         (merge, outputnode, [("out_file", "corrected")]),
         (resample, outputnode, [("out_field", "fieldmap")]),
-        (resample_ref, outputnode, [("out_field", "fieldmap_ref")]),
+        # (resample_ref, outputnode, [("out_field", "fieldmap_ref")]),
+        # TODO - take reference from brainextraction workflow
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
