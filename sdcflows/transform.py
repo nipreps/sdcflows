@@ -48,7 +48,7 @@ import os
 from functools import partial
 import asyncio
 from pathlib import Path
-from typing import Callable, List, Sequence, Tuple, Union
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import attr
 import numpy as np
@@ -70,7 +70,7 @@ def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
     pe_info: Tuple[int, float],
-    hmc_xfm: np.ndarray,
+    hmc_xfm: Optional[np.ndarray],
     fmap_hz: np.ndarray,
     output_dtype: Union[type, np.dtype] = None,
     order: int = 3,

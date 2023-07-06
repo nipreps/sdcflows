@@ -308,7 +308,7 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         True,
         usedefault=True,
         desc=(
-            "reconstruct the fieldmap on it's original grid and then interpolate on the "
+            "reconstruct the fieldmap on its original grid and then interpolate on the "
             "rotated grid, rather than reconstructing directly on the rotated grid."
         ),
     )
@@ -382,11 +382,11 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.ro_time,
             xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
             fmap2data_xfm=(
-                None if not isdefined(self.inputs.fmap2data_xfm) else self.inputs.fmap2data_xfm
+                self.inputs.fmap2data_xfm if isdefined(self.inputs.fmap2data_xfm) else None
             ),
             approx=self.inputs.approx,
             num_threads=(
-                None if not isdefined(self.inputs.num_threads) else self.inputs.num_threads
+                self.inputs.num_threads if isdefined(self.inputs.num_threads) else None
             ),
         ).to_filename(self._results["out_corrected"])
         unwarp.mapped.to_filename(self._results["out_field"])
