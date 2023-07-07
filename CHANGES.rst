@@ -1,3 +1,11 @@
+1.3.4 (July 07, 2023)
+=====================
+Bug-fix release in 1.3.x series.
+
+* FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* MAINT: Make call to scipy.stats.mode compatible with scipy 1.11.0 (#371)
+* CI: Update docker/machine images for 1.3.x branch (#327)
+
 1.3.3 (September 4, 2020)
 =========================
 Bug-fix release in 1.3.x series.
