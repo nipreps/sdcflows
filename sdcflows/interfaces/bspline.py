@@ -294,7 +294,10 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         exists=True,
         desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
     )
-    in_xfms = File(exists=True, desc="list of head-motion correction matrices")
+    in_xfms = traits.List(
+        traits.List(traits.List(traits.Float)),
+        desc="list of head-motion correction matrices",
+    )
     ro_time = InputMultiObject(
         traits.Float(), mandatory=True, desc="EPI readout time (s)."
     )
