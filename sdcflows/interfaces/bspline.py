@@ -84,7 +84,9 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
-    debug = traits.Bool(False, usedefault=True, desc="generate extra assets for debugging")
+    debug = traits.Bool(
+        False, usedefault=True, desc="generate extra assets for debugging"
+    )
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -142,16 +144,16 @@ class BSplineApprox(SimpleInterface):
 
         # Get a mask (or define on the spot to cover the full extent)
         masknii = (
-            nb.load(self.inputs.in_mask)
-            if isdefined(self.inputs.in_mask)
-            else None
+            nb.load(self.inputs.in_mask) if isdefined(self.inputs.in_mask) else None
         )
         if masknii is not None:
             masknii = nb.as_closest_canonical(masknii)
 
         # Determine the shape of bspline coefficients
         # This should not change with resizing, so do it first
-        bs_grids = [bspline_grid(fmapnii, control_zooms_mm=sp) for sp in self.inputs.bs_spacing]
+        bs_grids = [
+            bspline_grid(fmapnii, control_zooms_mm=sp) for sp in self.inputs.bs_spacing
+        ]
 
         need_resize = np.any(np.array(zooms) < self.inputs.zooms_min)
         if need_resize:
@@ -173,7 +175,8 @@ class BSplineApprox(SimpleInterface):
 
         # Generate a numpy array with the mask
         mask = (
-            np.ones(fmapnii.shape, dtype=bool) if masknii is None
+            np.ones(fmapnii.shape, dtype=bool)
+            if masknii is None
             else np.asanyarray(masknii.dataobj) > 1e-4
         )
 
@@ -194,9 +197,11 @@ class BSplineApprox(SimpleInterface):
         data -= center
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
-        colmat = sparse_vstack(grid_bspline_weights(fmapnii, grid) for grid in bs_grids).T.tocsr()
+        colmat = sparse_vstack(
+            grid_bspline_weights(fmapnii, grid) for grid in bs_grids
+        ).T.tocsr()
 
-        bs_grids_str = ['x'.join(str(s) for s in grid.shape) for grid in bs_grids]
+        bs_grids_str = ["x".join(str(s) for s in grid.shape) for grid in bs_grids]
         bs_grids_str[-1] = f"and {bs_grids_str[-1]}"
         LOGGER.info(
             f"Approximating B-Splines grids ({', '.join(bs_grids_str)} [knots]) on a grid of "
@@ -205,7 +210,9 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Fit the model
-        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False, solver='lsqr')
+        model = lm.Ridge(
+            alpha=self.inputs.ridge_alpha, fit_intercept=False, solver="lsqr"
+        )
         for attempt in range(3):
             model.fit(colmat[mask.reshape(-1), :], data[mask])
             extreme = np.abs(model.coef_).max()
@@ -227,7 +234,7 @@ class BSplineApprox(SimpleInterface):
             n = bsl.dataobj.size
             out_level = out_name.replace("_field.", f"_coeff{i:03}.")
             bsl.__class__(
-                np.array(model.coef_, dtype="float32")[index:index + n].reshape(
+                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
                     bsl.shape
                 ),
                 bsl.affine,
@@ -377,7 +384,9 @@ class ApplyCoeffsField(SimpleInterface):
             fmap2data_xfm = (~load(self.inputs.fmap2data_xfm)).matrix
 
         # Pre-cached interpolator object
-        unwarp = B0FieldTransform(coeffs=[nb.load(cname) for cname in self.inputs.in_coeff])
+        unwarp = B0FieldTransform(
+            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
+        )
 
         # We can now write out the fieldmap
         self._results["out_field"] = fname_presuffix(
@@ -415,7 +424,9 @@ class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     )
     fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
     transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
-    fmap_target = File(exists=True, desc="the distorted EPI target (feed to set debug mode on)")
+    fmap_target = File(
+        exists=True, desc="the distorted EPI target (feed to set debug mode on)"
+    )
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
@@ -439,7 +450,8 @@ class TransformCoefficients(SimpleInterface):
                 self.inputs.fmap_ref,
                 self.inputs.transform,
                 fmap_target=(
-                    self.inputs.fmap_target if isdefined(self.inputs.fmap_target)
+                    self.inputs.fmap_target
+                    if isdefined(self.inputs.fmap_target)
                     else None
                 ),
             )
@@ -459,7 +471,7 @@ class _TOPUPCoeffReorientInputSpec(BaseInterfaceInputSpec):
     pe_dir = traits.Enum(
         *["".join(p) for p in product("ijkxyz", ("", "-"))],
         mandatory=True,
-        desc="phase encoding direction"
+        desc="phase encoding direction",
     )
 
 
@@ -598,11 +610,13 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
-    header["cal_max"] = max((
-        abs(np.asanyarray(coeffnii.dataobj).min()),
-        np.asanyarray(coeffnii.dataobj).max(),
-    ))
-    header["cal_min"] = - header["cal_max"]
+    header["cal_max"] = max(
+        (
+            abs(np.asanyarray(coeffnii.dataobj).min()),
+            np.asanyarray(coeffnii.dataobj).max(),
+        )
+    )
+    header["cal_min"] = -header["cal_max"]
     header.set_intent("estimate", tuple(), name="B-Spline coefficients")
 
     # Write out fixed (generalized) coefficients

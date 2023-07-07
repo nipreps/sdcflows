@@ -117,10 +117,12 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
         step1 = estimator.get_workflow(omp_nthreads=6, debug=False)
 
         coeff2epi_wf = swar.init_coeff2epi_wf(omp_nthreads=4, sloppy=True, debug=True)
-        coeff2epi_wf.inputs.inputnode.target_mask = str((
-            datadir
-            / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-aftersdcbrain_mask.nii.gz"
-        ).absolute())
+        coeff2epi_wf.inputs.inputnode.target_mask = str(
+            (
+                datadir
+                / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-aftersdcbrain_mask.nii.gz"
+            ).absolute()
+        )
 
         # Check fmap2epi alignment
         rpt_coeff2epi = pe.Node(
@@ -133,15 +135,21 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
             name="rpt_coeff2epi",
         )
 
+        # fmt:off
         wf.connect([
-            (step1, coeff2epi_wf, [("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                                   ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-                                   ("outputnode.fmap_coeff", "inputnode.fmap_coeff")]),
+            (step1, coeff2epi_wf, [
+                ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                ("outputnode.fmap_mask", "inputnode.fmap_mask"),
+                ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+            ]),
             (warped_ref, coeff2epi_wf, [("out", "inputnode.target_ref")]),
-            (coeff2epi_wf, step2, [("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm")]),
+            (coeff2epi_wf, step2, [
+                ("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm"),
+            ]),
             (coeff2epi_wf, rpt_coeff2epi, [("coregister.warped_image", "before")]),
             (step1, rpt_coeff2epi, [("outputnode.fmap_ref", "after")]),
         ])
+        # fmt:on
 
     # Show a reportlet
     rpt_fieldmap = pe.Node(
@@ -160,34 +168,22 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
         name="rpt_correct",
     )
 
-    wf.connect(
-        [
-            (
-                step1,
-                step2,
-                [
-                    ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
-                ],
-            ),
-            (
-                step1,
-                rpt_fieldmap,
-                [
-                    ("outputnode.fmap", "fieldmap"),
-                    ("outputnode.fmap_ref", "reference"),
-                    ("outputnode.fmap_ref", "moving"),
-                ],
-            ),
-            (warped_ref, rpt_correct, [("out", "before")]),
-            (
-                step2,
-                rpt_correct,
-                [
-                    ("outputnode.corrected_ref", "after"),
-                ],
-            ),
-        ]
-    )
+    # fmt:off
+    wf.connect([
+        (step1, step2, [
+            ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+        ]),
+        (step1, rpt_fieldmap, [
+            ("outputnode.fmap", "fieldmap"),
+            ("outputnode.fmap_ref", "reference"),
+            ("outputnode.fmap_ref", "moving"),
+        ]),
+        (warped_ref, rpt_correct, [("out", "before")]),
+        (step2, rpt_correct, [
+            ("outputnode.corrected_ref", "after"),
+        ]),
+    ])
+    # fmt:on
     wf.run()
 
 

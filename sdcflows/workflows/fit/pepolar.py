@@ -136,7 +136,9 @@ def init_topup_wf(
     # Regrid all to the reference (grid_reference=0 means first averaged run)
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
     # Sort PE blips to ensure reproducibility
-    sort_pe_blips = pe.Node(SortPEBlips(), name="sort_pe_blips", run_without_submitting=True)
+    sort_pe_blips = pe.Node(
+        SortPEBlips(), name="sort_pe_blips", run_without_submitting=True
+    )
     # Merge into one 4D file
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     # Pad dimensions so that they meet TOPUP's expectations
