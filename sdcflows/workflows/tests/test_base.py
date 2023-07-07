@@ -24,9 +24,9 @@
 from pathlib import Path
 import os
 import pytest
-from ... import fieldmaps as fm
-from ...utils.wrangler import find_estimators
-from ..base import init_fmap_preproc_wf
+from sdcflows import fieldmaps as fm
+from sdcflows.utils.wrangler import find_estimators
+from sdcflows.workflows.base import init_fmap_preproc_wf
 
 
 @pytest.mark.parametrize(
