@@ -26,6 +26,7 @@ from pathlib import Path
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
+from nitransforms.linear import load
 
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
@@ -293,6 +294,12 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
     fmap2data_xfm = File(
         exists=True,
         desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
+        xor="data2fmap_xfm",
+    )
+    data2fmap_xfm = File(
+        exists=True,
+        desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
+        xor="fmap2data_xfm",
     )
     in_xfms = traits.List(
         traits.List(traits.List(traits.Float)),
@@ -361,6 +368,14 @@ class ApplyCoeffsField(SimpleInterface):
     def _run_interface(self, runtime):
         from sdcflows.transform import B0FieldTransform
 
+        fmap2data_xfm = None
+
+        if isdefined(self.inputs.fmap2data_xfm):
+            fmap2data_xfm = load(self.inputs.fmap2data_xfm).matrix
+        elif isdefined(self.inputs.data2fmap_xfm):
+            # Same, but inverting direction
+            fmap2data_xfm = (~load(self.inputs.fmap2data_xfm)).matrix
+
         # Pre-cached interpolator object
         unwarp = B0FieldTransform(coeffs=[nb.load(cname) for cname in self.inputs.in_coeff])
 
@@ -384,9 +399,7 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.pe_dir,
             self.inputs.ro_time,
             xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
-            fmap2data_xfm=(
-                self.inputs.fmap2data_xfm if isdefined(self.inputs.fmap2data_xfm) else None
-            ),
+            fmap2data_xfm=fmap2data_xfm,
             approx=self.inputs.approx,
             num_threads=(
                 self.inputs.num_threads if isdefined(self.inputs.num_threads) else None

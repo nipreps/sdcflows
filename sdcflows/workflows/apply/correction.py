@@ -94,7 +94,14 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["distorted", "metadata", "fmap_coeff", "fmap2data_xfm", "hmc_xforms"]
+            fields=[
+                "distorted",
+                "metadata",
+                "fmap_coeff",
+                "fmap2data_xfm",
+                "data2fmap_xfm",
+                "hmc_xforms",
+            ]
         ),
         name="inputnode",
     )
@@ -145,6 +152,7 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         (inputnode, resample, [("distorted", "in_data"),
                                ("fmap_coeff", "in_coeff"),
                                ("fmap2data_xfm", "fmap2data_xfm"),
+                               ("data2fmap_xfm", "data2fmap_xfm"),
                                ("hmc_xforms", "in_xfms")]),
         (rotime, resample, [("readout_time", "ro_time"),
                             ("pe_direction", "pe_dir")]),

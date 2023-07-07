@@ -31,6 +31,7 @@ from nipype.pipeline import engine as pe
 from sdcflows import fieldmaps as sfm
 from sdcflows.interfaces.reportlets import FieldmapReportlet
 from sdcflows.workflows.apply import correction as swac
+from sdcflows.workflows.apply import registration as swar
 from niworkflows.interfaces.reportlets.registration import (
     SimpleBeforeAfterRPT as SimpleBeforeAfter,
 )
@@ -38,7 +39,8 @@ from niworkflows.interfaces.reportlets.registration import (
 
 @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize("pe0", ["LR"])
-def test_pepolar_wf(tmpdir, workdir, outdir, datadir, pe0):
+@pytest.mark.parametrize("mode", ["pepolar", "phasediff"])
+def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
     """Build a ``FieldmapEstimation`` workflow and test estimation and correction."""
 
     tmpdir.chdir()
@@ -50,41 +52,15 @@ def test_pepolar_wf(tmpdir, workdir, outdir, datadir, pe0):
 
     datadir = datadir / "hcph-pilot_fieldmaps"
 
+    wf = pe.Workflow(name=f"hcph_{mode}_{pe0}")
+
+    # Execute in temporary directory
+    wf.base_dir = f"{tmpdir}"
+
+    # Prepare some necessary data and metadata
     metadata = json.loads(
         (datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_dwi.json").read_text()
     )
-
-    # Generate an estimator workflow with the estimator object
-    estimator = sfm.FieldmapEstimation(
-        sources=[
-            datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.nii.gz",
-            datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz",
-        ]
-    )
-    step1 = estimator.get_workflow(omp_nthreads=6, debug=False, sloppy=True)
-
-    # Set inputs to estimator
-    step1.inputs.inputnode.metadata = [
-        json.loads(
-            (datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.json").read_text()
-        ),
-        metadata,
-    ]
-    step1.inputs.inputnode.in_data = [
-        str((datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.nii.gz").absolute()),
-        str(
-            (
-                datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz"
-            ).absolute()
-        ),
-    ]
-
-    # Show a reportlet
-    rpt_fieldmap = pe.Node(
-        FieldmapReportlet(out_report=str(outdir / "test-integration_fieldmap.svg")),
-        name="rpt_fieldmap",
-    )
-
     unwarp_input = (
         datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz"
     ).absolute()
@@ -107,21 +83,83 @@ def test_pepolar_wf(tmpdir, workdir, outdir, datadir, pe0):
     step2.inputs.inputnode.distorted = str(unwarp_input)
     step2.inputs.inputnode.hmc_xforms = unwarp_xfms
 
+    if mode == "pepolar":
+        # Generate an estimator workflow with the estimator object
+        estimator = sfm.FieldmapEstimation(
+            sources=[
+                datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.nii.gz",
+                datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz",
+            ],
+        )
+        step1 = estimator.get_workflow(omp_nthreads=6, debug=False, sloppy=True)
+
+        # Set inputs to estimator
+        step1.inputs.inputnode.metadata = [
+            json.loads(
+                (datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.json").read_text()
+            ),
+            metadata,
+        ]
+        step1.inputs.inputnode.in_data = [
+            str((datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe1}_epi.nii.gz").absolute()),
+            str(
+                (
+                    datadir
+                    / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz"
+                ).absolute()
+            ),
+        ]
+    else:
+        # Generate an estimator workflow with the estimator object
+        estimator = sfm.FieldmapEstimation(
+            sources=[datadir / "sub-pilot_ses-15_phasediff.nii.gz"],
+        )
+        step1 = estimator.get_workflow(omp_nthreads=6, debug=False)
+
+        coeff2epi_wf = swar.init_coeff2epi_wf(omp_nthreads=4, sloppy=True, debug=True)
+        coeff2epi_wf.inputs.inputnode.target_mask = str((
+            datadir
+            / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-aftersdcbrain_mask.nii.gz"
+        ).absolute())
+
+        # Check fmap2epi alignment
+        rpt_coeff2epi = pe.Node(
+            SimpleBeforeAfter(
+                after_label="GRE (mag)",
+                before_label="EPI (ref)",
+                out_report=str(outdir / f"test-integration_{mode}_alignment.svg"),
+                dismiss_affine=True,
+            ),
+            name="rpt_coeff2epi",
+        )
+
+        wf.connect([
+            (step1, coeff2epi_wf, [("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                                   ("outputnode.fmap_mask", "inputnode.fmap_mask"),
+                                   ("outputnode.fmap_coeff", "inputnode.fmap_coeff")]),
+            (warped_ref, coeff2epi_wf, [("out", "inputnode.target_ref")]),
+            (coeff2epi_wf, step2, [("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm")]),
+            (coeff2epi_wf, rpt_coeff2epi, [("coregister.warped_image", "before")]),
+            (step1, rpt_coeff2epi, [("outputnode.fmap_ref", "after")]),
+        ])
+
+    # Show a reportlet
+    rpt_fieldmap = pe.Node(
+        FieldmapReportlet(out_report=str(outdir / f"test-integration_{mode}.svg")),
+        name="rpt_fieldmap",
+    )
+
     # Write reportlet
     rpt_correct = pe.Node(
         SimpleBeforeAfter(
             after_label="Corrected",
             before_label="Distorted",
-            out_report=str(outdir / "test-integration_sdc.svg"),
+            out_report=str(outdir / f"test-integration_{mode}.svg"),
             dismiss_affine=True,
         ),
         name="rpt_correct",
     )
 
-    wf = pe.Workflow(name=f"hcph_pepolar_{pe0}")
-
-    # Execute in temporary directory
-    wf.base_dir = f"{tmpdir}"
     wf.connect(
         [
             (

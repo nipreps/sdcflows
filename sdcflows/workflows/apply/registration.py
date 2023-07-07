@@ -157,6 +157,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
         (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
                                 ("fmap_ref", "fmap_ref")]),
         (coregister, map_coeff, [(("forward_transforms", _pop), "transform")]),
+        (coregister, map_coeff, [("forward_transforms", "target2fmap_xfm")]),
         (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
     ])
     # fmt: on
