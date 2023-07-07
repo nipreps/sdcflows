@@ -60,7 +60,7 @@ jobs:
       - checkout:
           path: /tmp/src/sdcflows
 
-      - run: 
+      - run:
           name: Configure git (pacify datalad)
           command: |
             git config --global user.name "First Last"
