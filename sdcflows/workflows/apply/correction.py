@@ -51,8 +51,6 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     ------
     distorted
         the target EPI image.
-    distorted_ref
-        the distorted reference EPI image to which each volume has been motion corrected
     metadata
         dictionary of metadata corresponding to the target EPI image
     fmap_coeff
