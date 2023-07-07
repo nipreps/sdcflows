@@ -450,10 +450,10 @@ class FieldmapEstimation:
             kwargs["mode"] = str(self.method).rpartition(".")[-1].lower()
             self._wf = init_fmap_wf(**kwargs)
             self._wf.inputs.inputnode.magnitude = [
-                str(f.path) for f in self.sources if f.suffix.startswith("magnitude")
+                str(f.path.absolute()) for f in self.sources if f.suffix.startswith("magnitude")
             ]
             self._wf.inputs.inputnode.fieldmap = [
-                (str(f.path), f.metadata)
+                (str(f.path.absolute()), f.metadata)
                 for f in self.sources
                 if f.suffix in ("fieldmap", "phasediff", "phase2", "phase1")
             ]
