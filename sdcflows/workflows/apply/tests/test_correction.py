@@ -32,6 +32,8 @@ from ..registration import init_coeff2epi_wf
 
 def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     """Test the unwarping workflow."""
+    tmpdir.chdir()
+
     distorted = (
         datadir
         / "HCP101006"
@@ -72,7 +74,10 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
             ("outputnode.fmap_ref", "inputnode.fmap_ref"),
             ("outputnode.fmap_mask", "inputnode.fmap_mask"),
         ]),
-        (reg_wf, unwarp_wf, [("outputnode.fmap_coeff", "inputnode.fmap_coeff")]),
+        (reg_wf, unwarp_wf, [
+            ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+            ("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm")
+        ]),
     ])
     # fmt:on
 

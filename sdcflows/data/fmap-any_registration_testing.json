@@ -18,5 +18,6 @@
     "transforms": [ "Rigid", "Rigid" ],
     "use_histogram_matching": [ true, true ],
     "winsorize_lower_quantile": 0.005,
-    "winsorize_upper_quantile": 0.998
+    "winsorize_upper_quantile": 0.998,
+    "write_composite_transform": false
 }

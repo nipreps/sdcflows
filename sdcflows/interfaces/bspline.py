@@ -26,7 +26,7 @@ from pathlib import Path
 import numpy as np
 import nibabel as nb
 from nibabel.affines import apply_affine
-from nitransforms.linear import load
+from nitransforms.linear import Affine
 
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
@@ -298,13 +298,13 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="input coefficients as calculated in the estimation stage",
     )
-    fmap2data_xfm = File(
-        exists=True,
+    fmap2data_xfm = InputMultiObject(
+        File(exists=True),
         desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
         xor="data2fmap_xfm",
     )
-    data2fmap_xfm = File(
-        exists=True,
+    data2fmap_xfm = InputMultiObject(
+        File(exists=True),
         desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
         xor="fmap2data_xfm",
     )
@@ -378,10 +378,18 @@ class ApplyCoeffsField(SimpleInterface):
         fmap2data_xfm = None
 
         if isdefined(self.inputs.fmap2data_xfm):
-            fmap2data_xfm = load(self.inputs.fmap2data_xfm).matrix
+            fmap2data_xfm = Affine.from_filename(
+                self.inputs.fmap2data_xfm if not isinstance(self.inputs.fmap2data_xfm, list)
+                else self.inputs.fmap2data_xfm[0],
+                fmt="itk"
+            ).matrix
         elif isdefined(self.inputs.data2fmap_xfm):
             # Same, but inverting direction
-            fmap2data_xfm = (~load(self.inputs.fmap2data_xfm)).matrix
+            fmap2data_xfm = (~Affine.from_filename(
+                self.inputs.data2fmap_xfm if not isinstance(self.inputs.data2fmap_xfm, list)
+                else self.inputs.data2fmap_xfm[0],
+                fmt="itk"
+            )).matrix
 
         # Pre-cached interpolator object
         unwarp = B0FieldTransform(

@@ -273,6 +273,7 @@ class B0FieldTransform:
             ``False`` if cache was valid and will be reused.
 
         """
+        import pdb; pdb.set_trace()
         # Calculate the physical coordinates of target grid
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
