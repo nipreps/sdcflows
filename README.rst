@@ -13,7 +13,7 @@ SDCFlows
 .. image:: https://github.com/nipreps/sdcflows/workflows/Deps%20&%20CI/badge.svg
     :target: https://github.com/nipreps/sdcflows/actions
 
-SDCFlows (*Susceptibility Distortion Correction workFlows*) is a Python library of 
+SDCFlows (*Susceptibility Distortion Correction workFlows*) is a Python library of
 *NiPype*-based workflows to preprocess *B0* mapping data, estimate the corresponding
 fieldmap and finally correct for susceptibility distortions.
 Susceptibility-derived distortions are typically displayed by images acquired with EPI

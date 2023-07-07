@@ -14,4 +14,3 @@ If you are participating because of your affiliation with another organization (
 | Poldrack | Russell A. | @poldrack | 0000-0001-6755-0259 | Department of Psychology, Stanford University, CA, USA |
 | Satterthwaite | Theodore D. |  | 0000-0001-7072-9399 | Perelman School of Medicine, University of Pennsylvania, PA, USA |
 | Gorgolewski | Krzysztof J. | @chrisgorgo | 0000-0003-3321-7583 | Google LLC |
-

@@ -47,7 +47,7 @@ jobs:
         source /tmp/buildenv/bin/activate
         python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
                               setuptools_scm_git_archive pip twine docutils
-        
+
         python -m build -s -w
         python -m twine check dist/sdcflows-*
         mv dist /tmp/package
