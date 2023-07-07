@@ -21,11 +21,13 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Unit tests of the transform object."""
+import os
 from subprocess import check_call
 from itertools import product
 import pytest
-import nibabel as nb
 import numpy as np
+import nibabel as nb
+from nitransforms.linear import LinearTransformsMapping
 from skimage.morphology import ball
 import scipy.ndimage as nd
 
@@ -135,6 +137,181 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
                 f"_y-{rotation[1] or 0}_z-{rotation[2] or 0}.svg"
             ),
         ).run()
+
+
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
+@pytest.mark.parametrize(
+    "pe0",
+    [
+        "LR",
+    ],
+)
+@pytest.mark.parametrize("hmc", (True, False))
+@pytest.mark.parametrize("fmap", (True, False))
+def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
+    """Test the .apply() member of the B0Transform object."""
+    datadir = datadir / "hcph-pilot_fieldmaps"
+    tmpdir.chdir()
+
+    if not hmc and not fmap:
+        return
+
+    # Get coefficients file (at least for a quick reference if fmap is False)
+    coeffs = [
+        nb.load(
+            datadir
+            / f"sub-pilot_ses-15_desc-topup+coeff+{pe0}+{pe0[::-1]}_fieldmap.nii.gz"
+        )
+    ]
+
+    if fmap is False:
+        data = np.zeros(coeffs[0].shape, dtype=coeffs[0].header.get_data_dtype())
+
+        # Replace coefficients file with all-zeros to test HMC is working
+        coeffs[0] = coeffs[0].__class__(data, coeffs[0].affine, coeffs[0].header)
+
+    warp = tf.B0FieldTransform(coeffs=coeffs)
+
+    hmc_xfms = (
+        np.load(datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.npy")
+        if hmc
+        else None
+    )
+
+    in_file = (
+        datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz"
+        if hmc
+        else datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz"
+    )
+
+    corrected = warp.apply(
+        in_file,
+        ro_time=0.0502149,
+        pe_dir="i-",
+        xfms=hmc_xfms,
+        num_threads=6,
+    )
+    corrected.to_filename(f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwi.nii.gz")
+
+    corrected.__class__(
+        np.asanyarray(corrected.dataobj).mean(-1),
+        corrected.affine,
+        corrected.header,
+    ).to_filename(f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz")
+
+    error_margin = 0.5
+    if fmap is False:  # If no fieldmap, this is equivalent to only HMC
+        realigned = LinearTransformsMapping(hmc_xfms, reference=in_file).apply(in_file)
+        error = np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2))
+
+        if outdir:
+            from niworkflows.interfaces.reportlets.registration import (
+                SimpleBeforeAfterRPT as SimpleBeforeAfter,
+            )
+
+            # Do not include the first volume in the average to enhance differences
+            realigned_data = np.asanyarray(corrected.dataobj)[..., 1:].mean(-1)
+            realigned_data[realigned_data < 0] = 0
+            realigned.__class__(
+                realigned_data,
+                realigned.affine,
+                realigned.header,
+            ).to_filename(
+                f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz"
+            )
+
+            SimpleBeforeAfter(
+                after_label="Theirs (3dvolreg)",
+                before_label="Ours (SDCFlows)",
+                after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz",
+                before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
+                out_report=str(
+                    outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc_dwi.svg"
+                ),
+            ).run()
+
+            realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
+                outdir
+                / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc+error_dwi.nii.gz"
+            )
+    else:
+        realigned = nb.load(in_file)
+        error = np.nan_to_num(
+            np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2)), nan=0
+        )
+        error_margin = 200  # test oracle is pretty bad here - needs revision.
+
+        if outdir:
+            from niworkflows.interfaces.reportlets.registration import (
+                SimpleBeforeAfterRPT as SimpleBeforeAfter,
+            )
+
+            # Do not include the first volume in the average to enhance differences
+            realigned_data = np.asanyarray(corrected.dataobj)[..., 1:].mean(-1)
+            realigned_data[realigned_data < 0] = 0
+            realigned.__class__(
+                realigned_data,
+                realigned.affine,
+                realigned.header,
+            ).to_filename(
+                f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz"
+            )
+
+            SimpleBeforeAfter(
+                after_label="Theirs (NiTransforms)",
+                before_label="Ours (SDCFlows)",
+                after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz",
+                before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
+                out_report=str(
+                    outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-"
+                    f"{'just' if not hmc else 'hmc+'}fmap_dwi.svg"
+                ),
+            ).run()
+
+            realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
+                outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-"
+                f"{'' if not hmc else 'hmc+'}fmap+error_dwi.nii.gz"
+            )
+
+    # error is below 0.5 in 95% of the voxels clipping margins
+    assert np.percentile(error[2:-2, 2:-2, 2:-2], 95) < error_margin
+
+    if outdir and fmap and hmc:
+        # Generate a conversion without hmc
+        corrected_nohmc = warp.apply(
+            in_file,
+            ro_time=0.0502149,
+            pe_dir="i-",
+            xfms=None,
+            num_threads=6,
+        )
+        corrected_nohmc.to_filename(
+            f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwi.nii.gz"
+        )
+
+        # Do not include the first volume in the average to enhance differences
+        corrected_nohmc.__class__(
+            np.asanyarray(corrected.dataobj)[..., 1:].mean(-1),
+            corrected.affine,
+            corrected.header,
+        ).to_filename(
+            f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz"
+        )
+
+        SimpleBeforeAfter(
+            after_label="W/o HMC",
+            before_label="With HMC",
+            after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz",
+            before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
+            out_report=str(
+                outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmcdiff_dwi.svg"
+            ),
+        ).run()
+
+        error = np.sqrt(((corrected.dataobj - corrected_nohmc.dataobj) ** 2))
+        realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
+            outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmdiff+error_dwi.nii.gz"
+        )
 
 
 @pytest.mark.parametrize("pe_dir", ["j", "j-", "i", "i-", "k", "k-"])
