@@ -329,19 +329,22 @@ class B0FieldTransform:
             fmap.shape
         )
 
+        # Generate a NIfTI object
+        hdr.set_intent("estimate", name="fieldmap Hz")
+        hdr.set_data_dtype("float32")
+        hdr["cal_max"] = max((abs(fmap.min()), fmap.max()))
+        hdr["cal_min"] = -hdr["cal_max"]
+
+        # Cache
+        self.mapped = nb.Nifti1Image(fmap, target_affine, hdr)
+
         if approx:
             from nitransforms.linear import Affine
 
             # Interpolate fmap given on target_reference in target_reference_back
             # voxel locations (overwrite fmap)
-            fmap = Affine(reference=_tmp_reference).apply(fmap)
+            self.mapped = Affine(reference=_tmp_reference).apply(self.mapped)
 
-        # Cache
-        hdr.set_intent("estimate", name="fieldmap Hz")
-        hdr.set_data_dtype("float32")
-        hdr["cal_max"] = max((abs(fmap.min()), fmap.max()))
-        hdr["cal_min"] = -hdr["cal_max"]
-        self.mapped = nb.Nifti1Image(fmap, target_affine, hdr)
         return True
 
     def apply(
