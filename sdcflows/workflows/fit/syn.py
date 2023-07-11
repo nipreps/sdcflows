@@ -451,7 +451,7 @@ def init_syn_preprocessing_wf(
     prior2epi = pe.Node(
         ApplyTransforms(
             invert_transform_flags=[True, False, False],
-            input_image=data.load("fmap_atlas.nii.gz"),
+            input_image=str(data.load("fmap_atlas.nii.gz")),
         ),
         name="prior2epi",
         n_procs=omp_nthreads,

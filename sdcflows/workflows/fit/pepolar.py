@@ -149,7 +149,7 @@ def init_topup_wf(
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
     topup = pe.Node(
         TOPUP(
-            config=data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf")
+            config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))
         ),
         name="topup",
     )
