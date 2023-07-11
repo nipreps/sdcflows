@@ -1,6 +1,9 @@
 """SDCflows - :abbr:`SDC (susceptibility distortion correction)` by DUMMIES, for dummies."""
+from sdcflows.data import Loader
+
 __packagename__ = "sdcflows"
-__copyright__ = "2022, The NiPreps developers"
+__copyright__ = "2023, The NiPreps developers"
+
 try:
     from ._version import __version__
 except ModuleNotFoundError:
@@ -12,3 +15,12 @@ except ModuleNotFoundError:
         __version__ = "unknown"
     del get_distribution
     del DistributionNotFound
+
+__all__ = (
+    "__version__",
+    "__packagename__",
+    "__copyright__",
+    "load_resource",
+)
+
+load_resource = Loader(__package__)

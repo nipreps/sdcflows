@@ -7,6 +7,7 @@ Information on specific functions, classes, and methods.
    :glob:
 
    api/sdcflows.cli
+   api/sdcflows.data
    api/sdcflows.fieldmaps
    api/sdcflows.interfaces
    api/sdcflows.transform

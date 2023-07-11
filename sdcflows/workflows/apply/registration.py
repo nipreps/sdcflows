@@ -29,10 +29,10 @@ in the case of PEPOLAR estimation).
 The target EPI is the distorted dataset (or a reference thereof).
 
 """
-from pkg_resources import resource_filename as pkgrf
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from sdcflows.data import load as load_data
 
 
 def init_coeff2epi_wf(
@@ -111,9 +111,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
-    ants_settings = pkgrf(
-        "sdcflows", f"data/fmap-any_registration{'_testing' * sloppy}.json"
-    )
+    ants_settings = load_data(f"fmap-any_registration{'_testing' * sloppy}.json")
 
     coregister = pe.Node(
         Registration(
