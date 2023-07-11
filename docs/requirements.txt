@@ -1,5 +1,6 @@
 attrs >= 20.1.0
 furo
+importlib_resources
 matplotlib >= 2.2.0
 nibabel
 nipype >= 1.5.1
