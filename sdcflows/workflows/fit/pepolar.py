@@ -21,11 +21,12 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Datasets with multiple phase encoded directions."""
-from pkg_resources import resource_filename as _pkg_fname
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+from ... import data
 
 INPUT_FIELDS = ("metadata", "in_data")
 _PEPOLAR_DESC = """\
@@ -148,7 +149,7 @@ def init_topup_wf(
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
     topup = pe.Node(
         TOPUP(
-            config=_pkg_fname("sdcflows", f"data/flirtsch/b02b0{'_quick' * sloppy}.cnf")
+            config=data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf")
         ),
         name="topup",
     )
@@ -332,7 +333,7 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
 
     align_pes = pe.Node(
         Registration(
-            from_file=_pkg_fname("sdcflows", "data/translation_rigid.json"),
+            from_file=data.load("translation_rigid.json"),
             output_warped_image=True,
         ),
         name="align_pes",
