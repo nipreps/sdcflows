@@ -1,15 +1,15 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.viz package" href="sdcflows.viz.html" /><link rel="prev" title="sdcflows.utils.tools module" href="sdcflows.utils.tools.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2021.10.09"/>
-        <title>sdcflows.utils.wrangler module - sdcflows 2.5.2.dev12+g54b05c07 documentation</title>
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
+        <title>sdcflows.utils.wrangler module - sdcflows 2.5.2.dev21+g5434c795 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css" />
     
     
@@ -21,38 +21,38 @@
   --color-code-foreground: black;
   
   }
-  body[data-theme="dark"] {
-    --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
-  
-  }
-  @media (prefers-color-scheme: dark) {
-    body:not([data-theme="light"]) {
+  @media not print {
+    body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
   
     }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
   }
 </style></head>
   <body>
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
     
+
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
     <title>Contents</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path stroke="none" d="M0 0h24v24H0z" />
-      <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="10" y1="12" x2="20" y2="12" />
-      <line x1="6" y1="18" x2="20" y2="18" />
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
     </svg>
   </symbol>
   <symbol id="svg-menu" viewBox="0 0 24 24">
     <title>Menu</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
       <line x1="3" y1="12" x2="21" y2="12"></line>
       <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -61,14 +61,14 @@
   </symbol>
   <symbol id="svg-arrow-right" viewBox="0 0 24 24">
     <title>Expand</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
       <polyline points="9 18 15 12 9 6"></polyline>
     </svg>
   </symbol>
   <symbol id="svg-sun" viewBox="0 0 24 24">
     <title>Light mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
       <circle cx="12" cy="12" r="5"></circle>
       <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -83,7 +83,7 @@
   </symbol>
   <symbol id="svg-moon" viewBox="0 0 24 24">
     <title>Dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
@@ -91,7 +91,7 @@
   </symbol>
   <symbol id="svg-sun-half" viewBox="0 0 24 24">
     <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
       <circle cx="12" cy="12" r="9" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev12+g54b05c07 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev21+g5434c795 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -135,7 +135,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -146,20 +146,20 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev12 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev21 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev12 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev21 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
   </ul>
 </div><form class="sidebar-search-container" method="get" action="../search.html" role="search">
-  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form>
@@ -167,13 +167,14 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../methods.html">Methods and implementation</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.interfaces.brainmask.html">sdcflows.interfaces.brainmask module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.interfaces.bspline.html">sdcflows.interfaces.bspline module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.interfaces.epi.html">sdcflows.interfaces.epi module</a></li>
@@ -183,7 +184,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.transform.html">sdcflows.transform module</a></li>
-<li class="toctree-l2 current has-children"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sdcflows.utils.html">sdcflows.utils package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.utils package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.bimap.html">sdcflows.utils.bimap module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
@@ -192,17 +193,17 @@
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sdcflows.utils.wrangler module</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.viz.html">sdcflows.viz package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of sdcflows.viz package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.viz.utils.html">sdcflows.viz.utils module</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.workflows.html">sdcflows.workflows package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of sdcflows.workflows package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.apply package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.apply.correction.html">sdcflows.workflows.apply.correction module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.apply.registration.html">sdcflows.workflows.apply.registration module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -220,6 +221,7 @@
 
 </div>
 </div>
+
       </div>
       
     </div>
@@ -227,8 +229,15 @@
   <div class="main">
     <div class="content">
       <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
         <div class="content-icon-container">
-          <div class="theme-toggle-container theme-toggle-content">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -236,38 +245,39 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
           <section id="module-sdcflows.utils.wrangler">
-<span id="sdcflows-utils-wrangler-module"></span><h1>sdcflows.utils.wrangler module<a class="headerlink" href="#module-sdcflows.utils.wrangler" title="Permalink to this headline">¶</a></h1>
+<span id="sdcflows-utils-wrangler-module"></span><h1>sdcflows.utils.wrangler module<a class="headerlink" href="#module-sdcflows.utils.wrangler" title="Permalink to this heading">#</a></h1>
 <p>Find fieldmaps on the BIDS inputs for <abbr title="susceptibility distortion correction">SDC</abbr>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.wrangler.find_anatomical_estimators">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.wrangler.</span></span><span class="sig-name descname"><span class="pre">find_anatomical_estimators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anat_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSFile.html#bids.layout.BIDSFile" title="(in PyBIDS v0.16.1)"><span class="pre">bids.layout.models.BIDSFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><span class="pre">bids.layout.layout.BIDSLayout</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sessions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_entities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapFile" title="sdcflows.fieldmaps.FieldmapFile"><span class="pre">sdcflows.fieldmaps.FieldmapFile</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sdcflows/utils/wrangler.html#find_anatomical_estimators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.wrangler.find_anatomical_estimators" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.wrangler.</span></span><span class="sig-name descname"><span class="pre">find_anatomical_estimators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anat_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSFile.html#bids.layout.BIDSFile" title="(in PyBIDS v0.16.1)"><span class="pre">BIDSFile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><span class="pre">BIDSLayout</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sessions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_entities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapFile" title="sdcflows.fieldmaps.FieldmapFile"><span class="pre">FieldmapFile</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sdcflows/utils/wrangler.html#find_anatomical_estimators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.wrangler.find_anatomical_estimators" title="Permalink to this definition">#</a></dt>
 <dd><p>Find anatomical estimators</p>
 <p>Given an anatomical reference image, create lists of files for estimating
 susceptibility distortion for the EPI images in a dataset.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>anat_file</strong> (<a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSFile.html#bids.layout.BIDSFile" title="(in PyBIDS v0.16.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bids.layout.BIDSFile</span></code></a>) – Anatomical reference image to use in estimators.</p></li>
 <li><p><strong>layout</strong> (<a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bids.layout.BIDSLayout</span></code></a>) – An initialized PyBIDS layout.</p></li>
 <li><p><strong>subject</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Participant label for this single-subject workflow.</p></li>
 <li><p><strong>sessions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – One of more session identifiers. To use all, pass <code class="docutils literal notranslate"><span class="pre">[None]</span></code>.</p></li>
 <li><p><strong>base_entities</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Entities to use to query for images. These should include any filters.</p></li>
-<li><p><strong>suffixes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – EPI suffixes, for example <code class="docutils literal notranslate"><span class="pre">["bold",</span> <span class="pre">"dwi"]</span></code>. Associated <code class="docutils literal notranslate"><span class="pre">"sbref"</span></code>s
+<li><p><strong>suffixes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – EPI suffixes, for example <code class="docutils literal notranslate"><span class="pre">[&quot;bold&quot;,</span> <span class="pre">&quot;dwi&quot;]</span></code>. Associated <code class="docutils literal notranslate"><span class="pre">&quot;sbref&quot;</span></code>s
 will be found and used in place of BOLD/diffusion EPIs.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.wrangler.find_estimators">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.wrangler.</span></span><span class="sig-name descname"><span class="pre">find_estimators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><span class="pre">bids.layout.layout.BIDSLayout</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sessions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmapless</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.11)"><span class="pre">set</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_fmapless</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.11)"><span class="pre">logging.Logger</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bids_filters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anat_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'T1w'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/utils/wrangler.html#find_estimators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.wrangler.find_estimators" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.wrangler.</span></span><span class="sig-name descname"><span class="pre">find_estimators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><span class="pre">BIDSLayout</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sessions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmapless</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.11)"><span class="pre">set</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_fmapless</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.11)"><span class="pre">Logger</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bids_filters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anat_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'T1w'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/utils/wrangler.html#find_estimators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.wrangler.find_estimators" title="Permalink to this definition">#</a></dt>
 <dd><p>Apply basic heuristics to automatically find available data for fieldmap estimation.</p>
 <p>The “<em>fieldmap-less</em>” heuristics only attempt to find <code class="docutils literal notranslate"><span class="pre">_dwi</span></code> and <code class="docutils literal notranslate"><span class="pre">_bold</span></code> candidates
 to pair with a <code class="docutils literal notranslate"><span class="pre">_T1w</span></code> anatomical reference.
@@ -275,15 +285,15 @@ For more complicated heuristics (for instance, using <code class="docutils liter
 images,) the <a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> object must be
 created manually by the user.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>layout</strong> (<a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.16.1)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bids.layout.BIDSLayout</span></code></a>) – An initialized PyBIDS layout.</p></li>
 <li><p><strong>subject</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Participant label for this single-subject workflow.</p></li>
 <li><p><strong>sessions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> or None) – One of more session identifiers. If None, all sessions will be used.</p></li>
 <li><p><strong>fmapless</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code></a>) – Indicates if fieldmap-less heuristics should be executed.
 When <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code></a>, it can contain valid BIDS suffices
-for EPI images (namely, <code class="docutils literal notranslate"><span class="pre">"dwi"</span></code>, <code class="docutils literal notranslate"><span class="pre">"bold"</span></code>, or <code class="docutils literal notranslate"><span class="pre">"sbref"</span></code>).
-When <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, heuristics will use the <code class="docutils literal notranslate"><span class="pre">{"bold",</span> <span class="pre">"dwi"}</span></code> set.</p></li>
+for EPI images (namely, <code class="docutils literal notranslate"><span class="pre">&quot;dwi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;bold&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;sbref&quot;</span></code>).
+When <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, heuristics will use the <code class="docutils literal notranslate"><span class="pre">{&quot;bold&quot;,</span> <span class="pre">&quot;dwi&quot;}</span></code> set.</p></li>
 <li><p><strong>force_fmapless</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – When some other fieldmap estimation methods have been found, fieldmap-less
 estimation will be skipped except if <code class="docutils literal notranslate"><span class="pre">force_fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>logger</strong> – The logger used to relay messages. If not provided, one will be created.</p></li>
@@ -293,12 +303,12 @@ This allows lower level file inclusion/exclusion.</p></li>
 approaches. If not provided, <code class="docutils literal notranslate"><span class="pre">T1w</span></code> is used.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>estimators</strong> – The list of <a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a> objects that have
 successfully been built (meaning, all necessary inputs and corresponding metadata
 are present in the given layout.)</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a></p>
 </dd>
 </dl>
@@ -306,85 +316,85 @@ are present in the given layout.)</p>
 <p>Our <code class="docutils literal notranslate"><span class="pre">ds000054</span></code> dataset, created for <em>fMRIPrep</em>, only has one <em>phasediff</em> type of fieldmap
 with <code class="docutils literal notranslate"><span class="pre">magnitude1</span></code> and <code class="docutils literal notranslate"><span class="pre">magnitude2</span></code> files:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000054'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"100185"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_00000')]</span>
+<span class="go">                    bids_id=&#39;auto_00000&#39;)]</span>
 </pre></div>
 </div>
 <p>OpenNeuro’s dataset with four <em>PEPOLAR</em> EPI files, two runs per phase-encoding direction
 (AP, PA):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001771'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"36"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_00001')]</span>
+<span class="go">                    bids_id=&#39;auto_00001&#39;)]</span>
 </pre></div>
 </div>
 <p>OpenNeuro’s <code class="docutils literal notranslate"><span class="pre">ds001600</span></code> is an SDC test-dataset containing many different possibilities
 for fieldmap estimation:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001600'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"1"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001600&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_00002'),</span>
+<span class="go">                    bids_id=&#39;auto_00002&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_00003'),</span>
+<span class="go">                    bids_id=&#39;auto_00003&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_00004'),</span>
+<span class="go">                    bids_id=&#39;auto_00004&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_00005')]</span>
+<span class="go">                    bids_id=&#39;auto_00005&#39;)]</span>
 </pre></div>
 </div>
 <p>We can also pick one (simplified) HCP subject for testing purposes:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'HCP101006'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"101006"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;HCP101006&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;101006&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_00006'),</span>
+<span class="go">                    bids_id=&#39;auto_00006&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_00007'),</span>
+<span class="go">                    bids_id=&#39;auto_00007&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_00008')]</span>
+<span class="go">                    bids_id=&#39;auto_00008&#39;)]</span>
 </pre></div>
 </div>
 <p>Finally, <em>SDCFlows</em>’ “<em>dataset A</em>” and “<em>dataset B</em>” contain BIDS structures
 with zero-byte NIfTI files and some corresponding metadata:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsA'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...')]</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsB'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsB&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...')]</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <p>After cleaning the registry, we can see how the “<em>fieldmap-less</em>” estimation
@@ -392,69 +402,69 @@ can be forced:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fm</span><span class="o">.</span><span class="n">clear_registry</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000054'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"100185"</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="p">{</span><span class="s2">"bold"</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">},</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id='auto_...')]</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <p>Likewise in a more comprehensive dataset:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001771'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"36"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...'),</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...')]</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <p>Because “<em>dataset A</em>” contains very few metadata fields available, “<em>fieldmap-less</em>”
 heuristics come back empty (BOLD and DWI files are missing
 the mandatory <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code>, in this case):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsA'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='auto_...')]</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <p>This function should also correctly investigate multi-session datasets:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000206'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"05"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
@@ -462,43 +472,44 @@ the mandatory <code class="docutils literal notranslate"><span class="pre">Phase
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000206'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"05"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id='auto_...'),</span>
+<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...')]</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 <p>When the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata is set for one or more fieldmaps, then
 the heuristics that use <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code> are dismissed:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsC'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsC&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;5 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='pepolar4pe')]</span>
+<span class="go">                    bids_id=&#39;pepolar4pe&#39;)]</span>
 </pre></div>
 </div>
 <p>The only exception to the priority of <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> is when fieldmaps
 are searched with the <code class="docutils literal notranslate"><span class="pre">force_fmapless</span></code> argument on:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fm</span><span class="o">.</span><span class="n">clear_registry</span><span class="p">()</span>  <span class="c1"># Necessary as `pepolar4pe` is not changing.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsC'</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsC&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="go">[FieldmapEstimation(sources=&lt;5 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id='pepolar4pe'),</span>
+<span class="go">                    bids_id=&#39;pepolar4pe&#39;),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id='auto_...')]</span>
+<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
 </pre></div>
 </div>
 </dd></dl>
+
 </section>
 
         </article>
@@ -513,10 +524,10 @@ are searched with the <code class="docutils literal notranslate"><span class="pr
                 </div>
                 <div class="title">sdcflows.viz package</div>
               </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
           <a class="prev-page" href="sdcflows.utils.tools.html">
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
@@ -527,32 +538,53 @@ are searched with the <code class="docutils literal notranslate"><span class="pr
               </div>
             </a>
         </div>
-
-        <div class="related-information">
-              Copyright &#169; 2022, The NiPreps developers |
-            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
-              and
-              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-              <a href="https://github.com/pradyunsg/furo">Furo theme</a>. |
-            <a class="muted-link" href="../_sources/api/sdcflows.utils.wrangler.rst.txt"
-               rel="nofollow">
-              Show Source
-            </a>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, The NiPreps developers
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
         </div>
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sdcflows.utils.wrangler module</a><ul>
+<li><a class="reference internal" href="#sdcflows.utils.wrangler.find_anatomical_estimators"><code class="docutils literal notranslate"><span class="pre">find_anatomical_estimators()</span></code></a></li>
+<li><a class="reference internal" href="#sdcflows.utils.wrangler.find_estimators"><code class="docutils literal notranslate"><span class="pre">find_estimators()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
   </div>
 </div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/scripts/main.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
     <script src="../_static/js/version-switch.js"></script>
     </body>
 </html>
