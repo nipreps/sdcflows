@@ -23,7 +23,7 @@
 """Test _version.py."""
 import sys
 from collections import namedtuple
-from pkg_resources import DistributionNotFound
+from importlib.metadata import PackageNotFoundError
 from importlib import reload
 import sdcflows
 
@@ -40,16 +40,15 @@ def test_version_scm0(monkeypatch):
 
 
 def test_version_scm1(monkeypatch):
-    """Retrieve the version via pkg_resources."""
+    """Retrieve the version via importlib.metadata."""
     monkeypatch.setitem(sys.modules, "sdcflows._version", None)
 
-    def _dist(name):
-        Distribution = namedtuple("Distribution", ["name", "version"])
-        return Distribution(name, "success")
+    def _version(name):
+        return "9.0.0"
 
-    monkeypatch.setattr("pkg_resources.get_distribution", _dist)
+    monkeypatch.setattr("importlib.metadata.version", _version)
     reload(sdcflows)
-    assert sdcflows.__version__ == "success"
+    assert sdcflows.__version__ == "9.0.0"
 
 
 def test_version_scm2(monkeypatch):
@@ -57,8 +56,8 @@ def test_version_scm2(monkeypatch):
     monkeypatch.setitem(sys.modules, "sdcflows._version", None)
 
     def _raise(name):
-        raise DistributionNotFound("No get_distribution mock")
+        raise PackageNotFoundError("No get_distribution mock")
 
-    monkeypatch.setattr("pkg_resources.get_distribution", _raise)
+    monkeypatch.setattr("importlib.metadata.version", _raise)
     reload(sdcflows)
-    assert sdcflows.__version__ == "unknown"
+    assert sdcflows.__version__ == "0+unknown"
