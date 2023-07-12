@@ -291,6 +291,17 @@ class B0FieldTransform:
             target_reference.header,
         )
 
+        # Approximate only iff the coordinate systems are not aligned
+        finest_coeffs = listify(self.coeffs)[-1]
+        approx &= not np.allclose(
+            np.linalg.norm(
+                np.cross(finest_coeffs.affine[:-1, :-1].T, target_reference.affine[:-1, :-1].T),
+                axis=1,
+            ),
+            0,
+            atol=1e-3,
+        )
+
         # TODO Separate cache validation from here. With the resampling, this
         # code will always  determine the cache must be recalculated.
         # if self.mapped is not None:
