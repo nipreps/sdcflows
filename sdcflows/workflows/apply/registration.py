@@ -87,6 +87,10 @@ def init_coeff2epi_wf(
     target_ref
         the target reference EPI resampled into the fieldmap reference for
         quality control purposes.
+    target2fmap_xfm
+        An ITK-style transform produced with ANTs that can be used as transform in
+        ``antsApplyTransforms`` with the fieldmap as reference and the target EPI
+        as moving, resampling the latter into the fieldmap space.
 
     """
     from packaging.version import parse as parseversion, Version
@@ -107,7 +111,8 @@ The field coefficients were mapped on to the reference EPI using the transform.
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["target_ref", "fmap_coeff"]), name="outputnode"
+        niu.IdentityInterface(fields=["target_ref", "fmap_coeff", "target2fmap_xfm"]),
+        name="outputnode",
     )
 
     # Register the reference of the fieldmap to the reference
@@ -133,14 +138,17 @@ The field coefficients were mapped on to the reference EPI using the transform.
             ("target_mask", f"moving_image_mask{mask_trait_s}"),
             ("fmap_mask", f"fixed_image_mask{mask_trait_s}"),
         ]),
-        (coregister, outputnode, [("warped_image", "target_ref")]),
+        (coregister, outputnode, [
+            ("warped_image", "target_ref"),
+            ("forward_transforms", "target2fmap_xfm"),
+        ]),
     ])
     # fmt: on
 
     if not write_coeff:
         return workflow
 
-    # Map the coefficients into the EPI space
+    # Resample the coefficients into the EPI grid
     map_coeff = pe.Node(TransformCoefficients(), name="map_coeff")
     map_coeff.interface._always_run = debug
 
