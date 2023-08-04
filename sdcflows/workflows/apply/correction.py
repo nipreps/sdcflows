@@ -26,7 +26,9 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
+def init_unwarp_wf(
+    *, ref_only=False, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf",
+):
     r"""
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
@@ -95,7 +97,13 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
     workflow = Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["distorted", "distorted_ref", "metadata", "fmap_coeff", "hmc_xforms"]
+            fields=[
+                "distorted",
+                "distorted_ref",
+                "metadata",
+                "fmap_coeff",
+                "hmc_xforms",
+            ]
         ),
         name="inputnode",
     )
@@ -128,7 +136,9 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
     else:
         num_threads = omp_nthreads
 
-    resample_ref = pe.Node(ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref")
+    resample_ref = pe.Node(
+        ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref"
+    )
 
     brainextraction_wf = init_brainextraction_wf()
 
