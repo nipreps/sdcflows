@@ -159,7 +159,6 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
         )
 
         merge = pe.Node(MergeSeries(), name="merge")
-        average = pe.Node(RobustAverage(mc_method=None), name="average")
 
         # fmt:off
         workflow.connect([
@@ -169,7 +168,6 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
             (rotime, resample, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
             (resample, merge, [("out_corrected", "in_files")]),
-            (merge, average, [("out_file", "in_file")]),
             (merge, outputnode, [("out_file", "corrected")]),
             (resample, outputnode, [("out_field", "fieldmap"),
                                     ("out_warp", "fieldwarp")]),
