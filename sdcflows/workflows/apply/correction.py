@@ -86,7 +86,6 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
         No motion is taken into account.
 
     """
-    from niworkflows.interfaces.images import RobustAverage
     from niworkflows.interfaces.nibabel import MergeSeries
     from sdcflows.interfaces.epi import GetReadoutTime
     from sdcflows.interfaces.bspline import ApplyCoeffsField
@@ -135,15 +134,23 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
 
     # fmt:off
     workflow.connect([
-        (inputnode, rotime, [(("distorted", _pop), "in_file"),
-                             ("metadata", "metadata")]),
-        (inputnode, resample_ref, [("distorted_ref", "in_data"),
-                                   ("fmap_coeff", "in_coeff")]),
-        (rotime, resample_ref, [("readout_time", "ro_time"),
-                                ("pe_direction", "pe_dir")]),
+        (inputnode, rotime, [
+            (("distorted", _pop), "in_file"),
+            ("metadata", "metadata"),
+        ]),
+        (inputnode, resample_ref, [
+            ("distorted_ref", "in_data"),
+            ("fmap_coeff", "in_coeff"),
+        ]),
+        (rotime, resample_ref, [
+            ("readout_time", "ro_time"),
+            ("pe_direction", "pe_dir"),
+        ]),
         (resample_ref, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
-        (resample_ref, outputnode, [("out_field", "fieldmap_ref"),
-                                    ("out_warp", "fieldwarp_ref")]),
+        (resample_ref, outputnode, [
+            ("out_field", "fieldmap_ref"),
+            ("out_warp", "fieldwarp_ref"),
+        ]),
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
@@ -162,15 +169,21 @@ def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False
 
         # fmt:off
         workflow.connect([
-            (inputnode, resample, [("distorted", "in_data"),
-                                ("fmap_coeff", "in_coeff"),
-                                ("hmc_xforms", "in_xfms")]),
-            (rotime, resample, [("readout_time", "ro_time"),
-                                ("pe_direction", "pe_dir")]),
+            (inputnode, resample, [
+                ("distorted", "in_data"),
+                ("fmap_coeff", "in_coeff"),
+                ("hmc_xforms", "in_xfms"),
+            ]),
+            (rotime, resample, [
+                ("readout_time", "ro_time"),
+                ("pe_direction", "pe_dir"),
+            ]),
             (resample, merge, [("out_corrected", "in_files")]),
             (merge, outputnode, [("out_file", "corrected")]),
-            (resample, outputnode, [("out_field", "fieldmap"),
-                                    ("out_warp", "fieldwarp")]),
+            (resample, outputnode, [
+                ("out_field", "fieldmap"),
+                ("out_warp", "fieldwarp"),
+            ]),
         ])
         # fmt:on
     return workflow
