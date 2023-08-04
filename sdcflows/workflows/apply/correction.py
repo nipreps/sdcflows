@@ -26,7 +26,7 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
+def init_unwarp_wf(*, ref_only=False, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
     r"""
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
@@ -129,16 +129,7 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     else:
         num_threads = omp_nthreads
 
-    resample = pe.Node(
-        ApplyCoeffsField(num_threads=num_threads),
-        mem_gb=mem_per_thread * num_threads,
-        name="resample",
-    )
-
     resample_ref = pe.Node(ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref")
-
-    merge = pe.Node(MergeSeries(), name="merge")
-    average = pe.Node(RobustAverage(mc_method=None), name="average")
 
     brainextraction_wf = init_brainextraction_wf()
 
@@ -146,21 +137,11 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
     workflow.connect([
         (inputnode, rotime, [(("distorted", _pop), "in_file"),
                              ("metadata", "metadata")]),
-        (inputnode, resample, [("distorted", "in_data"),
-                               ("fmap_coeff", "in_coeff"),
-                               ("hmc_xforms", "in_xfms")]),
-        (rotime, resample, [("readout_time", "ro_time"),
-                            ("pe_direction", "pe_dir")]),
         (inputnode, resample_ref, [("distorted_ref", "in_data"),
                                    ("fmap_coeff", "in_coeff")]),
         (rotime, resample_ref, [("readout_time", "ro_time"),
                                 ("pe_direction", "pe_dir")]),
-        (resample, merge, [("out_corrected", "in_files")]),
-        (merge, average, [("out_file", "in_file")]),
-        (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
-        (merge, outputnode, [("out_file", "corrected")]),
-        (resample, outputnode, [("out_field", "fieldmap"),
-                                ("out_warp", "fieldwarp")]),
+        (resample_ref, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
         (resample_ref, outputnode, [("out_field", "fieldmap_ref"),
                                     ("out_warp", "fieldwarp_ref")]),
         (brainextraction_wf, outputnode, [
@@ -169,4 +150,29 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         ]),
     ])
     # fmt:on
+
+    if not ref_only:
+        resample = pe.Node(
+            ApplyCoeffsField(num_threads=num_threads),
+            mem_gb=mem_per_thread * num_threads,
+            name="resample",
+        )
+
+        merge = pe.Node(MergeSeries(), name="merge")
+        average = pe.Node(RobustAverage(mc_method=None), name="average")
+
+        # fmt:off
+        workflow.connect([
+            (inputnode, resample, [("distorted", "in_data"),
+                                ("fmap_coeff", "in_coeff"),
+                                ("hmc_xforms", "in_xfms")]),
+            (rotime, resample, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
+            (resample, merge, [("out_corrected", "in_files")]),
+            (merge, average, [("out_file", "in_file")]),
+            (merge, outputnode, [("out_file", "corrected")]),
+            (resample, outputnode, [("out_field", "fieldmap"),
+                                    ("out_warp", "fieldwarp")]),
+        ])
+        # fmt:on
     return workflow
