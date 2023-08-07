@@ -21,18 +21,17 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test unwarp."""
-from pathlib import Path
+import json
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-
-from ...fit.fieldmap import init_magnitude_wf
-from ..correction import init_unwarp_wf
-from ..registration import init_coeff2epi_wf
+from sdcflows.workflows.apply.correction import init_unwarp_wf
 
 
 def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
     """Test the unwarping workflow."""
     tmpdir.chdir()
+
+    derivs_path = datadir / "HCP101006" / "derivatives" / "sdcflows-2.x"
 
     distorted = (
         datadir
@@ -42,44 +41,14 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         / "sub-101006_task-rest_dir-LR_sbref.nii.gz"
     )
 
-    magnitude = (
-        datadir / "HCP101006" / "sub-101006" / "fmap" / "sub-101006_magnitude1.nii.gz"
+    workflow = init_unwarp_wf(omp_nthreads=2, debug=True)
+    workflow.inputs.inputnode.distorted = str(distorted)
+    workflow.inputs.inputnode.metadata = json.loads(
+        (distorted.parent / distorted.name.replace(".nii.gz", ".json")).read_text()
     )
-    fmap_ref_wf = init_magnitude_wf(2, name="fmap_ref_wf")
-    fmap_ref_wf.inputs.inputnode.magnitude = magnitude
-
-    epi_ref_wf = init_magnitude_wf(2, name="epi_ref_wf")
-    epi_ref_wf.inputs.inputnode.magnitude = distorted
-
-    reg_wf = init_coeff2epi_wf(2, debug=True, sloppy=True, write_coeff=True)
-    reg_wf.inputs.inputnode.fmap_coeff = [Path(__file__).parent / "fieldcoeff.nii.gz"]
-
-    unwarp_wf = init_unwarp_wf(omp_nthreads=2, debug=True)
-    unwarp_wf.inputs.inputnode.metadata = {
-        "EffectiveEchoSpacing": 0.00058,
-        "PhaseEncodingDirection": "i",
-    }
-
-    workflow = pe.Workflow(name="test_unwarp_wf")
-    # fmt: off
-    workflow.connect([
-        (epi_ref_wf, unwarp_wf, [
-            ("outputnode.fmap_ref", "inputnode.distorted"),
-        ]),
-        (epi_ref_wf, reg_wf, [
-            ("outputnode.fmap_ref", "inputnode.target_ref"),
-            ("outputnode.fmap_mask", "inputnode.target_mask"),
-        ]),
-        (fmap_ref_wf, reg_wf, [
-            ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-            ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-        ]),
-        (reg_wf, unwarp_wf, [
-            ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
-            ("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm")
-        ]),
-    ])
-    # fmt:on
+    workflow.inputs.inputnode.fmap_coeff = [
+        str(derivs_path / "sub-101006_coeff-1_desc-topup_fieldmap.nii.gz")
+    ]
 
     if outdir:
         from niworkflows.interfaces.reportlets.registration import (
@@ -88,12 +57,15 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
 
+        unwarp_wf = workflow  # Change variable name
+        workflow = pe.Workflow(name="outputs_unwarp_wf")
         squeeze = pe.Node(niu.Function(function=_squeeze), name="squeeze")
 
         report = pe.Node(
             SimpleBeforeAfter(
                 before_label="Distorted",
                 after_label="Corrected",
+                before=str(distorted)
             ),
             name="report",
             mem_gb=0.1,
@@ -111,7 +83,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
             run_without_submitting=True,
         )
 
-        rep = pe.Node(FieldmapReportlet(apply_mask=True), "simple_report")
+        rep = pe.Node(FieldmapReportlet(), "simple_report")
         rep.interface._always_run = True
 
         ds_fmap_report = pe.Node(
@@ -128,14 +100,15 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
 
         # fmt: off
         workflow.connect([
-            (epi_ref_wf, report, [("outputnode.fmap_ref", "before")]),
             (unwarp_wf, squeeze, [("outputnode.corrected", "in_file")]),
             (unwarp_wf, report, [("outputnode.corrected_mask", "wm_seg")]),
             (squeeze, report, [("out", "after")]),
             (report, ds_report, [("out_report", "in_file")]),
-            (epi_ref_wf, rep, [("outputnode.fmap_ref", "reference"),
-                               ("outputnode.fmap_mask", "mask")]),
-            (unwarp_wf, rep, [("outputnode.fieldmap", "fieldmap")]),
+            (squeeze, rep, [("out", "reference")]),
+            (unwarp_wf, rep, [
+                ("outputnode.fieldmap", "fieldmap"),
+                ("outputnode.corrected_mask", "mask"),
+            ]),
             (rep, ds_fmap_report, [("out_report", "in_file")]),
         ])
         # fmt: on

@@ -29,6 +29,7 @@ in the case of PEPOLAR estimation).
 The target EPI is the distorted dataset (or a reference thereof).
 
 """
+from warnings import warn
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
@@ -95,8 +96,6 @@ def init_coeff2epi_wf(
     """
     from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
-    from ...interfaces.bspline import TransformCoefficients
-    from ...utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -132,6 +131,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     # fmt: off
     workflow.connect([
+        (inputnode, outputnode, [("fmap_coeff", "fmap_coeff")]),
         (inputnode, coregister, [
             ("target_ref", "moving_image"),
             ("fmap_ref", "fixed_image"),
@@ -145,27 +145,7 @@ The field coefficients were mapped on to the reference EPI using the transform.
     ])
     # fmt: on
 
-    if not write_coeff:
-        return workflow
-
-    # Resample the coefficients into the EPI grid
-    map_coeff = pe.Node(TransformCoefficients(), name="map_coeff")
-    map_coeff.interface._always_run = debug
-
-    # fmt: off
-    workflow.connect([
-        (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
-                                ("fmap_ref", "fmap_ref")]),
-        (coregister, map_coeff, [(("forward_transforms", _pop), "transform")]),
-        (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
-    ])
-    # fmt: on
-
-    if debug:
-        # fmt: off
-        workflow.connect([
-            (inputnode, map_coeff, [("target_ref", "fmap_target")]),
-        ])
-        # fmt: on
+    if write_coeff:
+        warn("SDCFlows does not tinker with the coefficients file anymore")
 
     return workflow
