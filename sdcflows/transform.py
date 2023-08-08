@@ -236,7 +236,7 @@ class B0FieldTransform:
     def fit(
         self,
         target_reference: nb.spatialimages.SpatialImage,
-        fmap2data_xfm: np.ndarray = None,
+        xfm_data2fmap: np.ndarray = None,
         approx: bool = True,
     ) -> bool:
         r"""
@@ -251,15 +251,15 @@ class B0FieldTransform:
             The image object containing a reference grid (same as that of the data
             to be resampled). If a 4D dataset is provided, then the fourth dimension
             will be dropped.
-        fmap2data_xfm : :obj:`numpy.ndarray`
+        xfm_data2fmap : :obj:`numpy.ndarray`
             Transform that maps coordinates on the `target_reference` onto the
             fieldmap reference (that is, the linear transform through which the fieldmap can
             be resampled in register with the `target_reference`).
-            In other words, `fmap2data_xfm` is the result of calling a registration tool
+            In other words, `xfm_data2fmap` is the result of calling a registration tool
             such as ANTs configured for a linear transform with at most 12 degrees of freedom
             and called with the image carrying `target_affine` as reference and the fieldmap
             reference as moving.
-            The result of such a registration framework is an affine (our `fmap2data_xfm` here)
+            The result of such a registration framework is an affine (our `xfm_data2fmap` here)
             that maps coordinates in reference (target) RAS onto the fieldmap RAS.
         approx : :obj:`bool`
             If ``True``, do not reconstruct the B-Spline field directly on the target
@@ -277,14 +277,14 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
-        approx &= fmap2data_xfm is not None  # Approximate iff fmap2data_xfm is defined
-        fmap2data_xfm = fmap2data_xfm if fmap2data_xfm is not None else np.eye(4)
+        approx &= xfm_data2fmap is not None  # Approximate iff xfm_data2fmap is defined
+        xfm_data2fmap = xfm_data2fmap if xfm_data2fmap is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
 
         # Project the reference's grid onto the fieldmap's
         target_reference = target_reference.__class__(
             target_reference.dataobj,
-            fmap2data_xfm @ target_affine,
+            xfm_data2fmap @ target_affine,
             target_reference.header,
         )
 
@@ -347,7 +347,7 @@ class B0FieldTransform:
         hdr["cal_min"] = -hdr["cal_max"]
 
         # Cache
-        self.mapped = nb.Nifti1Image(fmap, target_affine, hdr)
+        self.mapped = nb.Nifti1Image(fmap, target_reference.affine, hdr)
 
         if approx:
             from nitransforms.linear import Affine
@@ -364,7 +364,7 @@ class B0FieldTransform:
         pe_dir: Union[str, Sequence[str]],
         ro_time: Union[float, Sequence[float]],
         xfms: Sequence[np.ndarray] = None,
-        fmap2data_xfm: np.ndarray = None,
+        xfm_data2fmap: np.ndarray = None,
         approx: bool = True,
         order: int = 3,
         mode: str = "constant",
@@ -394,15 +394,15 @@ class B0FieldTransform:
             Therefore, each of these matrices express the transform of every
             voxel's RAS (physical) coordinates in the image used as reference
             for realignment into the coordinates of each of the EPI series volume.
-        fmap2data_xfm : :obj:`numpy.ndarray`
-            Transform that maps coordinates on the `target_reference` onto the
+        xfm_data2fmap : :obj:`numpy.ndarray`
+            Transform that maps coordinates on the ``target_reference`` onto the
             fieldmap reference (that is, the linear transform through which the fieldmap can
-            be resampled in register with the `target_reference`).
-            In other words, `fmap2data_xfm` is the result of calling a registration tool
+            be resampled in register with the ``target_reference``).
+            In other words, ``xfm_data2fmap`` is the result of calling a registration tool
             such as ANTs configured for a linear transform with at most 12 degrees of freedom
-            and called with the image carrying `target_affine` as reference and the fieldmap
+            and called with the image carrying ``target_affine`` as reference and the fieldmap
             reference as moving.
-            The result of such a registration framework is an affine (our `fmap2data_xfm` here)
+            The result of such a registration framework is an affine (our ``xfm_data2fmap`` here)
             that maps coordinates in reference (target) RAS onto the fieldmap RAS.
         approx : :obj:`bool`
             If ``True``, do not reconstruct the B-Spline field directly on the target
@@ -456,9 +456,9 @@ class B0FieldTransform:
             )
         else:
             # Generate warp field (before ensuring positive cosines)
-            self.fit(moving, fmap2data_xfm=fmap2data_xfm, approx=approx)
+            self.fit(moving, xfm_data2fmap=xfm_data2fmap, approx=approx)
 
-        # Squeeze non-spatial dimensions
+        # Squeeze n33on-spatial dimensions
         newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
         data = np.reshape(moving.dataobj, newshape)
         ndim = min(data.ndim, 3)

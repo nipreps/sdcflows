@@ -53,7 +53,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
     ]
 
     if with_affine:
-        workflow.inputs.inputnode.data2fmap_xfm = str(
+        workflow.inputs.inputnode.fmap2data_xfm = str(
             str(derivs_path / "sub-101006_from-sbrefLR_to-fieldmapref_mode-image_xfm.mat")
         )
 

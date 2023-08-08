@@ -300,12 +300,12 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
     )
     fmap2data_xfm = InputMultiObject(
         File(exists=True),
-        desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
+        desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
         xor="data2fmap_xfm",
     )
     data2fmap_xfm = InputMultiObject(
         File(exists=True),
-        desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
+        desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
         xor="fmap2data_xfm",
     )
     in_xfms = traits.List(
@@ -375,19 +375,19 @@ class ApplyCoeffsField(SimpleInterface):
     def _run_interface(self, runtime):
         from sdcflows.transform import B0FieldTransform
 
-        fmap2data_xfm = None
+        data2fmap_xfm = None
 
-        if isdefined(self.inputs.fmap2data_xfm):
-            fmap2data_xfm = Affine.from_filename(
-                self.inputs.fmap2data_xfm if not isinstance(self.inputs.fmap2data_xfm, list)
-                else self.inputs.fmap2data_xfm[0],
-                fmt="itk"
-            ).matrix
-        elif isdefined(self.inputs.data2fmap_xfm):
-            # Same, but inverting direction
-            fmap2data_xfm = (~Affine.from_filename(
+        if isdefined(self.inputs.data2fmap_xfm):
+            data2fmap_xfm = Affine.from_filename(
                 self.inputs.data2fmap_xfm if not isinstance(self.inputs.data2fmap_xfm, list)
                 else self.inputs.data2fmap_xfm[0],
+                fmt="itk"
+            ).matrix
+        elif isdefined(self.inputs.fmap2data_xfm):
+            # Same, but inverting direction
+            data2fmap_xfm = (~Affine.from_filename(
+                self.inputs.fmap2data_xfm if not isinstance(self.inputs.fmap2data_xfm, list)
+                else self.inputs.fmap2data_xfm[0],
                 fmt="itk"
             )).matrix
 
@@ -416,7 +416,7 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.pe_dir,
             self.inputs.ro_time,
             xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
-            fmap2data_xfm=fmap2data_xfm,
+            xfm_data2fmap=data2fmap_xfm,
             approx=self.inputs.approx,
             num_threads=(
                 self.inputs.num_threads if isdefined(self.inputs.num_threads) else None
