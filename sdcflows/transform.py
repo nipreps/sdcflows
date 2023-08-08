@@ -277,9 +277,6 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
-        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
-        target_reference, _ = ensure_positive_cosines(target_reference)
-
         approx &= fmap2data_xfm is not None  # Approximate iff fmap2data_xfm is defined
         fmap2data_xfm = fmap2data_xfm if fmap2data_xfm is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
@@ -290,6 +287,9 @@ class B0FieldTransform:
             fmap2data_xfm @ target_affine,
             target_reference.header,
         )
+
+        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
+        target_reference, _ = ensure_positive_cosines(target_reference)
 
         # Approximate only iff the coordinate systems are not aligned
         finest_coeffs = listify(self.coeffs)[-1]

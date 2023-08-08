@@ -22,12 +22,14 @@
 #
 """Test unwarp."""
 import json
+import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from sdcflows.workflows.apply.correction import init_unwarp_wf
 
 
-def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
+@pytest.mark.parametrize("with_affine", [False, True])
+def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
     """Test the unwarping workflow."""
     tmpdir.chdir()
 
@@ -50,6 +52,11 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         str(derivs_path / "sub-101006_coeff-1_desc-topup_fieldmap.nii.gz")
     ]
 
+    if with_affine:
+        workflow.inputs.inputnode.data2fmap_xfm = str(
+            str(derivs_path / "sub-101006_from-sbrefLR_to-fieldmapref_mode-image_xfm.mat")
+        )
+
     if outdir:
         from niworkflows.interfaces.reportlets.registration import (
             SimpleBeforeAfterRPT as SimpleBeforeAfter,
@@ -57,6 +64,8 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir):
         from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
 
+        outdir = outdir / f"with{'' if with_affine else 'out'}-affine"
+        outdir.mkdir(exist_ok=True, parents=True)
         unwarp_wf = workflow  # Change variable name
         workflow = pe.Workflow(name="outputs_unwarp_wf")
         squeeze = pe.Node(niu.Function(function=_squeeze), name="squeeze")
