@@ -88,6 +88,7 @@ def init_unwarp_wf(
         No motion is taken into account.
 
     """
+    from niworkflows.interfaces.images import RobustAverage
     from niworkflows.interfaces.nibabel import MergeSeries
     from sdcflows.interfaces.epi import GetReadoutTime
     from sdcflows.interfaces.bspline import ApplyCoeffsField
@@ -140,6 +141,9 @@ def init_unwarp_wf(
         ApplyCoeffsField(), mem_gb=mem_per_thread, name="resample_ref"
     )
 
+    merge_ref = pe.Node(MergeSeries(), name="merge_ref")
+    average = pe.Node(RobustAverage(mc_method=None), name="average")
+
     brainextraction_wf = init_brainextraction_wf()
 
     # fmt:off
@@ -156,7 +160,9 @@ def init_unwarp_wf(
             ("readout_time", "ro_time"),
             ("pe_direction", "pe_dir"),
         ]),
-        (resample_ref, brainextraction_wf, [("out_corrected", "inputnode.in_file")]),
+        (resample_ref, merge_ref, [("out_corrected", "in_files")]),
+        (merge_ref, average, [("out_file", "in_file")]),
+        (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
         (resample_ref, outputnode, [
             ("out_field", "fieldmap_ref"),
             ("out_warp", "fieldwarp_ref"),
