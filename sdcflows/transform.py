@@ -280,12 +280,16 @@ class B0FieldTransform:
         approx &= xfm_data2fmap is not None  # Approximate iff xfm_data2fmap is defined
         xfm_data2fmap = xfm_data2fmap if xfm_data2fmap is not None else np.eye(4)
         target_affine = target_reference.affine.copy()
+        target_header = target_reference.header.copy()
+
+        if approx:
+            _tmp_shape = target_reference.shape[:3]
 
         # Project the reference's grid onto the fieldmap's
         target_reference = target_reference.__class__(
             target_reference.dataobj,
             xfm_data2fmap @ target_affine,
-            target_reference.header,
+            target_header,
         )
 
         # Make sure the data array has all cosines positive (i.e., no axes are flipped)
@@ -320,7 +324,6 @@ class B0FieldTransform:
         if approx:
             from sdcflows.utils.tools import deoblique_and_zooms
 
-            _tmp_reference = target_reference
             # Generate a sampling reference on the fieldmap's space that fully covers
             # the target_reference's grid.
             target_reference = deoblique_and_zooms(
@@ -352,7 +355,12 @@ class B0FieldTransform:
         if approx:
             from nitransforms.linear import Affine
 
-            # Interpolate fmap given on target_reference in target_reference_back
+            _tmp_reference = nb.Nifti1Image(
+                np.zeros(_tmp_shape, dtype=target_header.get_data_dtype()),
+                target_affine,
+                target_header,
+            )
+            # Interpolate fmap given on target_reference in the original target_reference
             # voxel locations (overwrite fmap)
             self.mapped = Affine(reference=_tmp_reference).apply(self.mapped)
 
@@ -497,14 +505,20 @@ class B0FieldTransform:
 
         # Convert head-motion transforms to voxel-to-voxel:
         if xfms is not None:
-            if len(xfms) != n_volumes:
-                raise RuntimeError(
-                    f"Number of head-motion estimates ({len(xfms)}) does not match the "
-                    f"number of volumes ({n_volumes})"
-                )
-            vox2ras = moving.affine.copy()
-            ras2vox = np.linalg.inv(vox2ras)
-            xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
+            # if len(xfms) != n_volumes:
+            #     raise RuntimeError(
+            #         f"Number of head-motion estimates ({len(xfms)}) does not match the "
+            #         f"number of volumes ({n_volumes})"
+            #     )
+            # vox2ras = moving.affine.copy()
+            # ras2vox = np.linalg.inv(vox2ras)
+            # xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
+            xfms = None
+            warn(
+                "Head-motion compensating (realignment) transforms are ignored when applying "
+                "the unwarp with SDCFlows. This feature will be enabled as soon as unit tests "
+                "are implemented for its quality assurance."
+            )
 
         # Resample
         resampled = asyncio.run(unwarp_parallel(

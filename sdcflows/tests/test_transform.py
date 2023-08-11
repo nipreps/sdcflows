@@ -146,7 +146,8 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
         "LR",
     ],
 )
-@pytest.mark.parametrize("hmc", (True, False))
+# @pytest.mark.parametrize("hmc", (True, False))
+@pytest.mark.parametrize("hmc", (False, ))
 @pytest.mark.parametrize("fmap", (True, False))
 def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
     """Test the .apply() member of the B0Transform object."""
