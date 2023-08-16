@@ -136,7 +136,9 @@ def init_topup_wf(
     # Regrid all to the reference (grid_reference=0 means first averaged run)
     regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
     # Sort PE blips to ensure reproducibility
-    sort_pe_blips = pe.Node(SortPEBlips(), name="sort_pe_blips", run_without_submitting=True)
+    sort_pe_blips = pe.Node(
+        SortPEBlips(), name="sort_pe_blips", run_without_submitting=True
+    )
     # Merge into one 4D file
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     # Pad dimensions so that they meet TOPUP's expectations
@@ -214,11 +216,9 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
-    from niworkflows.interfaces.nibabel import SplitSeries
-    from ...interfaces.bspline import ApplyCoeffsField
+    from sdcflows.interfaces.bspline import ApplyCoeffsField
 
     # Separate the runs again, as our ApplyCoeffsField corrects them separately
-    split_blips = pe.Node(SplitSeries(), name="split_blips")
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
     unwarp.interface._always_run = True
     concat_corrected = pe.Node(MergeSeries(), name="concat_corrected")
@@ -226,12 +226,10 @@ def init_topup_wf(
     # fmt:off
     workflow.connect([
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (setwise_avg, split_blips, [("out_hmc_volumes", "in_file")]),
-        (split_blips, unwarp, [("out_files", "in_data")]),
+        (setwise_avg, unwarp, [("out_hmc_volumes", "in_data")]),
         (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
                                  ("pe_dirs", "pe_dir")]),
-        (unwarp, outputnode, [("out_warp", "out_warps"),
-                              ("out_field", "fmap")]),
+        (unwarp, outputnode, [("out_field", "fmap")]),
         (unwarp, concat_corrected, [("out_corrected", "in_files")]),
         (concat_corrected, ref_average, [("out_file", "in_file")]),
     ])

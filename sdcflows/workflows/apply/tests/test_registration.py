@@ -131,3 +131,25 @@ def _gen_coeff(img):
     out_file = Path("coeff.nii.gz").absolute()
     bspline_grid(img).to_filename(out_file)
     return str(out_file)
+
+
+# ## Just in case we want to test with epis:
+# reg_wf = init_coeff2epi_wf(2, debug=True, sloppy=True, write_coeff=True)
+# reg_wf.inputs.inputnode.fmap_coeff = [
+#     str(derivs_path / "sub-101006_coeff-1_desc-topup_fieldmap.nii.gz")
+# ]
+# reg_wf.inputs.inputnode.fmap_ref = str(derivs_path / "sub-101006_desc-pepolar_epiref.nii.gz")
+# reg_wf.inputs.inputnode.fmap_mask = str(derivs_path / "sub-101006_desc-pepolar_mask.nii.gz")
+# reg_wf.inputs.inputnode.target_ref = str(
+#     derivs_path / "sub-101006_task-rest_dir-LR_desc-preproc_sbref.nii.gz"
+# )
+# reg_wf.inputs.inputnode.target_mask = str(
+#     derivs_path / "sub-101006_task-rest_dir-LR_desc-sbref_mask.nii.gz"
+# )
+# fmt: off
+# workflow.connect([
+#     (reg_wf, unwarp_wf, [
+#         ("outputnode.target2fmap_xfm", "inputnode.data2fmap_xfm")
+#     ]),
+# ])
+# fmt:on
