@@ -50,7 +50,7 @@ import os
 from functools import partial
 import asyncio
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Sequence, Tuple
 
 import attr
 import numpy as np
@@ -118,7 +118,9 @@ async def worker(
     """Create one worker and attach it to the execution loop."""
     async with semaphore:
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, func, data, coordinates, pe_info, hmc_xfm)
+        result = await loop.run_in_executor(
+            None, func, data, coordinates, pe_info, hmc_xfm
+        )
         return result
 
 
@@ -204,14 +206,16 @@ async def unwarp_parallel(
         xfm = None if xfms is None else xfms[volid]
 
         # IMPORTANT - the coordinates array must be copied every time anew per thread
-        task = asyncio.create_task(worker(
-            volume,
-            coordinates.copy(),
-            pe_info[volid],
-            xfm,
-            func,
-            semaphore,
-        ))
+        task = asyncio.create_task(
+            worker(
+                volume,
+                coordinates.copy(),
+                pe_info[volid],
+                xfm,
+                func,
+                semaphore,
+            )
+        )
         tasks.append(task)
 
     # Wait for all tasks to complete
@@ -295,14 +299,15 @@ class B0FieldTransform:
         finest_coeffs = listify(self.coeffs)[-1]
         approx &= not np.allclose(
             np.linalg.norm(
-                np.cross(finest_coeffs.affine[:-1, :-1].T, target_reference.affine[:-1, :-1].T),
+                np.cross(
+                    finest_coeffs.affine[:-1, :-1].T,
+                    target_reference.affine[:-1, :-1].T,
+                ),
                 axis=1,
             ),
             0,
             atol=1e-3,
         )
-
-
 
         weights = []
         coeffs = []
@@ -342,7 +347,9 @@ class B0FieldTransform:
             from nitransforms.linear import Affine
 
             _tmp_reference = nb.Nifti1Image(
-                np.zeros(target_reference.shape[:3], dtype=target_reference.get_data_dtype()),
+                np.zeros(
+                    target_reference.shape[:3], dtype=target_reference.get_data_dtype()
+                ),
                 target_reference.affine,
                 target_reference.header,
             )
@@ -364,7 +371,7 @@ class B0FieldTransform:
         mode: str = "constant",
         cval: float = 0.0,
         prefilter: bool = True,
-        output_dtype: str, np.dtype | None = None,
+        output_dtype: str | np.dtype | None = None,
         num_threads: int = None,
         allow_negative: bool = False,
     ):
@@ -481,13 +488,15 @@ class B0FieldTransform:
             pe_info.append((
                 pe_axis,
                 # Displacements are reversed if either is true (after ensuring positive cosines)
-                -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid]
+                -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
             ))
 
         # Reference image's voxel coordinates (in voxel units)
-        voxcoords = nt.linear.Affine(
-            reference=moving
-        ).reference.ndindex.reshape((ndim, *data.shape[:ndim])).astype("float32")
+        voxcoords = (
+            nt.linear.Affine(reference=moving)
+            .reference.ndindex.reshape((ndim, *data.shape[:ndim]))
+            .astype("float32")
+        )
 
         # Convert head-motion transforms to voxel-to-voxel:
         if xfms is not None:
@@ -507,19 +516,21 @@ class B0FieldTransform:
             )
 
         # Resample
-        resampled = asyncio.run(unwarp_parallel(
-            data,
-            voxcoords,
-            self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
-            pe_info,
-            xfms,
-            output_dtype=output_dtype,
-            order=order,
-            mode=mode,
-            cval=cval,
-            prefilter=prefilter,
-            max_concurrent=num_threads or min(os.cpu_count(), 12),
-        ))
+        resampled = asyncio.run(
+            unwarp_parallel(
+                data,
+                voxcoords,
+                self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
+                pe_info,
+                xfms,
+                output_dtype=output_dtype,
+                order=order,
+                mode=mode,
+                cval=cval,
+                prefilter=prefilter,
+                max_concurrent=num_threads or min(os.cpu_count(), 12),
+            )
+        )
 
         if not allow_negative:
             resampled[resampled < 0] = cval
