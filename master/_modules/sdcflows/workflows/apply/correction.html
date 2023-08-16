@@ -4,12 +4,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>sdcflows.workflows.apply.correction - sdcflows 2.5.2.dev23+g375dd7a0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/css/version-switch.css" />
+    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+        <title>sdcflows.workflows.apply.correction - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/version-switch.css?v=3fffbac3" />
     
     
 
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.5.2.dev23+g375dd7a0 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -303,8 +303,6 @@
 <span class="sd">    ------</span>
 <span class="sd">    distorted</span>
 <span class="sd">        the target EPI image.</span>
-<span class="sd">    distorted_ref</span>
-<span class="sd">        the distorted reference EPI image to which each volume has been motion corrected</span>
 <span class="sd">    metadata</span>
 <span class="sd">        dictionary of metadata corresponding to the target EPI image</span>
 <span class="sd">    fmap_coeff</span>
@@ -326,16 +324,6 @@
 <span class="sd">        the target EPI reference image, after applying unwarping.</span>
 <span class="sd">    corrected_mask</span>
 <span class="sd">        a fast mask calculated from the corrected EPI reference.</span>
-<span class="sd">    fieldmap_ref</span>
-<span class="sd">        the actual B\ :sub:`0` inhomogeneity map (also called *fieldmap*)</span>
-<span class="sd">        interpolated from the B-Spline coefficients into the reference EPI&#39;s</span>
-<span class="sd">        grid, given in Hz units.</span>
-<span class="sd">        No motion is taken into account.</span>
-<span class="sd">    fieldwarp_ref</span>
-<span class="sd">        the displacements field interpolated from the B-Spline coefficients</span>
-<span class="sd">        and scaled by the appropriate parameters (readout time of the EPI</span>
-<span class="sd">        target and voxel size along PE).</span>
-<span class="sd">        No motion is taken into account.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="kn">import</span> <span class="n">RobustAverage</span>
@@ -348,7 +336,14 @@
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;distorted&quot;</span><span class="p">,</span> <span class="s2">&quot;distorted_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;hmc_xforms&quot;</span><span class="p">]</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;distorted&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;metadata&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;hmc_xforms&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputnode&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -360,8 +355,6 @@
                 <span class="s2">&quot;corrected&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;corrected_ref&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;corrected_mask&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;fieldwarp_ref&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;fieldmap_ref&quot;</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
@@ -387,8 +380,6 @@
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;resample&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">resample_ref</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(),</span> <span class="n">mem_gb</span><span class="o">=</span><span class="n">mem_per_thread</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;resample_ref&quot;</span><span class="p">)</span>
-
     <span class="n">merge</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>
     <span class="n">average</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">mc_method</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">)</span>
 
@@ -400,21 +391,16 @@
                              <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;distorted&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">),</span>
                                <span class="p">(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">,</span> <span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">),</span>
                                <span class="p">(</span><span class="s2">&quot;hmc_xforms&quot;</span><span class="p">,</span> <span class="s2">&quot;in_xfms&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">rotime</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
                             <span class="p">(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">resample_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;distorted_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">),</span>
-                                   <span class="p">(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">rotime</span><span class="p">,</span> <span class="n">resample_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.in_file&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;out_warp&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldwarp&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">resample_ref</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap_ref&quot;</span><span class="p">),</span>
-                                    <span class="p">(</span><span class="s2">&quot;out_warp&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldwarp_ref&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">brainextraction_wf</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[</span>
             <span class="p">(</span><span class="s2">&quot;outputnode.out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected_ref&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;outputnode.out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected_mask&quot;</span><span class="p">),</span>
@@ -454,10 +440,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-    <script src="../../../../_static/doctools.js"></script>
-    <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/scripts/furo.js"></script>
-    <script src="../../../../_static/js/version-switch.js"></script>
+</div><script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js?v=4429f6ee"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../../_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="../../../../_static/js/version-switch.js?v=d8b55535"></script>
     </body>
 </html>

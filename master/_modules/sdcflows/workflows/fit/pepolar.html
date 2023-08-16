@@ -4,12 +4,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html" /><link rel="search" title="Search" href="../../../../search.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.5.2.dev23+g375dd7a0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/css/version-switch.css" />
+    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+        <title>sdcflows.workflows.fit.pepolar - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/version-switch.css?v=3fffbac3" />
     
     
 
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">sdcflows 2.5.2.dev23+g375dd7a0 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -388,7 +388,9 @@
     <span class="c1"># Regrid all to the reference (grid_reference=0 means first averaged run)</span>
     <span class="n">regrid</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">UniformGrid</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">grid_reference</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;regrid&quot;</span><span class="p">)</span>
     <span class="c1"># Sort PE blips to ensure reproducibility</span>
-    <span class="n">sort_pe_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SortPEBlips</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sort_pe_blips&quot;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sort_pe_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">SortPEBlips</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sort_pe_blips&quot;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="c1"># Merge into one 4D file</span>
     <span class="n">concat_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(</span><span class="n">affine_tolerance</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;concat_blips&quot;</span><span class="p">)</span>
     <span class="c1"># Pad dimensions so that they meet TOPUP&#39;s expectations</span>
@@ -466,11 +468,9 @@
         <span class="c1"># fmt: on</span>
         <span class="k">return</span> <span class="n">workflow</span>
 
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">SplitSeries</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.interfaces.bspline</span> <span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
     <span class="c1"># Separate the runs again, as our ApplyCoeffsField corrects them separately</span>
-    <span class="n">split_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SplitSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;split_blips&quot;</span><span class="p">)</span>
     <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp&quot;</span><span class="p">)</span>
     <span class="n">unwarp</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">concat_corrected</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;concat_corrected&quot;</span><span class="p">)</span>
@@ -478,12 +478,10 @@
     <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
         <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">split_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_hmc_volumes&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">split_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_files&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_hmc_volumes&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
                                  <span class="p">(</span><span class="s2">&quot;pe_dirs&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_warp&quot;</span><span class="p">,</span> <span class="s2">&quot;out_warps&quot;</span><span class="p">),</span>
-                              <span class="p">(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">concat_corrected</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">concat_corrected</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
     <span class="p">])</span>
@@ -726,10 +724,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-    <script src="../../../../_static/doctools.js"></script>
-    <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/scripts/furo.js"></script>
-    <script src="../../../../_static/js/version-switch.js"></script>
+</div><script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js?v=4429f6ee"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../../_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="../../../../_static/js/version-switch.js?v=d8b55535"></script>
     </body>
 </html>

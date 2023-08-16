@@ -4,12 +4,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>sdcflows.transform - sdcflows 2.5.2.dev23+g375dd7a0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/version-switch.css" />
+    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+        <title>sdcflows.transform - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/version-switch.css?v=3fffbac3" />
     
     
 
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">sdcflows 2.5.2.dev23+g375dd7a0 documentation</div></a>
+      <a href="../../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -272,8 +272,37 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;The :math:`B_0` unwarping transform formalism.&quot;&quot;&quot;</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The :math:`B_0` unwarping transform formalism.</span>
+
+<span class="sd">This module implements a data structure to represent the displacements field associated</span>
+<span class="sd">to the deformations caused by susceptibility-derived distortions.</span>
+<span class="sd">This implementation attempts to provide a single representation of such distortions independently</span>
+<span class="sd">of the estimation strategy (see :doc:`/methods`).</span>
+
+<span class="sd">.. _bspline-interpolation:</span>
+
+<span class="sd">That is achieved by implementing multi-level B-Spline cubic interpolators.</span>
+<span class="sd">For one given level, a function :math:`f(\mathbf{s})` can be represented as a linear combination</span>
+<span class="sd">of tensor-product cubic B-Spline basis (:math:`\Psi^3(\mathbf{k}, \mathbf{s})`;</span>
+<span class="sd">see Eq. :math:`\eqref{eq:2}`).</span>
+
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    f(\mathbf{s}) =</span>
+<span class="sd">    \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).</span>
+<span class="sd">    \label{eq:1}\tag{1}</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">attr</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -284,15 +313,170 @@
 
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">nitransforms</span> <span class="k">as</span> <span class="nn">nt</span>
-<span class="kn">from</span> <span class="nn">nitransforms.base</span> <span class="kn">import</span> <span class="n">_as_homogeneous</span>
 <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
 
 <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">reorient_image</span>
 
+<span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
 
-<span class="k">def</span> <span class="nf">_clear_mapped</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-    <span class="n">instance</span><span class="o">.</span><span class="n">mapped</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">value</span>
+
+<span class="k">def</span> <span class="nf">_sdc_unwarp</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">pe_info</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">hmc_xfm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fmap_hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">output_dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+    <span class="n">cval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">prefilter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample one volume, moving through a head motion correction affine if provided.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">hmc_xfm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Move image with the head</span>
+        <span class="n">coords_shape</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span>
+            <span class="n">hmc_xfm</span><span class="p">,</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">coords_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">coords_shape</span><span class="p">)</span>
+
+    <span class="c1"># Map voxel coordinates applying the VSM</span>
+    <span class="c1"># The VSM is just the displacements field given in index coordinates</span>
+    <span class="c1"># voxcoords is the deformation field, i.e., the target position of each voxel</span>
+    <span class="n">coordinates</span><span class="p">[</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fmap_hz</span> <span class="o">*</span> <span class="n">pe_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">resampled</span> <span class="o">=</span> <span class="n">ndi</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">coordinates</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">output_dtype</span><span class="p">,</span>
+        <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+        <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
+        <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">resampled</span>
+
+
+<div class="viewcode-block" id="worker"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.worker">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">worker</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">pe_info</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">hmc_xfm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">semaphore</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create one worker and attach it to the execution loop.&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">semaphore</span><span class="p">:</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_running_loop</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span>
+            <span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">pe_info</span><span class="p">,</span> <span class="n">hmc_xfm</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="unwarp_parallel"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.unwarp_parallel">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">unwarp_parallel</span><span class="p">(</span>
+    <span class="n">fulldataset</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">fmap_hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">pe_info</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">xfms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+    <span class="n">cval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">prefilter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_concurrent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="mi">12</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unwarp an EPI dataset parallelizing across volumes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fulldataset : :obj:`~numpy.ndarray`</span>
+<span class="sd">        An array of shape (I, J, K, T), where I, J, K are the dimensions of spatial axes</span>
+<span class="sd">        and T is the number of volumes.</span>
+<span class="sd">        The full data array of the EPI that are wanted after correction.</span>
+<span class="sd">    coordinates : :obj:`~numpy.ndarray`</span>
+<span class="sd">        An array of shape (3, I, J, K) array providing the voxel (index) coordinates of</span>
+<span class="sd">        the reference image (i.e., interpolated points) before SDC/HMC.</span>
+<span class="sd">    fmap_hz : :obj:`~numpy.ndarray`</span>
+<span class="sd">        An array of shape (I, J, K) containing the displacement of each voxel in voxel units.</span>
+<span class="sd">    pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)</span>
+<span class="sd">        A tuple containing the index of the phase-encoding axis in the data array and</span>
+<span class="sd">        the readout time (including sign, if displacements must be reversed)</span>
+<span class="sd">    xfms : :obj:`list` of obj:`~numpy.ndarray`</span>
+<span class="sd">        A list of 4×4 matrices, each one formalizing</span>
+<span class="sd">        the estimated head motion alignment to the scan&#39;s reference.</span>
+<span class="sd">        Therefore, each of these matrices express the transform of every</span>
+<span class="sd">        voxel&#39;s RAS (physical) coordinates in the image used as reference</span>
+<span class="sd">        for realignment into the coordinates of each of the EPI series volume.</span>
+<span class="sd">    order : :obj:`int`, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    mode : {&#39;constant&#39;, &#39;reflect&#39;, &#39;nearest&#39;, &#39;mirror&#39;, &#39;wrap&#39;}, optional</span>
+<span class="sd">        Determines how the input image is extended when the resamplings overflows</span>
+<span class="sd">        a border. Default is &#39;constant&#39;.</span>
+<span class="sd">    cval : :obj:`float`, optional</span>
+<span class="sd">        Constant value for ``mode=&#39;constant&#39;``. Default is 0.0.</span>
+<span class="sd">    prefilter : :obj:`bool`, optional</span>
+<span class="sd">        Determines if the image&#39;s data array is prefiltered with</span>
+<span class="sd">        a spline filter before interpolation. The default is ``True``,</span>
+<span class="sd">        which will create a temporary *float64* array of filtered values</span>
+<span class="sd">        if *order &gt; 1*. If setting this to ``False``, the output will be</span>
+<span class="sd">        slightly blurred if *order &gt; 1*, unless the input is prefiltered,</span>
+<span class="sd">        i.e. it is the result of calling the spline filter on the original</span>
+<span class="sd">        input.</span>
+<span class="sd">    output_dtype : :obj:`str` or :obj:`~numpy.dtype`</span>
+<span class="sd">        Override the output data type, instead of propagating it from the</span>
+<span class="sd">        moving image.</span>
+<span class="sd">    max_concurrent : :obj:`int`</span>
+<span class="sd">        The maximum number of parallel resamplings at any given time of execution.</span>
+<span class="sd">        Use this parameter to set an upper bound to memory utilization.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">semaphore</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">max_concurrent</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fulldataset</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">fulldataset</span> <span class="o">=</span> <span class="n">fulldataset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+
+    <span class="n">func</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">_sdc_unwarp</span><span class="p">,</span>
+        <span class="n">fmap_hz</span><span class="o">=</span><span class="n">fmap_hz</span><span class="p">,</span>
+        <span class="n">output_dtype</span><span class="o">=</span><span class="n">output_dtype</span><span class="p">,</span>
+        <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+        <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
+        <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a worker task for each chunk</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">volid</span><span class="p">,</span> <span class="n">volume</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">fulldataset</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
+        <span class="n">xfm</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">xfms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">xfms</span><span class="p">[</span><span class="n">volid</span><span class="p">]</span>
+
+        <span class="c1"># IMPORTANT - the coordinates array must be copied every time anew per thread</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
+            <span class="n">worker</span><span class="p">(</span>
+                <span class="n">volume</span><span class="p">,</span>
+                <span class="n">coordinates</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="n">pe_info</span><span class="p">[</span><span class="n">volid</span><span class="p">],</span>
+                <span class="n">xfm</span><span class="p">,</span>
+                <span class="n">func</span><span class="p">,</span>
+                <span class="n">semaphore</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+    <span class="c1"># Wait for all tasks to complete</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+
+    <span class="c1"># Collect the results and stack along last dimension</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">()</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
 
 
 <div class="viewcode-block" id="B0FieldTransform"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -301,20 +485,44 @@
 
     <span class="n">coeffs</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;B-Spline coefficients (one value per control point).&quot;&quot;&quot;</span>
-    <span class="n">xfm</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_setattr</span><span class="o">=</span><span class="n">_clear_mapped</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A rigid-body transform to prepend to the unwarping displacements field.&quot;&quot;&quot;</span>
     <span class="n">mapped</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the</span>
 <span class="sd">    target image we want to correct).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="B0FieldTransform.fit"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spatialimage</span><span class="p">):</span>
+<div class="viewcode-block" id="B0FieldTransform.fit"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target_reference</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+        <span class="n">xfm_data2fmap</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">approx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate the interpolation matrix (and the VSM with it).</span>
 
 <span class="sd">        Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`</span>
 <span class="sd">        for all voxels in the target-image&#39;s extent.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        target_reference : :obj:`~nibabel.spatialimages.SpatialImage`</span>
+<span class="sd">            The image object containing a reference grid (same as that of the data</span>
+<span class="sd">            to be resampled). If a 4D dataset is provided, then the fourth dimension</span>
+<span class="sd">            will be dropped.</span>
+<span class="sd">        xfm_data2fmap : :obj:`numpy.ndarray`</span>
+<span class="sd">            Transform that maps coordinates on the `target_reference` onto the</span>
+<span class="sd">            fieldmap reference (that is, the linear transform through which the fieldmap can</span>
+<span class="sd">            be resampled in register with the `target_reference`).</span>
+<span class="sd">            In other words, `xfm_data2fmap` is the result of calling a registration tool</span>
+<span class="sd">            such as ANTs configured for a linear transform with at most 12 degrees of freedom</span>
+<span class="sd">            and called with the image carrying `target_affine` as reference and the fieldmap</span>
+<span class="sd">            reference as moving.</span>
+<span class="sd">            The result of such a registration framework is an affine (our `xfm_data2fmap` here)</span>
+<span class="sd">            that maps coordinates in reference (target) RAS onto the fieldmap RAS.</span>
+<span class="sd">        approx : :obj:`bool`</span>
+<span class="sd">            If ``True``, do not reconstruct the B-Spline field directly on the target</span>
+<span class="sd">            (which will likely not be aligned with the fieldmap&#39;s grid), but rather use</span>
+<span class="sd">            the fieldmap&#39;s grid and then use just regular interpolation.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -324,72 +532,136 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Calculate the physical coordinates of target grid</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
-            <span class="n">spatialimage</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_reference</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+            <span class="n">target_reference</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">target_reference</span><span class="p">)</span>
 
-        <span class="c1"># Initialize xform (or set identity)</span>
-        <span class="n">xfm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xfm</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xfm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Affine</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">newaff</span> <span class="o">=</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">affine</span>
-            <span class="n">newshape</span> <span class="o">=</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">shape</span>
-
-            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">newshape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
-                <span class="n">newaff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">affine</span>
-            <span class="p">):</span>
-                <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">coeffs</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># Generate tensor-product B-Spline weights</span>
-        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coeffs</span><span class="p">):</span>
-            <span class="n">xfm</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">spatialimage</span>
-            <span class="n">moved_cs</span> <span class="o">=</span> <span class="n">level</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
-                <span class="n">level</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">xfm</span><span class="o">.</span><span class="n">matrix</span> <span class="o">@</span> <span class="n">level</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">level</span><span class="o">.</span><span class="n">header</span>
-            <span class="p">)</span>
-            <span class="n">wmat</span> <span class="o">=</span> <span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">,</span> <span class="n">moved_cs</span><span class="p">)</span>
-            <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wmat</span><span class="p">)</span>
-            <span class="n">coeffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">level</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-
-        <span class="c1"># Interpolate the VSM (voxel-shift map)</span>
-        <span class="n">vsm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">spatialimage</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
-        <span class="n">vsm</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">sparse_vstack</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-            <span class="n">vsm</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">approx</span> <span class="o">&amp;=</span> <span class="n">xfm_data2fmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># Approximate iff xfm_data2fmap is defined</span>
+        <span class="n">xfm_data2fmap</span> <span class="o">=</span> <span class="n">xfm_data2fmap</span> <span class="k">if</span> <span class="n">xfm_data2fmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="c1"># Project the reference&#39;s grid onto the fieldmap&#39;s</span>
+        <span class="n">projected_reference</span> <span class="o">=</span> <span class="n">target_reference</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="n">target_reference</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span>
+            <span class="n">xfm_data2fmap</span> <span class="o">@</span> <span class="n">target_reference</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
+            <span class="n">target_reference</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># Cache</span>
-        <span class="n">hdr</span> <span class="o">=</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">hdr</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s2">&quot;estimate&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Voxel shift&quot;</span><span class="p">)</span>
+        <span class="c1"># Make sure the data array has all cosines positive (i.e., no axes are flipped)</span>
+        <span class="n">projected_reference</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">projected_reference</span><span class="p">)</span>
+
+        <span class="c1"># Approximate only if the coordinate systems are not aligned</span>
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coeffs</span><span class="p">)</span>
+        <span class="n">approx</span> <span class="o">&amp;=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span>
+                    <span class="n">coeffs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                    <span class="n">target_reference</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">approx</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">deoblique_and_zooms</span>
+
+            <span class="c1"># Generate a sampling reference on the fieldmap&#39;s space that fully covers</span>
+            <span class="c1"># the target_reference&#39;s grid.</span>
+            <span class="n">projected_reference</span> <span class="o">=</span> <span class="n">deoblique_and_zooms</span><span class="p">(</span>
+                <span class="n">coeffs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">target_reference</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Generate tensor-product B-Spline weights</span>
+        <span class="n">coeffs_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">coeffs</span><span class="p">:</span>
+            <span class="n">wmat</span> <span class="o">=</span> <span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">target_reference</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+            <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wmat</span><span class="p">)</span>
+            <span class="n">coeffs_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">level</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Reconstruct the fieldmap (in Hz) from coefficients</span>
+        <span class="n">fmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">projected_reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="n">fmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">coeffs_data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">sparse_vstack</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">fmap</span><span class="o">.</span><span class="n">shape</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate a NIfTI object</span>
+        <span class="n">hdr</span> <span class="o">=</span> <span class="n">target_reference</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">hdr</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s2">&quot;estimate&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fieldmap Hz&quot;</span><span class="p">)</span>
         <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
-        <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">vsm</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="n">vsm</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
-        <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">vsm</span><span class="p">,</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="n">fmap</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">fmap</span><span class="p">,</span> <span class="n">projected_reference</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">approx</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">nitransforms.linear</span> <span class="kn">import</span> <span class="n">Affine</span>
+
+            <span class="n">_tmp_reference</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="n">target_reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">target_reference</span><span class="o">.</span><span class="n">get_data_dtype</span><span class="p">()</span>
+                <span class="p">),</span>
+                <span class="n">target_reference</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
+                <span class="n">target_reference</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># Interpolate fmap given on target_reference in the original target_reference</span>
+            <span class="c1"># voxel locations (overwrite fmap)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="o">=</span> <span class="n">Affine</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">_tmp_reference</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="B0FieldTransform.apply"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">spatialimage</span><span class="p">,</span>
-        <span class="n">pe_dir</span><span class="p">,</span>
-        <span class="n">ro_time</span><span class="p">,</span>
-        <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span>
-        <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">output_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">moving</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
+        <span class="n">pe_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">ro_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">xfms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">xfm_data2fmap</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">approx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+        <span class="n">cval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">prefilter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">output_dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allow_negative</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Apply a transformation to an image, resampling on the reference spatial object.</span>
+
+<span class="sd">        Handles parallelization to resample 4D images.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        spatialimage : `spatialimage`</span>
+<span class="sd">        moving : :obj:`~nibabel.spatialimages.SpatialImage`</span>
 <span class="sd">            The image object containing the data to be resampled in reference</span>
 <span class="sd">            space</span>
-<span class="sd">        reference : spatial object, optional</span>
-<span class="sd">            The image, surface, or combination thereof containing the coordinates</span>
-<span class="sd">            of samples that will be sampled.</span>
-<span class="sd">        order : int, optional</span>
+<span class="sd">        pe_dir : :obj:`str` or :obj:`list` of :obj:`str`</span>
+<span class="sd">            A valid ``PhaseEncodingDirection`` metadata value.</span>
+<span class="sd">        ro_time : :obj:`float` or :obj:`list` of :obj:`float`</span>
+<span class="sd">            The total readout time in seconds.</span>
+<span class="sd">        xfms : :obj:`None` or :obj:`list`</span>
+<span class="sd">            A list of 4×4 matrices, each one formalizing</span>
+<span class="sd">            the estimated head motion alignment to the scan&#39;s reference.</span>
+<span class="sd">            Therefore, each of these matrices express the transform of every</span>
+<span class="sd">            voxel&#39;s RAS (physical) coordinates in the image used as reference</span>
+<span class="sd">            for realignment into the coordinates of each of the EPI series volume.</span>
+<span class="sd">        xfm_data2fmap : :obj:`numpy.ndarray`</span>
+<span class="sd">            Transform that maps coordinates on the ``target_reference`` onto the</span>
+<span class="sd">            fieldmap reference (that is, the linear transform through which the fieldmap can</span>
+<span class="sd">            be resampled in register with the ``target_reference``).</span>
+<span class="sd">            In other words, ``xfm_data2fmap`` is the result of calling a registration tool</span>
+<span class="sd">            such as ANTs configured for a linear transform with at most 12 degrees of freedom</span>
+<span class="sd">            and called with the image carrying ``target_affine`` as reference and the fieldmap</span>
+<span class="sd">            reference as moving.</span>
+<span class="sd">            The result of such a registration framework is an affine (our ``xfm_data2fmap`` here)</span>
+<span class="sd">            that maps coordinates in reference (target) RAS onto the fieldmap RAS.</span>
+<span class="sd">        approx : :obj:`bool`</span>
+<span class="sd">            If ``True``, do not reconstruct the B-Spline field directly on the target</span>
+<span class="sd">            (which will likely not be aligned with the fieldmap&#39;s grid), but rather use</span>
+<span class="sd">            the fieldmap&#39;s grid and then use just regular interpolation.</span>
+<span class="sd">        order : :obj:`int`, optional</span>
 <span class="sd">            The order of the spline interpolation, default is 3.</span>
 <span class="sd">            The order has to be in the range 0-5.</span>
 <span class="sd">        mode : {&#39;constant&#39;, &#39;reflect&#39;, &#39;nearest&#39;, &#39;mirror&#39;, &#39;wrap&#39;}, optional</span>
@@ -397,7 +669,7 @@
 <span class="sd">            a border. Default is &#39;constant&#39;.</span>
 <span class="sd">        cval : float, optional</span>
 <span class="sd">            Constant value for ``mode=&#39;constant&#39;``. Default is 0.0.</span>
-<span class="sd">        prefilter: bool, optional</span>
+<span class="sd">        prefilter : :obj:`bool`, optional</span>
 <span class="sd">            Determines if the image&#39;s data array is prefiltered with</span>
 <span class="sd">            a spline filter before interpolation. The default is ``True``,</span>
 <span class="sd">            which will create a temporary *float64* array of filtered values</span>
@@ -405,74 +677,121 @@
 <span class="sd">            slightly blurred if *order &gt; 1*, unless the input is prefiltered,</span>
 <span class="sd">            i.e. it is the result of calling the spline filter on the original</span>
 <span class="sd">            input.</span>
+<span class="sd">        output_dtype : :obj:`str` or :obj:`~numpy.dtype`</span>
+<span class="sd">            Override the output data type, instead of propagating it from the</span>
+<span class="sd">            moving image.</span>
+<span class="sd">        num_threads : :obj:`int`</span>
+<span class="sd">            The maximum number of parallel resamplings at any given time of execution.</span>
+<span class="sd">            Use this parameter to set an upper bound to memory utilization.</span>
+<span class="sd">        allow_negative : :obj:`bool`</span>
+<span class="sd">            Remove negative values introduced in interpolation (may happen for nonnegative data</span>
+<span class="sd">            when order :math:`\gt` 3). Set this value to `True` if your `moving` image does</span>
+<span class="sd">            have negative values.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        resampled : `spatialimage` or ndarray</span>
+<span class="sd">        resampled : :obj:`~nibabel.spatialimages.SpatialImage`</span>
 <span class="sd">            The data imaged after resampling to reference space.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
 
         <span class="c1"># Ensure the fmap has been computed</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
-            <span class="n">spatialimage</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">moving</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+            <span class="n">moving</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">moving</span><span class="p">)</span>
 
-        <span class="n">spatialimage</span><span class="p">,</span> <span class="n">axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">)</span>
+        <span class="c1"># Make sure the data array has all cosines positive (i.e., no axes are flipped)</span>
+        <span class="n">moving</span><span class="p">,</span> <span class="n">axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">moving</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">spatialimage</span><span class="p">)</span>
-        <span class="n">fmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-        <span class="c1"># Reverse mapped if reversed blips</span>
-        <span class="k">if</span> <span class="n">pe_dir</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">):</span>
-            <span class="n">fmap</span> <span class="o">*=</span> <span class="o">-</span><span class="mf">1.0</span>
-
-        <span class="c1"># Generate warp field</span>
-        <span class="n">pe_axis</span> <span class="o">=</span> <span class="s2">&quot;ijk&quot;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-        <span class="c1"># Map voxel coordinates applying the VSM</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xfm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ijk_axis</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">fmap</span><span class="o">.</span><span class="n">shape</span><span class="p">])</span>
-            <span class="n">voxcoords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="o">*</span><span class="n">ijk_axis</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;ij&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;The fieldmap has been already fit, the user is responsible for &quot;</span>
+                <span class="s2">&quot;ensuring the parameters of the EPI target are consistent.&quot;</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Map coordinates from reference to time-step</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">xfm</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">spatialimage</span>
-            <span class="n">hmc_xyz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xfm</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xfm</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">ndcoords</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-            <span class="c1"># Convert from RAS to voxel coordinates</span>
-            <span class="n">voxcoords</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xfm</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
-<div class="viewcode-block" id="B0FieldTransform.to_displacements"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.to_displacements">[docs]</a>                <span class="o">@</span> <span class="n">_as_homogeneous</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">hmc_xyz</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xfm</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-            <span class="p">)[:</span><span class="mi">3</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+            <span class="c1"># Generate warp field (before ensuring positive cosines)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">moving</span><span class="p">,</span> <span class="n">xfm_data2fmap</span><span class="o">=</span><span class="n">xfm_data2fmap</span><span class="p">,</span> <span class="n">approx</span><span class="o">=</span><span class="n">approx</span><span class="p">)</span>
 
-        <span class="c1"># fmap * ro_time is the voxel-shift map (VSM)</span>
-        <span class="c1"># The VSM is just the displacements field given in index coordinates</span>
-        <span class="c1"># voxcoords is the deformation field, i.e., the target position of each voxel</span>
-        <span class="n">voxcoords</span><span class="p">[</span><span class="n">pe_axis</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fmap</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">ro_time</span>
+        <span class="c1"># Squeeze non-spatial dimensions</span>
+        <span class="n">newshape</span> <span class="o">=</span> <span class="n">moving</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">moving</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">arrayproxy</span><span class="o">.</span><span class="n">reshape_dataobj</span><span class="p">(</span><span class="n">moving</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newshape</span><span class="p">)</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">n_volumes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">output_dtype</span> <span class="o">=</span> <span class="n">output_dtype</span> <span class="ow">or</span> <span class="n">moving</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_data_dtype</span><span class="p">()</span>
 
-        <span class="c1"># Prepare data</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">spatialimage</span><span class="o">.</span><span class="n">dataobj</span><span class="p">))</span>
-        <span class="n">output_dtype</span> <span class="o">=</span> <span class="n">output_dtype</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="c1"># Prepare input parameters</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">pe_dir</span> <span class="o">=</span> <span class="p">[</span><span class="n">pe_dir</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro_time</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">ro_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">ro_time</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">n_volumes</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">pe_dir</span> <span class="o">*=</span> <span class="n">n_volumes</span>
+
+        <span class="k">if</span> <span class="n">n_volumes</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ro_time</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">ro_time</span> <span class="o">*=</span> <span class="n">n_volumes</span>
+
+        <span class="n">pe_info</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">volid</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_volumes</span><span class="p">):</span>
+            <span class="n">pe_axis</span> <span class="o">=</span> <span class="s2">&quot;ijk&quot;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="n">volid</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">axis_flip</span> <span class="o">=</span> <span class="n">axcodes</span><span class="p">[</span><span class="n">pe_axis</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;LPI&quot;</span><span class="p">)</span>
+            <span class="n">pe_flip</span> <span class="o">=</span> <span class="n">pe_dir</span><span class="p">[</span><span class="n">volid</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+
+            <span class="n">pe_info</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">pe_axis</span><span class="p">,</span>
+                <span class="c1"># Displacements are reversed if either is true (after ensuring positive cosines)</span>
+                <span class="o">-</span><span class="n">ro_time</span><span class="p">[</span><span class="n">volid</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">axis_flip</span> <span class="o">^</span> <span class="n">pe_flip</span><span class="p">)</span> <span class="k">else</span> <span class="n">ro_time</span><span class="p">[</span><span class="n">volid</span><span class="p">],</span>
+            <span class="p">))</span>
+
+        <span class="c1"># Reference image&#39;s voxel coordinates (in voxel units)</span>
+        <span class="n">voxcoords</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Affine</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">moving</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">ndindex</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ndim</span><span class="p">,</span> <span class="o">*</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">ndim</span><span class="p">]))</span>
+            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert head-motion transforms to voxel-to-voxel:</span>
+        <span class="k">if</span> <span class="n">xfms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># if len(xfms) != n_volumes:</span>
+            <span class="c1">#     raise RuntimeError(</span>
+            <span class="c1">#         f&quot;Number of head-motion estimates ({len(xfms)}) does not match the &quot;</span>
+            <span class="c1">#         f&quot;number of volumes ({n_volumes})&quot;</span>
+            <span class="c1">#     )</span>
+            <span class="c1"># vox2ras = moving.affine.copy()</span>
+            <span class="c1"># ras2vox = np.linalg.inv(vox2ras)</span>
+            <span class="c1"># xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]</span>
+            <span class="n">xfms</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Head-motion compensating (realignment) transforms are ignored when applying &quot;</span>
+                <span class="s2">&quot;the unwarp with SDCFlows. This feature will be enabled as soon as unit tests &quot;</span>
+                <span class="s2">&quot;are implemented for its quality assurance.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Resample</span>
-        <span class="n">resampled</span> <span class="o">=</span> <span class="n">ndi</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span>
-            <span class="n">voxcoords</span><span class="p">,</span>
-            <span class="n">output</span><span class="o">=</span><span class="n">output_dtype</span><span class="p">,</span>
-            <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
-            <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
-            <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">spatialimage</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="n">moved</span> <span class="o">=</span> <span class="n">spatialimage</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
-            <span class="n">resampled</span><span class="p">,</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">spatialimage</span><span class="o">.</span><span class="n">header</span>
+        <span class="n">resampled</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">unwarp_parallel</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="n">voxcoords</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">),</span>  <span class="c1"># fieldmap in Hz</span>
+                <span class="n">pe_info</span><span class="p">,</span>
+                <span class="n">xfms</span><span class="p">,</span>
+                <span class="n">output_dtype</span><span class="o">=</span><span class="n">output_dtype</span><span class="p">,</span>
+                <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
+                <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
+                <span class="n">max_concurrent</span><span class="o">=</span><span class="n">num_threads</span> <span class="ow">or</span> <span class="nb">min</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="mi">12</span><span class="p">),</span>
+            <span class="p">)</span>
         <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_negative</span><span class="p">:</span>
+            <span class="n">resampled</span><span class="p">[</span><span class="n">resampled</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cval</span>
+
+        <span class="n">moved</span> <span class="o">=</span> <span class="n">moving</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">resampled</span><span class="p">,</span> <span class="n">moving</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">moving</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
         <span class="n">moved</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="n">output_dtype</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">reorient_image</span><span class="p">(</span><span class="n">moved</span><span class="p">,</span> <span class="n">axcodes</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">to_displacements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="B0FieldTransform.to_displacements"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.to_displacements">[docs]</a>    <span class="k">def</span> <span class="nf">to_displacements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.</span>
 
@@ -585,17 +904,21 @@
     <span class="n">fmap_nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">vsm</span> <span class="o">/</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="n">xyz_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
     <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s2">&quot;estimate&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Delta_B0 [Hz]&quot;</span><span class="p">)</span>
     <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">set_xyzt_units</span><span class="p">(</span><span class="s2">&quot;mm&quot;</span><span class="p">)</span>
-    <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span>
-        <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">fmap_nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">fmap_nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
-    <span class="p">))</span>
-    <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
+    <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">fmap_nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">fmap_nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">fmap_nii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">fmap_nii</span></div>
 
 
 <div class="viewcode-block" id="grid_bspline_weights"><a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.grid_bspline_weights">[docs]</a><span class="k">def</span> <span class="nf">grid_bspline_weights</span><span class="p">(</span><span class="n">target_nii</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Evaluate tensor-product B-Spline weights on a grid.</span>
+
+<span class="sd">    .. _bspline-tensor:</span>
 
 <span class="sd">    For each of the *N* input samples :math:`(s_1, s_2, s_3)` and *K* control</span>
 <span class="sd">    points or *knots* :math:`\mathbf{k} =(k_1, k_2, k_3)`, the tensor-product</span>
@@ -615,9 +938,9 @@
 <span class="sd">    support of the tensor-product kernel associated to each control point can be filtered</span>
 <span class="sd">    out and dismissed to lighten computation.</span>
 
-<span class="sd">    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})`</span>
-<span class="sd">    can be easily identified in Eq. :math:`\eqref{eq:1}` and used as the design matrix</span>
-<span class="sd">    for approximation of data.</span>
+<span class="sd">    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})` can easily be</span>
+<span class="sd">    identified in `Eq. (1) &lt;sdcflows.interfaces.bspline.html#bspline-interpolation&gt;`_,</span>
+<span class="sd">    and used as the design matrix for approximation of data.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -643,10 +966,14 @@
     <span class="n">knots_shape</span> <span class="o">=</span> <span class="n">ctrl_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
 
     <span class="c1"># Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">),</span>
-        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">),</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Image&#39;s and B-Spline&#39;s grids are not aligned.&quot;</span><span class="p">)</span>
 
     <span class="n">target_to_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">ctrl_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">@</span> <span class="n">target_nii</span><span class="o">.</span><span class="n">affine</span>
@@ -698,11 +1025,13 @@
     <span class="n">hdr</span><span class="o">.</span><span class="n">set_sform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># Make it easy on viz software to render proper range</span>
-    <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span>
-        <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
-    <span class="p">))</span>
-    <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
+    <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;cal_max&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">coeff</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newaff</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span>
 </pre></div>
         </article>
@@ -736,10 +1065,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/furo.js"></script>
-    <script src="../../_static/js/version-switch.js"></script>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=4429f6ee"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="../../_static/js/version-switch.js?v=d8b55535"></script>
     </body>
 </html>

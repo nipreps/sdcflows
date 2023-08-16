@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils package" href="sdcflows.utils.html" /><link rel="prev" title="sdcflows.interfaces.utils module" href="sdcflows.interfaces.utils.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>sdcflows.transform module - sdcflows 2.5.2.dev23+g375dd7a0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css" />
+    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+        <title>sdcflows.transform module - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css?v=3fffbac3" />
     
     
 
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev23+g375dd7a0 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -254,41 +254,80 @@
           <section id="module-sdcflows.transform">
 <span id="sdcflows-transform-module"></span><h1>sdcflows.transform module<a class="headerlink" href="#module-sdcflows.transform" title="Permalink to this heading">#</a></h1>
 <p>The <span class="math notranslate nohighlight">\(B_0\)</span> unwarping transform formalism.</p>
+<p>This module implements a data structure to represent the displacements field associated
+to the deformations caused by susceptibility-derived distortions.
+This implementation attempts to provide a single representation of such distortions independently
+of the estimation strategy (see <a class="reference internal" href="../methods.html"><span class="doc">Methods and implementation</span></a>).</p>
+<p id="bspline-interpolation">That is achieved by implementing multi-level B-Spline cubic interpolators.
+For one given level, a function <span class="math notranslate nohighlight">\(f(\mathbf{s})\)</span> can be represented as a linear combination
+of tensor-product cubic B-Spline basis (<span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>;
+see Eq. <span class="math notranslate nohighlight">\(\eqref{eq:2}\)</span>).</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[f(\mathbf{s}) =
+\sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
+\label{eq:1}\tag{1}\]</div>
+</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">B0FieldTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coeffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">B0FieldTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coeffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Represents and applies the transform to correct for susceptibility distortions.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.apply">
-<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spatialimage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ro_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.apply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.apply" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moving</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ro_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfm_data2fmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.25)"><span class="pre">dtype</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_negative</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.apply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.apply" title="Permalink to this definition">#</a></dt>
 <dd><p>Apply a transformation to an image, resampling on the reference spatial object.</p>
+<p>Handles parallelization to resample 4D images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spatialimage</strong> (<cite>spatialimage</cite>) – The image object containing the data to be resampled in reference
+<li><p><strong>moving</strong> (<a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpatialImage</span></code></a>) – The image object containing the data to be resampled in reference
 space</p></li>
-<li><p><strong>reference</strong> (<em>spatial object, optional</em>) – The image, surface, or combination thereof containing the coordinates
-of samples that will be sampled.</p></li>
-<li><p><strong>order</strong> (<em>int, optional</em>) – The order of the spline interpolation, default is 3.
+<li><p><strong>pe_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – A valid <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code> metadata value.</p></li>
+<li><p><strong>ro_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>) – The total readout time in seconds.</p></li>
+<li><p><strong>xfms</strong> (<a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – A list of 4×4 matrices, each one formalizing
+the estimated head motion alignment to the scan’s reference.
+Therefore, each of these matrices express the transform of every
+voxel’s RAS (physical) coordinates in the image used as reference
+for realignment into the coordinates of each of the EPI series volume.</p></li>
+<li><p><strong>xfm_data2fmap</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – Transform that maps coordinates on the <code class="docutils literal notranslate"><span class="pre">target_reference</span></code> onto the
+fieldmap reference (that is, the linear transform through which the fieldmap can
+be resampled in register with the <code class="docutils literal notranslate"><span class="pre">target_reference</span></code>).
+In other words, <code class="docutils literal notranslate"><span class="pre">xfm_data2fmap</span></code> is the result of calling a registration tool
+such as ANTs configured for a linear transform with at most 12 degrees of freedom
+and called with the image carrying <code class="docutils literal notranslate"><span class="pre">target_affine</span></code> as reference and the fieldmap
+reference as moving.
+The result of such a registration framework is an affine (our <code class="docutils literal notranslate"><span class="pre">xfm_data2fmap</span></code> here)
+that maps coordinates in reference (target) RAS onto the fieldmap RAS.</p></li>
+<li><p><strong>approx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, do not reconstruct the B-Spline field directly on the target
+(which will likely not be aligned with the fieldmap’s grid), but rather use
+the fieldmap’s grid and then use just regular interpolation.</p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – The order of the spline interpolation, default is 3.
 The order has to be in the range 0-5.</p></li>
 <li><p><strong>mode</strong> (<em>{‘constant’, ‘reflect’, ‘nearest’, ‘mirror’, ‘wrap’}, optional</em>) – Determines how the input image is extended when the resamplings overflows
 a border. Default is ‘constant’.</p></li>
 <li><p><strong>cval</strong> (<em>float, optional</em>) – Constant value for <code class="docutils literal notranslate"><span class="pre">mode='constant'</span></code>. Default is 0.0.</p></li>
-<li><p><strong>prefilter</strong> (<em>bool, optional</em>) – Determines if the image’s data array is prefiltered with
+<li><p><strong>prefilter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>, optional) – Determines if the image’s data array is prefiltered with
 a spline filter before interpolation. The default is <code class="docutils literal notranslate"><span class="pre">True</span></code>,
 which will create a temporary <em>float64</em> array of filtered values
 if <em>order &gt; 1</em>. If setting this to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the output will be
 slightly blurred if <em>order &gt; 1</em>, unless the input is prefiltered,
 i.e. it is the result of calling the spline filter on the original
 input.</p></li>
+<li><p><strong>output_dtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype</span></code></a>) – Override the output data type, instead of propagating it from the
+moving image.</p></li>
+<li><p><strong>num_threads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – The maximum number of parallel resamplings at any given time of execution.
+Use this parameter to set an upper bound to memory utilization.</p></li>
+<li><p><strong>allow_negative</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Remove negative values introduced in interpolation (may happen for nonnegative data
+when order <span class="math notranslate nohighlight">\(\gt\)</span> 3). Set this value to <cite>True</cite> if your <cite>moving</cite> image does
+have negative values.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>resampled</strong> – The data imaged after resampling to reference space.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>spatialimage</cite> or ndarray</p>
+<dd class="field-odd"><p><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpatialImage</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -301,17 +340,36 @@ input.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spatialimage</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.fit" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfm_data2fmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/transform.html#B0FieldTransform.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.fit" title="Permalink to this definition">#</a></dt>
 <dd><p>Generate the interpolation matrix (and the VSM with it).</p>
 <p>Implements Eq. <span class="math notranslate nohighlight">\(\eqref{eq:1}\)</span>, interpolating <span class="math notranslate nohighlight">\(f(\mathbf{s})\)</span>
 for all voxels in the target-image’s extent.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>updated</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> if the internal field representation was fit,
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_reference</strong> (<a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpatialImage</span></code></a>) – The image object containing a reference grid (same as that of the data
+to be resampled). If a 4D dataset is provided, then the fourth dimension
+will be dropped.</p></li>
+<li><p><strong>xfm_data2fmap</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>) – Transform that maps coordinates on the <cite>target_reference</cite> onto the
+fieldmap reference (that is, the linear transform through which the fieldmap can
+be resampled in register with the <cite>target_reference</cite>).
+In other words, <cite>xfm_data2fmap</cite> is the result of calling a registration tool
+such as ANTs configured for a linear transform with at most 12 degrees of freedom
+and called with the image carrying <cite>target_affine</cite> as reference and the fieldmap
+reference as moving.
+The result of such a registration framework is an affine (our <cite>xfm_data2fmap</cite> here)
+that maps coordinates in reference (target) RAS onto the fieldmap RAS.</p></li>
+<li><p><strong>approx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, do not reconstruct the B-Spline field directly on the target
+(which will likely not be aligned with the fieldmap’s grid), but rather use
+the fieldmap’s grid and then use just regular interpolation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>updated</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> if the internal field representation was fit,
 <code class="docutils literal notranslate"><span class="pre">False</span></code> if cache was valid and will be reused.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -343,12 +401,6 @@ target image we want to correct).</p>
 <dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nibabel.nifti.Nifti1Image</span></code></p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.transform.B0FieldTransform.xfm">
-<span class="sig-name descname"><span class="pre">xfm</span></span><a class="headerlink" href="#sdcflows.transform.B0FieldTransform.xfm" title="Permalink to this definition">#</a></dt>
-<dd><p>A rigid-body transform to prepend to the unwarping displacements field.</p>
 </dd></dl>
 
 </dd></dl>
@@ -402,7 +454,7 @@ target image we want to correct).</p>
 <dt class="sig sig-object py" id="sdcflows.transform.grid_bspline_weights">
 <span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">grid_bspline_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_nii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_nii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/transform.html#grid_bspline_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.grid_bspline_weights" title="Permalink to this definition">#</a></dt>
 <dd><p>Evaluate tensor-product B-Spline weights on a grid.</p>
-<p>For each of the <em>N</em> input samples <span class="math notranslate nohighlight">\((s_1, s_2, s_3)\)</span> and <em>K</em> control
+<p id="bspline-tensor">For each of the <em>N</em> input samples <span class="math notranslate nohighlight">\((s_1, s_2, s_3)\)</span> and <em>K</em> control
 points or <em>knots</em> <span class="math notranslate nohighlight">\(\mathbf{k} =(k_1, k_2, k_3)\)</span>, the tensor-product
 cubic B-Spline kernel weights are calculated:</p>
 <div class="math-wrapper docutils container">
@@ -417,9 +469,9 @@ closed-form given by Eq. (6) of <a class="reference internal" href="sdcflows.int
 <p>By iterating over dimensions, the data samples that fall outside of the compact
 support of the tensor-product kernel associated to each control point can be filtered
 out and dismissed to lighten computation.</p>
-<p>Finally, the resulting weights matrix <span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>
-can be easily identified in Eq. <span class="math notranslate nohighlight">\(\eqref{eq:1}\)</span> and used as the design matrix
-for approximation of data.</p>
+<p>Finally, the resulting weights matrix <span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span> can easily be
+identified in <a class="reference external" href="sdcflows.interfaces.bspline.html#bspline-interpolation">Eq. (1)</a>,
+and used as the design matrix for approximation of data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -441,6 +493,53 @@ step of approximation/extrapolation.</p>
 <dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> (<span class="math notranslate nohighlight">\(K \times N\)</span>)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sdcflows.transform.unwarp_parallel">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">unwarp_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fulldataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmap_hz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pe_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><span class="pre">Tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.11)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.25)"><span class="pre">dtype</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_concurrent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/transform.html#unwarp_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.unwarp_parallel" title="Permalink to this definition">#</a></dt>
+<dd><p>Unwarp an EPI dataset parallelizing across volumes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fulldataset</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – An array of shape (I, J, K, T), where I, J, K are the dimensions of spatial axes
+and T is the number of volumes.
+The full data array of the EPI that are wanted after correction.</p></li>
+<li><p><strong>coordinates</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – An array of shape (3, I, J, K) array providing the voxel (index) coordinates of
+the reference image (i.e., interpolated points) before SDC/HMC.</p></li>
+<li><p><strong>fmap_hz</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray</span></code></a>) – An array of shape (I, J, K) containing the displacement of each voxel in voxel units.</p></li>
+<li><p><strong>pe_info</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> of (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>)) – A tuple containing the index of the phase-encoding axis in the data array and
+the readout time (including sign, if displacements must be reversed)</p></li>
+<li><p><strong>xfms</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of obj:<cite>~numpy.ndarray</cite>) – A list of 4×4 matrices, each one formalizing
+the estimated head motion alignment to the scan’s reference.
+Therefore, each of these matrices express the transform of every
+voxel’s RAS (physical) coordinates in the image used as reference
+for realignment into the coordinates of each of the EPI series volume.</p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – The order of the spline interpolation, default is 3.
+The order has to be in the range 0-5.</p></li>
+<li><p><strong>mode</strong> (<em>{‘constant’, ‘reflect’, ‘nearest’, ‘mirror’, ‘wrap’}, optional</em>) – Determines how the input image is extended when the resamplings overflows
+a border. Default is ‘constant’.</p></li>
+<li><p><strong>cval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – Constant value for <code class="docutils literal notranslate"><span class="pre">mode='constant'</span></code>. Default is 0.0.</p></li>
+<li><p><strong>prefilter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>, optional) – Determines if the image’s data array is prefiltered with
+a spline filter before interpolation. The default is <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+which will create a temporary <em>float64</em> array of filtered values
+if <em>order &gt; 1</em>. If setting this to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the output will be
+slightly blurred if <em>order &gt; 1</em>, unless the input is prefiltered,
+i.e. it is the result of calling the spline filter on the original
+input.</p></li>
+<li><p><strong>output_dtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.25)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype</span></code></a>) – Override the output data type, instead of propagating it from the
+moving image.</p></li>
+<li><p><strong>max_concurrent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>) – The maximum number of parallel resamplings at any given time of execution.
+Use this parameter to set an upper bound to memory utilization.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sdcflows.transform.worker">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.transform.</span></span><span class="sig-name descname"><span class="pre">worker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pe_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.11)"><span class="pre">Tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hmc_xfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><span class="pre">Callable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">semaphore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Semaphore</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)"><span class="pre">ndarray</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/transform.html#worker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.transform.worker" title="Permalink to this definition">#</a></dt>
+<dd><p>Create one worker and attach it to the execution loop.</p>
 </dd></dl>
 
 </section>
@@ -507,12 +606,13 @@ step of approximation/extrapolation.</p>
 <li><a class="reference internal" href="#sdcflows.transform.B0FieldTransform.fit"><code class="docutils literal notranslate"><span class="pre">B0FieldTransform.fit()</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.transform.B0FieldTransform.mapped"><code class="docutils literal notranslate"><span class="pre">B0FieldTransform.mapped</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.transform.B0FieldTransform.to_displacements"><code class="docutils literal notranslate"><span class="pre">B0FieldTransform.to_displacements()</span></code></a></li>
-<li><a class="reference internal" href="#sdcflows.transform.B0FieldTransform.xfm"><code class="docutils literal notranslate"><span class="pre">B0FieldTransform.xfm</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sdcflows.transform.disp_to_fmap"><code class="docutils literal notranslate"><span class="pre">disp_to_fmap()</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.transform.fmap_to_disp"><code class="docutils literal notranslate"><span class="pre">fmap_to_disp()</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.transform.grid_bspline_weights"><code class="docutils literal notranslate"><span class="pre">grid_bspline_weights()</span></code></a></li>
+<li><a class="reference internal" href="#sdcflows.transform.unwarp_parallel"><code class="docutils literal notranslate"><span class="pre">unwarp_parallel()</span></code></a></li>
+<li><a class="reference internal" href="#sdcflows.transform.worker"><code class="docutils literal notranslate"><span class="pre">worker()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -524,11 +624,11 @@ step of approximation/extrapolation.</p>
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/furo.js"></script>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=4429f6ee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="../_static/js/version-switch.js"></script>
+    <script src="../_static/js/version-switch.js?v=d8b55535"></script>
     </body>
 </html>

@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.interfaces.epi module" href="sdcflows.interfaces.epi.html" /><link rel="prev" title="sdcflows.interfaces.brainmask module" href="sdcflows.interfaces.brainmask.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>sdcflows.interfaces.bspline module - sdcflows 2.5.2.dev23+g375dd7a0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css" />
+    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
+        <title>sdcflows.interfaces.bspline module - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css?v=3fffbac3" />
     
     
 
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev23+g375dd7a0 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev23 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -258,25 +258,59 @@
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.ApplyCoeffsField">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">ApplyCoeffsField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#ApplyCoeffsField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.ApplyCoeffsField" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></p>
-<p>Convert a set of B-Spline coefficients to a full displacements map.</p>
+<p>Undistort a target, distorted image with a fieldmap, formalized by its B-Spline coefficients.</p>
+<p>Preconditions:</p>
+<ul class="simple">
+<li><p>We have a “target EPI” - a BOLD or DWI dataset (or even MPRAGE, same principle),
+without having gone through HMC or SDC.</p></li>
+<li><p>We have also the list of HMC matrices that <em>accounts for</em> head-motion, so after resampling
+the dataset through this list of transforms <em>the head does not move anymore</em>.</p></li>
+<li><p>We have estimated the fieldmap’s coefficients</p></li>
+<li><p>We have the “fieldmap-to-data” affine transform that aligns the target dataset (e.g., EPI)
+and the fieldmap’s “magnitude” (phasediff et al.) or “reference” (pepolar, syn).</p></li>
+</ul>
+<p>The algorithm is implemented in the <a class="reference internal" href="sdcflows.transform.html#sdcflows.transform.B0FieldTransform" title="sdcflows.transform.B0FieldTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">B0FieldTransform</span></code></a> object.
+First, we will call <a class="reference internal" href="sdcflows.transform.html#sdcflows.transform.B0FieldTransform.fit" title="sdcflows.transform.B0FieldTransform.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>, which
+results in:</p>
+<ol class="arabic simple">
+<li><p>The reference grid of the target dataset is projected onto the fieldmap space</p></li>
+<li><p>The B-Spline coefficients are applied to reconstruct the field on the grid resulting
+above.</p></li>
+</ol>
+<p>After which, we can then call <a class="reference internal" href="sdcflows.transform.html#sdcflows.transform.B0FieldTransform.apply" title="sdcflows.transform.B0FieldTransform.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a>.
+This second step will:</p>
+<ol class="arabic simple" start="3">
+<li><p>Find the location of every voxel on each timepoint (meaning, after the head moved)
+and progress (or recede) along the phase-encoding axis to find the actual (voxel)
+coordinates of each voxel.
+With those coordinates known, interpolation is trivial.</p></li>
+<li><p>Generate a spatial image with the new data.</p></li>
+</ol>
 <dl class="field-list simple">
 <dt class="field-odd">Mandatory Inputs<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>in_coeff</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – Input coefficients, after alignment to the EPI data.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_coeff</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – Input coefficients as calculated in the estimation stage.</p></li>
+<li><p><strong>in_data</strong> (<em>a pathlike object or string representing a file</em>) – Input EPI data to be corrected.</p></li>
+<li><p><strong>pe_dir</strong> (<em>a list of items which are ‘i’ or ‘i-’ or ‘j’ or ‘j-’ or ‘k’ or ‘k-’</em>) – The phase-encoding direction corresponding to in_data.</p></li>
+<li><p><strong>ro_time</strong> (<em>a list of items which are a float</em>) – EPI readout time (s).</p></li>
+</ul>
 </dd>
 <dt class="field-even">Optional Inputs<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>in_data</strong> (<em>a list of items which are a pathlike object or string representing a file</em>)</p></li>
-<li><p><strong>in_xfms</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – List of head-motion correction matrices.</p></li>
+<li><p><strong>approx</strong> (<em>a boolean</em>) – Reconstruct the fieldmap on its original grid and then interpolate on the rotated grid, rather than reconstructing directly on the rotated grid.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p><strong>data2fmap_xfm</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – The transform by which the fieldmap can be resampled on the target EPI’s grid.
+Mutually <strong>exclusive</strong> with inputs: <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">_</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p></li>
+<li><p><strong>fmap2data_xfm</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – The transform by which the target EPI can be resampled on the fieldmap’s grid.
+Mutually <strong>exclusive</strong> with inputs: <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">_</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p></li>
+<li><p><strong>in_xfms</strong> (<em>a list of items which are a list of items which are a list of items which are a float</em>) – List of head-motion correction matrices.</p></li>
 <li><p><strong>num_threads</strong> (<em>an integer</em>) – Number of threads.</p></li>
-<li><p><strong>pe_dir</strong> (<em>a list of items which are ‘i’ or ‘i-’ or ‘j’ or ‘j-’ or ‘k’ or ‘k-’</em>)</p></li>
-<li><p><strong>ro_time</strong> (<em>a list of items which are a float</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Outputs<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>out_corrected</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>)</p></li>
 <li><p><strong>out_field</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>)</p></li>
-<li><p><strong>out_warp</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -293,14 +327,8 @@ beyond the brain mask, which alleviates boundary effects in correction.</p>
 <p>This interface resolves the optimization problem of obtaining the B-Spline coefficients
 <span class="math notranslate nohighlight">\(c(\mathbf{k})\)</span> that best approximate the data samples within the
 brain mask <span class="math notranslate nohighlight">\(f(\mathbf{s})\)</span>, following Eq. (17) – in that case for 2D –
-of <a class="reference internal" href="#unser1999" id="id1"><span>[Unser1999]</span></a>.
-Here, and adapted to 3D:</p>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[f(\mathbf{s}) =
-\sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
-\label{eq:1}\tag{1}\]</div>
-</div>
+of <a class="reference internal" href="#unser1999" id="id1"><span>[Unser1999]</span></a>. Here, and for the case of 3D, the formulism is adapted in
+<a class="reference external" href="sdcflows.transform.html#bspline-interpolation">Eq. (1) of the transform module</a>.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="unser1999" role="doc-biblioentry">
@@ -311,8 +339,10 @@ Magazine 16(6):22-38, 1999.</p>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><code class="xref py py-func docutils literal notranslate"><span class="pre">bspline_weights()</span></code> - for Eq. <span class="math notranslate nohighlight">\(\eqref{eq:2}\)</span> and the evaluation of
-the tri-cubic B-Splines <span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>.</p>
+<p><a class="reference internal" href="sdcflows.transform.html#sdcflows.transform.grid_bspline_weights" title="sdcflows.transform.grid_bspline_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">grid_bspline_weights()</span></code></a> - for the evaluation of
+the tensor-product, cubic B-Splines (<span class="math notranslate nohighlight">\(\Psi^3(\mathbf{k}, \mathbf{s})\)</span>)
+formalized in
+<a class="reference external" href="sdcflows.transform.html#bspline-tensor">Eq. (2) of the transform module</a>.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Mandatory Inputs<span class="colon">:</span></dt>
@@ -485,11 +515,11 @@ The s-form header is used because the imaging axes may be oblique.</p>
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/furo.js"></script>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=4429f6ee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="../_static/js/version-switch.js"></script>
+    <script src="../_static/js/version-switch.js?v=d8b55535"></script>
     </body>
 </html>
