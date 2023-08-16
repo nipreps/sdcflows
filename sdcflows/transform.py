@@ -296,11 +296,11 @@ class B0FieldTransform:
         projected_reference, _ = ensure_positive_cosines(projected_reference)
 
         # Approximate only if the coordinate systems are not aligned
-        finest_coeffs = listify(self.coeffs)[-1]
+        coeffs = listify(self.coeffs)
         approx &= not np.allclose(
             np.linalg.norm(
                 np.cross(
-                    finest_coeffs.affine[:-1, :-1].T,
+                    coeffs[-1].affine[:-1, :-1].T,
                     target_reference.affine[:-1, :-1].T,
                 ),
                 axis=1,
@@ -310,26 +310,26 @@ class B0FieldTransform:
         )
 
         weights = []
-        coeffs = []
         if approx:
             from sdcflows.utils.tools import deoblique_and_zooms
 
             # Generate a sampling reference on the fieldmap's space that fully covers
             # the target_reference's grid.
             projected_reference = deoblique_and_zooms(
-                listify(self.coeffs)[-1],
+                coeffs[-1],
                 target_reference,
             )
 
         # Generate tensor-product B-Spline weights
-        for level in listify(self.coeffs):
+        coeffs_data = []
+        for level in coeffs:
             wmat = grid_bspline_weights(target_reference, level)
             weights.append(wmat)
-            coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
+            coeffs_data.append(level.get_fdata(dtype="float32").reshape(-1))
 
         # Reconstruct the fieldmap (in Hz) from coefficients
         fmap = np.zeros(projected_reference.shape[:3], dtype="float32")
-        fmap = (np.squeeze(np.hstack(coeffs).T) @ sparse_vstack(weights)).reshape(
+        fmap = (np.squeeze(np.hstack(coeffs_data).T) @ sparse_vstack(weights)).reshape(
             fmap.shape
         )
 

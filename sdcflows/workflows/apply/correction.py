@@ -72,16 +72,6 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         the target EPI reference image, after applying unwarping.
     corrected_mask
         a fast mask calculated from the corrected EPI reference.
-    fieldmap_ref
-        the actual B\ :sub:`0` inhomogeneity map (also called *fieldmap*)
-        interpolated from the B-Spline coefficients into the reference EPI's
-        grid, given in Hz units.
-        No motion is taken into account.
-    fieldwarp_ref
-        the displacements field interpolated from the B-Spline coefficients
-        and scaled by the appropriate parameters (readout time of the EPI
-        target and voxel size along PE).
-        No motion is taken into account.
 
     """
     from niworkflows.interfaces.images import RobustAverage
@@ -113,8 +103,6 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
                 "corrected",
                 "corrected_ref",
                 "corrected_mask",
-                "fieldwarp_ref",
-                "fieldmap_ref",
             ]
         ),
         name="outputnode",
@@ -161,8 +149,6 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         (average, brainextraction_wf, [("out_file", "inputnode.in_file")]),
         (merge, outputnode, [("out_file", "corrected")]),
         (resample, outputnode, [("out_field", "fieldmap")]),
-        # (resample_ref, outputnode, [("out_field", "fieldmap_ref")]),
-        # TODO - take reference from brainextraction workflow
         (brainextraction_wf, outputnode, [
             ("outputnode.out_file", "corrected_ref"),
             ("outputnode.out_mask", "corrected_mask"),
