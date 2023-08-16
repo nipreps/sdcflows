@@ -413,12 +413,10 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.in_data,
             self.inputs.pe_dir,
             self.inputs.ro_time,
-            xfms=self.inputs.in_xfms if isdefined(self.inputs.in_xfms) else None,
+            xfms=self.inputs.in_xfms or None,
             xfm_data2fmap=data2fmap_xfm,
             approx=self.inputs.approx,
-            num_threads=(
-                self.inputs.num_threads if isdefined(self.inputs.num_threads) else None
-            ),
+            num_threads=self.inputs.num_threads or None,
         ).to_filename(self._results["out_corrected"])
         unwarp.mapped.to_filename(self._results["out_field"])
         return runtime
@@ -456,9 +454,7 @@ class TransformCoefficients(SimpleInterface):
                 self.inputs.fmap_ref,
                 self.inputs.transform,
                 fmap_target=(
-                    self.inputs.fmap_target
-                    if isdefined(self.inputs.fmap_target)
-                    else None
+                    self.inputs.fmap_target or None
                 ),
             )
             out_file = fname_presuffix(
