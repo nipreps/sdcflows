@@ -403,8 +403,6 @@ class ApplyCoeffsField(SimpleInterface):
             newpath=runtime.cwd,
         )
 
-        # HMC matrices are only necessary when reslicing the data (i.e., apply())
-        # Check the length of in_xfms matches that of in_data
         self._results["out_corrected"] = fname_presuffix(
             self.inputs.in_data,
             suffix="_sdc",

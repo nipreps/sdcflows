@@ -44,6 +44,8 @@ see Eq. :math:`\eqref{eq:2}`).
 
 
 """
+from __future__ import annotations
+
 import os
 from functools import partial
 import asyncio
@@ -70,9 +72,9 @@ def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
     pe_info: Tuple[int, float],
-    hmc_xfm: Optional[np.ndarray],
+    hmc_xfm: np.ndarray | None,
     fmap_hz: np.ndarray,
-    output_dtype: Union[type, np.dtype] = None,
+    output_dtype: str | np.dtype | None = None,
     order: int = 3,
     mode: str = "constant",
     cval: float = 0.0,
@@ -130,9 +132,9 @@ async def unwarp_parallel(
     mode: str = "constant",
     cval: float = 0.0,
     prefilter: bool = True,
-    output_dtype: Union[str, np.dtype] = None,
+    output_dtype: str | np.dtype | None = None,
     max_concurrent: int = min(os.cpu_count(), 12),
-) -> List[np.ndarray]:
+) -> np.ndarray:
     r"""
     Unwarp an EPI dataset parallelizing across volumes.
 
@@ -236,7 +238,7 @@ class B0FieldTransform:
     def fit(
         self,
         target_reference: nb.spatialimages.SpatialImage,
-        xfm_data2fmap: np.ndarray = None,
+        xfm_data2fmap: np.ndarray | None = None,
         approx: bool = True,
     ) -> bool:
         r"""
@@ -279,23 +281,17 @@ class B0FieldTransform:
 
         approx &= xfm_data2fmap is not None  # Approximate iff xfm_data2fmap is defined
         xfm_data2fmap = xfm_data2fmap if xfm_data2fmap is not None else np.eye(4)
-        target_affine = target_reference.affine.copy()
-        target_header = target_reference.header.copy()
-
-        if approx:
-            _tmp_shape = target_reference.shape[:3]
-
         # Project the reference's grid onto the fieldmap's
-        target_reference = target_reference.__class__(
+        projected_reference = target_reference.__class__(
             target_reference.dataobj,
-            xfm_data2fmap @ target_affine,
-            target_header,
+            xfm_data2fmap @ target_reference.affine,
+            target_reference.header,
         )
 
         # Make sure the data array has all cosines positive (i.e., no axes are flipped)
-        target_reference, _ = ensure_positive_cosines(target_reference)
+        projected_reference, _ = ensure_positive_cosines(projected_reference)
 
-        # Approximate only iff the coordinate systems are not aligned
+        # Approximate only if the coordinate systems are not aligned
         finest_coeffs = listify(self.coeffs)[-1]
         approx &= not np.allclose(
             np.linalg.norm(
@@ -306,27 +302,16 @@ class B0FieldTransform:
             atol=1e-3,
         )
 
-        # TODO Separate cache validation from here. With the resampling, this
-        # code will always  determine the cache must be recalculated.
-        # if self.mapped is not None:
-        #     newshape = target_reference.shape
 
-        #     if np.all(newshape == self.mapped.shape) and np.allclose(
-        #         target_affine, self.mapped.affine
-        #     ):
-        #         return False
 
         weights = []
         coeffs = []
-        _tmp_reference = None
-
-        hdr = target_reference.header.copy()
         if approx:
             from sdcflows.utils.tools import deoblique_and_zooms
 
             # Generate a sampling reference on the fieldmap's space that fully covers
             # the target_reference's grid.
-            target_reference = deoblique_and_zooms(
+            projected_reference = deoblique_and_zooms(
                 listify(self.coeffs)[-1],
                 target_reference,
             )
@@ -338,27 +323,28 @@ class B0FieldTransform:
             coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
 
         # Reconstruct the fieldmap (in Hz) from coefficients
-        fmap = np.zeros(target_reference.shape[:3], dtype="float32")
+        fmap = np.zeros(projected_reference.shape[:3], dtype="float32")
         fmap = (np.squeeze(np.hstack(coeffs).T) @ sparse_vstack(weights)).reshape(
             fmap.shape
         )
 
         # Generate a NIfTI object
+        hdr = target_reference.header.copy()
         hdr.set_intent("estimate", name="fieldmap Hz")
         hdr.set_data_dtype("float32")
         hdr["cal_max"] = max((abs(fmap.min()), fmap.max()))
         hdr["cal_min"] = -hdr["cal_max"]
 
         # Cache
-        self.mapped = nb.Nifti1Image(fmap, target_reference.affine, hdr)
+        self.mapped = nb.Nifti1Image(fmap, projected_reference.affine, hdr)
 
         if approx:
             from nitransforms.linear import Affine
 
             _tmp_reference = nb.Nifti1Image(
-                np.zeros(_tmp_shape, dtype=target_header.get_data_dtype()),
-                target_affine,
-                target_header,
+                np.zeros(target_reference.shape[:3], dtype=target_reference.get_data_dtype()),
+                target_reference.affine,
+                target_reference.header,
             )
             # Interpolate fmap given on target_reference in the original target_reference
             # voxel locations (overwrite fmap)
@@ -369,16 +355,16 @@ class B0FieldTransform:
     def apply(
         self,
         moving: nb.spatialimages.SpatialImage,
-        pe_dir: Union[str, Sequence[str]],
-        ro_time: Union[float, Sequence[float]],
-        xfms: Sequence[np.ndarray] = None,
-        xfm_data2fmap: np.ndarray = None,
+        pe_dir: str | Sequence[str],
+        ro_time: float | Sequence[float],
+        xfms: Sequence[np.ndarray] | None = None,
+        xfm_data2fmap: np.ndarray | None = None,
         approx: bool = True,
         order: int = 3,
         mode: str = "constant",
         cval: float = 0.0,
         prefilter: bool = True,
-        output_dtype: Union[str, np.dtype] = None,
+        output_dtype: str, np.dtype | None = None,
         num_threads: int = None,
         allow_negative: bool = False,
     ):
@@ -466,9 +452,9 @@ class B0FieldTransform:
             # Generate warp field (before ensuring positive cosines)
             self.fit(moving, xfm_data2fmap=xfm_data2fmap, approx=approx)
 
-        # Squeeze n33on-spatial dimensions
+        # Squeeze non-spatial dimensions
         newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
-        data = np.reshape(moving.dataobj, newshape)
+        data = nb.arrayproxy.reshape_dataobj(moving.dataobj, newshape)
         ndim = min(data.ndim, 3)
         n_volumes = data.shape[3] if data.ndim == 4 else 1
         output_dtype = output_dtype or moving.header.get_data_dtype()

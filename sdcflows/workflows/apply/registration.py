@@ -146,6 +146,9 @@ The field coefficients were mapped on to the reference EPI using the transform.
     # fmt: on
 
     if write_coeff:
-        warn("SDCFlows does not tinker with the coefficients file anymore")
+        warn(
+            "SDCFlows does not tinker with the coefficients file anymore, " 
+            "the `write_coeff` parameter will be removed in a future release."
+        )
 
     return workflow

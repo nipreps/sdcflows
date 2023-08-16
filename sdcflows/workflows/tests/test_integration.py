@@ -50,14 +50,14 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
 
     session = "15" if pe0 == "LR" else "14"
 
-    pe1 = f"{pe0[::-1]}"
+    pe1 = pe0[::-1]
 
     datadir = datadir / "hcph-pilot_fieldmaps"
 
     wf = pe.Workflow(name=f"hcph_{mode}_{pe0}")
 
     # Execute in temporary directory
-    wf.base_dir = f"{tmpdir}" if not workdir else str(workdir)
+    wf.base_dir = str(workdir or tmpdir)
 
     # Prepare some necessary data and metadata
     metadata = json.loads(
