@@ -340,7 +340,7 @@ def test_conversions(tmpdir, testdata_dir, pe_dir):
 
 def test_grid_bspline_weights():
     target_shape = (10, 10, 10)
-    target_aff = [[1, 0, 0, -5], [0, 1, 0, -5], [0, 0, 1, -5], [0, 0, 0, 1]]
+    target_aff = [[0.5, 0, 0, -2.5], [0, 0.5, 0, -2.5], [0, 0, 0.5, -2.5], [0, 0, 0, 1]]
     ctrl_shape = (4, 4, 4)
     ctrl_aff = [[3, 0, 0, -6], [0, 3, 0, -6], [0, 0, 3, -6], [0, 0, 0, 1]]
 
@@ -352,7 +352,7 @@ def test_grid_bspline_weights():
     # Empirically determined numbers intended to indicate that something
     # significant has changed. If it turns out we've been doing this wrong,
     # these numbers will probably change.
-    assert np.isclose(weights[0, 0], 0.18919244)
+    assert np.isclose(weights[0, 0], 0.00089725334)
     assert np.isclose(weights[-1, -1], 0.18919244)
-    assert np.isclose(weights.sum(axis=1).max(), 26.833675)
-    assert np.isclose(weights.sum(axis=1).min(), 1.5879614)
+    assert np.isclose(weights.sum(axis=1).max(), 129.3907)
+    assert np.isclose(weights.sum(axis=1).min(), 0.0052327816)
