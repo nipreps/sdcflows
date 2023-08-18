@@ -10,6 +10,6 @@ numpy
 packaging
 pydot >= 1.2.3
 pydotplus
-sphinx
+sphinx >= 7.2.2
 sphinxcontrib-apidoc
 templateflow

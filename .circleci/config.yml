@@ -123,7 +123,7 @@ jobs:
             datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
             datalad update --merge -d brain-extraction-tests/
             datalad get -r -J 2 -d brain-extraction-tests
-      
+
       - run:
           name: Install HCPh fieldmaps
           command: |
@@ -356,8 +356,7 @@ jobs:
           flags: unittests
 
   build_docs:
-    docker:
-      - image: python:3.8.5
+    <<: *python_defaults
     working_directory: /tmp/gh-pages
     environment:
       - FSLOUTPUTTYPE: NIFTI
@@ -370,8 +369,8 @@ jobs:
       - run:
           name: Install Graphviz
           command: |
-            apt-get update -y
-            apt-get install -y --no-install-recommends graphviz
+            sudo apt-get update -y
+            sudo apt-get install -y --no-install-recommends graphviz
       - run:
           name: Install deps
           command: |
