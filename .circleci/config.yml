@@ -349,8 +349,7 @@ jobs:
           flags: unittests
 
   build_docs:
-    docker:
-      - image: python:3.8.5
+    <<: *python_defaults
     working_directory: /tmp/gh-pages
     environment:
       - FSLOUTPUTTYPE: NIFTI
@@ -363,8 +362,8 @@ jobs:
       - run:
           name: Install Graphviz
           command: |
-            apt-get update -y
-            apt-get install -y --no-install-recommends graphviz
+            sudo apt-get update -y
+            sudo apt-get install -y --no-install-recommends graphviz
       - run:
           name: Install deps
           command: |
