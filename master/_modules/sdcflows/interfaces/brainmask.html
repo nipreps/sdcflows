@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>sdcflows.interfaces.brainmask - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>sdcflows.interfaces.brainmask - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -293,7 +293,9 @@
     <span class="n">out_probseg</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the probabilistic brain mask&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BrainExtraction"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.BrainExtraction">[docs]</a><span class="k">class</span> <span class="nc">BrainExtraction</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="BrainExtraction">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.BrainExtraction">[docs]</a>
+<span class="k">class</span> <span class="nc">BrainExtraction</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Brain extraction for EPI and GRE data.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_BrainExtractionInputSpec</span>
@@ -313,6 +315,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_BinaryDilationInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;binary file to dilate&quot;</span><span class="p">)</span>
     <span class="n">radius</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;structure element (ball) radius&quot;</span><span class="p">)</span>
@@ -322,7 +325,9 @@
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input file, after binary dilation&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BinaryDilation"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.BinaryDilation">[docs]</a><span class="k">class</span> <span class="nc">BinaryDilation</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="BinaryDilation">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.BinaryDilation">[docs]</a>
+<span class="k">class</span> <span class="nc">BinaryDilation</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Brain extraction for EPI and GRE data.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_BinaryDilationInputSpec</span>
@@ -337,6 +342,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_UnionInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in1</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;binary file&quot;</span><span class="p">)</span>
     <span class="n">in2</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;binary file&quot;</span><span class="p">)</span>
@@ -346,7 +352,9 @@
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input file, after binary dilation&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Union"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.Union">[docs]</a><span class="k">class</span> <span class="nc">Union</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="Union">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.brainmask.html#sdcflows.interfaces.brainmask.Union">[docs]</a>
+<span class="k">class</span> <span class="nc">Union</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Brain extraction for EPI and GRE data.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_UnionInputSpec</span>
@@ -359,6 +367,7 @@
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_dilate</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -436,9 +445,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="../../../_static/documentation_options.js?v=ed08c01c"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../_static/js/version-switch.js?v=d8b55535"></script>
     </body>

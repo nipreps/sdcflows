@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.workflows.fit package" href="sdcflows.workflows.fit.html" /><link rel="prev" title="sdcflows.workflows.apply.correction module" href="sdcflows.workflows.apply.correction.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>sdcflows.workflows.apply.registration module - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>sdcflows.workflows.apply.registration module - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -251,15 +251,15 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-sdcflows.workflows.apply.registration">
-<span id="sdcflows-workflows-apply-registration-module"></span><h1>sdcflows.workflows.apply.registration module<a class="headerlink" href="#module-sdcflows.workflows.apply.registration" title="Permalink to this heading">#</a></h1>
-<p>Align the fieldmap reference map to the target EPI.</p>
+          <section id="sdcflows-workflows-apply-registration-module">
+<h1>sdcflows.workflows.apply.registration module<a class="headerlink" href="#sdcflows-workflows-apply-registration-module" title="Link to this heading">#</a></h1>
+<p id="module-sdcflows.workflows.apply.registration">Align the fieldmap reference map to the target EPI.</p>
 <p>The fieldmap reference map may be a magnitude image (or an EPI dataset,
 in the case of PEPOLAR estimation).</p>
 <p>The target EPI is the distorted dataset (or a reference thereof).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.workflows.apply.registration.init_coeff2epi_wf">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.apply.registration.</span></span><span class="sig-name descname"><span class="pre">init_coeff2epi_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omp_nthreads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sloppy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_coeff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coeff2epi_wf'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/apply/registration.html#init_coeff2epi_wf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.apply.registration.init_coeff2epi_wf" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.workflows.apply.registration.</span></span><span class="sig-name descname"><span class="pre">init_coeff2epi_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omp_nthreads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sloppy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_coeff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'coeff2epi_wf'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/workflows/apply/registration.html#init_coeff2epi_wf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.workflows.apply.registration.init_coeff2epi_wf" title="Link to this definition">#</a></dt>
 <dd><p>Move the field coefficients on to the target (distorted) EPI space.</p>
 <dl>
 <dt>Workflow Graph</dt><dd><figure class="align-default">
@@ -370,9 +370,9 @@ as moving, resampling the latter into the fieldmap space.</p></li>
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="../_static/documentation_options.js?v=ed08c01c"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../_static/js/version-switch.js?v=d8b55535"></script>
     </body>

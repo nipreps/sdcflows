@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>sdcflows.interfaces.utils - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>sdcflows.interfaces.utils - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -321,7 +321,9 @@
     <span class="n">out_meta</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">DictStrAny</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Flatten">[docs]</a>
+<span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a list of 3D and 4D files (and metadata).&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_FlattenInputSpec</span>
@@ -341,6 +343,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_UniformGridInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_data</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -355,7 +358,9 @@
     <span class="n">reference</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="UniformGrid"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.UniformGrid">[docs]</a><span class="k">class</span> <span class="nc">UniformGrid</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="UniformGrid">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.UniformGrid">[docs]</a>
+<span class="k">class</span> <span class="nc">UniformGrid</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure all images in input have the same spatial parameters.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_UniformGridInputSpec</span>
@@ -402,6 +407,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_ReorientImageAndMetadataInputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Input 3- or 4D image&quot;</span><span class="p">)</span>
     <span class="n">target_orientation</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
@@ -426,7 +432,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="ReorientImageAndMetadata"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ReorientImageAndMetadata">[docs]</a><span class="k">class</span> <span class="nc">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="ReorientImageAndMetadata">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ReorientImageAndMetadata">[docs]</a>
+<span class="k">class</span> <span class="nc">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ReorientImageAndMetadataInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_ReorientImageAndMetadataOutputSpec</span>
 
@@ -471,6 +479,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_ConvertWarpInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;output of 3dQwarp&quot;</span><span class="p">)</span>
 
@@ -479,7 +488,9 @@
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the warp converted into ANTs&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ConvertWarp"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ConvertWarp">[docs]</a><span class="k">class</span> <span class="nc">ConvertWarp</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="ConvertWarp">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ConvertWarp">[docs]</a>
+<span class="k">class</span> <span class="nc">ConvertWarp</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a displacements field from ``3dQwarp`` to ANTS-compatible.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ConvertWarpInputSpec</span>
@@ -490,6 +501,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">_DeobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
@@ -507,7 +519,9 @@
     <span class="n">out_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input mask, after correcting obliquity&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Deoblique"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Deoblique">[docs]</a><span class="k">class</span> <span class="nc">Deoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="Deoblique">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Deoblique">[docs]</a>
+<span class="k">class</span> <span class="nc">Deoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a dataset plumb.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_DeobliqueInputSpec</span>
@@ -527,6 +541,7 @@
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">runtime</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">_ReobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
@@ -551,7 +566,9 @@
     <span class="n">out_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input mask, after correcting obliquity&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Reoblique"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Reoblique">[docs]</a><span class="k">class</span> <span class="nc">Reoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="Reoblique">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Reoblique">[docs]</a>
+<span class="k">class</span> <span class="nc">Reoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a dataset plumb.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ReobliqueInputSpec</span>
@@ -576,6 +593,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_DenoiseImageInputSpec</span><span class="p">(</span><span class="n">_DenoiseImageInputSpecBase</span><span class="p">):</span>
     <span class="n">copy_header</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
         <span class="kc">True</span><span class="p">,</span>
@@ -584,11 +602,14 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="DenoiseImage"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.DenoiseImage">[docs]</a><span class="k">class</span> <span class="nc">DenoiseImage</span><span class="p">(</span><span class="n">_DenoiseImageBase</span><span class="p">,</span> <span class="n">_CopyHeaderInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="DenoiseImage">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.DenoiseImage">[docs]</a>
+<span class="k">class</span> <span class="nc">DenoiseImage</span><span class="p">(</span><span class="n">_DenoiseImageBase</span><span class="p">,</span> <span class="n">_CopyHeaderInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add copy_header capability to DenoiseImage from nipype.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_DenoiseImageInputSpec</span>
     <span class="n">_copy_header_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;output_image&quot;</span><span class="p">:</span> <span class="s2">&quot;input_image&quot;</span><span class="p">}</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">_PadSlicesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
@@ -605,7 +626,9 @@
     <span class="n">padded</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Indicator if the input image was padded&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PadSlices"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PadSlices">[docs]</a><span class="k">class</span> <span class="nc">PadSlices</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="PadSlices">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PadSlices">[docs]</a>
+<span class="k">class</span> <span class="nc">PadSlices</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check an image for uneven slices, and add an empty slice if necessary</span>
 
@@ -621,6 +644,7 @@
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
+
 <span class="k">class</span> <span class="nc">_PositiveDirectionCosinesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;input image&quot;</span><span class="p">)</span>
 
@@ -630,7 +654,9 @@
     <span class="n">in_orientation</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="PositiveDirectionCosines"><a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PositiveDirectionCosines">[docs]</a><span class="k">class</span> <span class="nc">PositiveDirectionCosines</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<div class="viewcode-block" id="PositiveDirectionCosines">
+<a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PositiveDirectionCosines">[docs]</a>
+<span class="k">class</span> <span class="nc">PositiveDirectionCosines</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reorient axes polarity to have all positive direction cosines.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_PositiveDirectionCosinesInputSpec</span>
@@ -646,6 +672,7 @@
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">runtime</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_flatten</span><span class="p">(</span><span class="n">inlist</span><span class="p">,</span> <span class="n">max_trs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -857,9 +884,9 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="../../../_static/documentation_options.js?v=ed08c01c"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../../../_static/js/version-switch.js?v=d8b55535"></script>
     </body>

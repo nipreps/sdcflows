@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils.wrangler module" href="sdcflows.utils.wrangler.html" /><link rel="prev" title="sdcflows.utils.phasemanip module" href="sdcflows.utils.phasemanip.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>sdcflows.utils.tools module - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>sdcflows.utils.tools module - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -251,18 +251,18 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-sdcflows.utils.tools">
-<span id="sdcflows-utils-tools-module"></span><h1>sdcflows.utils.tools module<a class="headerlink" href="#module-sdcflows.utils.tools" title="Permalink to this heading">#</a></h1>
-<p>Image processing tools.</p>
+          <section id="sdcflows-utils-tools-module">
+<h1>sdcflows.utils.tools module<a class="headerlink" href="#sdcflows-utils-tools-module" title="Link to this heading">#</a></h1>
+<p id="module-sdcflows.utils.tools">Image processing tools.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.brain_masker">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">brain_masker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#brain_masker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.brain_masker" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">brain_masker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#brain_masker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.brain_masker" title="Link to this definition">#</a></dt>
 <dd><p>Use grayscale morphological operations to obtain a quick mask of EPI data.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.deoblique_and_zooms">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">deoblique_and_zooms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oblique</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#deoblique_and_zooms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.deoblique_and_zooms" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">deoblique_and_zooms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oblique</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.spatialimages.html#nibabel.spatialimages.SpatialImage" title="(in NiBabel v5.1.0)"><span class="pre">SpatialImage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#deoblique_and_zooms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.deoblique_and_zooms" title="Link to this definition">#</a></dt>
 <dd><p>Generate a sampling reference aligned with in_reference fully covering oblique.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -281,7 +281,7 @@ oblique on to the reference.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.ensure_positive_cosines">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">ensure_positive_cosines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#ensure_positive_cosines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.ensure_positive_cosines" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">ensure_positive_cosines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#ensure_positive_cosines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.ensure_positive_cosines" title="Link to this definition">#</a></dt>
 <dd><p>Reorient axes polarity to have all positive direction cosines.</p>
 <p>In other words, this interface will reorient the image polarities to be all
 <em>positive</em>, respecting the axes ordering.
@@ -290,7 +290,7 @@ For instance, <em>LAS</em> -&gt; <em>RAS</em> or <em>ALS</em> -&gt; <em>ARS</em>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.reorient_pedir">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">reorient_pedir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_ornt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ornt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#reorient_pedir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.reorient_pedir" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">reorient_pedir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pe_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_ornt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ornt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#reorient_pedir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.reorient_pedir" title="Link to this definition">#</a></dt>
 <dd><p>Return updated PhaseEncodingDirection to account for an image data array rotation</p>
 <p>Orientations form a natural group with identity, product and inverse.
 This function thus has the following properties (here <code class="docutils literal notranslate"><span class="pre">e</span></code> is the identity,
@@ -337,7 +337,7 @@ and passing it as <code class="docutils literal notranslate"><span class="pre">t
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.tools.resample_to_zooms">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">resample_to_zooms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zooms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#resample_to_zooms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.resample_to_zooms" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.tools.</span></span><span class="sig-name descname"><span class="pre">resample_to_zooms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zooms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/tools.html#resample_to_zooms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.tools.resample_to_zooms" title="Link to this definition">#</a></dt>
 <dd><p>Resample the input data to a new grid with the requested zooms.</p>
 </dd></dl>
 
@@ -415,9 +415,9 @@ and passing it as <code class="docutils literal notranslate"><span class="pre">t
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="../_static/documentation_options.js?v=ed08c01c"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="../_static/js/version-switch.js?v=d8b55535"></script>
     </body>

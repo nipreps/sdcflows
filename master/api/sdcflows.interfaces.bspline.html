@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.interfaces.epi module" href="sdcflows.interfaces.epi.html" /><link rel="prev" title="sdcflows.interfaces.brainmask module" href="sdcflows.interfaces.brainmask.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>sdcflows.interfaces.bspline module - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>sdcflows.interfaces.bspline module - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="../index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -251,12 +251,12 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-sdcflows.interfaces.bspline">
-<span id="sdcflows-interfaces-bspline-module"></span><h1>sdcflows.interfaces.bspline module<a class="headerlink" href="#module-sdcflows.interfaces.bspline" title="Permalink to this heading">#</a></h1>
-<p>Filtering of <span class="math notranslate nohighlight">\(B_0\)</span> field mappings with B-Splines.</p>
+          <section id="sdcflows-interfaces-bspline-module">
+<h1>sdcflows.interfaces.bspline module<a class="headerlink" href="#sdcflows-interfaces-bspline-module" title="Link to this heading">#</a></h1>
+<p id="module-sdcflows.interfaces.bspline">Filtering of <span class="math notranslate nohighlight">\(B_0\)</span> field mappings with B-Splines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.ApplyCoeffsField">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">ApplyCoeffsField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#ApplyCoeffsField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.ApplyCoeffsField" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">ApplyCoeffsField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#ApplyCoeffsField"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.ApplyCoeffsField" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></p>
 <p>Undistort a target, distorted image with a fieldmap, formalized by its B-Spline coefficients.</p>
 <p>Preconditions:</p>
@@ -318,7 +318,7 @@ Mutually <strong>exclusive</strong> with inputs: <code class="docutils literal n
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.BSplineApprox">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">BSplineApprox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#BSplineApprox"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.BSplineApprox" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">BSplineApprox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#BSplineApprox"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.BSplineApprox" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></p>
 <p>Approximate the <span class="math notranslate nohighlight">\(B_0\)</span> field using tensor-product B-Splines.</p>
 <p>The approximation effectively smooths the data, removing spikes and other
@@ -378,7 +378,7 @@ formalized in
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.TOPUPCoeffReorient">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">TOPUPCoeffReorient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#TOPUPCoeffReorient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.TOPUPCoeffReorient" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">TOPUPCoeffReorient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#TOPUPCoeffReorient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.TOPUPCoeffReorient" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></p>
 <p>Revise the orientation of TOPUP-generated B-Spline coefficients.</p>
 <p>TOPUP-generated “fieldcoeff” files are just B-Spline fields, where the shape
@@ -415,7 +415,7 @@ The s-form header is used because the imaging axes may be oblique.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.TransformCoefficients">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">TransformCoefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#TransformCoefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.TransformCoefficients" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">TransformCoefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#TransformCoefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.TransformCoefficients" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></p>
 <p>Project coefficients files to another space through a rigid-body transform.</p>
 <dl class="field-list simple">
@@ -437,7 +437,7 @@ The s-form header is used because the imaging axes may be oblique.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.interfaces.bspline.bspline_grid">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">bspline_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_zooms_mm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(40.0,</span> <span class="pre">40.0,</span> <span class="pre">20.0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#bspline_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.bspline_grid" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.bspline.</span></span><span class="sig-name descname"><span class="pre">bspline_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_zooms_mm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(40.0,</span> <span class="pre">40.0,</span> <span class="pre">20.0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/bspline.html#bspline_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.bspline.bspline_grid" title="Link to this definition">#</a></dt>
 <dd><p>Create a <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.nifti1.html#nibabel.nifti1.Nifti1Image" title="(in NiBabel v5.1.0)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Nifti1Image</span></code></a> embedding the location of control points.</p>
 </dd></dl>
 
@@ -515,9 +515,9 @@ The s-form header is used because the imaging axes may be oblique.</p>
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="../_static/documentation_options.js?v=ed08c01c"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/version-switch.js?v=d8b55535"></script>

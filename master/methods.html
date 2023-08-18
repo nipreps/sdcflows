@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Library API (application program interface)" href="api.html" /><link rel="prev" title="Installation" href="installation.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2023.07.26 -->
-        <title>Methods and implementation - sdcflows 2.5.2.dev68+g11fadb26 documentation</title>
+    <!-- Generated with Sphinx 7.2.2 and Furo 2023.08.17 -->
+        <title>Methods and implementation - sdcflows 2.5.2.dev74+ga6089277 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
@@ -124,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">sdcflows 2.5.2.dev68+g11fadb26 documentation</div></a>
+      <a href="index.html"><div class="brand">sdcflows 2.5.2.dev74+ga6089277 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,14 +146,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev68 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev74 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -252,7 +252,7 @@
         </div>
         <article role="main">
           <section id="methods-and-implementation">
-<h1>Methods and implementation<a class="headerlink" href="#methods-and-implementation" title="Permalink to this heading">#</a></h1>
+<h1>Methods and implementation<a class="headerlink" href="#methods-and-implementation" title="Link to this heading">#</a></h1>
 <p><em>SDCFlows</em> defines a clear <abbr title="application programming interface">API</abbr> that divides
 the problem of susceptibility distortions (SD) into two stages:</p>
 <ol class="arabic simple">
@@ -275,7 +275,7 @@ The implementation of these workflows is found in the submodule <a class="refere
 <figure class="align-center" id="id14">
 <span id="fig-1"></span><a class="reference internal image-reference" href="_images/sdcflows-OHBM21-fig1.png"><img alt="_images/sdcflows-OHBM21-fig1.png" src="_images/sdcflows-OHBM21-fig1.png" style="width: 100%;" /></a>
 <figcaption>
-<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Susceptibility distortions in a nutshell</span><a class="headerlink" href="#id14" title="Permalink to this image">#</a></p>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Susceptibility distortions in a nutshell</span><a class="headerlink" href="#id14" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <div class="admonition-bids-specification admonition">
@@ -283,7 +283,7 @@ The implementation of these workflows is found in the submodule <a class="refere
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#echo-planar-imaging-and-b0-mapping">Echo-planar imaging and *B0* mapping</a>.</p>
 </div>
 <section id="fieldmap-estimation-theory-and-methods">
-<h2>Fieldmap estimation: theory and methods<a class="headerlink" href="#fieldmap-estimation-theory-and-methods" title="Permalink to this heading">#</a></h2>
+<h2>Fieldmap estimation: theory and methods<a class="headerlink" href="#fieldmap-estimation-theory-and-methods" title="Link to this heading">#</a></h2>
 <p>The displacement suffered by every voxel along the <abbr title="phase-encoding">PE</abbr> direction
 can be derived from Eq. (2) of <a class="reference internal" href="#hutton2002" id="id3"><span>[Hutton2002]</span></a>:</p>
 <div class="math-wrapper docutils container">
@@ -310,7 +310,7 @@ we obtain the nonzero component of the associated displacements field
 \label{eq:fieldmap-2}\tag{2}\]</div>
 </div>
 <section id="direct-b0-mapping-sequences">
-<span id="sdc-direct-b0"></span><h3>Direct B0 mapping sequences<a class="headerlink" href="#direct-b0-mapping-sequences" title="Permalink to this heading">#</a></h3>
+<span id="sdc-direct-b0"></span><h3>Direct B0 mapping sequences<a class="headerlink" href="#direct-b0-mapping-sequences" title="Link to this heading">#</a></h3>
 <div class="admonition-bids-specification admonition">
 <p class="admonition-title">BIDS Specification</p>
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-3-direct-field-mapping">Types of fieldmaps - Case 3: Direct field mapping</a>
@@ -321,7 +321,7 @@ reconstruct an estimate of <em>the fieldmap in Hz</em>, <span class="math notran
 These <em>fieldmaps</em> are described with more detail <a class="reference external" href="https://cni.stanford.edu/wiki/GE_Processing#Fieldmaps">here</a>.</p>
 </section>
 <section id="phase-difference-b0-estimation">
-<span id="sdc-phasediff"></span><h3>Phase-difference B0 estimation<a class="headerlink" href="#phase-difference-b0-estimation" title="Permalink to this heading">#</a></h3>
+<span id="sdc-phasediff"></span><h3>Phase-difference B0 estimation<a class="headerlink" href="#phase-difference-b0-estimation" title="Link to this heading">#</a></h3>
 <div class="admonition-bids-specification admonition">
 <p class="admonition-title">BIDS Specification</p>
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images">Types of fieldmaps - Case 2: Two phase maps and two magnitude images</a>
@@ -357,7 +357,7 @@ It is necessary to find the integer number of offsets that make a region
 continuously smooth with its neighbors (<em>phase-unwrapping</em>, <a class="reference internal" href="#jenkinson2003" id="id5"><span>[Jenkinson2003]</span></a>).</p>
 </section>
 <section id="pepolar-techniques">
-<span id="sdc-pepolar"></span><h3><abbr title="Phase Encoding POLARity">PEPOLAR</abbr> techniques<a class="headerlink" href="#pepolar-techniques" title="Permalink to this heading">#</a></h3>
+<span id="sdc-pepolar"></span><h3><abbr title="Phase Encoding POLARity">PEPOLAR</abbr> techniques<a class="headerlink" href="#pepolar-techniques" title="Link to this heading">#</a></h3>
 <div class="admonition-bids-specification admonition">
 <p class="admonition-title">BIDS Specification</p>
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar">Types of fieldmaps - Case 4: Multiple phase encoded directions (“pepolar”)</a>.</p>
@@ -369,7 +369,7 @@ and AFNI <code class="docutils literal notranslate"><span class="pre">3dQwarp</s
 By default, FSL <code class="docutils literal notranslate"><span class="pre">topup</span></code> will be used.</p>
 </section>
 <section id="fieldmap-less-approaches">
-<span id="sdc-fieldmapless"></span><h3>Fieldmap-less approaches<a class="headerlink" href="#fieldmap-less-approaches" title="Permalink to this heading">#</a></h3>
+<span id="sdc-fieldmapless"></span><h3>Fieldmap-less approaches<a class="headerlink" href="#fieldmap-less-approaches" title="Link to this heading">#</a></h3>
 <p>Many studies acquired (especially with legacy MRI protocols) do not have any
 information to estimate susceptibility-derived distortions.
 In the absence of data with the specific purpose of estimating the <span class="math notranslate nohighlight">\(B_0\)</span>
@@ -419,13 +419,13 @@ Feedback will be enthusiastically received.</p>
 </div>
 </section>
 <section id="other-unsupported-approaches">
-<h3>Other (unsupported) approaches<a class="headerlink" href="#other-unsupported-approaches" title="Permalink to this heading">#</a></h3>
+<h3>Other (unsupported) approaches<a class="headerlink" href="#other-unsupported-approaches" title="Link to this heading">#</a></h3>
 <p>There exist some alternative options to estimate the fieldmap, such as mapping the
 point-spread-function <a class="reference internal" href="#zaitsev2004" id="id12"><span>[Zaitsev2004]</span></a>, or by means of nonlinear registration of brain
 surfaces onto the distorted <abbr title="echo-planar imaging">EPI</abbr> data <a class="reference internal" href="#esteban2016" id="id13"><span>[Esteban2016]</span></a>.</p>
 </section>
 <section id="estimation-tooling">
-<h3>Estimation tooling<a class="headerlink" href="#estimation-tooling" title="Permalink to this heading">#</a></h3>
+<h3>Estimation tooling<a class="headerlink" href="#estimation-tooling" title="Link to this heading">#</a></h3>
 <p>The workflows provided by <a class="reference internal" href="api/sdcflows.workflows.fit.html#module-sdcflows.workflows.fit" title="sdcflows.workflows.fit"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.workflows.fit</span></code></a> make use of several utilities.
 The cornerstone of these tools is the fieldmap representation with B-Splines
 (<a class="reference internal" href="api/sdcflows.interfaces.bspline.html#module-sdcflows.interfaces.bspline" title="sdcflows.interfaces.bspline"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.interfaces.bspline</span></code></a>).
@@ -438,16 +438,16 @@ updated and then the fieldmap reconstructed.</p>
 </section>
 </section>
 <section id="unwarping-the-distorted-data">
-<h2>Unwarping the distorted data<a class="headerlink" href="#unwarping-the-distorted-data" title="Permalink to this heading">#</a></h2>
+<h2>Unwarping the distorted data<a class="headerlink" href="#unwarping-the-distorted-data" title="Link to this heading">#</a></h2>
 <p><a class="reference internal" href="api/sdcflows.workflows.apply.html#module-sdcflows.workflows.apply" title="sdcflows.workflows.apply"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sdcflows.workflows.apply</span></code></a> contains workflows to project fieldmaps represented by B-Spline
 basis into the space of the target <abbr title="echo-planar imaging">EPI</abbr> data.</p>
 </section>
 <section id="discovering-fieldmaps-in-a-bids-dataset">
-<h2>Discovering fieldmaps in a BIDS dataset<a class="headerlink" href="#discovering-fieldmaps-in-a-bids-dataset" title="Permalink to this heading">#</a></h2>
+<h2>Discovering fieldmaps in a BIDS dataset<a class="headerlink" href="#discovering-fieldmaps-in-a-bids-dataset" title="Link to this heading">#</a></h2>
 <p>To ease the implementation of higher-level pipelines integrating <abbr title="susceptibility distortion correction">SDC</abbr>,
 <em>SDCFlows</em> provides <a class="reference internal" href="api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators" title="sdcflows.utils.wrangler.find_estimators"><code class="xref py py-func docutils literal notranslate"><span class="pre">sdcflows.utils.wrangler.find_estimators()</span></code></a>.</p>
 <section id="explicit-specification-with-b0fieldidentifier">
-<h3>Explicit specification with <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code><a class="headerlink" href="#explicit-specification-with-b0fieldidentifier" title="Permalink to this heading">#</a></h3>
+<h3>Explicit specification with <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code><a class="headerlink" href="#explicit-specification-with-b0fieldidentifier" title="Link to this heading">#</a></h3>
 <div class="admonition-bids-specification admonition">
 <p class="admonition-title">BIDS Specification</p>
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-b0fieldidentifier-metadata">Expressing the MR protocol intent for fieldmaps - Using *B0FieldIdentifier* metadata</a>.</p>
@@ -456,7 +456,7 @@ basis into the space of the target <abbr title="echo-planar imaging">EPI</abbr> 
 then corresponding estimators will be built from the available input data.</p>
 </section>
 <section id="implicit-specification-with-intendedfor">
-<h3>Implicit specification with <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code><a class="headerlink" href="#implicit-specification-with-intendedfor" title="Permalink to this heading">#</a></h3>
+<h3>Implicit specification with <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code><a class="headerlink" href="#implicit-specification-with-intendedfor" title="Link to this heading">#</a></h3>
 <div class="admonition-bids-specification admonition">
 <p class="admonition-title">BIDS Specification</p>
 <p>See the section <a class="reference external" href="https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-intendedfor-metadata">Expressing the MR protocol intent for fieldmaps - Using *IntendedFor* metadata</a>.</p>
@@ -467,7 +467,7 @@ Then, those estimators may be linked to target <abbr title="echo-planar imaging"
 <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code> field if available.</p>
 </section>
 <section id="fieldmap-less-by-registration-to-a-t1-weighted-image">
-<h3>Fieldmap-less by registration to a T1-weighted image<a class="headerlink" href="#fieldmap-less-by-registration-to-a-t1-weighted-image" title="Permalink to this heading">#</a></h3>
+<h3>Fieldmap-less by registration to a T1-weighted image<a class="headerlink" href="#fieldmap-less-by-registration-to-a-t1-weighted-image" title="Link to this heading">#</a></h3>
 <p>If none of the two previous options yielded any workable estimation strategy, and provided that
 the argument <code class="docutils literal notranslate"><span class="pre">fmapless</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, then <a class="reference internal" href="api/sdcflows.utils.wrangler.html#sdcflows.utils.wrangler.find_estimators" title="sdcflows.utils.wrangler.find_estimators"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_estimators()</span></code></a>
 will attempt to find <abbr title="blood-oxygen level-dependent">BOLD</abbr> or <abbr title="diffusion-weighted imaging">DWI</abbr>
@@ -481,7 +481,7 @@ yields results, then corresponding fieldmap-less estimators are set up.</p>
 </section>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">#</a></h2>
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <div role="list" class="citation-list">
 <div class="citation" id="jezzard1995" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Jezzard1995</a><span class="fn-bracket">]</span></span>
@@ -636,9 +636,9 @@ doi:<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.201
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=4429f6ee"></script>
+</div><script src="_static/documentation_options.js?v=ed08c01c"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=32e29ea5"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/version-switch.js?v=d8b55535"></script>
