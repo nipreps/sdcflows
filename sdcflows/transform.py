@@ -745,7 +745,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
         # Our original design matrices had size (K, L)
         # However, BSpline.design_matrix() generates a size of (L, K + 2),
-        # hence the trasposition (and zero-padding of 1 at every face when using these)
+        # hence the transposition (and zero-padding of 1 at every face when using these)
         wd.append(BSpline.design_matrix(locs, knots, 3).T)
 
     # Calculate the tensor product of the three design matrices
