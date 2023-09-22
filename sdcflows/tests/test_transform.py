@@ -348,16 +348,7 @@ def test_grid_bspline_weights():
         nb.Nifti1Image(np.zeros(target_shape), target_aff),
         nb.Nifti1Image(np.zeros(ctrl_shape), ctrl_aff),
     ).tocsr()
-    assert weights.shape == (np.prod(np.array(ctrl_shape) + 2), np.prod(target_shape))
-
-    # Calculate the legacy mask to index the weights below
-    legacy_mask = np.pad(
-        np.ones(ctrl_shape, dtype=bool),
-        ((1, 1), (1, 1), (1, 1)),
-    ).reshape(-1)
-
-    # Drop scipy's padding
-    weights = weights[legacy_mask]
+    assert weights.shape == (64, 1000)
     # Empirically determined numbers intended to indicate that something
     # significant has changed. If it turns out we've been doing this wrong,
     # these numbers will probably change.
