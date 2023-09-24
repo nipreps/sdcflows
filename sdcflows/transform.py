@@ -57,7 +57,7 @@ import numpy as np
 from warnings import warn
 from scipy import ndimage as ndi
 from scipy.interpolate import BSpline
-from scipy.sparse import vstack as sparse_vstack, kron, lil_array
+from scipy.sparse import hstack as sparse_hstack, kron, lil_array
 
 import nibabel as nb
 import nitransforms as nt
@@ -320,18 +320,15 @@ class B0FieldTransform:
             )
 
         # Generate tensor-product B-Spline weights
-        weights = []
-        coeffs_data = []
-        for level in coeffs:
-            wmat = grid_bspline_weights(target_reference, level)
-            weights.append(wmat)
-            coeffs_data.append(level.get_fdata(dtype="float32").reshape(-1))
+        colmat = sparse_hstack(
+            [grid_bspline_weights(target_reference, level) for level in coeffs]
+        ).tocsr()
+        coefficients = np.hstack(
+            [level.get_fdata(dtype="float32").reshape(-1) for level in coeffs]
+        )
 
         # Reconstruct the fieldmap (in Hz) from coefficients
-        fmap = np.zeros(projected_reference.shape[:3], dtype="float32")
-        fmap = (np.squeeze(np.hstack(coeffs_data).T) @ sparse_vstack(weights)).reshape(
-            fmap.shape
-        )
+        fmap = np.reshape(colmat @ coefficients, projected_reference.shape[:3])
 
         # Generate a NIfTI object
         hdr = target_reference.header.copy()
@@ -703,7 +700,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
     Returns
     -------
-    weights : :obj:`numpy.ndarray` (:math:`K \times N`)
+    weights : :obj:`numpy.ndarray` (:math:`N \times K`)
         A sparse matrix of interpolating weights :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
         for the *N* voxels of the target EPI, for each of the total *K* knots.
         This sparse matrix can be directly used as design matrix for the fitting
@@ -747,11 +744,11 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         colloc_ax = lil_array(distance.shape, dtype=dtype)
         colloc_ax[within_support] = bspl(locs)[:, 1:-1][within_support]
 
-        # Transpose to (K, L) and convert to CSR for efficient multiplication
-        wd.append(colloc_ax.T.tocsr())
+        # Convert to CSR for efficient multiplication
+        wd.append(colloc_ax.tocsr())
 
     # Calculate the tensor product of the three design matrices
-    return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
+    return kron(kron(wd[0], wd[1]), wd[2])
 
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):

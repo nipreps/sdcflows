@@ -348,11 +348,11 @@ def test_grid_bspline_weights():
         nb.Nifti1Image(np.zeros(target_shape), target_aff),
         nb.Nifti1Image(np.zeros(ctrl_shape), ctrl_aff),
     ).tocsr()
-    assert weights.shape == (64, 1000)
+    assert weights.shape == (1000, 64)
     # Empirically determined numbers intended to indicate that something
     # significant has changed. If it turns out we've been doing this wrong,
     # these numbers will probably change.
     assert np.isclose(weights[0, 0], 0.00089725334)
     assert np.isclose(weights[-1, -1], 0.18919244)
-    assert np.isclose(weights.sum(axis=1).max(), 129.3907)
-    assert np.isclose(weights.sum(axis=1).min(), 0.0052327816)
+    assert np.isclose(weights.sum(axis=0).max(), 129.3907)
+    assert np.isclose(weights.sum(axis=0).min(), 0.0052327816)

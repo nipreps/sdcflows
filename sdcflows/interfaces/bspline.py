@@ -130,7 +130,7 @@ class BSplineApprox(SimpleInterface):
 
     def _run_interface(self, runtime):
         from sklearn import linear_model as lm
-        from scipy.sparse import vstack as sparse_vstack
+        from scipy.sparse import hstack as sparse_hstack
 
         # Output name baseline
         out_name = fname_presuffix(
@@ -197,9 +197,9 @@ class BSplineApprox(SimpleInterface):
         data -= center
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
-        colmat = sparse_vstack(
-            grid_bspline_weights(fmapnii, grid) for grid in bs_grids
-        ).T.tocsr()
+        colmat = sparse_hstack(
+            [grid_bspline_weights(fmapnii, grid) for grid in bs_grids]
+        ).tocsr()
 
         bs_grids_str = ["x".join(str(s) for s in grid.shape) for grid in bs_grids]
         bs_grids_str[-1] = f"and {bs_grids_str[-1]}"
@@ -254,9 +254,9 @@ class BSplineApprox(SimpleInterface):
                 mask = np.asanyarray(masknii.dataobj) > 1e-4
             else:
                 mask = np.ones_like(fmapnii.dataobj, dtype=bool)
-            colmat = sparse_vstack(
-                grid_bspline_weights(fmapnii, grid) for grid in bs_grids
-            ).T.tocsr()
+            colmat = sparse_hstack(
+                [grid_bspline_weights(fmapnii, grid) for grid in bs_grids]
+            ).tocsr()
 
         regressors = colmat[mask.reshape(-1), :]
         interp_data = np.zeros_like(data)
