@@ -523,7 +523,7 @@ class B0FieldTransform:
                 self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
                 pe_info,
                 xfms,
-                output_dtype=output_dtype,
+                output_dtype='float32',
                 order=order,
                 mode=mode,
                 cval=cval,
