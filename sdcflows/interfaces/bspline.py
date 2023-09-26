@@ -298,6 +298,7 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="input coefficients as calculated in the estimation stage",
     )
+    fmap_mask = File(exist=True, desc="Mask used to calculate coefficients")
     fmap2data_xfm = InputMultiObject(
         File(exists=True),
         desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
@@ -393,7 +394,8 @@ class ApplyCoeffsField(SimpleInterface):
 
         # Pre-cached interpolator object
         unwarp = B0FieldTransform(
-            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
+            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff],
+            mask=self.inputs.fmap_mask or None,
         )
 
         # We can now write out the fieldmap

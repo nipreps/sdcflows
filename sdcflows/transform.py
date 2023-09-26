@@ -233,6 +233,8 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
+    mask = attr.ib(default=None)
+    """B-Spline coefficients (one value per control point)."""
     mapped = attr.ib(default=None, init=False)
     """
     A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
@@ -279,6 +281,8 @@ class B0FieldTransform:
             ``False`` if cache was valid and will be reused.
 
         """
+        from nitransforms.linear import Affine
+
         # Calculate the physical coordinates of target grid
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
@@ -319,6 +323,12 @@ class B0FieldTransform:
                 target_reference,
             )
 
+        if self.mask is None:
+            mask = np.ones(projected_reference.shape, dtype=bool)
+        else:
+            mask_img = nb.load(self.mask)
+            mask = np.bool_(Affine(reference=projected_reference).apply(mask_img).dataobj)
+
         # Generate tensor-product B-Spline weights
         colmat = sparse_hstack(
             [grid_bspline_weights(target_reference, level) for level in coeffs]
@@ -328,7 +338,8 @@ class B0FieldTransform:
         )
 
         # Reconstruct the fieldmap (in Hz) from coefficients
-        fmap = np.reshape(colmat @ coefficients, projected_reference.shape[:3])
+        fmap = np.zeros(projected_reference.shape[:3], dtype='float32')
+        fmap[mask] = colmat[mask.reshape(-1)] @ coefficients
 
         # Generate a NIfTI object
         hdr = target_reference.header.copy()
@@ -341,8 +352,6 @@ class B0FieldTransform:
         self.mapped = nb.Nifti1Image(fmap, projected_reference.affine, hdr)
 
         if approx:
-            from nitransforms.linear import Affine
-
             _tmp_reference = nb.Nifti1Image(
                 np.zeros(
                     target_reference.shape[:3], dtype=target_reference.get_data_dtype()
