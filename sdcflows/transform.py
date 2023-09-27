@@ -321,7 +321,7 @@ class B0FieldTransform:
 
         # Generate tensor-product B-Spline weights
         colmat = sparse_hstack(
-            [grid_bspline_weights(target_reference, level) for level in coeffs]
+            [grid_bspline_weights(projected_reference, level) for level in coeffs]
         ).tocsr()
         coefficients = np.hstack(
             [level.get_fdata(dtype="float32").reshape(-1) for level in coeffs]
