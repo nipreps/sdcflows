@@ -195,6 +195,7 @@ class BSplineApprox(SimpleInterface):
             center = np.mean(data[mask])
 
         data -= center
+        data[~mask] = 0
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
         colmat = sparse_hstack(
@@ -214,7 +215,7 @@ class BSplineApprox(SimpleInterface):
             alpha=self.inputs.ridge_alpha, fit_intercept=False, solver="lsqr"
         )
         for attempt in range(3):
-            model.fit(colmat[mask.reshape(-1), :], data[mask])
+            model.fit(colmat, data.reshape(-1))
             extreme = np.abs(model.coef_).max()
             LOGGER.debug(f"Model fit attempt {attempt}: max(|coeffs|) = {extreme}")
             # Normal values seem to be ~1e2, bad ~1e8. May want to tweak this if
