@@ -56,8 +56,8 @@ import attr
 import numpy as np
 from warnings import warn
 from scipy import ndimage as ndi
-from scipy.signal import cubic
-from scipy.sparse import vstack as sparse_vstack, kron, lil_array
+from scipy.interpolate import BSpline
+from scipy.sparse import hstack as sparse_hstack, kron, lil_array
 
 import nibabel as nb
 import nitransforms as nt
@@ -309,7 +309,6 @@ class B0FieldTransform:
             atol=1e-3,
         )
 
-        weights = []
         if approx:
             from sdcflows.utils.tools import deoblique_and_zooms
 
@@ -321,17 +320,15 @@ class B0FieldTransform:
             )
 
         # Generate tensor-product B-Spline weights
-        coeffs_data = []
-        for level in coeffs:
-            wmat = grid_bspline_weights(target_reference, level)
-            weights.append(wmat)
-            coeffs_data.append(level.get_fdata(dtype="float32").reshape(-1))
+        colmat = sparse_hstack(
+            [grid_bspline_weights(projected_reference, level) for level in coeffs]
+        ).tocsr()
+        coefficients = np.hstack(
+            [level.get_fdata(dtype="float32").reshape(-1) for level in coeffs]
+        )
 
         # Reconstruct the fieldmap (in Hz) from coefficients
-        fmap = np.zeros(projected_reference.shape[:3], dtype="float32")
-        fmap = (np.squeeze(np.hstack(coeffs_data).T) @ sparse_vstack(weights)).reshape(
-            fmap.shape
-        )
+        fmap = np.reshape(colmat @ coefficients, projected_reference.shape[:3])
 
         # Generate a NIfTI object
         hdr = target_reference.header.copy()
@@ -703,7 +700,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
     Returns
     -------
-    weights : :obj:`numpy.ndarray` (:math:`K \times N`)
+    weights : :obj:`numpy.ndarray` (:math:`N \times K`)
         A sparse matrix of interpolating weights :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
         for the *N* voxels of the target EPI, for each of the total *K* knots.
         This sparse matrix can be directly used as design matrix for the fitting
@@ -732,21 +729,26 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
 
         # Calculate the index component of samples w.r.t. B-Spline knots along current axis
+        # Size of locations is L
         locs = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
-        knots = np.arange(knots_shape[axis], dtype=dtype)
 
-        distance = np.abs(locs[np.newaxis, ...] - knots[..., np.newaxis])
+        # Size of knots is K + 6 so that all locations are fully covered by basis
+        knots = np.arange(-3, knots_shape[axis] + 3, dtype=dtype)
+
+        bspl = BSpline(knots, np.eye(len(knots) - 3 - 1), 3)
+
+        # Construct a sparse design matrix (L, K)
+        distance = np.abs(locs[..., np.newaxis] - knots[np.newaxis, 3:-3])
         within_support = distance < 2.0
-        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-        bs_w = cubic(d_vals)
 
-        colloc_ax = lil_array((knots_shape[axis], sample_shape[axis]), dtype=dtype)
-        colloc_ax[within_support] = bs_w[d_idxs]
+        colloc_ax = lil_array(distance.shape, dtype=dtype)
+        colloc_ax[within_support] = bspl(locs)[:, 1:-1][within_support]
 
-        wd.append(colloc_ax)
+        # Convert to CSR for efficient multiplication
+        wd.append(colloc_ax.tocsr())
 
     # Calculate the tensor product of the three design matrices
-    return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
+    return kron(kron(wd[0], wd[1]), wd[2])
 
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
