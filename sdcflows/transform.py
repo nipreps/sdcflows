@@ -92,7 +92,15 @@ def _sdc_unwarp(
     # Map voxel coordinates applying the VSM
     # The VSM is just the displacements field given in index coordinates
     # voxcoords is the deformation field, i.e., the target position of each voxel
-    coordinates[pe_info[0], ...] += fmap_hz * pe_info[1]
+    vsm = fmap_hz * pe_info[1]
+    coordinates[pe_info[0], ...] += vsm
+
+    # The Jacobian determinant image is the amount of stretching in the PE direction.
+    # Using central differences accounts for the shift in neighboring voxels.
+    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
+    # only warping in one direction, we end up with a diagonal matrix with two 1s.
+    # The following is the other entry at each voxel, and hence the determinant.
+    jacobian = 1 + np.gradient(vsm, axis=pe_info[0])
 
     resampled = ndi.map_coordinates(
         data,
@@ -102,7 +110,7 @@ def _sdc_unwarp(
         mode=mode,
         cval=cval,
         prefilter=prefilter,
-    )
+    ) * jacobian
 
     return resampled
 
