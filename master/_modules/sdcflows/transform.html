@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
-        <title>sdcflows.transform - sdcflows 2.5.2.dev84+g50ace2a4 documentation</title>
+        <title>sdcflows.transform - sdcflows 2.5.2.dev86+g3e318c52 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">sdcflows 2.5.2.dev84+g50ace2a4 documentation</div></a>
+      <a href="../../index.html"><div class="brand">sdcflows 2.5.2.dev86+g3e318c52 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,14 +145,14 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
     <span class="sidebar-brand-text">sdcflows</span>
-    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev84 (dev)</span>
+    <span id="version-slug" class="sidebar-brand-text">2.5.2.dev86 (dev)</span>
 </a>
 
 <!-- Versions dropdown -->
 <div id="version-menu" class="version-tree">
   <ul>
   <li class="toctree-l1 has-children">
-  <span class="sidebar-brand-text">2.5.2.dev84 (dev)</span>
+  <span class="sidebar-brand-text">2.5.2.dev86 (dev)</span>
   <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
   <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
   <ul id="v-tags"></ul>
@@ -344,7 +344,15 @@
     <span class="c1"># Map voxel coordinates applying the VSM</span>
     <span class="c1"># The VSM is just the displacements field given in index coordinates</span>
     <span class="c1"># voxcoords is the deformation field, i.e., the target position of each voxel</span>
-    <span class="n">coordinates</span><span class="p">[</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fmap_hz</span> <span class="o">*</span> <span class="n">pe_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">vsm</span> <span class="o">=</span> <span class="n">fmap_hz</span> <span class="o">*</span> <span class="n">pe_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">coordinates</span><span class="p">[</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">vsm</span>
+
+    <span class="c1"># The Jacobian determinant image is the amount of stretching in the PE direction.</span>
+    <span class="c1"># Using central differences accounts for the shift in neighboring voxels.</span>
+    <span class="c1"># The full Jacobian at each voxel would be a 3x3 matrix, but because there is</span>
+    <span class="c1"># only warping in one direction, we end up with a diagonal matrix with two 1s.</span>
+    <span class="c1"># The following is the other entry at each voxel, and hence the determinant.</span>
+    <span class="n">jacobian</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">vsm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
     <span class="n">resampled</span> <span class="o">=</span> <span class="n">ndi</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span>
@@ -354,7 +362,7 @@
         <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
         <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
         <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="p">)</span> <span class="o">*</span> <span class="n">jacobian</span>
 
     <span class="k">return</span> <span class="n">resampled</span>
 
@@ -1094,7 +1102,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=06a69072"></script>
+</div><script src="../../_static/documentation_options.js?v=69c0b557"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
