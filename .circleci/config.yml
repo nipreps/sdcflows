@@ -369,7 +369,7 @@ jobs:
           command: |
             python -m venv /tmp/venv
             source /tmp/venv/bin/activate
-            python -m pip install -U pip setuptools_scm
+            python -m pip install -U pip setuptools setuptools_scm
             pip install --no-cache-dir -r docs/requirements.txt
       - run:
           name: Build only this commit
