@@ -9,6 +9,6 @@ except ModuleNotFoundError:
     try:
         __version__ = get_distribution(__packagename__).version
     except DistributionNotFound:
-        __version__ = "unknown"
+        __version__ = "0+unknown"
     del get_distribution
     del DistributionNotFound
