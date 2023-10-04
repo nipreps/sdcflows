@@ -1,5 +1,5 @@
 attrs >= 20.1.0
-furo ~= 2021.10.09
+furo >= 2021.10.09
 matplotlib >= 2.2.0
 nibabel
 nipype >= 1.5.1
@@ -9,7 +9,7 @@ numpy
 packaging
 pydot >= 1.2.3
 pydotplus
-sphinx ~= 4.2
+sphinx >= 7.2.2
 sphinxcontrib-apidoc
 sphinxcontrib-napoleon
 templateflow
