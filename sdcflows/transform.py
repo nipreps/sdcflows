@@ -197,7 +197,10 @@ class B0FieldTransform:
         # fmap * ro_time is the voxel-shift map (VSM)
         # The VSM is just the displacements field given in index coordinates
         # voxcoords is the deformation field, i.e., the target position of each voxel
-        voxcoords[pe_axis, ...] += fmap.reshape(-1) * ro_time
+        vsm = fmap * ro_time
+        voxcoords[pe_axis, ...] += vsm.reshape(-1)
+
+        jacobian = 1 + np.gradient(vsm, axis=pe_axis)
 
         # Prepare data
         data = np.squeeze(np.asanyarray(spatialimage.dataobj))
@@ -212,7 +215,7 @@ class B0FieldTransform:
             mode=mode,
             cval=cval,
             prefilter=prefilter,
-        ).reshape(spatialimage.shape)
+        ).reshape(spatialimage.shape) * jacobian
 
         moved = spatialimage.__class__(
             resampled, spatialimage.affine, spatialimage.header
