@@ -61,4 +61,4 @@ def test_version_scm2(monkeypatch):
 
     monkeypatch.setattr("pkg_resources.get_distribution", _raise)
     reload(sdcflows)
-    assert sdcflows.__version__ == "unknown"
+    assert sdcflows.__version__ == "0+unknown"
