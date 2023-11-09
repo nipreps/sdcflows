@@ -18,85 +18,128 @@ permissions:
   contents: read
 
 jobs:
+  job_metadata:
+    if: github.repository == 'nipreps/sdcflows'
+    runs-on: ubuntu-latest
+    outputs:
+      commit_message: ${{ steps.get_commit_message.outputs.commit_message }}
+      version: ${{ steps.show_version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Print head git commit message
+        id: get_commit_message
+        run: |
+          if [[ -z "$COMMIT_MSG" ]]; then
+            COMMIT_MSG=$(git show -s --format=%s $REF)
+          fi
+          echo commit_message=$COMMIT_MSG | tee -a $GITHUB_OUTPUT
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          REF: ${{ github.event.pull_request.head.sha }}
+      - name: Detect version
+        id: show_version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF##*/}
+          else
+            pip install setuptools_scm
+            VERSION=$( python -m setuptools_scm )
+          fi
+          echo version=$VERSION | tee -a $GITHUB_OUTPUT
+
   build:
-    if: "!startsWith(github.ref, 'refs/tags/') && !contains(github.event.head_commit.message, '[skip ci]')"
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-        pip: ["pip==21.2", "pip~=22.0"]
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Fetch all tags (for setuptools_scm to work)
-      run: |
-        /usr/bin/git -c protocol.version=2 fetch --tags --prune --unshallow origin
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v3
-      with:
-        path: $HOME/.cache/pip
-        key: pip-cache-v1
-        restore-keys: |
-          pip-cache-
-    - name: Build in confined environment and interpolate version
-      run: |
-        python -m venv /tmp/buildenv
-        source /tmp/buildenv/bin/activate
-        python -m pip install -U build "setuptools >= 45" wheel "setuptools_scm >= 6.2" \
-                              setuptools_scm_git_archive pip twine docutils
-
-        python -m build -s -w
-        python -m twine check dist/sdcflows-*
-        mv dist /tmp/package
-        rm -rf sdcflows.egg-info/
-        # Interpolate version
-        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-          TAG=${GITHUB_REF##*/}
-        fi
-        THISVERSION=$( python -m setuptools_scm )
-        THISVERSION=${TAG:-$THISVERSION}
-        echo "Expected VERSION: \"${THISVERSION}\""
-        echo "THISVERSION=${THISVERSION}" >> $GITHUB_ENV
-    - name: Install in confined environment [pip]
-      run: |
-        python -m venv /tmp/pip
-        source /tmp/pip/bin/activate
-        python -m pip install -U "setuptools >= 45" "setuptools_scm >= 6.2" "${{ matrix.pip }}"
-        python -m pip install .
-        INSTALLED_VERSION=$(python -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
-        echo "VERSION: \"${THISVERSION}\""
-        echo "INSTALLED: \"${INSTALLED_VERSION}\""
-        test "${INSTALLED_VERSION}" = "${THISVERSION}"
-    - name: Install in confined environment [sdist]
-      run: |
-        python -m venv /tmp/install_sdist
-        source /tmp/install_sdist/bin/activate
-        python -m pip install -U "setuptools >= 45" "${{ matrix.pip }}"
-        python -m pip install /tmp/package/sdcflows*.tar.gz
-        INSTALLED_VERSION=$(python -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
-        echo "VERSION: \"${THISVERSION}\""
-        echo "INSTALLED: \"${INSTALLED_VERSION}\""
-        test "${INSTALLED_VERSION}" = "${THISVERSION}"
-    - name: Install in confined environment [wheel]
-      run: |
-        python -m venv /tmp/install_wheel
-        source /tmp/install_wheel/bin/activate
-        python -m pip install -U "setuptools >= 45" "${{ matrix.pip }}"
-        python -m pip install /tmp/package/sdcflows*.whl
-        INSTALLED_VERSION=$(python -c 'import sdcflows as sdc; print(sdc.__version__, end="")')
-        echo "INSTALLED: \"${INSTALLED_VERSION}\""
-        test "${INSTALLED_VERSION}" = "${THISVERSION}"
-
-  flake8:
+    if: github.repository == 'nipreps/sdcflows'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Set up Python 3
       uses: actions/setup-python@v4
       with:
         python-version: 3
-    - run: pip install flake8
-    - run: flake8 sdcflows/
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+    - name: Build niworkflows
+      run: pipx run build
+    - name: Check distributions
+      run: pipx run twine check dist/*
+    - uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist/
+
+  test:
+    if: "!startsWith(github.ref, 'refs/tags/') && !contains(github.event.head_commit.message, '[skip ci]')"
+    needs: [build, job_metadata]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        install: [repo]
+        include:
+          - python-version: "3.11"
+            install: sdist
+          - python-version: "3.11"
+            install: wheel
+          - python-version: "3.11"
+            install: editable
+
+    env:
+      INSTALL_TYPE: ${{ matrix.install }}
+
+    steps:
+    - uses: actions/checkout@v4
+      if: matrix.install == 'repo' || matrix.install == 'editable'
+      with:
+        fetch-depth: 0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Fetch packages
+      if: matrix.install == 'sdist' || matrix.install == 'wheel'
+      uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist/
+    - name: Select archive
+      run: |
+        if [ "$INSTALL_TYPE" = "sdist" ]; then
+          ARCHIVE=$( ls dist/*.tar.gz )
+        elif [ "$INSTALL_TYPE" = "wheel" ]; then
+          ARCHIVE=$( ls dist/*.whl )
+        elif [ "$INSTALL_TYPE" = "repo" ]; then
+          ARCHIVE="."
+        elif [ "$INSTALL_TYPE" = "editable" ]; then
+          ARCHIVE="-e ."
+        fi
+        echo "ARCHIVE=$ARCHIVE" | tee -a $GITHUB_ENV
+    - name: Install package
+      run: python -m pip install $ARCHIVE
+    - name: Check version
+      run: |
+        INSTALLED_VERSION=$(python -c 'import sdcflows; print(sdcflows.__version__, end="")')
+        echo "INSTALLED: \"${INSTALLED_VERSION}\""
+        test "${INSTALLED_VERSION}" = "${VERSION}"
+      env:
+        VERSION: ${{ needs.job_metadata.outputs.version }}
+    - name: Install test dependencies
+      run: python -m pip install "sdcflows[tests]"
+    - name: Run tests
+      run: pytest -sv --doctest-modules --cov sdcflows --pyargs sdcflows
+    - uses: codecov/codecov-action@v3
+      name: Submit to CodeCov
+
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3
+    - run: pipx run flake8 sdcflows/
