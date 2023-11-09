@@ -78,15 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        install: [repo]
-        include:
-          - python-version: "3.11"
-            install: sdist
-          - python-version: "3.11"
-            install: wheel
-          - python-version: "3.11"
-            install: editable
+        python-version: ["3.8", "3.12"]
+        install: [repo, sdist, wheel, editable]
 
     env:
       INSTALL_TYPE: ${{ matrix.install }}
@@ -127,12 +120,6 @@ jobs:
         test "${INSTALLED_VERSION}" = "${VERSION}"
       env:
         VERSION: ${{ needs.job_metadata.outputs.version }}
-    - name: Install test dependencies
-      run: python -m pip install "sdcflows[tests]"
-    - name: Run tests
-      run: pytest -sv --doctest-modules --cov sdcflows --pyargs sdcflows
-    - uses: codecov/codecov-action@v3
-      name: Submit to CodeCov
 
   flake8:
     runs-on: ubuntu-latest
