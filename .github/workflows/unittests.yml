@@ -108,8 +108,8 @@ jobs:
           python-${{ matrix.python-version }}-${{ env.CACHE_NUM }}
     - name: Install DataLad
       run: |
-        conda install git-annex datalad pip
-        pip install datalad-osf
+        conda install git-annex=*=alldep* pip
+        pip install datalad datalad-osf
     - name: Install fsl
       run: |
         conda install fsl-fugue fsl-topup
