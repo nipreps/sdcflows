@@ -147,10 +147,12 @@ RUN echo "Downloading Convert3D ..." \
 ENV C3DPATH="/opt/convert3d-1.0.0" \
     PATH="/opt/convert3d-1.0.0/bin:$PATH"
 
-# Configure PPA for libpng12
+# Configure PPAs for libpng12 and libxp6
 RUN GNUPGHOME=/tmp gpg --keyserver hkps://keyserver.ubuntu.com --no-default-keyring --keyring /usr/share/keyrings/linuxuprising.gpg --recv 0xEA8CACC073C3DB2A \
-    && echo "deb [signed-by=/usr/share/keyrings/linuxuprising.gpg] https://ppa.launchpadcontent.net/linuxuprising/libpng12/ubuntu jammy main" > /etc/apt/sources.list.d/linuxuprising.list
-# AFNI latest (neurodocker build)
+    && GNUPGHOME=/tmp gpg --keyserver hkps://keyserver.ubuntu.com --no-default-keyring --keyring /usr/share/keyrings/zeehio.gpg --recv 0xA1301338A3A48C4A \
+    && echo "deb [signed-by=/usr/share/keyrings/linuxuprising.gpg] https://ppa.launchpadcontent.net/linuxuprising/libpng12/ubuntu jammy main" > /etc/apt/sources.list.d/linuxuprising.list \
+    && echo "deb [signed-by=/usr/share/keyrings/zeehio.gpg] https://ppa.launchpadcontent.net/zeehio/libxp/ubuntu jammy main" > /etc/apt/sources.list.d/zeehio.list
+# Dependencies for AFNI; requires a discontinued multiarch-support package from bionic (18.04)
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
            ed \
@@ -162,27 +164,23 @@ RUN apt-get update -qq \
            libjpeg62 \
            libpng12-0 \
            libxm4 \
+           libxp6 \
            netpbm \
            tcsh \
            xfonts-base \
            xvfb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
     && curl -sSL --retry 5 -o /tmp/multiarch.deb http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1.5_amd64.deb \
     && dpkg -i /tmp/multiarch.deb \
     && rm /tmp/multiarch.deb \
-    && curl -sSL --retry 5 -o /tmp/libxp6.deb http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
-    && dpkg -i /tmp/libxp6.deb \
-    && rm /tmp/libxp6.deb \
     && apt-get install -f \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && gsl2_path="$(find / -name 'libgsl.so.19' || printf '')" \
     && if [ -n "$gsl2_path" ]; then \
          ln -sfv "$gsl2_path" "$(dirname $gsl2_path)/libgsl.so.0"; \
     fi \
-    && ldconfig \
-    && echo "Downloading AFNI ..." \
+    && ldconfig
+# AFNI latest
+RUN echo "Downloading AFNI ..." \
     && mkdir -p /opt/afni-latest \
     && curl -fsSL --retry 5 https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
     | tar -xz -C /opt/afni-latest --strip-components 1 \
