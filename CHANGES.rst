@@ -1,4 +1,4 @@
-2.6.0 (November 09, 2023)
+2.6.0 (November 10, 2023)
 =========================
 New feature release in the 2.6.0 series.
 
