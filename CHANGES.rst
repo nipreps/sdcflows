@@ -1,3 +1,27 @@
+2.6.0 (November 10, 2023)
+=========================
+New feature release in the 2.6.0 series.
+
+This release resolves a number of issues with fieldmaps inducing distortions
+during correction. Phase difference and direct fieldmaps are now masked correctly,
+preventing the overestimation of distortions outside the brain. Additionally,
+we now implement Jacobian weighting during unwarping, which corrects for compression
+and expansion effects on signal intensity.
+
+* FIX: Mask fieldmap before fitting spline field (#396)
+* FIX: Interpolate to floating point values (#394)
+* FIX: Refactoring the ``B0FieldTransform`` implementation (#346)
+* FIX: Nipype workflows like to be passed absolute paths (phasediff fieldmap) (#374)
+* ENH: Implement Jacobian weighting during unwarp (#391)
+* ENH: Output target2fmap_xfm from coeff2epi_wf (#381)
+* ENH: Add data loader to sdcflows.data, drop pkg_resources (#379)
+* RF: Use scipy.interpolate.BSpline to construct spline basis (#393)
+* DOC: Use latest sphinx to fix bad sphinx/furo interaction (#390)
+* DOC: Fix missing dependency when merging new data loader (#380)
+* MNT: Update emprical values in test to allow transition to new scipy's BSpline (#387)
+* MNT: Add pre-commit config (#375)
+* MNT: Add a seed to random generator of coefficients (#368)
+
 2.5.2 (November 09, 2023)
 =========================
 Bug-fix release in the 2.5.x series.
