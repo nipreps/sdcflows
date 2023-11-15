@@ -305,7 +305,7 @@ def find_estimators(
     sessions = sessions or layout.get_sessions(subject=subject) or [None]
     fmapless = fmapless or {}
     if fmapless is True:
-        fmapless = {"bold", "dwi"}
+        fmapless = {"bold", "dwi", "asl"}
 
     estimators = []
 
@@ -442,7 +442,7 @@ def find_estimators(
                 intent_map = []
                 for sbref in sbrefs:
                     ents = sbref.get_entities(metadata=False)
-                    ents["suffix"] = ["bold", "dwi"]
+                    ents["suffix"] = ["bold", "dwi", "asl"]
                     intent_map.append(
                         [
                             target
@@ -483,6 +483,7 @@ def find_estimators(
                     estimators.append(e)
 
     if estimators and not force_fmapless:
+        logger.warning(f"Estimators found: {estimators}")
         fmapless = False
 
     # Find fieldmap-less schemes
@@ -502,6 +503,7 @@ def find_estimators(
         suffixes=fmapless,
     )
     for spec in estimator_specs:
+        logger.warning(f"Estimator spec: {spec}")
         try:
             estimator = fm.FieldmapEstimation(spec)
         except (ValueError, TypeError) as err:
@@ -509,6 +511,7 @@ def find_estimators(
         else:
             _log_debug_estimation(logger, estimator, layout.root)
             estimators.append(estimator)
+
     return estimators
 
 
@@ -542,8 +545,10 @@ def find_anatomical_estimators(
         EPI suffixes, for example ``["bold", "dwi"]``. Associated ``"sbref"``\s
         will be found and used in place of BOLD/diffusion EPIs.
     """
-
     from .epimanip import get_trt
+    from .misc import create_logger
+
+    logger = create_logger('sdcflows.wrangler2')
 
     subject_root = Path(layout.root) / f"sub-{subject}"
 
@@ -554,6 +559,7 @@ def find_anatomical_estimators(
         datatype = {
             "bold": "func",
             "dwi": "dwi",
+            "asl": "perf",
         }[suffix]
         candidates = layout.get(
             **{
@@ -561,6 +567,7 @@ def find_anatomical_estimators(
                 **{"suffix": suffixes, "session": ses, "datatype": datatype},
             }
         )
+        logger.warning(f"Candidates: {candidates}")
 
         # Filter out candidates without defined PE direction
         epi_targets = []
@@ -569,6 +576,7 @@ def find_anatomical_estimators(
             meta = candidate.get_metadata()
 
             if not meta.get("PhaseEncodingDirection"):
+                logger.warning(f"PhaseEncodingDirection missing in meta: {meta}")
                 continue
 
             trt = 1.0
