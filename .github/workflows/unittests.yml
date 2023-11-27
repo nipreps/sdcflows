@@ -89,7 +89,7 @@ jobs:
         git config --global user.name 'NiPreps Bot'
         git config --global user.email 'nipreps@gmail.com'
     - name: Set up Python ${{ matrix.python-version }}
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
         auto-activate-base: true
