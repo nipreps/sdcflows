@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
+from __future__ import annotations
 import logging
 from functools import reduce
 from itertools import product
