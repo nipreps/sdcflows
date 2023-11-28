@@ -318,6 +318,11 @@ def main(argv=None):
                     print(f"\t\t\t{pe_dir}\t{fl_relpath}")
         return
 
+    from sdcflows.workflows.fit.base import init_sdcflows_wf
+
+    wf = init_sdcflows_wf(estimators_record, pargs.work_dir)
+    wf.run()
+
 
 if __name__ == "__main__":
     main()
