@@ -291,6 +291,7 @@ def find_estimators(
     base_entities = {
         "subject": subject,
         "extension": [".nii", ".nii.gz"],
+        "part": ["mag", None],
         "scope": "raw",  # Ensure derivatives are not captured
     }
 
