@@ -3,7 +3,7 @@ from shutil import rmtree
 
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from sdcflows.cli.find_estimators import gen_layout
+from sdcflows.cli.main import gen_layout
 from sdcflows.utils.wrangler import find_estimators
 from sdcflows.fieldmaps import clear_registry
 

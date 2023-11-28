@@ -24,6 +24,7 @@ dependencies = [
     "nibabel >=3.1.0",
     "nipype >=1.8.5,<2.0",
     "traits <6.4",
+    "migas >= 0.4.0",
     "niworkflows >= 1.7.0",
     "nitransforms >= 23.0.1",
     "numpy >= 1.21.0",
@@ -54,6 +55,7 @@ doc = [
     "pydot >= 1.2.3",
     "pydotplus",
     "sphinx >= 7.2.2",
+    "sphinx-argparse",
     "sphinxcontrib-apidoc",
     "templateflow"
 ]
@@ -83,7 +85,7 @@ tests = ["sdcflows[test]"]
 all = ["sdcflows[doc,test,mem,dev,test]"]
 
 [project.scripts]
-sdcflows-find-estimators = "sdcflows.cli.find_estimators:main"
+sdcflows = "sdcflows.cli.main:main"
 
 #
 # Hatch configurations

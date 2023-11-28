@@ -1,8 +1,31 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+#
+# Copyright 2023 The NiPreps Developers <nipreps@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# We support and encourage derived works from this project, please read
+# about our expectations at
+#
+#     https://www.nipreps.org/community/licensing/
+#
+"""Check the CLI."""
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from ..find_estimators import main as find_estimators
-from ...fieldmaps import clear_registry
+from sdcflows.cli.main import main as find_estimators
+from sdcflows.fieldmaps import clear_registry
 
 OUTPUT = """\
 Estimation for <{path}> complete. Found:
@@ -102,12 +125,15 @@ b0field_config = {
 
 @pytest.mark.parametrize(
     "test_id,config,estimator_id",
-    [("intendedfor", intendedfor_config, "auto_00000"), ("b0field", b0field_config, "pepolar")],
+    [
+        ("intendedfor", intendedfor_config, "auto_00000"),
+        ("b0field", b0field_config, "pepolar"),
+    ],
 )
 def test_find_estimators(tmp_path, capsys, test_id, config, estimator_id):
     path = tmp_path / test_id
     generate_bids_skeleton(path, config)
-    find_estimators([str(path)])
+    find_estimators([str(path), "--dry-run"])
     output = OUTPUT.format(path=path, estimator_id=estimator_id)
     out, _ = capsys.readouterr()
     assert out == output
