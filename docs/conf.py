@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "sphinxarg.ext",
     "sphinxcontrib.apidoc",
     "nbsphinx",
     "nipype.sphinxext.apidoc",

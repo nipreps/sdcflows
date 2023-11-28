@@ -9,5 +9,6 @@ Contents
     installation
     examples
     methods
+    cli
     api
     changes
