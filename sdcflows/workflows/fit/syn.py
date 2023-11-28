@@ -34,10 +34,11 @@ Estimating the susceptibility distortions without fieldmaps.
 
 
 """
-from pkg_resources import resource_filename
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+from ... import data
 
 DEFAULT_MEMORY_MIN_GB = 0.01
 INPUT_FIELDS = (
@@ -120,7 +121,6 @@ def init_syn_sdc_wf(
         Short description of the estimation method that was run.
 
     """
-    from pkg_resources import resource_filename as pkgrf
     from packaging.version import parse as parseversion, Version
     from nipype.interfaces.ants import ImageMath
     from niworkflows.interfaces.fixes import (
@@ -234,7 +234,7 @@ template [@fieldmapless3].
     # SyN Registration Core
     syn = pe.Node(
         Registration(
-            from_file=pkgrf("sdcflows", f"data/sd_syn{'_sloppy' * sloppy}.json")
+            from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")
         ),
         name="syn",
         n_procs=omp_nthreads,
@@ -328,8 +328,7 @@ template [@fieldmapless3].
         (zooms_bmask, outputnode, [("output_image", "fmap_mask")]),
         (bs_filter, outputnode, [("out_coeff", "fmap_coeff")]),
         (unwarp, outputnode, [("out_corrected", "fmap_ref"),
-                              ("out_field", "fmap"),
-                              ("out_warp", "out_warp")]),
+                              ("out_field", "fmap")]),
     ])
     # fmt: on
 
@@ -401,7 +400,6 @@ def init_syn_preprocessing_wf(
         the cost function of SyN.
 
     """
-    from pkg_resources import resource_filename as pkgrf
     from niworkflows.interfaces.nibabel import (
         IntensityClip,
         ApplyMask,
@@ -448,13 +446,11 @@ def init_syn_preprocessing_wf(
         mem_gb=DEFAULT_MEMORY_MIN_GB,
         run_without_submitting=True,
     )
-    transform_list.inputs.in3 = pkgrf(
-        "sdcflows", "data/fmap_atlas_2_MNI152NLin2009cAsym_affine.mat"
-    )
+    transform_list.inputs.in3 = data.load("fmap_atlas_2_MNI152NLin2009cAsym_affine.mat")
     prior2epi = pe.Node(
         ApplyTransforms(
             invert_transform_flags=[True, False, False],
-            input_image=pkgrf("sdcflows", "data/fmap_atlas.nii.gz"),
+            input_image=str(data.load("fmap_atlas.nii.gz")),
         ),
         name="prior2epi",
         n_procs=omp_nthreads,
@@ -496,7 +492,7 @@ def init_syn_preprocessing_wf(
     )
 
     epi2anat = pe.Node(
-        Registration(from_file=resource_filename("sdcflows", "data/affine.json")),
+        Registration(from_file=data.load("affine.json")),
         name="epi2anat",
         n_procs=omp_nthreads,
     )

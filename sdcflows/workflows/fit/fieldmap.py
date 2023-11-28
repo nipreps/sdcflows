@@ -90,6 +90,7 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
         DEFAULT_HF_ZOOMS_MM,
         DEFAULT_ZOOMS_MM,
     )
+    from ...interfaces.fmap import CheckRegister
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
@@ -97,6 +98,18 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
         niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff", "method"]),
         name="outputnode",
     )
+
+    def _unzip(fmap_spec):
+        return fmap_spec
+
+    unzip = pe.MapNode(
+        niu.Function(function=_unzip, output_names=["fmap_file", "meta"]),
+        run_without_submitting=True,
+        iterfield=["fmap_spec"],
+        name="unzip",
+    )
+
+    check_register = pe.Node(CheckRegister(), name='check_register')
 
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
     bs_filter = pe.Node(BSplineApprox(), name="bs_filter")
@@ -108,7 +121,10 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
 
     # fmt: off
     workflow.connect([
-        (inputnode, magnitude_wf, [("magnitude", "inputnode.magnitude")]),
+        (inputnode, unzip, [("fieldmap", "fmap_spec")]),
+        (inputnode, check_register, [("magnitude", "mag_files")]),
+        (unzip, check_register, [("fmap_file", "fmap_files")]),
+        (check_register, magnitude_wf, [("mag_files", "inputnode.magnitude")]),
         (magnitude_wf, bs_filter, [("outputnode.fmap_mask", "in_mask")]),
         (magnitude_wf, outputnode, [
             ("outputnode.fmap_mask", "fmap_mask"),
@@ -131,7 +147,8 @@ acquisitions.
 
         # fmt: off
         workflow.connect([
-            (inputnode, phdiff_wf, [("fieldmap", "inputnode.phase")]),
+            (unzip, phdiff_wf, [("meta", "inputnode.phase_meta")]),
+            (check_register, phdiff_wf, [("fmap_files", "inputnode.phase")]),
             (magnitude_wf, phdiff_wf, [
                 ("outputnode.fmap_ref", "inputnode.magnitude"),
                 ("outputnode.fmap_mask", "inputnode.mask"),
@@ -160,7 +177,7 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
         # fmt: off
         workflow.connect([
             (inputnode, units, [(("fieldmap", _get_units), "units")]),
-            (inputnode, fmapmrg, [(("fieldmap", _get_file), "in_files")]),
+            (check_register, fmapmrg, [("fmap_files", "in_files")]),
             (fmapmrg, units, [("out_avg", "in_file")]),
             (units, bs_filter, [("out_file", "in_data")]),
         ])
@@ -298,22 +315,13 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
 """
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["magnitude", "phase", "mask"]), name="inputnode"
+        niu.IdentityInterface(fields=["magnitude", "phase", "phase_meta", "mask"]),
+        name="inputnode",
     )
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["fieldmap"]),
         name="outputnode",
-    )
-
-    def _split(phase):
-        return phase
-
-    split = pe.MapNode(  # We cannot use an inline connection function with MapNode
-        niu.Function(function=_split, output_names=["map_file", "meta"]),
-        iterfield=["phase"],
-        run_without_submitting=True,
-        name="split",
     )
 
     # phase diff -> radians
@@ -334,15 +342,14 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
 
     # fmt: off
     workflow.connect([
-        (inputnode, split, [("phase", "phase")]),
+        (inputnode, phmap2rads, [("phase", "in_file")]),
+        (inputnode, calc_phdiff, [("phase_meta", "in_meta")]),
         (inputnode, prelude, [("magnitude", "magnitude_file"),
                               ("mask", "mask_file")]),
-        (split, phmap2rads, [("map_file", "in_file")]),
         (phmap2rads, calc_phdiff, [("out_file", "in_phases")]),
-        (split, calc_phdiff, [("meta", "in_meta")]),
         (calc_phdiff, prelude, [("phase_diff", "phase_file")]),
-        (prelude, compfmap, [("unwrapped_phase_file", "in_file")]),
         (calc_phdiff, compfmap, [("metadata", "metadata")]),
+        (prelude, compfmap, [("unwrapped_phase_file", "in_file")]),
         (compfmap, outputnode, [("out_file", "fieldmap")]),
     ])
     # fmt: on

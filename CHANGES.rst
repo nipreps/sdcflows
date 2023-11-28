@@ -1,3 +1,88 @@
+2.6.0 (November 10, 2023)
+=========================
+New feature release in the 2.6.0 series.
+
+This release resolves a number of issues with fieldmaps inducing distortions
+during correction. Phase difference and direct fieldmaps are now masked correctly,
+preventing the overestimation of distortions outside the brain. Additionally,
+we now implement Jacobian weighting during unwarping, which corrects for compression
+and expansion effects on signal intensity.
+
+* FIX: Mask fieldmap before fitting spline field (#396)
+* FIX: Interpolate to floating point values (#394)
+* FIX: Refactoring the ``B0FieldTransform`` implementation (#346)
+* FIX: Nipype workflows like to be passed absolute paths (phasediff fieldmap) (#374)
+* ENH: Implement Jacobian weighting during unwarp (#391)
+* ENH: Output target2fmap_xfm from coeff2epi_wf (#381)
+* ENH: Add data loader to sdcflows.data, drop pkg_resources (#379)
+* RF: Use scipy.interpolate.BSpline to construct spline basis (#393)
+* DOC: Use latest sphinx to fix bad sphinx/furo interaction (#390)
+* DOC: Fix missing dependency when merging new data loader (#380)
+* MNT: Update emprical values in test to allow transition to new scipy's BSpline (#387)
+* MNT: Add pre-commit config (#375)
+* MNT: Add a seed to random generator of coefficients (#368)
+
+2.5.2 (November 09, 2023)
+=========================
+Bug-fix release in the 2.5.x series.
+
+This release includes a fix for phasediff/direct fieldmaps that were previously
+producing distortions outside the brain due to an incorrect masking of the fieldmap.
+
+* FIX: Mask fieldmap before fitting spline field [backport gh-396] (#398)
+* DOC: Fix doc build for 2.5.x branch (#399)
+* MAINT: Make call to scipy.stats.mode compatible with scipy 1.11.0 (#371)
+
+2.5.1 (June 08, 2023)
+=====================
+Bug-fix release in the 2.5.x series.
+
+* FIX: Use ``lsqr`` solver for spline fit, rerun on extreme values (#366)
+* FIX: Ensure metadata is not present in entity query (#367)
+* RF/FIX: Prioritize sbref and shortest echo for SyN-SDC (#364)
+
+2.5.0 (June 01, 2023)
+=====================
+New feature release in the 2.5.x series.
+
+This release includes a number of changes to default behaviors.
+SyN-SDC will be performed per-BOLD/DWI image, unless specified otherwise with
+``B0FieldIdentifier``\s, and may now be specified with T2w images as anatomical
+references as well.
+Additionally, PEPolar fieldmaps will only be grouped if they share ``IntendedFor``
+metadata.
+
+Finally, as a small UX improvement, if magnitude1/magnitude2 images have differing
+affines but are in register, we will now copy the header rather than requiring the
+user to update the header themselves.
+
+* FIX: Ensure IntendedFor metadata is a subject-relative path (#360)
+* ENH: Split SyN fieldmap estimates per-EPI (#312)
+* ENH: Allow non-T1w anatomical estimators (#358)
+* ENH: Function to calculate reference grids aligned with the coefficients (#355)
+* ENH: Check registration of magnitude1/magnitude2 images and update headers (#356)
+* RF: Split PEPolar fieldmaps by intent, if available (#342)
+* CI: Use supported codecov uploaders (#348)
+
+2.4.3 (April 24, 2023)
+======================
+Bug-fix release in the 2.4.x series.
+
+This fix resolves an inconsistency of treatment of phase-difference and
+scanner-calculated fieldmaps, relative to PEPolar and SyN. Fieldmaps in
+orientations other than RAS were impacted.
+
+* FIX: Reorient fieldmaps to RAS before estimating B-splines (#354)
+
+2.4.2 (April 20, 2023)
+======================
+Bug-fix release in the 2.4.x series.
+
+Same fixes as 2.4.1, but this time for phase-difference and direct fieldmaps
+we missed last time.
+
+* FIX: Capture and report partial fieldmaps (#351)
+
 2.4.1 (March 20, 2023)
 ======================
 Bug-fix release in the 2.4.x series.
@@ -338,6 +423,14 @@ A complete list of issues addressed by the release is found `in the GitHub repo
 
 1.3.x series
 ============
+
+1.3.4 (July 07, 2023)
+---------------------
+Bug-fix release in 1.3.x series.
+
+* FIX: Limit ``3dQwarp`` to maximum 4 CPUs for stability reasons (#128)
+* MAINT: Make call to scipy.stats.mode compatible with scipy 1.11.0 (#371)
+* CI: Update docker/machine images for 1.3.x branch (#327)
 
 1.3.3 (September 4, 2020)
 -------------------------

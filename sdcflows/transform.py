@@ -20,27 +20,219 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""The :math:`B_0` unwarping transform formalism."""
+r"""
+The :math:`B_0` unwarping transform formalism.
+
+This module implements a data structure to represent the displacements field associated
+to the deformations caused by susceptibility-derived distortions.
+This implementation attempts to provide a single representation of such distortions independently
+of the estimation strategy (see :doc:`/methods`).
+
+.. _bspline-interpolation:
+
+That is achieved by implementing multi-level B-Spline cubic interpolators.
+For one given level, a function :math:`f(\mathbf{s})` can be represented as a linear combination
+of tensor-product cubic B-Spline basis (:math:`\Psi^3(\mathbf{k}, \mathbf{s})`;
+see Eq. :math:`\eqref{eq:2}`).
+
+
+.. math::
+
+    f(\mathbf{s}) =
+    \sum_{k_1} \sum_{k_2} \sum_{k_3} c(\mathbf{k}) \Psi^3(\mathbf{k}, \mathbf{s}).
+    \label{eq:1}\tag{1}
+
+
+"""
+from __future__ import annotations
+
+import os
+from functools import partial
+import asyncio
 from pathlib import Path
+from typing import Callable, Sequence, Tuple
 
 import attr
 import numpy as np
 from warnings import warn
 from scipy import ndimage as ndi
-from scipy.signal import cubic
-from scipy.sparse import vstack as sparse_vstack, kron, lil_array
+from scipy.interpolate import BSpline
+from scipy.sparse import hstack as sparse_hstack, kron, lil_array
 
 import nibabel as nb
 import nitransforms as nt
-from nitransforms.base import _as_homogeneous
 from bids.utils import listify
 
 from niworkflows.interfaces.nibabel import reorient_image
 
+from sdcflows.utils.tools import ensure_positive_cosines
 
-def _clear_mapped(instance, attribute, value):
-    instance.mapped = None
-    return value
+
+def _sdc_unwarp(
+    data: np.ndarray,
+    coordinates: np.ndarray,
+    pe_info: Tuple[int, float],
+    hmc_xfm: np.ndarray | None,
+    fmap_hz: np.ndarray,
+    output_dtype: str | np.dtype | None = None,
+    order: int = 3,
+    mode: str = "constant",
+    cval: float = 0.0,
+    prefilter: bool = True,
+) -> np.ndarray:
+    """Resample one volume, moving through a head motion correction affine if provided."""
+
+    if hmc_xfm is not None:
+        # Move image with the head
+        coords_shape = coordinates.shape
+        coordinates = nb.affines.apply_affine(
+            hmc_xfm, coordinates.reshape(coords_shape[0], -1).T
+        ).T.reshape(coords_shape)
+
+    # Map voxel coordinates applying the VSM
+    # The VSM is just the displacements field given in index coordinates
+    # voxcoords is the deformation field, i.e., the target position of each voxel
+    vsm = fmap_hz * pe_info[1]
+    coordinates[pe_info[0], ...] += vsm
+
+    # The Jacobian determinant image is the amount of stretching in the PE direction.
+    # Using central differences accounts for the shift in neighboring voxels.
+    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
+    # only warping in one direction, we end up with a diagonal matrix with two 1s.
+    # The following is the other entry at each voxel, and hence the determinant.
+    jacobian = 1 + np.gradient(vsm, axis=pe_info[0])
+
+    resampled = ndi.map_coordinates(
+        data,
+        coordinates,
+        output=output_dtype,
+        order=order,
+        mode=mode,
+        cval=cval,
+        prefilter=prefilter,
+    ) * jacobian
+
+    return resampled
+
+
+async def worker(
+    data: np.ndarray,
+    coordinates: np.ndarray,
+    pe_info: Tuple[int, float],
+    hmc_xfm: np.ndarray,
+    func: Callable,
+    semaphore: asyncio.Semaphore,
+) -> np.ndarray:
+    """Create one worker and attach it to the execution loop."""
+    async with semaphore:
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None, func, data, coordinates, pe_info, hmc_xfm
+        )
+        return result
+
+
+async def unwarp_parallel(
+    fulldataset: np.ndarray,
+    coordinates: np.ndarray,
+    fmap_hz: np.ndarray,
+    pe_info: Sequence[Tuple[int, float]],
+    xfms: Sequence[np.ndarray],
+    order: int = 3,
+    mode: str = "constant",
+    cval: float = 0.0,
+    prefilter: bool = True,
+    output_dtype: str | np.dtype | None = None,
+    max_concurrent: int = min(os.cpu_count(), 12),
+) -> np.ndarray:
+    r"""
+    Unwarp an EPI dataset parallelizing across volumes.
+
+    Parameters
+    ----------
+    fulldataset : :obj:`~numpy.ndarray`
+        An array of shape (I, J, K, T), where I, J, K are the dimensions of spatial axes
+        and T is the number of volumes.
+        The full data array of the EPI that are wanted after correction.
+    coordinates : :obj:`~numpy.ndarray`
+        An array of shape (3, I, J, K) array providing the voxel (index) coordinates of
+        the reference image (i.e., interpolated points) before SDC/HMC.
+    fmap_hz : :obj:`~numpy.ndarray`
+        An array of shape (I, J, K) containing the displacement of each voxel in voxel units.
+    pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)
+        A tuple containing the index of the phase-encoding axis in the data array and
+        the readout time (including sign, if displacements must be reversed)
+    xfms : :obj:`list` of obj:`~numpy.ndarray`
+        A list of 4×4 matrices, each one formalizing
+        the estimated head motion alignment to the scan's reference.
+        Therefore, each of these matrices express the transform of every
+        voxel's RAS (physical) coordinates in the image used as reference
+        for realignment into the coordinates of each of the EPI series volume.
+    order : :obj:`int`, optional
+        The order of the spline interpolation, default is 3.
+        The order has to be in the range 0-5.
+    mode : {'constant', 'reflect', 'nearest', 'mirror', 'wrap'}, optional
+        Determines how the input image is extended when the resamplings overflows
+        a border. Default is 'constant'.
+    cval : :obj:`float`, optional
+        Constant value for ``mode='constant'``. Default is 0.0.
+    prefilter : :obj:`bool`, optional
+        Determines if the image's data array is prefiltered with
+        a spline filter before interpolation. The default is ``True``,
+        which will create a temporary *float64* array of filtered values
+        if *order > 1*. If setting this to ``False``, the output will be
+        slightly blurred if *order > 1*, unless the input is prefiltered,
+        i.e. it is the result of calling the spline filter on the original
+        input.
+    output_dtype : :obj:`str` or :obj:`~numpy.dtype`
+        Override the output data type, instead of propagating it from the
+        moving image.
+    max_concurrent : :obj:`int`
+        The maximum number of parallel resamplings at any given time of execution.
+        Use this parameter to set an upper bound to memory utilization.
+
+    """
+
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    if fulldataset.ndim == 3:
+        fulldataset = fulldataset[..., np.newaxis]
+
+    func = partial(
+        _sdc_unwarp,
+        fmap_hz=fmap_hz,
+        output_dtype=output_dtype,
+        order=order,
+        mode=mode,
+        cval=cval,
+        prefilter=prefilter,
+    )
+
+    # Create a worker task for each chunk
+    tasks = []
+    for volid, volume in enumerate(np.rollaxis(fulldataset, -1, 0)):
+        xfm = None if xfms is None else xfms[volid]
+
+        # IMPORTANT - the coordinates array must be copied every time anew per thread
+        task = asyncio.create_task(
+            worker(
+                volume,
+                coordinates.copy(),
+                pe_info[volid],
+                xfm,
+                func,
+                semaphore,
+            )
+        )
+        tasks.append(task)
+
+    # Wait for all tasks to complete
+    await asyncio.gather(*tasks)
+
+    # Collect the results and stack along last dimension
+    results = np.stack([task.result() for task in tasks], -1)
+
+    return results
 
 
 @attr.s(slots=True)
@@ -49,20 +241,44 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    xfm = attr.ib(default=None, on_setattr=_clear_mapped)
-    """A rigid-body transform to prepend to the unwarping displacements field."""
     mapped = attr.ib(default=None, init=False)
     """
     A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
     target image we want to correct).
     """
 
-    def fit(self, spatialimage):
+    def fit(
+        self,
+        target_reference: nb.spatialimages.SpatialImage,
+        xfm_data2fmap: np.ndarray | None = None,
+        approx: bool = True,
+    ) -> bool:
         r"""
         Generate the interpolation matrix (and the VSM with it).
 
         Implements Eq. :math:`\eqref{eq:1}`, interpolating :math:`f(\mathbf{s})`
         for all voxels in the target-image's extent.
+
+        Parameters
+        ----------
+        target_reference : :obj:`~nibabel.spatialimages.SpatialImage`
+            The image object containing a reference grid (same as that of the data
+            to be resampled). If a 4D dataset is provided, then the fourth dimension
+            will be dropped.
+        xfm_data2fmap : :obj:`numpy.ndarray`
+            Transform that maps coordinates on the `target_reference` onto the
+            fieldmap reference (that is, the linear transform through which the fieldmap can
+            be resampled in register with the `target_reference`).
+            In other words, `xfm_data2fmap` is the result of calling a registration tool
+            such as ANTs configured for a linear transform with at most 12 degrees of freedom
+            and called with the image carrying `target_affine` as reference and the fieldmap
+            reference as moving.
+            The result of such a registration framework is an affine (our `xfm_data2fmap` here)
+            that maps coordinates in reference (target) RAS onto the fieldmap RAS.
+        approx : :obj:`bool`
+            If ``True``, do not reconstruct the B-Spline field directly on the target
+            (which will likely not be aligned with the fieldmap's grid), but rather use
+            the fieldmap's grid and then use just regular interpolation.
 
         Returns
         -------
@@ -72,72 +288,133 @@ class B0FieldTransform:
 
         """
         # Calculate the physical coordinates of target grid
-        if isinstance(spatialimage, (str, bytes, Path)):
-            spatialimage = nb.load(spatialimage)
+        if isinstance(target_reference, (str, bytes, Path)):
+            target_reference = nb.load(target_reference)
 
-        # Initialize xform (or set identity)
-        xfm = self.xfm if self.xfm is not None else nt.linear.Affine()
-
-        if self.mapped is not None:
-            newaff = spatialimage.affine
-            newshape = spatialimage.shape
-
-            if np.all(newshape == self.mapped.shape) and np.allclose(
-                newaff, self.mapped.affine
-            ):
-                return False
-
-        weights = []
-        coeffs = []
-
-        # Generate tensor-product B-Spline weights
-        for level in listify(self.coeffs):
-            xfm.reference = spatialimage
-            moved_cs = level.__class__(
-                level.dataobj, xfm.matrix @ level.affine, level.header
-            )
-            wmat = grid_bspline_weights(spatialimage, moved_cs)
-            weights.append(wmat)
-            coeffs.append(level.get_fdata(dtype="float32").reshape(-1))
-
-        # Interpolate the VSM (voxel-shift map)
-        vsm = np.zeros(spatialimage.shape[:3], dtype="float32")
-        vsm = (np.squeeze(np.hstack(coeffs).T) @ sparse_vstack(weights)).reshape(
-            vsm.shape
+        approx &= xfm_data2fmap is not None  # Approximate iff xfm_data2fmap is defined
+        xfm_data2fmap = xfm_data2fmap if xfm_data2fmap is not None else np.eye(4)
+        # Project the reference's grid onto the fieldmap's
+        projected_reference = target_reference.__class__(
+            target_reference.dataobj,
+            xfm_data2fmap @ target_reference.affine,
+            target_reference.header,
         )
 
-        # Cache
-        hdr = spatialimage.header.copy()
-        hdr.set_intent("estimate", name="Voxel shift")
+        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
+        projected_reference, _ = ensure_positive_cosines(projected_reference)
+
+        # Approximate only if the coordinate systems are not aligned
+        coeffs = listify(self.coeffs)
+        approx &= not np.allclose(
+            np.linalg.norm(
+                np.cross(
+                    coeffs[-1].affine[:-1, :-1].T,
+                    target_reference.affine[:-1, :-1].T,
+                ),
+                axis=1,
+            ),
+            0,
+            atol=1e-3,
+        )
+
+        if approx:
+            from sdcflows.utils.tools import deoblique_and_zooms
+
+            # Generate a sampling reference on the fieldmap's space that fully covers
+            # the target_reference's grid.
+            projected_reference = deoblique_and_zooms(
+                coeffs[-1],
+                target_reference,
+            )
+
+        # Generate tensor-product B-Spline weights
+        colmat = sparse_hstack(
+            [grid_bspline_weights(projected_reference, level) for level in coeffs]
+        ).tocsr()
+        coefficients = np.hstack(
+            [level.get_fdata(dtype="float32").reshape(-1) for level in coeffs]
+        )
+
+        # Reconstruct the fieldmap (in Hz) from coefficients
+        fmap = np.reshape(colmat @ coefficients, projected_reference.shape[:3])
+
+        # Generate a NIfTI object
+        hdr = target_reference.header.copy()
+        hdr.set_intent("estimate", name="fieldmap Hz")
         hdr.set_data_dtype("float32")
-        hdr["cal_max"] = max((abs(vsm.min()), vsm.max()))
-        hdr["cal_min"] = - hdr["cal_max"]
-        self.mapped = nb.Nifti1Image(vsm, spatialimage.affine, hdr)
+        hdr["cal_max"] = max((abs(fmap.min()), fmap.max()))
+        hdr["cal_min"] = -hdr["cal_max"]
+
+        # Cache
+        self.mapped = nb.Nifti1Image(fmap, projected_reference.affine, hdr)
+
+        if approx:
+            from nitransforms.linear import Affine
+
+            _tmp_reference = nb.Nifti1Image(
+                np.zeros(
+                    target_reference.shape[:3], dtype=target_reference.get_data_dtype()
+                ),
+                target_reference.affine,
+                target_reference.header,
+            )
+            # Interpolate fmap given on target_reference in the original target_reference
+            # voxel locations (overwrite fmap)
+            self.mapped = Affine(reference=_tmp_reference).apply(self.mapped)
+
         return True
 
     def apply(
         self,
-        spatialimage,
-        pe_dir,
-        ro_time,
-        order=3,
-        mode="constant",
-        cval=0.0,
-        prefilter=True,
-        output_dtype=None,
+        moving: nb.spatialimages.SpatialImage,
+        pe_dir: str | Sequence[str],
+        ro_time: float | Sequence[float],
+        xfms: Sequence[np.ndarray] | None = None,
+        xfm_data2fmap: np.ndarray | None = None,
+        approx: bool = True,
+        order: int = 3,
+        mode: str = "constant",
+        cval: float = 0.0,
+        prefilter: bool = True,
+        output_dtype: str | np.dtype | None = None,
+        num_threads: int = None,
+        allow_negative: bool = False,
     ):
-        """
+        r"""
         Apply a transformation to an image, resampling on the reference spatial object.
+
+        Handles parallelization to resample 4D images.
 
         Parameters
         ----------
-        spatialimage : `spatialimage`
+        moving : :obj:`~nibabel.spatialimages.SpatialImage`
             The image object containing the data to be resampled in reference
             space
-        reference : spatial object, optional
-            The image, surface, or combination thereof containing the coordinates
-            of samples that will be sampled.
-        order : int, optional
+        pe_dir : :obj:`str` or :obj:`list` of :obj:`str`
+            A valid ``PhaseEncodingDirection`` metadata value.
+        ro_time : :obj:`float` or :obj:`list` of :obj:`float`
+            The total readout time in seconds.
+        xfms : :obj:`None` or :obj:`list`
+            A list of 4×4 matrices, each one formalizing
+            the estimated head motion alignment to the scan's reference.
+            Therefore, each of these matrices express the transform of every
+            voxel's RAS (physical) coordinates in the image used as reference
+            for realignment into the coordinates of each of the EPI series volume.
+        xfm_data2fmap : :obj:`numpy.ndarray`
+            Transform that maps coordinates on the ``target_reference`` onto the
+            fieldmap reference (that is, the linear transform through which the fieldmap can
+            be resampled in register with the ``target_reference``).
+            In other words, ``xfm_data2fmap`` is the result of calling a registration tool
+            such as ANTs configured for a linear transform with at most 12 degrees of freedom
+            and called with the image carrying ``target_affine`` as reference and the fieldmap
+            reference as moving.
+            The result of such a registration framework is an affine (our ``xfm_data2fmap`` here)
+            that maps coordinates in reference (target) RAS onto the fieldmap RAS.
+        approx : :obj:`bool`
+            If ``True``, do not reconstruct the B-Spline field directly on the target
+            (which will likely not be aligned with the fieldmap's grid), but rather use
+            the fieldmap's grid and then use just regular interpolation.
+        order : :obj:`int`, optional
             The order of the spline interpolation, default is 3.
             The order has to be in the range 0-5.
         mode : {'constant', 'reflect', 'nearest', 'mirror', 'wrap'}, optional
@@ -145,7 +422,7 @@ class B0FieldTransform:
             a border. Default is 'constant'.
         cval : float, optional
             Constant value for ``mode='constant'``. Default is 0.0.
-        prefilter: bool, optional
+        prefilter : :obj:`bool`, optional
             Determines if the image's data array is prefiltered with
             a spline filter before interpolation. The default is ``True``,
             which will create a temporary *float64* array of filtered values
@@ -153,70 +430,117 @@ class B0FieldTransform:
             slightly blurred if *order > 1*, unless the input is prefiltered,
             i.e. it is the result of calling the spline filter on the original
             input.
+        output_dtype : :obj:`str` or :obj:`~numpy.dtype`
+            Override the output data type, instead of propagating it from the
+            moving image.
+        num_threads : :obj:`int`
+            The maximum number of parallel resamplings at any given time of execution.
+            Use this parameter to set an upper bound to memory utilization.
+        allow_negative : :obj:`bool`
+            Remove negative values introduced in interpolation (may happen for nonnegative data
+            when order :math:`\gt` 3). Set this value to `True` if your `moving` image does
+            have negative values.
 
         Returns
         -------
-        resampled : `spatialimage` or ndarray
+        resampled : :obj:`~nibabel.spatialimages.SpatialImage`
             The data imaged after resampling to reference space.
 
         """
-        from sdcflows.utils.tools import ensure_positive_cosines
 
         # Ensure the fmap has been computed
-        if isinstance(spatialimage, (str, bytes, Path)):
-            spatialimage = nb.load(spatialimage)
+        if isinstance(moving, (str, bytes, Path)):
+            moving = nb.load(moving)
 
-        spatialimage, axcodes = ensure_positive_cosines(spatialimage)
+        # Make sure the data array has all cosines positive (i.e., no axes are flipped)
+        moving, axcodes = ensure_positive_cosines(moving)
 
-        self.fit(spatialimage)
-        fmap = self.mapped.get_fdata().copy()
-
-        # Reverse mapped if reversed blips
-        if pe_dir.endswith("-"):
-            fmap *= -1.0
-
-        # Generate warp field
-        pe_axis = "ijk".index(pe_dir[0])
-
-        # Map voxel coordinates applying the VSM
-        if self.xfm is None:
-            ijk_axis = tuple([np.arange(s) for s in fmap.shape])
-            voxcoords = np.array(
-                np.meshgrid(*ijk_axis, indexing="ij"), dtype="float32"
-            ).reshape(3, -1)
+        if self.mapped is not None:
+            warn(
+                "The fieldmap has been already fit, the user is responsible for "
+                "ensuring the parameters of the EPI target are consistent."
+            )
         else:
-            # Map coordinates from reference to time-step
-            self.xfm.reference = spatialimage
-            hmc_xyz = self.xfm.map(self.xfm.reference.ndcoords.T)
-            # Convert from RAS to voxel coordinates
-            voxcoords = (
-                np.linalg.inv(self.xfm.reference.affine)
-                @ _as_homogeneous(np.vstack(hmc_xyz), dim=self.xfm.reference.ndim).T
-            )[:3, ...]
+            # Generate warp field (before ensuring positive cosines)
+            self.fit(moving, xfm_data2fmap=xfm_data2fmap, approx=approx)
 
-        # fmap * ro_time is the voxel-shift map (VSM)
-        # The VSM is just the displacements field given in index coordinates
-        # voxcoords is the deformation field, i.e., the target position of each voxel
-        voxcoords[pe_axis, ...] += fmap.reshape(-1) * ro_time
+        # Squeeze non-spatial dimensions
+        newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
+        data = nb.arrayproxy.reshape_dataobj(moving.dataobj, newshape)
+        ndim = min(data.ndim, 3)
+        n_volumes = data.shape[3] if data.ndim == 4 else 1
+        output_dtype = output_dtype or moving.header.get_data_dtype()
 
-        # Prepare data
-        data = np.squeeze(np.asanyarray(spatialimage.dataobj))
-        output_dtype = output_dtype or data.dtype
+        # Prepare input parameters
+        if isinstance(pe_dir, str):
+            pe_dir = [pe_dir]
+
+        if isinstance(ro_time, float):
+            ro_time = [ro_time]
+
+        if n_volumes > 1 and len(pe_dir) == 1:
+            pe_dir *= n_volumes
+
+        if n_volumes > 1 and len(ro_time) == 1:
+            ro_time *= n_volumes
+
+        pe_info = []
+        for volid in range(n_volumes):
+            pe_axis = "ijk".index(pe_dir[volid][0])
+            axis_flip = axcodes[pe_axis] in ("LPI")
+            pe_flip = pe_dir[volid].endswith("-")
+
+            pe_info.append((
+                pe_axis,
+                # Displacements are reversed if either is true (after ensuring positive cosines)
+                -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
+            ))
+
+        # Reference image's voxel coordinates (in voxel units)
+        voxcoords = (
+            nt.linear.Affine(reference=moving)
+            .reference.ndindex.reshape((ndim, *data.shape[:ndim]))
+            .astype("float32")
+        )
+
+        # Convert head-motion transforms to voxel-to-voxel:
+        if xfms is not None:
+            # if len(xfms) != n_volumes:
+            #     raise RuntimeError(
+            #         f"Number of head-motion estimates ({len(xfms)}) does not match the "
+            #         f"number of volumes ({n_volumes})"
+            #     )
+            # vox2ras = moving.affine.copy()
+            # ras2vox = np.linalg.inv(vox2ras)
+            # xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
+            xfms = None
+            warn(
+                "Head-motion compensating (realignment) transforms are ignored when applying "
+                "the unwarp with SDCFlows. This feature will be enabled as soon as unit tests "
+                "are implemented for its quality assurance."
+            )
 
         # Resample
-        resampled = ndi.map_coordinates(
-            data,
-            voxcoords,
-            output=output_dtype,
-            order=order,
-            mode=mode,
-            cval=cval,
-            prefilter=prefilter,
-        ).reshape(spatialimage.shape)
-
-        moved = spatialimage.__class__(
-            resampled, spatialimage.affine, spatialimage.header
+        resampled = asyncio.run(
+            unwarp_parallel(
+                data,
+                voxcoords,
+                self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
+                pe_info,
+                xfms,
+                output_dtype='float32',
+                order=order,
+                mode=mode,
+                cval=cval,
+                prefilter=prefilter,
+                max_concurrent=num_threads or min(os.cpu_count(), 12),
+            )
         )
+
+        if not allow_negative:
+            resampled[resampled < 0] = cval
+
+        moved = moving.__class__(resampled, moving.affine, moving.header)
         moved.header.set_data_dtype(output_dtype)
         return reorient_image(moved, axcodes)
 
@@ -333,17 +657,21 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
     fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
     fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
     fmap_nii.header.set_xyzt_units("mm")
-    fmap_nii.header["cal_max"] = max((
-        abs(np.asanyarray(fmap_nii.dataobj).min()),
-        np.asanyarray(fmap_nii.dataobj).max(),
-    ))
-    fmap_nii.header["cal_min"] = - fmap_nii.header["cal_max"]
+    fmap_nii.header["cal_max"] = max(
+        (
+            abs(np.asanyarray(fmap_nii.dataobj).min()),
+            np.asanyarray(fmap_nii.dataobj).max(),
+        )
+    )
+    fmap_nii.header["cal_min"] = -fmap_nii.header["cal_max"]
     return fmap_nii
 
 
 def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
+
+    .. _bspline-tensor:
 
     For each of the *N* input samples :math:`(s_1, s_2, s_3)` and *K* control
     points or *knots* :math:`\mathbf{k} =(k_1, k_2, k_3)`, the tensor-product
@@ -363,9 +691,9 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     support of the tensor-product kernel associated to each control point can be filtered
     out and dismissed to lighten computation.
 
-    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
-    can be easily identified in Eq. :math:`\eqref{eq:1}` and used as the design matrix
-    for approximation of data.
+    Finally, the resulting weights matrix :math:`\Psi^3(\mathbf{k}, \mathbf{s})` can easily be
+    identified in `Eq. (1) <sdcflows.interfaces.bspline.html#bspline-interpolation>`_,
+    and used as the design matrix for approximation of data.
 
     Parameters
     ----------
@@ -380,7 +708,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
 
     Returns
     -------
-    weights : :obj:`numpy.ndarray` (:math:`K \times N`)
+    weights : :obj:`numpy.ndarray` (:math:`N \times K`)
         A sparse matrix of interpolating weights :math:`\Psi^3(\mathbf{k}, \mathbf{s})`
         for the *N* voxels of the target EPI, for each of the total *K* knots.
         This sparse matrix can be directly used as design matrix for the fitting
@@ -391,10 +719,14 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
     knots_shape = ctrl_nii.shape[:3]
 
     # Ensure the cross-product of affines is near zero (i.e., both coordinate systems are aligned)
-    if not np.allclose(np.linalg.norm(
-        np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
-        axis=1,
-    ), 0, atol=1e-3):
+    if not np.allclose(
+        np.linalg.norm(
+            np.cross(ctrl_nii.affine[:-1, :-1].T, target_nii.affine[:-1, :-1].T),
+            axis=1,
+        ),
+        0,
+        atol=1e-3,
+    ):
         warn("Image's and B-Spline's grids are not aligned.")
 
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
@@ -405,21 +737,26 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         coords[axis] = np.arange(sample_shape[axis], dtype=dtype)
 
         # Calculate the index component of samples w.r.t. B-Spline knots along current axis
+        # Size of locations is L
         locs = nb.affines.apply_affine(target_to_grid, coords.T)[:, axis]
-        knots = np.arange(knots_shape[axis], dtype=dtype)
 
-        distance = np.abs(locs[np.newaxis, ...] - knots[..., np.newaxis])
+        # Size of knots is K + 6 so that all locations are fully covered by basis
+        knots = np.arange(-3, knots_shape[axis] + 3, dtype=dtype)
+
+        bspl = BSpline(knots, np.eye(len(knots) - 3 - 1), 3)
+
+        # Construct a sparse design matrix (L, K)
+        distance = np.abs(locs[..., np.newaxis] - knots[np.newaxis, 3:-3])
         within_support = distance < 2.0
-        d_vals, d_idxs = np.unique(distance[within_support], return_inverse=True)
-        bs_w = cubic(d_vals)
 
-        colloc_ax = lil_array((knots_shape[axis], sample_shape[axis]), dtype=dtype)
-        colloc_ax[within_support] = bs_w[d_idxs]
+        colloc_ax = lil_array(distance.shape, dtype=dtype)
+        colloc_ax[within_support] = bspl(locs)[:, 1:-1][within_support]
 
-        wd.append(colloc_ax)
+        # Convert to CSR for efficient multiplication
+        wd.append(colloc_ax.tocsr())
 
     # Calculate the tensor product of the three design matrices
-    return kron(kron(wd[0], wd[1]), wd[2]).astype(dtype)
+    return kron(kron(wd[0], wd[1]), wd[2])
 
 
 def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
@@ -446,9 +783,11 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     hdr.set_sform(newaff, code=1)
 
     # Make it easy on viz software to render proper range
-    hdr["cal_max"] = max((
-        abs(np.asanyarray(coeff.dataobj).min()),
-        np.asanyarray(coeff.dataobj).max(),
-    ))
-    hdr["cal_min"] = - hdr["cal_max"]
+    hdr["cal_max"] = max(
+        (
+            abs(np.asanyarray(coeff.dataobj).min()),
+            np.asanyarray(coeff.dataobj).max(),
+        )
+    )
+    hdr["cal_min"] = -hdr["cal_max"]
     return coeff.__class__(coeff.dataobj, newaff, hdr)

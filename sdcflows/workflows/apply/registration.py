@@ -29,10 +29,12 @@ in the case of PEPOLAR estimation).
 The target EPI is the distorted dataset (or a reference thereof).
 
 """
-from pkg_resources import resource_filename as pkgrf
+from warnings import warn
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+from ... import data
 
 
 def init_coeff2epi_wf(
@@ -86,12 +88,14 @@ def init_coeff2epi_wf(
     target_ref
         the target reference EPI resampled into the fieldmap reference for
         quality control purposes.
+    target2fmap_xfm
+        An ITK-style transform produced with ANTs that can be used as transform in
+        ``antsApplyTransforms`` with the fieldmap as reference and the target EPI
+        as moving, resampling the latter into the fieldmap space.
 
     """
     from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
-    from ...interfaces.bspline import TransformCoefficients
-    from ...utils.misc import front as _pop
 
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
@@ -106,18 +110,15 @@ The field coefficients were mapped on to the reference EPI using the transform.
         name="inputnode",
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["target_ref", "fmap_coeff"]), name="outputnode"
+        niu.IdentityInterface(fields=["target_ref", "fmap_coeff", "target2fmap_xfm"]),
+        name="outputnode",
     )
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
-    ants_settings = pkgrf(
-        "sdcflows", f"data/fmap-any_registration{'_testing' * sloppy}.json"
-    )
-
     coregister = pe.Node(
         Registration(
-            from_file=ants_settings,
+            from_file=data.load(f"fmap-any_registration{'_testing' * sloppy}.json"),
             output_warped_image=debug,
             output_inverse_warped_image=debug,
         ),
@@ -130,37 +131,24 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     # fmt: off
     workflow.connect([
+        (inputnode, outputnode, [("fmap_coeff", "fmap_coeff")]),
         (inputnode, coregister, [
             ("target_ref", "moving_image"),
             ("fmap_ref", "fixed_image"),
             ("target_mask", f"moving_image_mask{mask_trait_s}"),
             ("fmap_mask", f"fixed_image_mask{mask_trait_s}"),
         ]),
-        (coregister, outputnode, [("warped_image", "target_ref")]),
+        (coregister, outputnode, [
+            ("warped_image", "target_ref"),
+            ("forward_transforms", "target2fmap_xfm"),
+        ]),
     ])
     # fmt: on
 
-    if not write_coeff:
-        return workflow
-
-    # Map the coefficients into the EPI space
-    map_coeff = pe.Node(TransformCoefficients(), name="map_coeff")
-    map_coeff.interface._always_run = debug
-
-    # fmt: off
-    workflow.connect([
-        (inputnode, map_coeff, [("fmap_coeff", "in_coeff"),
-                                ("fmap_ref", "fmap_ref")]),
-        (coregister, map_coeff, [(("forward_transforms", _pop), "transform")]),
-        (map_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
-    ])
-    # fmt: on
-
-    if debug:
-        # fmt: off
-        workflow.connect([
-            (inputnode, map_coeff, [("target_ref", "fmap_target")]),
-        ])
-        # fmt: on
+    if write_coeff:
+        warn(
+            "SDCFlows does not tinker with the coefficients file anymore, "
+            "the `write_coeff` parameter will be removed in a future release."
+        )
 
     return workflow
