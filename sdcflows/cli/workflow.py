@@ -40,9 +40,9 @@ def build_workflow(config_file, retval):
 
     config.loggers.cli.log(25, f"""\
 Running SDCFlows {config.environment.version}:
-       * BIDS dataset path: {config.execution.bids_dir}.
-       * Output folder: {config.execution.output_dir}.
-       * Analysis levels: {config.workflow.analysis_level}.
+             * BIDS dataset path: {config.execution.bids_dir}.
+             * Output folder: {config.execution.output_dir}.
+             * Analysis levels: {config.workflow.analysis_level}.
 """)
 
     retval["return_code"] = 1

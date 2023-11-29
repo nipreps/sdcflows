@@ -219,19 +219,23 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
         help="Upper bound memory limit for SDCFlows processes.",
     )
     g_perfm.add_argument(
-        "--testing",
-        dest="debug",
+        "--debug",
         action="store_true",
         default=False,
-        help="Use testing settings for a minimal footprint.",
+        help="Initiate in debug mode",
     )
-
     g_perfm.add_argument(
         "--pdb",
         dest="pdb",
         action="store_true",
         default=False,
         help="Open Python debugger (pdb) on exceptions.",
+    )
+    g_perfm.add_argument(
+        "--sloppy",
+        action="store_true",
+        default=False,
+        help="Use sloppy mode for minimal footprint.",
     )
 
     # Control instruments

@@ -50,6 +50,10 @@ def init_sdcflows_wf():
 
     for subject, sub_estimators in estimators_record.items():
         for estim in sub_estimators:
-            workflow.add_nodes([estim.get_workflow()])
+            workflow.add_nodes([estim.get_workflow(
+                omp_nthreads=config.nipype.omp_nthreads,
+                sloppy=False,
+                debug=False,
+            )])
 
     return workflow

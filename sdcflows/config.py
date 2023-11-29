@@ -381,7 +381,7 @@ class execution(_Config):
     cwd = os.getcwd()
     """Current working directory."""
     debug = False
-    """Run in sloppy mode (meaning, suboptimal parameters that minimize run-time)."""
+    """Run in debug mode (allowing debugger, force single-thread)."""
     dry_run = False
     """Just test, do not run."""
     layout = None
@@ -402,6 +402,8 @@ class execution(_Config):
     """Unique identifier of this particular run."""
     session = None
     """Filter input dataset by session identifier."""
+    sloppy = False
+    """Run in sloppy mode (meaning, suboptimal parameters that minimize run-time)."""
     templateflow_home = _templateflow_home
     """The root folder of the TemplateFlow client."""
     work_dir = Path("work").absolute()
