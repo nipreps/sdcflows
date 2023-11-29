@@ -3,9 +3,36 @@ from shutil import rmtree
 
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from sdcflows.cli.main import gen_layout
 from sdcflows.utils.wrangler import find_estimators
 from sdcflows.fieldmaps import clear_registry
+
+
+def gen_layout(bids_dir, database_dir=None):
+    import re
+    from bids.layout import BIDSLayout, BIDSLayoutIndexer
+
+    _indexer = BIDSLayoutIndexer(
+        validate=False,
+        ignore=(
+            "code",
+            "stimuli",
+            "sourcedata",
+            "models",
+            "derivatives",
+            re.compile(r"^\."),
+            re.compile(
+                r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|micr|perf)"
+            ),
+        ),
+    )
+
+    layout_kwargs = {"indexer": _indexer}
+
+    if database_dir:
+        layout_kwargs["database_path"] = database_dir
+
+    layout = BIDSLayout(bids_dir, **layout_kwargs)
+    return layout
 
 
 pepolar = {

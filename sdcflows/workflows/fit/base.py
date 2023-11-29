@@ -23,15 +23,32 @@
 """Build a dataset-wide estimation workflow."""
 
 
-def init_sdcflows_wf(estimators, work_dir):
+def init_sdcflows_wf():
     """Create a multi-subject, multi-estimator *SDCFlows* workflow."""
     from nipype.pipeline.engine import Workflow
+    from niworkflows.utils.bids import collect_participants
+
+    from sdcflows import config
+    from sdcflows.utils.wrangler import find_estimators
 
     # Create parent workflow
     workflow = Workflow(name="sdcflows_wf")
-    workflow.base_dir = work_dir
+    workflow.base_dir = config.execution.work_dir
 
-    for subject, sub_estimators in estimators.items():
+    subjects = collect_participants(
+        config.execution.layout,
+        config.execution.participant_label,
+    )
+    estimators_record = {}
+    for subject in subjects:
+        estimators_record[subject] = find_estimators(
+            layout=config.execution.layout,
+            subject=subject,
+            fmapless=config.workflow.fmapless,
+            logger=config.loggers.cli,
+        )
+
+    for subject, sub_estimators in estimators_record.items():
         for estim in sub_estimators:
             workflow.add_nodes([estim.get_workflow()])
 
