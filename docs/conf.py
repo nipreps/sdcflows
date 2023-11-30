@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinxcontrib.apidoc",
+    "nbsphinx",
     "nipype.sphinxext.apidoc",
     "nipype.sphinxext.plot_workflow",
 ]
