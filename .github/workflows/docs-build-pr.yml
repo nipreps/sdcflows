@@ -39,6 +39,11 @@ jobs:
         echo "Building branch/tag ${CURBRANCH:-<unkwown>}, from git ref <$GITHUB_REF>"
         echo "CURBRANCH=${CURBRANCH}" >> ${GITHUB_ENV}
 
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3
+
     - name: Install GraphViz
       run: |
         sudo apt-get update -y
