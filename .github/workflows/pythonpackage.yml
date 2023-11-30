@@ -125,8 +125,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3
+    - name: Set up Python
       uses: actions/setup-python@v4
-      with:
-        python-version: 3
-    - run: pipx run flake8 sdcflows/
+    - run: pipx run flake8-pyproject sdcflows/
+
+  # codespell:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - uses: codespell-project/actions-codespell@v2
