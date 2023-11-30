@@ -44,10 +44,10 @@ jobs:
       with:
         python-version: 3
 
-    - name: Install GraphViz
+    - name: Install GraphViz & pandoc
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends graphviz
+        sudo apt-get install -y --no-install-recommends graphviz pandoc
 
     - name: Install dependencies
       run: |
