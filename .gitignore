@@ -1,5 +1,5 @@
 # setuptools-scm
-sdcflows/_version.py
+_version.py
 
 # Byte-compiled / optimized / DLL files
 pip-wheel-metadata
