@@ -48,7 +48,7 @@ doc = [
     "nibabel",
     "nipype >= 1.5.1",
     "traits < 6.4",
-    "niworkflows ~= 1.6.3",
+    "niworkflows >= 1.7.0",
     "numpy",
     "packaging",
     "pydot >= 1.2.3",
