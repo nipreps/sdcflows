@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 from copy import copy
-from configparser import ConfigParser
 from pathlib import Path
 from packaging.requirements import Requirement, SpecifierSet
 
+try:
+    from tomllib import loads  # Python +3.11
+except ImportError:
+    from pip._vendor.tomli import loads
+
 repo_root = Path(__file__).parent.parent
-setup_cfg = repo_root / "setup.cfg"
+pyproject = repo_root / "pyproject.toml"
 reqs = repo_root / "requirements.txt"
 min_reqs = repo_root / "min-requirements.txt"
 
-config = ConfigParser()
-config.read(setup_cfg)
 requirements = [
     Requirement(req)
-    for req in config.get("options", "install_requires").strip().splitlines()
+    for req in loads(pyproject.read_text())["project"]["dependencies"]
 ]
 
 script_name = Path(__file__).relative_to(repo_root)

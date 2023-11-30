@@ -55,9 +55,7 @@ def test_ConvertWarp(tmpdir, shape):
     """Exercise the interface."""
     tmpdir.chdir()
 
-    nb.Nifti1Image(np.zeros(shape, dtype="uint8"), np.eye(4), None).to_filename(
-        "3dQwarp.nii.gz"
-    )
+    nb.Nifti1Image(np.zeros(shape, dtype="uint8"), np.eye(4), None).to_filename("3dQwarp.nii.gz")
 
     out = ConvertWarp(in_file="3dQwarp.nii.gz").run()
 
@@ -80,9 +78,7 @@ def test_Xeoblique(tmpdir, angles, oblique):
     tmpdir.chdir()
 
     affine = nb.affines.from_matvec(nb.eulerangles.euler2mat(*angles))
-    nb.Nifti1Image(np.zeros((10, 10, 10), dtype="uint8"), affine, None).to_filename(
-        "epi.nii.gz"
-    )
+    nb.Nifti1Image(np.zeros((10, 10, 10), dtype="uint8"), affine, None).to_filename("epi.nii.gz")
 
     result = (
         Deoblique(
@@ -108,12 +104,15 @@ def test_Xeoblique(tmpdir, angles, oblique):
     assert np.allclose(nb.load(reoblique.out_epi).affine, affine)
 
 
-@pytest.mark.parametrize("in_shape,expected_shape,padded", [
-    ((2,2,2), (2,2,2), False),
-    ((2,2,3), (2,2,4), True),
-    ((3,3,2,2), (3,3,2,2), False),
-    ((3,3,3,2), (3,3,4,2), True),
-])
+@pytest.mark.parametrize(
+    "in_shape,expected_shape,padded",
+    [
+        ((2, 2, 2), (2, 2, 2), False),
+        ((2, 2, 3), (2, 2, 4), True),
+        ((3, 3, 2, 2), (3, 3, 2, 2), False),
+        ((3, 3, 3, 2), (3, 3, 4, 2), True),
+    ],
+)
 def test_pad_slices(tmpdir, in_shape, expected_shape, padded):
     tmpdir.chdir()
 

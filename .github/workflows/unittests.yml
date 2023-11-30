@@ -1,4 +1,4 @@
-name: Deps & CI
+name: CI
 
 on:
   push:
@@ -31,15 +31,10 @@ jobs:
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
       ANTSPATH: /opt/ants
-      DEPS: ${{ matrix.deps }}.txt
     strategy:
       max-parallel: 5
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        deps: ["requirements"]
-        include:
-          - python-version: "3.8"
-            deps: "min-requirements"
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/cache@v3
@@ -117,7 +112,6 @@ jobs:
     - name: Install dependencies
       timeout-minutes: 5
       run: |
-        pip install -r $DEPS
         pip install .[tests]
 
 

@@ -45,8 +45,8 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF##*/}
           else
-            pip install setuptools_scm
-            VERSION=$( python -m setuptools_scm )
+            pip install -U build hatch hatchling pip twine docutils
+            VERSION=$( python -m hatch version | tail -n1 | xargs )
           fi
           echo version=$VERSION | tee -a $GITHUB_OUTPUT
 
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.10", "3.12"]
         install: [repo, sdist, wheel, editable]
 
     env:
@@ -125,8 +125,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3
+    - name: Set up Python
       uses: actions/setup-python@v4
-      with:
-        python-version: 3
-    - run: pipx run flake8 sdcflows/
+    - run: pipx run flake8-pyproject sdcflows/
+
+  # codespell:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - uses: codespell-project/actions-codespell@v2

@@ -46,9 +46,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r docs/requirements.txt
-        pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
-        python setup.py --version
+        python -m pip install -U build hatch hatchling pip docutils
+        python -m pip install -r docs/requirements.txt
+        python -m hatch version | tail -n1 | xargs
 
     - name: Build docs
       run: |

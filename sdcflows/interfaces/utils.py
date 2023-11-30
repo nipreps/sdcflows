@@ -83,9 +83,7 @@ class Flatten(SimpleInterface):
         )
 
         # Unzip out_data, out_meta outputs.
-        self._results["out_data"], self._results["out_meta"] = zip(
-            *self._results["out_list"]
-        )
+        self._results["out_data"], self._results["out_meta"] = zip(*self._results["out_list"])
         return runtime
 
 
@@ -129,18 +127,14 @@ class UniformGrid(SimpleInterface):
                 continue
 
             nii = nb.load(fname)
-            retval[i] = fname_presuffix(
-                fname, suffix=f"_regrid{i:03d}", newpath=runtime.cwd
-            )
+            retval[i] = fname_presuffix(fname, suffix=f"_regrid{i:03d}", newpath=runtime.cwd)
 
             if np.allclose(nii.shape[:3], refshape) and np.allclose(nii.affine, refaff):
                 if np.all(nii.affine == refaff):
                     retval[i] = fname
                 else:
                     # Set reference's affine if difference is small
-                    nii.__class__(nii.dataobj, refaff, nii.header).to_filename(
-                        retval[i]
-                    )
+                    nii.__class__(nii.dataobj, refaff, nii.header).to_filename(retval[i])
                 continue
 
             resampler.apply(nii).to_filename(retval[i])
@@ -152,9 +146,7 @@ class UniformGrid(SimpleInterface):
 
 class _ReorientImageAndMetadataInputSpec(TraitedSpec):
     in_file = File(exists=True, mandatory=True, desc="Input 3- or 4D image")
-    target_orientation = traits.Str(
-        desc="Axis codes of coordinate system to reorient to"
-    )
+    target_orientation = traits.Str(desc="Axis codes of coordinate system to reorient to")
     pe_dir = InputMultiObject(
         traits.Enum(
             *["".join(p) for p in product("ijkxyz", ("", "-"))],
@@ -185,9 +177,7 @@ class ReorientImageAndMetadata(SimpleInterface):
 
         target = self.inputs.target_orientation.upper()
         if not all(code in "RASLPI" for code in target):
-            raise ValueError(
-                f"Invalid orientation code {self.inputs.target_orientation}"
-            )
+            raise ValueError(f"Invalid orientation code {self.inputs.target_orientation}")
 
         img = nb.load(self.inputs.in_file)
         img2target = nb.orientations.ornt_transform(
@@ -208,9 +198,7 @@ class ReorientImageAndMetadata(SimpleInterface):
         pe_dirs = [reorient_pedir(pe_dir, img2target) for pe_dir in self.inputs.pe_dir]
 
         self._results = dict(
-            out_file=fname_presuffix(
-                self.inputs.in_file, suffix=target, newpath=runtime.cwd
-            ),
+            out_file=fname_presuffix(self.inputs.in_file, suffix=target, newpath=runtime.cwd),
             pe_dir=pe_dirs,
         )
 
@@ -234,16 +222,12 @@ class ConvertWarp(SimpleInterface):
     output_spec = _ConvertWarpOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_file"] = _qwarp2ants(
-            self.inputs.in_file, newpath=runtime.cwd
-        )
+        self._results["out_file"] = _qwarp2ants(self.inputs.in_file, newpath=runtime.cwd)
         return runtime
 
 
 class _DeobliqueInputSpec(BaseInterfaceInputSpec):
-    in_file = File(
-        exists=True, mandatory=True, desc="the input dataset potentially oblique"
-    )
+    in_file = File(exists=True, mandatory=True, desc="the input dataset potentially oblique")
     in_mask = File(
         exists=True,
         desc="a binary mask corresponding to the input dataset",
@@ -284,9 +268,7 @@ class _ReobliqueInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="the plumb field map, extracted from the displacements field estimated by SyN",
     )
-    in_epi = File(
-        exists=True, mandatory=True, desc="the original, potentially oblique EPI image"
-    )
+    in_epi = File(exists=True, mandatory=True, desc="the original, potentially oblique EPI image")
     in_mask = File(
         exists=True,
         desc="a binary mask corresponding to the input dataset",
@@ -342,9 +324,7 @@ class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
 class _PadSlicesInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc="3D or 4D NIfTI image")
     axis = traits.Int(
-        2,
-        usedefault=True,
-        desc="The axis through which slices are stacked in the input data"
+        2, usedefault=True, desc="The axis through which slices are stacked in the input data"
     )
 
 
@@ -359,12 +339,15 @@ class PadSlices(SimpleInterface):
 
     This intends to avoid TOPUP's segfault without changing the standard configuration
     """
+
     input_spec = _PadSlicesInputSpec
     output_spec = _PadSlicesOutputSpec
 
     def _run_interface(self, runtime):
         self._results["out_file"], self._results["padded"] = _pad_num_slices(
-            self.inputs.in_file, self.inputs.axis, runtime.cwd,
+            self.inputs.in_file,
+            self.inputs.axis,
+            runtime.cwd,
         )
         return runtime
 
@@ -385,10 +368,7 @@ class PositiveDirectionCosines(SimpleInterface):
     output_spec = _PositiveDirectionCosinesOutputSpec
 
     def _run_interface(self, runtime):
-        (
-            self._results["out_file"],
-            self._results["in_orientation"]
-        ) = _ensure_positive_cosines(
+        (self._results["out_file"], self._results["in_orientation"]) = _ensure_positive_cosines(
             self.inputs.in_file,
             newpath=runtime.cwd,
         )
@@ -459,10 +439,7 @@ def _deoblique(in_file, in_affine=None, newpath=None):
     if in_affine is None:
         orientation = nb.aff2axcodes(nii.affine)
         directions = (
-            np.array(
-                [int(l1 == l2) for l1, l2 in zip(orientation, "RAS")], dtype="float32"
-            )
-            * 2
+            np.array([int(l1 == l2) for l1, l2 in zip(orientation, "RAS")], dtype="float32") * 2
             - 1
         )
         newaff = np.eye(4)
@@ -490,13 +467,10 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
         return in_plumb, in_field, in_mask
 
     out_files = [
-        fname_presuffix(f, suffix="_oriented", newpath=newpath)
-        for f in (in_plumb, in_field)
+        fname_presuffix(f, suffix="_oriented", newpath=newpath) for f in (in_plumb, in_field)
     ] + [None]
     plumbnii = nb.load(in_plumb)
-    plumbnii.__class__(plumbnii.dataobj, epinii.affine, epinii.header).to_filename(
-        out_files[0]
-    )
+    plumbnii.__class__(plumbnii.dataobj, epinii.affine, epinii.header).to_filename(out_files[0])
 
     fmapnii = nb.load(in_field)
     hdr = fmapnii.header.copy()
@@ -546,7 +520,7 @@ def _pad_num_slices(in_file, ax=2, newpath=None):
     if img.shape[ax] % 2 == 0:
         return in_file, False
 
-    pwidth = [(0,0)] * len(img.shape)
+    pwidth = [(0, 0)] * len(img.shape)
     pwidth[ax] = (0, 1)
     padded = np.pad(img.dataobj, pwidth)
     hdr = img.header
