@@ -39,16 +39,21 @@ jobs:
         # Pacify git if we were to commit something
         git config user.email "nipreps@gmail.com"
         git config user.name "NiPreps Bot"
-    - name: Install GraphViz
+    - name: Install GraphViz & pandoc
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends graphviz
+        sudo apt-get install -y --no-install-recommends graphviz pandoc
+
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3
 
     - name: Install dependencies
       run: |
-        pip install -r docs/requirements.txt
-        pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
-        python setup.py --version
+        python -m pip install -U build hatch hatchling pip docutils
+        python -m pip install -r docs/requirements.txt
+        python -m hatch version | tail -n1 | xargs
 
     - name: Build docs
       run: |

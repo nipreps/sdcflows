@@ -39,16 +39,21 @@ jobs:
         echo "Building branch/tag ${CURBRANCH:-<unkwown>}, from git ref <$GITHUB_REF>"
         echo "CURBRANCH=${CURBRANCH}" >> ${GITHUB_ENV}
 
-    - name: Install GraphViz
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3
+
+    - name: Install GraphViz & pandoc
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends graphviz
+        sudo apt-get install -y --no-install-recommends graphviz pandoc
 
     - name: Install dependencies
       run: |
-        pip install -r docs/requirements.txt
-        pip install --no-cache-dir "setuptools ~= 45.0" "setuptools_scm[toml] >= 3.4"
-        python setup.py --version
+        python -m pip install -U build hatch hatchling pip docutils
+        python -m pip install -r docs/requirements.txt
+        python -m hatch version | tail -n1 | xargs
 
     - name: Build docs
       run: |

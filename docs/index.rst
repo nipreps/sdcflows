@@ -7,6 +7,7 @@ Contents
     :maxdepth: 3
 
     installation
+    examples
     methods
     api
     changes
