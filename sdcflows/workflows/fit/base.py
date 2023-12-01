@@ -30,6 +30,7 @@ def init_sdcflows_wf():
 
     from sdcflows import config
     from sdcflows.utils.wrangler import find_estimators
+    from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
     # Create parent workflow
     workflow = Workflow(name="sdcflows_wf")
@@ -50,10 +51,49 @@ def init_sdcflows_wf():
 
     for subject, sub_estimators in estimators_record.items():
         for estim in sub_estimators:
-            workflow.add_nodes([estim.get_workflow(
+            estim_wf = estim.get_workflow(
                 omp_nthreads=config.nipype.omp_nthreads,
                 sloppy=False,
                 debug=False,
-            )])
+            )
+
+            derivs_wf = init_fmap_derivatives_wf(
+                output_dir=config.execution.output_dir,
+                bids_fmap_id=estim.bids_id,
+                write_coeff=True,
+                name=f"fmap_derivatives_{estim.bids_id}",
+            )
+
+            source_paths = [
+                str(source.path.absolute()) for source in estim.sources
+            ]
+            derivs_wf.inputs.inputnode.source_files = source_paths
+            derivs_wf.inputs.inputnode.fmap_meta = [
+                source.metadata for source in estim.sources
+            ]
+
+            reportlets_wf = init_fmap_reports_wf(
+                fmap_type=estim.method,
+                output_dir=config.execution.output_dir,
+                bids_fmap_id=estim.bids_id,
+                name=f"fmap_reports_{estim.bids_id}",
+            )
+            reportlets_wf.inputs.inputnode.source_files = source_paths
+
+            # fmt:off
+            workflow.connect([
+                (estim_wf, derivs_wf, [
+                    ("outputnode.fmap", "inputnode.fieldmap"),
+                    ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                    ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+                ]),
+                (estim_wf, reportlets_wf, [
+                    ("outputnode.fmap", "inputnode.fieldmap"),
+                    ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                    ("outputnode.fmap_mask", "inputnode.fmap_mask"),
+                ]),
+
+            ])
+            # fmt:on
 
     return workflow
