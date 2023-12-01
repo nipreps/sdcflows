@@ -29,7 +29,7 @@ dependencies = [
     "niworkflows >= 1.7.0",
     "nitransforms >= 23.0.1",
     "numpy >= 1.21.0",
-    "pybids >= 0.15.1",
+    "pybids >= 0.16.4",
     "scikit-image >= 0.18",
     "scipy >= 1.8.1",
     "templateflow",
