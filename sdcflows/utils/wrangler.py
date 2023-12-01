@@ -63,9 +63,9 @@ def find_estimators(
         One of more session identifiers. If None, all sessions will be used.
     fmapless : :obj:`bool` or :obj:`set`
         Indicates if fieldmap-less heuristics should be executed.
-        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffices
-        for EPI images (namely, ``"dwi"``, ``"bold"``, or ``"sbref"``).
-        When ``fmapless`` is ``True``, heuristics will use the ``{"bold", "dwi"}`` set.
+        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffixes
+        for EPI images (namely, ``"dwi"``, ``"bold"``, ``"asl"``, or ``"sbref"``).
+        When ``fmapless`` is ``True``, heuristics will use the ``{"bold", "dwi", "asl"}`` set.
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
@@ -434,7 +434,7 @@ def find_estimators(
                 all_targets.append(target)
 
             # If sbrefs are targets, then the goal is generally to estimate with epi+sbref
-            # and correct bold/dwi
+            # and correct bold/dwi/asl
             sbrefs = [
                 target for target in all_targets if target.entities["suffix"] == "sbref"
             ]
@@ -484,7 +484,6 @@ def find_estimators(
                     estimators.append(e)
 
     if estimators and not force_fmapless:
-        logger.warning(f"Estimators found: {estimators}")
         fmapless = False
 
     # Find fieldmap-less schemes
@@ -504,7 +503,6 @@ def find_estimators(
         suffixes=fmapless,
     )
     for spec in estimator_specs:
-        logger.warning(f"Estimator spec: {spec}")
         try:
             estimator = fm.FieldmapEstimation(spec)
         except (ValueError, TypeError) as err:
@@ -512,7 +510,6 @@ def find_estimators(
         else:
             _log_debug_estimation(logger, estimator, layout.root)
             estimators.append(estimator)
-
     return estimators
 
 
@@ -543,13 +540,11 @@ def find_anatomical_estimators(
     base_entities : :class:`dict`
         Entities to use to query for images. These should include any filters.
     suffixes : :class:`list`
-        EPI suffixes, for example ``["bold", "dwi"]``. Associated ``"sbref"``\s
+        EPI suffixes, for example ``["bold", "dwi", "asl"]``. Associated ``"sbref"``\s
         will be found and used in place of BOLD/diffusion EPIs.
     """
-    from .epimanip import get_trt
-    from .misc import create_logger
 
-    logger = create_logger('sdcflows.wrangler2')
+    from .epimanip import get_trt
 
     subject_root = Path(layout.root) / f"sub-{subject}"
 
@@ -568,7 +563,6 @@ def find_anatomical_estimators(
                 **{"suffix": suffixes, "session": ses, "datatype": datatype},
             }
         )
-        logger.warning(f"Candidates: {candidates}")
 
         # Filter out candidates without defined PE direction
         epi_targets = []
@@ -577,7 +571,6 @@ def find_anatomical_estimators(
             meta = candidate.get_metadata()
 
             if not meta.get("PhaseEncodingDirection"):
-                logger.warning(f"PhaseEncodingDirection missing in meta: {meta}")
                 continue
 
             trt = 1.0
