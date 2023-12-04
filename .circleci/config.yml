@@ -377,7 +377,7 @@ jobs:
             python -m venv /tmp/venv
             source /tmp/venv/bin/activate
             python -m pip install -U build hatch hatchling pip twine docutils
-            python -m pip install --no-cache-dir -r docs/requirements.txt
+            python -m pip install .[docs]
       - run:
           name: Build only this commit
           command: |

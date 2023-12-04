@@ -7,7 +7,7 @@ matplotlib >= 2.2.0
 nbsphinx
 nibabel
 nipype >= 1.5.1
-niworkflows ~= 1.6.3
+niworkflows >= 1.7.0
 numpy
 packaging
 pandoc

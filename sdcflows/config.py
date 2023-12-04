@@ -54,7 +54,7 @@ Settings are stored using :abbr:`ToML (Tom's Markup Language)`.
 The module has a :py:func:`~sdcflows.config.to_filename` function to allow writing out
 the settings to hard disk in *ToML* format, which looks like:
 
-.. literalinclude:: ../sdcflows/data/config-example.toml
+.. literalinclude:: /_static/config-example.toml
    :language: toml
    :name: sdcflows.toml
    :caption: **Example file representation of SDCFlows settings**.
@@ -65,13 +65,13 @@ using the :py:func:`~sdcflows.config.load` function.
 Configuration sections
 ----------------------
 .. autoclass:: environment
-   :members:
+    :noindex:
 .. autoclass:: execution
-   :members:
+    :noindex:
 .. autoclass:: workflow
-   :members:
+    :noindex:
 .. autoclass:: nipype
-   :members:
+    :noindex:
 
 Usage
 -----
@@ -97,7 +97,7 @@ graph is built across processes.
 Logging
 -------
 .. autoclass:: loggers
-   :members:
+   :noindex:
 
 Other responsibilities
 ----------------------

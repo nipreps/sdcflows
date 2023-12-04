@@ -47,19 +47,24 @@ doc = [
     "attrs >= 20.1.0",
     "furo",
     "importlib_resources",
+    "ipykernel",
+    "ipython",
     "matplotlib >= 2.2.0",
+    "nbsphinx",
     "nibabel",
     "nipype >= 1.5.1",
-    "traits < 6.4",
     "niworkflows >= 1.7.0",
     "numpy",
     "packaging",
+    "pandoc",
     "pydot >= 1.2.3",
     "pydotplus",
+    "scipy",
     "sphinx >= 7.2.2",
     "sphinx-argparse",
     "sphinxcontrib-apidoc",
-    "templateflow"
+    "templateflow",
+    "traits < 6.4"
 ]
 
 mem = [
