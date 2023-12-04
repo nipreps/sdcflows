@@ -53,7 +53,7 @@ doc = [
     "nbsphinx",
     "nibabel",
     "nipype >= 1.5.1",
-    "niworkflows >= 1.7.0",
+    "niworkflows @ git+https://github.com/nipreps/niworkflows.git@master",
     "numpy",
     "packaging",
     "pandoc",

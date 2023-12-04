@@ -39,7 +39,7 @@ def main(argv=None):
     parse_args(argv)
 
     if config.execution.pdb:
-        from mriqc.utils.debug import setup_exceptionhook
+        from niworkflows.utils.debug import setup_exceptionhook
 
         setup_exceptionhook()
         config.nipype.plugin = "Linear"
@@ -47,7 +47,7 @@ def main(argv=None):
     # CRITICAL Save the config to a file. This is necessary because the execution graph
     # is built as a separate process to keep the memory footprint low. The most
     # straightforward way to communicate with the child process is via the filesystem.
-    # The config file name needs to be unique, otherwise multiple mriqc instances
+    # The config file name needs to be unique, otherwise multiple sdcflows instances
     # will create write conflicts.
     config_file = mktemp(
         dir=config.execution.work_dir, prefix=".sdcflows.", suffix=".toml"
@@ -133,7 +133,7 @@ def main(argv=None):
 
     # CRITICAL Load the config from the file. This is necessary because the ``build_workflow``
     # function executed constrained in a process may change the config (and thus the global
-    # state of MRIQC).
+    # state of SDCFlows).
     config.load(config_file)
 
     exitcode = exitcode or (sdcflows_wf is None) * os.EX_SOFTWARE
@@ -164,10 +164,10 @@ def main(argv=None):
 
     # Clean up master process before running workflow, which may create forks
     gc.collect()
-    # run MRIQC
+    # run SDCFlows
     _plugin = config.nipype.get_plugin()
     if _pool:
-        from mriqc.engine.plugin import MultiProcPlugin
+        from niworkflows.engine.plugin import MultiProcPlugin
 
         _plugin = {
             "plugin": MultiProcPlugin(

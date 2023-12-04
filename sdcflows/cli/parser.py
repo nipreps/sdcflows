@@ -272,7 +272,7 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
         "--notrack",
         action="store_true",
         help="Opt-out of sending tracking information of this run to the NiPreps developers. This"
-        " information helps to improve MRIQC and provides an indicator of real world usage "
+        " information helps to improve SDCFlows and provides an indicator of real world usage "
         " crucial for obtaining funding.",
     )
 
