@@ -542,6 +542,8 @@ def find_anatomical_estimators(
     suffixes : :class:`list`
         EPI suffixes, for example ``["bold", "dwi", "asl"]``. Associated ``"sbref"``\s
         will be found and used in place of BOLD/diffusion EPIs.
+        Similarly, ``"m0scan"``\s associated with ASL runs with the ``IntendedFor`` or
+        ``B0FieldIdentifier`` metadata will be used in place of ASL runs.
     """
 
     from .epimanip import get_trt
