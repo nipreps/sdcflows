@@ -75,6 +75,7 @@ def main(argv=None):
                 fmapless=config.workflow.fmapless,
                 logger=config.loggers.cli,
             )
+
         print(f"Estimation for <{config.execution.bids_dir}> complete. Found:")
         for subject, estimators in estimators_record.items():
             print(f"\tsub-{subject}")

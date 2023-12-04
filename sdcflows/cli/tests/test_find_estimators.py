@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Check the CLI."""
+from importlib import reload
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
 
@@ -131,9 +132,18 @@ b0field_config = {
     ],
 )
 def test_find_estimators(tmp_path, capsys, test_id, config, estimator_id):
-    path = tmp_path / test_id
+    """Test the CLI with --dry-run."""
+    import sdcflows.config as sc
+
+    # Reload is necessary to clean-up the layout config between parameterized runs
+    reload(sc)
+
+    path = (tmp_path / test_id).absolute()
     generate_bids_skeleton(path, config)
-    find_estimators([str(path), "--dry-run"])
+    with pytest.raises(SystemExit) as wrapped_exit:
+        find_estimators([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
+
+    assert wrapped_exit.value.code == 0
     output = OUTPUT.format(path=path, estimator_id=estimator_id)
     out, _ = capsys.readouterr()
     assert out == output
