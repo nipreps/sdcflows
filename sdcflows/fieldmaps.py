@@ -55,6 +55,8 @@ MODALITIES = {
     "bold": EstimatorType.PEPOLAR,
     "dwi": EstimatorType.PEPOLAR,
     "epi": EstimatorType.PEPOLAR,
+    "asl": EstimatorType.PEPOLAR,
+    "m0scan": EstimatorType.PEPOLAR,
     "fieldmap": EstimatorType.MAPPED,
     "magnitude": None,
     "magnitude1": None,
@@ -241,7 +243,7 @@ class FieldmapFile:
             self.metadata["TotalReadoutTime"] = 0.0
 
         # Check for REQUIRED metadata (depends on suffix.)
-        if self.suffix in ("bold", "dwi", "epi", "sbref"):
+        if self.suffix in ("bold", "dwi", "epi", "sbref", "asl", "m0scan"):
             if "PhaseEncodingDirection" not in self.metadata:
                 raise MetadataError(
                     f"Missing 'PhaseEncodingDirection' for <{self.path}>."
@@ -370,10 +372,12 @@ class FieldmapEstimation:
 
         # Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)
         # IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s
-        pepolar_types = suffix_set.intersection(("bold", "dwi", "epi", "sbref"))
+        pepolar_types = suffix_set.intersection(("bold", "dwi", "epi", "sbref", "asl", "m0scan"))
         anat_types = suffix_set.intersection(("T1w", "T2w"))
         _pepolar_estimation = (
-            len([f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref")]) > 1
+            len(
+                [f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref", "asl", "m0scan")]
+            ) > 1
         )
 
         if _pepolar_estimation and not anat_types:

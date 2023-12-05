@@ -63,9 +63,9 @@ def find_estimators(
         One of more session identifiers. If None, all sessions will be used.
     fmapless : :obj:`bool` or :obj:`set`
         Indicates if fieldmap-less heuristics should be executed.
-        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffices
-        for EPI images (namely, ``"dwi"``, ``"bold"``, or ``"sbref"``).
-        When ``fmapless`` is ``True``, heuristics will use the ``{"bold", "dwi"}`` set.
+        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffixes
+        for EPI images (namely, ``"dwi"``, ``"bold"``, ``"asl"``, or ``"sbref"``).
+        When ``fmapless`` is ``True``, heuristics will use the ``{"bold", "dwi", "asl"}`` set.
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
@@ -306,7 +306,7 @@ def find_estimators(
     sessions = sessions or layout.get_sessions(subject=subject) or [None]
     fmapless = fmapless or {}
     if fmapless is True:
-        fmapless = {"bold", "dwi"}
+        fmapless = {"bold", "dwi", "asl"}
 
     estimators = []
 
@@ -434,7 +434,7 @@ def find_estimators(
                 all_targets.append(target)
 
             # If sbrefs are targets, then the goal is generally to estimate with epi+sbref
-            # and correct bold/dwi
+            # and correct bold/dwi/asl
             sbrefs = [
                 target for target in all_targets if target.entities["suffix"] == "sbref"
             ]
@@ -443,7 +443,7 @@ def find_estimators(
                 intent_map = []
                 for sbref in sbrefs:
                     ents = sbref.get_entities(metadata=False)
-                    ents["suffix"] = ["bold", "dwi"]
+                    ents["suffix"] = ["bold", "dwi", "asl"]
                     intent_map.append(
                         [
                             target
@@ -540,8 +540,10 @@ def find_anatomical_estimators(
     base_entities : :class:`dict`
         Entities to use to query for images. These should include any filters.
     suffixes : :class:`list`
-        EPI suffixes, for example ``["bold", "dwi"]``. Associated ``"sbref"``\s
+        EPI suffixes, for example ``["bold", "dwi", "asl"]``. Associated ``"sbref"``\s
         will be found and used in place of BOLD/diffusion EPIs.
+        Similarly, ``"m0scan"``\s associated with ASL runs with the ``IntendedFor`` or
+        ``B0FieldIdentifier`` metadata will be used in place of ASL runs.
     """
 
     from .epimanip import get_trt
@@ -555,6 +557,7 @@ def find_anatomical_estimators(
         datatype = {
             "bold": "func",
             "dwi": "dwi",
+            "asl": "perf",
         }[suffix]
         candidates = layout.get(
             **{
