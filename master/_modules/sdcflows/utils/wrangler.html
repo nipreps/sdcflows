@@ -321,9 +321,9 @@
 <span class="sd">        One of more session identifiers. If None, all sessions will be used.</span>
 <span class="sd">    fmapless : :obj:`bool` or :obj:`set`</span>
 <span class="sd">        Indicates if fieldmap-less heuristics should be executed.</span>
-<span class="sd">        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffices</span>
-<span class="sd">        for EPI images (namely, ``&quot;dwi&quot;``, ``&quot;bold&quot;``, or ``&quot;sbref&quot;``).</span>
-<span class="sd">        When ``fmapless`` is ``True``, heuristics will use the ``{&quot;bold&quot;, &quot;dwi&quot;}`` set.</span>
+<span class="sd">        When ``fmapless`` is a :obj:`set`, it can contain valid BIDS suffixes</span>
+<span class="sd">        for EPI images (namely, ``&quot;dwi&quot;``, ``&quot;bold&quot;``, ``&quot;asl&quot;``, or ``&quot;sbref&quot;``).</span>
+<span class="sd">        When ``fmapless`` is ``True``, heuristics will use the ``{&quot;bold&quot;, &quot;dwi&quot;, &quot;asl&quot;}`` set.</span>
 <span class="sd">    force_fmapless : :obj:`bool`</span>
 <span class="sd">        When some other fieldmap estimation methods have been found, fieldmap-less</span>
 <span class="sd">        estimation will be skipped except if ``force_fmapless`` is ``True``.</span>
@@ -564,7 +564,7 @@
     <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span> <span class="ow">or</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_sessions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
     <span class="n">fmapless</span> <span class="o">=</span> <span class="n">fmapless</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">fmapless</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">fmapless</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">}</span>
+        <span class="n">fmapless</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">}</span>
 
     <span class="n">estimators</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -692,7 +692,7 @@
                 <span class="n">all_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
             <span class="c1"># If sbrefs are targets, then the goal is generally to estimate with epi+sbref</span>
-            <span class="c1"># and correct bold/dwi</span>
+            <span class="c1"># and correct bold/dwi/asl</span>
             <span class="n">sbrefs</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">target</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">all_targets</span> <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">entities</span><span class="p">[</span><span class="s2">&quot;suffix&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sbref&quot;</span>
             <span class="p">]</span>
@@ -701,7 +701,7 @@
                 <span class="n">intent_map</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">sbref</span> <span class="ow">in</span> <span class="n">sbrefs</span><span class="p">:</span>
                     <span class="n">ents</span> <span class="o">=</span> <span class="n">sbref</span><span class="o">.</span><span class="n">get_entities</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                    <span class="n">ents</span><span class="p">[</span><span class="s2">&quot;suffix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">]</span>
+                    <span class="n">ents</span><span class="p">[</span><span class="s2">&quot;suffix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">]</span>
                     <span class="n">intent_map</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="p">[</span>
                             <span class="n">target</span>
@@ -801,8 +801,10 @@
 <span class="sd">    base_entities : :class:`dict`</span>
 <span class="sd">        Entities to use to query for images. These should include any filters.</span>
 <span class="sd">    suffixes : :class:`list`</span>
-<span class="sd">        EPI suffixes, for example ``[&quot;bold&quot;, &quot;dwi&quot;]``. Associated ``&quot;sbref&quot;``\s</span>
+<span class="sd">        EPI suffixes, for example ``[&quot;bold&quot;, &quot;dwi&quot;, &quot;asl&quot;]``. Associated ``&quot;sbref&quot;``\s</span>
 <span class="sd">        will be found and used in place of BOLD/diffusion EPIs.</span>
+<span class="sd">        Similarly, ``&quot;m0scan&quot;``\s associated with ASL runs with the ``IntendedFor`` or</span>
+<span class="sd">        ``B0FieldIdentifier`` metadata will be used in place of ASL runs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="kn">from</span> <span class="nn">.epimanip</span> <span class="kn">import</span> <span class="n">get_trt</span>
@@ -816,6 +818,7 @@
         <span class="n">datatype</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;bold&quot;</span><span class="p">:</span> <span class="s2">&quot;func&quot;</span><span class="p">,</span>
             <span class="s2">&quot;dwi&quot;</span><span class="p">:</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;asl&quot;</span><span class="p">:</span> <span class="s2">&quot;perf&quot;</span><span class="p">,</span>
         <span class="p">}[</span><span class="n">suffix</span><span class="p">]</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="o">**</span><span class="p">{</span>
