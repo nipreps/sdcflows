@@ -95,7 +95,6 @@ def main(argv=None):
     if config.nipype.plugin in ("MultiProc", "LegacyMultiProc"):
         from contextlib import suppress
         import multiprocessing as mp
-        import multiprocessing.forkserver
         from concurrent.futures import ProcessPoolExecutor
 
         os.environ["OMP_NUM_THREADS"] = "1"

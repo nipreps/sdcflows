@@ -400,7 +400,7 @@ class execution(_Config):
     """Drop into PDB when exceptions are encountered."""
     run_uuid = "{}_{}".format(strftime("%Y%m%d-%H%M%S"), uuid4())
     """Unique identifier of this particular run."""
-    session = None
+    session_label = None
     """Filter input dataset by session identifier."""
     sloppy = False
     """Run in sloppy mode (meaning, suboptimal parameters that minimize run-time)."""

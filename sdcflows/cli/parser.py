@@ -137,17 +137,13 @@ Estimate fieldmaps available in a BIDS-compliant MRI dataset.""",
     g_bids = parser.add_argument_group("Options related to BIDS")
     g_bids.add_argument(
         "--participant-label",
-        "--participant_label",
-        "--participant-labels",
-        "--participant_labels",
-        dest="participant_label",
         action=ParticipantLabelAction,
         nargs="+",
         help="A space delimited list of participant identifiers or a single "
         "identifier (the sub- prefix can be removed).",
     )
     g_bids.add_argument(
-        "--session",
+        "--session-label",
         action="store",
         nargs="*",
         type=str,
@@ -180,9 +176,6 @@ Estimate fieldmaps available in a BIDS-compliant MRI dataset.""",
     g_perfm = parser.add_argument_group("Options to handle performance")
     g_perfm.add_argument(
         "--nprocs",
-        "--n_procs",
-        "--n_cpus",
-        "-n-cpus",
         action="store",
         type=PositiveInt,
         help="""\
@@ -200,7 +193,6 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
     )
     g_perfm.add_argument(
         "--omp-nthreads",
-        "--ants-nthreads",
         action="store",
         type=PositiveInt,
         help="""\
@@ -210,8 +202,6 @@ If ``None``, the number of CPUs available will be automatically assigned (which 
 not be what you want in, e.g., shared systems like a HPC cluster.""",
     )
     g_perfm.add_argument(
-        "--mem",
-        "--mem_gb",
         "--mem-gb",
         dest="memory_gb",
         action="store",
@@ -222,7 +212,7 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
         "--debug",
         action="store_true",
         default=False,
-        help="Initiate in debug mode",
+        help="Enable changes to processing to aid in debugging",
     )
     g_perfm.add_argument(
         "--pdb",
@@ -256,8 +246,9 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
         help="only find estimable fieldmaps (that is, estimation is not triggered)",
     )
     g_outputs.add_argument(
-        "--fmapless",
-        action="store_true",
+        "--no-fmapless",
+        action="store_false",
+        dest="fieldmapless",
         default=False,
         help="Allow fieldmap-less estimation",
     )
@@ -271,9 +262,9 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
     g_outputs.add_argument(
         "--notrack",
         action="store_true",
-        help="Opt-out of sending tracking information of this run to the NiPreps developers. This"
-        " information helps to improve SDCFlows and provides an indicator of real world usage "
-        " crucial for obtaining funding.",
+        help="Opt-out of sending tracking information of this run to the NiPreps developers. "
+        "This information helps to improve SDCFlows and provides an indicator of "
+        "real world usage for obtaining funding.",
     )
 
     return parser
