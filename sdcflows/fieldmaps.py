@@ -440,7 +440,7 @@ class FieldmapEstimation:
         """Return a tuple of paths that are sorted."""
         return tuple(sorted(str(f.path) for f in self.sources))
 
-    def get_workflow(self, **kwargs):
+    def get_workflow(self, set_inputs=True, **kwargs):
         """Build the estimation workflow corresponding to this instance."""
         if self._wf is not None:
             return self._wf
@@ -453,18 +453,28 @@ class FieldmapEstimation:
 
             kwargs["mode"] = str(self.method).rpartition(".")[-1].lower()
             self._wf = init_fmap_wf(**kwargs)
-            self._wf.inputs.inputnode.magnitude = [
-                str(f.path.absolute()) for f in self.sources if f.suffix.startswith("magnitude")
-            ]
-            self._wf.inputs.inputnode.fieldmap = [
-                (str(f.path.absolute()), f.metadata)
-                for f in self.sources
-                if f.suffix in ("fieldmap", "phasediff", "phase2", "phase1")
-            ]
+            if set_inputs:
+                self._wf.inputs.inputnode.magnitude = [
+                    str(f.path.absolute())
+                    for f in self.sources if f.suffix.startswith("magnitude")
+                ]
+                self._wf.inputs.inputnode.fieldmap = [
+                    (str(f.path.absolute()), f.metadata)
+                    for f in self.sources
+                    if f.suffix in ("fieldmap", "phasediff", "phase2", "phase1")
+                ]
         elif self.method == EstimatorType.PEPOLAR:
             from .workflows.fit.pepolar import init_topup_wf
 
             self._wf = init_topup_wf(**kwargs)
+
+            if set_inputs:
+                self._wf.inputs.inputnode.in_data = [
+                    str(f.path.absolute()) for f in self.sources
+                ]
+                self._wf.inputs.inputnode.metadata = [
+                    f.metadata for f in self.sources
+                ]
         elif self.method == EstimatorType.ANAT:
             from .workflows.fit.syn import init_syn_sdc_wf
 

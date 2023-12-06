@@ -4,6 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
+SPHINX_APIDOC_OPTIONS = members,show-inheritance
 PAPER         =
 BUILDDIR      = _build
 OUTDIR        = html
@@ -57,7 +58,7 @@ docs-coverage:
 	PYTHONPATH=$(PYTHONPATH) $(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) $(BUILDDIR)/coverage
 
 html:
-	PYTHONPATH=$(PYTHONPATH) $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/$(OUTDIR)
+	PYTHONPATH=$(PYTHONPATH) SPHINX_APIDOC_OPTIONS=$(SPHINX_APIDOC_OPTIONS) $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/$(OUTDIR)
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/$(OUTDIR)."
 

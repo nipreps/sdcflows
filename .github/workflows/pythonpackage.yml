@@ -63,7 +63,7 @@ jobs:
         python-version: 3
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
-    - name: Build niworkflows
+    - name: Build sdcflows
       run: pipx run build
     - name: Check distributions
       run: pipx run twine check dist/*
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.9", "3.12"]
         install: [repo, sdist, wheel, editable]
 
     env:
