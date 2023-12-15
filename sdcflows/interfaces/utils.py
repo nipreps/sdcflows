@@ -137,7 +137,12 @@ class UniformGrid(SimpleInterface):
                     nii.__class__(nii.dataobj, refaff, nii.header).to_filename(retval[i])
                 continue
 
-            resampler.apply(nii).to_filename(retval[i])
+            # Hack around nitransforms' unsafe cast by dropping get_data_dtype that conflicts
+            # with effective dtype
+            # NT23_0_1: Isssue in nitransforms.base.TransformBase.apply
+            regridded_img = resampler.apply(nii.__class__(np.asanyarray(nii.dataobj), nii.affine))
+            # Restore the original on-disk data type
+            nii.__class__(regridded_img.dataobj, refaff, nii.header).to_filename(retval[i])
 
         self._results["out_data"] = retval
 
