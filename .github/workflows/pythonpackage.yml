@@ -95,7 +95,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Fetch packages
       if: matrix.install == 'sdist' || matrix.install == 'wheel'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist
         path: dist/
