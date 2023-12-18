@@ -1,3 +1,22 @@
+2.7.0 (December 18, 2023)
+=========================
+New feature release in the 2.7.0 series.
+
+This release includes an updated CLI, which allows ``sdcflows`` to be
+run as a BIDS App. To achieve the previous behavior of ``sdcflows-find-estimators``,
+use the ``-n`` flag.
+
+Addtional bug fixes and enhancements are included.
+
+* FIX: Drop header before resampling image to avoid unsafe cast (#415)
+* FIX: Wrangler now ignores ``part-phase`` EPI files (#407)
+* ENH: Standalone CLI now estimates fieldmaps (#408)
+* ENH: Add support for ASL data (#411)
+* ENH: Enable rendering of the Jupyter notebooks (#409)
+* MNT: Migrate to PEP517/518 packaging (#410)
+* CI: bump actions/setup-python from 4 to 5 (#412)
+* CI: bump conda-incubator/setup-miniconda from 2 to 3 (#406)
+
 2.6.0 (November 10, 2023)
 =========================
 New feature release in the 2.6.0 series.
