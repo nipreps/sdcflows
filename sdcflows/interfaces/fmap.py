@@ -362,7 +362,7 @@ def _conform_img(
     if np.allclose(img.affine, target_img.affine):
         return img.get_filename()
 
-    basename = os.basename(img.get_filename())
+    basename = os.path.basename(img.get_filename())
     out_file = os.path.join(cwd, basename)
 
     LOGGER.info(f"Copying affine to {basename}")
