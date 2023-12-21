@@ -12,6 +12,7 @@ Before every release, unlisted contributors will be invited again to add their n
 | Blair | Ross W. | @rwblair | 0000-0003-3007-1056 | Department of Psychology, Stanford University, CA, USA |
 | Cieslak | Matthew | @mattcieslak | 0000-0002-1931-4734 | Perelman School of Medicine, University of Pennsylvania, PA, USA |
 | MacNicol | Eilidh | @eilidhmacnicol | 0000-0003-3715-7012 | Department of Neuroimaging, King's College London |
+| Meisler | Steven | @smeisler | 0000-0002-8888-1572 | Speech & Hearing Bioscience & Technology Program, Harvard University |
 | Naveau | Mikaël | @naveau | 0000-0001-6948-9068 | Cyceron, UMS 3408 (CNRS - UCBN), France |
 | Pinsard | Basile | @bpinsard | 0000-0002-4391-3075 | University of Montréal, Montréal, Canada |
 | Salo | Taylor | @tsalo | 0000-0001-9813-3167 | Perelman School of Medicine, University of Pennsylvania, PA, USA |
