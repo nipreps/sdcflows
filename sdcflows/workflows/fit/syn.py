@@ -247,7 +247,7 @@ template [@fieldmapless3].
 
     # Extract the corresponding fieldmap in Hz
     extract_field = pe.Node(
-        DisplacementsField2Fieldmap(demean=True), name="extract_field"
+        DisplacementsField2Fieldmap(), name="extract_field"
     )
 
     unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
@@ -314,6 +314,7 @@ template [@fieldmapless3].
         (epi_merge, syn, [("out", "moving_image")]),
         (moving_masks, syn, [("out", "moving_image_masks")]),
         (syn, extract_field, [(("forward_transforms", _pop), "transform")]),
+        (clip_epi, extract_field, [("out_file", "epi")]),
         (readout_time, extract_field, [("readout_time", "ro_time"),
                                        ("pe_direction", "pe_dir")]),
         (extract_field, zooms_field, [("out_file", "input_image")]),

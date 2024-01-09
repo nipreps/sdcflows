@@ -161,6 +161,7 @@ class CheckB0Units(SimpleInterface):
 
 class _DisplacementsField2FieldmapInputSpec(BaseInterfaceInputSpec):
     transform = File(exists=True, mandatory=True, desc="input displacements field")
+    epi = File(exists=True, mandatory=True, desc="source EPI image")
     ro_time = traits.Float(mandatory=True, desc="total readout time")
     pe_dir = traits.Enum(
         "j-", "j", "i", "i-", "k", "k-", mandatory=True, desc="phase encoding direction"
@@ -189,6 +190,7 @@ class DisplacementsField2Fieldmap(SimpleInterface):
         )
         fmapnii = disp_to_fmap(
             nb.load(self.inputs.transform),
+            nb.load(self.inputs.epi),
             ro_time=self.inputs.ro_time,
             pe_dir=self.inputs.pe_dir,
             itk_format=self.inputs.itk_transform,

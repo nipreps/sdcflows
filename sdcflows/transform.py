@@ -617,7 +617,7 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
     return xyz_nii
 
 
-def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
+def disp_to_fmap(xyz_nii, epi_nii, ro_time, pe_dir, itk_format=True):
     """
     Convert a displacements field into a fieldmap in Hz.
 
@@ -625,12 +625,14 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
 
     Parameters
     ----------
-    xyz_nii : :obj:`os.pathlike`
-        Path to a displacements field in NIfTI format.
+    xyz_nii : :class:`nibabel.Nifti1Image`
+        Displacements field in NIfTI format.
+    epi_nii : :class:`nibabel.Nifti1Image`
+        Source EPI image.
     ro_time : :obj:`float`
-        The total readout time in seconds.
+        The total readout time of the EPI image in seconds.
     pe_dir : :obj:`str`
-        The ``PhaseEncodingDirection`` metadata value.
+        The ``PhaseEncodingDirection`` metadata value of the EPI image.
 
     Returns
     -------
@@ -644,12 +646,13 @@ def disp_to_fmap(xyz_nii, ro_time, pe_dir, itk_format=True):
         # ITK displacement vectors are in LPS orientation
         xyz_deltas[:, (0, 1)] *= -1
 
-    inv_aff = np.linalg.inv(xyz_nii.affine)
-    inv_aff[:3, 3] = 0  # Translations MUST NOT be applied.
+    # Use the EPI's affine to determine voxel spacing, axis ordering and flips
+    inv_aff = np.linalg.inv(epi_nii.affine)
+    inv_mat = inv_aff[:3, :3]
 
     # Convert displacements from mm to voxel units
     # Using the inverse affine accounts for reordering of axes, etc.
-    ijk_deltas = nb.affines.apply_affine(inv_aff, xyz_deltas).astype("float32")
+    ijk_deltas = (xyz_deltas @ inv_mat.T).astype("float32")
     pe_axis = "ijk".index(pe_dir[0])
     vsm = ijk_deltas[:, pe_axis].reshape(xyz_nii.shape[:3])
     scale_factor = -ro_time if pe_dir.endswith("-") else ro_time
