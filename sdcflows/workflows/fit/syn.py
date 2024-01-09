@@ -267,14 +267,15 @@ template [@fieldmapless3].
     )
 
     # Regularize with B-Splines
-    bs_filter = pe.Node(BSplineApprox(), name="bs_filter")
+    bs_filter = pe.Node(
+        BSplineApprox(recenter=False, debug=debug, extrapolate=not debug),
+        name="bs_filter",
+    )
     bs_filter.interface._always_run = debug
     bs_filter.inputs.bs_spacing = (
         [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
     )
-    bs_filter.inputs.extrapolate = not debug
 
-    # fmt: off
     workflow.connect([
         (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
                                    (("epi_ref", _pull), "metadata")]),
@@ -330,8 +331,7 @@ template [@fieldmapless3].
         (bs_filter, outputnode, [("out_coeff", "fmap_coeff")]),
         (unwarp, outputnode, [("out_corrected", "fmap_ref"),
                               ("out_field", "fmap")]),
-    ])
-    # fmt: on
+    ])  # fmt:skip
 
     return workflow
 
