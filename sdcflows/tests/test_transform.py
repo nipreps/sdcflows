@@ -327,11 +327,11 @@ def test_conversions(tmpdir, testdata_dir, pe_dir):
             ro_time=0.2,
             pe_dir=pe_dir,
         ),
+        fmap_nii,
         ro_time=0.2,
         pe_dir=pe_dir,
     )
 
-    new_nii.to_filename("test.nii.gz")
     assert np.allclose(
         fmap_nii.get_fdata(dtype="float32"),
         new_nii.get_fdata(dtype="float32"),
