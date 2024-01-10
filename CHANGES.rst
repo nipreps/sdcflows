@@ -1,3 +1,16 @@
+2.8.0 (January 10, 2024)
+========================
+New feature release in the 2.8.0 series.
+
+This release fixes a bug in converting SyN-SDC displacements to fieldmaps,
+resulting in exaggerated corrections. As this makes changes to the structure
+of a workflow and the expected inputs of a workflow node, this release is
+considered a minor release.
+
+* FIX: Derive field from SyN displacements using EPI affine (#421)
+* FIX: Change ``os.basename`` to ``os.path.basename`` (#419)
+* DOC: Add @smeisler to contributors (#420)
+
 2.7.0 (December 18, 2023)
 =========================
 New feature release in the 2.7.0 series.
