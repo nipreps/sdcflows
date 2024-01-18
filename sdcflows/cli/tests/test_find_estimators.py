@@ -25,7 +25,7 @@ from importlib import reload
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from sdcflows.cli.main import main as find_estimators
+from sdcflows.cli.main import main as cli_finder_wrapper
 from sdcflows.fieldmaps import clear_registry
 
 OUTPUT = """\
@@ -131,7 +131,7 @@ b0field_config = {
         ("b0field", b0field_config, "pepolar"),
     ],
 )
-def test_find_estimators(tmp_path, capsys, test_id, config, estimator_id):
+def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
     """Test the CLI with --dry-run."""
     import sdcflows.config as sc
 
@@ -141,7 +141,7 @@ def test_find_estimators(tmp_path, capsys, test_id, config, estimator_id):
     path = (tmp_path / test_id).absolute()
     generate_bids_skeleton(path, config)
     with pytest.raises(SystemExit) as wrapped_exit:
-        find_estimators([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
+        cli_finder_wrapper([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
 
     assert wrapped_exit.value.code == 0
     output = OUTPUT.format(path=path, estimator_id=estimator_id)
