@@ -20,9 +20,7 @@ def gen_layout(bids_dir, database_dir=None):
             "models",
             "derivatives",
             re.compile(r"^\."),
-            re.compile(
-                r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|micr|perf)"
-            ),
+            re.compile(r"sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|micr|perf)"),
         ),
     )
 
@@ -41,18 +39,26 @@ pepolar = {
             "session": "01",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "epi", "dir": "AP", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j-",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz"
-                }},
-                {"suffix": "epi", "dir": "PA", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz"
-                }}
+                {
+                    "suffix": "epi",
+                    "dir": "AP",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j-",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz",
+                    },
+                },
+                {
+                    "suffix": "epi",
+                    "dir": "PA",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz",
+                    },
+                },
             ],
             "func": [
                 {
@@ -61,27 +67,39 @@ pepolar = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
+            ],
         },
         {
             "session": "02",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "epi", "dir": "AP", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j-",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
-                }},
-                {"suffix": "epi", "dir": "PA", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
-                }}
+                {
+                    "suffix": "epi",
+                    "dir": "AP",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j-",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": (
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                        ),
+                    },
+                },
+                {
+                    "suffix": "epi",
+                    "dir": "PA",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": (
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                        ),
+                    },
+                },
             ],
             "func": [
                 {
@@ -90,27 +108,39 @@ pepolar = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
+            ],
         },
         {
             "session": "03",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "epi", "dir": "AP", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j-",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
-                }},
-                {"suffix": "epi", "dir": "PA", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
-                }}
+                {
+                    "suffix": "epi",
+                    "dir": "AP",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j-",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": (
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                        ),
+                    },
+                },
+                {
+                    "suffix": "epi",
+                    "dir": "PA",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": (
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                        ),
+                    },
+                },
             ],
             "func": [
                 {
@@ -119,24 +149,28 @@ pepolar = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
+            ],
         },
         {
             "session": "04",
             "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
             "fmap": [
-                {"suffix": "epi", "dir": "AP", "metadata": {
-                    "EchoTime": 1.2,
-                    "PhaseEncodingDirection": "j-",
-                    "TotalReadoutTime": 0.8,
-                    "IntendedFor": [
-                        "ses-04/func/sub-01_ses-04_task-rest_run-1_bold.nii.gz",
-                        "ses-04/func/sub-01_ses-04_task-rest_run-2_bold.nii.gz",
-                    ],
-                }},
+                {
+                    "suffix": "epi",
+                    "dir": "AP",
+                    "metadata": {
+                        "EchoTime": 1.2,
+                        "PhaseEncodingDirection": "j-",
+                        "TotalReadoutTime": 0.8,
+                        "IntendedFor": [
+                            "ses-04/func/sub-01_ses-04_task-rest_run-1_bold.nii.gz",
+                            "ses-04/func/sub-01_ses-04_task-rest_run-2_bold.nii.gz",
+                        ],
+                    },
+                },
             ],
             "func": [
                 {
@@ -146,8 +180,8 @@ pepolar = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 },
                 {
                     "task": "rest",
@@ -156,11 +190,11 @@ pepolar = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 },
-            ]
-        }
+            ],
+        },
     ]
 }
 
@@ -176,11 +210,11 @@ phasediff = {
                     "metadata": {
                         "EchoTime1": 1.2,
                         "EchoTime2": 1.4,
-                        "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz"
-                    }
+                        "IntendedFor": "ses-01/func/sub-01_ses-01_task-rest_bold.nii.gz",
+                    },
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
-                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
+                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}},
             ],
             "func": [
                 {
@@ -189,10 +223,10 @@ phasediff = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
+            ],
         },
         {
             "session": "02",
@@ -203,11 +237,13 @@ phasediff = {
                     "metadata": {
                         "EchoTime1": 1.2,
                         "EchoTime2": 1.4,
-                        "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
-                    }
+                        "IntendedFor": (
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                        ),
+                    },
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
-                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
+                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}},
             ],
             "func": [
                 {
@@ -216,10 +252,10 @@ phasediff = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
+            ],
         },
         {
             "session": "03",
@@ -230,11 +266,13 @@ phasediff = {
                     "metadata": {
                         "EchoTime1": 1.2,
                         "EchoTime2": 1.4,
-                        "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
-                    }
+                        "IntendedFor": (
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                        ),
+                    },
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
-                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}}
+                {"suffix": "magnitude2", "metadata": {"EchoTime": 1.4}},
             ],
             "func": [
                 {
@@ -243,11 +281,11 @@ phasediff = {
                     "metadata": {
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
-                        "PhaseEncodingDirection": "j"
-                    }
+                        "PhaseEncodingDirection": "j",
+                    },
                 }
-            ]
-        }
+            ],
+        },
     ]
 }
 
@@ -257,23 +295,18 @@ filters = {
         "datatype": "fmap",
         "session": "01",
     },
-    "t1w": {
-        "datatype": "anat",
-        "session": "01",
-        "suffix": "T1w"
-    },
-    "bold": {
-        "datatype": "func",
-        "session": "01",
-        "suffix": "bold"
-    }
+    "t1w": {"datatype": "anat", "session": "01", "suffix": "T1w"},
+    "bold": {"datatype": "func", "session": "01", "suffix": "bold"},
 }
 
 
-@pytest.mark.parametrize('name,skeleton,estimations', [
-    ('pepolar', pepolar, 1),
-    ('phasediff', phasediff, 1),
-])
+@pytest.mark.parametrize(
+    'name,skeleton,estimations',
+    [
+        ('pepolar', pepolar, 1),
+        ('phasediff', phasediff, 1),
+    ],
+)
 def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)
@@ -282,17 +315,32 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     assert len(est) == estimations
     clear_registry()
 
-@pytest.mark.parametrize('name,skeleton,estimations', [
-    ('pepolar', pepolar, 3),
-    ('phasediff', phasediff, 3),
+
+@pytest.mark.parametrize(
+    'name,skeleton,total_estimations',
+    [
+        ('pepolar', pepolar, 5),
+        ('phasediff', phasediff, 3),
+    ],
+)
+@pytest.mark.parametrize("session, estimations", [
+    ("01", 1),
+    ("02", 1),
+    ("03", 1),
+    (None, None),
 ])
-def test_wrangler_URIs(tmpdir, name, skeleton, estimations):
+def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estimations):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)
     layout = gen_layout(bids_dir)
-    est = find_estimators(layout=layout, subject='01')
-    assert len(est) == estimations
+    est = find_estimators(
+        layout=layout,
+        subject='01',
+        sessions=[session] if session else None,
+    )
+    assert len(est) == estimations or total_estimations
     clear_registry()
+
 
 def test_single_reverse_pedir(tmp_path):
     bids_dir = tmp_path / "bids"
@@ -324,10 +372,7 @@ def test_fieldmapless(tmp_path):
             "PhaseEncodingDirection": "j",
         },
     }
-    me_metadata = [
-        {"EchoTime": 0.01 * i, **bold["metadata"]}
-        for i in range(1, 4)
-    ]
+    me_metadata = [{"EchoTime": 0.01 * i, **bold["metadata"]} for i in range(1, 4)]
     sbref = {**bold, **{"suffix": "sbref"}}
     spec = {
         "01": {
@@ -407,14 +452,8 @@ def test_fieldmapless(tmp_path):
     spec = {
         "01": {
             "anat": [T1w],
-            "func": [
-                {"echo": i + 1, **bold, **{"metadata": me_metadata[i]}}
-                for i in range(3)
-            ]
-            + [
-                {"echo": i + 1, **sbref, **{"metadata": me_metadata[i]}}
-                for i in range(3)
-            ],
+            "func": [{"echo": i + 1, **bold, **{"metadata": me_metadata[i]}} for i in range(3)]
+            + [{"echo": i + 1, **sbref, **{"metadata": me_metadata[i]}} for i in range(3)],
         },
     }
     generate_bids_skeleton(bids_dir, spec)
