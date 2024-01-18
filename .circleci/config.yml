@@ -370,7 +370,7 @@ jobs:
           name: Install Graphviz & pandoc
           command: |
             sudo apt-get update -y
-            sudo apt-get install -y --no-install-recommends graphviz pandoc
+            sudo apt-get install -y --no-install-recommends graphviz pandoc texlive
       - run:
           name: Install deps
           command: |
@@ -384,7 +384,8 @@ jobs:
             source /tmp/venv/bin/activate
             python -m hatch version | tail -n1 | xargs
             BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
-            make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
+            python -c "from templateflow.api import get; get('MNI152NLin2009cAsym', desc='brain', resolution=1, suffix='T1w')"
+            make -C docs SPHINXOPTS="-W -v" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
       - store_artifacts:
           path: ~/docs/
 
