@@ -384,7 +384,7 @@ jobs:
             source /tmp/venv/bin/activate
             python -m hatch version | tail -n1 | xargs
             BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
-            make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
+            make -C docs SPHINXOPTS="-W -v -v -v" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
       - store_artifacts:
           path: ~/docs/
 
