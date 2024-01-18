@@ -59,6 +59,15 @@ jobs:
         python -m pip install -r docs/requirements.txt
         python -m hatch version | tail -n1 | xargs
 
+    - name: Pre-install template
+      shell: python
+      run: |
+        from templateflow.api import get
+        get('MNI152NLin2009cAsym', desc='brain', resolution=1, suffix='T1w')
+        get('MNI152NLin2009cAsym', desc='fMRIPrep', resolution=2, suffix='boldref')
+        get('MNI152NLin2009cAsym', desc='brain', resolution=2, suffix='mask')
+        get('MNI152NLin2009cAsym', label='brain', resolution=1, suffix='probseg')
+
     - name: Build docs
       run: |
           make -C docs/ SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR="${CURBRANCH:-html}" html
