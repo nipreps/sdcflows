@@ -5,6 +5,8 @@ on:
   push:
     branches: [ 'doc/*', 'docs/*', master, "maint/*" ]
     tags: [ '*' ]
+  pull_request:
+    branches: [ master, 'maint/*' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
 
     steps:
