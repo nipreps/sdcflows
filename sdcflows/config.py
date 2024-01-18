@@ -124,8 +124,8 @@ except ImportError:
 
 # Ignore annoying warnings
 from sdcflows._warnings import logging
+from sdcflows import __version__
 
-__version__ = get_version("sdcflows")
 _pre_exec_env = dict(os.environ)
 
 # Reduce numpy's vms by limiting OMP_NUM_THREADS

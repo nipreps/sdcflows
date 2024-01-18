@@ -44,6 +44,7 @@ extensions = [
 
 autodoc_mock_imports = [
     "matplotlib",
+    "migas",
     "nilearn",
     "nipy",
     "nitime",

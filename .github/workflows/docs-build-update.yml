@@ -5,6 +5,8 @@ on:
   push:
     branches: [ 'doc/*', 'docs/*', master, "maint/*" ]
     tags: [ '*' ]
+  pull_request:
+    branches: [ master, 'maint/*' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -39,10 +42,11 @@ jobs:
         # Pacify git if we were to commit something
         git config user.email "nipreps@gmail.com"
         git config user.name "NiPreps Bot"
+
     - name: Install GraphViz & pandoc
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends graphviz pandoc
+        sudo apt-get install -y --no-install-recommends graphviz pandoc texlive
 
     - name: Set up Python 3
       uses: actions/setup-python@v5
@@ -54,6 +58,15 @@ jobs:
         python -m pip install -U build hatch hatchling pip docutils
         python -m pip install -r docs/requirements.txt
         python -m hatch version | tail -n1 | xargs
+
+    - name: Pre-install template
+      shell: python
+      run: |
+        from templateflow.api import get
+        get('MNI152NLin2009cAsym', desc='brain', resolution=1, suffix='T1w')
+        get('MNI152NLin2009cAsym', desc='fMRIPrep', resolution=2, suffix='boldref')
+        get('MNI152NLin2009cAsym', desc='brain', resolution=2, suffix='mask')
+        get('MNI152NLin2009cAsym', label='brain', resolution=1, suffix='probseg')
 
     - name: Build docs
       run: |
