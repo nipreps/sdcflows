@@ -139,6 +139,12 @@ def main(argv=None):
     if exitcode != 0:
         sys.exit(exitcode)
 
+    if len(sdcflows_wf.list_node_names()) == 0:
+        config.loggers.cli.critical(
+            'Workflow did not generate any jobs. Please check your inputs are valid.'
+        )
+        sys.exit(os.EX_USAGE)
+
     # Initialize nipype config
     config.nipype.init()
     # Make sure loggers are started

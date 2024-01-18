@@ -248,8 +248,8 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
     g_outputs.add_argument(
         "--no-fmapless",
         action="store_false",
-        dest="fieldmapless",
-        default=False,
+        dest="fmapless",
+        default=True,
         help="Allow fieldmap-less estimation",
     )
     g_outputs.add_argument(
