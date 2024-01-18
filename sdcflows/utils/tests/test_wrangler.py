@@ -74,13 +74,13 @@ pepolar = {
                     "EchoTime": 1.2,
                     "PhaseEncodingDirection": "j-",
                     "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                    "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
                 }},
                 {"suffix": "epi", "dir": "PA", "metadata": {
                     "EchoTime": 1.2,
                     "PhaseEncodingDirection": "j",
                     "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                    "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
                 }}
             ],
             "func": [
@@ -103,13 +103,13 @@ pepolar = {
                     "EchoTime": 1.2,
                     "PhaseEncodingDirection": "j-",
                     "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                    "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
                 }},
                 {"suffix": "epi", "dir": "PA", "metadata": {
                     "EchoTime": 1.2,
                     "PhaseEncodingDirection": "j",
                     "TotalReadoutTime": 0.8,
-                    "IntendedFor": "ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                    "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
                 }}
             ],
             "func": [
@@ -203,7 +203,7 @@ phasediff = {
                     "metadata": {
                         "EchoTime1": 1.2,
                         "EchoTime2": 1.4,
-                        "IntendedFor": "ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
+                        "IntendedFor": "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_bold.nii.gz"
                     }
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
@@ -230,7 +230,7 @@ phasediff = {
                     "metadata": {
                         "EchoTime1": 1.2,
                         "EchoTime2": 1.4,
-                        "IntendedFor": "ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
+                        "IntendedFor": "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_bold.nii.gz"
                     }
                 },
                 {"suffix": "magnitude1", "metadata": {"EchoTime": 1.2}},
@@ -282,6 +282,17 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     assert len(est) == estimations
     clear_registry()
 
+@pytest.mark.parametrize('name,skeleton,estimations', [
+    ('pepolar', pepolar, 3),
+    ('phasediff', phasediff, 3),
+])
+def test_wrangler_URIs(tmpdir, name, skeleton, estimations):
+    bids_dir = str(tmpdir / name)
+    generate_bids_skeleton(bids_dir, skeleton)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject='01')
+    assert len(est) == estimations
+    clear_registry()
 
 def test_single_reverse_pedir(tmp_path):
     bids_dir = tmp_path / "bids"
