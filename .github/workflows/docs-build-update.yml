@@ -42,10 +42,11 @@ jobs:
         # Pacify git if we were to commit something
         git config user.email "nipreps@gmail.com"
         git config user.name "NiPreps Bot"
+
     - name: Install GraphViz & pandoc
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends graphviz pandoc
+        sudo apt-get install -y --no-install-recommends graphviz pandoc texlive
 
     - name: Set up Python 3
       uses: actions/setup-python@v5
