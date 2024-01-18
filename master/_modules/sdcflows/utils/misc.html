@@ -170,11 +170,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -192,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -207,6 +212,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -335,8 +341,6 @@
 
 
 
-<div class="viewcode-block" id="create_logger">
-<a class="viewcode-back" href="../../../api/sdcflows.utils.misc.html#sdcflows.utils.misc.create_logger">[docs]</a>
 <span class="k">def</span> <span class="nf">create_logger</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
@@ -348,8 +352,7 @@
     <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1">]: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">logger</span></div>
-
+    <span class="k">return</span> <span class="n">logger</span>
 </pre></div>
         </article>
       </div>

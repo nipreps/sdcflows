@@ -170,11 +170,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -192,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -207,6 +212,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -715,7 +721,7 @@
 
 <div class="viewcode-block" id="FieldmapEstimation.get_workflow">
 <a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation.get_workflow">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the estimation workflow corresponding to this instance.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span>
@@ -728,18 +734,28 @@
 
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_fmap_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
-            <span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fieldmap</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()),</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">)</span>
-            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fieldmap</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()),</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">.workflows.fit.pepolar</span> <span class="kn">import</span> <span class="n">init_topup_wf</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_topup_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">in_data</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">.workflows.fit.syn</span> <span class="kn">import</span> <span class="n">init_syn_sdc_wf</span>
 

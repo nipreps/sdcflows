@@ -3,5 +3,4 @@ sdcflows.transform module
 
 .. automodule:: sdcflows.transform
    :members:
-   :undoc-members:
    :show-inheritance:

@@ -3,5 +3,4 @@ sdcflows.workflows.fit.pepolar module
 
 .. automodule:: sdcflows.workflows.fit.pepolar
    :members:
-   :undoc-members:
    :show-inheritance:

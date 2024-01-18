@@ -3,5 +3,4 @@ sdcflows.viz.utils module
 
 .. automodule:: sdcflows.viz.utils
    :members:
-   :undoc-members:
    :show-inheritance:

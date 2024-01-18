@@ -3,7 +3,6 @@ sdcflows.interfaces package
 
 .. automodule:: sdcflows.interfaces
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Submodules

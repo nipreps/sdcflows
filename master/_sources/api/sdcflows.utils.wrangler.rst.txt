@@ -3,5 +3,4 @@ sdcflows.utils.wrangler module
 
 .. automodule:: sdcflows.utils.wrangler
    :members:
-   :undoc-members:
    :show-inheritance:

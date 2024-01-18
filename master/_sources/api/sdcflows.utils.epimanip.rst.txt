@@ -3,5 +3,4 @@ sdcflows.utils.epimanip module
 
 .. automodule:: sdcflows.utils.epimanip
    :members:
-   :undoc-members:
    :show-inheritance:

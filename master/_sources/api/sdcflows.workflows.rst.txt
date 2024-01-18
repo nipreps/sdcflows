@@ -3,7 +3,6 @@ sdcflows.workflows package
 
 .. automodule:: sdcflows.workflows
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Subpackages

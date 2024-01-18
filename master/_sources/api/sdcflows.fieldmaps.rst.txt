@@ -3,5 +3,4 @@ sdcflows.fieldmaps module
 
 .. automodule:: sdcflows.fieldmaps
    :members:
-   :undoc-members:
    :show-inheritance:

@@ -3,7 +3,6 @@ sdcflows.cli package
 
 .. automodule:: sdcflows.cli
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Submodules
@@ -12,4 +11,6 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   sdcflows.cli.find_estimators
+   sdcflows.cli.main
+   sdcflows.cli.parser
+   sdcflows.cli.workflow

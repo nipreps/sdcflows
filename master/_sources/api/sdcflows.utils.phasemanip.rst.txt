@@ -3,5 +3,4 @@ sdcflows.utils.phasemanip module
 
 .. automodule:: sdcflows.utils.phasemanip
    :members:
-   :undoc-members:
    :show-inheritance:

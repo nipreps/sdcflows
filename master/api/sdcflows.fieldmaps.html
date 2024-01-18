@@ -171,11 +171,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -193,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -208,6 +213,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -263,31 +269,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.fieldmaps.</span></span><span class="sig-name descname"><span class="pre">EstimatorType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#EstimatorType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>Represents different types of fieldmap estimation approach.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.ANAT">
-<span class="sig-name descname"><span class="pre">ANAT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.ANAT" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.MAPPED">
-<span class="sig-name descname"><span class="pre">MAPPED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.MAPPED" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.PEPOLAR">
-<span class="sig-name descname"><span class="pre">PEPOLAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PEPOLAR" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.PHASEDIFF">
-<span class="sig-name descname"><span class="pre">PHASEDIFF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.PHASEDIFF" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sdcflows.fieldmaps.EstimatorType.UNKNOWN">
-<span class="sig-name descname"><span class="pre">UNKNOWN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#sdcflows.fieldmaps.EstimatorType.UNKNOWN" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -307,7 +288,7 @@ and collects all the available metadata.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.fieldmaps.FieldmapEstimation.get_workflow">
-<span class="sig-name descname"><span class="pre">get_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapEstimation.get_workflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapEstimation.get_workflow" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">get_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/fieldmaps.html#FieldmapEstimation.get_workflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.fieldmaps.FieldmapEstimation.get_workflow" title="Link to this definition">#</a></dt>
 <dd><p>Build the estimation workflow corresponding to this instance.</p>
 </dd></dl>
 
@@ -551,14 +532,7 @@ will overwrite metadata read from sidecar JSON.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sdcflows.fieldmaps module</a><ul>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType"><code class="docutils literal notranslate"><span class="pre">EstimatorType</span></code></a><ul>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType.ANAT"><code class="docutils literal notranslate"><span class="pre">EstimatorType.ANAT</span></code></a></li>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType.MAPPED"><code class="docutils literal notranslate"><span class="pre">EstimatorType.MAPPED</span></code></a></li>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType.PEPOLAR"><code class="docutils literal notranslate"><span class="pre">EstimatorType.PEPOLAR</span></code></a></li>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType.PHASEDIFF"><code class="docutils literal notranslate"><span class="pre">EstimatorType.PHASEDIFF</span></code></a></li>
-<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">EstimatorType.UNKNOWN</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#sdcflows.fieldmaps.EstimatorType"><code class="docutils literal notranslate"><span class="pre">EstimatorType</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.fieldmaps.FieldmapEstimation"><code class="docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a><ul>
 <li><a class="reference internal" href="#sdcflows.fieldmaps.FieldmapEstimation.bids_id"><code class="docutils literal notranslate"><span class="pre">FieldmapEstimation.bids_id</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.fieldmaps.FieldmapEstimation.get_workflow"><code class="docutils literal notranslate"><span class="pre">FieldmapEstimation.get_workflow()</span></code></a></li>

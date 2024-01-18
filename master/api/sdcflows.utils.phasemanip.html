@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils.tools module" href="sdcflows.utils.tools.html" /><link rel="prev" title="sdcflows.utils.misc module" href="sdcflows.utils.misc.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.utils.telemetry module" href="sdcflows.utils.telemetry.html" /><link rel="prev" title="sdcflows.utils.misc module" href="sdcflows.utils.misc.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
         <title>sdcflows.utils.phasemanip module - sdcflows 0+unknown documentation</title>
@@ -171,11 +171,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">Library API (application program interface)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -193,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -208,6 +213,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -320,12 +326,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="sdcflows.utils.tools.html">
+          <a class="next-page" href="sdcflows.utils.telemetry.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">sdcflows.utils.tools module</div>
+                <div class="title">sdcflows.utils.telemetry module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

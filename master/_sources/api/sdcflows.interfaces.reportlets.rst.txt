@@ -3,5 +3,4 @@ sdcflows.interfaces.reportlets module
 
 .. automodule:: sdcflows.interfaces.reportlets
    :members:
-   :undoc-members:
    :show-inheritance:

@@ -1,0 +1,6 @@
+sdcflows.cli.parser module
+==========================
+
+.. automodule:: sdcflows.cli.parser
+   :members:
+   :show-inheritance:

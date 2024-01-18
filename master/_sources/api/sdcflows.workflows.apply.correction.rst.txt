@@ -3,5 +3,4 @@ sdcflows.workflows.apply.correction module
 
 .. automodule:: sdcflows.workflows.apply.correction
    :members:
-   :undoc-members:
    :show-inheritance:

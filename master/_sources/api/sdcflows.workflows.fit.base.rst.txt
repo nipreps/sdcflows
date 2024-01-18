@@ -1,0 +1,6 @@
+sdcflows.workflows.fit.base module
+==================================
+
+.. automodule:: sdcflows.workflows.fit.base
+   :members:
+   :show-inheritance:

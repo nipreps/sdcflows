@@ -3,7 +3,6 @@ sdcflows.utils package
 
 .. automodule:: sdcflows.utils
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Submodules
@@ -16,5 +15,6 @@ Submodules
    sdcflows.utils.epimanip
    sdcflows.utils.misc
    sdcflows.utils.phasemanip
+   sdcflows.utils.telemetry
    sdcflows.utils.tools
    sdcflows.utils.wrangler

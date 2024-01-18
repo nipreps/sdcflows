@@ -3,7 +3,6 @@ sdcflows.viz package
 
 .. automodule:: sdcflows.viz
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Submodules

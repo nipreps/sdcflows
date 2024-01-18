@@ -170,11 +170,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -192,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -207,6 +212,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -277,6 +283,7 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
@@ -287,6 +294,19 @@
 <span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
+
+
+<span class="k">def</span> <span class="nf">_resolve_intent</span><span class="p">(</span>
+    <span class="n">intent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">BIDSLayout</span><span class="p">,</span>
+    <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">intent</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;bids::&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">[</span><span class="mi">6</span><span class="p">:])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">intent</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;bids:&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="n">intent</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">intent</span>
 
 
 <div class="viewcode-block" id="find_estimators">
@@ -685,7 +705,7 @@
             <span class="c1"># Find existing IntendedFor targets and warn if missing</span>
             <span class="n">all_targets</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">epi_base_md</span><span class="p">[</span><span class="s2">&quot;IntendedFor&quot;</span><span class="p">]):</span>
-                <span class="n">target</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">subject_root</span> <span class="o">/</span> <span class="n">intent</span><span class="p">))</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="n">_resolve_intent</span><span class="p">(</span><span class="n">intent</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">subject</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Single PE target </span><span class="si">%s</span><span class="s2"> not found&quot;</span><span class="p">,</span> <span class="n">intent</span><span class="p">)</span>
                     <span class="k">continue</span>

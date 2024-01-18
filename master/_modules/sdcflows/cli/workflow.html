@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
-        <title>sdcflows.cli.find_estimators - sdcflows 0+unknown documentation</title>
+        <title>sdcflows.cli.workflow - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -170,11 +170,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -192,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -207,6 +212,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -253,122 +259,62 @@
           </label>
         </div>
         <article role="main">
-          <h1>Source code for sdcflows.cli.find_estimators</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">argparse</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+          <h1>Source code for sdcflows.cli.workflow</h1><div class="highlight"><pre>
+<span></span><span class="c1"># emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-</span>
+<span class="c1"># vi: set ft=python sts=4 ts=4 sw=4 et:</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright 2023 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+<span class="c1"># We support and encourage derived works from this project, please read</span>
+<span class="c1"># about our expectations at</span>
+<span class="c1">#</span>
+<span class="c1">#     https://www.nipreps.org/community/licensing/</span>
+<span class="c1">#</span>
+<span class="sd">&quot;&quot;&quot;Build the SDCFlows&#39; standalone workflow.&quot;&quot;&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">_drop_sub</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;sub-&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
+<div class="viewcode-block" id="build_workflow">
+<a class="viewcode-back" href="../../../api/sdcflows.cli.workflow.html#sdcflows.cli.workflow.build_workflow">[docs]</a>
+<span class="k">def</span> <span class="nf">build_workflow</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="n">retval</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the Nipype Workflow that supports the whole execution graph.&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="c1"># We do not need OMP &gt; 1 for workflow creation</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
 
+    <span class="kn">from</span> <span class="nn">sdcflows</span> <span class="kn">import</span> <span class="n">config</span>
+    <span class="kn">from</span> <span class="nn">sdcflows.workflows.fit.base</span> <span class="kn">import</span> <span class="n">init_sdcflows_wf</span>
 
-<span class="k">def</span> <span class="nf">_parser</span><span class="p">():</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Parse a BIDS directory and show what estimators are available&quot;</span><span class="p">,</span>
-        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawDescriptionHelpFormatter</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;bids_dir&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The input BIDS directory to parse&quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;-s&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--subjects&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="n">_drop_sub</span><span class="p">,</span>
-        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;One or more subject identifiers&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--fmapless&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Allow fieldmap-less estimation&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--bids-database-dir&quot;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a PyBIDS database folder, for faster indexing (especially &quot;</span>
-             <span class="s2">&quot;useful for large datasets). Will be created if not present.&quot;</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print information while finding estimators (Useful for debugging)&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">parser</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+    <span class="c1"># Initialize nipype config</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="c1"># Make sure loggers are started</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
 
+    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">Running SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">:</span>
+<span class="s2">             * BIDS dataset path: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span><span class="si">}</span><span class="s2">.</span>
+<span class="s2">             * Output folder: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">.</span>
+<span class="s2">             * Analysis levels: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">analysis_level</span><span class="si">}</span><span class="s2">.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="gen_layout">
-<a class="viewcode-back" href="../../../api/sdcflows.cli.find_estimators.html#sdcflows.cli.find_estimators.gen_layout">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_layout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="n">database_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">re</span>
-    <span class="kn">from</span> <span class="nn">bids.layout</span> <span class="kn">import</span> <span class="n">BIDSLayout</span><span class="p">,</span> <span class="n">BIDSLayoutIndexer</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;return_code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_sdcflows_wf</span><span class="p">()</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;return_code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">retval</span></div>
 
-    <span class="n">_indexer</span> <span class="o">=</span> <span class="n">BIDSLayoutIndexer</span><span class="p">(</span>
-        <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">ignore</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;code&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;stimuli&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;sourcedata&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;models&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;derivatives&quot;</span><span class="p">,</span>
-            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\.&quot;</span><span class="p">),</span>
-            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/(beh|eeg|ieeg|meg|micr|perf)&quot;</span><span class="p">),</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-
-    <span class="n">layout_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;indexer&#39;</span><span class="p">:</span> <span class="n">_indexer</span><span class="p">}</span>
-
-    <span class="k">if</span> <span class="n">database_dir</span><span class="p">:</span>
-        <span class="n">layout_kwargs</span><span class="p">[</span><span class="s1">&#39;database_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">database_dir</span>
-
-    <span class="n">layout</span> <span class="o">=</span> <span class="n">BIDSLayout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">layout_kwargs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">layout</span></div>
-
-
-
-<div class="viewcode-block" id="main">
-<a class="viewcode-back" href="../../../api/sdcflows.cli.find_estimators.html#sdcflows.cli.find_estimators.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parse a BIDS directory and print subject estimators</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="kn">import</span> <span class="n">collect_participants</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.utils.wrangler</span> <span class="kn">import</span> <span class="n">find_estimators</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.utils.misc</span> <span class="kn">import</span> <span class="n">create_logger</span>
-
-    <span class="n">pargs</span> <span class="o">=</span> <span class="n">_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
-
-    <span class="n">bids_dir</span> <span class="o">=</span> <span class="n">pargs</span><span class="o">.</span><span class="n">bids_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">layout</span> <span class="o">=</span> <span class="n">gen_layout</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">,</span> <span class="n">pargs</span><span class="o">.</span><span class="n">bids_database_dir</span><span class="p">)</span>
-    <span class="n">subjects</span> <span class="o">=</span> <span class="n">collect_participants</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">pargs</span><span class="o">.</span><span class="n">subjects</span><span class="p">)</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">create_logger</span><span class="p">(</span><span class="s1">&#39;sdcflow.wrangler&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">10</span> <span class="k">if</span> <span class="n">pargs</span><span class="o">.</span><span class="n">verbose</span> <span class="k">else</span> <span class="mi">40</span><span class="p">)</span>
-    <span class="n">estimators_record</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">subjects</span><span class="p">:</span>
-        <span class="n">estimators_record</span><span class="p">[</span><span class="n">subject</span><span class="p">]</span> <span class="o">=</span> <span class="n">find_estimators</span><span class="p">(</span>
-            <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
-            <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span>
-            <span class="n">fmapless</span><span class="o">=</span><span class="n">pargs</span><span class="o">.</span><span class="n">fmapless</span><span class="p">,</span>
-            <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="c1"># pretty print results</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Estimation for &lt;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt; complete. Found:&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">subject</span><span class="p">,</span> <span class="n">estimators</span> <span class="ow">in</span> <span class="n">estimators_record</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">estimators</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="s2">No estimators found&quot;</span><span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">for</span> <span class="n">estimator</span> <span class="ow">in</span> <span class="n">estimators</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">estimator</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">fl</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
-                <span class="n">fl_relpath</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">bids_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
-                <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t\t</span><span class="si">{</span><span class="n">pe_dir</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">fl_relpath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
 </pre></div>
         </article>
       </div>

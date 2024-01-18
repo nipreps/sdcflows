@@ -3,7 +3,6 @@ sdcflows.workflows.fit package
 
 .. automodule:: sdcflows.workflows.fit
    :members:
-   :undoc-members:
    :show-inheritance:
 
 Submodules
@@ -12,6 +11,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   sdcflows.workflows.fit.base
    sdcflows.workflows.fit.fieldmap
    sdcflows.workflows.fit.pepolar
    sdcflows.workflows.fit.syn

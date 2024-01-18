@@ -3,5 +3,4 @@ sdcflows.workflows.fit.syn module
 
 .. automodule:: sdcflows.workflows.fit.syn
    :members:
-   :undoc-members:
    :show-inheritance:

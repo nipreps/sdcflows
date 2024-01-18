@@ -170,11 +170,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -192,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -207,6 +212,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -896,7 +902,7 @@
 
 <div class="viewcode-block" id="disp_to_fmap">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.disp_to_fmap">[docs]</a>
-<span class="k">def</span> <span class="nf">disp_to_fmap</span><span class="p">(</span><span class="n">xyz_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">disp_to_fmap</span><span class="p">(</span><span class="n">xyz_nii</span><span class="p">,</span> <span class="n">epi_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a displacements field into a fieldmap in Hz.</span>
 
@@ -904,12 +910,14 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    xyz_nii : :obj:`os.pathlike`</span>
-<span class="sd">        Path to a displacements field in NIfTI format.</span>
+<span class="sd">    xyz_nii : :class:`nibabel.Nifti1Image`</span>
+<span class="sd">        Displacements field in NIfTI format.</span>
+<span class="sd">    epi_nii : :class:`nibabel.Nifti1Image`</span>
+<span class="sd">        Source EPI image.</span>
 <span class="sd">    ro_time : :obj:`float`</span>
-<span class="sd">        The total readout time in seconds.</span>
+<span class="sd">        The total readout time of the EPI image in seconds.</span>
 <span class="sd">    pe_dir : :obj:`str`</span>
-<span class="sd">        The ``PhaseEncodingDirection`` metadata value.</span>
+<span class="sd">        The ``PhaseEncodingDirection`` metadata value of the EPI image.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -923,12 +931,13 @@
         <span class="c1"># ITK displacement vectors are in LPS orientation</span>
         <span class="n">xyz_deltas</span><span class="p">[:,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
 
-    <span class="n">inv_aff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">xyz_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
-    <span class="n">inv_aff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Translations MUST NOT be applied.</span>
+    <span class="c1"># Use the EPI&#39;s affine to determine voxel spacing, axis ordering and flips</span>
+    <span class="n">inv_aff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">epi_nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
+    <span class="n">inv_mat</span> <span class="o">=</span> <span class="n">inv_aff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
 
     <span class="c1"># Convert displacements from mm to voxel units</span>
     <span class="c1"># Using the inverse affine accounts for reordering of axes, etc.</span>
-    <span class="n">ijk_deltas</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">inv_aff</span><span class="p">,</span> <span class="n">xyz_deltas</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">ijk_deltas</span> <span class="o">=</span> <span class="p">(</span><span class="n">xyz_deltas</span> <span class="o">@</span> <span class="n">inv_mat</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
     <span class="n">pe_axis</span> <span class="o">=</span> <span class="s2">&quot;ijk&quot;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">vsm</span> <span class="o">=</span> <span class="n">ijk_deltas</span><span class="p">[:,</span> <span class="n">pe_axis</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xyz_nii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
     <span class="n">scale_factor</span> <span class="o">=</span> <span class="o">-</span><span class="n">ro_time</span> <span class="k">if</span> <span class="n">pe_dir</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">ro_time</span>

@@ -171,11 +171,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -193,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -208,6 +213,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -308,9 +314,36 @@ the MRI image analysis and reproducibility platform offered by
 <li class="toctree-l2"><a class="reference internal" href="methods.html#references">References</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Standalone command line usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#options-related-to-bids">Options related to BIDS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#options-to-handle-performance">Options to handle performance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#instrumental-options">Instrumental options</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Library API (application program interface)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.cli.html">sdcflows.cli package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.config.html">sdcflows.config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#configuration-sections">Configuration sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#other-responsibilities">Other responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.dumps"><code class="docutils literal notranslate"><span class="pre">dumps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.environment"><code class="docutils literal notranslate"><span class="pre">environment</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.execution"><code class="docutils literal notranslate"><span class="pre">execution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.file_path"><code class="docutils literal notranslate"><span class="pre">file_path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.from_dict"><code class="docutils literal notranslate"><span class="pre">from_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.get"><code class="docutils literal notranslate"><span class="pre">get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.loggers"><code class="docutils literal notranslate"><span class="pre">loggers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.nipype"><code class="docutils literal notranslate"><span class="pre">nipype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.restore_env"><code class="docutils literal notranslate"><span class="pre">restore_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.to_filename"><code class="docutils literal notranslate"><span class="pre">to_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.config.html#sdcflows.config.workflow"><code class="docutils literal notranslate"><span class="pre">workflow</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.data.html">sdcflows.data package</a><ul>
@@ -356,6 +389,8 @@ the MRI image analysis and reproducibility platform offered by
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changes.html">What’s new?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#january-10-2024">2.8.0 (January 10, 2024)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#december-18-2023">2.7.0 (December 18, 2023)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changes.html#november-10-2023">2.6.0 (November 10, 2023)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changes.html#november-09-2023">2.5.2 (November 09, 2023)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changes.html#june-08-2023">2.5.1 (June 08, 2023)</a></li>

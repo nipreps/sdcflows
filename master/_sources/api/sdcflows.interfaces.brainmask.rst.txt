@@ -3,5 +3,4 @@ sdcflows.interfaces.brainmask module
 
 .. automodule:: sdcflows.interfaces.brainmask
    :members:
-   :undoc-members:
    :show-inheritance:

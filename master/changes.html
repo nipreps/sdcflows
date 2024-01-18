@@ -171,11 +171,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Standalone command line usage</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.find_estimators.html">sdcflows.cli.find_estimators module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="api/sdcflows.config.html">sdcflows.config module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.data.html">sdcflows.data package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -193,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
 </ul>
@@ -208,6 +213,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
@@ -257,6 +263,37 @@
         <article role="main">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Link to this heading">#</a></h1>
+<section id="january-10-2024">
+<h2>2.8.0 (January 10, 2024)<a class="headerlink" href="#january-10-2024" title="Link to this heading">#</a></h2>
+<p>New feature release in the 2.8.0 series.</p>
+<p>This release fixes a bug in converting SyN-SDC displacements to fieldmaps,
+resulting in exaggerated corrections. As this makes changes to the structure
+of a workflow and the expected inputs of a workflow node, this release is
+considered a minor release.</p>
+<ul class="simple">
+<li><p>FIX: Derive field from SyN displacements using EPI affine (#421)</p></li>
+<li><p>FIX: Change <code class="docutils literal notranslate"><span class="pre">os.basename</span></code> to <code class="docutils literal notranslate"><span class="pre">os.path.basename</span></code> (#419)</p></li>
+<li><p>DOC: Add &#64;smeisler to contributors (#420)</p></li>
+</ul>
+</section>
+<section id="december-18-2023">
+<h2>2.7.0 (December 18, 2023)<a class="headerlink" href="#december-18-2023" title="Link to this heading">#</a></h2>
+<p>New feature release in the 2.7.0 series.</p>
+<p>This release includes an updated CLI, which allows <code class="docutils literal notranslate"><span class="pre">sdcflows</span></code> to be
+run as a BIDS App. To achieve the previous behavior of <code class="docutils literal notranslate"><span class="pre">sdcflows-find-estimators</span></code>,
+use the <code class="docutils literal notranslate"><span class="pre">-n</span></code> flag.</p>
+<p>Addtional bug fixes and enhancements are included.</p>
+<ul class="simple">
+<li><p>FIX: Drop header before resampling image to avoid unsafe cast (#415)</p></li>
+<li><p>FIX: Wrangler now ignores <code class="docutils literal notranslate"><span class="pre">part-phase</span></code> EPI files (#407)</p></li>
+<li><p>ENH: Standalone CLI now estimates fieldmaps (#408)</p></li>
+<li><p>ENH: Add support for ASL data (#411)</p></li>
+<li><p>ENH: Enable rendering of the Jupyter notebooks (#409)</p></li>
+<li><p>MNT: Migrate to PEP517/518 packaging (#410)</p></li>
+<li><p>CI: bump actions/setup-python from 4 to 5 (#412)</p></li>
+<li><p>CI: bump conda-incubator/setup-miniconda from 2 to 3 (#406)</p></li>
+</ul>
+</section>
 <section id="november-10-2023">
 <h2>2.6.0 (November 10, 2023)<a class="headerlink" href="#november-10-2023" title="Link to this heading">#</a></h2>
 <p>New feature release in the 2.6.0 series.</p>
@@ -914,6 +951,8 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#january-10-2024">2.8.0 (January 10, 2024)</a></li>
+<li><a class="reference internal" href="#december-18-2023">2.7.0 (December 18, 2023)</a></li>
 <li><a class="reference internal" href="#november-10-2023">2.6.0 (November 10, 2023)</a></li>
 <li><a class="reference internal" href="#november-09-2023">2.5.2 (November 09, 2023)</a></li>
 <li><a class="reference internal" href="#june-08-2023">2.5.1 (June 08, 2023)</a></li>
