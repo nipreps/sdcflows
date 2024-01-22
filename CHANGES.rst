@@ -1,6 +1,22 @@
+2.8.1 (January 22, 2024)
+========================
+Bug-fix release in the 2.8.x series.
+
+Fixes doc builds and CLI support for fieldmapless workflows.
+Introduces support for BIDS-URIs.
+
+* FIX: Enable fieldmapless by default in CLI (#426)
+* FIX: Pandoc requires Texlive to render LaTeX in notebook (#427)
+* FIX: New test ``test_wrangler_URIs`` had the wrong oracle (#425)
+* ENH: Resolve BIDS-URIs (#349)
+* TEST: Use less confusing function name for testing CLI with --dry-run (#424)
+* MNT: Bump actions/download-artifact from 3 to 4 (#418)
+* MNT: Bump actions/upload-artifact from 3 to 4 (#417)
+* CI: Move PR doc build into main doc build, add texlive to build dependencies (#428)
+
 2.8.0 (January 10, 2024)
 ========================
-New feature release in the 2.8.0 series.
+New feature release in the 2.8.x series.
 
 This release fixes a bug in converting SyN-SDC displacements to fieldmaps,
 resulting in exaggerated corrections. As this makes changes to the structure
