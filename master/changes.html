@@ -263,9 +263,25 @@
         <article role="main">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Link to this heading">#</a></h1>
+<section id="january-22-2024">
+<h2>2.8.1 (January 22, 2024)<a class="headerlink" href="#january-22-2024" title="Link to this heading">#</a></h2>
+<p>Bug-fix release in the 2.8.x series.</p>
+<p>Fixes doc builds and CLI support for fieldmapless workflows.
+Introduces support for BIDS-URIs.</p>
+<ul class="simple">
+<li><p>FIX: Enable fieldmapless by default in CLI (#426)</p></li>
+<li><p>FIX: Pandoc requires Texlive to render LaTeX in notebook (#427)</p></li>
+<li><p>FIX: New test <code class="docutils literal notranslate"><span class="pre">test_wrangler_URIs</span></code> had the wrong oracle (#425)</p></li>
+<li><p>ENH: Resolve BIDS-URIs (#349)</p></li>
+<li><p>TEST: Use less confusing function name for testing CLI with –dry-run (#424)</p></li>
+<li><p>MNT: Bump actions/download-artifact from 3 to 4 (#418)</p></li>
+<li><p>MNT: Bump actions/upload-artifact from 3 to 4 (#417)</p></li>
+<li><p>CI: Move PR doc build into main doc build, add texlive to build dependencies (#428)</p></li>
+</ul>
+</section>
 <section id="january-10-2024">
 <h2>2.8.0 (January 10, 2024)<a class="headerlink" href="#january-10-2024" title="Link to this heading">#</a></h2>
-<p>New feature release in the 2.8.0 series.</p>
+<p>New feature release in the 2.8.x series.</p>
 <p>This release fixes a bug in converting SyN-SDC displacements to fieldmaps,
 resulting in exaggerated corrections. As this makes changes to the structure
 of a workflow and the expected inputs of a workflow node, this release is
@@ -951,6 +967,7 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#january-22-2024">2.8.1 (January 22, 2024)</a></li>
 <li><a class="reference internal" href="#january-10-2024">2.8.0 (January 10, 2024)</a></li>
 <li><a class="reference internal" href="#december-18-2023">2.7.0 (December 18, 2023)</a></li>
 <li><a class="reference internal" href="#november-10-2023">2.6.0 (November 10, 2023)</a></li>
