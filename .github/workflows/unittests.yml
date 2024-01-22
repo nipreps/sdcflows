@@ -37,7 +37,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: /var/lib/apt
         key: apt-cache-v3
@@ -53,7 +53,7 @@ jobs:
                         libglu1-mesa-dev libglw1-mesa     \
                         libxm4 build-essential
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: /opt/afni
         key: afni-v1
@@ -66,7 +66,7 @@ jobs:
           tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
         fi
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: /opt/ants
         key: ants-v1
@@ -90,7 +90,7 @@ jobs:
         auto-activate-base: true
         python-version: ${{ matrix.python-version }}
         channels: anaconda,https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       id: conda
       env:
         CACHE_NUM: v4
@@ -115,7 +115,7 @@ jobs:
         pip install .[tests]
 
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/templateflow
         key: tf-cache-v1
@@ -125,7 +125,7 @@ jobs:
       run: |
         python tools/cache_templateflow.py
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ${{ env.TEST_DATA_HOME }}
         key: data-cache-v1
