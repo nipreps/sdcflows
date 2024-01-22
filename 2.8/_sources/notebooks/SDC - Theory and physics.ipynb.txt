@@ -1,0 +1,487 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "f5728fa4",
+   "metadata": {},
+   "source": [
+    "# Susceptibility Distortions (and Correction) in a nutshell\n",
+    "\n",
+    "This notebook is an attempt to produce educational materials that would help an MRI beginner understand the problem of SD(C)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "031f06b5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "bd6b80c5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from matplotlib import pyplot as plt\n",
+    "from mpl_toolkits.axes_grid1.inset_locator import inset_axes\n",
+    "\n",
+    "plt.rcParams[\"figure.figsize\"] = (12, 9)\n",
+    "plt.rcParams[\"xtick.bottom\"] = False\n",
+    "plt.rcParams[\"xtick.labelbottom\"] = False\n",
+    "plt.rcParams[\"ytick.left\"] = False\n",
+    "plt.rcParams[\"ytick.labelleft\"] = False"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "69f6df9e",
+   "metadata": {},
+   "source": [
+    "Some tools we will need:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "900e432b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from itertools import product\n",
+    "import numpy as np\n",
+    "from scipy import ndimage as ndi\n",
+    "import nibabel as nb\n",
+    "from templateflow.api import get"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e41f635f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def get_centers(brain_slice):\n",
+    "    samples_x = np.arange(6, brain_slice.shape[1] - 3, step=12).astype(int)\n",
+    "    samples_y = np.arange(6, brain_slice.shape[0] - 3, step=12).astype(int)\n",
+    "    return zip(*product(samples_x, samples_y))\n",
+    "    \n",
+    "\n",
+    "def plot_brain(brain_slice, brain_cmap=\"RdPu_r\", grid=False, voxel_centers_c=None):\n",
+    "    fig, ax = plt.subplots()\n",
+    "\n",
+    "    # Plot image\n",
+    "    ax.imshow(brain_slice, cmap=brain_cmap, origin=\"lower\");\n",
+    "\n",
+    "    # Generate focus axes\n",
+    "    axins = inset_axes(\n",
+    "        ax,\n",
+    "        width=\"200%\",\n",
+    "        height=\"100%\",\n",
+    "        bbox_to_anchor=(1.05, .6, .5, .4),\n",
+    "        bbox_transform=ax.transAxes,\n",
+    "        loc=2,\n",
+    "    )\n",
+    "    axins.set_aspect(\"auto\")\n",
+    "\n",
+    "    # sub region of the original image\n",
+    "    x1, x2 = (np.array((-30, 30)) + (z_s.shape[1] - 1) * 0.5).astype(int)\n",
+    "    y1, y2 = np.round(np.array((-15, 15)) + (z_s.shape[0] - 1) * 0.70).astype(int)\n",
+    "\n",
+    "    axins.imshow(brain_slice[y1:y2, x1:x2], extent=(x1, x2, y1, y2), cmap=brain_cmap, origin=\"lower\");\n",
+    "    axins.set_xlim(x1, x2)\n",
+    "    axins.set_ylim(y1, y2)\n",
+    "    axins.set_xticklabels([])\n",
+    "    axins.set_yticklabels([])\n",
+    "\n",
+    "    ax.indicate_inset_zoom(axins, edgecolor=\"black\");\n",
+    "\n",
+    "        \n",
+    "    if grid:\n",
+    "        params = {}\n",
+    "        if voxel_centers_c is not None:\n",
+    "            params[\"c\"] = voxel_centers_c\n",
+    "            params[\"cmap\"] = \"seismic\"\n",
+    "\n",
+    "        # Voxel centers\n",
+    "        ax.scatter(*get_centers(brain_slice), s=20, **params)\n",
+    "        axins.scatter(*get_centers(brain_slice), s=80, **params)\n",
+    "\n",
+    "        # Voxel edges\n",
+    "        e_i = np.arange(0, z_slice.shape[1], step=12).astype(int)\n",
+    "        e_j = np.arange(0, z_slice.shape[0], step=12).astype(int)\n",
+    "\n",
+    "        # Plot grid\n",
+    "        ax.plot([e_i[1:-1]] * len(e_j), e_j, c='k', lw=1, alpha=0.3);\n",
+    "        ax.plot(e_i, [e_j[1:-1]] * len(e_i), c='k', lw=1, alpha=0.3);\n",
+    "        axins.plot([e_i[1:-1]] * len(e_j), e_j, c='k', lw=1, alpha=0.3);\n",
+    "        axins.plot(e_i, [e_j[1:-1]] * len(e_i), c='k', lw=1, alpha=0.3);\n",
+    "        \n",
+    "    return fig, ax, axins"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f2f95db1",
+   "metadata": {},
+   "source": [
+    "## Data: a brain\n",
+    "\n",
+    "Let's start getting some brain image model to work with, select a particular axial slice at the middle of it and visualize it."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e5f439e3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data = np.asanyarray(nb.load(get(\"MNI152NLin2009cAsym\", desc=\"brain\", resolution=1, suffix=\"T1w\")).dataobj);"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4b65f3fe",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "z_slice = np.swapaxes(data[..., 90], 0, 1).astype(\"float32\")\n",
+    "z_s = z_slice.copy()\n",
+    "z_slice[z_slice == 0] = np.nan"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a3e1240b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plot_brain(z_slice);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0e5d1d04",
+   "metadata": {},
+   "source": [
+    "### Sampling that brain and MRI\n",
+    "\n",
+    "MRI will basically define an extent of phyisical space inside the scanner bore that will be imaged (field-of-view, Fov). That continuous space will be discretized into a number of voxels, and the signal corresponding to each voxel (a voxel is a *volume element*) will be measured at the center of the voxel (blue dots in the picture)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "39451ae7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plot_brain(np.ones_like(z_slice) * np.nan, grid=True);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0662a703",
+   "metadata": {},
+   "source": [
+    "Which means, this discretization of the space inside the scanner will be imposed on the imaged object (a brain in our case):"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "acb35b9f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plot_brain(z_slice, grid=True);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d9feb405",
+   "metadata": {},
+   "source": [
+    "### The $B_\\text{0}$ field is not absolutely uniform\n",
+    "\n",
+    "Indeed, inserting an object in the scanner bore perturbs the nominal $B_\\text{0}$ field, which should be constant all across the FoV (e.g., 3.0 T in all the voxels above, if your scanner is 3T).\n",
+    "\n",
+    "In particular, some specific locations where the air filling the empty space around us is close to tissues, these deviations from the nominal $B_\\text{0}$ are larger."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "668ea6a6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "field = np.asanyarray(nb.load(\"fieldmap.nii.gz\").dataobj)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3cbfad11",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig, ax, axins = plot_brain(z_slice, grid=True)\n",
+    "ax.imshow(field, cmap=\"seismic\", origin=\"lower\", alpha=np.ones_like(field) * 0.3);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "18ec6e3b",
+   "metadata": {},
+   "source": [
+    "Then, we can measure (in reality, approximate or estimate) how much off each voxel of our grid deviates from the nominal field strength. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1ee31e08",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "x_coord, y_coord = get_centers(z_slice)\n",
+    "sampled_field = field[y_coord, x_coord]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "396081d6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig, ax, axins = plot_brain(np.ones_like(z_slice) * np.nan, grid=True, voxel_centers_c=sampled_field)\n",
+    "ax.imshow(field, cmap=\"seismic\", origin=\"lower\", alpha=np.ones_like(field) * 0.3);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "84bb7aca",
+   "metadata": {},
+   "source": [
+    "Those sampled deviations from the nominal field ($\\Delta B_\\text{0}$) can be plotted on top of our brain slice, to see where voxels are fairly close to their nominal value (e.g., those two white dots in the ventricles at the middle) and those furtherr from it (e.g., two voxels towards the anterior commissure which are very reddish)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e62a83e0",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig, ax, axins = plot_brain(z_slice, grid=True, voxel_centers_c=sampled_field)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e453750f",
+   "metadata": {},
+   "source": [
+    "### The second ingredient of the distortion cocktail - acquisition trade-offs\n",
+    "\n",
+    "In addition to that issue, this problem becomes only apparent when some of the encoding directions has very limited bandwidth. Normally, anatomical images (MPRAGE, MP2RAGE, T2-SPACE, SPGR, etc.) have sufficient bandwidth in all encoding axes so that distortions are not appreciable.\n",
+    "\n",
+    "However, echo-planar imaging (EPI) is designed to acquire extremelly fast - at the cost of reducing the bandwidth of the phase encoding direction.\n",
+    "\n",
+    "When we have this limitation, the scanner *will think* it's sampling at the regular grid above, but in turn, the signal will be coming from slightly displaced locations along the phase-encoding (PE) axis, that is, the encoding axis with lowest bandwidth (acquired fastest).\n",
+    "\n",
+    "The formulae governing this distortion are described in the [*SDCFlows* documentation](https://www.nipreps.org/sdcflows/master/methods.html#methods-and-implementation)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "cc305def",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "trt = - 0.15  # in seconds"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "daf70d82",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig, ax, axins = plot_brain(z_slice, grid=False)\n",
+    "\n",
+    "# Voxel edges\n",
+    "e_i = np.arange(0, z_slice.shape[1], step=12).astype(int)\n",
+    "e_j = np.arange(0, z_slice.shape[0], step=12).astype(int)\n",
+    "\n",
+    "y_coord_moved = y_coord + trt * sampled_field\n",
+    "is_in_fov = (y_coord_moved > 0) & (y_coord_moved < field.shape[0] - 1)\n",
+    "ax.scatter(np.array(x_coord)[is_in_fov], y_coord_moved[is_in_fov], c=sampled_field[is_in_fov], s=20, cmap=\"seismic\")\n",
+    "ax.plot([e_i[1:-1]] * len(e_j), e_j, c='k', lw=1, alpha=0.3);\n",
+    "\n",
+    "axins.scatter(np.array(x_coord)[is_in_fov], y_coord_moved[is_in_fov], c=sampled_field[is_in_fov], s=80, cmap=\"seismic\")\n",
+    "axins.plot([e_i[1:-1]] * len(e_j), e_j, c='k', lw=1, alpha=0.3);\n",
+    "\n",
+    "j_axis = np.arange(z_slice.shape[1], dtype=int)\n",
+    "\n",
+    "for i in e_j:\n",
+    "    warped_edges = i + trt * field[i, :]\n",
+    "    warped_edges[warped_edges <= 0] = np.nan\n",
+    "    warped_edges[warped_edges >= field.shape[0] - 1] = np.nan\n",
+    "    ax.plot(j_axis, warped_edges, c='k', lw=1, alpha=0.5);\n",
+    "    axins.plot(j_axis, warped_edges, c='k', lw=1, alpha=0.5);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c5ba00f3",
+   "metadata": {},
+   "source": [
+    "## The effects of this physical phenomenon\n",
+    "\n",
+    "Then the MRI device will execute the EPI scanning scheme, and sample at the locations given above. The result can be seen in the image below:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c0daa39a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "all_indexes = tuple([np.arange(s) for s in z_slice.shape])\n",
+    "all_ndindex = np.array(np.meshgrid(*all_indexes, indexing=\"ij\")).reshape(2, -1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "48a18834",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "all_ndindex_warped = all_ndindex.astype(\"float32\")\n",
+    "all_ndindex_warped[0, :] += trt * field.reshape(-1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a66a77e1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "warped_brain = ndi.map_coordinates(\n",
+    "    z_s,\n",
+    "    all_ndindex_warped,\n",
+    ").reshape(z_slice.shape)\n",
+    "plt.imshow(warped_brain, origin=\"lower\", cmap=\"Greys_r\");"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bc2a01f0",
+   "metadata": {},
+   "source": [
+    "For reference, we can plot our MRI (grayscale colormap) fused with the original (ground-truth) anatomy."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a7006222",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.imshow(warped_brain, cmap=\"Greys_r\", origin=\"lower\")\n",
+    "plt.imshow(z_slice, cmap=\"RdPu_r\", alpha=0.5, origin=\"lower\");"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a5c67efb",
+   "metadata": {},
+   "source": [
+    "### The effect if the PE direction is reversed (\"negative blips\")\n",
+    "\n",
+    "Then, the distortion happens exactly on the opposed direction:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "62a33f4b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "all_ndindex_warped = all_ndindex.astype(\"float32\")\n",
+    "all_ndindex_warped[0, :] -= trt * field.reshape(-1)\n",
+    "\n",
+    "warped_brain = ndi.map_coordinates(\n",
+    "    z_s,\n",
+    "    all_ndindex_warped,\n",
+    ").reshape(z_slice.shape)\n",
+    "plt.imshow(warped_brain, cmap=\"Greys_r\", origin=\"lower\");"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e116767b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.imshow(warped_brain, cmap=\"Greys_r\")\n",
+    "plt.imshow(z_slice, cmap=\"RdPu_r\", alpha=0.5, origin=\"lower\");"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "56135fde",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "edd9e0a4",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

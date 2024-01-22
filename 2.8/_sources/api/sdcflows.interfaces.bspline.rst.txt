@@ -1,0 +1,6 @@
+sdcflows.interfaces.bspline module
+==================================
+
+.. automodule:: sdcflows.interfaces.bspline
+   :members:
+   :show-inheritance:
