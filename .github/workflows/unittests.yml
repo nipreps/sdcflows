@@ -177,7 +177,8 @@ jobs:
         export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
         pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
 
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v4
       with:
         file: cov.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
       if: ${{ always() }}
