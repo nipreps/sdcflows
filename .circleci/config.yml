@@ -178,12 +178,17 @@ jobs:
                 docker tag localhost:5000/sdcflows nipreps/sdcflows
             else
                 LATEST=$( git describe --abbrev=0 )
-                echo "Pulling nipreps/sdcflows:$LATEST from Docker Hub"
                 docker pull ubuntu:xenial-20191010
                 docker tag ubuntu:xenial-20191010 localhost:5000/ubuntu
                 docker push localhost:5000/ubuntu
-                docker pull nipreps/sdcflows:$LATEST
-                docker tag nipreps/sdcflows:$LATEST nipreps/sdcflows:latest
+                if docker pull nipreps/sdcflows:$LATEST; then
+                    echo "Pulling nipreps/sdcflows:$LATEST from Docker Hub"
+                    docker tag nipreps/sdcflows:$LATEST nipreps/sdcflows:latest
+                else
+                    echo "Falling back to nipreps/sdcflows:1.3.3"
+                    docker pull nipreps/sdcflows:1.3.3
+                    docker tag nipreps/sdcflows:1.3.3 nipreps/sdcflows:latest
+                fi
             fi
       - run:
           name: Build Docker image
