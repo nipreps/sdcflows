@@ -106,8 +106,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .BuildNum }}
-            - freesurfer-v1-
+            - freesurfer-v0-{{ .BuildNum }}
+            - freesurfer-v0-
       - run:
           name: Pull FreeSurfer down
           command: |
@@ -243,8 +243,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - freesurfer-v1-{{ .BuildNum }}
-            - freesurfer-v1-
+            - freesurfer-v0-{{ .BuildNum }}
+            - freesurfer-v0-
       - restore_cache:
           keys:
             - data-v2-{{ .Branch }}-
