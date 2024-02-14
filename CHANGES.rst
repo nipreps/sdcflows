@@ -1,3 +1,9 @@
+1.3.5 (February 14, 2024)
+=========================
+Bug-fix release in 1.3.x series.
+
+* FIX: Remove unused ANTs parameter that was removed in 2.4.1 (#431)
+
 1.3.4 (July 07, 2023)
 =====================
 Bug-fix release in 1.3.x series.
