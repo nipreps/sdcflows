@@ -1,37 +1,3 @@
-docs_deploy: &docs
-  docker:
-    - image: node:8.10.0
-  working_directory: /tmp/gh-pages
-  steps:
-    - run:
-        name: Check whether this is the original repo
-        command: |
-          if [[ "$CIRCLE_PROJECT_USERNAME" != "nipreps" ]]; then
-              echo "Not in nipreps/sdcflows - skipping docs deploy."
-              circleci step halt
-          fi
-    - add_ssh_keys:
-        fingerprints:
-          - "46:48:1e:6d:00:0e:f2:f8:e5:aa:b9:aa:da:eb:59:4e"
-    - run:
-        name: Install gh-pages tool
-        command: |
-          npm install -g --silent gh-pages@2.0.1
-    - checkout
-    - run:
-        name: Set git settings
-        command: |
-          git config user.email "nipreps@gmail.com"
-          git config user.name "Documentation Push"
-    - attach_workspace:
-        at: docs/_build
-    - run:
-        name: Disable jekyll builds
-        command: touch docs/_build/html/.nojekyll
-    - run:
-        name: Deploy docs to gh-pages branch
-        command: gh-pages --dotfiles --message "doc(update) [skip ci]" --dist docs/_build/html
-
 version: 2.1
 orbs:
   docker: circleci/docker@1.6.0
@@ -301,70 +267,6 @@ jobs:
       - store_test_results:
           path: /tmp/tests
 
-  build_docs:
-    docker:
-      - image: cimg/python:3.9.16
-    working_directory: /tmp/gh-pages
-    environment:
-      - FSLOUTPUTTYPE: NIFTI
-      - SUBJECTS_DIR: /tmp/subjects
-    steps:
-      - checkout
-      - run:
-          name: Create subjects folder
-          command: mkdir -p $SUBJECTS_DIR
-      - run:
-          name: Install Graphviz
-          command: sudo apt-get update && sudo apt-get -y install --no-install-recommends graphviz
-      - run:
-          name: Install deps
-          command: |
-            pip install --no-cache-dir -r docs/requirements.txt
-            pip install --no-cache-dir "setuptools_scm[toml]"
-            python -m setuptools_scm
-      - run:
-          name: Build only this commit
-          command: make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=no_version_html html
-      - store_artifacts:
-          path: /home/circleci/docs/no_version_html
-          destination: noversion
-      - run:
-          name: Stop or generate versioned docs?
-          command: |
-            set +e
-            force_versioned="$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[docs?[ _]?versions?\]' )"
-            set -e
-            if [[ "x${CIRCLE_TAG}" = "x" && "${CIRCLE_BRANCH}" != "master" && "x${force_versioned}" = "x" ]]; then
-              echo "Not a tag or master branch - skipping versioned docs."
-              circleci step halt
-            fi
-      - run:
-          name: Clean-up nonversioned docs.
-          command: make -C docs clean
-      - restore_cache:
-          keys:
-            - docs-v2-{{ .Branch }}-{{ .Revision }}
-            - docs-v2-{{ .Branch }}-
-            - docs-v2-maint/1.3.x
-            - docs-v2-
-          paths:
-            - ./docs/_build
-      - run:
-          name: Generate Versioned Docs
-          command: |
-            BRANCH=$( echo $CIRCLE_BRANCH | sed 's+/+_+g' )
-            make -C docs SPHINXOPTS="-W" BUILDDIR="$HOME/docs" OUTDIR=${CIRCLE_TAG:-$BRANCH} html
-      - save_cache:
-          key: docs-v2-{{ .Branch }}-{{ .Revision }}
-          paths:
-            - ./docs/_build
-      - persist_to_workspace:
-          root: docs/_build
-          paths: html
-      - store_artifacts:
-          path: ./docs/_build/html/html
-          destination: versioned
-
   deploy_docker:
     machine:
       image: ubuntu-2204:2022.10.2
@@ -460,9 +362,6 @@ jobs:
             python3 -m twine check dist/*
             python3 -m twine upload dist/* --non-interactive
 
-  deploy_docs_tag:
-    <<: *docs
-
 workflows:
   version: 2
   build_deploy:
@@ -503,7 +402,6 @@ workflows:
           context:
             - nipreps-common
           requires:
-            - build_docs
             - test_package
             - build_n_pytest
           filters:
@@ -517,23 +415,6 @@ workflows:
             - nipreps-common
           requires:
             - deploy_pypi
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
-
-      - build_docs:
-          filters:
-            branches:
-              ignore:
-                - /tests?\/.*/
-            tags:
-              only: /.*/
-
-      - deploy_docs_tag:
-          requires:
-            - deploy_docker
           filters:
             branches:
               ignore: /.*/
