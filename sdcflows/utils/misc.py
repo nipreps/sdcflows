@@ -234,3 +234,136 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
     mask_img.to_filename(out_file)
 
     return out_file
+
+
+def calculate_diffs(mag_file, phase_file):
+    import nibabel as nb
+    import numpy as np
+
+    mag_img = nb.load(mag_file)
+    phase_img = nb.load(phase_file)
+    mag_data = mag_img.get_fdata()
+    phase_data = phase_img.get_fdata()
+    signal_diff = (
+        mag_data[..., 0]
+        * mag_data[..., 1]
+        * np.exp(1j * (phase_data[..., 1] - phase_data[..., 0]))
+    )
+    mag_diff = np.abs(signal_diff)
+    phase_diff = np.angle(signal_diff)
+    mag_diff_img = nb.Nifti1Image(mag_diff, mag_img.affine, mag_img.header)
+    phase_diff_img = nb.Nifti1Image(phase_diff, phase_img.affine, phase_img.header)
+    mag_diff_file = "mag_diff.nii.gz"
+    phase_diff_file = "phase_diff.nii.gz"
+    mag_diff_img.to_filename(mag_diff_file)
+    phase_diff_img.to_filename(phase_diff_file)
+    return mag_diff_file, phase_diff_file
+
+
+def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file):
+    import nibabel as nb
+    import numpy as np
+
+    FMAP_PROPORTION_HEURISTIC = 0.25
+    FMAP_AMBIGUOUS_HEURISTIC = 0.5
+
+    mag_img = nb.load(mag_file)
+    phase_img = nb.load(phase_file)
+    unwrapped_diff = nb.load(unwrapped_diff_file).get_fdata()
+    mask = nb.load(mask_file).get_fdata().astype(bool)
+    mag_data = mag_img.get_fdata()
+    phase_data = phase_img.get_fdata()
+    TE0, TE1 = echo_times[:2]
+    phase0 = phase_data[..., 0]
+    phase1 = phase_data[..., 1]
+    mag0 = mag_data[..., 0]
+    mag1 = mag_data[..., 1]
+    voxel_mask = create_brain_mask(mag0, -2)
+    phases = np.stack([phase0, phase1], axis=-1)
+    mags = np.stack([mag0, mag1], axis=-1)
+    TEs = np.array([TE0, TE1])
+    all_TEs = np.array([0.0, TE0, TE1])
+    proposed_offset = np.angle(np.exp(1j * (phase0 - ((TE0 * unwrapped_diff) / (TE1 - TE0)))))
+
+    # get the new phases
+    proposed_phases = phases - proposed_offset[..., np.newaxis]
+
+    # compute the fieldmap
+    proposed_fieldmap, proposed_unwrapped_phases = get_dual_echo_fieldmap(
+        proposed_phases, TEs, mags, mask
+    )
+
+    # check if the proposed fieldmap is below 10
+    # print(f"proposed_fieldmap: {proposed_fieldmap[voxel_mask].mean()}")
+    if proposed_fieldmap[voxel_mask].mean() < -10:
+        unwrapped_diff += 2 * np.pi
+    # check if the propossed fieldmap is between -10 and 0
+    elif proposed_fieldmap[voxel_mask].mean() < 0 and not wrap_limit:
+        # look at proportion of voxels that are positive
+        voxel_prop = (
+            np.count_nonzero(proposed_fieldmap[voxel_mask] > 0)
+            / proposed_fieldmap[voxel_mask].shape[0]
+        )
+
+        # if the proportion of positive voxels is less than 0.25, then add 2pi
+        if voxel_prop < FMAP_PROPORTION_HEURISTIC:
+            unwrapped_diff += 2 * np.pi
+        elif voxel_prop < FMAP_AMBIGUOUS_HEURISTIC:
+            # compute mean of phase offset
+            mean_phase_offset = proposed_offset[voxel_mask].mean()
+            # print(f"mean_phase_offset: {mean_phase_offset}")
+            # if less than -1 then
+            if mean_phase_offset < -1:
+                phase_fits = np.concatenate(
+                    (
+                        np.zeros((*proposed_unwrapped_phases.shape[:-1], 1)),
+                        proposed_unwrapped_phases,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_1, _, _, _ = np.polyfit(
+                    all_TEs,
+                    phase_fits[voxel_mask, :].T,
+                    1,
+                    full=True,
+                )
+
+                # check if adding 2pi makes it better
+                new_proposed_offset = np.angle(
+                    np.exp(1j * (phase0 - ((TE0 * (unwrapped_diff + 2 * np.pi)) / (TE1 - TE0))))
+                )
+                new_proposed_phases = phases - new_proposed_offset[..., np.newaxis]
+                new_proposed_fieldmap, new_proposed_unwrapped_phases = get_dual_echo_fieldmap(
+                    new_proposed_phases, TEs, mags, mask
+                )
+
+                # fit linear model to the proposed phases
+                new_phase_fits = np.concatenate(
+                    (
+                        np.zeros((*new_proposed_unwrapped_phases.shape[:-1], 1)),
+                        new_proposed_unwrapped_phases,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_2, _, _, _ = np.polyfit(
+                    echo_times, new_phase_fits[voxel_mask, :].T, 1, full=True
+                )
+
+                if (
+                    np.isclose(residuals_1.mean(), residuals_2.mean(), atol=1e-3, rtol=1e-3)
+                    and new_proposed_fieldmap[voxel_mask].mean() > 0
+                ):
+                    unwrapped_diff += 2 * np.pi
+                else:
+                    unwrapped_diff -= 2 * np.pi
+
+    # compute the phase offset
+    offset = np.angle(np.exp(1j * (phase0 - ((TE0 * unwrapped_diff) / (TE1 - TE0)))))
+
+    new_unwrapped_diff_file = "unwrapped_diff.nii.gz"
+    offset_file = "offset.nii.gz"
+    nb.Nifti1Image(offset, mag_img.affine, mag_img.header).to_filename(offset_file)
+    nb.Nifti1Image(unwrapped_diff, mag_img.affine, mag_img.header).to_filename(
+        new_unwrapped_diff_file
+    )
+    return offset_file, new_unwrapped_diff_file

@@ -28,7 +28,7 @@ from nipype.interfaces.fsl import Split as FSLSplit
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from sdcflows.interfaces.fmap import PhaseMap2rads, ROMEO
-from sdcflows.utils.misc import medic_automask
+from sdcflows.utils.misc import calculate_diffs, medic_automask
 
 INPUT_FIELDS = ("magnitude", "phase", "metadata")
 
@@ -124,11 +124,25 @@ def init_medic_wf(
     )
     workflow.connect([(phase2rad, split_phase, [("out_file", "in_file")])])
 
-    concat_across_echoes = pe.Node(
+    concat_phase_across_echoes = pe.Node(
         niu.Merge(2),
-        name="concat_across_echoes",
+        name="concat_phase_across_echoes",
     )
-    workflow.connect([(split_phase, concat_across_echoes, [("out_files", "in1")])])
+    workflow.connect([(split_phase, concat_phase_across_echoes, [("out_files", "in1")])])
+
+    # Split magnitude data into single-frame, multi-echo 4D files
+    split_magnitude = pe.MapNode(
+        FSLSplit(dimension="t"),
+        iterfield=["in_file"],
+        name="split_magnitude",
+    )
+    workflow.connect([(inputnode, split_magnitude, [("magnitude", "in_file")])])
+
+    concat_magnitude_across_echoes = pe.Node(
+        niu.Merge(2),
+        name="concat_magnitude_across_echoes",
+    )
+    workflow.connect([(split_magnitude, concat_magnitude_across_echoes, [("out_files", "in1")])])
 
     mask_buffer = pe.Node(
         niu.IdentityInterface(fields=["mask_file"]),
@@ -146,8 +160,8 @@ def init_medic_wf(
             iterfield=["in_file"],
         )
         workflow.connect([
-            (inputnode, voxqual, [("magnitude", "mag_file")]),
-            (concat_across_echoes, voxqual, [("out", "phase_file")]),
+            (concat_magnitude_across_echoes, voxqual, [("out", "mag_file")]),
+            (concat_phase_across_echoes, voxqual, [("out", "phase_file")]),
         ])  # fmt:skip
 
         # Then use skimage's otsu thresholding to get a mask
@@ -163,7 +177,7 @@ def init_medic_wf(
         automask_medic.inputs.echo_times = echo_times
         automask_medic.inputs.automask_dilation = automask_dilation
         workflow.connect([
-            (inputnode, automask_medic, [("magnitude", "mag_file")]),
+            (concat_magnitude_across_echoes, automask_medic, [("out", "mag_file")]),
             (voxqual, automask_medic, [("quality_file", "voxel_quality")]),
             (automask_medic, mask_buffer, [("out_file", "mask_file")]),
         ])  # fmt:skip
@@ -171,6 +185,19 @@ def init_medic_wf(
         mask_buffer.inputs.mask_file = "NULL"
 
     # Do MCPC-3D-S algo to compute phase offset
+    create_diffs = pe.MapNode(
+        niu.Function(
+            input_names=["mag_file", "phase_file"],
+            output_names=["diff_file"],
+            function=calculate_diffs,
+        ),
+        iterfield=["mag_file", "phase_file"],
+        name="create_diffs",
+    )
+    workflow.connect([
+        (concat_magnitude_across_echoes, create_diffs, [("out", "mag_file")]),
+        (concat_phase_across_echoes, create_diffs, [("out", "phase_file")]),
+    ])  # fmt:skip
 
     # Unwrap phase data with ROMEO
     unwrap_phase = pe.MapNode(
@@ -182,7 +209,7 @@ def init_medic_wf(
         ),
         name="unwrap_phase",
     )
-    workflow.connect([(concat_across_echoes, unwrap_phase, [("out", "phase_file")])])
+    workflow.connect([(concat_phase_across_echoes, unwrap_phase, [("out", "phase_file")])])
 
     # Re-split the unwrapped phase data
 
