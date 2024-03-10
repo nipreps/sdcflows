@@ -29,6 +29,8 @@ from nipype.utils.filemanip import fname_presuffix
 from nipype import logging
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
+    CommandLineInputSpec,
+    CommandLine,
     TraitedSpec,
     File,
     traits,
@@ -390,3 +392,116 @@ def _check_gross_geometry(
             f"{img1.get_filename()} {''.join(nb.aff2axcodes(img1.affine))}, "
             f"{img2.get_filename()} {''.join(nb.aff2axcodes(img2.affine))}"
         )
+
+
+class _ROMEOInputSpec(CommandLineInputSpec):
+    """Input specification for ApplyAffine."""
+
+    phase_file = File(
+        exists=True,
+        mandatory=True,
+        argstr="--phase %s",
+        position=0,
+        desc="The phase image that should be unwrapped",
+    )
+    mag_file = File(
+        exists=True,
+        mandatory=True,
+        argstr="--magnitude %s",
+        position=1,
+        desc="The magnitude image (better unwrapping if specified)",
+    )
+    out_file = File(
+        argstr="--output %s",
+        default_value="unwrapped.nii",
+        usedefault=True,
+        position=2,
+        desc="The output path or filename (default: unwrapped.nii)"
+    )
+    echo_times = traits.List(
+        traits.Float,
+        argstr="--echo-times %s",
+        desc=(
+            "The echo times required for temporal unwrapping specified in array or range syntax "
+            "(e.g., '[1.5,3.0]' or '3.5:3.5:14'). "
+            "For identical echo times, '-t epi' can be used with the possibility to specify the "
+            "echo time as e.g. '-t epi 5.3' (for B0 calculation)."
+        )
+    )
+    mask = traits.List(
+        traits.Either(
+            File(exists=True),
+            traits.Enum(
+                "nomask",
+                "robustmask",
+            ),
+        ),
+        default_value="robustmask",
+        usedefault=True,
+        argstr="--mask %s",
+        desc=(
+            "nomask | qualitymask <threshold> | robustmask "
+            "| <mask_file>. <threshold>=0.1 for qualitymask "
+            "in [0;1] (default: ['robustmask']). "
+            "qualitymask <threshold> isn't supported in this interface."
+        ),
+    )
+    mask_unwrapped = traits.Bool(
+        argstr="--mask-unwrapped",
+        desc=(
+            "Apply the mask on the unwrapped result. "
+            "If mask is 'nomask', sets it to 'robustmask'."
+        ),
+    )
+    weights = traits.Enum(
+        "romeo",
+        "romeo2",
+        "romeo3",
+        "romeo4",
+        "romeo6",
+        "bestpath",
+        argstr="--weights %s",
+        desc=(
+            "romeo | romeo2 | romeo3 | romeo4 | romeo6 | "
+            "bestpath | <4d-weights-file> | <flags>. "
+            "<flags> are up to 6 bits to activate individual weights (eg. '1010'). "
+            "The weights are (1)phasecoherence (2)phasegradientcoherence "
+            "(3)phaselinearity (4)magcoherence (5)magweight (6)magweight2 "
+            "(default: 'romeo')."
+            "4d-weights-file and flags aren't supported in this interface."
+        )
+    )
+    calculate_b0 = traits.Bool(
+        argstr="--compute-B0",
+        desc=(
+            "Calculate combined B0 map in [Hz]. "
+            "This activates MCPC3Ds phase offset correction (monopolar) for multi-echo data."
+        ),
+    )
+    phase_offset_correction = traits.Enum(
+        "on",
+        "off",
+        "bipolar",
+        argstr="--phase-offset-correction %s",
+        desc=(
+            "on | off | bipolar. "
+            "Applies the MCPC3Ds method to perform phase offset determination and removal "
+            "(for multi-echo). "
+            "'bipolar' removes eddy current artefacts (requires >= 3 echoes). "
+            "(default: 'off', without arg: 'on')"
+        ),
+    )
+
+
+class _ROMEOOutputSpec(TraitedSpec):
+    """Output specification for ApplyAffine."""
+
+    out_file = File(exists=True, desc="output file")
+
+
+class ROMEO(CommandLine):
+    """Run ROMEO unwrapping."""
+
+    input_spec = _ROMEOInputSpec
+    output_spec = _ROMEOOutputSpec
+    _cmd = "romeo"
