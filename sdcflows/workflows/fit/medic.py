@@ -28,12 +28,15 @@ from nipype.interfaces.fsl import Split as FSLSplit
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from sdcflows.interfaces.fmap import PhaseMap2rads, ROMEO
+from sdcflows.utils.misc import medic_automask
 
 INPUT_FIELDS = ("magnitude", "phase", "metadata")
 
 
 def init_medic_wf(
+    echo_times,
     automask,
+    automask_dilation,
     omp_nthreads=1,
     sloppy=False,
     debug=False,
@@ -99,7 +102,7 @@ def init_medic_wf(
                 "xfms",
                 "out_warps",
                 "method",
-            ]
+            ],
         ),
         name="outputnode",
     )
@@ -127,29 +130,59 @@ def init_medic_wf(
     )
     workflow.connect([(split_phase, concat_across_echoes, [("out_files", "in1")])])
 
+    mask_buffer = pe.Node(
+        niu.IdentityInterface(fields=["mask_file"]),
+        name="mask_buffer",
+    )
     if automask:
         # the theory goes like this, the magnitude/otsu base mask can be too aggressive
         # occasionally and the voxel quality mask can get extra voxels that are not brain,
         # but is noisy so we combine the two masks to get a better mask
 
         # Use ROMEO's voxel-quality command
+        voxqual = pe.MapNode(
+            ROMEO(write_quality=True, echo_times=echo_times),
+            name="voxqual",
+            iterfield=["in_file"],
+        )
+        workflow.connect([
+            (inputnode, voxqual, [("magnitude", "mag_file")]),
+            (concat_across_echoes, voxqual, [("out", "phase_file")]),
+        ])  # fmt:skip
 
         # Then use skimage's otsu thresholding to get a mask
         # and do a bunch of other stuff
-        ...
+        automask_medic = pe.Node(
+            niu.Function(
+                input_names=["mag_file", "voxel_quality", "echo_times", "automask_dilation"],
+                output_names=["mask_file"],
+                function=medic_automask,
+            ),
+            name="automask_medic",
+        )
+        automask_medic.inputs.echo_times = echo_times
+        automask_medic.inputs.automask_dilation = automask_dilation
+        workflow.connect([
+            (inputnode, automask_medic, [("magnitude", "mag_file")]),
+            (voxqual, automask_medic, [("quality_file", "voxel_quality")]),
+            (automask_medic, mask_buffer, [("out_file", "mask_file")]),
+        ])  # fmt:skip
+    else:
+        mask_buffer.inputs.mask_file = "NULL"
 
     # Do MCPC-3D-S algo to compute phase offset
 
     # Unwrap phase data with ROMEO
     unwrap_phase = pe.MapNode(
         ROMEO(
+            echo_times=echo_times,
             weights="romeo",
             correct_global=True,
             maxseeds=1,
         ),
         name="unwrap_phase",
     )
-    workflow.connect([(concat_across_echoes, unwrap_phase, [("out", "in_file")])])
+    workflow.connect([(concat_across_echoes, unwrap_phase, [("out", "phase_file")])])
 
     # Re-split the unwrapped phase data
 
