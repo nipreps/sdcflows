@@ -399,23 +399,18 @@ class _ROMEOInputSpec(CommandLineInputSpec):
 
     phase_file = File(
         exists=True,
-        mandatory=True,
         argstr="--phase %s",
-        position=0,
         desc="The phase image that should be unwrapped",
     )
     mag_file = File(
         exists=True,
-        mandatory=True,
         argstr="--magnitude %s",
-        position=1,
         desc="The magnitude image (better unwrapping if specified)",
     )
     out_file = File(
         argstr="--output %s",
         default_value="unwrapped.nii",
         usedefault=True,
-        position=2,
         desc="The output path or filename (default: unwrapped.nii)"
     )
     echo_times = traits.List(
@@ -471,6 +466,7 @@ class _ROMEOInputSpec(CommandLineInputSpec):
             "4d-weights-file and flags aren't supported in this interface."
         )
     )
+    # TODO: Figure out what the output file would be and populate outputs.
     calculate_b0 = traits.Bool(
         argstr="--compute-B0",
         desc=(
@@ -489,6 +485,129 @@ class _ROMEOInputSpec(CommandLineInputSpec):
             "(for multi-echo). "
             "'bipolar' removes eddy current artefacts (requires >= 3 echoes). "
             "(default: 'off', without arg: 'on')"
+        ),
+    )
+    phase_offset_smoothing_sigma_mm = traits.List(
+        traits.Float,
+        minlen=3,
+        maxlen=3,
+        argstr="--phase-offset-smoothing-sigma-mm %s",
+        default_value=[7, 7, 7],
+        usedefault=True,
+        desc=(
+            "default: [7,7,7] "
+            "Only applied if phase-offset-correction is activated. "
+            "The given sigma size is divided by the voxel size from the nifti phase file "
+            "to obtain a smoothing size in voxels. "
+            "A value of [0,0,0] deactivates phase offset smoothing (not recommended)."
+        ),
+    )
+    # TODO: Figure out what the output file would be and populate outputs.
+    write_phase_offsets = traits.Bool(
+        argstr="--write-phase-offsets",
+        desc="Saves the estimated phase offsets to the output folder",
+    )
+    individual_unwrapping = traits.Bool(
+        argstr="--individual-unwrapping",
+        desc=(
+            "Unwraps the echoes individually (not temporal). "
+            "This might be necessary if there is large movement (timeseries) or "
+            "phase-offset-correction is not applicable."
+        ),
+    )
+    template_echo = traits.Int(
+        argstr="--template %d",
+        default_value=1,
+        usedefault=True,
+        desc=(
+            "Template echo that is spatially unwrapped and used for temporal unwrapping "
+            "(type: Int64, default: 1)"
+        ),
+    )
+    no_mmap = traits.Bool(
+        argstr="--no-mmap",
+        desc="Deactivate memory mapping. Memory mapping might cause problems on network storage",
+    )
+    no_rescale = traits.Bool(
+        argstr="--no-rescale",
+        desc=(
+            "Deactivate rescaling of input images. "
+            "By default the input phase is rescaled to the range [-π;π]. "
+            "This option allows inputting already unwrapped phase images without "
+            "manually wrapping them first."
+        ),
+    )
+    threshold = traits.Float(
+        argstr="--threshold %f",
+        desc=(
+            "<maximum number of wraps>. "
+            "Threshold the unwrapped phase to the maximum number of wraps and sets exceeding "
+            "values to 0 (type: Float64, default: Inf)"
+        ),
+    )
+    verbose = traits.Bool(
+        argstr="--verbose",
+        desc="verbose output messages",
+    )
+    correct_global = traits.Bool(
+        argstr="--correct-global",
+        desc=(
+            "Phase is corrected to remove global n2π phase offset. "
+            "The median of phase values (inside mask if given) is used to calculate the "
+            "correction term"
+        ),
+    )
+    # TODO: Figure out what the output file would be and populate outputs.
+    write_quality = traits.Bool(
+        argstr="--write-quality",
+        desc="Writes out the ROMEO quality map as a 3D image with one value per voxel",
+    )
+    # TODO: Figure out what the output files would be and populate outputs.
+    write_quality_all = traits.Bool(
+        argstr="--write-quality-all",
+        desc="Writes out an individual quality map for each of the ROMEO weights.",
+    )
+    max_seeds = traits.Int(
+        argstr="--max-seeds %d",
+        default_value=1,
+        usedefault=True,
+        desc=(
+            "EXPERIMENTAL! "
+            "Sets the maximum number of seeds for unwrapping. "
+            "Higher values allow more separated regions. "
+            "(type: Int64, default: 1)"
+        ),
+    )
+    merge_regions = traits.Bool(
+        argstr="--merge-regions",
+        desc="EXPERIMENTAL! Spatially merges neighboring regions after unwrapping.",
+    )
+    correct_regions = traits.Bool(
+        argstr="--correct-regions",
+        desc=(
+            "EXPERIMENTAL! "
+            "Performed after merging. "
+            "Brings the median of each region closest to 0 (mod 2π)."
+        ),
+    )
+    wrap_addition = traits.Float(
+        argstr="--wrap-addition %f",
+        desc=(
+            "[0;π] "
+            "EXPERIMENTAL! "
+            "Usually the true phase difference of neighboring voxels cannot exceed π "
+            "to be able to unwrap them. "
+            "This setting increases the limit and uses 'linear unwrapping' of 3 voxels in a line. "
+            "Neighbors can have (π + wrap-addition) phase difference. "
+            "(type: Float64, default: 0.0)"
+        ),
+    )
+    temporal_uncertain_unwrapping = traits.Bool(
+        argstr="--temporal-uncertain-unwrapping",
+        desc=(
+            "EXPERIMENTAL! "
+            "Uses spatial unwrapping on voxels that have high uncertainty values after "
+            "temporal unwrapping."
         ),
     )
 

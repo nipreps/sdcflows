@@ -142,7 +142,11 @@ def init_medic_wf(
 
     # Unwrap phase data with ROMEO
     unwrap_phase = pe.MapNode(
-        ROMEO(),
+        ROMEO(
+            weights="romeo",
+            correct_global=True,
+            maxseeds=1,
+        ),
         name="unwrap_phase",
     )
     workflow.connect([(concat_across_echoes, unwrap_phase, [("out", "in_file")])])
