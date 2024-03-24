@@ -34,6 +34,7 @@ INPUT_FIELDS = ("magnitude", "phase", "metadata")
 
 
 def init_medic_wf(
+    n_volumes,
     echo_times,
     automask,
     automask_dilation,
@@ -108,6 +109,8 @@ def init_medic_wf(
     )
     outputnode.inputs.method = "MEDIC"
 
+    n_echoes = len(echo_times)
+
     # Convert phase to radians (-pi to pi)
     phase2rad = pe.MapNode(
         PhaseMap2rads(),
@@ -117,32 +120,55 @@ def init_medic_wf(
     workflow.connect([(inputnode, phase2rad, [("phase", "in_file")])])
 
     # Split phase data into single-frame, multi-echo 4D files
-    split_phase = pe.MapNode(
-        FSLSplit(dimension="t"),
-        iterfield=["in_file"],
-        name="split_phase",
-    )
-    workflow.connect([(phase2rad, split_phase, [("out_file", "in_file")])])
-
-    concat_phase_across_echoes = pe.Node(
-        niu.Merge(2),
+    concat_phase_across_echoes = pe.MapNode(
+        niu.Merge(numinputs=n_echoes),
+        iterfield=[f"in{i + 1}" for i in range(n_echoes)],
         name="concat_phase_across_echoes",
     )
-    workflow.connect([(split_phase, concat_phase_across_echoes, [("out_files", "in1")])])
-
-    # Split magnitude data into single-frame, multi-echo 4D files
-    split_magnitude = pe.MapNode(
-        FSLSplit(dimension="t"),
-        iterfield=["in_file"],
-        name="split_magnitude",
+    concat_mag_across_echoes = pe.MapNode(
+        niu.Merge(numinputs=n_echoes),
+        iterfield=[f"in{i + 1}" for i in range(n_echoes)],
+        name="concat_mag_across_echoes",
     )
-    workflow.connect([(inputnode, split_magnitude, [("magnitude", "in_file")])])
+    for i_echo in range(n_echoes):
+        select_phase_echo = pe.Node(
+            niu.Select(index=i_echo),
+            name=f"select_phase_echo_{i_echo:02d}",
+        )
+        workflow.connect([(phase2rad, select_phase_echo, [("out_file", "inlist")])])
 
-    concat_magnitude_across_echoes = pe.Node(
-        niu.Merge(2),
-        name="concat_magnitude_across_echoes",
-    )
-    workflow.connect([(split_magnitude, concat_magnitude_across_echoes, [("out_files", "in1")])])
+        split_phase = pe.Node(
+            FSLSplit(dimension="t"),
+            name=f"split_phase_{i_echo:02d}",
+        )
+        workflow.connect([
+            (select_phase_echo, split_phase, [("out", "in_file")]),
+            (split_phase, concat_phase_across_echoes, [("out_files", f"in{i_echo + 1}")]),
+        ])  # fmt:skip
+
+        # Split magnitude data into single-frame, multi-echo 4D files
+        select_mag_echo = pe.Node(
+            niu.Select(index=i_echo),
+            name=f"select_mag_echo_{i_echo:02d}",
+        )
+        workflow.connect([(inputnode, select_mag_echo, [("magnitude", "inlist")])])
+
+        split_mag = pe.Node(
+            FSLSplit(dimension="t"),
+            name=f"split_mag_{i_echo:02d}",
+        )
+        workflow.connect([
+            (select_mag_echo, split_mag, [("out", "in_file")]),
+            (split_mag, concat_mag_across_echoes, [("out_files", f"in{i_echo + 1}")]),
+        ])  # fmt:skip
+
+    for volume in range(n_volumes):
+        process_volume_wf = init_process_volume_wf(
+            echo_times,
+            automask,
+            automask_dilation,
+            name=f"process_volume_{volume:02d}_wf",
+        )
 
     mask_buffer = pe.Node(
         niu.IdentityInterface(fields=["mask_file"]),
@@ -160,7 +186,7 @@ def init_medic_wf(
             iterfield=["in_file"],
         )
         workflow.connect([
-            (concat_magnitude_across_echoes, voxqual, [("out", "mag_file")]),
+            (concat_mag_across_echoes, voxqual, [("out", "mag_file")]),
             (concat_phase_across_echoes, voxqual, [("out", "phase_file")]),
         ])  # fmt:skip
 
@@ -177,7 +203,7 @@ def init_medic_wf(
         automask_medic.inputs.echo_times = echo_times
         automask_medic.inputs.automask_dilation = automask_dilation
         workflow.connect([
-            (concat_magnitude_across_echoes, automask_medic, [("out", "mag_file")]),
+            (concat_mag_across_echoes, automask_medic, [("out", "mag_file")]),
             (voxqual, automask_medic, [("quality_file", "voxel_quality")]),
             (automask_medic, mask_buffer, [("out_file", "mask_file")]),
         ])  # fmt:skip
@@ -195,7 +221,7 @@ def init_medic_wf(
         name="create_diffs",
     )
     workflow.connect([
-        (concat_magnitude_across_echoes, create_diffs, [("out", "mag_file")]),
+        (concat_mag_across_echoes, create_diffs, [("out", "mag_file")]),
         (concat_phase_across_echoes, create_diffs, [("out", "phase_file")]),
     ])  # fmt:skip
 
@@ -208,6 +234,7 @@ def init_medic_wf(
             maxseeds=1,
         ),
         name="unwrap_phase",
+        iterfield=["phase_file"],
     )
     workflow.connect([(concat_phase_across_echoes, unwrap_phase, [("out", "phase_file")])])
 
