@@ -120,15 +120,15 @@ def init_medic_wf(
     workflow.connect([(inputnode, phase2rad, [("phase", "in_file")])])
 
     # Split phase data into single-frame, multi-echo 4D files
-    concat_phase_across_echoes = pe.MapNode(
+    group_phase_across_echoes = pe.MapNode(
         niu.Merge(numinputs=n_echoes),
         iterfield=[f"in{i + 1}" for i in range(n_echoes)],
-        name="concat_phase_across_echoes",
+        name="group_phase_across_echoes",
     )
-    concat_mag_across_echoes = pe.MapNode(
+    group_mag_across_echoes = pe.MapNode(
         niu.Merge(numinputs=n_echoes),
         iterfield=[f"in{i + 1}" for i in range(n_echoes)],
-        name="concat_mag_across_echoes",
+        name="group_mag_across_echoes",
     )
     for i_echo in range(n_echoes):
         select_phase_echo = pe.Node(
@@ -143,7 +143,7 @@ def init_medic_wf(
         )
         workflow.connect([
             (select_phase_echo, split_phase, [("out", "in_file")]),
-            (split_phase, concat_phase_across_echoes, [("out_files", f"in{i_echo + 1}")]),
+            (split_phase, group_phase_across_echoes, [("out_files", f"in{i_echo + 1}")]),
         ])  # fmt:skip
 
         # Split magnitude data into single-frame, multi-echo 4D files
@@ -159,16 +159,69 @@ def init_medic_wf(
         )
         workflow.connect([
             (select_mag_echo, split_mag, [("out", "in_file")]),
-            (split_mag, concat_mag_across_echoes, [("out_files", f"in{i_echo + 1}")]),
+            (split_mag, group_mag_across_echoes, [("out_files", f"in{i_echo + 1}")]),
         ])  # fmt:skip
 
-    for volume in range(n_volumes):
+    for i_volume in range(n_volumes):
         process_volume_wf = init_process_volume_wf(
             echo_times,
             automask,
             automask_dilation,
-            name=f"process_volume_{volume:02d}_wf",
+            name=f"process_volume_{i_volume:02d}_wf",
         )
+
+        select_phase_volume = pe.Node(
+            niu.Select(index=i_volume),
+            name=f"select_phase_volume_{i_volume:02d}",
+        )
+        select_mag_volume = pe.Node(
+            niu.Select(index=i_volume),
+            name=f"select_mag_volume_{i_volume:02d}",
+        )
+        workflow.connect([
+            (group_phase_across_echoes, select_phase_volume, [("out", "inlist")]),
+            (group_mag_across_echoes, select_mag_volume, [("out", "inlist")]),
+            (select_phase_volume, process_volume_wf, [("out", "inputnode.phase")]),
+            (select_mag_volume, process_volume_wf, [("out", "inputnode.magnitude")]),
+        ])  # fmt:skip
+
+    # Re-combine into echo-wise time series
+
+    # Check temporal consistency of phase unwrapping
+
+    # Compute field maps
+
+    # Apply SVD filter to field maps
+
+    return workflow
+
+
+def init_process_volume_wf(
+    echo_times,
+    automask,
+    automask_dilation,
+    name="process_volume_wf",
+):
+    """Create a workflow to process a single volume of multi-echo data.
+
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+
+            from sdcflows.workflows.fit.pepolar import init_process_volume_wf
+            wf = init_process_volume_wf()   # doctest: +SKIP
+    """
+    workflow = Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=["magnitude", "phase"]),
+        name="inputnode",
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask"]),
+        name="outputnode",
+    )
 
     mask_buffer = pe.Node(
         niu.IdentityInterface(fields=["mask_file"]),
@@ -186,8 +239,10 @@ def init_medic_wf(
             iterfield=["in_file"],
         )
         workflow.connect([
-            (concat_mag_across_echoes, voxqual, [("out", "mag_file")]),
-            (concat_phase_across_echoes, voxqual, [("out", "phase_file")]),
+            (inputnode, voxqual, [
+                ("magnitude", "mag_file"),
+                ("phase", "phase_file"),
+            ]),
         ])  # fmt:skip
 
         # Then use skimage's otsu thresholding to get a mask
@@ -203,7 +258,7 @@ def init_medic_wf(
         automask_medic.inputs.echo_times = echo_times
         automask_medic.inputs.automask_dilation = automask_dilation
         workflow.connect([
-            (concat_mag_across_echoes, automask_medic, [("out", "mag_file")]),
+            (inputnode, automask_medic, [("magnitude", "mag_file")]),
             (voxqual, automask_medic, [("quality_file", "voxel_quality")]),
             (automask_medic, mask_buffer, [("out_file", "mask_file")]),
         ])  # fmt:skip
@@ -221,8 +276,10 @@ def init_medic_wf(
         name="create_diffs",
     )
     workflow.connect([
-        (concat_mag_across_echoes, create_diffs, [("out", "mag_file")]),
-        (concat_phase_across_echoes, create_diffs, [("out", "phase_file")]),
+        (inputnode, create_diffs, [
+            ("magnitude", "mag_file"),
+            ("phase", "phase_file"),
+        ]),
     ])  # fmt:skip
 
     # Unwrap phase data with ROMEO
@@ -236,16 +293,8 @@ def init_medic_wf(
         name="unwrap_phase",
         iterfield=["phase_file"],
     )
-    workflow.connect([(concat_phase_across_echoes, unwrap_phase, [("out", "phase_file")])])
+    workflow.connect([(inputnode, unwrap_phase, [("phase", "phase_file")])])
 
     # Re-split the unwrapped phase data
-
-    # Re-combine into echo-wise time series
-
-    # Check temporal consistency of phase unwrapping
-
-    # Compute field maps
-
-    # Apply SVD filter to field maps
 
     return workflow
