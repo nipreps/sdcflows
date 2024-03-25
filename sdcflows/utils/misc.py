@@ -22,6 +22,9 @@
 #
 """Basic miscellaneous utilities."""
 import logging
+from scipy.stats import mode
+from scipy.ndimage import gaussian_filter
+from typing import Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -237,6 +240,28 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
 
 
 def calculate_diffs(mag_file, phase_file):
+    """Calculate magnitude and phase differences between first two echoes.
+
+    Parameters
+    ----------
+    mag_file : str
+        Magnitude image file, with shape (x, y, z, n_echoes).
+    phase_file : str
+        Phase image file, with shape (x, y, z, n_echoes).
+
+    Returns
+    -------
+    mag_diff_file : str
+        Magnitude difference between echoes 2 and 1, with shape (x, y, z).
+    phase_diff_file : str
+        Phase difference between echoes 2 and 1, with shape (x, y, z).
+
+    Notes
+    -----
+    This calculates a signal difference map between the first two echoes using both the
+    magnitude and phase data,
+    then separates the magnitude and phase differences out.
+    """
     import nibabel as nb
     import numpy as np
 
@@ -260,7 +285,40 @@ def calculate_diffs(mag_file, phase_file):
     return mag_diff_file, phase_diff_file
 
 
-def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file):
+def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file, wrap_limit):
+    """Estimate and remove phase offset with MCPC-3D-S algorithm.
+
+    Parameters
+    ----------
+    mag_file : str
+        Magnitude image file
+    phase_file : str
+        Phase image file
+    echo_times : :obj:`numpy.ndarray`
+        Echo times
+    unwrapped_diff_file : str
+        Unwrapped phase difference file
+    mask_file : str
+        Mask file
+    wrap_limit : bool
+        If True, this turns off some heuristics for phase unwrapping.
+
+    Returns
+    -------
+    offset_file : str
+        Phase offset file
+    new_unwrapped_diff_file : str
+        Unwrapped phase difference file
+
+    Notes
+    -----
+    "MCPC-3D-S estimates the phase offset by computing the unwrapped phase difference between
+    the first and second echoes of the data,
+    then estimating the phase offset by assuming linear phase accumulation between the first
+    and second echoes." (from Van et al.)
+
+    The MCPC-3D-S algorithm is described in https://doi.org/10.1002/mrm.26963.
+    """
     import nibabel as nb
     import numpy as np
 
@@ -289,6 +347,7 @@ def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file):
     proposed_phases = phases - proposed_offset[..., np.newaxis]
 
     # compute the fieldmap
+    # TODO: Move this step into a separate interface, since it calls ROMEO
     proposed_fieldmap, proposed_unwrapped_phases = get_dual_echo_fieldmap(
         proposed_phases, TEs, mags, mask
     )
@@ -367,3 +426,207 @@ def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file):
         new_unwrapped_diff_file
     )
     return offset_file, new_unwrapped_diff_file
+
+
+def global_mode_correction(
+    echo_times,
+    magnitude_file,
+    phase_file,
+    mask_file,
+    masksum_file,
+    automask=True,
+):
+    """Apply global mode correction.
+
+    Compute the global mode offset for the first echo then try to find the offset
+    that minimizes the residuals for each subsequent echo.
+    """
+    import nibabel as nb
+    import numpy as np
+
+    # global mode correction
+    # use auto mask to get brain mask
+    mag_data = nb.load(magnitude_file).get_fdata()
+    phase_img = nb.load(phase_file)
+    phase_data = phase_img.get_fdata()
+    mask_data = nb.load(mask_file).get_fdata().astype(np.bool)
+
+    echo_idx = np.argmin(echo_times)
+    mag_shortest = mag_data[..., echo_idx]
+    brain_mask = create_brain_mask(mag_shortest)
+
+    # for each of these matrices TEs are on rows, voxels are columns
+    # get design matrix
+    X = echo_times[:, np.newaxis]
+
+    # get magnitude weight matrix
+    W = mag_data[brain_mask, :].T
+
+    # loop over each index past 1st echo
+    for i in range(1, echo_times.shape[0]):
+        # get matrix with the masked unwrapped data (weighted by magnitude)
+        Y = phase_data[brain_mask, :].T
+
+        # Compute offset through linear regression method
+        best_offset = compute_offset(i, W, X, Y)
+
+        # apply the offset
+        phase_data[..., i] += 2 * np.pi * best_offset
+
+    # set anything outside of mask_data to 0
+    phase_data[~mask_data] = 0
+
+    unwrapped_file = "unwrapped_phase.nii.gz"
+    nb.Nifti1Image(phase_data, phase_img.affine, phase_img.header).to_filename(unwrapped_file)
+
+    if not automask:
+        final_mask_file = "final_mask.nii.gz"
+        nb.Nifti1Image(
+            mask_data.astype(np.int8),
+            phase_img.affine,
+            phase_img.header,
+        ).to_filename(final_mask_file)
+    else:
+        final_mask_file = masksum_file
+
+    return final_mask_file, unwrapped_file
+
+
+def compute_offset(echo_ind: int, W: npt.NDArray, X: npt.NDArray, Y: npt.NDArray) -> int:
+    """Method for computing the global mode offset for echoes > 1.
+
+    Parameters
+    ----------
+    echo_ind : int
+        Echo index
+    W : npt.NDArray
+        Weights
+    X : npt.NDArray
+        TEs in 2d matrix
+    Y : npt.NDArray
+        Masked unwrapped data weighted by magnitude
+
+    Returns
+    -------
+    best_offset: int
+    """
+    # fit the model to the up to previous echo
+    coefficients, _ = weighted_regression(X[:echo_ind], Y[:echo_ind], W[:echo_ind])
+
+    # compute the predicted phase for the current echo
+    Y_pred = X[echo_ind] * coefficients
+
+    # compute the difference between the predicted phase and the unwrapped phase
+    Y_diff = Y_pred - Y[echo_ind]
+
+    # compute closest multiple of 2pi to the difference
+    int_map = np.round(Y_diff / (2 * np.pi)).astype(int)
+
+    # compute the most often occuring multiple
+    best_offset = mode(int_map, axis=0, keepdims=False).mode
+    best_offset = cast(int, best_offset)
+
+    return best_offset
+
+
+def svd_filtering(
+    field_maps: npt.NDArray,
+    new_masks: npt.NDArray,
+    voxel_size: float,
+    n_frames: int,
+    border_filt: Tuple[int, int],
+    svd_filt: int,
+):
+    if new_masks.max() == 2 and n_frames >= np.max(border_filt):
+        logging.info("Performing spatial/temporal filtering of border voxels...")
+        smoothed_field_maps = np.zeros(field_maps.shape, dtype=np.float32)
+        # smooth by 4 mm kernel
+        sigma = (4 / voxel_size) / 2.355
+        for i in range(field_maps.shape[-1]):
+            smoothed_field_maps[..., i] = gaussian_filter(field_maps[..., i], sigma=sigma)
+        # compute the union of all the masks
+        union_mask = np.sum(new_masks, axis=-1) > 0
+        # do temporal filtering of border voxels with SVD
+        U, S, VT = np.linalg.svd(smoothed_field_maps[union_mask], full_matrices=False)
+        # first pass of SVD filtering
+        recon = np.dot(U[:, : border_filt[0]] * S[: border_filt[0]], VT[: border_filt[0], :])
+        recon_img = np.zeros(field_maps.shape, dtype=np.float32)
+        recon_img[union_mask] = recon
+        # set the border voxels in the field map to the recon values
+        for i in range(field_maps.shape[-1]):
+            field_maps[new_masks[..., i] == 1, i] = recon_img[new_masks[..., i] == 1, i]
+        # do second SVD filtering pass
+        U, S, VT = np.linalg.svd(field_maps[union_mask], full_matrices=False)
+        # second pass of SVD filtering
+        recon = np.dot(U[:, : border_filt[1]] * S[: border_filt[1]], VT[: border_filt[1], :])
+        recon_img = np.zeros(field_maps.shape, dtype=np.float32)
+        recon_img[union_mask] = recon
+        # set the border voxels in the field map to the recon values
+        for i in range(field_maps.shape[-1]):
+            field_maps[new_masks[..., i] == 1, i] = recon_img[new_masks[..., i] == 1, i]
+
+    # use svd filter to denoise the field maps
+    if n_frames >= svd_filt:
+        logging.info("Denoising field maps with SVD...")
+        logging.info(f"Keeping {svd_filt} components...")
+        # compute the union of all the masks
+        union_mask = np.sum(new_masks, axis=-1) > 0
+        # compute SVD
+        U, S, VT = np.linalg.svd(field_maps[union_mask], full_matrices=False)
+        # only keep the first n_components components
+        recon = np.dot(U[:, :svd_filt] * S[:svd_filt], VT[:svd_filt, :])
+        recon_img = np.zeros(field_maps.shape, dtype=np.float32)
+        recon_img[union_mask] = recon
+        # set the voxel values in the mask to the recon values
+        for i in range(field_maps.shape[-1]):
+            field_maps[new_masks[..., i] > 0, i] = recon_img[new_masks[..., i] > 0, i]
+
+    return field_maps
+
+
+def weighted_regression(
+    X: npt.NDArray,
+    Y: npt.NDArray,
+    W: npt.NDArray,
+) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Single parameter weighted regression.
+
+    This function does a single parameter weighted regression using elementwise matrix operations.
+
+    Parameters
+    ----------
+    X : npt.NDArray
+        Design matrix, rows are each echo, columns are voxels.
+        If column is size 1, this array will be broadcasted across all voxels.
+    Y : npt.NDArray
+        Ordinate matrix, rows are each echo, columns are voxels.
+        (This is meant for phase values)
+    W : npt.NDArray
+        Weight matrix (usually the magnitude image) echos x voxels
+
+    Returns
+    -------
+    npt.NDArray
+        model weights
+    npt.NDArray
+        residuals
+    """
+    # compute weighted X and Y
+    WY = W * Y
+    WX = W * X
+
+    # now compute the weighted squared magnitude of the X
+    sq_WX = np.sum(WX**2, axis=0, keepdims=True)
+
+    # get the inverse X
+    inv_WX = np.zeros(WX.shape)
+    np.divide(WX, sq_WX, out=inv_WX, where=(sq_WX != 0))
+
+    # compute the weights
+    model_weights = (inv_WX * WY).sum(axis=0)
+
+    # now compute residuals (on unweighted data)
+    residuals = np.sum((Y - model_weights * X) ** 2, axis=0)
+
+    # return model weights and residuals
+    return model_weights, residuals

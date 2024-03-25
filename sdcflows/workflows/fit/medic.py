@@ -224,7 +224,7 @@ def init_process_volume_wf(
     )
 
     mask_buffer = pe.Node(
-        niu.IdentityInterface(fields=["mask_file"]),
+        niu.IdentityInterface(fields=["mask_file", "masksum_file"]),
         name="mask_buffer",
     )
     if automask:
@@ -250,7 +250,7 @@ def init_process_volume_wf(
         automask_medic = pe.Node(
             niu.Function(
                 input_names=["mag_file", "voxel_quality", "echo_times", "automask_dilation"],
-                output_names=["mask_file"],
+                output_names=["mask_file", "masksum_file"],
                 function=medic_automask,
             ),
             name="automask_medic",
@@ -260,16 +260,20 @@ def init_process_volume_wf(
         workflow.connect([
             (inputnode, automask_medic, [("magnitude", "mag_file")]),
             (voxqual, automask_medic, [("quality_file", "voxel_quality")]),
-            (automask_medic, mask_buffer, [("out_file", "mask_file")]),
+            (automask_medic, mask_buffer, [
+                ("mask_file", "mask_file"),
+                ("masksum_file", "masksum_file"),
+            ]),
         ])  # fmt:skip
     else:
         mask_buffer.inputs.mask_file = "NULL"
+        mask_buffer.inputs.masksum_file = "NULL"
 
     # Do MCPC-3D-S algo to compute phase offset
     create_diffs = pe.MapNode(
         niu.Function(
             input_names=["mag_file", "phase_file"],
-            output_names=["diff_file"],
+            output_names=["phase_offset", "unwrapped_diff", "phase_modified"],
             function=calculate_diffs,
         ),
         iterfield=["mag_file", "phase_file"],
@@ -289,11 +293,19 @@ def init_process_volume_wf(
             weights="romeo",
             correct_global=True,
             maxseeds=1,
+            merge_regions=False,
+            correct_regions=False,
         ),
         name="unwrap_phase",
-        iterfield=["phase_file"],
+        iterfield=["phase_file", "magnitude_file", "mask_file"],
     )
-    workflow.connect([(inputnode, unwrap_phase, [("phase", "phase_file")])])
+    workflow.connect([
+        (inputnode, unwrap_phase, [("magnitude", "magnitude_file")]),
+        (mask_buffer, unwrap_phase, [("mask_file", "mask_file")]),
+        (create_diffs, unwrap_phase, [("phase_modified", "phase_file")]),
+    ])  # fmt:skip
+
+    # Global mode correction
 
     # Re-split the unwrapped phase data
 
