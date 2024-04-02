@@ -23,7 +23,10 @@
 """Test the base workflow."""
 from pathlib import Path
 import os
+import re
+
 import pytest
+
 from sdcflows import fieldmaps as fm
 from sdcflows.utils.wrangler import find_estimators
 from sdcflows.workflows.base import init_fmap_preproc_wf
@@ -55,7 +58,8 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
         if estimator.method != fm.EstimatorType.PEPOLAR:
             continue
 
-        inputnode = wf.get_node(f"in_{estimator.bids_id}")
+        clean_bids_id = re.sub(r'[^a-zA-Z0-9]', '', estimator.bids_id)
+        inputnode = wf.get_node(f"in_{clean_bids_id}")
         inputnode.inputs.in_data = [str(f.path) for f in estimator.sources]
         inputnode.inputs.metadata = [f.metadata for f in estimator.sources]
 
