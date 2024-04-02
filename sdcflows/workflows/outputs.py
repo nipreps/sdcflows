@@ -21,6 +21,8 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Writing out outputs."""
+import re
+
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.interfaces.bids import DerivativesDataSink as _DDS
@@ -156,7 +158,7 @@ def init_fmap_derivatives_wf(
     """
     custom_entities = custom_entities or {}
     if bids_fmap_id:
-        custom_entities["fmapid"] = bids_fmap_id.replace("_", "")
+        custom_entities["fmapid"] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
