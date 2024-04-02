@@ -79,7 +79,7 @@ def init_fmap_reports_wf(
 
     custom_entities = custom_entities or {}
     if bids_fmap_id:
-        custom_entities["fmapid"] = bids_fmap_id.replace("_", "")
+        custom_entities["fmapid"] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(

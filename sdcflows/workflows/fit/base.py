@@ -25,6 +25,8 @@
 
 def init_sdcflows_wf():
     """Create a multi-subject, multi-estimator *SDCFlows* workflow."""
+    import re
+
     from nipype.pipeline.engine import Workflow
     from niworkflows.utils.bids import collect_participants
 
@@ -51,6 +53,8 @@ def init_sdcflows_wf():
 
     for subject, sub_estimators in estimators_record.items():
         for estim in sub_estimators:
+            clean_bids_id = re.sub(r'[^a-zA-Z0-9]', '', estim.bids_id)
+
             estim_wf = estim.get_workflow(
                 omp_nthreads=config.nipype.omp_nthreads,
                 sloppy=False,
@@ -61,7 +65,7 @@ def init_sdcflows_wf():
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
                 write_coeff=True,
-                name=f"fmap_derivatives_{estim.bids_id}",
+                name=f"fmap_derivatives_{clean_bids_id}",
             )
 
             source_paths = [
@@ -76,7 +80,7 @@ def init_sdcflows_wf():
                 fmap_type=estim.method,
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
-                name=f"fmap_reports_{estim.bids_id}",
+                name=f"fmap_reports_{clean_bids_id}",
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 
