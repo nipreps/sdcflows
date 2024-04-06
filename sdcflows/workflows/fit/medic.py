@@ -370,6 +370,31 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         name="outputnode",
     )
 
+    # Concatenate the phase images
+    concatenate_phases = pe.Node(
+        niu.Merge(2),
+        name="concatenate_phases",
+    )
+    workflow.connect([
+        (inputnode, concatenate_phases, [("phase0", "in1"), ("phase1", "in2")]),
+    ])  # fmt:skip
+
+    # Concatenate the magnitude images
+    concatenate_magnitudes = pe.Node(
+        niu.Merge(2),
+        name="concatenate_magnitudes",
+    )
+    workflow.connect([
+        (inputnode, concatenate_magnitudes, [("magnitude0", "in1"), ("magnitude1", "in2")]),
+    ])  # fmt:skip
+
+    # Concatenate the echo times
+    concatenate_echo_times = pe.Node(
+        niu.Merge(2),
+        name="concatenate_echo_times",
+    )
+    workflow.connect([(inputnode, concatenate_echo_times, [("te0", "in1"), ("te1", "in2")])])
+
     # Calculate magnitude and phase differences
     calc_diffs = pe.Node(
         niu.Function(
@@ -434,8 +459,30 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
     ])  # fmt:skip
 
     # Get the new phases
+    calculate_proposed_phases = pe.Node(
+        niu.Function(
+            input_names=["phase0", "phase1", "offset"],
+            output_names=["proposed_phases"],
+            function=subtract_offset,
+        ),
+        name="calculate_proposed_phases",
+    )
+    workflow.connect([
+        (concatenate_phases, calculate_proposed_phases, [("phases", "phases")]),
+        (calc_offset, calculate_proposed_phases, [("offset", "offset")]),
+    ])  # fmt:skip
 
     # Compute the dual-echo field map
+    dual_echo_workflow = init_dual_echo_wf(
+        wrap_limit,
+        name="dual_echo_workflow",
+    )
+    workflow.connect([
+        (inputnode, dual_echo_workflow, [("mask_file", "inputnode.mask_file")]),
+        (concatenate_echo_times, dual_echo_workflow, [("echo_times", "inputnode.echo_times")]),
+        (concatenate_magnitudes, dual_echo_workflow, [("magnitudes", "inputnode.magnitudes")]),
+        (calculate_proposed_phases, dual_echo_workflow, [("proposed_phases", "inputnode.phases")]),
+    ])  # fmt:skip
 
     # Check if the proposed field map is below -10
     # Add 2 * pi if so
@@ -511,8 +558,10 @@ def create_brain_mask(mag_shortest, extra_dilation):
     npt.NDArray[np.bool_]
         Mask of voxels to use for unwrapping
     """
+    import os
     from typing import cast
 
+    import nibabel as nb
     import numpy as np
     import numpy.typing as npt
     from scipy.ndimage import (
@@ -525,12 +574,17 @@ def create_brain_mask(mag_shortest, extra_dilation):
 
     from sdcflows.utils.misc import get_largest_connected_component
 
+    mag_img = nb.load(mag_shortest)
+    mag_data = mag_img.get_fdata()
+
+    mask_file = os.path.abspath("mask.nii.gz")
+
     # create structuring element
     strel = generate_binary_structure(3, 2)
 
     # get the otsu threshold
-    threshold = threshold_otsu(mag_shortest)
-    mask_data = mag_shortest > threshold
+    threshold = threshold_otsu(mag_data)
+    mask_data = mag_data > threshold
     mask_data = cast(npt.NDArray[np.float32], binary_fill_holes(mask_data, strel))
 
     # erode mask
@@ -557,8 +611,10 @@ def create_brain_mask(mag_shortest, extra_dilation):
     if np.all(np.isclose(mask_data, 0)):
         mask_data = np.ones(mask_data.shape)
 
-    # return the mask
-    return mask_data.astype(np.bool_)
+    mask_data = mask_data.astype(np.bool_).astype(np.uint8)
+    mask_img = nb.Nifti1Image(mask_data, mag_img.affine, mag_img.header)
+    mask_img.to_filename(mask_file)
+    return mask_file
 
 
 def calculate_offset(phase0, unwrapped_diff, te0, te1):
@@ -597,3 +653,22 @@ def calculate_offset(phase0, unwrapped_diff, te0, te1):
     )
     proposed_offset_img = nb.Nifti1Image(proposed_offset, phase0_img.affine, phase0_img.header)
     proposed_offset_img.to_filename(offset_file)
+    return offset_file
+
+
+def subtract_offset(phases, offset):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    updated_phases_file = os.path.abspath("updated_phases.nii.gz")
+
+    phases_img = nb.load(phases)
+    offset_img = nb.load(offset)
+    phases_data = phases_img.get_fdata()
+    offset_data = offset_img.get_fdata()
+    updated_phases = phases_data - offset_data[..., np.newaxis]
+    updated_phases_img = nb.Nifti1Image(updated_phases, phases_img.affine, phases_img.header)
+    updated_phases_img.to_filename(updated_phases_file)
+    return updated_phases_file
