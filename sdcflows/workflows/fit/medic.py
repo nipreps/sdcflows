@@ -343,10 +343,39 @@ def init_process_volume_wf(
 
 
 def init_mcpc_3d_s_wf(wrap_limit, name):
-    """"""
-    FMAP_PROPORTION_HEURISTIC = 0.25
-    FMAP_AMBIGUIOUS_HEURISTIC = 0.5
+    """Estimate and remove phase offset with MCPC-3D-S algorithm.
 
+    Parameters
+    ----------
+    wrap_limit : bool
+        If True, this turns off some heuristics for phase unwrapping.
+    name : str
+        The name of the workflow.
+
+    Inputs
+    ------
+    magnitude0 : str
+        The path to the magnitude image from the first echo.
+    magnitude1 : str
+        The path to the magnitude image from the second echo.
+    phase0 : str
+        The path to the phase image from the first echo.
+    phase1 : str
+        The path to the phase image from the second echo.
+    te0 : float
+        The echo time of the first echo.
+    te1 : float
+        The echo time of the second echo.
+    mask_file : str
+        The path to the voxel mask.
+
+    Outputs
+    -------
+    offset : str
+        The path to the estimated phase offset.
+    unwrapped_diff : str
+        The path to the unwrapped phase difference image.
+    """
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(
@@ -359,8 +388,6 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
                 "te0",
                 "te1",
                 "mask_file",
-                "ref",
-                "ref_mask",
             ],
         ),
         name="inputnode",
@@ -376,7 +403,10 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         name="concatenate_phases",
     )
     workflow.connect([
-        (inputnode, concatenate_phases, [("phase0", "in1"), ("phase1", "in2")]),
+        (inputnode, concatenate_phases, [
+            ("phase0", "in1"),
+            ("phase1", "in2"),
+        ]),
     ])  # fmt:skip
 
     # Concatenate the magnitude images
@@ -385,7 +415,10 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         name="concatenate_magnitudes",
     )
     workflow.connect([
-        (inputnode, concatenate_magnitudes, [("magnitude0", "in1"), ("magnitude1", "in2")]),
+        (inputnode, concatenate_magnitudes, [
+            ("magnitude0", "in1"),
+            ("magnitude1", "in2"),
+        ]),
     ])  # fmt:skip
 
     # Concatenate the echo times
@@ -393,7 +426,12 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         niu.Merge(2),
         name="concatenate_echo_times",
     )
-    workflow.connect([(inputnode, concatenate_echo_times, [("te0", "in1"), ("te1", "in2")])])
+    workflow.connect([
+        (inputnode, concatenate_echo_times, [
+            ("te0", "in1"),
+            ("te1", "in2"),
+        ]),
+    ])  # fmt:skip
 
     # Calculate magnitude and phase differences
     calc_diffs = pe.Node(
@@ -438,6 +476,7 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         ),
         name="create_mask",
     )
+    create_mask.inputs.extra_dilation = -2  # hardcoded in warpkit
     workflow.connect([(inputnode, create_mask, [("magnitude0", "mag_shortest")])])
 
     # Calculate initial offset estimate
@@ -459,38 +498,110 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
     ])  # fmt:skip
 
     # Get the new phases
-    calculate_proposed_phases = pe.Node(
+    calc_proposed_phases = pe.Node(
         niu.Function(
             input_names=["phase0", "phase1", "offset"],
             output_names=["proposed_phases"],
             function=subtract_offset,
         ),
-        name="calculate_proposed_phases",
+        name="calc_proposed_phases",
     )
     workflow.connect([
-        (concatenate_phases, calculate_proposed_phases, [("phases", "phases")]),
-        (calc_offset, calculate_proposed_phases, [("offset", "offset")]),
+        (concatenate_phases, calc_proposed_phases, [("phases", "phases")]),
+        (calc_offset, calc_proposed_phases, [("offset", "offset")]),
     ])  # fmt:skip
 
     # Compute the dual-echo field map
-    dual_echo_workflow = init_dual_echo_wf(
-        wrap_limit,
-        name="dual_echo_workflow",
-    )
+    dual_echo_wf = init_dual_echo_wf(name="dual_echo_wf")
     workflow.connect([
-        (inputnode, dual_echo_workflow, [("mask_file", "inputnode.mask_file")]),
-        (concatenate_echo_times, dual_echo_workflow, [("echo_times", "inputnode.echo_times")]),
-        (concatenate_magnitudes, dual_echo_workflow, [("magnitudes", "inputnode.magnitudes")]),
-        (calculate_proposed_phases, dual_echo_workflow, [("proposed_phases", "inputnode.phases")]),
+        (inputnode, dual_echo_wf, [("mask_file", "inputnode.mask_file")]),
+        (concatenate_echo_times, dual_echo_wf, [("echo_times", "inputnode.echo_times")]),
+        (concatenate_magnitudes, dual_echo_wf, [("magnitudes", "inputnode.magnitudes")]),
+        (calc_proposed_phases, dual_echo_wf, [("proposed_phases", "inputnode.phases")]),
     ])  # fmt:skip
 
-    # Check if the proposed field map is below -10
-    # Add 2 * pi if so
+    # Calculate a modified field map with 2pi added to the unwrapped difference image
+    add_2pi = pe.Node(
+        niu.Function(
+            input_names=["phases", "unwrapped_diff", "te0", "te1"],
+            output_names=["phases"],
+            function=modify_unwrapped_diff,
+        ),
+        name="add_2pi",
+    )
+    workflow.connect([
+        (concatenate_phases, add_2pi, [("phases", "phases")]),
+        (unwrap_diffs, add_2pi, [("out_file", "unwrapped_diff")]),
+        (inputnode, add_2pi, [
+            ("te0", "te0"),
+            ("te1", "te1"),
+        ]),
+    ])  # fmt:skip
 
-    # Check if the proposed field map is between -10 and 0
-    #
+    modified_dual_echo_wf = init_dual_echo_wf(name="modified_dual_echo_wf")
+    workflow.connect([
+        (inputnode, modified_dual_echo_wf, [("mask_file", "inputnode.mask_file")]),
+        (concatenate_echo_times, modified_dual_echo_wf, [("echo_times", "inputnode.echo_times")]),
+        (concatenate_magnitudes, modified_dual_echo_wf, [("magnitudes", "inputnode.magnitudes")]),
+        (add_2pi, modified_dual_echo_wf, [("phases", "inputnode.phases")]),
+    ])  # fmt:skip
+
+    # Select the fieldmap
+    select_unwrapped_diff = pe.Node(
+        niu.Function(
+            input_names=[
+                "original_fieldmap",
+                "original_unwrapped_phases",
+                "original_offset",
+                "modified_fieldmap",
+                "modified_unwrapped_phases",
+                "unwrapped_diff",
+                "voxel_mask",
+                "echo_times",
+                "wrap_limit",
+            ],
+            output_names=["new_unwrapped_diff"],
+            function=select_fieldmap,
+        ),
+        name="select_fmap",
+    )
+    select_unwrapped_diff.inputs.wrap_limit = wrap_limit
+    workflow.connect([
+        (inputnode, select_unwrapped_diff, [("echo_times", "echo_times")]),
+        (unwrap_diffs, select_unwrapped_diff, [("out_file", "unwrapped_diff")]),
+        (create_mask, select_unwrapped_diff, [("mask", "voxel_mask")]),
+        (calc_offset, select_unwrapped_diff, [("offset", "original_offset")]),
+        (dual_echo_wf, select_unwrapped_diff, [
+            ("outputnode.fieldmap", "original_fieldmap"),
+            ("outputnode.unwrapped_phases", "original_unwrapped_phases"),
+        ]),
+        (modified_dual_echo_wf, select_unwrapped_diff, [
+            ("outputnode.fieldmap", "modified_fieldmap"),
+            ("outputnode.unwrapped_phases", "modified_unwrapped_phases"),
+        ]),
+        (select_unwrapped_diff, outputnode, [("new_unwrapped_diff", "unwrapped_diff")]),
+    ])  # fmt:skip
 
     # Compute the updated phase offset
+    calc_updated_offset = pe.Node(
+        niu.Function(
+            input_names=["phase0", "unwrapped_diff", "te0", "te1"],
+            output_names=["offset"],
+            function=calculate_offset,
+        ),
+        name="calc_updated_offset",
+    )
+    workflow.connect([
+        (inputnode, calc_updated_offset, [
+            ("phase0", "phase0"),
+            ("te0", "te0"),
+            ("te1", "te1"),
+        ]),
+        # TODO: Update this to use the updated difference map
+        (unwrap_diffs, calc_updated_offset, [("out_file", "unwrapped_diff")]),
+        (calc_updated_offset, outputnode, [("offset", "offset")]),
+    ])  # fmt:skip
+
     return workflow
 
 
@@ -672,3 +783,215 @@ def subtract_offset(phases, offset):
     updated_phases_img = nb.Nifti1Image(updated_phases, phases_img.affine, phases_img.header)
     updated_phases_img.to_filename(updated_phases_file)
     return updated_phases_file
+
+
+def init_dual_echo_wf(name="dual_echo_wf"):
+    workflow = Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=[
+                "magnitudes",
+                "phases",
+                "echo_times",
+                "mask",
+            ],
+        ),
+        name="inputnode",
+    )
+
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["fieldmap", "unwrapped_phases"]),
+        name="outputnode",
+    )
+
+    # Unwrap the phases with ROMEO
+    unwrap_phases = pe.Node(
+        ROMEO(
+            weights="romeo",
+            correct_global=True,
+            maxseeds=1,
+            merge_regions=False,
+            correct_regions=False,
+        ),
+        name="unwrap_phases",
+    )
+    workflow.connect([
+        (inputnode, unwrap_phases, [
+            ("magnitudes", "magnitude_file"),
+            ("phases", "phase_file"),
+            ("mask", "mask_file"),
+            ("echo_times", "echo_times"),
+        ]),
+        (unwrap_phases, outputnode, [("out_file", "unwrapped_phases")]),
+    ])  # fmt:skip
+
+    # Calculate the fieldmap
+    calc_fieldmap = pe.Node(
+        niu.Function(
+            input_names=["unwrapped_phases", "echo_times"],
+            output_names=["fieldmap"],
+            function=calculate_fieldmap,
+        ),
+        name="calc_fieldmap",
+    )
+    workflow.connect([
+        (unwrap_phases, calc_fieldmap, [("out_file", "unwrapped_phases")]),
+        (inputnode, calc_fieldmap, [("echo_times", "echo_times")]),
+        (calc_fieldmap, outputnode, [("fieldmap", "fieldmap")]),
+    ])  # fmt:skip
+
+    return workflow
+
+
+def calculate_fieldmap(unwrapped_phases, echo_times):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    fieldmap_file = os.path.abspath("fieldmap.nii.gz")
+
+    unwrapped_phases_img = nb.load(unwrapped_phases)
+    unwrapped_phases_data = unwrapped_phases_img.get_fdata()
+
+    phase_diff = unwrapped_phases_data[..., 1] - unwrapped_phases_data[..., 0]
+    fieldmap = (1000 / (2 * np.pi)) * phase_diff / (echo_times[1] - echo_times[0])
+    fieldmap_img = nb.Nifti1Image(
+        fieldmap,
+        unwrapped_phases_img.affine,
+        unwrapped_phases_img.header,
+    )
+    fieldmap_img.to_filename(fieldmap_file)
+
+    return fieldmap_file
+
+
+def modify_unwrapped_diff(phases, unwrapped_diff, te0, te1):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    updated_phases_file = os.path.abspath("updated_phases.nii.gz")
+
+    phases_img = nb.load(phases)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    phases_data = phases_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+
+    new_proposed_offset = np.angle(
+        np.exp(
+            1j * (phases_data[..., 0] - ((te0 * (unwrapped_diff_data + 2 * np.pi)) / (te1 - te0)))
+        )
+    )
+    new_proposed_phases = phases_data - new_proposed_offset[..., np.newaxis]
+    new_proposed_phases_img = nb.Nifti1Image(
+        new_proposed_phases,
+        phases_img.affine,
+        phases_img.header,
+    )
+    new_proposed_phases_img.to_filename(updated_phases_file)
+
+    return updated_phases_file
+
+
+def select_fieldmap(
+    original_fieldmap,
+    original_unwrapped_phases,
+    original_offset,
+    modified_fieldmap,
+    modified_unwrapped_phases,
+    unwrapped_diff,
+    voxel_mask,
+    echo_times,
+    wrap_limit,
+):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    FMAP_PROPORTION_HEURISTIC = 0.25
+    FMAP_AMBIGUIOUS_HEURISTIC = 0.5
+
+    new_unwrapped_diff_file = os.path.abspath("new_unwrapped_diff.nii.gz")
+
+    orig_fmap_img = nb.load(original_fieldmap)
+    orig_unwrapped_phases_img = nb.load(original_unwrapped_phases)
+    orig_offset_img = nb.load(original_offset)
+    mod_fmap_img = nb.load(modified_fieldmap)
+    mod_unwrapped_phases_img = nb.load(modified_unwrapped_phases)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    voxel_mask_img = nb.load(voxel_mask)
+
+    orig_fmap_data = orig_fmap_img.get_fdata()
+    orig_unwrapped_phases_data = orig_unwrapped_phases_img.get_fdata()
+    orig_offset_data = orig_offset_img.get_fdata()
+    mod_fmap_data = mod_fmap_img.get_fdata()
+    mod_unwrapped_phases_data = mod_unwrapped_phases_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+    voxel_mask_data = voxel_mask_img.get_fdata()
+
+    masked_orig_fmap = orig_fmap_data[voxel_mask_data]
+    if masked_orig_fmap.mean() < -10:
+        # check if the proposed fieldmap is below -10
+        unwrapped_diff_data += 2 * np.pi
+
+    elif masked_orig_fmap.mean() < 0 and not wrap_limit:
+        # check if the proposed fieldmap is between -10 and 0
+        # look at proportion of voxels that are positive
+        voxel_prop = np.count_nonzero(masked_orig_fmap > 0) / masked_orig_fmap.shape[0]
+
+        # if the proportion of positive voxels is less than 0.25, then add 2pi
+        if voxel_prop < FMAP_PROPORTION_HEURISTIC:
+            unwrapped_diff_data += 2 * np.pi
+        elif voxel_prop < FMAP_AMBIGUIOUS_HEURISTIC:
+            # compute mean of phase offset
+            mean_phase_offset = orig_offset_data[voxel_mask_data].mean()
+            if mean_phase_offset < -1:
+                phase_fits = np.concatenate(
+                    (
+                        np.zeros((*orig_unwrapped_phases_data.shape[:-1], 1)),
+                        orig_unwrapped_phases_data,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_1, _, _, _ = np.polyfit(
+                    echo_times,
+                    phase_fits[voxel_mask_data, :].T,
+                    1,
+                    full=True,
+                )
+
+                masked_mod_fmap = mod_fmap_data[voxel_mask_data]
+                # fit linear model to the proposed phases
+                new_phase_fits = np.concatenate(
+                    (
+                        np.zeros((*mod_unwrapped_phases_data.shape[:-1], 1)),
+                        mod_unwrapped_phases_data,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_2, _, _, _ = np.polyfit(
+                    echo_times,
+                    new_phase_fits[voxel_mask_data, :].T,
+                    1,
+                    full=True,
+                )
+
+                if (
+                    np.isclose(residuals_1.mean(), residuals_2.mean(), atol=1e-3, rtol=1e-3)
+                    and masked_mod_fmap.mean() > 0
+                ):
+                    unwrapped_diff_data += 2 * np.pi
+                else:
+                    unwrapped_diff_data -= 2 * np.pi
+
+    new_unwrapped_diff_img = nb.Nifti1Image(
+        unwrapped_diff_data,
+        unwrapped_diff_img.affine,
+        unwrapped_diff_img.header,
+    )
+    new_unwrapped_diff_img.to_filename(new_unwrapped_diff_file)
+    return new_unwrapped_diff_file
