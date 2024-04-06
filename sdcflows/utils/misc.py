@@ -561,8 +561,8 @@ def subtract_offset(phase, offset):
     return updated_phase_file
 
 
-def calculate_fieldmap(unwrapped_phase, echo_times):
-    """Calculate the fieldmap from the unwrapped phase difference.
+def calculate_dual_echo_fieldmap(unwrapped_phase, echo_times):
+    """Calculate the fieldmap from the unwrapped phase difference of the first two echoes.
 
     Parameters
     ----------
@@ -599,6 +599,7 @@ def calculate_fieldmap(unwrapped_phase, echo_times):
 
 
 def modify_unwrapped_diff(phase, unwrapped_diff, echo_times):
+    """Add 2*pi to unwrapped difference data and recalculate the offset."""
     import os
 
     import nibabel as nb
@@ -736,9 +737,24 @@ def select_fieldmap(
 
 
 def global_mode_correction(magnitude, unwrapped, mask, echo_times):
-    # this computes the global mode offset for the first echo then tries to find the offset
-    # that minimizes the residuals for each subsequent echo
-    # use auto mask to get brain mask
+    """Compute the global mode offset for the first echo and apply it to the subsequent echoes.
+
+    Parameters
+    ----------
+    magnitude : :obj:`str`
+    unwrapped : :obj:`str`
+    mask : :obj:`str`
+    echo_times : :obj:`list` of :obj:`float`
+
+    Returns
+    -------
+    new_unwrapped_file : :obj:`str`
+
+    Notes
+    -----
+    This computes the global mode offset for the first echo then tries to find the offset
+    that minimizes the residuals for each subsequent echo
+    """
     import os
 
     import nibabel as nb
@@ -783,3 +799,171 @@ def global_mode_correction(magnitude, unwrapped, mask, echo_times):
     new_unwrapped_img.to_filename(new_unwrapped_file)
 
     return new_unwrapped_file
+
+
+def corr2_coeff(A, B):
+    """Efficiently calculates correlation coefficient between the columns of two 2D arrays
+
+    Parameters
+    ----------
+    A : npt.NDArray
+        1st array to correlate
+    B : npt.NDArray
+        2nd array to correlate
+
+    Returns
+    -------
+    npt.NDArray
+        array of correlation coefficients
+    """
+    # Transpose A and B
+    A = A.T
+    B = B.T
+
+    # Rowwise mean of input arrays & subtract from input arrays themeselves
+    A_mA = A - A.mean(axis=1, keepdims=True)
+    B_mB = B - B.mean(axis=1, keepdims=True)
+
+    # Sum of squares across rows
+    ssA = (A_mA**2).sum(axis=1, keepdims=True)
+    ssB = (B_mB**2).sum(axis=1, keepdims=True).T
+
+    # Finally get corr coeff
+    return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA, ssB))
+
+
+def check_temporal_consistency_corr(
+    unwrapped_data,
+    unwrapped_echo_1,
+    TEs,
+    mag,
+    t,
+    frame_idx,
+    masks,
+    threshold=0.98,
+):
+    """Ensures phase unwrapping solutions are temporally consistent
+
+    This uses correlation as a similarity metric between frames to enforce temporal consistency.
+
+    Parameters
+    ----------
+    unwrapped_data : npt.NDArray
+        unwrapped phase data, where last column is time, and second to last column are the echoes
+    TEs : npt.NDArray
+        echo times
+    mag : List[nib.Nifti1Image]
+        magnitude images
+    frames : List[int]
+        list of frames that are being processed
+    threshold : float
+        threshold for correlation similarity. By default 0.98
+    """
+    from sdcflows.utils.misc import corr2_coeff
+
+    logging.info(f"Computing temporal consistency check for frame: {t}")
+
+    # generate brain mask (with 1 voxel erosion)
+    echo_idx = np.argmin(TEs)
+    mag_shortest = mag[echo_idx].dataobj[..., frame_idx]
+    brain_mask = create_brain_mask(mag_shortest, -1)
+
+    # get the current frame phase
+    current_frame_data = unwrapped_echo_1[brain_mask, t][:, np.newaxis]
+
+    # get the correlation between the current frame and all other frames
+    corr = corr2_coeff(current_frame_data, unwrapped_echo_1[brain_mask, :]).ravel()
+
+    # threhold the RD
+    tmask = corr > threshold
+
+    # get indices of mask
+    indices = np.where(tmask)[0]
+
+    # get mask for frame
+    mask = masks[..., t] > 0
+
+    # for each frame compute the mean value along the time axis (masked by indices and mask)
+    mean_voxels = np.mean(unwrapped_echo_1[mask][:, indices], axis=-1)
+
+    # for this frame figure out the integer multiple that minimizes the value to the mean voxel
+    int_map = np.round((mean_voxels - unwrapped_echo_1[mask, t]) / (2 * np.pi)).astype(int)
+
+    # correct the data using the integer map
+    unwrapped_data[mask, 0, t] += 2 * np.pi * int_map
+
+    # format weight matrix
+    weights_mat = np.stack([m.dataobj[..., frame_idx] for m in mag], axis=-1)[mask].T
+
+    # form design matrix
+    X = TEs[:, np.newaxis]
+
+    # fit subsequent echos to the weighted linear regression from the first echo
+    for echo in range(1, unwrapped_data.shape[-2]):
+        # form response matrix
+        Y = unwrapped_data[mask, :echo, t].T
+
+        # fit model to data
+        coefficients, _ = weighted_regression(X[:echo], Y, weights_mat[:echo])
+
+        # get the predicted values for this echo
+        Y_pred = coefficients * TEs[echo]
+
+        # compute the difference and get the integer multiple map
+        int_map = np.round((Y_pred - unwrapped_data[mask, echo, t]) / (2 * np.pi)).astype(int)
+
+        # correct the data using the integer map
+        unwrapped_data[mask, echo, t] += 2 * np.pi * int_map
+
+
+def compute_field_map(
+    phase,
+    magnitude,
+    echo_times,
+):
+    """Function for computing field map for a given frame
+
+    Parameters
+    ----------
+    unwrapped_mat: np.ndarray
+        Array of unwrapped phase data for a given frame
+    mag: List[nib.NiftiImage]
+        List of magnitudes
+    num_echos: int
+        Number of echos
+    TEs_mat: npt.NDArray
+        Echo times in a 2d matrix
+    frame_num: int
+        Frame number
+
+    Returns
+    -------
+    B0: np.ndarray
+        Field map in Hertz.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    from sdcflows.utils.misc import weighted_regression
+
+    b0_file = os.path.abspath("b0.nii.gz")
+
+    phase_img = nb.load(phase)
+    phase_data = phase_img.get_fdata()
+    magnitude_img = nb.load(magnitude)
+    magnitude_data = magnitude_img.get_fdata()
+    size = magnitude_data.shape[:3]
+
+    n_echoes = echo_times.size
+
+    unwrapped_mat = phase_data.reshape(-1, n_echoes).T
+    weights = magnitude_data.reshape(-1, n_echoes).T
+    b0 = weighted_regression(echo_times, unwrapped_mat, weights)[0].T.reshape(*size)
+    b0 *= 1000 / (2 * np.pi)
+
+    b0_img = nb.Nifti1Image(b0, phase_img.affine, phase_img.header)
+    b0_img.to_filename(b0_file)
+
+    return b0_file

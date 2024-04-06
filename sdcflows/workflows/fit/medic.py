@@ -30,7 +30,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from sdcflows.interfaces.fmap import PhaseMap2rads, ROMEO
 from sdcflows.utils.misc import (
     calculate_diffs2,
-    calculate_fieldmap,
+    calculate_dual_echo_fieldmap,
     calculate_offset,
     create_brain_mask,
     global_mode_correction,
@@ -61,7 +61,7 @@ def init_medic_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fit.pepolar import init_topup_wf
+            from sdcflows.workflows.fit.medic import init_medic_wf
             wf = init_topup_wf()
 
     Parameters
@@ -198,6 +198,8 @@ def init_medic_wf(
     # Re-combine into echo-wise time series
 
     # Check temporal consistency of phase unwrapping
+
+    # Write out unwrapped phase data
 
     # Compute field maps
 
@@ -635,7 +637,7 @@ def init_dual_echo_wf(name="dual_echo_wf"):
         niu.Function(
             input_names=["unwrapped_phase", "echo_times"],
             output_names=["fieldmap"],
-            function=calculate_fieldmap,
+            function=calculate_dual_echo_fieldmap,
         ),
         name="calc_fieldmap",
     )
