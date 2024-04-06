@@ -115,73 +115,6 @@ def get_largest_connected_component(mask_data: npt.NDArray[np.bool_]) -> npt.NDA
     return mask_data
 
 
-def create_brain_mask(
-    mag_shortest: npt.NDArray[np.float32],
-    extra_dilation: int = 0,
-) -> npt.NDArray[np.bool_]:
-    """Create a quick brain mask for a single frame.
-
-    Parameters
-    ----------
-    mag_shortest : npt.NDArray[np.float32]
-        Magnitude data with the shortest echo time
-    extra_dilation : int
-        Number of extra dilations (or erosions if negative) to perform, by default 0
-
-    Returns
-    -------
-    npt.NDArray[np.bool_]
-        Mask of voxels to use for unwrapping
-    """
-    from typing import cast
-
-    import numpy as np
-    import numpy.typing as npt
-    from scipy.ndimage import (
-        binary_dilation,
-        binary_erosion,
-        binary_fill_holes,
-        generate_binary_structure,
-    )
-    from skimage.filters import threshold_otsu
-
-    # create structuring element
-    strel = generate_binary_structure(3, 2)
-
-    # get the otsu threshold
-    threshold = threshold_otsu(mag_shortest)
-    mask_data = mag_shortest > threshold
-    mask_data = cast(npt.NDArray[np.float32], binary_fill_holes(mask_data, strel))
-
-    # erode mask
-    mask_data = cast(
-        npt.NDArray[np.bool_],
-        binary_erosion(mask_data, structure=strel, iterations=2, border_value=1),
-    )
-
-    # get largest connected component
-    mask_data = get_largest_connected_component(mask_data)
-
-    # dilate the mask
-    mask_data = binary_dilation(mask_data, structure=strel, iterations=2)
-
-    # extra dilation to get areas on the edge of the brain
-    if extra_dilation > 0:
-        mask_data = binary_dilation(mask_data, structure=strel, iterations=extra_dilation)
-
-    # if negative, erode instead
-    if extra_dilation < 0:
-        mask_data = binary_erosion(mask_data, structure=strel, iterations=abs(extra_dilation))
-
-    # since we can't have a completely empty mask, set all zeros to ones
-    # if the mask is all empty
-    if np.all(np.isclose(mask_data, 0)):
-        mask_data = np.ones(mask_data.shape)
-
-    # return the mask
-    return mask_data.astype(np.bool_)
-
-
 def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_file="mask.nii.gz"):
     from typing import cast
 
@@ -195,6 +128,8 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
         generate_binary_structure,
     )
     from skimage.filters import threshold_otsu
+
+    from sdcflows.utils.misc import create_brain_mask, get_largest_connected_component
 
     mag_img = nb.load(mag_file)
     mag_data = mag_img.get_fdata()
@@ -262,6 +197,8 @@ def calculate_diffs(mag_file, phase_file):
     magnitude and phase data,
     then separates the magnitude and phase differences out.
     """
+    import os
+
     import nibabel as nb
     import numpy as np
 
@@ -278,222 +215,17 @@ def calculate_diffs(mag_file, phase_file):
     phase_diff = np.angle(signal_diff)
     mag_diff_img = nb.Nifti1Image(mag_diff, mag_img.affine, mag_img.header)
     phase_diff_img = nb.Nifti1Image(phase_diff, phase_img.affine, phase_img.header)
-    mag_diff_file = "mag_diff.nii.gz"
-    phase_diff_file = "phase_diff.nii.gz"
+    mag_diff_file = os.path.abspath("mag_diff.nii.gz")
+    phase_diff_file = os.path.abspath("phase_diff.nii.gz")
     mag_diff_img.to_filename(mag_diff_file)
     phase_diff_img.to_filename(phase_diff_file)
     return mag_diff_file, phase_diff_file
 
 
-def mcpc_3d_s(mag_file, phase_file, echo_times, unwrapped_diff_file, mask_file, wrap_limit):
-    """Estimate and remove phase offset with MCPC-3D-S algorithm.
-
-    Parameters
-    ----------
-    mag_file : str
-        Magnitude image file
-    phase_file : str
-        Phase image file
-    echo_times : :obj:`numpy.ndarray`
-        Echo times
-    unwrapped_diff_file : str
-        Unwrapped phase difference file
-    mask_file : str
-        Mask file
-    wrap_limit : bool
-        If True, this turns off some heuristics for phase unwrapping.
-
-    Returns
-    -------
-    offset_file : str
-        Phase offset file
-    new_unwrapped_diff_file : str
-        Unwrapped phase difference file
-
-    Notes
-    -----
-    "MCPC-3D-S estimates the phase offset by computing the unwrapped phase difference between
-    the first and second echoes of the data,
-    then estimating the phase offset by assuming linear phase accumulation between the first
-    and second echoes." (from Van et al.)
-
-    The MCPC-3D-S algorithm is described in https://doi.org/10.1002/mrm.26963.
-    """
-    import nibabel as nb
-    import numpy as np
-
-    FMAP_PROPORTION_HEURISTIC = 0.25
-    FMAP_AMBIGUOUS_HEURISTIC = 0.5
-
-    mag_img = nb.load(mag_file)
-    phase_img = nb.load(phase_file)
-    unwrapped_diff = nb.load(unwrapped_diff_file).get_fdata()
-    mask = nb.load(mask_file).get_fdata().astype(bool)
-    mag_data = mag_img.get_fdata()
-    phase_data = phase_img.get_fdata()
-    TE0, TE1 = echo_times[:2]
-    phase0 = phase_data[..., 0]
-    phase1 = phase_data[..., 1]
-    mag0 = mag_data[..., 0]
-    mag1 = mag_data[..., 1]
-    voxel_mask = create_brain_mask(mag0, -2)
-    phases = np.stack([phase0, phase1], axis=-1)
-    mags = np.stack([mag0, mag1], axis=-1)
-    TEs = np.array([TE0, TE1])
-    all_TEs = np.array([0.0, TE0, TE1])
-    proposed_offset = np.angle(np.exp(1j * (phase0 - ((TE0 * unwrapped_diff) / (TE1 - TE0)))))
-
-    # get the new phases
-    proposed_phases = phases - proposed_offset[..., np.newaxis]
-
-    # compute the fieldmap
-    # TODO: Move this step into a separate interface, since it calls ROMEO
-    proposed_fieldmap, proposed_unwrapped_phases = get_dual_echo_fieldmap(
-        proposed_phases, TEs, mags, mask
-    )
-
-    # check if the proposed fieldmap is below 10
-    # print(f"proposed_fieldmap: {proposed_fieldmap[voxel_mask].mean()}")
-    if proposed_fieldmap[voxel_mask].mean() < -10:
-        unwrapped_diff += 2 * np.pi
-    # check if the propossed fieldmap is between -10 and 0
-    elif proposed_fieldmap[voxel_mask].mean() < 0 and not wrap_limit:
-        # look at proportion of voxels that are positive
-        voxel_prop = (
-            np.count_nonzero(proposed_fieldmap[voxel_mask] > 0)
-            / proposed_fieldmap[voxel_mask].shape[0]
-        )
-
-        # if the proportion of positive voxels is less than 0.25, then add 2pi
-        if voxel_prop < FMAP_PROPORTION_HEURISTIC:
-            unwrapped_diff += 2 * np.pi
-        elif voxel_prop < FMAP_AMBIGUOUS_HEURISTIC:
-            # compute mean of phase offset
-            mean_phase_offset = proposed_offset[voxel_mask].mean()
-            # print(f"mean_phase_offset: {mean_phase_offset}")
-            # if less than -1 then
-            if mean_phase_offset < -1:
-                phase_fits = np.concatenate(
-                    (
-                        np.zeros((*proposed_unwrapped_phases.shape[:-1], 1)),
-                        proposed_unwrapped_phases,
-                    ),
-                    axis=-1,
-                )
-                _, residuals_1, _, _, _ = np.polyfit(
-                    all_TEs,
-                    phase_fits[voxel_mask, :].T,
-                    1,
-                    full=True,
-                )
-
-                # check if adding 2pi makes it better
-                new_proposed_offset = np.angle(
-                    np.exp(1j * (phase0 - ((TE0 * (unwrapped_diff + 2 * np.pi)) / (TE1 - TE0))))
-                )
-                new_proposed_phases = phases - new_proposed_offset[..., np.newaxis]
-                new_proposed_fieldmap, new_proposed_unwrapped_phases = get_dual_echo_fieldmap(
-                    new_proposed_phases, TEs, mags, mask
-                )
-
-                # fit linear model to the proposed phases
-                new_phase_fits = np.concatenate(
-                    (
-                        np.zeros((*new_proposed_unwrapped_phases.shape[:-1], 1)),
-                        new_proposed_unwrapped_phases,
-                    ),
-                    axis=-1,
-                )
-                _, residuals_2, _, _, _ = np.polyfit(
-                    echo_times, new_phase_fits[voxel_mask, :].T, 1, full=True
-                )
-
-                if (
-                    np.isclose(residuals_1.mean(), residuals_2.mean(), atol=1e-3, rtol=1e-3)
-                    and new_proposed_fieldmap[voxel_mask].mean() > 0
-                ):
-                    unwrapped_diff += 2 * np.pi
-                else:
-                    unwrapped_diff -= 2 * np.pi
-
-    # compute the phase offset
-    offset = np.angle(np.exp(1j * (phase0 - ((TE0 * unwrapped_diff) / (TE1 - TE0)))))
-
-    new_unwrapped_diff_file = "unwrapped_diff.nii.gz"
-    offset_file = "offset.nii.gz"
-    nb.Nifti1Image(offset, mag_img.affine, mag_img.header).to_filename(offset_file)
-    nb.Nifti1Image(unwrapped_diff, mag_img.affine, mag_img.header).to_filename(
-        new_unwrapped_diff_file
-    )
-    return offset_file, new_unwrapped_diff_file
-
-
-def global_mode_correction(
-    echo_times,
-    magnitude_file,
-    phase_file,
-    mask_file,
-    masksum_file,
-    automask=True,
-):
-    """Apply global mode correction.
-
-    Compute the global mode offset for the first echo then try to find the offset
-    that minimizes the residuals for each subsequent echo.
-    """
-    import nibabel as nb
-    import numpy as np
-
-    # global mode correction
-    # use auto mask to get brain mask
-    mag_data = nb.load(magnitude_file).get_fdata()
-    phase_img = nb.load(phase_file)
-    phase_data = phase_img.get_fdata()
-    mask_data = nb.load(mask_file).get_fdata().astype(np.bool)
-
-    echo_idx = np.argmin(echo_times)
-    mag_shortest = mag_data[..., echo_idx]
-    brain_mask = create_brain_mask(mag_shortest)
-
-    # for each of these matrices TEs are on rows, voxels are columns
-    # get design matrix
-    X = echo_times[:, np.newaxis]
-
-    # get magnitude weight matrix
-    W = mag_data[brain_mask, :].T
-
-    # loop over each index past 1st echo
-    for i in range(1, echo_times.shape[0]):
-        # get matrix with the masked unwrapped data (weighted by magnitude)
-        Y = phase_data[brain_mask, :].T
-
-        # Compute offset through linear regression method
-        best_offset = compute_offset(i, W, X, Y)
-
-        # apply the offset
-        phase_data[..., i] += 2 * np.pi * best_offset
-
-    # set anything outside of mask_data to 0
-    phase_data[~mask_data] = 0
-
-    unwrapped_file = "unwrapped_phase.nii.gz"
-    nb.Nifti1Image(phase_data, phase_img.affine, phase_img.header).to_filename(unwrapped_file)
-
-    if not automask:
-        final_mask_file = "final_mask.nii.gz"
-        nb.Nifti1Image(
-            mask_data.astype(np.int8),
-            phase_img.affine,
-            phase_img.header,
-        ).to_filename(final_mask_file)
-    else:
-        final_mask_file = masksum_file
-
-    return final_mask_file, unwrapped_file
-
-
 def compute_offset(echo_ind: int, W: npt.NDArray, X: npt.NDArray, Y: npt.NDArray) -> int:
     """Method for computing the global mode offset for echoes > 1.
+
+    TODO: Rename this and calculate_offset.
 
     Parameters
     ----------
@@ -630,3 +362,424 @@ def weighted_regression(
 
     # return model weights and residuals
     return model_weights, residuals
+
+
+def calculate_diffs2(magnitude, phase):
+    """Calculate the magnitude and phase differences between two complex-valued images.
+
+    Parameters
+    ----------
+    magnitude : :obj:`str`
+        The path to the magnitude image (concatenated across echoes).
+    phase : :obj:`str`
+        The path to the phase image (concatenated across echoes).
+
+    Returns
+    -------
+    mag_diff_file : :obj:`str`
+        The path to the magnitude difference image.
+    phase_diff_file : :obj:`str`
+        The path to the phase difference image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    mag_diff_file = os.path.abspath("magnitude_diff.nii.gz")
+    phase_diff_file = os.path.abspath("phase_diff.nii.gz")
+
+    magnitude_img = nb.load(magnitude)
+    phase_img = nb.load(phase)
+    magnitude_data = magnitude_img.get_fdata()
+    phase_data = phase_img.get_fdata()
+
+    signal_diff = (
+        magnitude_data[..., 0]
+        * magnitude_data[..., 1]
+        * np.exp(1j * (phase_data[..., 1] - phase_data[..., 0]))
+    )
+    mag_diff = np.abs(signal_diff)
+    phase_diff = np.angle(signal_diff)
+    mag_diff_img = nb.Nifti1Image(mag_diff, magnitude_img.affine, magnitude_img.header)
+    phase_diff_img = nb.Nifti1Image(phase_diff, phase_img.affine, phase_img.header)
+    mag_diff_img.to_filename(mag_diff_file)
+    phase_diff_img.to_filename(phase_diff_file)
+
+    return mag_diff_file, phase_diff_file
+
+
+def create_brain_mask(magnitude, extra_dilation):
+    """Create a quick brain mask for a single frame.
+
+    Parameters
+    ----------
+    magnitude : npt.NDArray[np.float32]
+        Magnitude data with the shortest echo time
+    extra_dilation : int
+        Number of extra dilations (or erosions if negative) to perform, by default 0
+
+    Returns
+    -------
+    npt.NDArray[np.bool_]
+        Mask of voxels to use for unwrapping
+    """
+    import os
+    from typing import cast
+
+    import nibabel as nb
+    import numpy as np
+    import numpy.typing as npt
+    from scipy.ndimage import (
+        binary_dilation,
+        binary_fill_holes,
+        binary_erosion,
+        generate_binary_structure,
+    )
+    from skimage.filters import threshold_otsu
+
+    from sdcflows.utils.misc import get_largest_connected_component
+
+    mag_img = nb.load(magnitude)
+    mag_data = mag_img.get_fdata()
+    mag_data = mag_data[..., 0]
+
+    mask_file = os.path.abspath("mask.nii.gz")
+
+    # create structuring element
+    strel = generate_binary_structure(3, 2)
+
+    # get the otsu threshold
+    threshold = threshold_otsu(mag_data)
+    mask_data = mag_data > threshold
+    mask_data = cast(npt.NDArray[np.float32], binary_fill_holes(mask_data, strel))
+
+    # erode mask
+    mask_data = cast(
+        npt.NDArray[np.bool_],
+        binary_erosion(mask_data, structure=strel, iterations=2, border_value=1),
+    )
+
+    # get largest connected component
+    mask_data = get_largest_connected_component(mask_data)
+
+    # dilate the mask
+    mask_data = binary_dilation(mask_data, structure=strel, iterations=2)
+
+    # extra dilation to get areas on the edge of the brain
+    if extra_dilation > 0:
+        mask_data = binary_dilation(mask_data, structure=strel, iterations=extra_dilation)
+    # if negative, erode instead
+    if extra_dilation < 0:
+        mask_data = binary_erosion(mask_data, structure=strel, iterations=abs(extra_dilation))
+
+    # since we can't have a completely empty mask, set all zeros to ones
+    # if the mask is all empty
+    if np.all(np.isclose(mask_data, 0)):
+        mask_data = np.ones(mask_data.shape)
+
+    mask_data = mask_data.astype(np.bool_).astype(np.uint8)
+    mask_img = nb.Nifti1Image(mask_data, mag_img.affine, mag_img.header)
+    mask_img.to_filename(mask_file)
+    return mask_file
+
+
+def calculate_offset(phase, unwrapped_diff, echo_times):
+    """Calculate the phase offset between two echoes.
+
+    TODO: Rename this and compute_offset.
+
+    Parameters
+    ----------
+    phase : :obj:`str`
+        The path to the phase image (concatenated across echoes).
+    unwrapped_diff : :obj:`str`
+        The path to the unwrapped phase difference image from the first two echoes.
+    echo_times : :obj:`list` of :obj:`float`
+        The echo times.
+
+    Returns
+    -------
+    offset : :obj:`str`
+        The path to the phase offset image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    offset_file = os.path.abspath("offset.nii.gz")
+
+    phase_img = nb.load(phase)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    phase_data = phase_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+
+    proposed_offset = np.angle(
+        np.exp(
+            1j
+            * (
+                phase_data[..., 0]
+                - ((echo_times[0] * unwrapped_diff_data) / (echo_times[1] - echo_times[0]))
+            )
+        )
+    )
+    proposed_offset_img = nb.Nifti1Image(proposed_offset, phase_img.affine, phase_img.header)
+    proposed_offset_img.to_filename(offset_file)
+    return offset_file
+
+
+def subtract_offset(phase, offset):
+    """Subtract the offset from the phase image.
+
+    Parameters
+    ----------
+    phase : :obj:`str`
+        The path to the phase image.
+    offset : :obj:`str`
+        The path to the offset image.
+
+    Returns
+    -------
+    updated_phase : :obj:`str`
+        The path to the updated phase image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    updated_phase_file = os.path.abspath("updated_phase.nii.gz")
+
+    phase_img = nb.load(phase)
+    offset_img = nb.load(offset)
+    phase_data = phase_img.get_fdata()
+    offset_data = offset_img.get_fdata()
+    updated_phase = phase_data - offset_data[..., np.newaxis]
+    updated_phase_img = nb.Nifti1Image(updated_phase, phase_img.affine, phase_img.header)
+    updated_phase_img.to_filename(updated_phase_file)
+    return updated_phase_file
+
+
+def calculate_fieldmap(unwrapped_phase, echo_times):
+    """Calculate the fieldmap from the unwrapped phase difference.
+
+    Parameters
+    ----------
+    unwrapped_phase : :obj:`str`
+        The path to the unwrapped phase difference image.
+    echo_times : :obj:`list` of :obj:`float`
+        The echo times.
+
+    Returns
+    -------
+    fieldmap : :obj:`str`
+        The path to the fieldmap image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    fieldmap_file = os.path.abspath("fieldmap.nii.gz")
+
+    unwrapped_phase_img = nb.load(unwrapped_phase)
+    unwrapped_phase_data = unwrapped_phase_img.get_fdata()
+
+    phase_diff = unwrapped_phase_data[..., 1] - unwrapped_phase_data[..., 0]
+    fieldmap = (1000 / (2 * np.pi)) * phase_diff / (echo_times[1] - echo_times[0])
+    fieldmap_img = nb.Nifti1Image(
+        fieldmap,
+        unwrapped_phase_img.affine,
+        unwrapped_phase_img.header,
+    )
+    fieldmap_img.to_filename(fieldmap_file)
+
+    return fieldmap_file
+
+
+def modify_unwrapped_diff(phase, unwrapped_diff, echo_times):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    updated_phase_file = os.path.abspath("updated_phase.nii.gz")
+
+    phase_img = nb.load(phase)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    phase_data = phase_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+
+    new_proposed_offset = np.angle(
+        np.exp(
+            1j
+            * (
+                phase_data[..., 0]
+                - (
+                    (echo_times[0] * (unwrapped_diff_data + 2 * np.pi))
+                    / (echo_times[1] - echo_times[0])
+                )
+            )
+        )
+    )
+    new_proposed_phase = phase_data - new_proposed_offset[..., np.newaxis]
+    new_proposed_phase_img = nb.Nifti1Image(
+        new_proposed_phase,
+        phase_img.affine,
+        phase_img.header,
+    )
+    new_proposed_phase_img.to_filename(updated_phase_file)
+
+    return updated_phase_file
+
+
+def select_fieldmap(
+    original_fieldmap,
+    original_unwrapped_phase,
+    original_offset,
+    modified_fieldmap,
+    modified_unwrapped_phase,
+    unwrapped_diff,
+    voxel_mask,
+    echo_times,
+    wrap_limit,
+):
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    FMAP_PROPORTION_HEURISTIC = 0.25
+    FMAP_AMBIGUIOUS_HEURISTIC = 0.5
+
+    new_unwrapped_diff_file = os.path.abspath("new_unwrapped_diff.nii.gz")
+
+    orig_fmap_img = nb.load(original_fieldmap)
+    orig_unwrapped_phase_img = nb.load(original_unwrapped_phase)
+    orig_offset_img = nb.load(original_offset)
+    mod_fmap_img = nb.load(modified_fieldmap)
+    mod_unwrapped_phase_img = nb.load(modified_unwrapped_phase)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    voxel_mask_img = nb.load(voxel_mask)
+
+    orig_fmap_data = orig_fmap_img.get_fdata()
+    orig_unwrapped_phase_data = orig_unwrapped_phase_img.get_fdata()
+    orig_offset_data = orig_offset_img.get_fdata()
+    mod_fmap_data = mod_fmap_img.get_fdata()
+    mod_unwrapped_phase_data = mod_unwrapped_phase_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+    voxel_mask_data = voxel_mask_img.get_fdata()
+
+    masked_orig_fmap = orig_fmap_data[voxel_mask_data]
+    if masked_orig_fmap.mean() < -10:
+        # check if the proposed fieldmap is below -10
+        unwrapped_diff_data += 2 * np.pi
+
+    elif masked_orig_fmap.mean() < 0 and not wrap_limit:
+        # check if the proposed fieldmap is between -10 and 0
+        # look at proportion of voxels that are positive
+        voxel_prop = np.count_nonzero(masked_orig_fmap > 0) / masked_orig_fmap.shape[0]
+
+        # if the proportion of positive voxels is less than 0.25, then add 2pi
+        if voxel_prop < FMAP_PROPORTION_HEURISTIC:
+            unwrapped_diff_data += 2 * np.pi
+        elif voxel_prop < FMAP_AMBIGUIOUS_HEURISTIC:
+            # compute mean of phase offset
+            mean_phase_offset = orig_offset_data[voxel_mask_data].mean()
+            if mean_phase_offset < -1:
+                phase_fits = np.concatenate(
+                    (
+                        np.zeros((*orig_unwrapped_phase_data.shape[:-1], 1)),
+                        orig_unwrapped_phase_data,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_1, _, _, _ = np.polyfit(
+                    echo_times,
+                    phase_fits[voxel_mask_data, :].T,
+                    1,
+                    full=True,
+                )
+
+                masked_mod_fmap = mod_fmap_data[voxel_mask_data]
+                # fit linear model to the proposed phase
+                new_phase_fits = np.concatenate(
+                    (
+                        np.zeros((*mod_unwrapped_phase_data.shape[:-1], 1)),
+                        mod_unwrapped_phase_data,
+                    ),
+                    axis=-1,
+                )
+                _, residuals_2, _, _, _ = np.polyfit(
+                    echo_times,
+                    new_phase_fits[voxel_mask_data, :].T,
+                    1,
+                    full=True,
+                )
+
+                if (
+                    np.isclose(residuals_1.mean(), residuals_2.mean(), atol=1e-3, rtol=1e-3)
+                    and masked_mod_fmap.mean() > 0
+                ):
+                    unwrapped_diff_data += 2 * np.pi
+                else:
+                    unwrapped_diff_data -= 2 * np.pi
+
+    new_unwrapped_diff_img = nb.Nifti1Image(
+        unwrapped_diff_data,
+        unwrapped_diff_img.affine,
+        unwrapped_diff_img.header,
+    )
+    new_unwrapped_diff_img.to_filename(new_unwrapped_diff_file)
+    return new_unwrapped_diff_file
+
+
+def global_mode_correction(magnitude, unwrapped, mask, echo_times):
+    # this computes the global mode offset for the first echo then tries to find the offset
+    # that minimizes the residuals for each subsequent echo
+    # use auto mask to get brain mask
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    from sdcflows.utils.misc import compute_offset, create_brain_mask
+
+    new_unwrapped_file = os.path.abspath("unwrapped.nii.gz")
+
+    mag_img = nb.load(magnitude)
+    unwrapped_img = nb.load(unwrapped)
+    mask_img = nb.load(mask)
+    mag_data = mag_img.get_fdata()
+    unwrapped_data = unwrapped_img.get_fdata()
+    mask_data = mask_img.get_fdata()
+
+    mag_shortest = mag_data[..., 0]
+    brain_mask = create_brain_mask(mag_shortest)
+
+    # for each of these matrices TEs are on rows, voxels are columns
+    # get design matrix
+    X = echo_times[:, np.newaxis]
+
+    # get magnitude weight matrix
+    W = mag_data[brain_mask, :].T
+
+    # loop over each index past 1st echo
+    for i in range(1, echo_times.shape[0]):
+        # get matrix with the masked unwrapped data (weighted by magnitude)
+        Y = unwrapped_data[brain_mask, :].T
+
+        # Compute offset through linear regression method
+        best_offset = compute_offset(i, W, X, Y)
+
+        # apply the offset
+        unwrapped_data[..., i] += 2 * np.pi * best_offset
+
+    # set anything outside of mask_data to 0
+    unwrapped_data[~mask_data] = 0
+
+    new_unwrapped_img = nb.Nifti1Image(unwrapped_data, mag_img.affine, mag_img.header)
+    new_unwrapped_img.to_filename(new_unwrapped_file)
+
+    return new_unwrapped_file
