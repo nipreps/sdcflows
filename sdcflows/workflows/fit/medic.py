@@ -210,7 +210,37 @@ def init_process_volume_wf(
             :simple_form: yes
 
             from sdcflows.workflows.fit.pepolar import init_process_volume_wf
-            wf = init_process_volume_wf()   # doctest: +SKIP
+
+            wf = init_process_volume_wf(
+                echo_times=[0.015, 0.030, 0.045, 0.06],
+                automask=True,
+                automask_dilation=3,
+            )   # doctest: +SKIP
+
+    Parameters
+    ----------
+    echo_times : :obj:`list` of :obj:`float`
+        The echo times of the multi-echo data.
+    automask : :obj:`bool`
+        Whether to automatically generate a mask for the fieldmap.
+    automask_dilation : :obj:`int`
+        The number of voxels by which to dilate the automatically generated mask.
+
+    Inputs
+    ------
+    magnitude : :obj:`str`
+        The magnitude EPI file that will be fed into MEDIC.
+    phase : :obj:`str`
+        The phase EPI file that will be fed into MEDIC.
+
+    Outputs
+    -------
+    fmap : :obj:`str`
+        The path of the estimated fieldmap.
+    fmap_ref : :obj:`str`
+        The path of an unwarped conversion of files in ``in_data``.
+    fmap_mask : :obj:`str`
+        The path of mask corresponding to the ``fmap_ref`` output.
     """
     workflow = Workflow(name=name)
 
@@ -310,3 +340,260 @@ def init_process_volume_wf(
     # Re-split the unwrapped phase data
 
     return workflow
+
+
+def init_mcpc_3d_s_wf(wrap_limit, name):
+    """"""
+    FMAP_PROPORTION_HEURISTIC = 0.25
+    FMAP_AMBIGUIOUS_HEURISTIC = 0.5
+
+    workflow = Workflow(name=name)
+
+    inputnode = pe.Node(
+        niu.IdentityInterface(
+            fields=[
+                "magnitude0",
+                "magnitude1",
+                "phase0",
+                "phase1",
+                "te0",
+                "te1",
+                "mask_file",
+                "ref",
+                "ref_mask",
+            ],
+        ),
+        name="inputnode",
+    )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=["offset", "unwrapped_diff"]),
+        name="outputnode",
+    )
+
+    # Calculate magnitude and phase differences
+    calc_diffs = pe.Node(
+        niu.Function(
+            input_names=["magnitude0", "magnitude1", "phase0", "phase1"],
+            output_names=["mag_diff_file", "phase_diff_file"],
+            function=calculate_diffs2,
+        ),
+        name="calc_diffs",
+    )
+    workflow.connect([
+        (inputnode, calc_diffs, [
+            ("magnitude0", "magnitude0"),
+            ("magnitude1", "magnitude1"),
+            ("phase0", "phase0"),
+            ("phase1", "phase1"),
+        ]),
+    ])  # fmt:skip
+
+    # Unwrap difference images
+    unwrap_diffs = pe.Node(
+        ROMEO(
+            weights="romeo",
+            correct_global=True,
+        ),
+        name="unwrap_diffs",
+    )
+    workflow.connect([
+        (inputnode, unwrap_diffs, [("mask_file", "mask_file")]),
+        (calc_diffs, unwrap_diffs, [
+            ("mag_diff_file", "magnitude_file"),
+            ("phase_diff_file", "phase_file"),
+        ]),
+    ])  # fmt:skip
+
+    # Calculate voxel mask
+    create_mask = pe.Node(
+        niu.Function(
+            input_names=["mag_shortest", "extra_dilation"],
+            output_names=["mask"],
+            function=create_brain_mask,
+        ),
+        name="create_mask",
+    )
+    workflow.connect([(inputnode, create_mask, [("magnitude0", "mag_shortest")])])
+
+    # Calculate initial offset estimate
+    calc_offset = pe.Node(
+        niu.Function(
+            input_names=["phase0", "unwrapped_diff", "te0", "te1"],
+            output_names=["offset"],
+            function=calculate_offset,
+        ),
+        name="calc_offset",
+    )
+    workflow.connect([
+        (inputnode, calc_offset, [
+            ("phase0", "phase0"),
+            ("te0", "te0"),
+            ("te1", "te1"),
+        ]),
+        (unwrap_diffs, calc_offset, [("out_file", "unwrapped_diff")]),
+    ])  # fmt:skip
+
+    # Get the new phases
+
+    # Compute the dual-echo field map
+
+    # Check if the proposed field map is below -10
+    # Add 2 * pi if so
+
+    # Check if the proposed field map is between -10 and 0
+    #
+
+    # Compute the updated phase offset
+    return workflow
+
+
+def calculate_diffs2(magnitude0, magnitude1, phase0, phase1):
+    """Calculate the magnitude and phase differences between two complex-valued images.
+
+    Parameters
+    ----------
+    magnitude0 : :obj:`str`
+        The path to the magnitude image from the first echo.
+    magnitude1 : :obj:`str`
+        The path to the magnitude image from the second echo.
+    phase0 : :obj:`str`
+        The path to the phase image from the first echo.
+    phase1 : :obj:`str`
+        The path to the phase image from the second echo.
+
+    Returns
+    -------
+    mag_diff_file : :obj:`str`
+        The path to the magnitude difference image.
+    phase_diff_file : :obj:`str`
+        The path to the phase difference image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    mag_diff_file = os.path.abspath("magnitude_diff.nii.gz")
+    phase_diff_file = os.path.abspath("phase_diff.nii.gz")
+
+    magnitude0_img = nb.load(magnitude0)
+    magnitude1_img = nb.load(magnitude1)
+    phase0_img = nb.load(phase0)
+    phase1_img = nb.load(phase1)
+    magnitude0_data = magnitude0_img.get_fdata()
+    magnitude1_data = magnitude1_img.get_fdata()
+    phase0_data = phase0_img.get_fdata()
+    phase1_data = phase1_img.get_fdata()
+
+    signal_diff = magnitude0_data * magnitude1_data * np.exp(1j * (phase1_data - phase0_data))
+    mag_diff = np.abs(signal_diff)
+    phase_diff = np.angle(signal_diff)
+    mag_diff_img = nb.Nifti1Image(mag_diff, magnitude0_img.affine, magnitude0_img.header)
+    phase_diff_img = nb.Nifti1Image(phase_diff, phase0_img.affine, phase0_img.header)
+    mag_diff_img.to_filename(mag_diff_file)
+    phase_diff_img.to_filename(phase_diff_file)
+
+    return mag_diff_file, phase_diff_file
+
+
+def create_brain_mask(mag_shortest, extra_dilation):
+    """Create a quick brain mask for a single frame.
+
+    Parameters
+    ----------
+    mag_shortest : npt.NDArray[np.float32]
+        Magnitude data with the shortest echo time
+    extra_dilation : int
+        Number of extra dilations (or erosions if negative) to perform, by default 0
+
+    Returns
+    -------
+    npt.NDArray[np.bool_]
+        Mask of voxels to use for unwrapping
+    """
+    from typing import cast
+
+    import numpy as np
+    import numpy.typing as npt
+    from scipy.ndimage import (
+        binary_dilation,
+        binary_fill_holes,
+        binary_erosion,
+        generate_binary_structure,
+    )
+    from skimage.filters import threshold_otsu
+
+    from sdcflows.utils.misc import get_largest_connected_component
+
+    # create structuring element
+    strel = generate_binary_structure(3, 2)
+
+    # get the otsu threshold
+    threshold = threshold_otsu(mag_shortest)
+    mask_data = mag_shortest > threshold
+    mask_data = cast(npt.NDArray[np.float32], binary_fill_holes(mask_data, strel))
+
+    # erode mask
+    mask_data = cast(
+        npt.NDArray[np.bool_],
+        binary_erosion(mask_data, structure=strel, iterations=2, border_value=1),
+    )
+
+    # get largest connected component
+    mask_data = get_largest_connected_component(mask_data)
+
+    # dilate the mask
+    mask_data = binary_dilation(mask_data, structure=strel, iterations=2)
+
+    # extra dilation to get areas on the edge of the brain
+    if extra_dilation > 0:
+        mask_data = binary_dilation(mask_data, structure=strel, iterations=extra_dilation)
+    # if negative, erode instead
+    if extra_dilation < 0:
+        mask_data = binary_erosion(mask_data, structure=strel, iterations=abs(extra_dilation))
+
+    # since we can't have a completely empty mask, set all zeros to ones
+    # if the mask is all empty
+    if np.all(np.isclose(mask_data, 0)):
+        mask_data = np.ones(mask_data.shape)
+
+    # return the mask
+    return mask_data.astype(np.bool_)
+
+
+def calculate_offset(phase0, unwrapped_diff, te0, te1):
+    """Calculate the phase offset between two echoes.
+
+    Parameters
+    ----------
+    phase0 : :obj:`str`
+        The path to the phase image from the first echo.
+    unwrapped_diff : :obj:`str`
+        The path to the unwrapped phase difference image.
+    te0 : :obj:`float`
+        The echo time of the first echo.
+    te1 : :obj:`float`
+        The echo time of the second echo.
+
+    Returns
+    -------
+    offset : :obj:`str`
+        The path to the phase offset image.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    offset_file = os.path.abspath("offset.nii.gz")
+
+    phase0_img = nb.load(phase0)
+    unwrapped_diff_img = nb.load(unwrapped_diff)
+    phase0_data = phase0_img.get_fdata()
+    unwrapped_diff_data = unwrapped_diff_img.get_fdata()
+
+    proposed_offset = np.angle(
+        np.exp(1j * (phase0_data - ((te0 * unwrapped_diff_data) / (te1 - te0))))
+    )
+    proposed_offset_img = nb.Nifti1Image(proposed_offset, phase0_img.affine, phase0_img.header)
+    proposed_offset_img.to_filename(offset_file)
