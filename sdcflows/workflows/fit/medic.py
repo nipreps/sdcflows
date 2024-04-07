@@ -27,7 +27,7 @@ from nipype.interfaces import utility as niu
 from nipype.interfaces.fsl import Split as FSLSplit
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-from sdcflows.interfaces.fmap import PhaseMap2rads, ROMEO
+from sdcflows.interfaces.fmap import PhaseMap2rads2, ROMEO
 from sdcflows.utils.misc import (
     calculate_diffs2,
     calculate_dual_echo_fieldmap,
@@ -121,9 +121,9 @@ def init_medic_wf(
 
     n_echoes = len(echo_times)
 
-    # Convert phase to radians (-pi to pi)
+    # Convert phase to radians (-pi to pi, not 0 to 2pi)
     phase2rad = pe.MapNode(
-        PhaseMap2rads(),
+        PhaseMap2rads2(),
         iterfield=["in_file"],
         name="phase2rad",
     )
@@ -210,8 +210,8 @@ def init_medic_wf(
 
 def init_process_volume_wf(
     echo_times,
-    automask,
-    automask_dilation,
+    automask=True,
+    automask_dilation=3,
     name="process_volume_wf",
 ):
     """Create a workflow to process a single volume of multi-echo data.
@@ -241,9 +241,10 @@ def init_process_volume_wf(
     Inputs
     ------
     magnitude : :obj:`str`
-        The magnitude EPI file that will be fed into MEDIC.
+        One volume of magnitude EPI data, concatenated across echoes.
     phase : :obj:`str`
-        The phase EPI file that will be fed into MEDIC.
+        One volume of phase EPI data, concatenated across echoes.
+        Must already be scaled from -pi to pi.
     mask : :obj:`str`
         The brain mask that will be used to constrain the fieldmap estimation.
         If ``automask`` is True, this mask will be modified.
@@ -277,8 +278,9 @@ def init_process_volume_wf(
         # but is noisy so we combine the two masks to get a better mask
 
         # Use ROMEO's voxel-quality command
+        # NOTE: In warpkit Andrew creates a "mag" image of all ones.
         voxqual = pe.Node(
-            ROMEO(write_quality=True, echo_times=echo_times),
+            ROMEO(write_quality=True, echo_times=echo_times, mask="robustmask"),
             name="voxqual",
         )
         workflow.connect([
@@ -341,15 +343,15 @@ def init_process_volume_wf(
             echo_times=echo_times,
             weights="romeo",
             correct_global=True,
-            maxseeds=1,
+            max_seeds=1,
             merge_regions=False,
             correct_regions=False,
         ),
         name="unwrap_phase",
     )
     workflow.connect([
-        (inputnode, unwrap_phase, [("magnitude", "magnitude_file")]),
-        (mask_buffer, unwrap_phase, [("mask_file", "mask_file")]),
+        (inputnode, unwrap_phase, [("magnitude", "mag_file")]),
+        (mask_buffer, unwrap_phase, [("mask", "mask")]),
         (remove_offset, unwrap_phase, [("phase_modified", "phase_file")]),
     ])  # fmt:skip
 
@@ -362,11 +364,9 @@ def init_process_volume_wf(
         ),
         name="global_mode_corr",
     )
+    global_mode_corr.inputs.echo_times = echo_times
     workflow.connect([
-        (inputnode, global_mode_corr, [
-            ("magnitude", "magnitude"),
-            ("echo_times", "echo_times"),
-        ]),
+        (inputnode, global_mode_corr, [("magnitude", "magnitude")]),
         (unwrap_phase, global_mode_corr, [("out_file", "unwrapped")]),
         (mask_buffer, global_mode_corr, [("mask", "mask")]),
         (global_mode_corr, outputnode, [("unwrapped", "phase_unwrapped")]),
@@ -446,9 +446,9 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
         name="unwrap_diffs",
     )
     workflow.connect([
-        (inputnode, unwrap_diffs, [("mask", "mask_file")]),
+        (inputnode, unwrap_diffs, [("mask", "mask")]),
         (calc_diffs, unwrap_diffs, [
-            ("mag_diff_file", "magnitude_file"),
+            ("mag_diff_file", "mag_file"),
             ("phase_diff_file", "phase_file"),
         ]),
     ])  # fmt:skip
@@ -500,7 +500,7 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
     dual_echo_wf = init_dual_echo_wf(name="dual_echo_wf")
     workflow.connect([
         (inputnode, dual_echo_wf, [
-            ("mask", "inputnode.mask_file"),
+            ("mask", "inputnode.mask"),
             ("echo_times", "inputnode.echo_times"),
             ("magnitude", "inputnode.magnitude"),
         ]),
@@ -518,7 +518,7 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
     )
     workflow.connect([
         (inputnode, add_2pi, [
-            ("phase", "phase")
+            ("phase", "phase"),
             ("echo_times", "echo_times"),
         ]),
         (unwrap_diffs, add_2pi, [("out_file", "unwrapped_diff")]),
@@ -527,7 +527,7 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
     modified_dual_echo_wf = init_dual_echo_wf(name="modified_dual_echo_wf")
     workflow.connect([
         (inputnode, modified_dual_echo_wf, [
-            ("mask", "inputnode.mask_file"),
+            ("mask", "inputnode.mask"),
             ("echo_times", "inputnode.echo_times"),
             ("magnitude", "inputnode.magnitude"),
         ]),
@@ -616,7 +616,7 @@ def init_dual_echo_wf(name="dual_echo_wf"):
         ROMEO(
             weights="romeo",
             correct_global=True,
-            maxseeds=1,
+            max_seeds=1,
             merge_regions=False,
             correct_regions=False,
         ),
@@ -624,9 +624,9 @@ def init_dual_echo_wf(name="dual_echo_wf"):
     )
     workflow.connect([
         (inputnode, unwrap_phase, [
-            ("magnitude", "magnitude_file"),
+            ("magnitude", "mag_file"),
             ("phase", "phase_file"),
-            ("mask", "mask_file"),
+            ("mask", "mask"),
             ("echo_times", "echo_times"),
         ]),
         (unwrap_phase, outputnode, [("out_file", "unwrapped_phase")]),

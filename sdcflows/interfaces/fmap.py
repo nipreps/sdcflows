@@ -64,6 +64,27 @@ class PhaseMap2rads(SimpleInterface):
         return runtime
 
 
+class _PhaseMap2rads2InputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="input (wrapped) phase map")
+
+
+class _PhaseMap2rads2OutputSpec(TraitedSpec):
+    out_file = File(desc="the phase map in the range -3.14 - 3.14")
+
+
+class PhaseMap2rads2(SimpleInterface):
+    """Convert a phase map given in a.u. (e.g., 0-4096) to radians."""
+
+    input_spec = _PhaseMap2rads2InputSpec
+    output_spec = _PhaseMap2rads2OutputSpec
+
+    def _run_interface(self, runtime):
+        from ..utils.phasemanip import au2rads2
+
+        self._results["out_file"] = au2rads2(self.inputs.in_file, newpath=runtime.cwd)
+        return runtime
+
+
 class _SubtractPhasesInputSpec(BaseInterfaceInputSpec):
     in_phases = traits.List(File(exists=True), min=1, max=2, desc="input phase maps")
     in_meta = traits.List(
@@ -408,31 +429,27 @@ class _ROMEOInputSpec(CommandLineInputSpec):
         desc="The magnitude image (better unwrapping if specified)",
     )
     out_file = File(
+        "unwrapped.nii",
         argstr="--output %s",
-        default_value="unwrapped.nii",
         usedefault=True,
-        desc="The output path or filename (default: unwrapped.nii)"
+        desc="The output path or filename (default: unwrapped.nii)",
     )
     echo_times = traits.List(
         traits.Float,
-        argstr="--echo-times %s",
+        argstr="--echo-times [%s]",
         desc=(
             "The echo times required for temporal unwrapping specified in array or range syntax "
             "(e.g., '[1.5,3.0]' or '3.5:3.5:14'). "
             "For identical echo times, '-t epi' can be used with the possibility to specify the "
             "echo time as e.g. '-t epi 5.3' (for B0 calculation)."
-        )
-    )
-    mask = traits.List(
-        traits.Either(
-            File(exists=True),
-            traits.Enum(
-                "nomask",
-                "robustmask",
-            ),
         ),
-        default_value="robustmask",
-        usedefault=True,
+    )
+    mask = traits.Either(
+        File(exists=True),
+        traits.Enum(
+            "nomask",
+            "robustmask",
+        ),
         argstr="--mask %s",
         desc=(
             "nomask | qualitymask <threshold> | robustmask "
@@ -464,7 +481,7 @@ class _ROMEOInputSpec(CommandLineInputSpec):
             "(3)phaselinearity (4)magcoherence (5)magweight (6)magweight2 "
             "(default: 'romeo')."
             "4d-weights-file and flags aren't supported in this interface."
-        )
+        ),
     )
     # TODO: Figure out what the output file would be and populate outputs.
     calculate_b0 = traits.Bool(
@@ -488,11 +505,11 @@ class _ROMEOInputSpec(CommandLineInputSpec):
         ),
     )
     phase_offset_smoothing_sigma_mm = traits.List(
+        [7, 7, 7],
         traits.Float,
         minlen=3,
         maxlen=3,
         argstr="--phase-offset-smoothing-sigma-mm %s",
-        default_value=[7, 7, 7],
         usedefault=True,
         desc=(
             "default: [7,7,7] "
@@ -616,6 +633,7 @@ class _ROMEOOutputSpec(TraitedSpec):
     """Output specification for ApplyAffine."""
 
     out_file = File(exists=True, desc="output file")
+    quality_file = File(desc="Quality file. Only created if write_quality is True.")
 
 
 class ROMEO(CommandLine):
@@ -624,3 +642,11 @@ class ROMEO(CommandLine):
     input_spec = _ROMEOInputSpec
     output_spec = _ROMEOOutputSpec
     _cmd = "romeo"
+
+    def _list_outputs(self):
+        outputs = self.output_spec().get()
+        outputs["out_file"] = os.path.abspath(self.inputs.out_file)
+        if self.inputs.write_quality:
+            outputs["quality_file"] = os.path.abspath("quality.nii")
+
+        return outputs

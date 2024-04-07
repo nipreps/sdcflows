@@ -80,13 +80,6 @@ RUN mkdir /opt/convert3d && \
     curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Experimental/c3d-1.4.0-Linux-gcc64.tar.gz/download \
     | tar -xz -C /opt/convert3d --strip-components 1
 
-# CompileMRI 4.0.6
-RUN mkdir /opt/CompileMRI && \
-   curl -fsSL --retry 5 https://github.com/korbinian90/CompileMRI.jl/releases/download/v4.0.6/mritools_ubuntu-22.04_4.0.6.tar.gz \
-   | tar -xz -C /opt/CompileMRI --strip-components 1
-
-ENV PATH="/opt/CompileMRI/bin:$PATH"
-
 # Micromamba
 FROM downloader as micromamba
 WORKDIR /
@@ -168,6 +161,13 @@ COPY --from=c3d /opt/convert3d/bin/c3d_affine_tool /usr/bin/c3d_affine_tool
 ENV PATH="/opt/afni-latest:$PATH" \
     AFNI_IMSAVE_WARNINGS="NO" \
     AFNI_PLUGINPATH="/opt/afni-latest"
+
+# CompileMRI 4.0.6
+RUN mkdir /opt/CompileMRI && \
+curl -fsSL --retry 5 https://github.com/korbinian90/CompileMRI.jl/releases/download/v4.0.6/mritools_ubuntu-22.04_4.0.6.tar.gz \
+| tar -xz -C /opt/CompileMRI --strip-components 1
+
+ENV PATH="/opt/CompileMRI/bin:$PATH"
 
 # Create a shared $HOME directory
 RUN useradd -m -s /bin/bash -G users sdcflows
