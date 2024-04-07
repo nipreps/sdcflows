@@ -25,6 +25,7 @@
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+from niworkflows.interfaces.nibabel import MergeSeries
 
 from sdcflows.interfaces.fmap import MEDICB0, PhaseMap2rads2, ROMEO
 from sdcflows.interfaces.utils import EnforceTemporalConsistency, SVDFilter, TransposeImages
@@ -163,12 +164,9 @@ def init_medic_wf(
         ),
         name="transpose_phase_unwrapped",
     )
-    concatenate_masks = pe.Node(
-        TransposeImages(
-            numinputs=n_volumes,
-            numoutputs=1,
-        ),
-        name="concatenate_masks",
+    aggregate_masks = pe.Node(
+        niu.Merge(n_volumes),
+        name="aggregate_masks",
     )
 
     for i_volume in range(n_volumes):
@@ -187,8 +185,14 @@ def init_medic_wf(
             (process_volume_wf, transpose_phase_unwrapped, [
                 ("outputnode.phase_unwrapped", f"in{i_volume + 1}"),
             ]),
-            (process_volume_wf, concatenate_masks, [("outputnode.mask", f"in{i_volume + 1}")]),
+            (process_volume_wf, aggregate_masks, [("outputnode.mask", f"in{i_volume + 1}")]),
         ])  # fmt:skip
+
+    concatenate_masks = pe.Node(
+        MergeSeries(allow_4D=False),
+        name="concatenate_masks",
+    )
+    workflow.connect([(aggregate_masks, concatenate_masks, [("out", "in_files")])])
 
     # Compute field maps
     merge_phase_unwrapped = pe.Node(
@@ -209,7 +213,7 @@ def init_medic_wf(
     )
     workflow.connect([
         (inputnode, enforce_consistency, [("magnitude", "magnitude")]),
-        (concatenate_masks, enforce_consistency, [("out1", "mask")]),
+        (concatenate_masks, enforce_consistency, [("out_file", "mask")]),
         (merge_phase_unwrapped, enforce_consistency, [("out", "phase_unwrapped")]),
     ])  # fmt:skip
 
@@ -232,7 +236,7 @@ def init_medic_wf(
     )
     workflow.connect([
         (compute_fieldmap, apply_svd_filter, [("b0", "fieldmap")]),
-        (concatenate_masks, apply_svd_filter, [("out1", "mask")]),
+        (concatenate_masks, apply_svd_filter, [("out_file", "mask")]),
         (apply_svd_filter, outputnode, [("fieldmap", "fieldmap")]),
     ])  # fmt:skip
 

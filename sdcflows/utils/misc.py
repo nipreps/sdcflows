@@ -116,6 +116,7 @@ def get_largest_connected_component(mask_data: npt.NDArray[np.bool_]) -> npt.NDA
 
 
 def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_file="mask.nii.gz"):
+    import os
     from typing import cast
 
     import nibabel as nb
@@ -131,10 +132,12 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
 
     from sdcflows.utils.misc import create_brain_mask, get_largest_connected_component
 
+    out_file = os.path.abspath(out_file)
+
     mag_img = nb.load(mag_file)
-    mag_data = mag_img.get_fdata()
 
     vq = nb.load(voxel_quality).get_fdata()
+    vq[np.isnan(vq)] = 0  # I (TS) am seeing NaNs in this file, which breaks things.
     vq_mask = vq > threshold_otsu(vq)
     strel = generate_binary_structure(3, 2)
     vq_mask = binary_fill_holes(vq_mask, strel).astype(bool)
@@ -142,9 +145,8 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
     vq_mask = get_largest_connected_component(vq_mask)
 
     # combine masks
-    echo_idx = np.argmin(echo_times)
-    mag_shortest = mag_data[..., echo_idx]
-    brain_mask = create_brain_mask(mag_shortest)
+    brain_mask_file = create_brain_mask(mag_file)
+    brain_mask = nb.load(brain_mask_file).get_fdata().astype(bool)
     combined_mask = brain_mask | vq_mask
     combined_mask = get_largest_connected_component(combined_mask)
 
@@ -171,7 +173,7 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
     mask_img = nb.Nifti1Image(mask_data, mag_img.affine, mag_img.header)
     mask_img.to_filename(out_file)
 
-    return out_file
+    return out_file, None
 
 
 def calculate_diffs(mag_file, phase_file):
