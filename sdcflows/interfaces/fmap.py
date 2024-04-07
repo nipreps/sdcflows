@@ -723,7 +723,11 @@ class MEDICB0(SimpleInterface):
 
             unwrapped_mat = phase_volume_data.reshape(-1, n_echoes).T
             weights = magnitude_volume_data.reshape(-1, n_echoes).T
-            b0 = weighted_regression(echo_times, unwrapped_mat, weights)[0].T.reshape(*size)
+            b0 = weighted_regression(
+                echo_times[:, np.newaxis],
+                unwrapped_mat,
+                weights,
+            )[0].T.reshape(*size)
             b0 *= 1000 / (2 * np.pi)
             out_b0[:, :, :, i_vol] = b0
 

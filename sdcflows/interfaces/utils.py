@@ -848,7 +848,15 @@ class EnforceTemporalConsistency(SimpleInterface):
                 Y = phase_unwrapped[volume_mask, :j_echo, i_vol].T
 
                 # fit model to data
-                coefficients, _ = weighted_regression(X[:j_echo], Y, weights_mat[:j_echo])
+                # XXX: Small change from warpkit:
+                # weights_mat[:j_echo, i_vol, :] instead of weights_mat[:j_echo]
+                # Otherwise, coefficients is voxels x time instead of just voxels
+                # Not sure what the issue is.
+                coefficients, _ = weighted_regression(
+                    X[:j_echo],
+                    Y,
+                    weights_mat[:j_echo, i_vol, :],
+                )
 
                 # get the predicted values for this echo
                 Y_pred = coefficients * echo_times[j_echo]
