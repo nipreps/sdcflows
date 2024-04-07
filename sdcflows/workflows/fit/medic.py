@@ -24,10 +24,10 @@
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces.fsl import Split as FSLSplit
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-from sdcflows.interfaces.fmap import PhaseMap2rads2, ROMEO
+from sdcflows.interfaces.fmap import MEDICB0, PhaseMap2rads2, ROMEO
+from sdcflows.interfaces.utils import EnforceTemporalConsistency, SVDFilter, TransposeImages
 from sdcflows.utils.misc import (
     calculate_diffs2,
     calculate_dual_echo_fieldmap,
@@ -48,6 +48,8 @@ def init_medic_wf(
     echo_times,
     automask,
     automask_dilation,
+    border_filter=(1, 5),
+    svd_filter=10,
     omp_nthreads=1,
     sloppy=False,
     debug=False,
@@ -103,18 +105,7 @@ def init_medic_wf(
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(
-            fields=[
-                "fmap",
-                "fmap_ref",
-                "fmap_coeff",
-                "fmap_mask",
-                "jacobians",
-                "xfms",
-                "out_warps",
-                "method",
-            ],
-        ),
+        niu.IdentityInterface(fields=["fieldmap"]),
         name="outputnode",
     )
     outputnode.inputs.method = "MEDIC"
@@ -129,48 +120,59 @@ def init_medic_wf(
     )
     workflow.connect([(inputnode, phase2rad, [("phase", "in_file")])])
 
-    # Split phase data into single-frame, multi-echo 4D files
-    group_phase_across_echoes = pe.MapNode(
-        niu.Merge(numinputs=n_echoes),
-        iterfield=[f"in{i + 1}" for i in range(n_echoes)],
-        name="group_phase_across_echoes",
+    # Transpose the magnitude data into volume-wise images concatenated across echoes
+    transpose_magnitude = pe.Node(
+        TransposeImages(
+            numinputs=n_echoes,
+            numoutputs=n_volumes,
+        ),
+        name="transpose_magnitude",
     )
-    group_mag_across_echoes = pe.MapNode(
-        niu.Merge(numinputs=n_echoes),
-        iterfield=[f"in{i + 1}" for i in range(n_echoes)],
-        name="group_mag_across_echoes",
+
+    # Transpose the phase data into volume-wise images concatenated across echoes
+    transpose_phase = pe.Node(
+        TransposeImages(
+            numinputs=n_echoes,
+            numoutputs=n_volumes,
+        ),
+        name="transpose_phase",
     )
+
     for i_echo in range(n_echoes):
-        select_phase_echo = pe.Node(
-            niu.Select(index=i_echo),
-            name=f"select_phase_echo_{i_echo:02d}",
-        )
-        workflow.connect([(phase2rad, select_phase_echo, [("out_file", "inlist")])])
-
-        split_phase = pe.Node(
-            FSLSplit(dimension="t"),
-            name=f"split_phase_{i_echo:02d}",
-        )
-        workflow.connect([
-            (select_phase_echo, split_phase, [("out", "in_file")]),
-            (split_phase, group_phase_across_echoes, [("out_files", f"in{i_echo + 1}")]),
-        ])  # fmt:skip
-
         # Split magnitude data into single-frame, multi-echo 4D files
         select_mag_echo = pe.Node(
             niu.Select(index=i_echo),
             name=f"select_mag_echo_{i_echo:02d}",
         )
-        workflow.connect([(inputnode, select_mag_echo, [("magnitude", "inlist")])])
+        workflow.connect([
+            (inputnode, select_mag_echo, [("magnitude", "inlist")]),
+            (select_mag_echo, transpose_magnitude, [("out", f"in{i_echo + 1}")]),
+        ])  # fmt:skip
 
-        split_mag = pe.Node(
-            FSLSplit(dimension="t"),
-            name=f"split_mag_{i_echo:02d}",
+        select_phase_echo = pe.Node(
+            niu.Select(index=i_echo),
+            name=f"select_phase_echo_{i_echo:02d}",
         )
         workflow.connect([
-            (select_mag_echo, split_mag, [("out", "in_file")]),
-            (split_mag, group_mag_across_echoes, [("out_files", f"in{i_echo + 1}")]),
+            (phase2rad, select_phase_echo, [("out_file", "inlist")]),
+            (select_phase_echo, transpose_phase, [("out", f"in{i_echo + 1}")]),
         ])  # fmt:skip
+
+    # Prepare to recombine into echo-wise time series
+    transpose_phase_unwrapped = pe.Node(
+        TransposeImages(
+            numinputs=n_volumes,
+            numoutputs=n_echoes,
+        ),
+        name="transpose_phase_unwrapped",
+    )
+    concatenate_masks = pe.Node(
+        TransposeImages(
+            numinputs=n_volumes,
+            numoutputs=1,
+        ),
+        name="concatenate_masks",
+    )
 
     for i_volume in range(n_volumes):
         process_volume_wf = init_process_volume_wf(
@@ -180,30 +182,62 @@ def init_medic_wf(
             name=f"process_volume_{i_volume:02d}_wf",
         )
 
-        select_phase_volume = pe.Node(
-            niu.Select(index=i_volume),
-            name=f"select_phase_volume_{i_volume:02d}",
-        )
-        select_mag_volume = pe.Node(
-            niu.Select(index=i_volume),
-            name=f"select_mag_volume_{i_volume:02d}",
-        )
         workflow.connect([
-            (group_phase_across_echoes, select_phase_volume, [("out", "inlist")]),
-            (group_mag_across_echoes, select_mag_volume, [("out", "inlist")]),
-            (select_phase_volume, process_volume_wf, [("out", "inputnode.phase")]),
-            (select_mag_volume, process_volume_wf, [("out", "inputnode.magnitude")]),
+            (transpose_magnitude, process_volume_wf, [
+                (f"out{i_volume + 1}", "inputnode.magnitude"),
+            ]),
+            (transpose_phase, process_volume_wf, [(f"out{i_volume + 1}", "inputnode.phase")]),
+            (process_volume_wf, transpose_phase_unwrapped, [
+                ("outputnode.phase_unwrapped", f"in{i_volume + 1}"),
+            ]),
+            (process_volume_wf, concatenate_masks, [("outputnode.mask", f"in{i_volume + 1}")]),
         ])  # fmt:skip
 
-    # Re-combine into echo-wise time series
-
-    # Check temporal consistency of phase unwrapping
-
-    # Write out unwrapped phase data
-
     # Compute field maps
+    merge_phase_unwrapped = pe.Node(
+        niu.Merge(n_echoes),
+        name="merge_phase_unwrapped",
+    )
+    for i_echo in n_echoes:
+        workflow.connect([
+            (transpose_phase_unwrapped, merge_phase_unwrapped, [
+                (f"out{i_echo + 1}", f"in{i_echo + 1}"),
+            ]),
+        ])  # fmt:skip
+
+    # Enforce temporal consistency of phase unwrapping
+    enforce_consistency = pe.Node(
+        EnforceTemporalConsistency(echo_times=echo_times, threshold=0.98),
+        name="enforce_consistency",
+    )
+    workflow.connect([
+        (inputnode, enforce_consistency, [("magnitude", "magnitude")]),
+        (concatenate_masks, enforce_consistency, [("out1", "in_masks")]),
+        (merge_phase_unwrapped, enforce_consistency, [("out", "phase_unwrapped")]),
+    ])  # fmt:skip
+
+    compute_fieldmap = pe.Node(
+        MEDICB0(echo_times=echo_times),
+        name="compute_fieldmap",
+    )
+    workflow.connect([
+        (inputnode, compute_fieldmap, [("magnitude", "magnitude")]),
+        (enforce_consistency, compute_fieldmap, [("out", "phase")]),
+    ])  # fmt:skip
 
     # Apply SVD filter to field maps
+    apply_svd_filter = pe.Node(
+        SVDFilter(
+            svd_filter=svd_filter,
+            border_filter=border_filter,
+        ),
+        name="apply_svd_filter",
+    )
+    workflow.connect([
+        (compute_fieldmap, apply_svd_filter, [("fieldmap", "fieldmap")]),
+        (concatenate_masks, apply_svd_filter, [("out1", "mask")]),
+        (apply_svd_filter, outputnode, [("fieldmap", "fieldmap")]),
+    ])  # fmt:skip
 
     return workflow
 
@@ -279,6 +313,8 @@ def init_process_volume_wf(
 
         # Use ROMEO's voxel-quality command
         # NOTE: In warpkit Andrew creates a "mag" image of all ones.
+        # With the current version (at least on some test data),
+        # there are NaNs in the voxel quality map.
         voxqual = pe.Node(
             ROMEO(write_quality=True, echo_times=echo_times, mask="robustmask"),
             name="voxqual",

@@ -650,3 +650,85 @@ class ROMEO(CommandLine):
             outputs["quality_file"] = os.path.abspath("quality.nii")
 
         return outputs
+
+
+class _MEDICB0InputSpec():
+    magnitude = traits.List(
+        File(exists=True),
+        mandatory=True,
+        desc="Echo-wise magnitude time series",
+    )
+    phase = traits.List(
+        File(exists=True),
+        mandatory=True,
+        desc="Echo-wise phase time series",
+    )
+    echo_times = traits.List(
+        traits.Float,
+        mandatory=True,
+        desc="the echo times of the EPI image",
+    )
+
+
+class _MEDICB0OutputSpec():
+    b0 = File(exists=True, desc="the B0 fieldmap time series")
+
+
+class MEDICB0(SimpleInterface):
+    """Run MEDIC B0 unwrapping."""
+
+    input_spec = _MEDICB0InputSpec
+    output_spec = _MEDICB0OutputSpec
+
+    def _run_interface(self, runtime):
+        import os
+
+        import nibabel as nb
+        import numpy as np
+        from nilearn import image
+
+        from sdcflows.utils.misc import weighted_regression
+
+        magnitude_files = self.inputs.magnitude
+        phase_files = self.inputs.phase
+        echo_times = np.array(self.inputs.echo_times)
+
+        assert len(magnitude_files) == len(phase_files) == len(echo_times)
+
+        temp_img = nb.load(magnitude_files[0])
+        n_volumes = temp_img.shape[3]
+        size = temp_img.shape[:3]
+        n_echoes = echo_times.size
+
+        out_b0 = np.zeros(temp_img.shape)
+        b0_file = os.path.abspath("b0.nii.gz")
+
+        # Split up and transpose the echo-wise data into volume-wise data
+        for i_vol in range(n_volumes):
+            magnitude_volume_imgs = []
+            phase_volume_imgs = []
+            for j_echo in range(n_echoes):
+                magnitude_volume_imgs.append(
+                    nb.load(magnitude_files[j_echo]).slicer[..., i_vol]
+                )
+                phase_volume_imgs.append(
+                    nb.load(phase_files[j_echo]).slicer[..., i_vol]
+                )
+
+            magnitude_volume_img = image.concat_imgs(magnitude_volume_imgs)
+            phase_volume_img = image.concat_imgs(phase_volume_imgs)
+
+            magnitude_volume_data = magnitude_volume_img.get_fdata()
+            phase_volume_data = phase_volume_img.get_fdata()
+
+            unwrapped_mat = phase_volume_data.reshape(-1, n_echoes).T
+            weights = magnitude_volume_data.reshape(-1, n_echoes).T
+            b0 = weighted_regression(echo_times, unwrapped_mat, weights)[0].T.reshape(*size)
+            b0 *= 1000 / (2 * np.pi)
+            out_b0[:, :, :, i_vol] = b0
+
+        b0_img = nb.Nifti1Image(out_b0, temp_img.affine, temp_img.header)
+        b0_img.to_filename(b0_file)
+        self._results["b0"] = b0_file
+
+        return runtime

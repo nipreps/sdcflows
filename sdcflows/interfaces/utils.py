@@ -21,9 +21,15 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Utilities."""
+import os
 from itertools import product
+
+import nibabel as nb
+from nilearn import image
+from nipype import logging
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
+    DynamicTraitedSpec,
     TraitedSpec,
     File,
     traits,
@@ -36,11 +42,13 @@ from nipype.interfaces.ants.segmentation import (
     DenoiseImage as _DenoiseImageBase,
     DenoiseImageInputSpec as _DenoiseImageInputSpecBase,
 )
+from nipype.interfaces.io import add_traits
 from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 
 from sdcflows.utils.tools import reorient_pedir
 
 OBLIQUE_THRESHOLD_DEG = 0.5
+LOGGER = logging.getLogger("nipype.interface")
 
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
@@ -552,3 +560,310 @@ def _ensure_positive_cosines(in_file: str, newpath: str = None):
     reoriented, axcodes = ensure_positive_cosines(nb.load(in_file))
     reoriented.to_filename(out_file)
     return out_file, "".join(axcodes)
+
+
+class _TransposeImagesInputSpec(DynamicTraitedSpec):
+    pass
+
+
+class _TransposeImagesOutputSpec(DynamicTraitedSpec):
+    pass
+
+
+class TransposeImages(SimpleInterface):
+    """Convert input filenames to BIDS URIs, based on links in the dataset.
+
+    This interface can combine multiple lists of inputs.
+    """
+
+    input_spec = _TransposeImagesInputSpec
+    output_spec = _TransposeImagesOutputSpec
+
+    def __init__(self, numinputs=0, numoutputs=0, **inputs):
+        super().__init__(**inputs)
+        self._numinputs = numinputs
+        if numinputs >= 1:
+            input_names = [f"in{i + 1}" for i in range(numinputs)]
+        else:
+            input_names = []
+        add_traits(self.inputs, input_names)
+
+        self._numoutputs = numoutputs
+        if numoutputs >= 1:
+            output_names = [f"out{i + 1}" for i in range(numoutputs)]
+        else:
+            output_names = []
+        add_traits(self.outputs, output_names)
+
+    def _run_interface(self, runtime):
+        inputs = [getattr(self.inputs, f"in{i + 1}") for i in range(self._numinputs)]
+
+        for i_vol in range(self._numoutputs):
+            vol_imgs = []
+            for file_ in inputs:
+                vol_img = image.index_img(file_, i_vol)
+                vol_imgs.append(vol_img)
+            concat_vol_img = image.concat_imgs(vol_imgs)
+
+            vol_file = os.path.abspath(f"vol{i_vol + 1}.nii.gz")
+            concat_vol_img.to_filename(vol_file)
+            self._results[f"out{i_vol + 1}"] = vol_file
+
+        return runtime
+
+
+class _SVDFilterInputSpec(TraitedSpec):
+    fieldmap = File(exists=True, mandatory=True, desc="Fieldmap image")
+    mask = File(exists=True, desc="Mask image")
+    border_filter = traits.List(
+        traits.Float,
+        desc="Border filter parameters",
+        minlen=2,
+        maxlen=2,
+        default_value=[0.5, 0.5],
+    )
+    svd_filter = traits.Integer(desc="SVD filter parameter")
+
+
+class _SVDFilterOutputSpec(TraitedSpec):
+    fieldmap = File(exists=True, desc="Filtered fieldmap image")
+
+
+class SVDFilter(SimpleInterface):
+
+    input_spec = _SVDFilterInputSpec
+    output_spec = _SVDFilterOutputSpec
+
+    def _run_interface(self, runtime):
+        import numpy as np
+        from nipype.utils.filemanip import fname_presuffix
+        from scipy.ndimage import gaussian_filter
+
+        border_filt = self.inputs.border_filter
+        svd_filt = self.inputs.svd_filter
+
+        fieldmap_img = nb.load(self.inputs.fieldmap)
+        mask_img = nb.load(self.inputs.mask)
+
+        n_frames = fieldmap_img.shape[3]
+        voxel_size = fieldmap_img.header.get_zooms()[0]  # assuming isotropic voxels I guess
+
+        mask_data = mask_img.get_fdata().astype(np.uint8)
+        fieldmap_data = fieldmap_img.get_fdata()
+
+        if mask_data.max() == 2 and n_frames >= np.max(border_filt):
+            LOGGER.info("Performing spatial/temporal filtering of border voxels...")
+            smoothed_field_maps = np.zeros(fieldmap_data.shape, dtype=np.float32)
+            # smooth by 4 mm kernel
+            sigma = (4 / voxel_size) / 2.355
+            for i_vol in range(n_frames):
+                smoothed_field_maps[..., i_vol] = gaussian_filter(
+                    fieldmap_data[..., i_vol],
+                    sigma=sigma,
+                )
+
+            # compute the union of all the masks
+            union_mask = np.sum(mask_data, axis=-1) > 0
+
+            # do temporal filtering of border voxels with SVD
+            U, S, VT = np.linalg.svd(smoothed_field_maps[union_mask], full_matrices=False)
+
+            # first pass of SVD filtering
+            recon = np.dot(U[:, : border_filt[0]] * S[: border_filt[0]], VT[: border_filt[0], :])
+            recon_img = np.zeros(fieldmap_data.shape, dtype=np.float32)
+            recon_img[union_mask] = recon
+
+            # set the border voxels in the field map to the recon values
+            for i_vol in range(n_frames):
+                fieldmap_data[mask_data[..., i_vol] == 1, i_vol] = recon_img[
+                    mask_data[..., i_vol] == 1,
+                    i_vol,
+                ]
+
+            # do second SVD filtering pass
+            U, S, VT = np.linalg.svd(fieldmap_data[union_mask], full_matrices=False)
+
+            # second pass of SVD filtering
+            recon = np.dot(U[:, : border_filt[1]] * S[: border_filt[1]], VT[: border_filt[1], :])
+            recon_img = np.zeros(fieldmap_data.shape, dtype=np.float32)
+            recon_img[union_mask] = recon
+
+            # set the border voxels in the field map to the recon values
+            for i_vol in range(n_frames):
+                fieldmap_data[mask_data[..., i_vol] == 1, i_vol] = recon_img[
+                    mask_data[..., i_vol] == 1,
+                    i_vol,
+                ]
+
+        # use svd filter to denoise the field maps
+        if n_frames >= svd_filt:
+            LOGGER.info("Denoising field maps with SVD...")
+            LOGGER.info(f"Keeping {svd_filt} components...")
+
+            # compute the union of all the masks
+            union_mask = np.sum(mask_data, axis=-1) > 0
+
+            # compute SVD
+            U, S, VT = np.linalg.svd(fieldmap_data[union_mask], full_matrices=False)
+
+            # only keep the first n_components components
+            recon = np.dot(U[:, :svd_filt] * S[:svd_filt], VT[:svd_filt, :])
+            recon_img = np.zeros(fieldmap_data.shape, dtype=np.float32)
+            recon_img[union_mask] = recon
+
+            # set the voxel values in the mask to the recon values
+            for i_vol in range(n_frames):
+                fieldmap_data[mask_data[..., i_vol] > 0, i_vol] = recon_img[
+                    mask_data[..., i_vol] > 0,
+                    i_vol,
+                ]
+
+        out_file = fname_presuffix(self.inputs.fieldmap, suffix="_filtered", newpath=runtime.cwd)
+        nb.Nifti1Image(
+            fieldmap_data,
+            fieldmap_img.affine,
+            fieldmap_img.header,
+        ).to_filename(out_file)
+        self._results["fieldmap"] = out_file
+
+        return runtime
+
+
+class _EnforceTemporalConsistencyInputSpec(TraitedSpec):
+    phase_unwrapped = traits.List(
+        File(exists=True),
+        mandatory=True,
+        desc="Unwrapped phase data",
+    )
+    echo_times = traits.List(
+        traits.Float,
+        mandatory=True,
+        desc="Echo times",
+    )
+    magnitude = traits.List(
+        File(exists=True),
+        mandatory=True,
+        desc="Magnitude images",
+    )
+    mask = File(exists=True, mandatory=True, desc="Brain mask")
+    threshold = traits.Float(
+        0.98,
+        usedefault=True,
+        desc="Threshold for correlation similarity",
+    )
+
+
+class _EnforceTemporalConsistencyOutputSpec(TraitedSpec):
+    phase_unwrapped = traits.List(
+        File(exists=True),
+        desc="Unwrapped phase data after temporal consistency is enforced.",
+    )
+
+
+class EnforceTemporalConsistency(SimpleInterface):
+    """Ensure phase unwrapping solutions are temporally consistent.
+
+    This uses correlation as a similarity metric between frames to enforce temporal consistency.
+    """
+
+    input_spec = _EnforceTemporalConsistencyInputSpec
+    output_spec = _EnforceTemporalConsistencyOutputSpec
+
+    def _run_interface(self, runtime):
+        import numpy as np
+        from nipype.utils.filemanip import fname_presuffix
+
+        from sdcflows.utils.misc import corr2_coeff, create_brain_mask, weighted_regression
+
+        echo_times = np.array(self.inputs.echo_times)
+        n_echoes = echo_times.size
+        mag_shortest = self.inputs.magnitude[0]
+
+        # generate brain mask (with 1 voxel erosion)
+        brain_mask_file = create_brain_mask(mag_shortest, -1)
+        brain_mask = nb.load(brain_mask_file).get_fdata().astype(bool)
+
+        # Concate the unwrapped phase data into a 5D array
+        phase_imgs = [nb.load(phase) for phase in self.inputs.phase_unwrapped]
+        unwrapped_echo_1 = phase_imgs[0].get_fdata()
+        phase_unwrapped = np.stack([img.get_fdata() for img in phase_imgs], axis=3)
+        magnitude_imgs = [nb.load(mag) for mag in self.inputs.magnitude]
+        n_volumes = phase_imgs[0].shape[3]
+        mask_img = nb.load(self.inputs.mask)
+        mask_data = mask_img.get_fdata().astype(bool)
+
+        for i_vol in range(n_volumes):
+            LOGGER.info(f"Computing temporal consistency check for frame: {i_vol}")
+
+            # get the current frame phase
+            current_frame_data = unwrapped_echo_1[brain_mask, i_vol][:, np.newaxis]
+
+            # get the correlation between the current frame and all other frames
+            corr = corr2_coeff(current_frame_data, unwrapped_echo_1[brain_mask, :]).ravel()
+
+            # threhold the RD
+            tmask = corr > self.inputs.threshold
+
+            # get indices of mask
+            indices = np.where(tmask)[0]
+
+            # get mask for frame
+            volume_mask = mask_data[..., i_vol] > 0
+
+            # for each frame compute the mean value along the time axis
+            # (masked by indices and mask)
+            mean_voxels = np.mean(unwrapped_echo_1[volume_mask][:, indices], axis=-1)
+
+            # for this frame figure out the integer multiple that minimizes the value to the
+            # mean voxel
+            int_map = np.round(
+                (mean_voxels - unwrapped_echo_1[volume_mask, i_vol]) / (2 * np.pi)
+            ).astype(int)
+
+            # correct the first echo's data using the integer map
+            phase_unwrapped[volume_mask, 0, i_vol] += 2 * np.pi * int_map
+
+            # format weight matrix
+            weights_mat = np.stack([m.dataobj for m in magnitude_imgs], axis=-1)[volume_mask].T
+
+            # form design matrix
+            X = echo_times[:, np.newaxis]
+
+            # fit subsequent echos to the weighted linear regression from the first echo
+            for j_echo in range(1, n_echoes):
+                # form response matrix
+                Y = phase_unwrapped[volume_mask, :j_echo, i_vol].T
+
+                # fit model to data
+                coefficients, _ = weighted_regression(X[:j_echo], Y, weights_mat[:j_echo])
+
+                # get the predicted values for this echo
+                Y_pred = coefficients * echo_times[j_echo]
+
+                # compute the difference and get the integer multiple map
+                int_map = np.round(
+                    (Y_pred - phase_unwrapped[volume_mask, j_echo, i_vol]) / (2 * np.pi)
+                ).astype(int)
+
+                # correct the data using the integer map
+                phase_unwrapped[volume_mask, j_echo, i_vol] += 2 * np.pi * int_map
+
+        out_files = []
+        for i_echo in range(n_echoes):
+            phase_unwrapped_echo = phase_unwrapped[:, :, :, i_echo, :]
+            phase_unwrapped_echo_img = nb.Nifti1Image(
+                phase_unwrapped_echo,
+                phase_imgs[0].affine,
+                phase_imgs[0].header,
+            )
+            out_file = fname_presuffix(
+                self.inputs.phase_unwrapped[i_echo],
+                suffix="_temporallyconsistent",
+                newpath=runtime.cwd,
+            )
+            phase_unwrapped_echo_img.to_filename(out_file)
+            out_files.append(out_file)
+
+        self._results["phase_unwrapped"] = out_files
+
+        return runtime
