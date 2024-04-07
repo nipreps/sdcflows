@@ -36,6 +36,7 @@ from nipype.interfaces.base import (
     SimpleInterface,
     InputMultiObject,
     OutputMultiObject,
+    Undefined,
     isdefined,
 )
 from nipype.interfaces.ants.segmentation import (
@@ -566,10 +567,6 @@ class _TransposeImagesInputSpec(DynamicTraitedSpec):
     pass
 
 
-class _TransposeImagesOutputSpec(DynamicTraitedSpec):
-    pass
-
-
 class TransposeImages(SimpleInterface):
     """Convert input filenames to BIDS URIs, based on links in the dataset.
 
@@ -577,23 +574,35 @@ class TransposeImages(SimpleInterface):
     """
 
     input_spec = _TransposeImagesInputSpec
-    output_spec = _TransposeImagesOutputSpec
+    output_spec = DynamicTraitedSpec
 
     def __init__(self, numinputs=0, numoutputs=0, **inputs):
         super().__init__(**inputs)
         self._numinputs = numinputs
+        self._numoutputs = numoutputs
         if numinputs >= 1:
             input_names = [f"in{i + 1}" for i in range(numinputs)]
         else:
             input_names = []
         add_traits(self.inputs, input_names)
 
-        self._numoutputs = numoutputs
-        if numoutputs >= 1:
-            output_names = [f"out{i + 1}" for i in range(numoutputs)]
+    def _outputs(self):
+        # Mostly copied from nipype.interfaces.dcmstack.LookupMeta.
+        outputs = super()._outputs()
+
+        undefined_traits = {}
+        if self._numoutputs >= 1:
+            output_names = [f"out{i + 1}" for i in range(self._numoutputs)]
         else:
             output_names = []
-        add_traits(self.outputs, output_names)
+
+        for output_name in output_names:
+            outputs.add_trait(output_name, traits.Any)
+            undefined_traits[output_name] = Undefined
+
+        outputs.trait_set(trait_change_notify=False, **undefined_traits)
+
+        return outputs
 
     def _run_interface(self, runtime):
         inputs = [getattr(self.inputs, f"in{i + 1}") for i in range(self._numinputs)]
@@ -611,6 +620,11 @@ class TransposeImages(SimpleInterface):
 
         return runtime
 
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs.update(self._results)
+        return outputs
+
 
 class _SVDFilterInputSpec(TraitedSpec):
     fieldmap = File(exists=True, mandatory=True, desc="Fieldmap image")
@@ -620,9 +634,8 @@ class _SVDFilterInputSpec(TraitedSpec):
         desc="Border filter parameters",
         minlen=2,
         maxlen=2,
-        default_value=[0.5, 0.5],
     )
-    svd_filter = traits.Integer(desc="SVD filter parameter")
+    svd_filter = traits.Int(desc="SVD filter parameter")
 
 
 class _SVDFilterOutputSpec(TraitedSpec):

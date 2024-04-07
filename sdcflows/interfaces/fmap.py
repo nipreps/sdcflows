@@ -652,7 +652,7 @@ class ROMEO(CommandLine):
         return outputs
 
 
-class _MEDICB0InputSpec():
+class _MEDICB0InputSpec(TraitedSpec):
     magnitude = traits.List(
         File(exists=True),
         mandatory=True,
@@ -670,7 +670,7 @@ class _MEDICB0InputSpec():
     )
 
 
-class _MEDICB0OutputSpec():
+class _MEDICB0OutputSpec(TraitedSpec):
     b0 = File(exists=True, desc="the B0 fieldmap time series")
 
 

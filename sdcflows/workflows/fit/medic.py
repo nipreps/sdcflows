@@ -48,15 +48,11 @@ def init_medic_wf(
     echo_times,
     automask,
     automask_dilation,
-    border_filter=(1, 5),
+    border_filter=[1, 5],
     svd_filter=10,
-    omp_nthreads=1,
-    sloppy=False,
-    debug=False,
     name="medic_wf",
 ):
-    """
-    Create the PEPOLAR field estimation workflow based on FSL's ``topup``.
+    """Create the MEDIC dynamic field estimation workflow.
 
     Workflow Graph
         .. workflow ::
@@ -64,7 +60,8 @@ def init_medic_wf(
             :simple_form: yes
 
             from sdcflows.workflows.fit.medic import init_medic_wf
-            wf = init_topup_wf()
+
+            wf = init_medic_wf()
 
     Parameters
     ----------
@@ -176,9 +173,9 @@ def init_medic_wf(
 
     for i_volume in range(n_volumes):
         process_volume_wf = init_process_volume_wf(
-            echo_times,
-            automask,
-            automask_dilation,
+            echo_times=echo_times,
+            automask=automask,
+            automask_dilation=automask_dilation,
             name=f"process_volume_{i_volume:02d}_wf",
         )
 
@@ -198,7 +195,7 @@ def init_medic_wf(
         niu.Merge(n_echoes),
         name="merge_phase_unwrapped",
     )
-    for i_echo in n_echoes:
+    for i_echo in range(n_echoes):
         workflow.connect([
             (transpose_phase_unwrapped, merge_phase_unwrapped, [
                 (f"out{i_echo + 1}", f"in{i_echo + 1}"),
@@ -212,7 +209,7 @@ def init_medic_wf(
     )
     workflow.connect([
         (inputnode, enforce_consistency, [("magnitude", "magnitude")]),
-        (concatenate_masks, enforce_consistency, [("out1", "in_masks")]),
+        (concatenate_masks, enforce_consistency, [("out1", "mask")]),
         (merge_phase_unwrapped, enforce_consistency, [("out", "phase_unwrapped")]),
     ])  # fmt:skip
 
@@ -222,19 +219,19 @@ def init_medic_wf(
     )
     workflow.connect([
         (inputnode, compute_fieldmap, [("magnitude", "magnitude")]),
-        (enforce_consistency, compute_fieldmap, [("out", "phase")]),
+        (enforce_consistency, compute_fieldmap, [("phase_unwrapped", "phase")]),
     ])  # fmt:skip
 
     # Apply SVD filter to field maps
     apply_svd_filter = pe.Node(
         SVDFilter(
             svd_filter=svd_filter,
-            border_filter=border_filter,
+            border_filter=list(border_filter),
         ),
         name="apply_svd_filter",
     )
     workflow.connect([
-        (compute_fieldmap, apply_svd_filter, [("fieldmap", "fieldmap")]),
+        (compute_fieldmap, apply_svd_filter, [("b0", "fieldmap")]),
         (concatenate_masks, apply_svd_filter, [("out1", "mask")]),
         (apply_svd_filter, outputnode, [("fieldmap", "fieldmap")]),
     ])  # fmt:skip
