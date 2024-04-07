@@ -272,7 +272,7 @@ def init_process_volume_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fit.pepolar import init_process_volume_wf
+            from sdcflows.workflows.fit.medic import init_process_volume_wf
 
             wf = init_process_volume_wf(
                 echo_times=[0.015, 0.030, 0.045, 0.06],
