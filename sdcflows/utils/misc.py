@@ -360,14 +360,14 @@ def create_brain_mask(magnitude, extra_dilation=0):
 
     Parameters
     ----------
-    magnitude : npt.NDArray[np.float32]
-        Magnitude data with the shortest echo time
+    magnitude : str
+        Path to magnitude file, where last dimension is the number of echoes.
     extra_dilation : int
         Number of extra dilations (or erosions if negative) to perform, by default 0
 
     Returns
     -------
-    npt.NDArray[np.bool_]
+    mask_file : str
         Mask of voxels to use for unwrapping
     """
     import os
