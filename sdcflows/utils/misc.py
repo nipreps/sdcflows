@@ -23,7 +23,6 @@
 """Basic miscellaneous utilities."""
 import logging
 from scipy.stats import mode
-from scipy.ndimage import gaussian_filter
 from typing import Tuple, cast
 
 import numpy as np
@@ -781,87 +780,3 @@ def corr2_coeff(A, B):
 
     # Finally get corr coeff
     return np.dot(A_mA, B_mB.T) / np.sqrt(np.dot(ssA, ssB))
-
-
-def check_temporal_consistency_corr(
-    unwrapped_data,
-    unwrapped_echo_1,
-    TEs,
-    mag,
-    t,
-    frame_idx,
-    masks,
-    threshold=0.98,
-):
-    """Ensures phase unwrapping solutions are temporally consistent
-
-    This uses correlation as a similarity metric between frames to enforce temporal consistency.
-
-    Parameters
-    ----------
-    unwrapped_data : npt.NDArray
-        unwrapped phase data, where last column is time, and second to last column are the echoes
-    TEs : npt.NDArray
-        echo times
-    mag : List[nib.Nifti1Image]
-        magnitude images
-    frames : List[int]
-        list of frames that are being processed
-    threshold : float
-        threshold for correlation similarity. By default 0.98
-    """
-    from sdcflows.utils.misc import corr2_coeff
-
-    logging.info(f"Computing temporal consistency check for frame: {t}")
-
-    # generate brain mask (with 1 voxel erosion)
-    echo_idx = np.argmin(TEs)
-    mag_shortest = mag[echo_idx].dataobj[..., frame_idx]
-    brain_mask = create_brain_mask(mag_shortest, -1)
-
-    # get the current frame phase
-    current_frame_data = unwrapped_echo_1[brain_mask, t][:, np.newaxis]
-
-    # get the correlation between the current frame and all other frames
-    corr = corr2_coeff(current_frame_data, unwrapped_echo_1[brain_mask, :]).ravel()
-
-    # threhold the RD
-    tmask = corr > threshold
-
-    # get indices of mask
-    indices = np.where(tmask)[0]
-
-    # get mask for frame
-    mask = masks[..., t] > 0
-
-    # for each frame compute the mean value along the time axis (masked by indices and mask)
-    mean_voxels = np.mean(unwrapped_echo_1[mask][:, indices], axis=-1)
-
-    # for this frame figure out the integer multiple that minimizes the value to the mean voxel
-    int_map = np.round((mean_voxels - unwrapped_echo_1[mask, t]) / (2 * np.pi)).astype(int)
-
-    # correct the data using the integer map
-    unwrapped_data[mask, 0, t] += 2 * np.pi * int_map
-
-    # format weight matrix
-    weights_mat = np.stack([m.dataobj[..., frame_idx] for m in mag], axis=-1)[mask].T
-
-    # form design matrix
-    X = TEs[:, np.newaxis]
-
-    # fit subsequent echos to the weighted linear regression from the first echo
-    for echo in range(1, unwrapped_data.shape[-2]):
-        # form response matrix
-        Y = unwrapped_data[mask, :echo, t].T
-
-        # fit model to data
-        coefficients, _ = weighted_regression(X[:echo], Y, weights_mat[:echo])
-
-        # get the predicted values for this echo
-        Y_pred = coefficients * TEs[echo]
-
-        # compute the difference and get the integer multiple map
-        int_map = np.round((Y_pred - unwrapped_data[mask, echo, t]) / (2 * np.pi)).astype(int)
-
-        # correct the data using the integer map
-        unwrapped_data[mask, echo, t] += 2 * np.pi * int_map

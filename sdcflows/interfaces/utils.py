@@ -777,6 +777,13 @@ class EnforceTemporalConsistency(SimpleInterface):
     """Ensure phase unwrapping solutions are temporally consistent.
 
     This uses correlation as a similarity metric between frames to enforce temporal consistency.
+
+    This is derived from ``warpkit.unwrap.check_temporal_consistency_corr``.
+
+    XXX: Small change from warpkit:
+    I used ``weights_mat[:j_echo, i_vol, :]`` instead of ``weights_mat[:j_echo]``
+    Otherwise, ``coefficients`` is voxels x time instead of just voxels
+    Not sure what the source of the problem is yet.
     """
 
     input_spec = _EnforceTemporalConsistencyInputSpec
