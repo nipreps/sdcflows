@@ -41,7 +41,7 @@ from sdcflows.utils.misc import (
     subtract_offset,
 )
 
-INPUT_FIELDS = ("magnitude", "phase", "metadata")
+INPUT_FIELDS = ("magnitude", "phase")
 
 
 def init_medic_wf(
@@ -62,18 +62,31 @@ def init_medic_wf(
 
             from sdcflows.workflows.fit.medic import init_medic_wf
 
-            wf = init_medic_wf()
+            wf = init_medic_wf(
+                n_volumes=4,
+                echo_times=[0.015, 0.030, 0.045, 0.06],
+                automask=True,
+                automask_dilation=3,
+                border_filter=[1, 5],
+                svd_filter=10,
+            )   # doctest: +SKIP
 
     Parameters
     ----------
-    sloppy : :obj:`bool`
-        Whether a fast configuration of topup (less accurate) should be applied.
-    debug : :obj:`bool`
-        Run in debug mode
+    n_volumes : :obj:`int`
+        The number of volumes in the multi-echo data.
+    echo_times : :obj:`list` of :obj:`float`
+        The echo times of the multi-echo data, in milliseconds.
+    automask : :obj:`bool`
+        Whether to automatically generate a mask for the fieldmap.
+    automask_dilation : :obj:`int`
+        The number of voxels by which to dilate the automatically generated mask.
+    border_filter : :obj:`list` of :obj:`int`
+        The border filter to apply to the fieldmap.
+    svd_filter : :obj:`int`
+        The number of singular values to retain in the SVD filter.
     name : :obj:`str`
         Name for this workflow
-    omp_nthreads : :obj:`int`
-        Parallelize internal tasks across the number of CPUs given by this option.
 
     Inputs
     ------
@@ -81,29 +94,31 @@ def init_medic_wf(
         A list of echo-wise magnitude EPI files that will be fed into MEDIC.
     phase : :obj:`list` of :obj:`str`
         A list of echo-wise phase EPI files that will be fed into MEDIC.
-    metadata : :obj:`list` of :obj:`dict`
-        A list of dictionaries containing the metadata corresponding to each file
-        in ``in_data``.
 
     Outputs
     -------
-    fmap : :obj:`str`
-        The path of the estimated fieldmap.
-    fmap_ref : :obj:`str`
-        The path of an unwarped conversion of files in ``in_data``.
-    fmap_mask : :obj:`str`
-        The path of mask corresponding to the ``fmap_ref`` output.
-    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
-        The path(s) of the B-Spline coefficients supporting the fieldmap.
+    fieldmap : :obj:`str`
+        The path of the estimated fieldmap time series file.
+    phase_unwrapped : :obj:`list` of :obj:`str`
+        Path to the unwrapped phase time series files.
     method: :obj:`str`
         Short description of the estimation method that was run.
+
+    Notes
+    -----
+    This is a translation of the MEDIC algorithm, as implemented in ``vandandrew/warpkit``
+    (specifically the function ``unwrap_and_compute_field_maps``), into a Nipype workflow.
 
     """
     workflow = Workflow(name=name)
 
+    workflow.__desc__ = """\
+A dynamic fieldmap was estimated from multi-echo EPI data using the MEDIC algorithm (@medic).
+"""
+
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fieldmap"]),
+        niu.IdentityInterface(fields=["fieldmap", "phase_unwrapped", "method"]),
         name="outputnode",
     )
     outputnode.inputs.method = "MEDIC"
@@ -215,6 +230,7 @@ def init_medic_wf(
         (inputnode, enforce_consistency, [("magnitude", "magnitude")]),
         (concatenate_masks, enforce_consistency, [("out_file", "mask")]),
         (merge_phase_unwrapped, enforce_consistency, [("out", "phase_unwrapped")]),
+        (enforce_consistency, outputnode, [("phase_unwrapped", "phase_unwrapped")]),
     ])  # fmt:skip
 
     compute_fieldmap = pe.Node(
@@ -249,7 +265,7 @@ def init_process_volume_wf(
     automask_dilation=3,
     name="process_volume_wf",
 ):
-    """Create a workflow to process a single volume of multi-echo data.
+    """Process a single volume of multi-echo data according to the MEDIC method.
 
     Workflow Graph
         .. workflow ::
@@ -272,6 +288,8 @@ def init_process_volume_wf(
         Whether to automatically generate a mask for the fieldmap.
     automask_dilation : :obj:`int`
         The number of voxels by which to dilate the automatically generated mask.
+    name : :obj:`str`
+        The name of the workflow.
 
     Inputs
     ------
@@ -313,7 +331,7 @@ def init_process_volume_wf(
         # but is noisy so we combine the two masks to get a better mask
 
         # Use ROMEO's voxel-quality command
-        # NOTE: In warpkit Andrew creates a "mag" image of all ones.
+        # XXX: In warpkit Andrew creates a "mag" image of all ones.
         # With the current version (at least on some test data),
         # there are NaNs in the voxel quality map.
         voxqual = pe.Node(
@@ -327,8 +345,7 @@ def init_process_volume_wf(
             ]),
         ])  # fmt:skip
 
-        # Then use skimage's otsu thresholding to get a mask
-        # and do a bunch of other stuff
+        # Then use skimage's otsu thresholding to get a mask and do a bunch of other stuff
         automask_medic = pe.Node(
             niu.Function(
                 input_names=["mag_file", "voxel_quality", "echo_times", "automask_dilation"],
@@ -629,6 +646,31 @@ def init_mcpc_3d_s_wf(wrap_limit, name):
 
 
 def init_dual_echo_wf(name="dual_echo_wf"):
+    """Estimate a field map from the first two echoes of multi-echo data.
+
+    Parameters
+    ----------
+    name : str
+        The name of the workflow.
+
+    Inputs
+    ------
+    magnitude : str
+        The path to the magnitude image.
+    phase : str
+        The path to the phase image.
+    echo_times : list of float
+        The echo times of the multi-echo data.
+    mask : str
+        The path to the brain mask mask.
+
+    Outputs
+    -------
+    fieldmap : str
+        The path to the estimated fieldmap.
+    unwrapped_phase : str
+        The path to the unwrapped phase image.
+    """
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(

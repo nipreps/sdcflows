@@ -94,12 +94,12 @@ def get_largest_connected_component(mask_data: npt.NDArray[np.bool_]) -> npt.NDA
 
     Parameters
     ----------
-    mask_data : npt.NDArray[np.bool_]
+    mask_data : :obj:`numpy.ndarray`
         Mask to get the largest connected component of
 
     Returns
     -------
-    npt.NDArray[np.bool_]
+    :obj:`numpy.ndarray`
         Mask with only the largest connected component
     """
     from skimage.measure import label, regionprops
@@ -232,16 +232,16 @@ def compute_offset(echo_ind: int, W: npt.NDArray, X: npt.NDArray, Y: npt.NDArray
     ----------
     echo_ind : int
         Echo index
-    W : npt.NDArray
+    W : :obj:`numpy.ndarray`
         Weights
-    X : npt.NDArray
+    X : :obj:`numpy.ndarray`
         TEs in 2d matrix
-    Y : npt.NDArray
+    Y : :obj:`numpy.ndarray`
         Masked unwrapped data weighted by magnitude
 
     Returns
     -------
-    best_offset: int
+    best_offset : int
     """
     # fit the model to the up to previous echo
     coefficients, _ = weighted_regression(X[:echo_ind], Y[:echo_ind], W[:echo_ind])
@@ -273,20 +273,20 @@ def weighted_regression(
 
     Parameters
     ----------
-    X : npt.NDArray
+    X : :obj:`numpy.ndarray`
         Design matrix, rows are each echo, columns are voxels.
         If column is size 1, this array will be broadcasted across all voxels.
-    Y : npt.NDArray
+    Y : :obj:`numpy.ndarray`
         Ordinate matrix, rows are each echo, columns are voxels.
         (This is meant for phase values)
-    W : npt.NDArray
+    W : :obj:`numpy.ndarray`
         Weight matrix (usually the magnitude image) echos x voxels
 
     Returns
     -------
-    npt.NDArray
+    :obj:`numpy.ndarray`
         model weights
-    npt.NDArray
+    :obj:`numpy.ndarray`
         residuals
     """
     # compute weighted X and Y
@@ -756,14 +756,14 @@ def corr2_coeff(A, B):
 
     Parameters
     ----------
-    A : npt.NDArray
+    A : :obj:`numpy.ndarray`
         1st array to correlate
-    B : npt.NDArray
+    B : :obj:`numpy.ndarray`
         2nd array to correlate
 
     Returns
     -------
-    npt.NDArray
+    :obj:`numpy.ndarray`
         array of correlation coefficients
     """
     # Transpose A and B
