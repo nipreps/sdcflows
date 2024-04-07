@@ -137,7 +137,7 @@ def medic_automask(mag_file, voxel_quality, echo_times, automask_dilation, out_f
     vq = nb.load(voxel_quality).get_fdata()
     vq_mask = vq > threshold_otsu(vq)
     strel = generate_binary_structure(3, 2)
-    vq_mask = cast(npt.NDArray[np.bool_], binary_fill_holes(vq_mask, strel))
+    vq_mask = binary_fill_holes(vq_mask, strel).astype(bool)
     # get largest connected component
     vq_mask = get_largest_connected_component(vq_mask)
 
@@ -409,7 +409,7 @@ def calculate_diffs2(magnitude, phase):
     return mag_diff_file, phase_diff_file
 
 
-def create_brain_mask(magnitude, extra_dilation):
+def create_brain_mask(magnitude, extra_dilation=0):
     """Create a quick brain mask for a single frame.
 
     Parameters
@@ -425,11 +425,9 @@ def create_brain_mask(magnitude, extra_dilation):
         Mask of voxels to use for unwrapping
     """
     import os
-    from typing import cast
 
     import nibabel as nb
     import numpy as np
-    import numpy.typing as npt
     from scipy.ndimage import (
         binary_dilation,
         binary_fill_holes,
@@ -452,13 +450,17 @@ def create_brain_mask(magnitude, extra_dilation):
     # get the otsu threshold
     threshold = threshold_otsu(mag_data)
     mask_data = mag_data > threshold
-    mask_data = cast(npt.NDArray[np.float32], binary_fill_holes(mask_data, strel))
+    if mask_data.ndim != strel.ndim:
+        raise ValueError(f"{mask_data.shape} ({mask_data.ndim}) != {strel.shape} ({strel.ndim})")
+    mask_data = binary_fill_holes(mask_data, strel).astype(np.float32)
 
     # erode mask
-    mask_data = cast(
-        npt.NDArray[np.bool_],
-        binary_erosion(mask_data, structure=strel, iterations=2, border_value=1),
-    )
+    mask_data = binary_erosion(
+        mask_data,
+        structure=strel,
+        iterations=2,
+        border_value=1,
+    ).astype(bool)
 
     # get largest connected component
     mask_data = get_largest_connected_component(mask_data)
@@ -670,7 +672,7 @@ def select_fieldmap(
     mod_fmap_data = mod_fmap_img.get_fdata()
     mod_unwrapped_phase_data = mod_unwrapped_phase_img.get_fdata()
     unwrapped_diff_data = unwrapped_diff_img.get_fdata()
-    voxel_mask_data = voxel_mask_img.get_fdata()
+    voxel_mask_data = voxel_mask_img.get_fdata().astype(bool)
 
     masked_orig_fmap = orig_fmap_data[voxel_mask_data]
     if masked_orig_fmap.mean() < -10:
@@ -769,22 +771,24 @@ def global_mode_correction(magnitude, unwrapped, mask, echo_times):
     mask_img = nb.load(mask)
     mag_data = mag_img.get_fdata()
     unwrapped_data = unwrapped_img.get_fdata()
-    mask_data = mask_img.get_fdata()
+    mask_data = mask_img.get_fdata().astype(bool)
+    echo_times = np.array(echo_times)
 
-    mag_shortest = mag_data[..., 0]
-    brain_mask = create_brain_mask(mag_shortest)
+    brain_mask = create_brain_mask(magnitude)
+    brain_mask_img = nb.load(brain_mask)
+    brain_mask_data = brain_mask_img.get_fdata().astype(bool)
 
     # for each of these matrices TEs are on rows, voxels are columns
     # get design matrix
     X = echo_times[:, np.newaxis]
 
     # get magnitude weight matrix
-    W = mag_data[brain_mask, :].T
+    W = mag_data[brain_mask_data, :].T
 
     # loop over each index past 1st echo
     for i in range(1, echo_times.shape[0]):
         # get matrix with the masked unwrapped data (weighted by magnitude)
-        Y = unwrapped_data[brain_mask, :].T
+        Y = unwrapped_data[brain_mask_data, :].T
 
         # Compute offset through linear regression method
         best_offset = compute_offset(i, W, X, Y)
