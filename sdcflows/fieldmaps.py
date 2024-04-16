@@ -446,7 +446,8 @@ class FieldmapEstimation:
             return self._wf
 
         # Override workflow name (non-word/special characters are replaced to avoid nipype invalid node name errors)
-        kwargs["name"] = f"wf_{re.sub(r'[^-\w]', '-', self.bids_id)}"
+        bids_id = re.sub(r'[^-\w]', '-', self.bids_id)
+        kwargs["name"] = f"wf_{bids_id}"
 
         if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             from .workflows.fit.fieldmap import init_fmap_wf
