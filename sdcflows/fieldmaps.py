@@ -340,9 +340,9 @@ class FieldmapEstimation:
                 try:
                     new_path = (
                         sources[0].parent / sources[0].name
-                        .replace("fieldmap", "magnitude")
-                        .replace("diff", "1")
-                        .replace("phase", "magnitude")
+                        .replace("_fieldmap", "_magnitude")
+                        .replace("_phasediff", "_phase1")
+                        .replace("_phase", "_magnitude")
                     )
                     self.sources.append(FieldmapFile(new_path))
                 except Exception:
