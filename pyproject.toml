@@ -34,6 +34,7 @@ dependencies = [
     "scipy >= 1.8.1",
     "templateflow",
     "toml",
+    "warpkit == 0.1.1",
 ]
 dynamic = ["version"]
 

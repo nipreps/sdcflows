@@ -80,6 +80,11 @@ RUN mkdir /opt/convert3d && \
     curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Experimental/c3d-1.4.0-Linux-gcc64.tar.gz/download \
     | tar -xz -C /opt/convert3d --strip-components 1
 
+# Julia for MEDIC
+FROM downloader as julia
+RUN curl -fsSL https://install.julialang.org | sh -s -- --yes --default-channel 1.9.4 && \
+    mkdir -p /opt/julia/ && cp -r /root/.julia/juliaup/*/* /opt/julia/
+
 # Micromamba
 FROM downloader as micromamba
 WORKDIR /
@@ -156,11 +161,17 @@ RUN apt-get update -qq \
 # Install files from stages
 COPY --from=afni /opt/afni-latest /opt/afni-latest
 COPY --from=c3d /opt/convert3d/bin/c3d_affine_tool /usr/bin/c3d_affine_tool
+COPY --from=julia /opt/julia/ /opt/julia/
 
 # AFNI config
 ENV PATH="/opt/afni-latest:$PATH" \
     AFNI_IMSAVE_WARNINGS="NO" \
     AFNI_PLUGINPATH="/opt/afni-latest"
+
+# Julia config
+ENV PATH="/opt/julia/bin:${PATH}"
+# add libjulia to ldconfig
+RUN echo "/opt/julia/lib" >> /etc/ld.so.conf.d/julia.conf && ldconfig
 
 # Create a shared $HOME directory
 RUN useradd -m -s /bin/bash -G users sdcflows

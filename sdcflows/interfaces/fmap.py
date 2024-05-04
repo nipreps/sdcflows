@@ -29,6 +29,8 @@ from nipype.utils.filemanip import fname_presuffix
 from nipype import logging
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
+    CommandLineInputSpec,
+    CommandLine,
     TraitedSpec,
     File,
     traits,
@@ -390,3 +392,94 @@ def _check_gross_geometry(
             f"{img1.get_filename()} {''.join(nb.aff2axcodes(img1.affine))}, "
             f"{img2.get_filename()} {''.join(nb.aff2axcodes(img2.affine))}"
         )
+
+
+class _MEDICInputSpec(CommandLineInputSpec):
+    mag_files = traits.List(
+        File(exists=True),
+        argstr="--magnitude %s",
+        mandatory=True,
+        minlen=2,
+        desc="Magnitude image(s) to verify registration",
+    )
+    phase_files = traits.List(
+        File(exists=True),
+        argstr="--phase %s",
+        mandatory=True,
+        minlen=2,
+        desc="Phase image(s) to verify registration",
+    )
+    metadata = traits.List(
+        File(exists=True),
+        argstr="--metadata %s",
+        mandatory=True,
+        minlen=2,
+        desc="Metadata corresponding to the inputs",
+    )
+    prefix = traits.Str(
+        "medic",
+        argstr="--out_prefix %s",
+        usedefault=True,
+        desc="Prefix for output files",
+    )
+    noise_frames = traits.Int(
+        0,
+        argstr="--noiseframes %d",
+        usedefault=True,
+        desc="Number of noise frames to remove",
+    )
+    n_cpus = traits.Int(
+        4,
+        argstr="--n_cpus %d",
+        usedefault=True,
+        desc="Number of CPUs to use",
+    )
+    debug = traits.Bool(
+        False,
+        argstr="--debug",
+        usedefault=True,
+        desc="Enable debugging output",
+    )
+    wrap_limit = traits.Bool(
+        False,
+        argstr="--wrap_limit",
+        usedefault=True,
+        desc="Turns off some heuristics for phase unwrapping",
+    )
+
+
+class _MEDICOutputSpec(TraitedSpec):
+    native_field_map = File(
+        exists=True,
+        desc="4D ative (distorted) space field map in Hertz",
+    )
+    displacement_map = File(
+        exists=True,
+        desc="4D displacement map in millimeters",
+    )
+    field_map = File(
+        exists=True,
+        desc="4D undistorted field map in Hertz",
+    )
+
+
+class MEDIC(CommandLine):
+    """Run MEDIC."""
+
+    _cmd = "medic"
+    input_spec = _MEDICInputSpec
+    output_spec = _MEDICOutputSpec
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        out_dir = os.getcwd()
+        outputs['native_field_map'] = os.path.join(
+            out_dir,
+            f'{self.inputs.prefix}_fieldmaps_native.nii',
+        )
+        outputs['displacement_map'] = os.path.join(
+            out_dir,
+            f'{self.inputs.prefix}_displacementmaps.nii',
+        )
+        outputs['field_map'] = os.path.join(out_dir, f'{self.inputs.prefix}_fieldmaps.nii')
+        return outputs
