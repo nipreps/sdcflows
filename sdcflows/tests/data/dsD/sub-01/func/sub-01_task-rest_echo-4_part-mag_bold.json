@@ -89,5 +89,6 @@
         0.29,
         1.015
     ],
-    "SpacingBetweenSlices": 2
+    "SpacingBetweenSlices": 2,
+    "TotalReadoutTime": 0.03
 }

@@ -1,17 +1,17 @@
 {
     "B0FieldIdentifier": "medic",
     "B0FieldSource": "medic",
-    "EchoTime": 0.06366,
+    "EchoTime": 0.0142,
     "FlipAngle": 68,
     "ImageType": [
         "ORIGINAL",
         "PRIMARY",
-        "P",
+        "M",
         "MB",
-        "TE3",
+        "TE2",
         "ND",
-        "MOSAIC",
-        "PHASE"
+        "NORM",
+        "MOSAIC"
     ],
     "PhaseEncodingDirection": "j",
     "RepetitionTime": 1.761,
@@ -90,6 +90,5 @@
         1.015
     ],
     "SpacingBetweenSlices": 2,
-    "TotalReadoutTime": 0.03,
-    "Units": "arbitrary"
+    "TotalReadoutTime": 0.03
 }

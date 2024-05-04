@@ -90,5 +90,6 @@
         1.015
     ],
     "SpacingBetweenSlices": 2,
+    "TotalReadoutTime": 0.03,
     "Units": "arbitrary"
 }
