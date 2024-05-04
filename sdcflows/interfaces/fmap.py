@@ -64,6 +64,27 @@ class PhaseMap2rads(SimpleInterface):
         return runtime
 
 
+class _PhaseMap2rads2InputSpec(BaseInterfaceInputSpec):
+    in_file = File(exists=True, mandatory=True, desc="input (wrapped) phase map")
+
+
+class _PhaseMap2rads2OutputSpec(TraitedSpec):
+    out_file = File(desc="the phase map in the range -3.14 - 3.14")
+
+
+class PhaseMap2rads2(SimpleInterface):
+    """Convert a phase map given in a.u. (e.g., 0-4096) to radians."""
+
+    input_spec = _PhaseMap2rads2InputSpec
+    output_spec = _PhaseMap2rads2OutputSpec
+
+    def _run_interface(self, runtime):
+        from ..utils.phasemanip import au2rads2
+
+        self._results["out_file"] = au2rads2(self.inputs.in_file, newpath=runtime.cwd)
+        return runtime
+
+
 class _SubtractPhasesInputSpec(BaseInterfaceInputSpec):
     in_phases = traits.List(File(exists=True), min=1, max=2, desc="input phase maps")
     in_meta = traits.List(

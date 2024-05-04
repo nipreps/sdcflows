@@ -49,6 +49,7 @@ class EstimatorType(Enum):
     PHASEDIFF = auto()
     MAPPED = auto()
     ANAT = auto()
+    MEDIC = auto()
 
 
 MODALITIES = {
