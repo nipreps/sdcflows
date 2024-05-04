@@ -28,7 +28,7 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from sdcflows.interfaces.fmap import MEDIC, PhaseMap2rads2
 
-INPUT_FIELDS = ("magnitude", "phase")
+INPUT_FIELDS = ("magnitude", "phase", "metadata")
 
 
 def init_medic_wf(name="medic_wf"):
@@ -68,9 +68,8 @@ def init_medic_wf(name="medic_wf"):
 
     Notes
     -----
-    This is a translation of the MEDIC algorithm, as implemented in ``vandandrew/warpkit``
-    (specifically the function ``unwrap_and_compute_field_maps``), into a Nipype workflow.
-
+    This workflow performs minimal preparation before running the MEDIC algorithm,
+    as implemented in ``vandandrew/warpkit``.
     """
     workflow = Workflow(name=name)
 
