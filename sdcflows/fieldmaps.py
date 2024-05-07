@@ -68,6 +68,7 @@ MODALITIES = {
     "sbref": EstimatorType.PEPOLAR,
     "T1w": EstimatorType.ANAT,
     "T2w": EstimatorType.ANAT,
+    "medic": EstimatorType.MEDIC,
 }
 
 
@@ -311,16 +312,20 @@ class FieldmapEstimation:
 
         # Fieldmap option 1: actual field-mapping sequences
         fmap_types = suffix_set.intersection(
-            ("fieldmap", "phasediff", "phase1", "phase2")
+            ("fieldmap", "phasediff", "phase1", "phase2", "bold")
         )
         if len(fmap_types) > 1 and fmap_types - set(("phase1", "phase2")):
-            raise TypeError(f"Incompatible suffices found: <{','.join(fmap_types)}>.")
+            raise TypeError(f"Incompatible suffixes found: <{','.join(fmap_types)}>.")
+
+        # Check for MEDIC
+        if "part-mag" in self.sources[0].path:
+            fmap_types = set(list(fmap_types) + ["medic"])
 
         if fmap_types:
             sources = sorted(
                 f.path
                 for f in self.sources
-                if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2")
+                if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2", "bold")
             )
 
             # Automagically add the corresponding phase2 file if missing as argument
