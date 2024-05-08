@@ -48,7 +48,6 @@ autodoc_mock_imports = [
     "nilearn",
     "nipy",
     "nitime",
-    "numpy",
     "pandas",
     "seaborn",
     "skimage",
