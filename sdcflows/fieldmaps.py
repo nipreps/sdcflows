@@ -446,8 +446,7 @@ class FieldmapEstimation:
             return self._wf
 
         # Override workflow name
-        clean_bids_id = re.sub(r'[^a-zA-Z0-9]', '', self.bids_id)
-        kwargs["name"] = f"wf_{clean_bids_id}"
+        kwargs["name"] = f"wf_{self.bids_id}"
 
         if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             from .workflows.fit.fieldmap import init_fmap_wf

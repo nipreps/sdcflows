@@ -21,8 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
-import re
-
 from nipype import logging
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -108,7 +106,6 @@ def init_fmap_preproc_wf(
     )
 
     for n, estimator in enumerate(estimators, 1):
-        clean_bids_id = re.sub(r'[^a-zA-Z0-9]', '', estimator.bids_id)
         est_wf = estimator.get_workflow(
             omp_nthreads=omp_nthreads,
             debug=debug,
@@ -119,7 +116,7 @@ def init_fmap_preproc_wf(
         ]
 
         out_map = pe.Node(
-            niu.IdentityInterface(fields=out_fields), name=f"out_{clean_bids_id}"
+            niu.IdentityInterface(fields=out_fields), name=f"out_{estimator.bids_id}"
         )
         out_map.inputs.fmap_id = estimator.bids_id
 
@@ -127,7 +124,7 @@ def init_fmap_preproc_wf(
             output_dir=str(output_dir),
             write_coeff=True,
             bids_fmap_id=estimator.bids_id,
-            name=f"fmap_derivatives_wf_{clean_bids_id}",
+            name=f"fmap_derivatives_wf_{estimator.bids_id}",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = source_files
         fmap_derivatives_wf.inputs.inputnode.fmap_meta = [
@@ -138,7 +135,7 @@ def init_fmap_preproc_wf(
             output_dir=str(output_dir),
             fmap_type=str(estimator.method).rpartition(".")[-1].lower(),
             bids_fmap_id=estimator.bids_id,
-            name=f"fmap_reports_wf_{clean_bids_id}",
+            name=f"fmap_reports_wf_{estimator.bids_id}",
         )
         fmap_reports_wf.inputs.inputnode.source_files = source_files
 
@@ -146,7 +143,7 @@ def init_fmap_preproc_wf(
             fields = INPUT_FIELDS[estimator.method]
             inputnode = pe.Node(
                 niu.IdentityInterface(fields=fields),
-                name=f"in_{clean_bids_id}",
+                name=f"in_{estimator.bids_id}",
             )
             # fmt:off
             workflow.connect([
