@@ -347,8 +347,6 @@
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.base.html#sdcflows.workflows.fit.base.init_sdcflows_wf">[docs]</a>
 <span class="k">def</span> <span class="nf">init_sdcflows_wf</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a multi-subject, multi-estimator *SDCFlows* workflow.&quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">re</span>
-
     <span class="kn">from</span> <span class="nn">nipype.pipeline.engine</span> <span class="kn">import</span> <span class="n">Workflow</span>
     <span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="kn">import</span> <span class="n">collect_participants</span>
 
@@ -375,8 +373,6 @@
 
     <span class="k">for</span> <span class="n">subject</span><span class="p">,</span> <span class="n">sub_estimators</span> <span class="ow">in</span> <span class="n">estimators_record</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">estim</span> <span class="ow">in</span> <span class="n">sub_estimators</span><span class="p">:</span>
-            <span class="n">clean_bids_id</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[^a-zA-Z0-9]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">)</span>
-
             <span class="n">estim_wf</span> <span class="o">=</span> <span class="n">estim</span><span class="o">.</span><span class="n">get_workflow</span><span class="p">(</span>
                 <span class="n">omp_nthreads</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">omp_nthreads</span><span class="p">,</span>
                 <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -387,7 +383,7 @@
                 <span class="n">output_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
                 <span class="n">write_coeff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_derivatives_</span><span class="si">{</span><span class="n">clean_bids_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_derivatives_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="n">source_paths</span> <span class="o">=</span> <span class="p">[</span>
@@ -402,7 +398,7 @@
                 <span class="n">fmap_type</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
                 <span class="n">output_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_reports_</span><span class="si">{</span><span class="n">clean_bids_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_reports_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">reportlets_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_paths</span>
 
