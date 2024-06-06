@@ -61,7 +61,7 @@ def init_sdcflows_wf():
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
                 write_coeff=True,
-                name=f"fmap_derivatives_{estim.bids_id}",
+                name=f"fmap_derivatives_{estim.sanitized_id}",
             )
 
             source_paths = [
@@ -76,7 +76,7 @@ def init_sdcflows_wf():
                 fmap_type=estim.method,
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
-                name=f"fmap_reports_{estim.bids_id}",
+                name=f"fmap_reports_{estim.sanitized_id}",
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 
