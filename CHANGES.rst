@@ -1,3 +1,21 @@
+2.9.0 (June 13, 2024)
+=====================
+Feature release in the 2.9.x series.
+
+The main change is that B0FieldIdentifiers with special characters
+are now sanitized and exposed through a ``FieldmapEstimator.sanitized_id``
+attribute.
+
+Workflow names and input/output connections will use ``sanitized_id``,
+to ensure compatibility with filenames and workflow graph generation.
+Internal lookup tables will continue to use the the unsanitized ``bids_id``.
+
+* FIX: Update suffix only when finding related fieldmap files (#436)
+* FIX: Remove unused ANTs parameter that was removed in 2.4.1 (#431)
+* RF: Add sanitized_id field to FieldmapEstimation (#444)
+* DOC: Un-mock the already-imported numpy (#440)
+* CI: Bump actions/cache from 3 to 4 (#429)
+
 2.8.1 (January 22, 2024)
 ========================
 Bug-fix release in the 2.8.x series.
