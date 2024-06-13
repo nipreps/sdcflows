@@ -1,0 +1,6 @@
+sdcflows.workflows.apply.registration module
+============================================
+
+.. automodule:: sdcflows.workflows.apply.registration
+   :members:
+   :show-inheritance:

@@ -1,0 +1,904 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+        <title>sdcflows.fieldmaps - sdcflows 0+unknown documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/version-switch.css?v=3fffbac3" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" /
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">sdcflows 0+unknown documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+    <span class="sidebar-brand-text">sdcflows</span>
+    <span id="version-slug" class="sidebar-brand-text">0 (dev)</span>
+</a>
+
+<!-- Versions dropdown -->
+<div id="version-menu" class="version-tree">
+  <ul>
+  <li class="toctree-l1 has-children">
+  <span class="sidebar-brand-text">0 (dev)</span>
+  <input class="toctree-checkbox" id="toctree-checkbox-v" name="toctree-checkbox-v" role="switch" type="checkbox">
+  <label for="toctree-checkbox-v"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label>
+  <ul id="v-tags"></ul>
+  </ul>
+</div><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../notebooks/SDC%20-%20Theory%20and%20physics.html">Susceptibility Distortions (and Correction) in a nutshell</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../methods.html">Methods and implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Standalone command line usage</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">Library API (application program interface)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Library API (application program interface)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.cli.html">sdcflows.cli package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of sdcflows.cli package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.main.html">sdcflows.cli.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.parser.html">sdcflows.cli.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.cli.workflow.html">sdcflows.cli.workflow module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.config.html">sdcflows.config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.data.html">sdcflows.data package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.fieldmaps.html">sdcflows.fieldmaps module</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.interfaces.html">sdcflows.interfaces package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of sdcflows.interfaces package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.brainmask.html">sdcflows.interfaces.brainmask module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.bspline.html">sdcflows.interfaces.bspline module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.epi.html">sdcflows.interfaces.epi module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.fmap.html">sdcflows.interfaces.fmap module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.reportlets.html">sdcflows.interfaces.reportlets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.interfaces.utils.html">sdcflows.interfaces.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sdcflows.transform.html">sdcflows.transform module</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.utils.html">sdcflows.utils package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of sdcflows.utils package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.bimap.html">sdcflows.utils.bimap module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.epimanip.html">sdcflows.utils.epimanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.misc.html">sdcflows.utils.misc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.phasemanip.html">sdcflows.utils.phasemanip module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.telemetry.html">sdcflows.utils.telemetry module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.tools.html">sdcflows.utils.tools module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.utils.wrangler.html">sdcflows.utils.wrangler module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.viz.html">sdcflows.viz package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of sdcflows.viz package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.viz.utils.html">sdcflows.viz.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/sdcflows.workflows.html">sdcflows.workflows package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of sdcflows.workflows package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/sdcflows.workflows.apply.html">sdcflows.workflows.apply package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.apply package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.apply.correction.html">sdcflows.workflows.apply.correction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.apply.registration.html">sdcflows.workflows.apply.registration module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/sdcflows.workflows.fit.html">sdcflows.workflows.fit package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of sdcflows.workflows.fit package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.base.html">sdcflows.workflows.fit.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.fieldmap.html">sdcflows.workflows.fit.fieldmap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.pepolar.html">sdcflows.workflows.fit.pepolar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sdcflows.workflows.fit.syn.html">sdcflows.workflows.fit.syn module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.workflows.ancillary.html">sdcflows.workflows.ancillary module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.workflows.base.html">sdcflows.workflows.base module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sdcflows.workflows.outputs.html">sdcflows.workflows.outputs module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">What’s new?</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for sdcflows.fieldmaps</h1><div class="highlight"><pre>
+<span></span><span class="c1"># emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-</span>
+<span class="c1"># vi: set ft=python sts=4 ts=4 sw=4 et:</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+<span class="c1"># We support and encourage derived works from this project, please read</span>
+<span class="c1"># about our expectations at</span>
+<span class="c1">#</span>
+<span class="c1">#     https://www.nipreps.org/community/licensing/</span>
+<span class="c1">#</span>
+<span class="sd">&quot;&quot;&quot;Utilities for fieldmap estimation.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">attr</span>
+<span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">loads</span>
+<span class="kn">from</span> <span class="nn">bids.layout</span> <span class="kn">import</span> <span class="n">parse_file_entities</span>
+<span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
+<span class="kn">from</span> <span class="nn">niworkflows.utils.bids</span> <span class="kn">import</span> <span class="n">relative_to_root</span>
+<span class="kn">from</span> <span class="nn">.utils.bimap</span> <span class="kn">import</span> <span class="n">EstimatorRegistry</span>
+
+
+<span class="n">_estimators</span> <span class="o">=</span> <span class="n">EstimatorRegistry</span><span class="p">()</span>
+<span class="n">_intents</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MetadataError">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.MetadataError">[docs]</a>
+<span class="k">class</span> <span class="nc">MetadataError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A better name for a specific value error.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="EstimatorType">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.EstimatorType">[docs]</a>
+<span class="k">class</span> <span class="nc">EstimatorType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents different types of fieldmap estimation approach.&quot;&quot;&quot;</span>
+
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">PEPOLAR</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">PHASEDIFF</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">MAPPED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">ANAT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+
+<span class="n">MODALITIES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;bold&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;dwi&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;epi&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;asl&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;m0scan&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;fieldmap&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
+    <span class="s2">&quot;magnitude&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">&quot;magnitude1&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">&quot;magnitude2&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">&quot;phase1&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s2">&quot;phase2&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s2">&quot;phasediff&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s2">&quot;sbref&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s2">&quot;T1w&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
+    <span class="s2">&quot;T2w&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_type_setter</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make sure the type of estimation is not changed.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot change determined method </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+        <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+        <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
+        <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid estimation method type </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">_id_setter</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">bids_id</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">bids_id</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot edit the bids_id&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FieldmapFile">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapFile">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">FieldmapFile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent a file that can be used in some fieldmap estimation method.</span>
+
+<span class="sd">    The class will read metadata from a sidecar JSON with filename matching that</span>
+<span class="sd">    of the file.</span>
+<span class="sd">    This class may receive metadata as a keyword argument at initialization.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(dsA_dir / &quot;sub-01&quot; / &quot;anat&quot; / &quot;sub-01_T1w.nii.gz&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; f.suffix</span>
+<span class="sd">    &#39;T1w&#39;</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...     find_meta=False</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError:</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;TotalReadoutTime&#39;]</span>
+<span class="sd">    0.005</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...     metadata={&quot;TotalReadoutTime&quot;: None},</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError:</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...     metadata={&#39;TotalReadoutTime&#39;: 0.006}</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;TotalReadoutTime&#39;]</span>
+<span class="sd">    0.006</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phasediff.nii.gz&quot;,</span>
+<span class="sd">    ...     find_meta=False</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError:</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phasediff.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime2&#39;]</span>
+<span class="sd">    0.00746</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phase2.nii.gz&quot;,</span>
+<span class="sd">    ...     find_meta=False</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError:</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phase2.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime&#39;]</span>
+<span class="sd">    0.00746</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_fieldmap.nii.gz&quot;,</span>
+<span class="sd">    ...     find_meta=False</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError:</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_fieldmap.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;Units&#39;]</span>
+<span class="sd">    &#39;rad/s&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">on_setattr</span><span class="o">=</span><span class="n">attr</span><span class="o">.</span><span class="n">setters</span><span class="o">.</span><span class="n">NO_OP</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to a fieldmap file.&quot;&quot;&quot;</span>
+
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;BIDS entities extracted from filepath.&quot;&quot;&quot;</span>
+
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extracted suffix from input file.&quot;&quot;&quot;</span>
+
+    <span class="n">bids_root</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path of the BIDS root.&quot;&quot;&quot;</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">attr</span><span class="o">.</span><span class="n">Factory</span><span class="p">(</span><span class="nb">dict</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Metadata associated to this file. When provided as keyword argument in initialization,</span>
+<span class="sd">    will overwrite metadata read from sidecar JSON.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">find_meta</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enable/disable automated search for corresponding metadata.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FieldmapFile.check_path">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapFile.check_path">[docs]</a>
+    <span class="nd">@path</span><span class="o">.</span><span class="n">validator</span>
+    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate a fieldmap path.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not exist, is a broken link, or it is not a file&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;.nii&quot;</span><span class="p">,</span> <span class="s2">&quot;.nii.gz&quot;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not look like a NIfTI file.&quot;</span><span class="p">)</span>
+
+        <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?&lt;=_)\w+(?=\.nii)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">MODALITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; with suffix &lt;</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&gt; is not a valid &quot;</span>
+                <span class="s2">&quot;fieldmap sourcefile.&quot;</span>
+            <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate metadata and additional checks.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities</span> <span class="o">=</span> <span class="n">parse_file_entities</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;suffix&quot;</span><span class="p">)</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;extension&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Automatically fill metadata in when possible</span>
+        <span class="c1"># TODO: implement BIDS hierarchy of metadata</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_meta</span><span class="p">:</span>
+            <span class="n">sidecar</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">sidecar</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">sidecar</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_meta</span><span class="p">)</span>
+
+        <span class="c1"># Attempt to infer a bids_root folder</span>
+        <span class="n">relative_path</span> <span class="o">=</span> <span class="n">relative_to_root</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bids_root</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">))])</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;T1w&quot;</span><span class="p">,</span> <span class="s2">&quot;T2w&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Check for REQUIRED metadata (depends on suffix.)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;PhaseEncodingDirection&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Missing &#39;PhaseEncodingDirection&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="kn">from</span> <span class="nn">.utils.epimanip</span> <span class="kn">import</span> <span class="n">get_trt</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Missing readout timing information for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;fieldmap&quot;</span> <span class="ow">and</span> <span class="s2">&quot;Units&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;Units&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;phasediff&quot;</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s2">&quot;EchoTime1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="s2">&quot;EchoTime2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Missing &#39;EchoTime1&#39; and/or &#39;EchoTime2&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;EchoTime&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;EchoTime&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FieldmapEstimation">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">FieldmapEstimation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent fieldmap estimation strategies.</span>
+
+<span class="sd">    This class provides a consistent interface to all types of fieldmap estimation</span>
+<span class="sd">    strategies.</span>
+<span class="sd">    The actual type of method for estimation is inferred from the ``sources`` input,</span>
+<span class="sd">    and collects all the available metadata.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">FieldmapFile</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FieldmapFile</span><span class="p">)</span> <span class="k">else</span> <span class="n">f</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="p">],</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2"> files&gt;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;File path or list of paths indicating the source data to estimate a fieldmap.&quot;&quot;&quot;</span>
+
+    <span class="n">method</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span> <span class="n">on_setattr</span><span class="o">=</span><span class="n">_type_setter</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag indicating the estimator type inferred from the input sources.&quot;&quot;&quot;</span>
+
+    <span class="n">bids_id</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">on_setattr</span><span class="o">=</span><span class="n">_id_setter</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The unique ``B0FieldIdentifier`` field of this fieldmap.&quot;&quot;&quot;</span>
+
+    <span class="n">sanitized_id</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sanitized version of the bids_id with special characters replaced by underscores.&quot;&quot;&quot;</span>
+
+    <span class="n">_wf</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal pointer to a workflow.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine the intended fieldmap estimation type and check for data completeness.&quot;&quot;&quot;</span>
+        <span class="n">suffix_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
+        <span class="n">suffix_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">suffix_list</span><span class="p">)</span>
+
+        <span class="c1"># Fieldmap option 1: actual field-mapping sequences</span>
+        <span class="n">fmap_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible suffices found: &lt;</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">fmap_types</span><span class="p">:</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">path</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Automagically add the corresponding phase2 file if missing as argument</span>
+            <span class="n">missing_phases</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;phase1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">missing_phases</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">mis_ph</span> <span class="o">=</span> <span class="s2">&quot;phase1&quot;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;phase2&quot;</span>
+                <span class="n">hit_ph</span> <span class="o">=</span> <span class="s2">&quot;phase2&quot;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;phase1&quot;</span>
+                <span class="n">new_source</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hit_ph</span><span class="p">,</span> <span class="n">mis_ph</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_source</span><span class="p">))</span>
+                <span class="n">sources</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">missing_phases</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">new_source</span><span class="p">)</span>
+
+            <span class="c1"># Set method, this cannot be undone</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">fmap_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
+
+            <span class="c1"># Determine the name of the corresponding (first) magnitude file(s)</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;magnitude</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="n">magnitude</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">new_path</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;_magnitude&quot;</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;_phase1&quot;</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_phase&quot;</span><span class="p">,</span> <span class="s2">&quot;_magnitude&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;A fieldmap or phase-difference estimation type was found, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;but an anatomical reference (</span><span class="si">{</span><span class="n">magnitude</span><span class="si">}</span><span class="s2"> file) is missing.&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># Check presence and try to find (if necessary) the second magnitude file</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span>
+                <span class="ow">and</span> <span class="s2">&quot;magnitude2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span>
+            <span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">new_path</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;diff&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;phase2&quot;</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="s2">&quot;A phase-difference estimation (phase1/2) type was found, &quot;</span>
+                            <span class="s2">&quot;but an anatomical reference (magnitude2 file) is missing.&quot;</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)</span>
+        <span class="c1"># IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s</span>
+        <span class="n">pepolar_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">))</span>
+        <span class="n">anat_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s2">&quot;T1w&quot;</span><span class="p">,</span> <span class="s2">&quot;T2w&quot;</span><span class="p">))</span>
+        <span class="n">_pepolar_estimation</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">suffix_list</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">)]</span>
+            <span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_pepolar_estimation</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">anat_types</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">pepolar_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
+            <span class="n">_pe</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Only one phase-encoding direction &lt;</span><span class="si">{</span><span class="n">_pe</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="si">}</span><span class="s2">&gt; found across sources.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">anat_types</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">anat_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pepolar_types</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Only anatomical sources were found, cannot estimate fieldmap.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="c1"># No method has been identified -&gt; fail.</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Insufficient sources to estimate a fieldmap.&quot;</span><span class="p">)</span>
+
+        <span class="n">intents_meta</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">el</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+            <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;IntendedFor&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Register this estimation method</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">:</span>
+            <span class="c1"># If not manually set, try to get it from BIDS metadata</span>
+            <span class="n">b0_ids</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;B0FieldIdentifier&quot;</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;B0FieldIdentifier&quot;</span><span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">b0_ids</span><span class="p">:</span>
+                <span class="c1"># Find common IDs</span>
+                <span class="n">bids_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">b0_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="n">b0_ids</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">bids_ids</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No common ``B0FieldIdentifier`` found: &lt;</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">b0_ids</span><span class="p">))</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Multiple common ``B0FieldIdentifier``s found: &lt;</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                    <span class="p">)</span>
+                <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;bids_id&quot;</span><span class="p">,</span> <span class="n">bids_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">:</span>
+            <span class="n">_estimators</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bids_id</span> <span class="o">=</span> <span class="n">_estimators</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">())</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;bids_id&quot;</span><span class="p">,</span> <span class="n">bids_id</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">intent_file</span> <span class="ow">in</span> <span class="n">intents_meta</span><span class="p">:</span>
+            <span class="n">_intents</span><span class="p">[</span><span class="n">intent_file</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">)</span>
+
+        <span class="c1"># Provide a sanitized identifier that can be used in cases where</span>
+        <span class="c1"># special characters are not allowed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sanitized_id</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[^a-zA-Z0-9]&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FieldmapEstimation.paths">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation.paths">[docs]</a>
+    <span class="k">def</span> <span class="nf">paths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a tuple of paths that are sorted.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="FieldmapEstimation.get_workflow">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation.get_workflow">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the estimation workflow corresponding to this instance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span>
+
+        <span class="c1"># Override workflow name</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;wf_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.fieldmap</span> <span class="kn">import</span> <span class="n">init_fmap_wf</span>
+
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_fmap_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fieldmap</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()),</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.pepolar</span> <span class="kn">import</span> <span class="n">init_topup_wf</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_topup_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">in_data</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                <span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.workflows.fit.syn</span> <span class="kn">import</span> <span class="n">init_syn_sdc_wf</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_syn_sdc_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_identifier">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.get_identifier">[docs]</a>
+<span class="k">def</span> <span class="nf">get_identifier</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;IntendedFor&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the fieldmap identifier for a given filename.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : :obj:`str`</span>
+<span class="sd">        The file we want to search in indexes.</span>
+<span class="sd">    by : :obj:`str` (``IntendedFor`` or ``sources``)</span>
+<span class="sd">        Index table in which the search should be performed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;IntendedFor&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_intents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="p">())))</span>
+
+    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;sources&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&#39;</span><span class="si">{by}</span><span class="s2">&#39;&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="clear_registry">
+<a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.clear_registry">[docs]</a>
+<span class="k">def</span> <span class="nf">clear_registry</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Empty registries.&quot;&quot;&quot;</span>
+    <span class="n">_estimators</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">_intents</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, The NiPreps developers
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=27db1736"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/version-switch.js?v=d8b55535"></script>
+    </body>
+</html>
