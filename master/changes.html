@@ -326,6 +326,23 @@
         <article role="main" id="furo-main-content">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Link to this heading">¶</a></h1>
+<section id="june-13-2024">
+<h2>2.9.0 (June 13, 2024)<a class="headerlink" href="#june-13-2024" title="Link to this heading">¶</a></h2>
+<p>Feature release in the 2.9.x series.</p>
+<p>The main change is that B0FieldIdentifiers with special characters
+are now sanitized and exposed through a <code class="docutils literal notranslate"><span class="pre">FieldmapEstimator.sanitized_id</span></code>
+attribute.</p>
+<p>Workflow names and input/output connections will use <code class="docutils literal notranslate"><span class="pre">sanitized_id</span></code>,
+to ensure compatibility with filenames and workflow graph generation.
+Internal lookup tables will continue to use the the unsanitized <code class="docutils literal notranslate"><span class="pre">bids_id</span></code>.</p>
+<ul class="simple">
+<li><p>FIX: Update suffix only when finding related fieldmap files (#436)</p></li>
+<li><p>FIX: Remove unused ANTs parameter that was removed in 2.4.1 (#431)</p></li>
+<li><p>RF: Add sanitized_id field to FieldmapEstimation (#444)</p></li>
+<li><p>DOC: Un-mock the already-imported numpy (#440)</p></li>
+<li><p>CI: Bump actions/cache from 3 to 4 (#429)</p></li>
+</ul>
+</section>
 <section id="january-22-2024">
 <h2>2.8.1 (January 22, 2024)<a class="headerlink" href="#january-22-2024" title="Link to this heading">¶</a></h2>
 <p>Bug-fix release in the 2.8.x series.</p>
@@ -1037,6 +1054,7 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#june-13-2024">2.9.0 (June 13, 2024)</a></li>
 <li><a class="reference internal" href="#january-22-2024">2.8.1 (January 22, 2024)</a></li>
 <li><a class="reference internal" href="#january-10-2024">2.8.0 (January 10, 2024)</a></li>
 <li><a class="reference internal" href="#december-18-2023">2.7.0 (December 18, 2023)</a></li>
