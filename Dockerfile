@@ -40,7 +40,7 @@ RUN python -m build /src
 #
 
 # Utilities for downloading packages
-FROM ${BASE_IMAGE} as downloader
+FROM --platform=linux/amd64 ${BASE_IMAGE} as downloader
 
 # Bump the date to current to refresh curl/certificates/etc
 RUN echo "2023.11.09"
@@ -100,7 +100,7 @@ RUN /opt/conda/envs/sdcflows/bin/pip install --no-cache-dir -r /tmp/requirements
 #
 # Main stage
 #
-FROM ${BASE_IMAGE} as sdcflows
+FROM --platform=linux/amd64 ${BASE_IMAGE} as sdcflows
 
 # Configure apt
 ENV DEBIAN_FRONTEND="noninteractive" \
