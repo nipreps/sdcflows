@@ -38,6 +38,12 @@
       "type": "Researcher"
     },
     {
+      "orcid": "0000-0002-8888-1572",
+      "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University",
+      "name": "Steven Meisler",
+      "type": "Researcher"
+    },
+    {
       "orcid": "0000-0001-9049-0135",
       "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
       "name": "Azeez Adebimpe",
@@ -47,12 +53,6 @@
       "orcid": "0000-0002-2172-5786",
       "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University",
       "name": "Kevin R. Sitek",
-      "type": "Researcher"
-    },
-    {
-      "orcid": "0000-0002-8888-1572",
-      "affiliation": "Speech & Hearing Bioscience & Technology Program, Harvard University",
-      "name": "Steven L. Meisler",
       "type": "Researcher"
     },
     {

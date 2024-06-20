@@ -124,7 +124,7 @@ def init_fmap_preproc_wf(
             output_dir=str(output_dir),
             write_coeff=True,
             bids_fmap_id=estimator.bids_id,
-            name=f"fmap_derivatives_wf_{estimator.bids_id}",
+            name=f"fmap_derivatives_wf_{estimator.sanitized_id}",
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = source_files
         fmap_derivatives_wf.inputs.inputnode.fmap_meta = [
@@ -135,7 +135,7 @@ def init_fmap_preproc_wf(
             output_dir=str(output_dir),
             fmap_type=str(estimator.method).rpartition(".")[-1].lower(),
             bids_fmap_id=estimator.bids_id,
-            name=f"fmap_reports_wf_{estimator.bids_id}",
+            name=f"fmap_reports_wf_{estimator.sanitized_id}",
         )
         fmap_reports_wf.inputs.inputnode.source_files = source_files
 
@@ -143,7 +143,7 @@ def init_fmap_preproc_wf(
             fields = INPUT_FIELDS[estimator.method]
             inputnode = pe.Node(
                 niu.IdentityInterface(fields=fields),
-                name=f"in_{estimator.bids_id}",
+                name=f"in_{estimator.sanitized_id}",
             )
             # fmt:off
             workflow.connect([
