@@ -90,6 +90,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
+    out_intercept = traits.Float
     out_field = File(exists=True)
     out_coeff = OutputMultiObject(File(exists=True))
     out_error = File(exists=True)
@@ -226,7 +227,7 @@ class BSplineApprox(SimpleInterface):
                 f"Extreme value {extreme:.2e} detected in spline coefficients."
             )
 
-        LOGGER.info(f"Model fit. Intercept = {model.intercept_}")
+        self._results["out_intercept"] = model.intercept_
 
         # Store coefficients
         index = 0
@@ -273,7 +274,7 @@ class BSplineApprox(SimpleInterface):
         # Write out fitting-error map
         self._results["out_error"] = out_name.replace("_field.", "_error.")
         fmapnii.__class__(
-            data * mask - interp_data, fmapnii.affine, fmapnii.header
+            data * mask - interp_data + model.intercept_, fmapnii.affine, fmapnii.header
         ).to_filename(self._results["out_error"])
 
         if not self.inputs.extrapolate:
