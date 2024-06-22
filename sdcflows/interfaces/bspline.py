@@ -56,19 +56,19 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     in_data = File(exists=True, mandatory=True, desc="path to a fieldmap")
     in_mask = File(exists=True, desc="path to a brain mask")
     bs_spacing = InputMultiObject(
-        [DEFAULT_ZOOMS_MM],
+        [DEFAULT_HF_ZOOMS_MM],
         traits.Tuple(traits.Float, traits.Float, traits.Float),
         usedefault=True,
         desc="spacing between B-Spline control points",
     )
     ridge_alpha = traits.Float(
-        0.01, usedefault=True, desc="controls the regularization"
+        1e-4, usedefault=True, desc="controls the regularization"
     )
     recenter = traits.Enum(
+        False,
         "mode",
         "median",
         "mean",
-        False,
         usedefault=True,
         desc="strategy to recenter the distribution of the input fieldmap",
     )
@@ -80,7 +80,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     zooms_min = traits.Union(
         traits.Float,
         traits.Tuple(traits.Float, traits.Float, traits.Float),
-        default_value=4.0,
+        default_value=1.0,
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
@@ -211,9 +211,7 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Fit the model
-        model = lm.Ridge(
-            alpha=self.inputs.ridge_alpha, fit_intercept=False, solver="lsqr"
-        )
+        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=True)
         for attempt in range(3):
             model.fit(colmat, data.reshape(-1))
             extreme = np.abs(model.coef_).max()
@@ -227,6 +225,8 @@ class BSplineApprox(SimpleInterface):
                 f"Spline fit of input file {self.inputs.in_data} failed. "
                 f"Extreme value {extreme:.2e} detected in spline coefficients."
             )
+
+        LOGGER.info(f"Model fit. Intercept = {model.intercept_}")
 
         # Store coefficients
         index = 0
