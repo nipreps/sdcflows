@@ -302,6 +302,9 @@ class FieldmapEstimation:
     bids_id = attr.ib(default=None, kw_only=True, type=str, on_setattr=_id_setter)
     """The unique ``B0FieldIdentifier`` field of this fieldmap."""
 
+    sanitized_id = attr.ib(init=False, repr=False)
+    """Sanitized version of the bids_id with special characters replaced by underscores."""
+
     _wf = attr.ib(init=False, default=None, repr=False)
     """Internal pointer to a workflow."""
 
@@ -442,6 +445,10 @@ class FieldmapEstimation:
         for intent_file in intents_meta:
             _intents[intent_file].add(self.bids_id)
 
+        # Provide a sanitized identifier that can be used in cases where
+        # special characters are not allowed.
+        self.sanitized_id = re.sub(r'[^a-zA-Z0-9]', '_', self.bids_id)
+
     def paths(self):
         """Return a tuple of paths that are sorted."""
         return tuple(sorted(str(f.path) for f in self.sources))
@@ -452,7 +459,7 @@ class FieldmapEstimation:
             return self._wf
 
         # Override workflow name
-        kwargs["name"] = f"wf_{self.bids_id}"
+        kwargs["name"] = f"wf_{self.sanitized_id}"
 
         if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             from .workflows.fit.fieldmap import init_fmap_wf

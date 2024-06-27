@@ -111,6 +111,7 @@ def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources, raises):
     assert fe.method == method
     assert len(fe.sources) == nsources
     assert fe.bids_id is not None and fe.bids_id.startswith("auto_")
+    assert fe.bids_id == fe.sanitized_id  # Auto-generated IDs are sanitized
 
     # Attempt to change bids_id
     with pytest.raises(ValueError):
@@ -240,6 +241,33 @@ def test_FieldmapEstimationIdentifier(monkeypatch, dsA_dir):
 
     with pytest.raises(KeyError):
         fm.get_identifier("file", by="invalid")
+
+    fm.clear_registry()
+
+    fe = fm.FieldmapEstimation(
+        [
+            fm.FieldmapFile(
+                dsA_dir / "sub-01" / "fmap/sub-01_fieldmap.nii.gz",
+                metadata={
+                    "Units": "Hz",
+                    "B0FieldIdentifier": "fmap-with^special#chars",
+                    "IntendedFor": ["file1.nii.gz", "file2.nii.gz"],
+                },
+            ),
+            fm.FieldmapFile(
+                dsA_dir / "sub-01" / "fmap/sub-01_magnitude.nii.gz",
+                metadata={"Units": "Hz", "B0FieldIdentifier": "fmap-with^special#chars"},
+            ),
+        ]
+    )
+    assert fe.bids_id == "fmap-with^special#chars"
+    assert fe.sanitized_id == "fmap_with_special_chars"
+    # The unsanitized ID is used for lookups
+    assert fm.get_identifier("file1.nii.gz") == ("fmap-with^special#chars",)
+    assert fm.get_identifier("file2.nii.gz") == ("fmap-with^special#chars",)
+
+    wf = fe.get_workflow()
+    assert wf.name == "wf_fmap_with_special_chars"
 
     fm.clear_registry()
 
