@@ -8,3 +8,5 @@ Should you desire to be considered back as a contributor or maintainer, please r
 | --- | --- | --- |
 | Berleant | Shoshana | @berleant |
 | Bot | NiPreps | @nipreps-bot |
+| Bot | Dependabot | @dependabot[bot] |
+| Gorgolewski | Krzysztof J. | @chrisgorgo |
