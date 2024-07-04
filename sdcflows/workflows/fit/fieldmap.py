@@ -87,7 +87,6 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
     from ...interfaces.bspline import (
         BSplineApprox,
         DEFAULT_HF_ZOOMS_MM,
-        DEFAULT_ZOOMS_MM,
     )
     from ...interfaces.fmap import CheckRegister
 
@@ -113,9 +112,11 @@ def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", na
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
     bs_filter = pe.Node(BSplineApprox(), name="bs_filter")
     bs_filter.interface._always_run = debug
-    bs_filter.inputs.bs_spacing = (
-        [DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
-    )
+    bs_filter.inputs.bs_spacing = [DEFAULT_HF_ZOOMS_MM]
+
+    if sloppy:
+        bs_filter.inputs.zooms_min = 4.0
+
     bs_filter.inputs.extrapolate = not debug
 
     # fmt: off

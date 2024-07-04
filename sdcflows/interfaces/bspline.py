@@ -65,10 +65,10 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
         1e-4, usedefault=True, desc="controls the regularization"
     )
     recenter = traits.Enum(
-        False,
-        "mode",
         "median",
+        "mode",
         "mean",
+        False,
         usedefault=True,
         desc="strategy to recenter the distribution of the input fieldmap",
     )
