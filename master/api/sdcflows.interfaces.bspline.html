@@ -424,18 +424,18 @@ formalized in
 <dt class="field-even">Optional Inputs<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>bs_spacing</strong> (<em>a list of items which are a tuple of the form: (a float, a float, a float)</em>) – Spacing between B-Spline control points.
-(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">[(40.0,</span> <span class="pre">40.0,</span> <span class="pre">20.0)]</span></code>)</p></li>
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">[(16.0,</span> <span class="pre">16.0,</span> <span class="pre">10.0)]</span></code>)</p></li>
 <li><p><strong>debug</strong> (<em>a boolean</em>) – Generate extra assets for debugging.
 (Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
 <li><p><strong>extrapolate</strong> (<em>a boolean</em>) – Generate a field, extrapolated outside the brain mask.
 (Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
 <li><p><strong>in_mask</strong> (<em>a pathlike object or string representing an existing file</em>) – Path to a brain mask.</p></li>
-<li><p><strong>recenter</strong> (<em>‘mode’ or ‘median’ or ‘mean’ or False</em>) – Strategy to recenter the distribution of the input fieldmap.
-(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">mode</span></code>)</p></li>
+<li><p><strong>recenter</strong> (<em>‘median’ or ‘mode’ or ‘mean’ or False</em>) – Strategy to recenter the distribution of the input fieldmap.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">median</span></code>)</p></li>
 <li><p><strong>ridge_alpha</strong> (<em>a float</em>) – Controls the regularization.
-(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">0.01</span></code>)</p></li>
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">0.0001</span></code>)</p></li>
 <li><p><strong>zooms_min</strong> (<em>a float or a legal value</em>) – Limit minimum image zooms, set 0.0 to use the original image.
-(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">4.0</span></code>)</p></li>
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Outputs<span class="colon">:</span></dt>
@@ -444,6 +444,7 @@ formalized in
 <li><p><strong>out_error</strong> (<em>a pathlike object or string representing an existing file</em>)</p></li>
 <li><p><strong>out_extrapolated</strong> (<em>a pathlike object or string representing a file</em>)</p></li>
 <li><p><strong>out_field</strong> (<em>a pathlike object or string representing an existing file</em>)</p></li>
+<li><p><strong>out_intercept</strong> (<em>a float</em>)</p></li>
 </ul>
 </dd>
 </dl>
