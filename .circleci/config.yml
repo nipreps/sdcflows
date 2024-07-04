@@ -292,9 +292,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - workdir-v2-{{ .Branch }}-
-            - workdir-v2-master-
-            - workdir-v2-
+            - workdir-v3-{{ .Branch }}-
+            - workdir-v3-master-
+            - workdir-v3-
       - run:
           name: Refreshing cached intermediate results
           working_directory: /tmp/src/sdcflows
@@ -343,7 +343,7 @@ jobs:
                        --cov sdcflows --cov-report xml:/out/unittests.xml \
                        sdcflows/
       - save_cache:
-          key: workdir-v2-{{ .Branch }}-{{ .BuildNum }}
+          key: workdir-v3-{{ .Branch }}-{{ .BuildNum }}
           paths:
             - /tmp/work
       - store_artifacts:

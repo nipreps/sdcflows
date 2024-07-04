@@ -56,17 +56,17 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     in_data = File(exists=True, mandatory=True, desc="path to a fieldmap")
     in_mask = File(exists=True, desc="path to a brain mask")
     bs_spacing = InputMultiObject(
-        [DEFAULT_ZOOMS_MM],
+        [DEFAULT_HF_ZOOMS_MM],
         traits.Tuple(traits.Float, traits.Float, traits.Float),
         usedefault=True,
         desc="spacing between B-Spline control points",
     )
     ridge_alpha = traits.Float(
-        0.01, usedefault=True, desc="controls the regularization"
+        1e-4, usedefault=True, desc="controls the regularization"
     )
     recenter = traits.Enum(
-        "mode",
         "median",
+        "mode",
         "mean",
         False,
         usedefault=True,
@@ -80,7 +80,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
     zooms_min = traits.Union(
         traits.Float,
         traits.Tuple(traits.Float, traits.Float, traits.Float),
-        default_value=4.0,
+        default_value=1.0,
         usedefault=True,
         desc="limit minimum image zooms, set 0.0 to use the original image",
     )
@@ -90,6 +90,7 @@ class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
+    out_intercept = traits.Float
     out_field = File(exists=True)
     out_coeff = OutputMultiObject(File(exists=True))
     out_error = File(exists=True)
@@ -139,15 +140,15 @@ class BSplineApprox(SimpleInterface):
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
-        fmapnii = nb.as_closest_canonical(fmapnii)
+        # fmapnii = nb.as_closest_canonical(fmapnii)
         zooms = fmapnii.header.get_zooms()
 
         # Get a mask (or define on the spot to cover the full extent)
         masknii = (
             nb.load(self.inputs.in_mask) if isdefined(self.inputs.in_mask) else None
         )
-        if masknii is not None:
-            masknii = nb.as_closest_canonical(masknii)
+        # if masknii is not None:
+        #     masknii = nb.as_closest_canonical(masknii)
 
         # Determine the shape of bspline coefficients
         # This should not change with resizing, so do it first
@@ -211,9 +212,7 @@ class BSplineApprox(SimpleInterface):
         )
 
         # Fit the model
-        model = lm.Ridge(
-            alpha=self.inputs.ridge_alpha, fit_intercept=False, solver="lsqr"
-        )
+        model = lm.Ridge(alpha=self.inputs.ridge_alpha, fit_intercept=False)
         for attempt in range(3):
             model.fit(colmat, data.reshape(-1))
             extreme = np.abs(model.coef_).max()
@@ -227,6 +226,8 @@ class BSplineApprox(SimpleInterface):
                 f"Spline fit of input file {self.inputs.in_data} failed. "
                 f"Extreme value {extreme:.2e} detected in spline coefficients."
             )
+
+        self._results["out_intercept"] = model.intercept_
 
         # Store coefficients
         index = 0
@@ -247,11 +248,11 @@ class BSplineApprox(SimpleInterface):
         # Interpolating in the original grid will require a new collocation matrix
         if need_resize:
             fmapnii = nb.load(self.inputs.in_data)
-            fmapnii = nb.as_closest_canonical(fmapnii)
+            # fmapnii = nb.as_closest_canonical(fmapnii)
             data = fmapnii.get_fdata(dtype="float32") - center
             if masknii is not None:
                 masknii = nb.load(self.inputs.in_mask)
-                masknii = nb.as_closest_canonical(masknii)
+                # masknii = nb.as_closest_canonical(masknii)
                 mask = np.asanyarray(masknii.dataobj) > 1e-4
             else:
                 mask = np.ones_like(fmapnii.dataobj, dtype=bool)
@@ -267,14 +268,20 @@ class BSplineApprox(SimpleInterface):
         # Store interpolated field
         hdr = fmapnii.header.copy()
         hdr.set_data_dtype("float32")
-        fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(out_name)
+        outnii = fmapnii.__class__(interp_data, fmapnii.affine, hdr)
+        outnii.header["cal_max"] = np.abs(outnii.dataobj).max()
+        outnii.header["cal_min"] = -outnii.header["cal_max"]
+        outnii.to_filename(out_name)
         self._results["out_field"] = out_name
 
         # Write out fitting-error map
         self._results["out_error"] = out_name.replace("_field.", "_error.")
-        fmapnii.__class__(
-            data * mask - interp_data, fmapnii.affine, fmapnii.header
-        ).to_filename(self._results["out_error"])
+        errornii = fmapnii.__class__(
+            (data - interp_data) * mask, fmapnii.affine, fmapnii.header
+        )
+        errornii.header["cal_min"] = 0
+        errornii.header["cal_max"] = np.max(errornii.dataobj)
+        errornii.to_filename(self._results["out_error"])
 
         if not self.inputs.extrapolate:
             return runtime
