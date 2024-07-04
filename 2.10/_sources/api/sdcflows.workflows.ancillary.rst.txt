@@ -1,0 +1,6 @@
+sdcflows.workflows.ancillary module
+===================================
+
+.. automodule:: sdcflows.workflows.ancillary
+   :members:
+   :show-inheritance:
