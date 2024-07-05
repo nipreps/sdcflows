@@ -326,6 +326,27 @@
         <article role="main" id="furo-main-content">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Link to this heading">¶</a></h1>
+<section id="july-04-2024">
+<h2>2.10.0 (July 04, 2024)<a class="headerlink" href="#july-04-2024" title="Link to this heading">¶</a></h2>
+<p>Feature release in the 2.10.x series.</p>
+<p>The main change is a bugfix when fitting multi-level B-Splines to some
+noisy fieldmaps.
+The multi-level fitting, while being theoretically nice, does not really
+bring anything immediately as we are not generally inverting the distortion.
+In this release, the default fitting has been change to single-level B-Splines,
+with a spacing similar to TOPUP’s defaults.</p>
+<p>With thanks to Sunjae Shim (&#64;sjshim) for sharing Spiral-echo fieldmaps that
+were failing prior the patch in #453.</p>
+<section id="changes">
+<h3>CHANGES<a class="headerlink" href="#changes" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>FIX: Revision of the B-Spline fitting code (#453)</p></li>
+<li><p>FIX: Building Docker image on ARM64 devices (#449)</p></li>
+<li><p>ENH: Improve plots in jupyter notebook (#452)</p></li>
+<li><p>DOC: Fix <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> in notebook’s output. (#450)</p></li>
+</ul>
+</section>
+</section>
 <section id="june-13-2024">
 <h2>2.9.0 (June 13, 2024)<a class="headerlink" href="#june-13-2024" title="Link to this heading">¶</a></h2>
 <p>Feature release in the 2.9.x series.</p>
@@ -1054,6 +1075,10 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#july-04-2024">2.10.0 (July 04, 2024)</a><ul>
+<li><a class="reference internal" href="#changes">CHANGES</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#june-13-2024">2.9.0 (June 13, 2024)</a></li>
 <li><a class="reference internal" href="#january-22-2024">2.8.1 (January 22, 2024)</a></li>
 <li><a class="reference internal" href="#january-10-2024">2.8.0 (January 10, 2024)</a></li>
