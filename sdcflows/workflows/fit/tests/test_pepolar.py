@@ -78,8 +78,8 @@ def test_pepolar_wf(tmpdir, bids_layouts, workdir, outdir, ds, workflow):
         # fmt: off
         wf.connect([
             (pepolar_wf, fmap_reports_wf, [("outputnode.fmap", "inputnode.fieldmap"),
-                                         ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                                         ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
+                                           ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                                           ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
             (pepolar_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
