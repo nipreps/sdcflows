@@ -33,6 +33,7 @@ A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (
 echo-planar imaging (EPI) references """
 _PEPOLAR_METHOD = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
+
 def init_topup_wf(
     grid_reference=0,
     omp_nthreads=1,
@@ -92,7 +93,11 @@ def init_topup_wf(
 
     from ...interfaces.bspline import TOPUPCoeffReorient
     from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import PadSlices, ReorientImageAndMetadata, UniformGrid
+    from ...interfaces.utils import (
+        PadSlices,
+        ReorientImageAndMetadata,
+        UniformGrid,
+    )
     from ...utils.misc import front as _front
     from ..ancillary import init_brainextraction_wf
 
@@ -101,7 +106,9 @@ def init_topup_wf(
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
+    inputnode = pe.Node(
+        niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode"
+    )
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
@@ -139,19 +146,23 @@ def init_topup_wf(
         SortPEBlips(), name="sort_pe_blips", run_without_submitting=True
     )
     # Merge into one 4D file
-    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
+    concat_blips = pe.Node(
+        MergeSeries(affine_tolerance=1e-4), name="concat_blips"
+    )
     # Pad dimensions so that they meet TOPUP's expectations
     pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
     # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
+    setwise_avg = pe.Node(
+        RobustAverage(num_threads=omp_nthreads), name="setwise_avg"
+    )
     # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
-    to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
+    to_las = pe.Node(
+        ReorientImageAndMetadata(target_orientation="LAS"), name="to_las"
+    )
     topup = pe.Node(
-        TOPUP(
-            config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))
-        ),
+        TOPUP(config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))),
         name="topup",
     )
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
@@ -160,7 +171,9 @@ def init_topup_wf(
     )
 
     # Average the output
-    ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name="ref_average")
+    ref_average = pe.Node(
+        RobustAverage(num_threads=omp_nthreads), name="ref_average"
+    )
 
     # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
@@ -238,10 +251,8 @@ def init_topup_wf(
 
 
 def init_3dQwarp_wf(
-        omp_nthreads=1,
-        debug=False,
-        sloppy=False,
-        name="pepolar_estimate_wf"):
+    omp_nthreads=1, debug=False, sloppy=False, name="pepolar_estimate_wf"
+):
     """
     Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.
 
@@ -251,8 +262,8 @@ def init_3dQwarp_wf(
     ``3dQwarp`` is used to generate a displacement field and correct
     the reference image. The workflow also returns an estimated fieldmap,
     which is the result of converting the displacement field to a fieldmap
-    and then regularizing it with a bspline field. This means that the unwarped 
-    image is in general not what one would get by reconstructing the fieldmap 
+    and then regularizing it with a bspline field. This means that the unwarped
+    image is in general not what one would get by reconstructing the fieldmap
     from fmap_coeff and warping the in_data.
 
     Workflow Graph
@@ -276,11 +287,11 @@ def init_3dQwarp_wf(
     ------
     in_data : :obj:`list` of :obj:`str`
         A list of two EPI files, the first of which will be taken as reference.
-        The reference PhaseEncodingDirection should match the value for 
+        The reference PhaseEncodingDirection should match the value for
         in_reference.
     metadata : :obj:`list` of :obj:`dict`
-        A list with length matching the length of in_data. Each element should be a 
-        dict with keys that are strings and values of any type. One key should be 
+        A list with length matching the length of in_data. Each element should be a
+        dict with keys that are strings and values of any type. One key should be
         PhaseEncodingDirection and the values should be BIDS-valid codings.
 
     Outputs
@@ -301,7 +312,9 @@ def init_3dQwarp_wf(
     """
     from nipype.interfaces import afni
     from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
-    from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+    from niworkflows.interfaces.fixes import (
+        FixHeaderRegistration as Registration,
+    )
     from niworkflows.interfaces.freesurfer import StructuralReference
     from niworkflows.interfaces.header import CopyHeader
 
@@ -316,7 +329,6 @@ def init_3dQwarp_wf(
     from ...interfaces.utils import ConvertWarp, Flatten
     from ...utils.misc import front, last
 
-
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \
 with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
@@ -329,13 +341,15 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "fmap", 
-                "fmap_ref", 
-                "fmap_mask", 
-                "fmap_coeff", 
+                "fmap",
+                "fmap_ref",
+                "fmap_mask",
+                "fmap_coeff",
                 "method",
-                "out_warps"]),
-            name="outputnode"
+                "out_warps",
+            ]
+        ),
+        name="outputnode",
     )
     outputnode.inputs.method = _PEPOLAR_METHOD
 
@@ -347,7 +361,9 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
 
     flatten = pe.Node(Flatten(), name="flatten")
     sort_pe = pe.Node(
-        niu.Function(function=_sorted_pe, output_names=["sorted", "qwarp_args"]),
+        niu.Function(
+            function=_sorted_pe, output_names=["sorted", "qwarp_args"]
+        ),
         name="sort_pe",
         run_without_submitting=True,
     )
@@ -499,11 +515,14 @@ def _sorted_pe(inlist):
         elif pe[0] == ref_pe[0]:
             out_opp.append(d)
         else:
-            raise ValueError("Cannot handle orthogonal PE encodings.")
+            msg = "Cannot handle orthogonal PE encodings."
+            raise ValueError(msg)
 
     return (
         [out_ref, out_opp],
-        {"i": "-noYdis -noZdis", "j": "-noXdis -noZdis", "k": "-noXdis -noYdis"}[
-            ref_pe[0]
-        ],
+        {
+            "i": "-noYdis -noZdis",
+            "j": "-noXdis -noZdis",
+            "k": "-noXdis -noYdis",
+        }[ref_pe[0]],
     )

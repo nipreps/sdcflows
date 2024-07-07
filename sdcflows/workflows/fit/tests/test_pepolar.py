@@ -29,9 +29,11 @@ from ..pepolar import init_3dQwarp_wf, init_topup_wf
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
-@pytest.mark.parametrize("ds", ("ds001771", "HCP101006"))
-@pytest.mark.parametrize("workflow", ("topup", "3dQwarp"))
+@pytest.mark.skipif(
+    os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions"
+)
+@pytest.mark.parametrize("ds", ["ds001771", "HCP101006"])
+@pytest.mark.parametrize("workflow", ["topup", "3dQwarp"])
 def test_pepolar_wf(tmpdir, bids_layouts, workdir, outdir, ds, workflow):
     """Test preparation workflow."""
     layout = bids_layouts[ds]
