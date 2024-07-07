@@ -107,7 +107,7 @@ jobs:
         pip install datalad datalad-osf
     - name: Install fsl
       run: |
-        conda install fsl-fugue fsl-topup
+        conda install fsl-fugue fsl-topup fsl-bet2
     - uses: actions/checkout@v4
     - name: Install dependencies
       timeout-minutes: 5
