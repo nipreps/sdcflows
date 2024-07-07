@@ -294,6 +294,15 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
+    It should find MEDIC-style files too:
+
+    >>> find_estimators(
+    ...     layout=layouts['dsD'],
+    ...     subject="01",
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 10>,
+                        bids_id='medic')]
+
     """
     from .misc import create_logger
     from bids.layout import Query
