@@ -21,9 +21,8 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Datasets with multiple phase encoded directions."""
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -32,7 +31,7 @@ INPUT_FIELDS = ("metadata", "in_data")
 _PEPOLAR_DESC = """\
 A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
 echo-planar imaging (EPI) references """
-
+_PEPOLAR_METHOD = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
 
 def init_topup_wf(
     grid_reference=0,
@@ -88,13 +87,13 @@ def init_topup_wf(
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
-    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
     from niworkflows.interfaces.images import RobustAverage
+    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
 
-    from ...utils.misc import front as _front
-    from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import UniformGrid, PadSlices, ReorientImageAndMetadata
     from ...interfaces.bspline import TOPUPCoeffReorient
+    from ...interfaces.epi import GetReadoutTime, SortPEBlips
+    from ...interfaces.utils import PadSlices, ReorientImageAndMetadata, UniformGrid
+    from ...utils.misc import front as _front
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -118,7 +117,7 @@ def init_topup_wf(
         ),
         name="outputnode",
     )
-    outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
+    outputnode.inputs.method = _PEPOLAR_METHOD
 
     # Calculate the total readout time of each run
     readout_time = pe.MapNode(
@@ -238,13 +237,23 @@ def init_topup_wf(
     return workflow
 
 
-def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
+def init_3dQwarp_wf(
+        omp_nthreads=1,
+        debug=False,
+        sloppy=False,
+        name="pepolar_estimate_wf"):
     """
     Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.
 
     This workflow takes in two EPI files that MUST have opposed
     :abbr:`PE (phase-encoding)` direction.
     Therefore, EPIs with orthogonal PE directions are not supported.
+    ``3dQwarp`` is used to generate a displacement field and correct
+    the reference image. The workflow also returns an estimated fieldmap,
+    which is the result of converting the displacement field to a fieldmap
+    and then regularizing it with a bspline field. This means that the unwarped 
+    image is in general not what one would get by reconstructing the fieldmap 
+    from fmap_coeff and warping the in_data.
 
     Workflow Graph
         .. workflow ::
@@ -267,25 +276,46 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
     ------
     in_data : :obj:`list` of :obj:`str`
         A list of two EPI files, the first of which will be taken as reference.
+        The reference PhaseEncodingDirection should match the value for 
+        in_reference.
+    metadata : :obj:`list` of :obj:`dict`
+        A list with length matching the length of in_data. Each element should be a 
+        dict with keys that are strings and values of any type. One key should be 
+        PhaseEncodingDirection and the values should be BIDS-valid codings.
 
     Outputs
     -------
     fmap : :obj:`str`
         The path of the estimated fieldmap.
     fmap_ref : :obj:`str`
-        The path of an unwarped conversion of the first element of ``in_data``.
+        The path of an unwarped conversion of files in ``in_data``.
+    fmap_mask : :obj:`str`
+        The path of mask corresponding to the ``fmap_ref`` output.
+    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
+        The path(s) of the B-Spline coefficients supporting the fieldmap.
+    method: :obj:`str`
+        Short description of the estimation method that was run.
+    out_warps: :obj:`str`
+        The displacement field from 3dQwarp, in ANTS format.
 
     """
     from nipype.interfaces import afni
-    from niworkflows.interfaces.header import CopyHeader
-    from niworkflows.interfaces.fixes import (
-        FixHeaderRegistration as Registration,
-        FixHeaderApplyTransforms as ApplyTransforms,
-    )
-    from niworkflows.interfaces.freesurfer import StructuralReference
     from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
-    from ...utils.misc import front as _front, last as _last
-    from ...interfaces.utils import Flatten, ConvertWarp
+    from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+    from niworkflows.interfaces.freesurfer import StructuralReference
+    from niworkflows.interfaces.header import CopyHeader
+
+    from ...interfaces.bspline import (
+        DEFAULT_HF_ZOOMS_MM,
+        DEFAULT_ZOOMS_MM,
+        ApplyCoeffsField,
+        BSplineApprox,
+    )
+    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.fmap import DisplacementsField2Fieldmap
+    from ...interfaces.utils import ConvertWarp, Flatten
+    from ...utils.misc import front, last
+
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \
@@ -297,7 +327,22 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
     )
 
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
+        niu.IdentityInterface(
+            fields=[
+                "fmap", 
+                "fmap_ref", 
+                "fmap_mask", 
+                "fmap_coeff", 
+                "method",
+                "out_warps"]),
+            name="outputnode"
+    )
+    outputnode.inputs.method = _PEPOLAR_METHOD
+
+    readout_time = pe.Node(
+        GetReadoutTime(),
+        name="readout_time",
+        run_without_submitting=True,
     )
 
     flatten = pe.Node(Flatten(), name="flatten")
@@ -355,14 +400,24 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
 
     cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
 
-    unwarp_reference = pe.Node(
-        ApplyTransforms(
-            dimension=3,
-            float=True,
-            interpolation="LanczosWindowedSinc",
-        ),
-        name="unwarp_reference",
+    # Extract the corresponding fieldmap in Hz
+    extract_field = pe.Node(
+        DisplacementsField2Fieldmap(), name="extract_field"
     )
+
+    # Regularize with B-Splines
+    bs_filter = pe.Node(
+        BSplineApprox(debug=debug, extrapolate=not debug),
+        name="bs_filter",
+    )
+    bs_filter.interface._always_run = debug
+    bs_filter.inputs.bs_spacing = (
+        [DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
+    )
+    if sloppy:
+        bs_filter.inputs.zooms_min = 4.0
+
+    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
 
     # fmt: off
     workflow.connect([
@@ -371,20 +426,32 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
         (flatten, sort_pe, [("out_list", "inlist")]),
         (sort_pe, qwarp, [("qwarp_args", "args")]),
         (sort_pe, merge_pes, [("sorted", "in_files")]),
-        (merge_pes, pe0_wf, [(("out_file", _front), "inputnode.in_file")]),
-        (merge_pes, pe1_wf, [(("out_file", _last), "inputnode.in_file")]),
+        (merge_pes, pe0_wf, [(("out_file", front), "inputnode.in_file")]),
+        (merge_pes, pe1_wf, [(("out_file", last), "inputnode.in_file")]),
         (pe0_wf, align_pes, [("outputnode.skull_stripped_file", "fixed_image")]),
         (pe1_wf, align_pes, [("outputnode.skull_stripped_file", "moving_image")]),
         (pe0_wf, qwarp, [("outputnode.skull_stripped_file", "in_file")]),
         (align_pes, qwarp, [("warped_image", "base_file")]),
-        (inputnode, cphdr_warp, [(("in_data", _front), "hdr_file")]),
+        (inputnode, cphdr_warp, [(("in_data", front), "hdr_file")]),
         (qwarp, cphdr_warp, [("source_warp", "in_file")]),
         (cphdr_warp, to_ants, [("out_file", "in_file")]),
-        (to_ants, unwarp_reference, [("out_file", "transforms")]),
-        (inputnode, unwarp_reference, [("in_reference", "reference_image"),
-                                       ("in_reference", "input_image")]),
-        (unwarp_reference, outputnode, [("output_image", "fmap_ref")]),
-        (to_ants, outputnode, [("out_file", "fmap")]),
+        (pe0_wf, extract_field, [("outputnode.skull_stripped_file", "epi")]),
+        (to_ants, extract_field, [("out_file", "transform")]),
+        (inputnode, readout_time, [(("metadata", front), "metadata")]),
+        (readout_time, extract_field, [("readout_time", "ro_time"),
+                                       ("pe_direction", "pe_dir")]),
+        (pe1_wf, unwarp, [("outputnode.skull_stripped_file", "in_data")]),
+        (pe0_wf, bs_filter, [("outputnode.mask_file", "in_mask")]),
+        (extract_field, bs_filter, [("out_file", "in_data")]),
+        (bs_filter, unwarp, [("out_coeff", "in_coeff")]),
+        (readout_time, unwarp, [("readout_time", "ro_time"),
+                                ("pe_direction", "pe_dir")]),
+        (bs_filter, outputnode, [("out_coeff", "fmap_coeff")]),
+        (qwarp, outputnode, [("warped_source", "fmap_ref")]),
+        (unwarp, outputnode, [("out_field", "fmap")]),
+        (pe0_wf, outputnode, [("outputnode.mask_file", "fmap_mask")]),
+        (to_ants, outputnode, [("out_file", "out_warps")])
+
     ])
     # fmt: on
     return workflow
