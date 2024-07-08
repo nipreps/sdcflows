@@ -188,10 +188,14 @@ def get_trt(in_meta, in_file=None):
             raise ValueError(f"'{trt}'")
 
         return trt
+    elif in_file is None:
+        msg = "Unable to find TotalReadoutTime in metadata and in_file \
+               not defined."
+        raise AssertionError(msg)
 
     # npe = N voxels PE direction
     pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
-    npe = nb.load(in_file).shape[pe_index]
+    npe = nb.loadsave.load(in_file).shape[pe_index]
 
     # Use case 2: EES is defined
     ees = in_meta.get("EffectiveEchoSpacing")
@@ -252,7 +256,9 @@ def epi_mask(in_file, out_file=None):
     maxnorm = np.percentile(closed[closed > 0], 90)
     closed = np.clip(closed, a_min=0.0, a_max=maxnorm)
     # Calculate index of center of masses
-    cm = tuple(np.round(ndimage.measurements.center_of_mass(closed)).astype(int))
+    cm = tuple(
+        np.round(ndimage.measurements.center_of_mass(closed)).astype(int)
+    )
     # Erode the picture of the brain by a lot
     eroded = ndimage.grey_erosion(closed, structure=ball(5))
     # Calculate the residual
@@ -268,6 +274,8 @@ def epi_mask(in_file, out_file=None):
     hdr = img.header.copy()
     hdr.set_data_dtype("uint8")
     nb.Nifti1Image(
-        ndimage.binary_dilation(labels == 2, ball(2)).astype("uint8"), img.affine, hdr
+        ndimage.binary_dilation(labels == 2, ball(2)).astype("uint8"),
+        img.affine,
+        hdr,
     ).to_filename(out_file)
     return out_file

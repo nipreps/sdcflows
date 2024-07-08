@@ -25,13 +25,16 @@ import os
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..pepolar import init_topup_wf
+from ..pepolar import init_3dQwarp_wf, init_topup_wf
 
 
 @pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
-@pytest.mark.parametrize("ds", ("ds001771", "HCP101006"))
-def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
+@pytest.mark.skipif(
+    os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions"
+)
+@pytest.mark.parametrize("ds", ["ds001771", "HCP101006"])
+@pytest.mark.parametrize("workflow", ["topup", "3dQwarp"])
+def test_pepolar_wf(tmpdir, bids_layouts, workdir, outdir, ds, workflow):
     """Test preparation workflow."""
     layout = bids_layouts[ds]
     epi_path = sorted(
@@ -40,17 +43,24 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     )
     in_data = [f.path for f in epi_path]
 
-    wf = pe.Workflow(name=f"topup_{ds}")
-    topup_wf = init_topup_wf(omp_nthreads=2, debug=True, sloppy=True)
+    wf = pe.Workflow(name=f"{workflow}_{ds}")
+    if workflow == "topup":
+        init_pepolar = init_topup_wf
+    elif workflow == "3dQwarp":
+        init_pepolar = init_3dQwarp_wf
+    else:
+        msg = f"Unknown workflow: {workflow}"
+        raise ValueError(msg)
+    pepolar_wf = init_pepolar(omp_nthreads=2, debug=True, sloppy=True)
     metadata = [layout.get_metadata(f.path) for f in epi_path]
 
-    topup_wf.inputs.inputnode.in_data = in_data
-    topup_wf.inputs.inputnode.metadata = metadata
+    pepolar_wf.inputs.inputnode.in_data = in_data
+    pepolar_wf.inputs.inputnode.metadata = metadata
 
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        outdir = outdir / "unittests" / f"topup_{ds}"
+        outdir = outdir / "unittests" / f"{workflow}_{ds}"
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
@@ -67,10 +77,10 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
 
         # fmt: off
         wf.connect([
-            (topup_wf, fmap_reports_wf, [("outputnode.fmap", "inputnode.fieldmap"),
-                                         ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                                         ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
-            (topup_wf, fmap_derivatives_wf, [
+            (pepolar_wf, fmap_reports_wf, [("outputnode.fmap", "inputnode.fieldmap"),
+                                           ("outputnode.fmap_ref", "inputnode.fmap_ref"),
+                                           ("outputnode.fmap_mask", "inputnode.fmap_mask")]),
+            (pepolar_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                 ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
@@ -78,7 +88,7 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
         ])
         # fmt: on
     else:
-        wf.add_nodes([topup_wf])
+        wf.add_nodes([pepolar_wf])
 
     if workdir:
         wf.base_dir = str(workdir)
