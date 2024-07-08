@@ -454,6 +454,7 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
         (pe0_wf, extract_field, [("outputnode.skull_stripped_file", "epi")]),
         (to_ants, extract_field, [("out_file", "transform")]),
         (inputnode, readout_time, [(("metadata", front), "metadata")]),
+        (pe0_wf, readout_time, [("outputnode.skull_stripped_file", "in_file")]),
         (readout_time, extract_field, [("readout_time", "ro_time"),
                                        ("pe_direction", "pe_dir")]),
         (pe1_wf, unwarp, [("outputnode.skull_stripped_file", "in_data")]),
