@@ -127,9 +127,7 @@ def init_syn_sdc_wf(
     from ...interfaces.bspline import (
         ApplyCoeffsField,
         BSplineApprox,
-        DEFAULT_LF_ZOOMS_MM,
         DEFAULT_HF_ZOOMS_MM,
-        DEFAULT_ZOOMS_MM,
     )
     from ...interfaces.brainmask import BinaryDilation, Union
 
@@ -261,9 +259,10 @@ template [@fieldmapless3].
         name="bs_filter",
     )
     bs_filter.interface._always_run = debug
-    bs_filter.inputs.bs_spacing = (
-        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
-    )
+    bs_filter.inputs.bs_spacing = [DEFAULT_HF_ZOOMS_MM]
+
+    if sloppy:
+        bs_filter.inputs.zooms_min = 4.0
 
     workflow.connect([
         (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
