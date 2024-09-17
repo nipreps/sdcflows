@@ -1,3 +1,26 @@
+2.10.0 (July 04, 2024)
+======================
+Feature release in the 2.10.x series.
+
+The main change is a bugfix when fitting multi-level B-Splines to some
+noisy fieldmaps.
+The multi-level fitting, while being theoretically nice, does not really
+bring anything immediately as we are not generally inverting the distortion.
+In this release, the default fitting has been change to single-level B-Splines,
+with a spacing similar to TOPUP's defaults.
+
+With thanks to Sunjae Shim (@sjshim) for sharing Spiral-echo fieldmaps that
+were failing prior the patch in #453.
+
+CHANGES
+-------
+
+* FIX: Revision of the B-Spline fitting code (#453)
+* FIX: Building Docker image on ARM64 devices (#449)
+* ENH: Improve plots in jupyter notebook (#452)
+* DOC: Fix ``ValueError`` in notebook's output. (#450)
+
+
 2.9.0 (June 13, 2024)
 =====================
 Feature release in the 2.9.x series.

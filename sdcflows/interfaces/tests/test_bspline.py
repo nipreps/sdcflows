@@ -40,11 +40,11 @@ rng = np.random.default_rng(seed=20160305)  # First commit in nipreps/sdcflows
 @pytest.mark.parametrize("testnum", range(100))
 def test_bsplines(tmp_path, testnum):
     """Test idempotency of B-Splines interpolation + approximation."""
-    targetshape = (10, 12, 9)
+    targetshape = (50, 50, 30)
 
     # Generate an oblique affine matrix for the target - it will be a common case.
     targetaff = nb.affines.from_matvec(
-        nb.eulerangles.euler2mat(x=0.9, y=0.001, z=0.001) @ np.diag((2, 3, 4)),
+        nb.eulerangles.euler2mat(x=-0.9, y=0.001, z=0.001) @ np.diag((2, 2, 2.4)),
     )
 
     # Intendedly mis-centered (exercise we may not have volume-centered NIfTIs)
@@ -52,29 +52,52 @@ def test_bsplines(tmp_path, testnum):
         targetaff, 0.5 * (np.array(targetshape) - 3)
     )
 
+    mask = np.zeros(targetshape)
+    mask[10:-10, 10:-10, 6:-6] = 1
     # Generate some target grid
-    targetnii = nb.Nifti1Image(np.ones(targetshape), targetaff, None)
-    targetnii.to_filename(tmp_path / "target.nii.gz")
+    targetnii = nb.Nifti1Image(mask, targetaff, None)
+    targetnii.header.set_qform(targetaff, code=1)
+    targetnii.header.set_sform(targetaff, code=1)
+    targetnii.to_filename(tmp_path / "mask.nii.gz")
 
     # Generate random coefficients
-    gridnii = bspline_grid(targetnii, control_zooms_mm=(4, 6, 8))
-    coeff = (rng.random(size=gridnii.shape) - 0.5) * 500
+    gridnii = bspline_grid(targetnii, control_zooms_mm=(40, 40, 16))
+    coeff = (rng.standard_normal(size=gridnii.shape)) * 100
     coeffnii = nb.Nifti1Image(coeff.astype("float32"), gridnii.affine, gridnii.header)
+    coeffnii.header["cal_max"] = np.abs(coeff).max()
+    coeffnii.header["cal_min"] = -coeffnii.header["cal_max"]
+    coeffnii.header.set_qform(gridnii.affine, code=1)
+    coeffnii.header.set_sform(gridnii.affine, code=1)
     coeffnii.to_filename(tmp_path / "coeffs.nii.gz")
 
     os.chdir(tmp_path)
     # Check that we can interpolate the coefficients on a target
     test1 = ApplyCoeffsField(
-        in_data=str(tmp_path / "target.nii.gz"),
+        in_data=str(tmp_path / "mask.nii.gz"),
         in_coeff=str(tmp_path / "coeffs.nii.gz"),
         pe_dir="j-",
         ro_time=1.0,
     ).run()
 
+    fieldnii = nb.load(test1.outputs.out_field)
+    fielddata = fieldnii.get_fdata()
+    fielddata -= np.median(fielddata)
+    fielddata = 200 * fielddata / np.abs(fielddata).max()
+
+    fieldnii.header["cal_max"] = np.abs(fielddata).max()
+    fieldnii.header["cal_min"] = -fieldnii.header["cal_max"]
+    fieldnii.header.set_qform(targetaff, code=1)
+    fieldnii.header.set_sform(targetaff, code=1)
+
+    nb.Nifti1Image(fielddata, targetaff, fieldnii.header).to_filename(
+        tmp_path / "testfield.nii.gz",
+    )
+
     # Approximate the interpolated target
     test2 = BSplineApprox(
-        in_data=test1.outputs.out_field,
-        bs_spacing=[(4, 6, 8)],
+        in_data=str(tmp_path / "testfield.nii.gz"),
+        # in_mask=str(tmp_path / "mask.nii.gz"),
+        bs_spacing=[(40, 40, 16)],
         zooms_min=0,
         recenter=False,
         ridge_alpha=1e-4,
