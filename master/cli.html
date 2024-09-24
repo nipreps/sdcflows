@@ -5,11 +5,11 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Library API (application program interface)" href="api.html" /><link rel="prev" title="Methods and implementation" href="methods.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
         <title>Standalone command line usage - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="_static/css/version-switch.css?v=3fffbac3" />
     
     
@@ -89,19 +89,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -142,7 +129,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -342,8 +329,8 @@
                 <span class="p">[{</span><span class="n">participant</span><span class="p">,</span><span class="n">group</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
 </pre></div>
 </div>
-<section id="positional-arguments">
-<h2>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Link to this heading">¶</a></h2>
+<section id="sdcflows.cli.parser-_parser-positional-arguments">
+<h2>Positional Arguments<a class="headerlink" href="#sdcflows.cli.parser-_parser-positional-arguments" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>bids_dir</kbd></dt>
 <dd><p>The root folder of a BIDS valid dataset (sub-XXXXX folders should be found at the top level in this folder).</p>
@@ -357,20 +344,20 @@
 </dd>
 </dl>
 </section>
-<section id="named-arguments">
-<h2>Named Arguments<a class="headerlink" href="#named-arguments" title="Link to this heading">¶</a></h2>
+<section id="sdcflows.cli.parser-_parser-named-arguments">
+<h2>Named Arguments<a class="headerlink" href="#sdcflows.cli.parser-_parser-named-arguments" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--version</kbd></dt>
 <dd><p>show program’s version number and exit</p>
 </dd>
 <dt><kbd>-v, --verbose</kbd></dt>
 <dd><p>Increases log verbosity for each occurrence, debug level is -vvv.</p>
-<p>Default: 0</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
 </dd>
 </dl>
 </section>
-<section id="options-related-to-bids">
-<h2>Options related to BIDS<a class="headerlink" href="#options-related-to-bids" title="Link to this heading">¶</a></h2>
+<section id="sdcflows.cli.parser-_parser-options-related-to-bids">
+<h2>Options related to BIDS<a class="headerlink" href="#sdcflows.cli.parser-_parser-options-related-to-bids" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--participant-label</kbd></dt>
 <dd><p>A space delimited list of participant identifiers or a single identifier (the sub- prefix can be removed).</p>
@@ -386,12 +373,12 @@
 </dd>
 <dt><kbd>--bids-database-wipe</kbd></dt>
 <dd><p>Wipe out previously existing BIDS indexing caches, forcing re-indexing.</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 </dl>
 </section>
-<section id="options-to-handle-performance">
-<h2>Options to handle performance<a class="headerlink" href="#options-to-handle-performance" title="Link to this heading">¶</a></h2>
+<section id="sdcflows.cli.parser-_parser-options-to-handle-performance">
+<h2>Options to handle performance<a class="headerlink" href="#sdcflows.cli.parser-_parser-options-to-handle-performance" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--nprocs</kbd></dt>
 <dd><p>Maximum number of simultaneously running parallel processes executed by <em>SDCFlows</em> (e.g., several instances of ANTs’ registration). However, when <code class="docutils literal notranslate"><span class="pre">--nprocs</span></code> is greater or equal to the <code class="docutils literal notranslate"><span class="pre">--omp-nthreads</span></code> option, it also sets the maximum number of threads that simultaneously running processes may aggregate (meaning, with <code class="docutils literal notranslate"><span class="pre">--nprocs</span> <span class="pre">16</span> <span class="pre">--omp-nthreads</span> <span class="pre">8</span></code> a maximum of two 8-CPU-threaded processes will be running at a given time). Under this mode of operation, <code class="docutils literal notranslate"><span class="pre">--nprocs</span></code> sets the maximum number of processors that can be assigned work within an <em>SDCFlows</em> job, which includes all the processors used by currently running single- and multi-threaded processes. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the number of CPUs available will be automatically assigned (which may not be what you want in, e.g., shared systems like a HPC cluster.</p>
@@ -404,39 +391,39 @@
 </dd>
 <dt><kbd>--debug</kbd></dt>
 <dd><p>Enable changes to processing to aid in debugging</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 <dt><kbd>--pdb</kbd></dt>
 <dd><p>Open Python debugger (pdb) on exceptions.</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 <dt><kbd>--sloppy</kbd></dt>
 <dd><p>Use sloppy mode for minimal footprint.</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 </dl>
 </section>
-<section id="instrumental-options">
-<h2>Instrumental options<a class="headerlink" href="#instrumental-options" title="Link to this heading">¶</a></h2>
+<section id="sdcflows.cli.parser-_parser-instrumental-options">
+<h2>Instrumental options<a class="headerlink" href="#sdcflows.cli.parser-_parser-instrumental-options" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>-w, --work-dir</kbd></dt>
 <dd><p>Path where intermediate results should be stored.</p>
-<p>Default: /home/runner/work/sdcflows/sdcflows/docs/work</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">/home/runner/work/sdcflows/sdcflows/docs/work</span></code></p>
 </dd>
 <dt><kbd>-n, --dry-run</kbd></dt>
 <dd><p>only find estimable fieldmaps (that is, estimation is not triggered)</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 <dt><kbd>--no-fmapless</kbd></dt>
 <dd><p>Allow fieldmap-less estimation</p>
-<p>Default: True</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 </dd>
 <dt><kbd>--use-plugin</kbd></dt>
 <dd><p>Nipype plugin configuration file.</p>
 </dd>
 <dt><kbd>--notrack</kbd></dt>
 <dd><p>Opt-out of sending tracking information of this run to the NiPreps developers. This information helps to improve SDCFlows and provides an indicator of real world usage for obtaining funding.</p>
-<p>Default: False</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 </dd>
 </dl>
 </section>
@@ -498,11 +485,11 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Standalone command line usage</a><ul>
-<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
-<li><a class="reference internal" href="#named-arguments">Named Arguments</a></li>
-<li><a class="reference internal" href="#options-related-to-bids">Options related to BIDS</a></li>
-<li><a class="reference internal" href="#options-to-handle-performance">Options to handle performance</a></li>
-<li><a class="reference internal" href="#instrumental-options">Instrumental options</a></li>
+<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-named-arguments">Named Arguments</a></li>
+<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-options-related-to-bids">Options related to BIDS</a></li>
+<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-options-to-handle-performance">Options to handle performance</a></li>
+<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-instrumental-options">Instrumental options</a></li>
 </ul>
 </li>
 </ul>
@@ -517,7 +504,7 @@
 </div><script src="_static/documentation_options.js?v=27db1736"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/version-switch.js?v=d8b55535"></script>
     </body>
