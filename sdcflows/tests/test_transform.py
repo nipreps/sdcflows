@@ -139,7 +139,6 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
         ).run()
 
 
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize(
     "pe0",
     [
