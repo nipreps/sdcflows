@@ -21,7 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Check the tools submodule."""
-import os
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -29,7 +28,6 @@ from niworkflows.interfaces.reportlets.masks import SimpleShowMaskRPT
 from ..ancillary import init_brainextraction_wf
 
 
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 @pytest.mark.parametrize("folder", ["magnitude/ds000054", "magnitude/ds000217"])
 def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     """Exercise the brain masking tool."""

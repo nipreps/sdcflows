@@ -21,7 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Unit tests of the transform object."""
-import os
 from subprocess import check_call
 from itertools import product
 import pytest

@@ -21,7 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test fieldmap-less SDC-SyN."""
-import os
 import json
 import pytest
 from nipype.pipeline import engine as pe
@@ -29,8 +28,6 @@ from nipype.pipeline import engine as pe
 from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype
 
 
-@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
