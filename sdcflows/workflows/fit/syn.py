@@ -22,17 +22,6 @@
 #
 """
 Estimating the susceptibility distortions without fieldmaps.
-
-.. testsetup::
-
-    >>> tmpdir = getfixture('tmpdir')
-    >>> tmp = tmpdir.chdir() # changing to a temporary directory
-    >>> data = np.zeros((10, 10, 10, 1, 3))
-    >>> data[..., 1] = 1
-    >>> nb.Nifti1Image(data, None, None).to_filename(
-    ...     tmpdir.join('field.nii.gz').strpath)
-
-
 """
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu

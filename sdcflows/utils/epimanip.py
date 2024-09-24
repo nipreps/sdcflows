@@ -23,13 +23,6 @@
 """
 Manipulation of EPI data.
 
-.. testsetup::
-
-    >>> tmpdir = getfixture('tmpdir')
-    >>> tmp = tmpdir.chdir() # changing to a temporary directory
-    >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
-    ...     tmpdir.join('epi.nii.gz').strpath)
-
 """
 
 
@@ -41,6 +34,15 @@ def get_trt(in_meta, in_file=None):
     :math:`T_\text{ro}`, of :abbr:`EPI (echo-planar imaging)` scans.
     The first option is that a ``TotalReadoutTime`` field is found
     in the JSON sidecar:
+
+    .. testsetup::
+
+        >>> cwd = os.getcwd()
+        >>> tmpdir = getfixture('tmpdir')
+        >>> tmp = tmpdir.chdir() # changing to a temporary directory
+        >>> nb.Nifti1Image(np.zeros((90, 90, 60)), None, None).to_filename(
+        ...     tmpdir.join('epi.nii.gz').strpath)
+
 
     >>> meta = {'TotalReadoutTime': 0.05251}
     >>> get_trt(meta)
@@ -156,6 +158,10 @@ def get_trt(in_meta, in_file=None):
     ...         in_file='epi.nii.gz')  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ValueError:
+
+    .. testcleanup::
+
+        >>> os.chdir(cwd)
 
     .. admonition:: Thanks
 
