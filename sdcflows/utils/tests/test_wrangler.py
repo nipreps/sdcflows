@@ -1,10 +1,13 @@
-import pytest
+import re
+from pathlib import Path
 from shutil import rmtree
+
+import pytest
 
 from niworkflows.utils.testing import generate_bids_skeleton
 
 from sdcflows.utils.wrangler import find_estimators
-from sdcflows.fieldmaps import clear_registry
+from sdcflows.fieldmaps import clear_registry, get_identifier
 
 
 def gen_layout(bids_dir, database_dir=None):
@@ -339,6 +342,12 @@ def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estim
         sessions=[session] if session else None,
     )
     assert len(est) == estimations or total_estimations
+    if session:
+        bold = layout.get(session=session, suffix="bold", extension=".nii.gz")[0]
+        intended_rel = re.sub(r'^sub-[a-zA-Z0-9]*/', '', str(Path(bold).relative_to(layout.root)))
+        b0_id = get_identifier(intended_rel)
+        assert b0_id == ('auto_00000',)
+
     clear_registry()
 
 
