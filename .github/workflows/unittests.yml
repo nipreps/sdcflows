@@ -128,7 +128,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v1
+        key: data-cache-v2
         restore-keys: |
           data-cache-
     - name: Install test data
@@ -161,6 +161,17 @@ jobs:
         datalad install -r https://github.com/nipreps-data/ds000206.git
         datalad update -r --merge -d ds000206/
         datalad get -r -d ds000206/ ds000206/sub-05/
+
+        # Brain extraction tests
+        datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
+        datalad update --merge -d brain-extraction-tests/
+        datalad get -r -J 2 -d brain-extraction-tests
+
+        # HCPH pilot
+        datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
+        datalad update -r --merge -d hcph-pilot_fieldmaps/
+        datalad get -r -d hcph-pilot_fieldmaps/
+
 
     - name: Install FreeSurfer's mri_robust_template
       env:
