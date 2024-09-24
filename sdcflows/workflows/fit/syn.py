@@ -22,17 +22,6 @@
 #
 """
 Estimating the susceptibility distortions without fieldmaps.
-
-.. testsetup::
-
-    >>> tmpdir = getfixture('tmpdir')
-    >>> tmp = tmpdir.chdir() # changing to a temporary directory
-    >>> data = np.zeros((10, 10, 10, 1, 3))
-    >>> data[..., 1] = 1
-    >>> nb.Nifti1Image(data, None, None).to_filename(
-    ...     tmpdir.join('field.nii.gz').strpath)
-
-
 """
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -138,9 +127,7 @@ def init_syn_sdc_wf(
     from ...interfaces.bspline import (
         ApplyCoeffsField,
         BSplineApprox,
-        DEFAULT_LF_ZOOMS_MM,
         DEFAULT_HF_ZOOMS_MM,
-        DEFAULT_ZOOMS_MM,
     )
     from ...interfaces.brainmask import BinaryDilation, Union
 
@@ -272,9 +259,10 @@ template [@fieldmapless3].
         name="bs_filter",
     )
     bs_filter.interface._always_run = debug
-    bs_filter.inputs.bs_spacing = (
-        [DEFAULT_LF_ZOOMS_MM, DEFAULT_HF_ZOOMS_MM] if not sloppy else [DEFAULT_ZOOMS_MM]
-    )
+    bs_filter.inputs.bs_spacing = [DEFAULT_HF_ZOOMS_MM]
+
+    if sloppy:
+        bs_filter.inputs.zooms_min = 4.0
 
     workflow.connect([
         (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
