@@ -165,6 +165,9 @@ doctest_optionflags = "ALLOW_UNICODE NORMALIZE_WHITESPACE ELLIPSIS"
 env = "PYTHONHASHSEED=0"
 filterwarnings = ["ignore::DeprecationWarning"]
 junit_family = "xunit2"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 
 [tool.coverage.run]

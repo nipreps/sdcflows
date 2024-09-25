@@ -34,6 +34,12 @@ jobs:
       max-parallel: 5
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        marks: ["not slow"]
+        include:
+          - python-version: "3.9"
+            marks: "slow"
+          - python-version: "3.12"
+            marks: "slow"
 
     steps:
     - uses: actions/cache@v4
@@ -176,7 +182,9 @@ jobs:
         export PATH=${AFNI_HOME}:$PATH
         export FSLDIR=${CONDA_PREFIX}
         pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows \
-          --durations=20 --durations-min=10
+          --durations=20 --durations-min=10 -m "$MARKS"
+      env:
+        MARKS: ${{ matrix.marks }}
 
     - uses: codecov/codecov-action@v4
       with:

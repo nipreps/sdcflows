@@ -28,6 +28,7 @@ from niworkflows.interfaces.reportlets.masks import SimpleShowMaskRPT
 from ..ancillary import init_brainextraction_wf
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("folder", ["magnitude/ds000054", "magnitude/ds000217"])
 def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     """Exercise the brain masking tool."""

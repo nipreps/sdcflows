@@ -29,6 +29,7 @@ import pytest
 from ..fieldmap import init_fmap_wf, Workflow
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "fmap_file",
     [
