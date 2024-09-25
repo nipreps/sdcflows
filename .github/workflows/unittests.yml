@@ -173,6 +173,8 @@ jobs:
         datalad update -r --merge -d hcph-pilot_fieldmaps/
         datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
+    - name: Set FS_LICENSE variable
+      run: echo "FS_LICENSE=$HOME/.cache/freesurfer/license.txt" >> $GITHUB_ENV
 
     - name: Install FreeSurfer's mri_robust_template
       env:
@@ -180,8 +182,8 @@ jobs:
       run: |
         curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
         sudo install mri_robust_template /usr/local/bin
-        mkdir -p $HOME/.cache/freesurfer/
-        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $HOME/.cache/freesurfer/license.txt
+        mkdir -p $( dirname $FS_LICENSE )
+        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $FS_LICENSE
 
     - name: Run pytest with coverage
       run: |
