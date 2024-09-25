@@ -139,38 +139,39 @@ jobs:
         # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
         datalad update -r --merge -d ds001600/
-        datalad get -r -d ds001600/ ds001600/sub-1/
+        datalad get -r -J 2 -d ds001600/ ds001600/sub-1/
 
         # HCP/sub-101006
         datalad install -r https://github.com/nipreps-data/HCP101006.git
         datalad update -r --merge -d HCP101006/
-        datalad get -r -d HCP101006
+        datalad get -r -J 2 -d HCP101006 HCP101006/*
 
         # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update -r --merge -d ds001771/
-        datalad get -r -d ds001771/ ds001771/sub-36/*
-        datalad get -r -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
+        datalad get -r -J 2 -d ds001771/ ds001771/sub-36/*
+        datalad get -r -J 2 -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
 
         # ds000054
         datalad install -r https://github.com/nipreps-data/ds000054.git
         datalad update --merge -d ds000054/
         datalad get -r -d ds000054/ ds000054/sub-100185/*
+        datalad get -r -J 2 -d ds000054/ ds000054/derivatives/smriprep-0.6/sub-100185/anat/
 
         # ds000206
         datalad install -r https://github.com/nipreps-data/ds000206.git
         datalad update -r --merge -d ds000206/
-        datalad get -r -d ds000206/ ds000206/sub-05/
+        datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
 
         # Brain extraction tests
         datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
         datalad update --merge -d brain-extraction-tests/
-        datalad get -r -J 2 -d brain-extraction-tests
+        datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
 
         # HCPH pilot
         datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
         datalad update -r --merge -d hcph-pilot_fieldmaps/
-        datalad get -r -d hcph-pilot_fieldmaps/
+        datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
 
     - name: Install FreeSurfer's mri_robust_template
