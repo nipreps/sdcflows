@@ -195,3 +195,8 @@ ignore-words-list = 'nd,mapp,reson'
 skip = """
 ./.git,*.pdf,*.svg,*.min.js,*.ipynb,ORIGINAL_LICENSE,\
 ./docs/source/_static/example_anatreport.html"""
+
+[tool.check-wheel-contents]
+ignore = [
+  "W002",  # Test data contains duplicates
+]
