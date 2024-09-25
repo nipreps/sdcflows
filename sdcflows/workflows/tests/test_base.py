@@ -28,6 +28,7 @@ from sdcflows.utils.wrangler import find_estimators
 from sdcflows.workflows.base import init_fmap_preproc_wf
 
 
+@pytest.mark.veryslow
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "dataset,subject", [("ds000054", "100185"), ("HCP101006", "101006")]

@@ -36,6 +36,7 @@ from niworkflows.interfaces.reportlets.registration import (
 )
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("pe0", ["LR", "PA"])
 @pytest.mark.parametrize("mode", ["pepolar", "phasediff"])
 def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
