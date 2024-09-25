@@ -37,9 +37,9 @@ jobs:
         marks: ["not slow"]
         include:
           - python-version: "3.9"
-            marks: "slow"
+            marks: "slow and not veryslow"
           - python-version: "3.12"
-            marks: "slow"
+            marks: "veryslow"
 
     steps:
     - uses: actions/cache@v4
