@@ -36,7 +36,6 @@ from .. import fieldmaps as fm
 
 def _normalize_intent(
     intent: str,
-    layout: BIDSLayout,
     subject: str
 ) -> str | None:
     """Convert BIDS-URI intent to subject-relative intent
@@ -66,12 +65,11 @@ def _resolve_intent(
 
 def _filter_metadata(
     metadata: Dict[str, Any],
-    layout: BIDSLayout,
     subject: str
 ) -> Dict[str, Any]:
     intents = metadata.get("IntendedFor")
     if intents:
-        updated = [_normalize_intent(intent, layout, subject) for intent in listify(intents)]
+        updated = [_normalize_intent(intent, subject) for intent in listify(intents)]
         return {**metadata, "IntendedFor": updated}
     return metadata
 
@@ -439,7 +437,7 @@ def find_estimators(
                 for fmap in layout.get(**{**entities, **{'direction': dirs}}):
                     fmapfile = fm.FieldmapFile(
                         fmap.path,
-                        metadata=_filter_metadata(fmap.get_metadata(), layout, subject),
+                        metadata=_filter_metadata(fmap.get_metadata(), subject),
                     )
                     by_intent.setdefault(
                         tuple(fmapfile.metadata.get('IntendedFor', ())), []
