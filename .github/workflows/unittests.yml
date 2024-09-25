@@ -31,7 +31,7 @@ jobs:
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
     strategy:
-      max-parallel: 5
+      max-parallel: 6
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         marks: ["not slow"]
