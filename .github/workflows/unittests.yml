@@ -165,8 +165,10 @@ jobs:
         datalad update -r --merge -d hcph-pilot_fieldmaps/
         datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
-    - name: Set FS_LICENSE variable
-      run: echo "FS_LICENSE=$HOME/.cache/freesurfer/license.txt" >> $GITHUB_ENV
+    - name: Set FreeSurfer variables
+      run: |
+        echo "FREESURFER_HOME=$HOME/.cache/freesurfer" >> $GITHUB_ENV
+        echo "FS_LICENSE=$HOME/.cache/freesurfer/license.txt" >> $GITHUB_ENV
 
     - name: Install FreeSurfer's mri_robust_template
       env:
