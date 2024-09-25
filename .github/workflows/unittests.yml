@@ -30,7 +30,6 @@ jobs:
       AFNI_IMSAVE_WARNINGS: NO
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
-      ANTSPATH: /opt/ants
     strategy:
       max-parallel: 5
       matrix:
@@ -66,19 +65,6 @@ jobs:
           tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
         fi
 
-    - uses: actions/cache@v4
-      with:
-        path: /opt/ants
-        key: ants-v1
-        restore-keys: |
-          ants-v1
-    - name: Install ANTS
-      run: |
-        if [[ ! -d "${ANTSPATH}" ]]; then
-          sudo mkdir -p $ANTSPATH
-          curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
-        fi
-
     - name: Git settings (pacify DataLad)
       run: |
         git config --global user.name 'NiPreps Bot'
@@ -89,11 +75,11 @@ jobs:
         auto-update-conda: true
         auto-activate-base: true
         python-version: ${{ matrix.python-version }}
-        channels: anaconda,https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
+        channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
     - uses: actions/cache@v4
       id: conda
       env:
-        CACHE_NUM: v4
+        CACHE_NUM: v5
       with:
         path: |
           ~/conda_pkgs_dir
@@ -105,9 +91,9 @@ jobs:
       run: |
         conda install git-annex=*=alldep* pip
         pip install datalad datalad-osf
-    - name: Install fsl
+    - name: Install fsl and ANTs
       run: |
-        conda install fsl-fugue fsl-topup
+        conda install fsl-fugue fsl-topup ants
     - uses: actions/checkout@v4
     - name: Install dependencies
       timeout-minutes: 5
@@ -187,8 +173,8 @@ jobs:
 
     - name: Run pytest with coverage
       run: |
-        export LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-        export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
+        export PATH=${AFNI_HOME}:$PATH
+        export FSLDIR=${CONDA_PREFIX}
         pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows \
           --durations=20 --durations-min=10
 
