@@ -1,0 +1,30 @@
+name: Validations
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ master, main, 'maint/*' ]
+
+env:
+  FORCE_COLOR: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: pipx run flake8-pyproject sdcflows/
+
+  # codespell:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - uses: codespell-project/actions-codespell@v2
