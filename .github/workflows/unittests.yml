@@ -175,7 +175,7 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
         export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
-        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules sdcflows
+        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows
 
     - uses: codecov/codecov-action@v4
       with:

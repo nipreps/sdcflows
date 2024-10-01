@@ -341,7 +341,7 @@ jobs:
                 nipreps/sdcflows:latest \
                 pytest -v --junit-xml=/out/pytest.xml \
                        --cov sdcflows --cov-report xml:/out/unittests.xml \
-                       sdcflows/
+                       -n auto sdcflows/
       - save_cache:
           key: workdir-v3-{{ .Branch }}-{{ .BuildNum }}
           paths:
