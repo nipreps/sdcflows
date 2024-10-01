@@ -406,7 +406,7 @@ def find_estimators(
                 e = fm.FieldmapEstimation(
                     fm.FieldmapFile(
                         fmap.path,
-                        metadata=_filter_metadata(fmap.get_metadata(), layout, subject),
+                        metadata=_filter_metadata(fmap.get_metadata(), subject),
                     )
                 )
             except (ValueError, TypeError) as err:
