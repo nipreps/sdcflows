@@ -1,2 +1,2 @@
-from sdcflows.workflows.fit.syn import init_syn_sdc_wf
-wf = init_syn_sdc_wf(omp_nthreads=8)
+from sdcflows.workflows.fit.syn import init_syn_preprocessing_wf
+wf = init_syn_preprocessing_wf()
