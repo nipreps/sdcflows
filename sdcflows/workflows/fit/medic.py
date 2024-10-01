@@ -109,9 +109,9 @@ A dynamic fieldmap was estimated from multi-echo EPI data using the MEDIC algori
         name="medic",
     )
     workflow.connect([
-        (inputnode, medic, [("magnitude", "magnitude")]),
-        (phase2rad, medic, [("out_file", "metadata")]),
-        (phase2rad, medic, [("out_file", "phase")]),
+        (inputnode, medic, [("magnitude", "mag_files")]),
+        (write_metadata, medic, [("out_file", "metadata")]),
+        (phase2rad, medic, [("out_file", "phase_files")]),
         (medic, outputnode, [
             ("native_field_map", "fieldmap"),
             ("displacement_map", "displacement"),
