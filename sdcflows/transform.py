@@ -73,6 +73,7 @@ def _sdc_unwarp(
     coordinates: np.ndarray,
     pe_info: Tuple[int, float],
     hmc_xfm: np.ndarray | None,
+    jacobian: bool,
     fmap_hz: np.ndarray,
     output_dtype: str | np.dtype | None = None,
     order: int = 3,
@@ -95,13 +96,6 @@ def _sdc_unwarp(
     vsm = fmap_hz * pe_info[1]
     coordinates[pe_info[0], ...] += vsm
 
-    # The Jacobian determinant image is the amount of stretching in the PE direction.
-    # Using central differences accounts for the shift in neighboring voxels.
-    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
-    # only warping in one direction, we end up with a diagonal matrix with two 1s.
-    # The following is the other entry at each voxel, and hence the determinant.
-    jacobian = 1 + np.gradient(vsm, axis=pe_info[0])
-
     resampled = ndi.map_coordinates(
         data,
         coordinates,
@@ -110,7 +104,15 @@ def _sdc_unwarp(
         mode=mode,
         cval=cval,
         prefilter=prefilter,
-    ) * jacobian
+    )
+
+    # The Jacobian determinant image is the amount of stretching in the PE direction.
+    # Using central differences accounts for the shift in neighboring voxels.
+    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
+    # only warping in one direction, we end up with a diagonal matrix with two 1s.
+    # The following is the other entry at each voxel, and hence the determinant.
+    if jacobian:
+        resampled *= 1 + np.gradient(vsm, axis=pe_info[0])
 
     return resampled
 
@@ -138,6 +140,7 @@ async def unwarp_parallel(
     fmap_hz: np.ndarray,
     pe_info: Sequence[Tuple[int, float]],
     xfms: Sequence[np.ndarray],
+    jacobian: bool,
     order: int = 3,
     mode: str = "constant",
     cval: float = 0.0,
@@ -162,6 +165,8 @@ async def unwarp_parallel(
     pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)
         A tuple containing the index of the phase-encoding axis in the data array and
         the readout time (including sign, if displacements must be reversed)
+    jacobian : :class:`bool`
+        If :obj:`True`, apply Jacobian determinant correction after unwarping.
     xfms : :obj:`list` of obj:`~numpy.ndarray`
         A list of 4×4 matrices, each one formalizing
         the estimated head motion alignment to the scan's reference.
@@ -200,6 +205,7 @@ async def unwarp_parallel(
 
     func = partial(
         _sdc_unwarp,
+        jacobian=jacobian,
         fmap_hz=fmap_hz,
         output_dtype=output_dtype,
         order=order,
@@ -370,6 +376,7 @@ class B0FieldTransform:
         pe_dir: str | Sequence[str],
         ro_time: float | Sequence[float],
         xfms: Sequence[np.ndarray] | None = None,
+        jacobian: bool = True,
         xfm_data2fmap: np.ndarray | None = None,
         approx: bool = True,
         order: int = 3,
@@ -394,6 +401,8 @@ class B0FieldTransform:
             A valid ``PhaseEncodingDirection`` metadata value.
         ro_time : :obj:`float` or :obj:`list` of :obj:`float`
             The total readout time in seconds.
+        jacobian : :class:`bool`
+            If :obj:`True`, apply Jacobian determinant correction after unwarping.
         xfms : :obj:`None` or :obj:`list`
             A list of 4×4 matrices, each one formalizing
             the estimated head motion alignment to the scan's reference.
@@ -528,6 +537,7 @@ class B0FieldTransform:
                 self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
                 pe_info,
                 xfms,
+                jacobian,
                 output_dtype='float32',
                 order=order,
                 mode=mode,
