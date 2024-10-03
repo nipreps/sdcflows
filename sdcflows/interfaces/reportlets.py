@@ -26,7 +26,7 @@ import nibabel as nb
 from nilearn.image import threshold_img, load_img
 from niworkflows import NIWORKFLOWS_LOG
 from niworkflows.utils.images import rotation2canonical, rotate_affine
-from niworkflows.viz.utils import cuts_from_bbox, compose_view
+from nireports.reportlets.utils import cuts_from_bbox, compose_view
 from nipype.interfaces.base import File, isdefined, traits
 from nipype.interfaces.mixins import reporting
 
