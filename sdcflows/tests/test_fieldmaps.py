@@ -28,6 +28,13 @@ import bids
 from .. import fieldmaps as fm
 
 
+@pytest.fixture(autouse=True)
+def clear_registry():
+    fm.clear_registry()
+    yield
+    fm.clear_registry()
+
+
 def test_FieldmapFile(dsA_dir):
     """Test one existing file."""
     f1 = fm.FieldmapFile(dsA_dir / "sub-01" / "anat" / "sub-01_T1w.nii.gz")
@@ -45,13 +52,12 @@ def test_FieldmapFile(dsA_dir):
 
 
 @pytest.mark.parametrize(
-    "inputfiles,method,nsources,raises",
+    "inputfiles,method,nsources",
     [
         (
             ("fmap/sub-01_fieldmap.nii.gz", "fmap/sub-01_magnitude.nii.gz"),
             fm.EstimatorType.MAPPED,
             2,
-            False,
         ),
         (
             (
@@ -62,50 +68,36 @@ def test_FieldmapFile(dsA_dir):
             ),
             fm.EstimatorType.PHASEDIFF,
             4,
-            False,
         ),
         (
             ("fmap/sub-01_phase1.nii.gz", "fmap/sub-01_phase2.nii.gz"),
             fm.EstimatorType.PHASEDIFF,
             4,
-            True,
         ),
-        (("fmap/sub-01_phase2.nii.gz",), fm.EstimatorType.PHASEDIFF, 4, True),
-        (("fmap/sub-01_phase1.nii.gz",), fm.EstimatorType.PHASEDIFF, 4, True),
+        (("fmap/sub-01_phase2.nii.gz",), fm.EstimatorType.PHASEDIFF, 4),
+        (("fmap/sub-01_phase1.nii.gz",), fm.EstimatorType.PHASEDIFF, 4),
         (
             ("fmap/sub-01_dir-LR_epi.nii.gz", "fmap/sub-01_dir-RL_epi.nii.gz"),
             fm.EstimatorType.PEPOLAR,
             2,
-            False,
         ),
         (
             ("fmap/sub-01_dir-LR_epi.nii.gz", "dwi/sub-01_dir-RL_sbref.nii.gz"),
             fm.EstimatorType.PEPOLAR,
             2,
-            False,
         ),
         (
             ("anat/sub-01_T1w.nii.gz", "dwi/sub-01_dir-RL_sbref.nii.gz"),
             fm.EstimatorType.ANAT,
             2,
-            False,
         ),
     ],
 )
-def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources, raises):
+def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources):
     """Test errors."""
     sub_dir = dsA_dir / "sub-01"
 
     sources = [sub_dir / f for f in inputfiles]
-
-    if raises is True:
-        # Ensure that _estimators is still holding values from previous
-        # parameter set of this parametrized execution.
-        with pytest.raises(ValueError):
-            fm.FieldmapEstimation(sources)
-
-        # Clean up so this parameter set can be tested.
-        fm.clear_registry()
 
     fe = fm.FieldmapEstimation(sources)
     assert fe.method == method
