@@ -97,6 +97,8 @@ def init_coeff2epi_wf(
     from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
 
+    from sdcflows.interfaces import brainmask
+
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
 The estimated *fieldmap* was then aligned with rigid-registration to the target
@@ -113,6 +115,11 @@ The field coefficients were mapped on to the reference EPI using the transform.
         niu.IdentityInterface(fields=["target_ref", "fmap_coeff", "target2fmap_xfm"]),
         name="outputnode",
     )
+
+    # Dilate only for coregistration purposes
+    # https://github.com/nipreps/sdcflows/issues/461
+    dilate_target_mask = pe.Node(brainmask.BinaryDilation(radius=5), name="dilate_target_mask")
+    dilate_fmap_mask = pe.Node(brainmask.BinaryDilation(radius=5), name="dilate_fmap_mask")
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
@@ -132,11 +139,17 @@ The field coefficients were mapped on to the reference EPI using the transform.
     # fmt: off
     workflow.connect([
         (inputnode, outputnode, [("fmap_coeff", "fmap_coeff")]),
+        (inputnode, dilate_target_mask, [("target_mask", "in_file")]),
+        (inputnode, dilate_fmap_mask, [("fmap_mask", "in_file")]),
         (inputnode, coregister, [
             ("target_ref", "moving_image"),
             ("fmap_ref", "fixed_image"),
-            ("target_mask", f"moving_image_mask{mask_trait_s}"),
-            ("fmap_mask", f"fixed_image_mask{mask_trait_s}"),
+        ]),
+        (dilate_target_mask, coregister, [
+            ("out_file", f"moving_image_mask{mask_trait_s}")
+        ]),
+        (dilate_fmap_mask, coregister, [
+            ("out_file", f"fixed_image_mask{mask_trait_s}")
         ]),
         (coregister, outputnode, [
             ("warped_image", "target_ref"),
