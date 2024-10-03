@@ -426,7 +426,7 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.in_data,
             self.inputs.pe_dir,
             self.inputs.ro_time,
-            jacobian=self.inputs.jacobian or False,
+            jacobian=self.inputs.jacobian,
             xfms=self.inputs.in_xfms or None,
             xfm_data2fmap=data2fmap_xfm,
             approx=self.inputs.approx,
