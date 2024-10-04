@@ -133,6 +133,8 @@ b0field_config = {
 )
 def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
     """Test the CLI with --dry-run."""
+    from nibabel.filebasedimages import ImageFileError
+
     import sdcflows.config as sc
 
     # Reload is necessary to clean-up the layout config between parameterized runs
@@ -140,7 +142,7 @@ def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
 
     path = (tmp_path / test_id).absolute()
     generate_bids_skeleton(path, config)
-    with pytest.raises(SystemExit) as wrapped_exit:
+    with pytest.raises(ImageFileError) as wrapped_exit:
         cli_finder_wrapper([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
 
     assert wrapped_exit.value.code == 0

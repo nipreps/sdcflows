@@ -549,7 +549,9 @@ def find_estimators(
                     )
 
                 for phase_img in has_phase:
-                    complex_imgs = layout.get(**{**phase_img.get_entities(), **{'part': ['phase', 'mag']}})
+                    complex_imgs = layout.get(
+                        **{**phase_img.get_entities(), **{'part': ['phase', 'mag']}}
+                    )
 
                     if complex_imgs[0].path in fm._estimators.sources:
                         continue
@@ -557,7 +559,8 @@ def find_estimators(
                     try:
                         e = fm.FieldmapEstimation(
                             [
-                                fm.FieldmapFile(img.path, metadata=img.get_metadata()) for img in complex_imgs
+                                fm.FieldmapFile(img.path, metadata=img.get_metadata())
+                                for img in complex_imgs
                             ]
                         )
                     except (ValueError, TypeError) as err:
