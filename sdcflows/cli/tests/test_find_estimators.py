@@ -142,9 +142,11 @@ def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
 
     path = (tmp_path / test_id).absolute()
     generate_bids_skeleton(path, config)
+    # This was set to raise a SystemExit, but was only raising an ImageFileError
     with pytest.raises(ImageFileError) as wrapped_exit:
         cli_finder_wrapper([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
 
+    # ImageFileError has no code attribute, so we can't check the exit code
     # assert wrapped_exit.value.code == 0
     output = OUTPUT.format(path=path, estimator_id=estimator_id)
     out, _ = capsys.readouterr()
