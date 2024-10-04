@@ -34,6 +34,22 @@ from bids.utils import listify
 from .. import fieldmaps as fm
 
 
+def _normalize_intent(
+    intent: str,
+    subject: str
+) -> str | None:
+    """Convert BIDS-URI intent to subject-relative intent
+
+    SDCFlows currently makes strong assumptions about old-style intents,
+    and a change to that needs to be carefully considered and tested.
+    """
+    if intent.startswith("bids::"):
+        # bids::sub-<subject>/
+        #          ^- 10     ^- 11
+        return intent[11 + len(subject):]
+    return intent
+
+
 def _resolve_intent(
     intent: str,
     layout: BIDSLayout,
@@ -45,6 +61,17 @@ def _resolve_intent(
     if not intent.startswith("bids:"):
         return str(root / f"sub-{subject}" / intent)
     return intent
+
+
+def _filter_metadata(
+    metadata: Dict[str, Any],
+    subject: str
+) -> Dict[str, Any]:
+    intents = metadata.get("IntendedFor")
+    if intents:
+        updated = [_normalize_intent(intent, subject) for intent in listify(intents)]
+        return {**metadata, "IntendedFor": updated}
+    return metadata
 
 
 def find_estimators(
@@ -377,7 +404,10 @@ def find_estimators(
         ):
             try:
                 e = fm.FieldmapEstimation(
-                    fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                    fm.FieldmapFile(
+                        fmap.path,
+                        metadata=_filter_metadata(fmap.get_metadata(), subject),
+                    )
                 )
             except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
@@ -405,7 +435,10 @@ def find_estimators(
             if len(dirs) > 1:
                 by_intent = {}
                 for fmap in layout.get(**{**entities, **{'direction': dirs}}):
-                    fmapfile = fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
+                    fmapfile = fm.FieldmapFile(
+                        fmap.path,
+                        metadata=_filter_metadata(fmap.get_metadata(), subject),
+                    )
                     by_intent.setdefault(
                         tuple(fmapfile.metadata.get('IntendedFor', ())), []
                     ).append(fmapfile)
