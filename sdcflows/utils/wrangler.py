@@ -540,16 +540,16 @@ def find_estimators(
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
 
-                medic_entities = {**base_entities, **{'part': 'mag', 'echo': Query.ANY}}
-                has_magnitude = tuple()
+                medic_entities = {**base_entities, **{'part': 'phase', 'echo': Query.ANY}}
+                has_phase = tuple()
                 with suppress(ValueError):
-                    has_magnitude = layout.get(
+                    has_phase = layout.get(
                         suffix='bold',
                         **medic_entities,
                     )
 
-                for mag_img in has_magnitude:
-                    complex_imgs = layout.get(**{**mag_img.get_entities(), **{'part': ['phase', 'mag']}})
+                for phase_img in has_phase:
+                    complex_imgs = layout.get(**{**phase_img.get_entities(), **{'part': ['phase', 'mag']}})
 
                     if complex_imgs[0].path in fm._estimators.sources:
                         continue
