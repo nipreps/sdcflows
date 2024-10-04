@@ -528,7 +528,7 @@
     <span class="kn">from</span> <span class="nn">sdcflows.interfaces.bspline</span> <span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
     <span class="c1"># Separate the runs again, as our ApplyCoeffsField corrects them separately</span>
-    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp&quot;</span><span class="p">)</span>
+    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp&quot;</span><span class="p">)</span>
     <span class="n">unwarp</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">concat_corrected</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;concat_corrected&quot;</span><span class="p">)</span>
 

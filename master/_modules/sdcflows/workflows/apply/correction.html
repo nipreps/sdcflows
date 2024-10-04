@@ -335,7 +335,14 @@
 
 <div class="viewcode-block" id="init_unwarp_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.apply.correction.html#sdcflows.workflows.apply.correction.init_unwarp_wf">[docs]</a>
-<span class="k">def</span> <span class="nf">init_unwarp_wf</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">free_mem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp_wf&quot;</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">init_unwarp_wf</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">free_mem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp_wf&quot;</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.</span>
 
@@ -349,11 +356,13 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    omp_nthreads : :obj:`int`</span>
+<span class="sd">    jacobian : :class:`bool`</span>
+<span class="sd">        If :obj:`True`, apply Jacobian determinant correction after unwarping.</span>
+<span class="sd">    omp_nthreads : :class:`int`</span>
 <span class="sd">        Maximum number of threads an individual process may use.</span>
-<span class="sd">    name : :obj:`str`</span>
+<span class="sd">    name : :class:`str`</span>
 <span class="sd">        Unique name of this workflow.</span>
-<span class="sd">    debug : :obj:`bool`</span>
+<span class="sd">    debug : :class:`bool`</span>
 <span class="sd">        Whether to run in *sloppy* mode.</span>
 
 <span class="sd">    Inputs</span>
@@ -432,7 +441,7 @@
         <span class="n">num_threads</span> <span class="o">=</span> <span class="n">omp_nthreads</span>
 
     <span class="n">resample</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">num_threads</span><span class="p">),</span>
+        <span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="n">num_threads</span><span class="p">),</span>
         <span class="n">mem_gb</span><span class="o">=</span><span class="n">mem_per_thread</span> <span class="o">*</span> <span class="n">num_threads</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;resample&quot;</span><span class="p">,</span>
     <span class="p">)</span>

@@ -380,6 +380,7 @@
     <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">pe_info</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">hmc_xfm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">jacobian</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">fmap_hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">output_dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
@@ -402,13 +403,6 @@
     <span class="n">vsm</span> <span class="o">=</span> <span class="n">fmap_hz</span> <span class="o">*</span> <span class="n">pe_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">coordinates</span><span class="p">[</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">+=</span> <span class="n">vsm</span>
 
-    <span class="c1"># The Jacobian determinant image is the amount of stretching in the PE direction.</span>
-    <span class="c1"># Using central differences accounts for the shift in neighboring voxels.</span>
-    <span class="c1"># The full Jacobian at each voxel would be a 3x3 matrix, but because there is</span>
-    <span class="c1"># only warping in one direction, we end up with a diagonal matrix with two 1s.</span>
-    <span class="c1"># The following is the other entry at each voxel, and hence the determinant.</span>
-    <span class="n">jacobian</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">vsm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
     <span class="n">resampled</span> <span class="o">=</span> <span class="n">ndi</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span>
         <span class="n">coordinates</span><span class="p">,</span>
@@ -417,7 +411,15 @@
         <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
         <span class="n">cval</span><span class="o">=</span><span class="n">cval</span><span class="p">,</span>
         <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">*</span> <span class="n">jacobian</span>
+    <span class="p">)</span>
+
+    <span class="c1"># The Jacobian determinant image is the amount of stretching in the PE direction.</span>
+    <span class="c1"># Using central differences accounts for the shift in neighboring voxels.</span>
+    <span class="c1"># The full Jacobian at each voxel would be a 3x3 matrix, but because there is</span>
+    <span class="c1"># only warping in one direction, we end up with a diagonal matrix with two 1s.</span>
+    <span class="c1"># The following is the other entry at each voxel, and hence the determinant.</span>
+    <span class="k">if</span> <span class="n">jacobian</span><span class="p">:</span>
+        <span class="n">resampled</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">vsm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">pe_info</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">resampled</span>
 
@@ -450,6 +452,7 @@
     <span class="n">fmap_hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">pe_info</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
     <span class="n">xfms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">jacobian</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
     <span class="n">cval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -474,6 +477,8 @@
 <span class="sd">    pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)</span>
 <span class="sd">        A tuple containing the index of the phase-encoding axis in the data array and</span>
 <span class="sd">        the readout time (including sign, if displacements must be reversed)</span>
+<span class="sd">    jacobian : :class:`bool`</span>
+<span class="sd">        If :obj:`True`, apply Jacobian determinant correction after unwarping.</span>
 <span class="sd">    xfms : :obj:`list` of obj:`~numpy.ndarray`</span>
 <span class="sd">        A list of 4×4 matrices, each one formalizing</span>
 <span class="sd">        the estimated head motion alignment to the scan&#39;s reference.</span>
@@ -512,6 +517,7 @@
 
     <span class="n">func</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
         <span class="n">_sdc_unwarp</span><span class="p">,</span>
+        <span class="n">jacobian</span><span class="o">=</span><span class="n">jacobian</span><span class="p">,</span>
         <span class="n">fmap_hz</span><span class="o">=</span><span class="n">fmap_hz</span><span class="p">,</span>
         <span class="n">output_dtype</span><span class="o">=</span><span class="n">output_dtype</span><span class="p">,</span>
         <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
@@ -690,6 +696,7 @@
         <span class="n">pe_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">ro_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">xfms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">jacobian</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">xfm_data2fmap</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">approx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
@@ -714,6 +721,8 @@
 <span class="sd">            A valid ``PhaseEncodingDirection`` metadata value.</span>
 <span class="sd">        ro_time : :obj:`float` or :obj:`list` of :obj:`float`</span>
 <span class="sd">            The total readout time in seconds.</span>
+<span class="sd">        jacobian : :class:`bool`</span>
+<span class="sd">            If :obj:`True`, apply Jacobian determinant correction after unwarping.</span>
 <span class="sd">        xfms : :obj:`None` or :obj:`list`</span>
 <span class="sd">            A list of 4×4 matrices, each one formalizing</span>
 <span class="sd">            the estimated head motion alignment to the scan&#39;s reference.</span>
@@ -848,6 +857,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">),</span>  <span class="c1"># fieldmap in Hz</span>
                 <span class="n">pe_info</span><span class="p">,</span>
                 <span class="n">xfms</span><span class="p">,</span>
+                <span class="n">jacobian</span><span class="p">,</span>
                 <span class="n">output_dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span>
                 <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
                 <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
