@@ -237,7 +237,7 @@ template [@fieldmapless3].
         DisplacementsField2Fieldmap(), name="extract_field"
     )
 
-    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
+    unwarp = pe.Node(ApplyCoeffsField(jacobian=False), name="unwarp")
 
     # Check zooms (avoid very expensive B-Splines fitting)
     zooms_field = pe.Node(
@@ -340,8 +340,8 @@ def init_syn_preprocessing_wf(
             :graph2use: orig
             :simple_form: yes
 
-            from sdcflows.workflows.fit.syn import init_syn_sdc_wf
-            wf = init_syn_sdc_wf(omp_nthreads=8)
+            from sdcflows.workflows.fit.syn import init_syn_preprocessing_wf
+            wf = init_syn_preprocessing_wf()
 
     Parameters
     ----------

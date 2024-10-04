@@ -21,15 +21,13 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test pepolar type of fieldmaps."""
-import os
 import pytest
 from nipype.pipeline import engine as pe
 
 from ..pepolar import init_topup_wf
 
 
-@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
+@pytest.mark.slow
 @pytest.mark.parametrize("ds", ("ds001771", "HCP101006"))
 def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     """Test preparation workflow."""

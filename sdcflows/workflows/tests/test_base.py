@@ -22,13 +22,14 @@
 #
 """Test the base workflow."""
 from pathlib import Path
-import os
 import pytest
 from sdcflows import fieldmaps as fm
 from sdcflows.utils.wrangler import find_estimators
 from sdcflows.workflows.base import init_fmap_preproc_wf
 
 
+@pytest.mark.veryslow
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "dataset,subject", [("ds000054", "100185"), ("HCP101006", "101006")]
 )
@@ -61,9 +62,6 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
 
     if workdir:
         wf.base_dir = str(workdir)
-
-    if os.getenv("GITHUB_ACTIONS") == "true":
-        return
 
     res = wf.run(plugin="Linear")
 

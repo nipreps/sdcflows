@@ -26,7 +26,14 @@ from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
-def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_wf"):
+def init_unwarp_wf(
+    *,
+    jacobian=True,
+    free_mem=None,
+    omp_nthreads=1,
+    debug=False,
+    name="unwarp_wf",
+):
     r"""
     Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.
 
@@ -40,11 +47,13 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
 
     Parameters
     ----------
-    omp_nthreads : :obj:`int`
+    jacobian : :class:`bool`
+        If :obj:`True`, apply Jacobian determinant correction after unwarping.
+    omp_nthreads : :class:`int`
         Maximum number of threads an individual process may use.
-    name : :obj:`str`
+    name : :class:`str`
         Unique name of this workflow.
-    debug : :obj:`bool`
+    debug : :class:`bool`
         Whether to run in *sloppy* mode.
 
     Inputs
@@ -123,7 +132,7 @@ def init_unwarp_wf(*, free_mem=None, omp_nthreads=1, debug=False, name="unwarp_w
         num_threads = omp_nthreads
 
     resample = pe.Node(
-        ApplyCoeffsField(num_threads=num_threads),
+        ApplyCoeffsField(jacobian=jacobian, num_threads=num_threads),
         mem_gb=mem_per_thread * num_threads,
         name="resample",
     )

@@ -27,6 +27,7 @@ import numpy
 import nibabel
 import pytest
 from bids.layout import BIDSLayout
+from .fieldmaps import clear_registry
 
 # disable ET
 os.environ['NO_ET'] = '1'
@@ -59,18 +60,27 @@ TEST_WORK_DIR={test_workdir or '<unset> (intermediate files will be discarded)'}
 
 
 @pytest.fixture(autouse=True)
-def add_np(doctest_namespace):
-    doctest_namespace["np"] = numpy
-    doctest_namespace["nb"] = nibabel
-    doctest_namespace["os"] = os
-    doctest_namespace["Path"] = Path
-    doctest_namespace["layouts"] = layouts
-    for key, val in list(layouts.items()):
-        doctest_namespace[key] = Path(val.root)
+def doctest_fixture(doctest_namespace, request):
+    doctest_plugin = request.config.pluginmanager.getplugin("doctest")
+    if isinstance(request.node, doctest_plugin.DoctestItem):
+        doctest_namespace.update(
+            np=numpy,
+            nb=nibabel,
+            os=os,
+            Path=Path,
+            layouts=layouts,
+            dsA_dir=data_dir / "dsA",
+            dsB_dir=data_dir / "dsB",
+            dsC_dir=data_dir / "dsC",
+        )
+        doctest_namespace.update((key, Path(val.root)) for key, val in layouts.items())
 
-    doctest_namespace["dsA_dir"] = data_dir / "dsA"
-    doctest_namespace["dsB_dir"] = data_dir / "dsB"
-    doctest_namespace["dsC_dir"] = data_dir / "dsC"
+        # Start every doctest clean, and clean up after ourselves
+        clear_registry()
+        yield
+        clear_registry()
+    else:
+        yield
 
 
 @pytest.fixture

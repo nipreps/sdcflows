@@ -328,6 +328,11 @@ class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
         mandatory=True,
         desc="the phase-encoding direction corresponding to in_data",
     )
+    jacobian = traits.Bool(
+        False,
+        usedefault=True,
+        desc="apply Jacobian determinant correction after unwarping",
+    )
     num_threads = traits.Int(nohash=True, desc="number of threads")
     approx = traits.Bool(
         True,
@@ -421,6 +426,7 @@ class ApplyCoeffsField(SimpleInterface):
             self.inputs.in_data,
             self.inputs.pe_dir,
             self.inputs.ro_time,
+            jacobian=self.inputs.jacobian,
             xfms=self.inputs.in_xfms or None,
             xfm_data2fmap=data2fmap_xfm,
             approx=self.inputs.approx,

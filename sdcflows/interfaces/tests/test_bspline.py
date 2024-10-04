@@ -138,7 +138,6 @@ def test_topup_coeffs(tmpdir, testdata_dir):
         _fix_topup_fieldcoeff("failing.nii.gz", str(testdata_dir / "epi.nii.gz"), "i")
 
 
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
 def test_topup_coeffs_interpolation(tmpdir, testdata_dir):
     """Check that our interpolation is not far away from TOPUP's."""
     tmpdir.chdir()

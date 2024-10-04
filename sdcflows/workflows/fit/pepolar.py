@@ -219,7 +219,7 @@ def init_topup_wf(
     from sdcflows.interfaces.bspline import ApplyCoeffsField
 
     # Separate the runs again, as our ApplyCoeffsField corrects them separately
-    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
+    unwarp = pe.Node(ApplyCoeffsField(jacobian=True), name="unwarp")
     unwarp.interface._always_run = True
     concat_corrected = pe.Node(MergeSeries(), name="concat_corrected")
 

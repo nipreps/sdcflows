@@ -5,6 +5,12 @@ on:
   pull_request:
   schedule:
     - cron: 0 0 * * 0
+  # Allow job to be triggered manually from GitHub interface
+  workflow_dispatch:
+
+# Force pytest to use color
+env:
+  FORCE_COLOR: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +24,20 @@ defaults:
     shell: bash -el {0}
 
 jobs:
-  build-linux:
+  build-package:
+    name: Build & inspect package
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v2
+
+  test:
     if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
     runs-on: ubuntu-latest
     env:
@@ -30,11 +49,16 @@ jobs:
       AFNI_IMSAVE_WARNINGS: NO
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
-      ANTSPATH: /opt/ants
     strategy:
-      max-parallel: 5
+      max-parallel: 6
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        marks: ["not slow"]
+        include:
+          - python-version: "3.9"
+            marks: "slow and not veryslow"
+          - python-version: "3.12"
+            marks: "veryslow"
 
     steps:
     - uses: actions/cache@v4
@@ -66,19 +90,6 @@ jobs:
           tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
         fi
 
-    - uses: actions/cache@v4
-      with:
-        path: /opt/ants
-        key: ants-v1
-        restore-keys: |
-          ants-v1
-    - name: Install ANTS
-      run: |
-        if [[ ! -d "${ANTSPATH}" ]]; then
-          sudo mkdir -p $ANTSPATH
-          curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" | sudo tar -xzC $ANTSPATH --strip-components 1
-        fi
-
     - name: Git settings (pacify DataLad)
       run: |
         git config --global user.name 'NiPreps Bot'
@@ -89,11 +100,11 @@ jobs:
         auto-update-conda: true
         auto-activate-base: true
         python-version: ${{ matrix.python-version }}
-        channels: anaconda,https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
+        channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
     - uses: actions/cache@v4
       id: conda
       env:
-        CACHE_NUM: v4
+        CACHE_NUM: v5
       with:
         path: |
           ~/conda_pkgs_dir
@@ -105,9 +116,9 @@ jobs:
       run: |
         conda install git-annex=*=alldep* pip
         pip install datalad datalad-osf
-    - name: Install fsl
+    - name: Install fsl and ANTs
       run: |
-        conda install fsl-fugue fsl-topup
+        conda install fsl-fugue fsl-topup ants
     - uses: actions/checkout@v4
     - name: Install dependencies
       timeout-minutes: 5
@@ -128,7 +139,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v1
+        key: data-cache-v2
         restore-keys: |
           data-cache-
     - name: Install test data
@@ -139,28 +150,44 @@ jobs:
         # ds001600
         datalad install -r https://github.com/nipreps-data/ds001600.git
         datalad update -r --merge -d ds001600/
-        datalad get -r -d ds001600/ ds001600/sub-1/
+        datalad get -r -J 2 -d ds001600/ ds001600/sub-1/
 
         # HCP/sub-101006
         datalad install -r https://github.com/nipreps-data/HCP101006.git
         datalad update -r --merge -d HCP101006/
-        datalad get -r -d HCP101006
+        datalad get -r -J 2 -d HCP101006 HCP101006/*
 
         # ds001771
         datalad install -r https://github.com/nipreps-data/ds001771.git
         datalad update -r --merge -d ds001771/
-        datalad get -r -d ds001771/ ds001771/sub-36/*
-        datalad get -r -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
+        datalad get -r -J 2 -d ds001771/ ds001771/sub-36/*
+        datalad get -r -J 2 -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
 
         # ds000054
         datalad install -r https://github.com/nipreps-data/ds000054.git
         datalad update --merge -d ds000054/
         datalad get -r -d ds000054/ ds000054/sub-100185/*
+        datalad get -r -J 2 -d ds000054/ ds000054/derivatives/smriprep-0.6/sub-100185/anat/
 
         # ds000206
         datalad install -r https://github.com/nipreps-data/ds000206.git
         datalad update -r --merge -d ds000206/
-        datalad get -r -d ds000206/ ds000206/sub-05/
+        datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
+
+        # Brain extraction tests
+        datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
+        datalad update --merge -d brain-extraction-tests/
+        datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
+
+        # HCPH pilot
+        datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
+        datalad update -r --merge -d hcph-pilot_fieldmaps/
+        datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
+
+    - name: Set FreeSurfer variables
+      run: |
+        echo "FREESURFER_HOME=$HOME/.cache/freesurfer" >> $GITHUB_ENV
+        echo "FS_LICENSE=$HOME/.cache/freesurfer/license.txt" >> $GITHUB_ENV
 
     - name: Install FreeSurfer's mri_robust_template
       env:
@@ -168,17 +195,40 @@ jobs:
       run: |
         curl https://files.osf.io/v1/resources/$MRI_ROBUST_TEMPLATE?direct > mri_robust_template
         sudo install mri_robust_template /usr/local/bin
-        mkdir -p $HOME/.cache/freesurfer/
-        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $HOME/.cache/freesurfer/license.txt
+        mkdir -p $( dirname $FS_LICENSE )
+        echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $FS_LICENSE
 
     - name: Run pytest with coverage
       run: |
-        export LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-        export PATH=$ANTSPATH:${AFNI_HOME}:/usr/lib/fsl/5.0:$PATH
-        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows
+        export PATH=${AFNI_HOME}:$PATH
+        export FSLDIR=${CONDA_PREFIX}
+        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows \
+          --durations=20 --durations-min=10 -m "$MARKS"
+      env:
+        MARKS: ${{ matrix.marks }}
 
     - uses: codecov/codecov-action@v4
       with:
         file: cov.xml
         token: ${{ secrets.CODECOV_TOKEN }}
       if: ${{ always() }}
+
+  publish:
+    name: Publish released package to pypi.org
+    environment: release-pypi
+    if: github.event.action == 'published'
+    runs-on: ubuntu-latest
+    needs: [build-package, test]
+    permissions:
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Download packages built by build-and-inspect-python-package
+        uses: actions/download-artifact@v4
+        with:
+          name: Packages
+          path: dist
+
+      - name: Upload package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

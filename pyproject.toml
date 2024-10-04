@@ -161,11 +161,15 @@ per-file-ignores = [
 
 [tool.pytest.ini_options]
 norecursedirs = [".git"]
-addopts = "-svx --doctest-modules"
+addopts = "-svx --doctest-modules --strict-markers"
 doctest_optionflags = "ALLOW_UNICODE NORMALIZE_WHITESPACE ELLIPSIS"
 env = "PYTHONHASHSEED=0"
 filterwarnings = ["ignore::DeprecationWarning"]
 junit_family = "xunit2"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "veryslow: marks tests as very slow (>5min)",
+]
 
 
 [tool.coverage.run]
@@ -192,3 +196,8 @@ ignore-words-list = 'nd,mapp,reson'
 skip = """
 ./.git,*.pdf,*.svg,*.min.js,*.ipynb,ORIGINAL_LICENSE,\
 ./docs/source/_static/example_anatreport.html"""
+
+[tool.check-wheel-contents]
+ignore = [
+  "W002",  # Test data contains duplicates
+]

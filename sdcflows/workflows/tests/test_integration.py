@@ -21,7 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test the base workflow."""
-import os
 from pathlib import Path
 import json
 import pytest
@@ -37,7 +36,7 @@ from niworkflows.interfaces.reportlets.registration import (
 )
 
 
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
+@pytest.mark.slow
 @pytest.mark.parametrize("pe0", ["LR", "PA"])
 @pytest.mark.parametrize("mode", ["pepolar", "phasediff"])
 def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):

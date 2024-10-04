@@ -21,7 +21,6 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test phase-difference type of fieldmaps."""
-import os
 from pathlib import Path
 from json import loads
 
@@ -30,8 +29,7 @@ import pytest
 from ..fieldmap import init_fmap_wf, Workflow
 
 
-@pytest.mark.skipif(os.getenv("TRAVIS") == "true", reason="this is TravisCI")
-@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") == "true", reason="this is GH Actions")
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "fmap_file",
     [
