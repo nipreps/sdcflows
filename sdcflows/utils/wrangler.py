@@ -540,6 +540,39 @@ def find_estimators(
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
 
+                medic_entities = {**base_entities, **{'part': 'mag', 'echo': Query.ANY}}
+                has_magnitude = tuple()
+                with suppress(ValueError):
+                    has_magnitude = layout.get(
+                        suffix='bold',
+                        **medic_entities,
+                    )
+
+                for mag_img in has_magnitude:
+                    phase_img = layout.get(**{**mag_img.get_entities(), **{'part': 'phase'}})
+                    if not phase_img:
+                        continue
+
+                    phase_img = phase_img[0]
+                    try:
+                        e = fm.FieldmapEstimation(
+                            [
+                                fm.FieldmapFile(mag_img.path, metadata=mag_img.get_metadata()),
+                                fm.FieldmapFile(phase_img.path, metadata=phase_img.get_metadata()),
+                            ]
+                        )
+                    except (ValueError, TypeError) as err:
+                        _log_debug_estimator_fail(
+                            logger,
+                            "potential MEDIC fieldmap",
+                            [mag_img, phase_img],
+                            layout.root,
+                            str(err),
+                        )
+                    else:
+                        _log_debug_estimation(logger, e, layout.root)
+                        estimators.append(e)
+
     if estimators and not force_fmapless:
         fmapless = False
 
