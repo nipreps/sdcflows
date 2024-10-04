@@ -237,7 +237,7 @@ template [@fieldmapless3].
         DisplacementsField2Fieldmap(), name="extract_field"
     )
 
-    unwarp = pe.Node(ApplyCoeffsField(), name="unwarp")
+    unwarp = pe.Node(ApplyCoeffsField(jacobian=False), name="unwarp")
 
     # Check zooms (avoid very expensive B-Splines fitting)
     zooms_field = pe.Node(
