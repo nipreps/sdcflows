@@ -549,23 +549,22 @@ def find_estimators(
                     )
 
                 for mag_img in has_magnitude:
-                    phase_img = layout.get(**{**mag_img.get_entities(), **{'part': 'phase'}})
-                    if not phase_img:
+                    complex_imgs = layout.get(**{**mag_img.get_entities(), **{'part': ['phase', 'mag']}})
+
+                    if complex_imgs[0].path in fm._estimators.sources:
                         continue
 
-                    phase_img = phase_img[0]
                     try:
                         e = fm.FieldmapEstimation(
                             [
-                                fm.FieldmapFile(mag_img.path, metadata=mag_img.get_metadata()),
-                                fm.FieldmapFile(phase_img.path, metadata=phase_img.get_metadata()),
+                                fm.FieldmapFile(img.path, metadata=img.get_metadata()) for img in complex_imgs
                             ]
                         )
                     except (ValueError, TypeError) as err:
                         _log_debug_estimator_fail(
                             logger,
                             "potential MEDIC fieldmap",
-                            [mag_img, phase_img],
+                            complex_imgs,
                             layout.root,
                             str(err),
                         )
