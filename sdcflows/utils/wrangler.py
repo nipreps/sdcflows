@@ -321,6 +321,15 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
+    It should find MEDIC-style files too:
+
+    >>> find_estimators(
+    ...     layout=layouts['dsD'],
+    ...     subject="01",
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 10>,
+                        bids_id='medic')]
+
     """
     from .misc import create_logger
     from bids.layout import Query
@@ -530,6 +539,41 @@ def find_estimators(
                 else:
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
+
+                medic_entities = {**base_entities, **{'part': 'phase', 'echo': Query.ANY}}
+                has_phase = tuple()
+                with suppress(ValueError):
+                    has_phase = layout.get(
+                        suffix='bold',
+                        **medic_entities,
+                    )
+
+                for phase_img in has_phase:
+                    complex_imgs = layout.get(
+                        **{**phase_img.get_entities(), **{'part': ['phase', 'mag']}}
+                    )
+
+                    if complex_imgs[0].path in fm._estimators.sources:
+                        continue
+
+                    try:
+                        e = fm.FieldmapEstimation(
+                            [
+                                fm.FieldmapFile(img.path, metadata=img.get_metadata())
+                                for img in complex_imgs
+                            ]
+                        )
+                    except (ValueError, TypeError) as err:
+                        _log_debug_estimator_fail(
+                            logger,
+                            "potential MEDIC fieldmap",
+                            complex_imgs,
+                            layout.root,
+                            str(err),
+                        )
+                    else:
+                        _log_debug_estimation(logger, e, layout.root)
+                        estimators.append(e)
 
     if estimators and not force_fmapless:
         fmapless = False
