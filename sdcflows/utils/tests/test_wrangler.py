@@ -472,3 +472,24 @@ def test_fieldmapless(tmp_path):
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
+
+    # force fmapless on top of self-pepolar
+    self_pepolar_metadata = {
+        **bold["metadata"],
+        "B0FieldIdentifier": "pepolar_fmap",
+        "B0FieldSource": "pepolar_fmap"
+    }
+
+    spec = {
+        "01": {
+            "anat": [T1w],
+            "func": [{"run": i, **bold, "metadata": {**self_pepolar_metadata, "PhaseEncodingDirection": pedir}, } for i, pedir in zip(range(1, 3), ["j", "j-"])],
+        },
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject="01", fmapless=True, force_fmapless=True)
+    assert len(est) == 2
+    assert len(est[0].sources) == 2
+    clear_registry()
+    rmtree(bids_dir)
