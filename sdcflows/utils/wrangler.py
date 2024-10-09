@@ -550,9 +550,9 @@ def find_estimators(
         base_entities=base_entities,
         suffixes=fmapless,
     )
-    for spec in estimator_specs:
+    for si, spec in enumerate(estimator_specs):
         try:
-            estimator = fm.FieldmapEstimation(spec)
+            estimator = fm.FieldmapEstimation(spec, bids_id=f"fmapless{si}")
         except (ValueError, TypeError) as err:
             _log_debug_estimator_fail(logger, "ANAT", spec, layout.root, str(err))
         else:

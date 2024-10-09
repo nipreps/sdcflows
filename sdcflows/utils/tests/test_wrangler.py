@@ -326,12 +326,15 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
         ('phasediff', phasediff, 3),
     ],
 )
-@pytest.mark.parametrize("session, estimations", [
-    ("01", 1),
-    ("02", 1),
-    ("03", 1),
-    (None, None),
-])
+@pytest.mark.parametrize(
+    "session, estimations",
+    [
+        ("01", 1),
+        ("02", 1),
+        ("03", 1),
+        (None, None),
+    ],
+)
 def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estimations):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)
@@ -477,19 +480,27 @@ def test_fieldmapless(tmp_path):
     self_pepolar_metadata = {
         **bold["metadata"],
         "B0FieldIdentifier": "pepolar_fmap",
-        "B0FieldSource": "pepolar_fmap"
+        "B0FieldSource": "pepolar_fmap",
     }
 
     spec = {
         "01": {
             "anat": [T1w],
-            "func": [{"run": i, **bold, "metadata": {**self_pepolar_metadata, "PhaseEncodingDirection": pedir}, } for i, pedir in zip(range(1, 3), ["j", "j-"])],
+            "func": [
+                {
+                    "run": i,
+                    **bold,
+                    "metadata": {**self_pepolar_metadata, "PhaseEncodingDirection": pedir},
+                }
+                for i, pedir in zip(range(1, 3), ["j", "j-"])
+            ],
         },
     }
     generate_bids_skeleton(bids_dir, spec)
     layout = gen_layout(bids_dir)
-    est = find_estimators(layout=layout, subject="01", fmapless=True, force_fmapless=True)
-    assert len(est) == 2
-    assert len(est[0].sources) == 2
+    ests = find_estimators(layout=layout, subject="01", fmapless=True, force_fmapless=True)
+    assert len(ests) == 3
+    for est in ests:
+        assert len(est.sources) == 2
     clear_registry()
     rmtree(bids_dir)
