@@ -231,6 +231,7 @@ def find_estimators(
 
     Likewise in a more comprehensive dataset:
 
+    >>> fm.clear_registry()
     >>> find_estimators(
     ...     layout=layouts['ds001771'],
     ...     subject="36",
@@ -259,6 +260,7 @@ def find_estimators(
     heuristics come back empty (BOLD and DWI files are missing
     the mandatory ``PhaseEncodingDirection``, in this case):
 
+    >>> fm.clear_registry()
     >>> find_estimators(
     ...     layout=layouts['dsA'],
     ...     subject="01",
@@ -277,6 +279,7 @@ def find_estimators(
 
     This function should also correctly investigate multi-session datasets:
 
+    >>> fm.clear_registry()
     >>> find_estimators(
     ...     layout=layouts['ds000206'],
     ...     subject="05",
@@ -309,6 +312,7 @@ def find_estimators(
     The only exception to the priority of ``B0FieldIdentifier`` is when fieldmaps
     are searched with the ``force_fmapless`` argument on:
 
+    >>> fm.clear_registry()
     >>> fm.clear_registry()  # Necessary as `pepolar4pe` is not changing.
     >>> find_estimators(
     ...     layout=layouts['dsC'],
