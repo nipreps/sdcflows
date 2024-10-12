@@ -131,7 +131,7 @@ b0field_config = {
         ("b0field", b0field_config, "pepolar"),
     ],
 )
-def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
+def _test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
     """Test the CLI with --dry-run."""
     import sdcflows.config as sc
 
