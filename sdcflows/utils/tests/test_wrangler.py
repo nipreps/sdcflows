@@ -378,7 +378,7 @@ medic = {
 
 filters = {
     "fmap": {
-        "datatype": "fmap",
+        "datatype": ["fmap", "func"],
         "session": "01",
     },
     "t1w": {"datatype": "anat", "session": "01", "suffix": "T1w"},
