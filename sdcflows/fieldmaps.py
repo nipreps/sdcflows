@@ -321,7 +321,7 @@ class FieldmapEstimation:
             raise TypeError(f"Incompatible suffixes found: <{','.join(fmap_types)}>.")
 
         # Check for MEDIC
-        if "part-mag" in self.sources[0].path and "echo-" in self.sources[0].path:
+        if ("part-mag" in self.sources[0].path.name) and ("echo-" in self.sources[0].path.name):
             fmap_types = set(list(fmap_types) + ["medic"])
 
         if fmap_types:
