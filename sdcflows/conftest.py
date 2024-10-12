@@ -72,7 +72,6 @@ def doctest_fixture(doctest_namespace, request):
             dsA_dir=data_dir / "dsA",
             dsB_dir=data_dir / "dsB",
             dsC_dir=data_dir / "dsC",
-            dsD_dir=data_dir / "dsD",
         )
         doctest_namespace.update((key, Path(val.root)) for key, val in layouts.items())
 

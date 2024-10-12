@@ -52,7 +52,7 @@ class _PhaseMap2radsOutputSpec(TraitedSpec):
 
 
 class PhaseMap2rads(SimpleInterface):
-    """Convert a phase map given in a.u. (e.g., 0-4096) to radians."""
+    """Convert a phase map given in a.u. (e.g., 0-4096) to radians (0 to 2pi)."""
 
     input_spec = _PhaseMap2radsInputSpec
     output_spec = _PhaseMap2radsOutputSpec
@@ -73,7 +73,10 @@ class _PhaseMap2rads2OutputSpec(TraitedSpec):
 
 
 class PhaseMap2rads2(SimpleInterface):
-    """Convert a phase map given in a.u. (e.g., 0-4096) to radians."""
+    """Convert a phase map given in a.u. (e.g., 0-4096) to radians (-pi to pi).
+
+    This differs from PhaseMap2rads, which scales the phase to [0, 2*pi].
+    """
 
     input_spec = _PhaseMap2rads2InputSpec
     output_spec = _PhaseMap2rads2OutputSpec

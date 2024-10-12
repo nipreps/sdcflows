@@ -24,7 +24,7 @@
 
 
 def au2rads(in_file, newpath=None):
-    """Convert the input phase map in arbitrary units (a.u.) to rads."""
+    """Convert the input phase map in arbitrary units (a.u.) to rads (0 to 2pi)."""
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -47,7 +47,10 @@ def au2rads(in_file, newpath=None):
 
 
 def au2rads2(in_file, newpath=None):
-    """Convert the input phase map in arbitrary units (a.u.) to rads (-pi to pi)."""
+    """Convert the input phase map in arbitrary units (a.u.) to rads (-pi to pi).
+
+    This differs from au2rads, which scales the phase to [0, 2*pi].
+    """
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -58,6 +61,7 @@ def au2rads2(in_file, newpath=None):
 
     # Rescale to [0, 2*pi]
     data = (data - data.min()) * (2 * np.pi / (data.max() - data.min()))
+    # Rescale to [-pi, pi]
     data = data - np.pi
 
     # Round to float32 and clip
