@@ -304,6 +304,8 @@ medic = {
                     "part": "mag",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.0142,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
@@ -316,6 +318,8 @@ medic = {
                     "part": "phase",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.0142,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
@@ -328,6 +332,8 @@ medic = {
                     "part": "mag",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.03893,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
@@ -340,6 +346,8 @@ medic = {
                     "part": "phase",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.03893,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
@@ -352,6 +360,8 @@ medic = {
                     "part": "mag",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.06366,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
@@ -364,6 +374,8 @@ medic = {
                     "part": "phase",
                     "suffix": "bold",
                     "metadata": {
+                        "B0FieldIdentifier": ["medic_rest"],
+                        "B0FieldSource": ["medic_rest"],
                         "EchoTime": 0.06366,
                         "RepetitionTime": 0.8,
                         "TotalReadoutTime": 0.5,
