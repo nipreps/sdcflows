@@ -29,5 +29,5 @@ def test_get_trt_err_wo_trt_and_in_file():
     """Test that calling get_trt with dict that does not have TotalReadoutTime \
     and no in_file raises AssertionError.
     """
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         get_trt(in_meta={})
