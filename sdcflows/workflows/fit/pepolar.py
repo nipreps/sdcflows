@@ -21,8 +21,9 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Datasets with multiple phase encoded directions."""
-from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
+
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
