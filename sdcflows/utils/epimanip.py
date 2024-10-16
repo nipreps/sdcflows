@@ -189,9 +189,8 @@ def get_trt(in_meta, in_file=None):
 
         return trt
     elif in_file is None:
-        msg = "Unable to find TotalReadoutTime in metadata and in_file \
-               not defined."
-        raise AssertionError(msg)
+        msg = "`in_file` must be defined if TotalReadoutTime does not appear in `in_meta`."
+        raise ValueError(msg)
 
     # npe = N voxels PE direction
     pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
