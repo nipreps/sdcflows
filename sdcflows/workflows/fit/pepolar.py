@@ -88,17 +88,13 @@ def init_topup_wf(
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
-    from niworkflows.interfaces.images import RobustAverage
     from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
+    from niworkflows.interfaces.images import RobustAverage
 
-    from ...interfaces.bspline import TOPUPCoeffReorient
-    from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import (
-        PadSlices,
-        ReorientImageAndMetadata,
-        UniformGrid,
-    )
     from ...utils.misc import front as _front
+    from ...interfaces.epi import GetReadoutTime, SortPEBlips
+    from ...interfaces.utils import UniformGrid, PadSlices, ReorientImageAndMetadata
+    from ...interfaces.bspline import TOPUPCoeffReorient
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -106,9 +102,7 @@ def init_topup_wf(
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
 
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode"
-    )
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
