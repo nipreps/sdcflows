@@ -141,23 +141,19 @@ def init_topup_wf(
         SortPEBlips(), name="sort_pe_blips", run_without_submitting=True
     )
     # Merge into one 4D file
-    concat_blips = pe.Node(
-        MergeSeries(affine_tolerance=1e-4), name="concat_blips"
-    )
+    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
     # Pad dimensions so that they meet TOPUP's expectations
     pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
     # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    setwise_avg = pe.Node(
-        RobustAverage(num_threads=omp_nthreads), name="setwise_avg"
-    )
+    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
     # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
-    to_las = pe.Node(
-        ReorientImageAndMetadata(target_orientation="LAS"), name="to_las"
-    )
+    to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
     topup = pe.Node(
-        TOPUP(config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))),
+        TOPUP(
+            config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))
+        ),
         name="topup",
     )
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
@@ -166,9 +162,7 @@ def init_topup_wf(
     )
 
     # Average the output
-    ref_average = pe.Node(
-        RobustAverage(num_threads=omp_nthreads), name="ref_average"
-    )
+    ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name="ref_average")
 
     # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
