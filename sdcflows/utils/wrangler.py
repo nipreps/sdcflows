@@ -453,6 +453,53 @@ def find_estimators(
                         _log_debug_estimation(logger, e, layout.root)
                         estimators.append(e)
 
+        # Look for MEDIC field maps
+        # These need to be complex-valued multi-echo BOLD runs with ``IntendedFor``
+        has_intended = tuple()
+        with suppress(ValueError):
+            has_intended = layout.get(
+                **{
+                    **base_entities,
+                    **{
+                        'session': sessions,
+                        'echo': Query.REQUIRED,
+                        'part': 'phase',
+                        'suffix': 'bold',
+                        'IntendedFor': Query.REQUIRED,
+                    },
+                },
+            )
+
+        for bold_fmap in has_intended:
+            complex_imgs = layout.get(
+                **{
+                    **bold_fmap.get_entities(),
+                    **{'part': ['phase', 'mag'], 'echo': Query.ANY},
+                }
+            )
+
+            current_sources = [est.sources for est in estimators]
+            current_sources = [
+                str(item.path) for sublist in current_sources for item in sublist
+            ]
+            if complex_imgs[0].path in current_sources:
+                print("Skipping fieldmap %s (already in use)" % complex_imgs[0].relpath)
+                continue
+
+            if current_sources:
+                raise Exception(complex_imgs[0].path, current_sources)
+
+            e = fm.FieldmapEstimation(
+                [
+                    fm.FieldmapFile(img.path, metadata=img.get_metadata())
+                    for img in complex_imgs
+                ]
+            )
+
+            _log_debug_estimation(logger, e, layout.root)
+            estimators.append(e)
+            continue
+
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
         has_intended = tuple()
@@ -530,41 +577,6 @@ def find_estimators(
                 else:
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
-
-                medic_entities = {**base_entities, **{'part': 'phase', 'echo': Query.ANY}}
-                has_phase = tuple()
-                with suppress(ValueError):
-                    has_phase = layout.get(
-                        suffix='bold',
-                        **medic_entities,
-                    )
-
-                for phase_img in has_phase:
-                    complex_imgs = layout.get(
-                        **{**phase_img.get_entities(), **{'part': ['phase', 'mag']}}
-                    )
-
-                    if complex_imgs[0].path in fm._estimators.sources:
-                        continue
-
-                    try:
-                        e = fm.FieldmapEstimation(
-                            [
-                                fm.FieldmapFile(img.path, metadata=img.get_metadata())
-                                for img in complex_imgs
-                            ]
-                        )
-                    except (ValueError, TypeError) as err:
-                        _log_debug_estimator_fail(
-                            logger,
-                            "potential MEDIC fieldmap",
-                            complex_imgs,
-                            layout.root,
-                            str(err),
-                        )
-                    else:
-                        _log_debug_estimation(logger, e, layout.root)
-                        estimators.append(e)
 
     if estimators and not force_fmapless:
         fmapless = False

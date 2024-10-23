@@ -68,7 +68,6 @@ MODALITIES = {
     "sbref": EstimatorType.PEPOLAR,
     "T1w": EstimatorType.ANAT,
     "T2w": EstimatorType.ANAT,
-    "medic": EstimatorType.MEDIC,
 }
 
 
@@ -84,6 +83,7 @@ def _type_setter(obj, attribute, value):
         EstimatorType.PHASEDIFF,
         EstimatorType.MAPPED,
         EstimatorType.ANAT,
+        EstimatorType.MEDIC,
     ):
         raise ValueError(f"Invalid estimation method type {value}.")
 
@@ -315,14 +315,25 @@ class FieldmapEstimation:
 
         # Fieldmap option 1: actual field-mapping sequences
         fmap_types = suffix_set.intersection(
-            ("fieldmap", "phasediff", "phase1", "phase2", "bold")
+            ("fieldmap", "phasediff", "phase1", "phase2")
         )
         if len(fmap_types) > 1 and fmap_types - set(("phase1", "phase2")):
             raise TypeError(f"Incompatible suffixes found: <{','.join(fmap_types)}>.")
 
         # Check for MEDIC
-        if ("part-mag" in self.sources[0].path.name) and ("echo-" in self.sources[0].path.name):
-            fmap_types = set(list(fmap_types) + ["medic"])
+        mag_bold, phase_bold, me_bold = 0, 0, 0
+        for f in self.sources:
+            if f.suffix == "bold" and ("part-mag" in f.path.name):
+                mag_bold += 1
+
+            if f.suffix == "bold" and ("part-phase" in f.path.name):
+                phase_bold += 1
+
+            if f.suffix == "bold" and ("echo-" in f.path.name):
+                me_bold += 1
+
+        if (mag_bold > 1) and (phase_bold > 1) and (me_bold > 2) and (mag_bold == phase_bold):
+            self.method = EstimatorType.MEDIC
 
         if fmap_types:
             sources = sorted(
@@ -388,6 +399,7 @@ class FieldmapEstimation:
                 [f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref", "asl", "m0scan")]
             ) > 1
         )
+        _pepolar_estimation = _pepolar_estimation and (self.method == EstimatorType.UNKNOWN)
 
         if _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]

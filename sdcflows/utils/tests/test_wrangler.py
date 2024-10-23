@@ -708,7 +708,7 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     [
         ('pepolar', pepolar, 5),
         ('phasediff', phasediff, 3),
-        ('medic', medic, 1),
+        ('medic', medic, 3),
     ],
 )
 @pytest.mark.parametrize(
