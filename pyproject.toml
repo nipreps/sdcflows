@@ -157,6 +157,7 @@ ignore = ["W503", "E203"]
 per-file-ignores = [
     "**/__init__.py : F401",
     "docs/conf.py : E265",
+    "sdcflows/utils/tests/*.py: E501",
 ]
 
 [tool.pytest.ini_options]
