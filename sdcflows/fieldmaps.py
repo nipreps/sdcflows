@@ -321,19 +321,37 @@ class FieldmapEstimation:
             raise TypeError(f"Incompatible suffixes found: <{','.join(fmap_types)}>.")
 
         # Check for MEDIC
-        mag_bold, phase_bold, me_bold = 0, 0, 0
+        # They must have a bold suffix, multiple echoes, and both mag and phase data
+        echos = []
         for f in self.sources:
-            if f.suffix == "bold" and ("part-mag" in f.path.name):
-                mag_bold += 1
+            echo = re.search(r"(?<=_echo-)\d+", f.path.name)
+            if echo:
+                echos.append(int(echo.group()))
 
-            if f.suffix == "bold" and ("part-phase" in f.path.name):
-                phase_bold += 1
+        echos = sorted(list(set(echos)))
+        if len(echos) > 1:
+            for echo in echos:
+                has_mag, has_phase = False, False
+                for f in self.sources:
+                    if (
+                        f.suffix == "bold"
+                        and (f"echo-{echo}_" in f.path.name)
+                        and ("part-mag" in f.path.name)
+                    ):
+                        has_mag = True
 
-            if f.suffix == "bold" and ("echo-" in f.path.name):
-                me_bold += 1
+                    if (
+                        f.suffix == "bold"
+                        and (f"echo-{echo}_" in f.path.name)
+                        and ("part-phase" in f.path.name)
+                    ):
+                        has_phase = True
 
-        if (mag_bold > 1) and (phase_bold > 1) and (me_bold > 2) and (mag_bold == phase_bold):
+                if not (has_mag and has_phase):
+                    break
+
             self.method = EstimatorType.MEDIC
+            fmap_types = {}
 
         if fmap_types:
             sources = sorted(

@@ -483,22 +483,31 @@ def find_estimators(
                 str(item.path) for sublist in current_sources for item in sublist
             ]
             if complex_imgs[0].path in current_sources:
-                print("Skipping fieldmap %s (already in use)" % complex_imgs[0].relpath)
+                logger.debug("Skipping fieldmap %s (already in use)", complex_imgs[0].relpath)
                 continue
 
-            if current_sources:
-                raise Exception(complex_imgs[0].path, current_sources)
-
-            e = fm.FieldmapEstimation(
-                [
-                    fm.FieldmapFile(img.path, metadata=img.get_metadata())
-                    for img in complex_imgs
-                ]
-            )
-
-            _log_debug_estimation(logger, e, layout.root)
-            estimators.append(e)
-            continue
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            img.path,
+                            metadata=_filter_metadata(img.get_metadata(), subject),
+                        )
+                        for img in complex_imgs
+                    ]
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger,
+                    "unnamed MEDIC",
+                    [],
+                    layout.root,
+                    str(err),
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
+                continue
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
