@@ -516,7 +516,11 @@ def find_estimators(
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': ['epi', 'bold'], 'IntendedFor': Query.REQUIRED, 'session': sessions}
+                    **{
+                        'suffix': ['epi', 'bold'],
+                        'IntendedFor': Query.REQUIRED,
+                        'session': sessions,
+                    },
                 }
             )
 
