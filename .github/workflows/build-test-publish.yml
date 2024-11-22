@@ -202,14 +202,13 @@ jobs:
       run: |
         export PATH=${AFNI_HOME}:$PATH
         export FSLDIR=${CONDA_PREFIX}
-        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows \
+        pytest -v --cov sdcflows --cov-report xml --doctest-modules -n auto sdcflows \
           --durations=20 --durations-min=10 -m "$MARKS"
       env:
         MARKS: ${{ matrix.marks }}
 
     - uses: codecov/codecov-action@v5
       with:
-        file: cov.xml
         token: ${{ secrets.CODECOV_TOKEN }}
       if: ${{ always() }}
 
