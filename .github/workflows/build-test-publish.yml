@@ -185,9 +185,9 @@ jobs:
         datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
         # ds005250
-        datalad install -r https://gin.g-node.org/tsalo/ds005250-sdcflows.git
-        datalad update -r --merge -d ds005250-sdcflows/
-        datalad get -r -J 2 -d ds005250-sdcflows/ ds005250-sdcflows/sub-04/ses-2/
+        datalad install -r https://github.com/nipreps-data/ds005250.git
+        datalad update -r --merge -d ds005250/
+        datalad get -r -J 2 -d ds005250/ ds005250/sub-04/ses-2/
 
     - name: Set FreeSurfer variables
       run: |
