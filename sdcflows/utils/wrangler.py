@@ -324,7 +324,7 @@ def find_estimators(
     MEDIC fieldmaps are also supported:
 
     >>> find_estimators(
-    ...     layout=layouts['ds005250-sdcflows'],
+    ...     layout=layouts['ds005250'],
     ...     subject='04',
     ...     fmapless=False,
     ...     force_fmapless=False,
