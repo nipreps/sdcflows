@@ -347,7 +347,6 @@ def find_estimators(
     base_entities = {
         "subject": subject,
         "extension": [".nii", ".nii.gz"],
-        "part": ["mag", None],
         "scope": "raw",  # Ensure derivatives are not captured
     }
 
@@ -372,7 +371,9 @@ def find_estimators(
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            (listify(ids) for ids in layout.get_B0FieldIdentifiers(
+                session=sessions, **base_entities)
+            ),
             set()
         )
 

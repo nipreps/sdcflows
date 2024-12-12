@@ -38,7 +38,8 @@ def test_medic(tmpdir, datadir, workdir, outdir):
     magnitude_files = sorted(datadir.glob(pattern))
     phase_files = [f.with_name(f.name.replace("part-mag", "part-phase")) for f in magnitude_files]
     metadata_dicts = [
-        loads(Path(f.name.replace('.nii.gz', '.json')).read_text()) for f in magnitude_files
+        loads(Path(f.with_name(f.name.replace('.nii.gz', '.json'))).read_text())
+        for f in magnitude_files
     ]
 
     wf = Workflow(name=f"medic_{magnitude_files[0].name.replace('.nii.gz', '').replace('-', '_')}")
