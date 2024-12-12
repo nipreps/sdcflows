@@ -24,11 +24,11 @@
 import numpy as np
 import nibabel as nb
 
-from ..phasemanip import au2rads, phdiff2fmap
+from ..phasemanip import au2rads, au2rads2, phdiff2fmap
 
 
 def test_au2rads(tmp_path):
-    """Check the conversion."""
+    """Check the conversion from arbitrary units to 0 to 2pi."""
     data = np.random.randint(0, high=4096, size=(5, 5, 5))
     data[0, 0, 0] = 0
     data[-1, -1, -1] = 4096
@@ -41,6 +41,24 @@ def test_au2rads(tmp_path):
 
     assert np.allclose(
         (data / 4096).astype("float32") * 2.0 * np.pi,
+        nb.load(out_file).get_fdata(dtype="float32"),
+    )
+
+
+def test_au2rads2(tmp_path):
+    """Check the conversion from arbitrary units to -pi to pi."""
+    data = np.random.randint(0, high=4096, size=(5, 5, 5))
+    data[0, 0, 0] = 0
+    data[-1, -1, -1] = 4096
+
+    nb.Nifti1Image(data.astype("int16"), np.eye(4)).to_filename(
+        tmp_path / "testdata.nii.gz"
+    )
+
+    out_file = au2rads2(tmp_path / "testdata.nii.gz")
+
+    assert np.allclose(
+        ((data / 4096).astype("float32") * 2.0 * np.pi) - np.pi,
         nb.load(out_file).get_fdata(dtype="float32"),
     )
 

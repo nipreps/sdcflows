@@ -49,6 +49,7 @@ class EstimatorType(Enum):
     PHASEDIFF = auto()
     MAPPED = auto()
     ANAT = auto()
+    MEDIC = auto()
 
 
 MODALITIES = {
@@ -82,6 +83,7 @@ def _type_setter(obj, attribute, value):
         EstimatorType.PHASEDIFF,
         EstimatorType.MAPPED,
         EstimatorType.ANAT,
+        EstimatorType.MEDIC,
     ):
         raise ValueError(f"Invalid estimation method type {value}.")
 
@@ -316,13 +318,46 @@ class FieldmapEstimation:
             ("fieldmap", "phasediff", "phase1", "phase2")
         )
         if len(fmap_types) > 1 and fmap_types - set(("phase1", "phase2")):
-            raise TypeError(f"Incompatible suffices found: <{','.join(fmap_types)}>.")
+            raise TypeError(f"Incompatible suffixes found: <{','.join(fmap_types)}>.")
+
+        # Check for MEDIC
+        # They must have a bold suffix, multiple echoes, and both mag and phase data
+        echos = []
+        for f in self.sources:
+            echo = re.search(r"(?<=_echo-)\d+", f.path.name)
+            if echo:
+                echos.append(int(echo.group()))
+
+        echos = sorted(list(set(echos)))
+        if len(echos) > 1:
+            for echo in echos:
+                has_mag, has_phase = False, False
+                for f in self.sources:
+                    if (
+                        f.suffix == "bold"
+                        and (f"echo-{echo}_" in f.path.name)
+                        and ("part-mag" in f.path.name)
+                    ):
+                        has_mag = True
+
+                    if (
+                        f.suffix == "bold"
+                        and (f"echo-{echo}_" in f.path.name)
+                        and ("part-phase" in f.path.name)
+                    ):
+                        has_phase = True
+
+                if not (has_mag and has_phase):
+                    break
+
+            self.method = EstimatorType.MEDIC
+            fmap_types = {}
 
         if fmap_types:
             sources = sorted(
                 f.path
                 for f in self.sources
-                if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2")
+                if f.suffix in ("fieldmap", "phasediff", "phase1", "phase2", "bold")
             )
 
             # Automagically add the corresponding phase2 file if missing as argument
@@ -382,6 +417,7 @@ class FieldmapEstimation:
                 [f for f in suffix_list if f in ("bold", "dwi", "epi", "sbref", "asl", "m0scan")]
             ) > 1
         )
+        _pepolar_estimation = _pepolar_estimation and (self.method == EstimatorType.UNKNOWN)
 
         if _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]

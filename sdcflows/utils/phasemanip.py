@@ -24,7 +24,7 @@
 
 
 def au2rads(in_file, newpath=None):
-    """Convert the input phase map in arbitrary units (a.u.) to rads."""
+    """Convert the input phase map in arbitrary units (a.u.) to rads (0 to 2pi)."""
     import numpy as np
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
@@ -38,6 +38,34 @@ def au2rads(in_file, newpath=None):
 
     # Round to float32 and clip
     data = np.clip(np.float32(data), 0.0, 2 * np.pi)
+
+    hdr.set_data_dtype(np.float32)
+    hdr.set_xyzt_units("mm")
+    out_file = fname_presuffix(str(in_file), suffix="_rads", newpath=newpath)
+    nb.Nifti1Image(data, None, hdr).to_filename(out_file)
+    return out_file
+
+
+def au2rads2(in_file, newpath=None):
+    """Convert the input phase map in arbitrary units (a.u.) to rads (-pi to pi).
+
+    This differs from au2rads, which scales the phase to [0, 2*pi].
+    """
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+
+    im = nb.load(in_file)
+    data = im.get_fdata(caching="unchanged")  # Read as float64 for safety
+    hdr = im.header.copy()
+
+    # Rescale to [0, 2*pi]
+    data = (data - data.min()) * (2 * np.pi / (data.max() - data.min()))
+    # Rescale to [-pi, pi]
+    data = data - np.pi
+
+    # Round to float32 and clip
+    data = np.clip(np.float32(data), -np.pi, np.pi)
 
     hdr.set_data_dtype(np.float32)
     hdr.set_xyzt_units("mm")

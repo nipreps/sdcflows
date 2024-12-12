@@ -292,10 +292,393 @@ phasediff = {
     ]
 }
 
+medic = {
+    "01": [
+        {
+            "session": "01",
+            "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
+            "func": [
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-01/func/sub-01_ses-01_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+            ],
+        },
+        {
+            "session": "02",
+            "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
+            "func": [
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-02/func/sub-01_ses-02_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+            ],
+        },
+        {
+            "session": "03",
+            "anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}],
+            "func": [
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "1",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.0142,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "2",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.03893,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "mag",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+                {
+                    "task": "rest",
+                    "echo": "3",
+                    "part": "phase",
+                    "suffix": "bold",
+                    "metadata": {
+                        "EchoTime": 0.06366,
+                        "RepetitionTime": 0.8,
+                        "TotalReadoutTime": 0.5,
+                        "PhaseEncodingDirection": "j",
+                        "IntendedFor": [
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-1_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-2_part-phase_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-mag_bold.nii.gz",
+                            "bids::sub-01/ses-03/func/sub-01_ses-03_task-rest_echo-3_part-phase_bold.nii.gz",
+                        ],
+                    },
+                },
+            ],
+        },
+    ]
+}
+
 
 filters = {
     "fmap": {
-        "datatype": "fmap",
+        "datatype": ["fmap", "func"],
         "session": "01",
     },
     "t1w": {"datatype": "anat", "session": "01", "suffix": "T1w"},
@@ -308,6 +691,7 @@ filters = {
     [
         ('pepolar', pepolar, 1),
         ('phasediff', phasediff, 1),
+        ('medic', medic, 1),
     ],
 )
 def test_wrangler_filter(tmpdir, name, skeleton, estimations):
@@ -324,14 +708,18 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
     [
         ('pepolar', pepolar, 5),
         ('phasediff', phasediff, 3),
+        ('medic', medic, 3),
     ],
 )
-@pytest.mark.parametrize("session, estimations", [
-    ("01", 1),
-    ("02", 1),
-    ("03", 1),
-    (None, None),
-])
+@pytest.mark.parametrize(
+    "session, estimations",
+    [
+        ("01", 1),
+        ("02", 1),
+        ("03", 1),
+        (None, None),
+    ],
+)
 def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estimations):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)

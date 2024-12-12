@@ -321,6 +321,37 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
+    MEDIC fieldmaps are also supported, both with B0FieldIdentifier metadata:
+
+    >>> find_estimators(
+    ...     layout=layouts['ds005250'],
+    ...     subject='04',
+    ...     sessions=['1'],
+    ...     fmapless=False,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='sub_04_ses_1_DCAN_fmap_acq_MEGE'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                       bids_id='sub_04_ses_1_DCAN_fmap_acq_MESE'),
+    FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 6>,
+                       bids_id='sub_04_ses_1_acq_MBME_medic')]
+
+    and with IntendedFor metadata:
+
+    >>> find_estimators(
+    ...     layout=layouts['ds005250'],
+    ...     subject='04',
+    ...     sessions=['2'],
+    ...     fmapless=False,
+    ...     force_fmapless=False,
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='auto_...'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                       bids_id='auto_...'),
+    FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 6>,
+                       bids_id='auto_...')]
     """
     from .misc import create_logger
     from bids.layout import Query
@@ -332,7 +363,6 @@ def find_estimators(
     base_entities = {
         "subject": subject,
         "extension": [".nii", ".nii.gz"],
-        "part": ["mag", None],
         "scope": "raw",  # Ensure derivatives are not captured
     }
 
@@ -357,8 +387,13 @@ def find_estimators(
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
-            set()
+            (
+                listify(ids)
+                for ids in layout.get_B0FieldIdentifiers(
+                    session=sessions, **base_entities
+                )
+            ),
+            set(),
         )
 
     if b0_ids:
@@ -453,6 +488,62 @@ def find_estimators(
                         _log_debug_estimation(logger, e, layout.root)
                         estimators.append(e)
 
+        # Look for MEDIC field maps
+        # These need to be complex-valued multi-echo BOLD runs with ``IntendedFor``
+        has_intended = tuple()
+        with suppress(ValueError):
+            has_intended = layout.get(
+                **{
+                    **base_entities,
+                    **{
+                        'session': sessions,
+                        'echo': Query.REQUIRED,
+                        'part': 'phase',
+                        'suffix': 'bold',
+                        'IntendedFor': Query.REQUIRED,
+                    },
+                },
+            )
+
+        for bold_fmap in has_intended:
+            complex_imgs = layout.get(
+                **{
+                    **bold_fmap.get_entities(),
+                    **{'part': ['phase', 'mag'], 'echo': Query.ANY},
+                }
+            )
+
+            current_sources = [est.sources for est in estimators]
+            current_sources = [
+                str(item.path) for sublist in current_sources for item in sublist
+            ]
+            if complex_imgs[0].path in current_sources:
+                logger.debug("Skipping fieldmap %s (already in use)", complex_imgs[0].relpath)
+                continue
+
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            img.path,
+                            metadata=_filter_metadata(img.get_metadata(), subject),
+                        )
+                        for img in complex_imgs
+                    ]
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger,
+                    "unnamed MEDIC",
+                    [],
+                    layout.root,
+                    str(err),
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
+                continue
+
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
         has_intended = tuple()
@@ -460,7 +551,11 @@ def find_estimators(
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions}
+                    **{
+                        'suffix': ['epi', 'bold'],
+                        'IntendedFor': Query.REQUIRED,
+                        'session': sessions,
+                    },
                 }
             )
 
