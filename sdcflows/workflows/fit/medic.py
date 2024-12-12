@@ -59,7 +59,7 @@ def init_medic_wf(name="medic_wf"):
 
     Outputs
     -------
-    fieldmap : :obj:`str`
+    fmap : :obj:`str`
         The path of the estimated fieldmap time series file. Units are Hertz.
     displacement : :obj:`list` of :obj:`str`
         Path to the displacement time series files. Units are mm.
@@ -85,7 +85,7 @@ complex-valued, multi-echo EPI data using the MEDIC algorithm (@medic).
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fieldmap", "displacement", "method"]),
+        niu.IdentityInterface(fields=["fmap", "displacement", "method"]),
         name="outputnode",
     )
     outputnode.inputs.method = "MEDIC"
@@ -119,7 +119,7 @@ complex-valued, multi-echo EPI data using the MEDIC algorithm (@medic).
         (write_metadata, medic, [("out_file", "metadata")]),
         (phase2rad, medic, [("out_file", "phase_files")]),
         (medic, outputnode, [
-            ("native_field_map", "fieldmap"),
+            ("native_field_map", "fmap"),
             ("displacement_map", "displacement"),
         ]),
     ])  # fmt:skip

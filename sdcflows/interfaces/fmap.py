@@ -475,7 +475,7 @@ class _MEDICInputSpec(CommandLineInputSpec):
 class _MEDICOutputSpec(TraitedSpec):
     native_field_map = File(
         exists=True,
-        desc="4D ative (distorted) space field map in Hertz",
+        desc="4D native (distorted) space field map in Hertz",
     )
     displacement_map = File(
         exists=True,
