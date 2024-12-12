@@ -321,14 +321,30 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
-    MEDIC fieldmaps are also supported:
+    MEDIC fieldmaps are also supported, both with B0FieldIdentifier metadata:
 
     >>> find_estimators(
     ...     layout=layouts['ds005250'],
     ...     subject='04',
+    ...     sessions=['1'],
     ...     fmapless=False,
     ...     force_fmapless=False,
-    ...     bids_filters={'session': '2'},
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                        bids_id='sub_04_ses_1_DCAN_fmap_acq_MESE'),
+    FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
+                       bids_id='sub_04_ses_1_DCAN_fmap_acq_MEGE'),
+    FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 6>,
+                       bids_id='sub_04_ses_1_acq_MBME_medic')]
+
+    and with IntendedFor metadata:
+
+    >>> find_estimators(
+    ...     layout=layouts['ds005250'],
+    ...     subject='04',
+    ...     sessions=['2'],
+    ...     fmapless=False,
+    ...     force_fmapless=False,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
                         bids_id='auto_...'),
