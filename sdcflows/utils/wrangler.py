@@ -331,9 +331,9 @@ def find_estimators(
     ...     force_fmapless=False,
     ... )  # doctest: +ELLIPSIS
     [FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                        bids_id='sub_04_ses_1_DCAN_fmap_acq_MESE'),
+                        bids_id='sub_04_ses_1_DCAN_fmap_acq_MEGE'),
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.PEPOLAR: 2>,
-                       bids_id='sub_04_ses_1_DCAN_fmap_acq_MEGE'),
+                       bids_id='sub_04_ses_1_DCAN_fmap_acq_MESE'),
     FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 6>,
                        bids_id='sub_04_ses_1_acq_MBME_medic')]
 
