@@ -321,6 +321,15 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
+    >>> find_estimators(
+    ...     layout=layouts['ds005250-sdcflows'],
+    ...     subject='04',
+    ...     fmapless=False,
+    ...     force_fmapless=False,
+    ...     bids_filters={'session': '2'},
+    ... )  # doctest: +ELLIPSIS
+    [FieldmapEstimation(sources=<10 files>, method=<EstimatorType.MEDIC: 6>,
+                        bids_id='auto_...')]
     """
     from .misc import create_logger
     from bids.layout import Query

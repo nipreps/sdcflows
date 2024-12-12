@@ -70,11 +70,17 @@ def init_medic_wf(name="medic_wf"):
     -----
     This workflow performs minimal preparation before running the MEDIC algorithm,
     as implemented in ``vandandrew/warpkit``.
+
+    Any downstream processing piplines that use this workflow should include
+    the following references in their boilerplate BibTeX file:
+
+    - medic: https://doi.org/10.1101/2023.11.28.568744
     """
     workflow = Workflow(name=name)
 
     workflow.__desc__ = """\
-A dynamic fieldmap was estimated from multi-echo EPI data using the MEDIC algorithm (@medic).
+Volume-wise *B<sub>0</sub>* nonuniformity maps (or *fieldmaps*) were estimated from
+complex-valued, multi-echo EPI data using the MEDIC algorithm (@medic).
 """
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
