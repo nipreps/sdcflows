@@ -321,6 +321,8 @@ def find_estimators(
     FieldmapEstimation(sources=<2 files>, method=<EstimatorType.ANAT: 5>,
                        bids_id='auto_...')]
 
+    MEDIC fieldmaps are also supported:
+
     >>> find_estimators(
     ...     layout=layouts['ds005250-sdcflows'],
     ...     subject='04',
