@@ -371,10 +371,13 @@ def find_estimators(
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(
-                session=sessions, **base_entities)
+            (
+                listify(ids)
+                for ids in layout.get_B0FieldIdentifiers(
+                    session=sessions, **base_entities
+                )
             ),
-            set()
+            set(),
         )
 
     if b0_ids:
