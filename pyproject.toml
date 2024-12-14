@@ -150,8 +150,22 @@ per-file-ignores = [
 ]
 
 [tool.pytest.ini_options]
+minversion = "6"
+testpaths = ["sdcflows"]
+log_cli_level = "INFO"
+xfail_strict = true
 norecursedirs = [".git"]
-addopts = "-svx --doctest-modules --strict-markers"
+addopts = [
+  "-svx",
+  "-ra",
+  "--strict-config",
+  "--strict-markers",
+  "--doctest-modules",
+  # Config pytest-cov
+  "--cov=sdcflows",
+  "--cov-report=xml",
+  "--cov-config=pyproject.toml",
+]
 doctest_optionflags = "ALLOW_UNICODE NORMALIZE_WHITESPACE ELLIPSIS"
 env = "PYTHONHASHSEED=0"
 filterwarnings = ["ignore::DeprecationWarning"]
@@ -164,7 +178,6 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-concurrency = 'multiprocessing'
 omit = [
     '*/tests/*',
     '*/__init__.py',
