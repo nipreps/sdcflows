@@ -23,17 +23,16 @@ requires-python = ">=3.9"
 dependencies = [
     "acres >= 0.2.0",
     "attrs >= 20.1.0",
-    "nibabel >=3.1.0",
-    "nipype >=1.8.5,<2.0",
-    "traits <6.4",
+    "nibabel >= 3.0",
+    "nipype >= 1.8.5",
     "migas >= 0.4.0",
     "niworkflows >= 1.7.0",
-    "nitransforms >= 23.0.1",
-    "numpy >= 1.21.0",
+    "nitransforms >= 24.1.0",
+    "numpy >= 1.22",
     "pybids >= 0.16.4",
     "scikit-image >= 0.18",
     "scipy >= 1.8.1",
-    "templateflow",
+    "templateflow >= 23.1",
     "toml",
 ]
 dynamic = ["version"]
@@ -50,22 +49,13 @@ doc = [
     "importlib_resources",
     "ipykernel",
     "ipython",
-    "matplotlib >= 2.2.0",
     "nbsphinx",
-    "nibabel",
-    "nipype >= 1.5.1",
-    "niworkflows >= 1.10.0",
-    "numpy",
-    "packaging",
     "pandoc",
     "pydot >= 1.2.3",
     "pydotplus",
-    "scipy",
     "sphinx >= 7.2.2",
     "sphinx-argparse",
     "sphinxcontrib-apidoc",
-    "templateflow",
-    "traits < 6.4"
 ]
 
 mem = [
@@ -80,11 +70,11 @@ dev = [
 ]
 
 test = [
-    "coverage",
-    "pytest",
-    "pytest-cov",
+    "coverage[toml] >=5.2.1",
+    "pytest >= 6",
+    "pytest-cov >= 2.11",
     "pytest-env",
-    "pytest-xdist"
+    "pytest-xdist >= 2.5",
 ]
 
 # Aliases
