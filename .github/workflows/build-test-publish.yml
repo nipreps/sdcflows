@@ -49,15 +49,22 @@ jobs:
       AFNI_IMSAVE_WARNINGS: NO
       AFNI_TTATLAS_DATASET: /opt/afni/atlases
       AFNI_PLUGINPATH: /opt/afni/plugins
+      MARKS: ${{ matrix.marks }}
+      DEPENDS: ${{ matrix.dependencies }}
     strategy:
-      max-parallel: 6
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-        marks: ["not slow"]
+        dependencies:  ["latest", "pre"]
+        marks: ["fast"]
         include:
           - python-version: "3.9"
-            marks: "slow and not veryslow"
+            dependencies: "min"
+            marks: "fast"
+          - python-version: "3.9"
+            dependencies: "latest"
+            marks: "slow"
           - python-version: "3.12"
+            dependencies: "latest"
             marks: "veryslow"
 
     steps:
@@ -94,6 +101,8 @@ jobs:
       run: |
         git config --global user.name 'NiPreps Bot'
         git config --global user.email 'nipreps@gmail.com'
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v3
       with:
@@ -114,8 +123,9 @@ jobs:
           python-${{ matrix.python-version }}-${{ env.CACHE_NUM }}
     - name: Install DataLad
       run: |
-        conda install git-annex=*=alldep* pip
-        pip install datalad datalad-osf
+        conda install git-annex=*=alldep*
+        uv tool install datalad --with=datalad-next --with=datalad-osf
+        uv tool install datalad-osf --with=datalad-next
     - name: Install fsl and ANTs
       run: |
         conda install fsl-fugue fsl-topup ants
@@ -198,18 +208,16 @@ jobs:
         mkdir -p $( dirname $FS_LICENSE )
         echo "b2VzdGViYW5Ac3RhbmZvcmQuZWR1CjMwNzU2CiAqQ1MzYkJ5VXMxdTVNCiBGU2kvUGJsejJxR1V3Cg==" | base64 -d > $FS_LICENSE
 
-    - name: Run pytest with coverage
+    - name: Install tox
       run: |
-        export PATH=${AFNI_HOME}:$PATH
-        export FSLDIR=${CONDA_PREFIX}
-        pytest -v --cov sdcflows --cov-report xml:cov.xml --doctest-modules -n auto sdcflows \
-          --durations=20 --durations-min=10 -m "$MARKS"
-      env:
-        MARKS: ${{ matrix.marks }}
+        uv tool install tox --with=tox-uv --with=tox-gh-actions
+    - name: Show tox config
+      run: tox c
+    - name: Run tox
+      run: tox -v --exit-and-dump-after 1200
 
-    - uses: codecov/codecov-action@v4
+    - uses: codecov/codecov-action@v5
       with:
-        file: cov.xml
         token: ${{ secrets.CODECOV_TOKEN }}
       if: ${{ always() }}
 
