@@ -33,7 +33,7 @@ dependencies = [
     "scikit-image >= 0.18",
     "scipy >= 1.8.1",
     "templateflow >= 23.1",
-    "toml",
+    "toml >= 0.10",
 ]
 dynamic = ["version"]
 
