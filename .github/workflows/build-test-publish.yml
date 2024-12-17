@@ -52,6 +52,7 @@ jobs:
       MARKS: ${{ matrix.marks }}
       DEPENDS: ${{ matrix.dependencies }}
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         dependencies:  ["latest", "pre"]
