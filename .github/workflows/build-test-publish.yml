@@ -97,6 +97,8 @@ jobs:
           curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries && \
           tcsh @update.afni.binaries -package linux_ubuntu_16_64 -bindir ${AFNI_HOME}
         fi
+        ls -l ${AFNI_HOME}
+        echo "PATH=${AFNI_HOME}:$PATH" | tee -a $GITHUB_ENV
 
     - name: Git settings (pacify DataLad)
       run: |
