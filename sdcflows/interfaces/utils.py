@@ -50,7 +50,7 @@ class _FlattenInputSpec(BaseInterfaceInputSpec):
         desc="list of input data",
     )
     in_meta = InputMultiObject(
-        traits.DictStrAny,
+        traits.Dict(traits.Str),
         mandatory=True,
         desc="list of metadata",
     )
@@ -61,12 +61,12 @@ class _FlattenOutputSpec(TraitedSpec):
     out_list = OutputMultiObject(
         traits.Tuple(
             File(exists=True),
-            traits.DictStrAny,
+            traits.Dict(traits.Str),
         ),
         desc="list of output files",
     )
     out_data = OutputMultiObject(File(exists=True))
-    out_meta = OutputMultiObject(traits.DictStrAny)
+    out_meta = OutputMultiObject(traits.Dict(traits.Str))
 
 
 class Flatten(SimpleInterface):
