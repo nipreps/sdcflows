@@ -1,3 +1,18 @@
+2.11.0 (December 18, 2024)
+==========================
+Feature release in the 2.11.x series.
+
+This release supports numpy 2 and Python 3.13.
+
+* FIX: Normalize BIDS-URIs to subject-relative (#458)
+* FIX: Only fit high-frequency spline for SyN-SDC (#457)
+* ENH: Allow Jacobian correction to be toggled on/off (#462)
+* ENH: Dilate fmap and bold masks during coregistration (#463)
+* TEST: Clear registry consistently to avoid order dependency (#464)
+* DOC: Plot correct workflow in init_syn_preprocessing_wf docstring (#460)
+* CI: Drop CircleCI, using GHA only (#459)
+
+
 2.10.0 (July 04, 2024)
 ======================
 Feature release in the 2.10.x series.
