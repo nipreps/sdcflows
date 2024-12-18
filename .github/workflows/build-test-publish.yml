@@ -144,7 +144,7 @@ jobs:
           tf-cache-
     - name: Get TemplateFlow's required objects
       run: |
-        python tools/cache_templateflow.py
+        uv run tools/cache_templateflow.py
 
     - uses: actions/cache@v4
       with:
