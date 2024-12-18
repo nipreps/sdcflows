@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="sdcflows.fieldmaps module" href="sdcflows.fieldmaps.html" /><link rel="prev" title="sdcflows.config module" href="sdcflows.config.html" />
 
-    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.data package - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
@@ -316,7 +316,7 @@
 <p>SDCFlows data files</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.data.load">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.data.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#sdcflows.data.load" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.data.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#sdcflows.data.load" title="Link to this definition">¶</a></dt>
 <dd><p>Load package files relative to <code class="docutils literal notranslate"><span class="pre">sdcflows.data</span></code>.</p>
 <p>This package contains the following (top-level) files/directories:</p>
 <ul class="simple">
@@ -334,7 +334,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.load.readable">
-<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">readable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/importlib.resources.abc.html#importlib.resources.abc.Traversable" title="(in Python v3.12)"><span class="pre">Traversable</span></a></span></span><a class="headerlink" href="#sdcflows.data.load.readable" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">readable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/importlib.resources.abc.html#importlib.resources.abc.Traversable" title="(in Python v3.13)"><span class="pre">Traversable</span></a></span></span><a class="headerlink" href="#sdcflows.data.load.readable" title="Link to this definition">¶</a></dt>
 <dd><p>Provide read access to a resource through a Path-like interface.</p>
 <p>This file may or may not exist on the filesystem, and may be
 efficiently used for read operations, including directory traversal.</p>
@@ -344,8 +344,8 @@ that would be necessary.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.load.as_path">
-<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">as_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager" title="(in Python v3.12)"><span class="pre">AbstractContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sdcflows.data.load.as_path" title="Link to this definition">¶</a></dt>
-<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
+<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">as_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager" title="(in Python v3.13)"><span class="pre">AbstractContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sdcflows.data.load.as_path" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
 <p>This method generates a context manager that yields a Path when
 entered.</p>
 <p>This result is not cached, and any temporary files that are created
@@ -354,22 +354,22 @@ are deleted when the context is exited.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.load.cached">
-<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">cached</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></span><a class="headerlink" href="#sdcflows.data.load.cached" title="Link to this definition">¶</a></dt>
-<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
+<span class="sig-prename descclassname"><span class="pre">load.</span></span><span class="sig-name descname"><span class="pre">cached</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></span><a class="headerlink" href="#sdcflows.data.load.cached" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure data resource is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
 <p>Any temporary files that are created remain available throughout
 the duration of the program, and are deleted when Python exits.</p>
 <p>Results are cached so that multiple calls do not unpack the same
-data multiple times, but the cache is sensitive to the specific
-argument(s) passed.</p>
+data multiple times, but directories and their contents being
+requested separately may result in some duplication.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.data.Loader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.data.</span></span><span class="sig-name descname"><span class="pre">Loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/types.html#types.ModuleType" title="(in Python v3.12)"><span class="pre">ModuleType</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/data.html#Loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sdcflows.data.</span></span><span class="sig-name descname"><span class="pre">Loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/types.html#types.ModuleType" title="(in Python v3.13)"><span class="pre">ModuleType</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/acres.html#Loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader" title="Link to this definition">¶</a></dt>
 <dd><p>A loader for package files relative to a module</p>
-<p>This class wraps <a class="reference external" href="https://docs.python.org/3/library/importlib.resources.html#module-importlib.resources" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importlib.resources</span></code></a> to provide a getter
+<p>This class wraps <a class="reference external" href="https://docs.python.org/3/library/importlib.resources.html#module-importlib.resources" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importlib.resources</span></code></a> to provide a getter
 function with an interpreter-lifetime scope. For typical packages
-it simply passes through filesystem paths as <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>
+it simply passes through filesystem paths as <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>
 objects. For zipped distributions, it will unpack the files into
 a temporary directory that is cleaned up on interpreter exit.</p>
 <p>This loader accepts a fully-qualified module name or a module
@@ -386,12 +386,12 @@ object.</p>
 <span class="sd">.. automethod:: load_data.cached</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
-<span class="kn">from</span> <span class="nn">sdcflows.data</span> <span class="kn">import</span> <span class="n">Loader</span>
+<span class="kn">from</span> <span class="nn">acres</span> <span class="kn">import</span> <span class="n">Loader</span>
 
-<span class="n">load_data</span> <span class="o">=</span> <span class="n">Loader</span><span class="p">(</span><span class="n">__package__</span><span class="p">)</span>
+<span class="n">load_data</span> <span class="o">=</span> <span class="n">Loader</span><span class="p">(</span><span class="n">__spec__</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="#sdcflows.data.Loader" title="sdcflows.data.Loader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loader</span></code></a> objects implement the <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">callable()</span></code></a> interface
+<p><a class="reference internal" href="#sdcflows.data.Loader" title="sdcflows.data.Loader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loader</span></code></a> objects implement the <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">callable()</span></code></a> interface
 and generate a docstring, and are intended to be treated and documented
 as functions.</p>
 <p>For greater flexibility and improved readability over the <code class="docutils literal notranslate"><span class="pre">importlib.resources</span></code>
@@ -419,7 +419,7 @@ interface, explicit methods are provided to access resources.</p>
 </table>
 </div>
 <p>It is also possible to use <code class="docutils literal notranslate"><span class="pre">Loader</span></code> directly:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sdcflows.data</span> <span class="kn">import</span> <span class="n">Loader</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acres</span> <span class="kn">import</span> <span class="n">Loader</span>
 
 <span class="n">Loader</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">readable</span><span class="p">(</span><span class="s1">&#39;data/resource.ext&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
 
@@ -439,7 +439,7 @@ interface, explicit methods are provided to access resources.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.Loader.readable">
-<span class="sig-name descname"><span class="pre">readable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/importlib.resources.abc.html#importlib.resources.abc.Traversable" title="(in Python v3.12)"><span class="pre">Traversable</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/data.html#Loader.readable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.readable" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">readable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/importlib.resources.abc.html#importlib.resources.abc.Traversable" title="(in Python v3.13)"><span class="pre">Traversable</span></a></span></span><a class="reference internal" href="../_modules/acres.html#Loader.readable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.readable" title="Link to this definition">¶</a></dt>
 <dd><p>Provide read access to a resource through a Path-like interface.</p>
 <p>This file may or may not exist on the filesystem, and may be
 efficiently used for read operations, including directory traversal.</p>
@@ -449,8 +449,8 @@ that would be necessary.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.Loader.as_path">
-<span class="sig-name descname"><span class="pre">as_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager" title="(in Python v3.12)"><span class="pre">AbstractContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sdcflows/data.html#Loader.as_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.as_path" title="Link to this definition">¶</a></dt>
-<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
+<span class="sig-name descname"><span class="pre">as_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager" title="(in Python v3.13)"><span class="pre">AbstractContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/acres.html#Loader.as_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.as_path" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
 <p>This method generates a context manager that yields a Path when
 entered.</p>
 <p>This result is not cached, and any temporary files that are created
@@ -459,13 +459,13 @@ are deleted when the context is exited.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sdcflows.data.Loader.cached">
-<span class="sig-name descname"><span class="pre">cached</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/sdcflows/data.html#Loader.cached"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.cached" title="Link to this definition">¶</a></dt>
-<dd><p>Ensure data is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
+<span class="sig-name descname"><span class="pre">cached</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/acres.html#Loader.cached"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.data.Loader.cached" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure data resource is available as a <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>.</p>
 <p>Any temporary files that are created remain available throughout
 the duration of the program, and are deleted when Python exits.</p>
 <p>Results are cached so that multiple calls do not unpack the same
-data multiple times, but the cache is sensitive to the specific
-argument(s) passed.</p>
+data multiple times, but directories and their contents being
+requested separately may result in some duplication.</p>
 </dd></dl>
 
 </dd></dl>
@@ -550,7 +550,7 @@ argument(s) passed.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=27db1736"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

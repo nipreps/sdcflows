@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="What’s new?" href="../changes.html" /><link rel="prev" title="sdcflows.workflows.base module" href="sdcflows.workflows.base.html" />
 
-    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.workflows.outputs module - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
@@ -333,10 +333,10 @@
 (Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
 <li><p><strong>compress</strong> (<em>a list of items which are a boolean or None</em>) – Whether <code class="docutils literal notranslate"><span class="pre">in_file</span></code> should be compressed (True), uncompressed (False) or left unmodified (None, default).
 (Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)</p></li>
-<li><p><strong>data_dtype</strong> (<em>a string</em>) – NumPy datatype to coerce NIfTI data to, or <cite>source</cite> tomatch the input file dtype.</p></li>
+<li><p><strong>data_dtype</strong> (<em>a string</em>) – NumPy datatype to coerce NIfTI data to, or <cite>source</cite> to match the input file dtype.</p></li>
 <li><p><strong>dismiss_entities</strong> (<em>a list of items which are a string or None</em>) – A list entities that will not be propagated from the source file.
 (Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)</p></li>
-<li><p><strong>meta_dict</strong> (<em>a dictionary with keys which are a value of class ‘str’ and with values which are any value</em>) – An input dictionary containing metadata.</p></li>
+<li><p><strong>meta_dict</strong> (<em>a dictionary with keys which are a string and with values which are any value</em>) – An input dictionary containing metadata.</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Outputs<span class="colon">:</span></dt>
@@ -357,11 +357,11 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to save derivatives</p></li>
-<li><p><strong>bids_fmap_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Sets the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata into the outputs.</p></li>
-<li><p><strong>custom_entities</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – Define extra entities that will be written out in filenames.</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">&quot;fmap_derivatives_wf&quot;</span></code>)</p></li>
-<li><p><strong>write_coeff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Build the workflow path to map coefficients into target space.</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to save derivatives</p></li>
+<li><p><strong>bids_fmap_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Sets the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata into the outputs.</p></li>
+<li><p><strong>custom_entities</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – Define extra entities that will be written out in filenames.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">&quot;fmap_derivatives_wf&quot;</span></code>)</p></li>
+<li><p><strong>write_coeff</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>) – Build the workflow path to map coefficients into target space.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Inputs<span class="colon">:</span></dt>
@@ -382,11 +382,11 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fmap_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The fieldmap estimator type.</p></li>
-<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to save derivatives</p></li>
-<li><p><strong>bids_fmap_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Sets the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata into the outputs.</p></li>
-<li><p><strong>custom_entities</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – Define extra entities that will be written out in filenames.</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">&quot;fmap_reports_wf&quot;</span></code>)</p></li>
+<li><p><strong>fmap_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – The fieldmap estimator type.</p></li>
+<li><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Directory in which to save derivatives</p></li>
+<li><p><strong>bids_fmap_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Sets the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata into the outputs.</p></li>
+<li><p><strong>custom_entities</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a>) – Define extra entities that will be written out in filenames.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>) – Workflow name (default: <code class="docutils literal notranslate"><span class="pre">&quot;fmap_reports_wf&quot;</span></code>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Inputs<span class="colon">:</span></dt>
@@ -473,7 +473,7 @@
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=27db1736"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

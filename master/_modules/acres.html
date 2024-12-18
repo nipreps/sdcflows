@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>Overview: module code - sdcflows 0+unknown documentation</title>
+        <title>acres - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -304,38 +304,232 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>All modules for which code is available</h1>
-<ul><li><a href="acres.html">acres</a></li>
-<li><a href="sdcflows/cli/main.html">sdcflows.cli.main</a></li>
-<li><a href="sdcflows/cli/parser.html">sdcflows.cli.parser</a></li>
-<li><a href="sdcflows/cli/workflow.html">sdcflows.cli.workflow</a></li>
-<li><a href="sdcflows/config.html">sdcflows.config</a></li>
-<li><a href="sdcflows/fieldmaps.html">sdcflows.fieldmaps</a></li>
-<li><a href="sdcflows/interfaces/brainmask.html">sdcflows.interfaces.brainmask</a></li>
-<li><a href="sdcflows/interfaces/bspline.html">sdcflows.interfaces.bspline</a></li>
-<li><a href="sdcflows/interfaces/epi.html">sdcflows.interfaces.epi</a></li>
-<li><a href="sdcflows/interfaces/fmap.html">sdcflows.interfaces.fmap</a></li>
-<li><a href="sdcflows/interfaces/reportlets.html">sdcflows.interfaces.reportlets</a></li>
-<li><a href="sdcflows/interfaces/utils.html">sdcflows.interfaces.utils</a></li>
-<li><a href="sdcflows/transform.html">sdcflows.transform</a></li>
-<li><a href="sdcflows/utils/bimap.html">sdcflows.utils.bimap</a></li>
-<li><a href="sdcflows/utils/epimanip.html">sdcflows.utils.epimanip</a></li>
-<li><a href="sdcflows/utils/misc.html">sdcflows.utils.misc</a></li>
-<li><a href="sdcflows/utils/phasemanip.html">sdcflows.utils.phasemanip</a></li>
-<li><a href="sdcflows/utils/telemetry.html">sdcflows.utils.telemetry</a></li>
-<li><a href="sdcflows/utils/tools.html">sdcflows.utils.tools</a></li>
-<li><a href="sdcflows/utils/wrangler.html">sdcflows.utils.wrangler</a></li>
-<li><a href="sdcflows/viz/utils.html">sdcflows.viz.utils</a></li>
-<li><a href="sdcflows/workflows/ancillary.html">sdcflows.workflows.ancillary</a></li>
-<li><a href="sdcflows/workflows/apply/correction.html">sdcflows.workflows.apply.correction</a></li>
-<li><a href="sdcflows/workflows/apply/registration.html">sdcflows.workflows.apply.registration</a></li>
-<li><a href="sdcflows/workflows/base.html">sdcflows.workflows.base</a></li>
-<li><a href="sdcflows/workflows/fit/base.html">sdcflows.workflows.fit.base</a></li>
-<li><a href="sdcflows/workflows/fit/fieldmap.html">sdcflows.workflows.fit.fieldmap</a></li>
-<li><a href="sdcflows/workflows/fit/pepolar.html">sdcflows.workflows.fit.pepolar</a></li>
-<li><a href="sdcflows/workflows/fit/syn.html">sdcflows.workflows.fit.syn</a></li>
-<li><a href="sdcflows/workflows/outputs.html">sdcflows.workflows.outputs</a></li>
-</ul>
+          <h1>Source code for acres</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1">#</span>
+<span class="c1"># We support and encourage derived works from this project, please read</span>
+<span class="c1"># about our expectations at</span>
+<span class="c1">#</span>
+<span class="c1">#     https://www.nipreps.org/community/licensing/</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># This package was adapted from the fmriprep.data module released in 24.0.0,</span>
+<span class="c1"># which evolved from an implementation in the Nibabies project,</span>
+<span class="c1"># introduced in the following commit: https://github.com/nipreps/nibabies/commit/45a63a6</span>
+<span class="c1">#</span>
+<span class="c1"># Changes as of the fork (2024 July 15):</span>
+<span class="c1">#   - This implementation uses a global ExitStack and resource cache,</span>
+<span class="c1">#     to avoid `Loader` instances from containing self-references and</span>
+<span class="c1">#     potentially leaking memory.</span>
+<span class="c1">#</span>
+<span class="c1"># Future modifications will be tracked in the change log.</span>
+<span class="sd">&quot;&quot;&quot;Data loading utility for Python packages.</span>
+
+<span class="sd">This module provides a class that wraps :mod:`importlib.resources` to</span>
+<span class="sd">provide resource retrieval functions with commonly-needed scoping,</span>
+<span class="sd">including interpreter-lifetime caching.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">AbstractContextManager</span><span class="p">,</span> <span class="n">ExitStack</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">ModuleType</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cache</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span> <span class="k">as</span> <span class="n">cache</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">importlib.resources</span> <span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
+    <span class="kn">from</span> <span class="nn">importlib.resources.abc</span> <span class="kn">import</span> <span class="n">Traversable</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">importlib_resources</span> <span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
+    <span class="kn">from</span> <span class="nn">importlib_resources.abc</span> <span class="kn">import</span> <span class="n">Traversable</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Loader&#39;</span><span class="p">]</span>
+
+
+<span class="c1"># Use one global exit stack</span>
+<span class="n">EXIT_STACK</span> <span class="o">=</span> <span class="n">ExitStack</span><span class="p">()</span>
+<span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">EXIT_STACK</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+
+
+<span class="nd">@cache</span>
+<span class="k">def</span> <span class="nf">_cache_resource</span><span class="p">(</span><span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ModuleType</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
+    <span class="k">return</span> <span class="n">EXIT_STACK</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)))</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span>
+
+
+<div class="viewcode-block" id="Loader">
+<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader">[docs]</a>
+<span class="k">class</span> <span class="nc">Loader</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A loader for package files relative to a module</span>
+
+<span class="sd">    This class wraps :mod:`importlib.resources` to provide a getter</span>
+<span class="sd">    function with an interpreter-lifetime scope. For typical packages</span>
+<span class="sd">    it simply passes through filesystem paths as :class:`~pathlib.Path`</span>
+<span class="sd">    objects. For zipped distributions, it will unpack the files into</span>
+<span class="sd">    a temporary directory that is cleaned up on interpreter exit.</span>
+
+<span class="sd">    This loader accepts a fully-qualified module name or a module</span>
+<span class="sd">    object.</span>
+
+<span class="sd">    Expected usage::</span>
+
+<span class="sd">        &#39;&#39;&#39;Data package</span>
+
+<span class="sd">        .. autofunction:: load_data</span>
+
+<span class="sd">        .. automethod:: load_data.readable</span>
+
+<span class="sd">        .. automethod:: load_data.as_path</span>
+
+<span class="sd">        .. automethod:: load_data.cached</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+<span class="sd">        from acres import Loader</span>
+
+<span class="sd">        load_data = Loader(__spec__.name)</span>
+
+<span class="sd">    :class:`~Loader` objects implement the :func:`callable` interface</span>
+<span class="sd">    and generate a docstring, and are intended to be treated and documented</span>
+<span class="sd">    as functions.</span>
+
+<span class="sd">    For greater flexibility and improved readability over the ``importlib.resources``</span>
+<span class="sd">    interface, explicit methods are provided to access resources.</span>
+
+<span class="sd">    +---------------+----------------+------------------+</span>
+<span class="sd">    | On-filesystem | Lifetime       | Method           |</span>
+<span class="sd">    +---------------+----------------+------------------+</span>
+<span class="sd">    | `True`        | Interpreter    | :meth:`cached`   |</span>
+<span class="sd">    +---------------+----------------+------------------+</span>
+<span class="sd">    | `True`        | `with` context | :meth:`as_path`  |</span>
+<span class="sd">    +---------------+----------------+------------------+</span>
+<span class="sd">    | `False`       | n/a            | :meth:`readable` |</span>
+<span class="sd">    +---------------+----------------+------------------+</span>
+
+<span class="sd">    It is also possible to use ``Loader`` directly::</span>
+
+<span class="sd">        from acres import Loader</span>
+
+<span class="sd">        Loader(other_package).readable(&#39;data/resource.ext&#39;).read_text()</span>
+
+<span class="sd">        with Loader(other_package).as_path(&#39;data&#39;) as pkgdata:</span>
+<span class="sd">            # Call function that requires full Path implementation</span>
+<span class="sd">            func(pkgdata)</span>
+
+<span class="sd">        # contrast to</span>
+
+<span class="sd">        from importlib_resources import files, as_file</span>
+
+<span class="sd">        files(other_package).joinpath(&#39;data/resource.ext&#39;).read_text()</span>
+
+<span class="sd">        with as_file(files(other_package) / &#39;data&#39;) as pkgdata:</span>
+<span class="sd">            func(pkgdata)</span>
+
+<span class="sd">    .. automethod:: readable</span>
+
+<span class="sd">    .. automethod:: as_path</span>
+
+<span class="sd">    .. automethod:: cached</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ModuleType</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span> <span class="o">=</span> <span class="n">anchor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span>
+        <span class="c1"># Allow class to have a different docstring from instances</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct docstring for instances</span>
+
+<span class="sd">        Lists the public top-level paths inside the location, where</span>
+<span class="sd">        non-public means has a `.` or `_` prefix or is a &#39;tests&#39;</span>
+<span class="sd">        directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">top_level</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&#39;</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;tests&#39;</span>
+        <span class="p">)</span>
+        <span class="n">doclines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s1">&#39;Load package files relative to ``</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="si">}</span><span class="s1">``.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;This package contains the following (top-level) files/directories:&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;* ``</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">``&#39;</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">top_level</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doclines</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Loader.readable">
+<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.readable">[docs]</a>
+    <span class="k">def</span> <span class="nf">readable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Traversable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide read access to a resource through a Path-like interface.</span>
+
+<span class="sd">        This file may or may not exist on the filesystem, and may be</span>
+<span class="sd">        efficiently used for read operations, including directory traversal.</span>
+
+<span class="sd">        This result is not cached or copied to the filesystem in cases where</span>
+<span class="sd">        that would be necessary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span></div>
+
+
+<div class="viewcode-block" id="Loader.as_path">
+<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.as_path">[docs]</a>
+    <span class="k">def</span> <span class="nf">as_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data is available as a :class:`~pathlib.Path`.</span>
+
+<span class="sd">        This method generates a context manager that yields a Path when</span>
+<span class="sd">        entered.</span>
+
+<span class="sd">        This result is not cached, and any temporary files that are created</span>
+<span class="sd">        are deleted when the context is exited.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
+        <span class="k">return</span> <span class="n">as_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">))</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span></div>
+
+
+<div class="viewcode-block" id="Loader.cached">
+<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.cached">[docs]</a>
+    <span class="k">def</span> <span class="nf">cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data resource is available as a :class:`~pathlib.Path`.</span>
+
+<span class="sd">        Any temporary files that are created remain available throughout</span>
+<span class="sd">        the duration of the program, and are deleted when Python exits.</span>
+
+<span class="sd">        Results are cached so that multiple calls do not unpack the same</span>
+<span class="sd">        data multiple times, but directories and their contents being</span>
+<span class="sd">        requested separately may result in some duplication.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use self._anchor and segments to ensure the cache does not depend on id(self.files)</span>
+        <span class="c1"># PY310(importlib_resources): unused-ignore, PY311+(importlib.resources) arg-type</span>
+        <span class="k">return</span> <span class="n">_cache_resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type,unused-ignore]</span></div>
+
+
+    <span class="fm">__call__</span> <span class="o">=</span> <span class="n">cached</span></div>
+
+</pre></div>
         </article>
       </div>
       <footer>
