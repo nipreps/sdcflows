@@ -29,6 +29,7 @@ import nibabel as nb
 from nitransforms.linear import LinearTransformsMapping
 from skimage.morphology import ball
 import scipy.ndimage as nd
+from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
 
 from sdcflows import transform as tf
 from sdcflows.interfaces.bspline import bspline_grid
@@ -120,10 +121,6 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
     assert np.all((np.sqrt(((ours - theirs) ** 2).sum()) / ours.size) < 1e-1)
 
     if outdir:
-        from niworkflows.interfaces.reportlets.registration import (
-            SimpleBeforeAfterRPT as SimpleBeforeAfter,
-        )
-
         orientation = "".join([ax[bool(f)] for ax, f in zip(("RL", "AP", "SI"), flip)])
 
         SimpleBeforeAfter(
@@ -204,10 +201,6 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
         error = np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2))
 
         if outdir:
-            from niworkflows.interfaces.reportlets.registration import (
-                SimpleBeforeAfterRPT as SimpleBeforeAfter,
-            )
-
             # Do not include the first volume in the average to enhance differences
             realigned_data = np.asanyarray(corrected.dataobj)[..., 1:].mean(-1)
             realigned_data[realigned_data < 0] = 0
@@ -241,10 +234,6 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
         error_margin = 200  # test oracle is pretty bad here - needs revision.
 
         if outdir:
-            from niworkflows.interfaces.reportlets.registration import (
-                SimpleBeforeAfterRPT as SimpleBeforeAfter,
-            )
-
             # Do not include the first volume in the average to enhance differences
             realigned_data = np.asanyarray(corrected.dataobj)[..., 1:].mean(-1)
             realigned_data[realigned_data < 0] = 0

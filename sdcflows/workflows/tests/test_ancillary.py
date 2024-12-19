@@ -24,7 +24,7 @@
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from niworkflows.interfaces.reportlets.masks import SimpleShowMaskRPT
+from nireports.interfaces.reporting.masks import SimpleShowMaskRPT
 from ..ancillary import init_brainextraction_wf
 
 

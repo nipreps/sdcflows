@@ -26,6 +26,7 @@ import pytest
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
 
 from ...fit.fieldmap import init_magnitude_wf
 from ..registration import init_coeff2epi_wf
@@ -70,9 +71,6 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
     # fmt: on
 
     if outdir:
-        from niworkflows.interfaces.reportlets.registration import (
-            SimpleBeforeAfterRPT as SimpleBeforeAfter,
-        )
         from ...outputs import DerivativesDataSink
 
         report = pe.Node(

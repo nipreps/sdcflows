@@ -25,6 +25,7 @@ import json
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
 from sdcflows.workflows.apply.correction import init_unwarp_wf
 
 
@@ -58,9 +59,6 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
         )
 
     if outdir:
-        from niworkflows.interfaces.reportlets.registration import (
-            SimpleBeforeAfterRPT as SimpleBeforeAfter,
-        )
         from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
 
