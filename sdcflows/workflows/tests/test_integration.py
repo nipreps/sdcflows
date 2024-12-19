@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test the base workflow."""
+
 from pathlib import Path
 import json
 import pytest
@@ -31,7 +32,7 @@ from sdcflows import fieldmaps as sfm
 from sdcflows.interfaces.reportlets import FieldmapReportlet
 from sdcflows.workflows.apply import correction as swac
 from sdcflows.workflows.apply import registration as swar
-from niworkflows.interfaces.reportlets.registration import (
+from nireports.interfaces.reporting.base import (
     SimpleBeforeAfterRPT as SimpleBeforeAfter,
 )
 

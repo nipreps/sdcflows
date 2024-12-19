@@ -18,4 +18,3 @@ sphinx >= 7.2.2
 sphinx-argparse
 sphinxcontrib-apidoc
 templateflow
-traits < 6.4
