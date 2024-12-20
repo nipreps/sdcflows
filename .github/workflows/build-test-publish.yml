@@ -88,7 +88,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
-        path: /var/lib/apt
+        path: ${{ runner.temp }}/cache-linux
         key: apt-cache-v3
         restore-keys: |
           apt-cache-v3
@@ -102,13 +102,16 @@ jobs:
                         libglu1-mesa-dev libglw1-mesa     \
                         libxm4 build-essential
 
-    - uses: actions/cache@v4
+    - name: Restore cache for AFNI
+      id: cache-afni
+      uses: actions/cache@v4
       with:
         path: /opt/afni
-        key: afni-v1
+        key: afni-v1-${{ matrix.python-version }}-${{ matrix.dependencies }}-${{ matrix.marks }}
         restore-keys: |
-          afni-v1
+          afni-v1-
     - name: Install AFNI
+      if: steps.cache-afni.outputs.cache-hit != 'true'
       run: |
         if [[ ! -d "${AFNI_HOME}" ]]; then
           curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries && \
