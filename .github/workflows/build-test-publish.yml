@@ -129,7 +129,7 @@ jobs:
         auto-update-conda: true
         auto-activate-base: true
         python-version: ${{ matrix.python-version }}
-        channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge
+        channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge,defaults
     - uses: actions/cache@v4
       id: conda
       env:
