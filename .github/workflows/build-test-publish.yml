@@ -122,7 +122,7 @@ jobs:
         git config --global user.name 'NiPreps Bot'
         git config --global user.email 'nipreps@gmail.com'
     - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v5
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v3
       with:
