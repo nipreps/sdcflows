@@ -244,43 +244,44 @@ def get_trt(
 
         return trt
 
-    # npe = N voxels PE direction
-    pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
-    npe = nb.load(in_file).shape[pe_index]
+    if "PhaseEncodingDirection" in in_meta:
+        # npe = N voxels PE direction
+        pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
+        npe = nb.load(in_file).shape[pe_index]
 
-    # Use case 2: EES is defined
-    ees = in_meta.get("EffectiveEchoSpacing")
-    if ees:
-        # Effective echo spacing means that acceleration factors have been accounted for.
-        return ees * (npe - 1)
-    elif use_estimate and "EstimatedEffectiveEchoSpacing" in in_meta:
-        return in_meta.get("EstimatedEffectiveEchoSpacing") * (npe - 1)
-
-    try:
-        echospacing = in_meta["EchoSpacing"]
-        acc_factor = in_meta["ParallelReductionFactorInPlane"]
-    except KeyError:
-        pass
-    else:
-        # etl = effective train length
-        etl = npe // acc_factor
-        return echospacing * (etl - 1)
-
-    # Use case 3 (Philips scans)
-    try:
-        wfs = in_meta["WaterFatShift"]
-        epifactor = in_meta["EPIFactor"]
-    except KeyError:
-        pass
-    else:
-        wfs_hz = (
-            (in_meta.get("ImagingFrequency", 0) * 3.39941)
-            or (in_meta.get("MagneticFieldStrength", 0) * 144.7383333)
-            or None
-        )
-        if wfs_hz:
-            ees = wfs / (wfs_hz * (epifactor + 1))
+        # Use case 2: EES is defined
+        ees = in_meta.get("EffectiveEchoSpacing")
+        if ees:
+            # Effective echo spacing means that acceleration factors have been accounted for.
             return ees * (npe - 1)
+        elif use_estimate and "EstimatedEffectiveEchoSpacing" in in_meta:
+            return in_meta.get("EstimatedEffectiveEchoSpacing") * (npe - 1)
+
+        try:
+            echospacing = in_meta["EchoSpacing"]
+            acc_factor = in_meta["ParallelReductionFactorInPlane"]
+        except KeyError:
+            pass
+        else:
+            # etl = effective train length
+            etl = npe // acc_factor
+            return echospacing * (etl - 1)
+
+        # Use case 3 (Philips scans)
+        try:
+            wfs = in_meta["WaterFatShift"]
+            epifactor = in_meta["EPIFactor"]
+        except KeyError:
+            pass
+        else:
+            wfs_hz = (
+                (in_meta.get("ImagingFrequency", 0) * 3.39941)
+                or (in_meta.get("MagneticFieldStrength", 0) * 144.7383333)
+                or None
+            )
+            if wfs_hz:
+                ees = wfs / (wfs_hz * (epifactor + 1))
+                return ees * (npe - 1)
 
     if fallback:
         return fallback
