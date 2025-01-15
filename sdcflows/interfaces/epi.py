@@ -37,6 +37,8 @@ from nipype.interfaces.base import (
 class _GetReadoutTimeInputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, desc="EPI image corresponding to the metadata")
     metadata = traits.Dict(mandatory=True, desc="metadata corresponding to the inputs")
+    use_estimate = traits.Bool(False, desc='Use "Estimated*" fields to calculate TotalReadoutTime')
+    fallback = traits.Float(desc="A fallback value, in seconds.")
 
 
 class _GetReadoutTimeOutputSpec(TraitedSpec):
@@ -57,6 +59,8 @@ class GetReadoutTime(SimpleInterface):
         self._results["readout_time"] = get_trt(
             self.inputs.metadata,
             self.inputs.in_file if isdefined(self.inputs.in_file) else None,
+            use_estimate=self.inputs.use_estimate,
+            fallback=self.inputs.fallback or None,
         )
         self._results["pe_direction"] = self.inputs.metadata["PhaseEncodingDirection"]
         self._results["pe_dir_fsl"] = (
