@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.viz.utils - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/version-switch.css?v=3fffbac3" />
@@ -332,7 +332,7 @@
 
 <div class="viewcode-block" id="plot_registration">
 <a class="viewcode-back" href="../../../api/sdcflows.viz.utils.html#sdcflows.viz.utils.plot_registration">[docs]</a>
-<span class="k">def</span> <span class="nf">plot_registration</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_registration</span><span class="p">(</span>
     <span class="n">anat_nii</span><span class="p">,</span>
     <span class="n">div_id</span><span class="p">,</span>
     <span class="n">plot_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -350,13 +350,13 @@
 
 <span class="sd">    Default order is: axial, coronal, sagittal</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
 
-    <span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
-    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-    <span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="kn">import</span> <span class="n">plot_anat</span>
-    <span class="kn">from</span> <span class="nn">svgutils.transform</span> <span class="kn">import</span> <span class="n">SVGFigure</span>
-    <span class="kn">from</span> <span class="nn">nireports.reportlets.utils</span> <span class="kn">import</span> <span class="n">robust_set_limits</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">SVGNS</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_anat</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">svgutils.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVGFigure</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nireports.reportlets.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_set_limits</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">SVGNS</span>
 
     <span class="n">plot_params</span> <span class="o">=</span> <span class="n">plot_params</span> <span class="ow">or</span> <span class="p">{}</span>
 
@@ -411,11 +411,11 @@
 
 <div class="viewcode-block" id="coolwarm_transparent">
 <a class="viewcode-back" href="../../../api/sdcflows.viz.utils.html#sdcflows.viz.utils.coolwarm_transparent">[docs]</a>
-<span class="k">def</span> <span class="nf">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">opaque_perc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">transparent_perc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">opaque_perc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">transparent_perc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Modify the coolwarm color scale to have full transparency around the middle.&quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-    <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">pl</span>
-    <span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ListedColormap</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pylab</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListedColormap</span>
 
     <span class="c1"># Choose colormap</span>
     <span class="n">cmap</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">coolwarm</span>

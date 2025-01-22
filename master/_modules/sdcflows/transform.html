@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.transform - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/css/version-switch.css?v=3fffbac3" />
@@ -351,31 +351,31 @@
 
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">import</span> <span class="nn">attr</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span> <span class="k">as</span> <span class="n">ndi</span>
-<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">BSpline</span>
-<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">hstack</span> <span class="k">as</span> <span class="n">sparse_hstack</span><span class="p">,</span> <span class="n">kron</span><span class="p">,</span> <span class="n">lil_array</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">attr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span> <span class="k">as</span> <span class="n">ndi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">BSpline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">hstack</span> <span class="k">as</span> <span class="n">sparse_hstack</span><span class="p">,</span> <span class="n">kron</span><span class="p">,</span> <span class="n">lil_array</span>
 
-<span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-<span class="kn">import</span> <span class="nn">nitransforms</span> <span class="k">as</span> <span class="nn">nt</span>
-<span class="kn">from</span> <span class="nn">bids.utils</span> <span class="kn">import</span> <span class="n">listify</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nitransforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bids.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">listify</span>
 
-<span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">reorient_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">reorient_image</span>
 
-<span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
 
 
-<span class="k">def</span> <span class="nf">_sdc_unwarp</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sdc_unwarp</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">pe_info</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
@@ -426,7 +426,7 @@
 
 <div class="viewcode-block" id="worker">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.worker">[docs]</a>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">worker</span><span class="p">(</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">worker</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">pe_info</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
@@ -446,7 +446,7 @@
 
 <div class="viewcode-block" id="unwarp_parallel">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.unwarp_parallel">[docs]</a>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">unwarp_parallel</span><span class="p">(</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">unwarp_parallel</span><span class="p">(</span>
     <span class="n">fulldataset</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">coordinates</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">fmap_hz</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -557,7 +557,7 @@
 <div class="viewcode-block" id="B0FieldTransform">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform">[docs]</a>
 <span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">B0FieldTransform</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">B0FieldTransform</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents and applies the transform to correct for susceptibility distortions.&quot;&quot;&quot;</span>
 
     <span class="n">coeffs</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -570,7 +570,7 @@
 
 <div class="viewcode-block" id="B0FieldTransform.fit">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.fit">[docs]</a>
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">target_reference</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
         <span class="n">xfm_data2fmap</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -641,7 +641,7 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">approx</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">deoblique_and_zooms</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">deoblique_and_zooms</span>
 
             <span class="c1"># Generate a sampling reference on the fieldmap&#39;s space that fully covers</span>
             <span class="c1"># the target_reference&#39;s grid.</span>
@@ -672,7 +672,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mapped</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">fmap</span><span class="p">,</span> <span class="n">projected_reference</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">approx</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">nitransforms.linear</span> <span class="kn">import</span> <span class="n">Affine</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">nitransforms.linear</span><span class="w"> </span><span class="kn">import</span> <span class="n">Affine</span>
 
             <span class="n">_tmp_reference</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
@@ -690,7 +690,7 @@
 
 <div class="viewcode-block" id="B0FieldTransform.apply">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.apply">[docs]</a>
-    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">moving</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
         <span class="n">pe_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
@@ -877,7 +877,7 @@
 
 <div class="viewcode-block" id="B0FieldTransform.to_displacements">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.B0FieldTransform.to_displacements">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_displacements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_displacements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a NIfTI file containing a displacements field transform compatible with ITK/ANTs.</span>
 
@@ -905,7 +905,7 @@
 
 <div class="viewcode-block" id="fmap_to_disp">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.fmap_to_disp">[docs]</a>
-<span class="k">def</span> <span class="nf">fmap_to_disp</span><span class="p">(</span><span class="n">fmap_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fmap_to_disp</span><span class="p">(</span><span class="n">fmap_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a fieldmap in Hz into an ITK/ANTs-compatible displacements field.</span>
 
@@ -957,7 +957,7 @@
 
 <div class="viewcode-block" id="disp_to_fmap">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.disp_to_fmap">[docs]</a>
-<span class="k">def</span> <span class="nf">disp_to_fmap</span><span class="p">(</span><span class="n">xyz_nii</span><span class="p">,</span> <span class="n">epi_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">disp_to_fmap</span><span class="p">(</span><span class="n">xyz_nii</span><span class="p">,</span> <span class="n">epi_nii</span><span class="p">,</span> <span class="n">ro_time</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">itk_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a displacements field into a fieldmap in Hz.</span>
 
@@ -1013,7 +1013,7 @@
 
 <div class="viewcode-block" id="grid_bspline_weights">
 <a class="viewcode-back" href="../../api/sdcflows.transform.html#sdcflows.transform.grid_bspline_weights">[docs]</a>
-<span class="k">def</span> <span class="nf">grid_bspline_weights</span><span class="p">(</span><span class="n">target_nii</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">grid_bspline_weights</span><span class="p">(</span><span class="n">target_nii</span><span class="p">,</span> <span class="n">ctrl_nii</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Evaluate tensor-product B-Spline weights on a grid.</span>
 
@@ -1106,7 +1106,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_move_coeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">fmap_target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_move_coeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">fmap_target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read in a rigid transform from ANTs, and update the coefficients field affine.&quot;&quot;&quot;</span>
     <span class="n">xfm</span> <span class="o">=</span> <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">Affine</span><span class="p">(</span>
         <span class="n">nt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">itk</span><span class="o">.</span><span class="n">ITKLinearTransform</span><span class="o">.</span><span class="n">from_filename</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span><span class="o">.</span><span class="n">to_ras</span><span class="p">(),</span>

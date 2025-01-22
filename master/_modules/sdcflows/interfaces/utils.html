@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.interfaces.utils - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/version-switch.css?v=3fffbac3" />
@@ -328,8 +328,8 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Utilities.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseInterfaceInputSpec</span><span class="p">,</span>
     <span class="n">TraitedSpec</span><span class="p">,</span>
     <span class="n">File</span><span class="p">,</span>
@@ -339,18 +339,18 @@
     <span class="n">OutputMultiObject</span><span class="p">,</span>
     <span class="n">isdefined</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.ants.segmentation</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.ants.segmentation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DenoiseImage</span> <span class="k">as</span> <span class="n">_DenoiseImageBase</span><span class="p">,</span>
     <span class="n">DenoiseImageInputSpec</span> <span class="k">as</span> <span class="n">_DenoiseImageInputSpecBase</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces.mixins</span> <span class="kn">import</span> <span class="n">CopyHeaderInterface</span> <span class="k">as</span> <span class="n">_CopyHeaderInterface</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">CopyHeaderInterface</span> <span class="k">as</span> <span class="n">_CopyHeaderInterface</span>
 
-<span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">reorient_pedir</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reorient_pedir</span>
 
 <span class="n">OBLIQUE_THRESHOLD_DEG</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 
-<span class="k">class</span> <span class="nc">_FlattenInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_FlattenInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_data</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -364,7 +364,7 @@
     <span class="n">max_trs</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;only pick first TRs&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_FlattenOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_FlattenOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_list</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span>
             <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -378,13 +378,13 @@
 
 <div class="viewcode-block" id="Flatten">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Flatten">[docs]</a>
-<span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Flatten</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a list of 3D and 4D files (and metadata).&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_FlattenInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_FlattenOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_flatten</span><span class="p">(</span>
             <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">),</span>
             <span class="n">max_trs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">max_trs</span><span class="p">,</span>
@@ -397,7 +397,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">_UniformGridInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_UniformGridInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_data</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -406,24 +406,24 @@
     <span class="n">reference</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;reference index&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_UniformGridOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_UniformGridOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_data</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
     <span class="n">reference</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="UniformGrid">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.UniformGrid">[docs]</a>
-<span class="k">class</span> <span class="nc">UniformGrid</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniformGrid</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure all images in input have the same spatial parameters.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_UniformGridInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_UniformGridOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-        <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-        <span class="kn">from</span> <span class="nn">nitransforms.linear</span> <span class="kn">import</span> <span class="n">Affine</span>
-        <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">nitransforms.linear</span><span class="w"> </span><span class="kn">import</span> <span class="n">Affine</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
         <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">reference</span><span class="p">]</span>
@@ -462,7 +462,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">_ReorientImageAndMetadataInputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReorientImageAndMetadataInputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Input 3- or 4D image&quot;</span><span class="p">)</span>
     <span class="n">target_orientation</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Axis codes of coordinate system to reorient to&quot;</span><span class="p">)</span>
     <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
@@ -474,7 +474,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_ReorientImageAndMetadataOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReorientImageAndMetadataOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Reoriented image&quot;</span><span class="p">)</span>
     <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span>
@@ -486,14 +486,14 @@
 
 <div class="viewcode-block" id="ReorientImageAndMetadata">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ReorientImageAndMetadata">[docs]</a>
-<span class="k">class</span> <span class="nc">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ReorientImageAndMetadataInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_ReorientImageAndMetadataOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-        <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-        <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
         <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">target_orientation</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">code</span> <span class="ow">in</span> <span class="s2">&quot;RASLPI&quot;</span> <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">target</span><span class="p">):</span>
@@ -528,29 +528,29 @@
 
 
 
-<span class="k">class</span> <span class="nc">_ConvertWarpInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ConvertWarpInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;output of 3dQwarp&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_ConvertWarpOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ConvertWarpOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the warp converted into ANTs&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ConvertWarp">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.ConvertWarp">[docs]</a>
-<span class="k">class</span> <span class="nc">ConvertWarp</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConvertWarp</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a displacements field from ``3dQwarp`` to ANTS-compatible.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ConvertWarpInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_ConvertWarpOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_qwarp2ants</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
-<span class="k">class</span> <span class="nc">_DeobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_DeobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input dataset potentially oblique&quot;</span><span class="p">)</span>
     <span class="n">in_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span>
         <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -558,20 +558,20 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_DeobliqueOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_DeobliqueOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input dataset, after correcting obliquity&quot;</span><span class="p">)</span>
     <span class="n">out_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input mask, after correcting obliquity&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Deoblique">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Deoblique">[docs]</a>
-<span class="k">class</span> <span class="nc">Deoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Deoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a dataset plumb.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_DeobliqueInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_DeobliqueOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_deoblique</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span>
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
@@ -588,7 +588,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">_ReobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReobliqueInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_plumb</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the plumb EPI image&quot;</span><span class="p">)</span>
     <span class="n">in_field</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span>
         <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -602,7 +602,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_ReobliqueOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReobliqueOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_epi</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the reoblique&#39;d EPI image&quot;</span><span class="p">)</span>
     <span class="n">out_field</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the reoblique&#39;d EPI image&quot;</span><span class="p">)</span>
     <span class="n">out_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the input mask, after correcting obliquity&quot;</span><span class="p">)</span>
@@ -610,13 +610,13 @@
 
 <div class="viewcode-block" id="Reoblique">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.Reoblique">[docs]</a>
-<span class="k">class</span> <span class="nc">Reoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Reoblique</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a dataset plumb.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ReobliqueInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_ReobliqueOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="n">in_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span> <span class="k">if</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_epi&quot;</span><span class="p">],</span>
@@ -636,7 +636,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">_DenoiseImageInputSpec</span><span class="p">(</span><span class="n">_DenoiseImageInputSpecBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_DenoiseImageInputSpec</span><span class="p">(</span><span class="n">_DenoiseImageInputSpecBase</span><span class="p">):</span>
     <span class="n">copy_header</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
         <span class="kc">True</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -646,7 +646,7 @@
 
 <div class="viewcode-block" id="DenoiseImage">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.DenoiseImage">[docs]</a>
-<span class="k">class</span> <span class="nc">DenoiseImage</span><span class="p">(</span><span class="n">_DenoiseImageBase</span><span class="p">,</span> <span class="n">_CopyHeaderInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DenoiseImage</span><span class="p">(</span><span class="n">_DenoiseImageBase</span><span class="p">,</span> <span class="n">_CopyHeaderInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add copy_header capability to DenoiseImage from nipype.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_DenoiseImageInputSpec</span>
@@ -654,21 +654,21 @@
 
 
 
-<span class="k">class</span> <span class="nc">_PadSlicesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PadSlicesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;3D or 4D NIfTI image&quot;</span><span class="p">)</span>
     <span class="n">axis</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span>
         <span class="mi">2</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;The axis through which slices are stacked in the input data&quot;</span>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_PadSlicesOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PadSlicesOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;The output file with even number of slices&quot;</span><span class="p">)</span>
     <span class="n">padded</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Indicator if the input image was padded&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PadSlices">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PadSlices">[docs]</a>
-<span class="k">class</span> <span class="nc">PadSlices</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PadSlices</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check an image for uneven slices, and add an empty slice if necessary</span>
 
@@ -678,7 +678,7 @@
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_PadSlicesInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_PadSlicesOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_file&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;padded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_pad_num_slices</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
@@ -688,24 +688,24 @@
 
 
 
-<span class="k">class</span> <span class="nc">_PositiveDirectionCosinesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PositiveDirectionCosinesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;input image&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_PositiveDirectionCosinesOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_PositiveDirectionCosinesOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">()</span>
     <span class="n">in_orientation</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="PositiveDirectionCosines">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.utils.html#sdcflows.interfaces.utils.PositiveDirectionCosines">[docs]</a>
-<span class="k">class</span> <span class="nc">PositiveDirectionCosines</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PositiveDirectionCosines</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reorient axes polarity to have all positive direction cosines.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_PositiveDirectionCosinesInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_PositiveDirectionCosinesOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;out_file&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;in_orientation&quot;</span><span class="p">])</span> <span class="o">=</span> <span class="n">_ensure_positive_cosines</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span>
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
@@ -715,7 +715,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_flatten</span><span class="p">(</span><span class="n">inlist</span><span class="p">,</span> <span class="n">max_trs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_flatten</span><span class="p">(</span><span class="n">inlist</span><span class="p">,</span> <span class="n">max_trs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Split the input EPIs and generate a flattened list with corresponding metadata.</span>
 
@@ -728,8 +728,8 @@
 <span class="sd">        from the input images.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">out_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">()</span>
 
@@ -750,11 +750,11 @@
     <span class="k">return</span> <span class="n">output</span>
 
 
-<span class="k">def</span> <span class="nf">_qwarp2ants</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_qwarp2ants</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the data type and intent of a warp is acceptable by ITK-based tools.&quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -766,10 +766,10 @@
     <span class="k">return</span> <span class="n">out_file</span>
 
 
-<span class="k">def</span> <span class="nf">_deoblique</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">in_affine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_deoblique</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">in_affine</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">nii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">OBLIQUE_THRESHOLD_DEG</span><span class="p">):</span>
@@ -796,10 +796,10 @@
     <span class="k">return</span> <span class="n">out_file</span>
 
 
-<span class="k">def</span> <span class="nf">_reoblique</span><span class="p">(</span><span class="n">in_epi</span><span class="p">,</span> <span class="n">in_plumb</span><span class="p">,</span> <span class="n">in_field</span><span class="p">,</span> <span class="n">in_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_reoblique</span><span class="p">(</span><span class="n">in_epi</span><span class="p">,</span> <span class="n">in_plumb</span><span class="p">,</span> <span class="n">in_field</span><span class="p">,</span> <span class="n">in_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
     <span class="n">epinii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_epi</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">epinii</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">OBLIQUE_THRESHOLD_DEG</span><span class="p">):</span>
@@ -828,7 +828,7 @@
     <span class="k">return</span> <span class="n">out_files</span>
 
 
-<span class="k">def</span> <span class="nf">_pad_num_slices</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_pad_num_slices</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Ensure the image has even number of slices to avert TOPUP&#39;s segfault.</span>
 
@@ -851,9 +851,9 @@
 <span class="sd">        Indicator if the input image was padded.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
-    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">ax</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -869,7 +869,7 @@
     <span class="k">return</span> <span class="n">out_file</span><span class="p">,</span> <span class="kc">True</span>
 
 
-<span class="k">def</span> <span class="nf">_ensure_positive_cosines</span><span class="p">(</span><span class="n">in_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">newpath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_positive_cosines</span><span class="p">(</span><span class="n">in_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">newpath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reorient axes polarity to have all positive direction cosines.</span>
 
@@ -878,9 +878,9 @@
 <span class="sd">    For instance, *LAS* -&gt; *RAS* or *ALS* -&gt; *ARS*.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
-    <span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">fname_presuffix</span>
-    <span class="kn">from</span> <span class="nn">sdcflows.utils.tools</span> <span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_positive_cosines</span>
 
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;_flipfree&quot;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">newpath</span><span class="p">)</span>
     <span class="n">reoriented</span><span class="p">,</span> <span class="n">axcodes</span> <span class="o">=</span> <span class="n">ensure_positive_cosines</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">))</span>

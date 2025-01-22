@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.interfaces.epi - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/version-switch.css?v=3fffbac3" />
@@ -329,7 +329,7 @@
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Interfaces to deal with the various types of fieldmap sources.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseInterfaceInputSpec</span><span class="p">,</span>
     <span class="n">File</span><span class="p">,</span>
     <span class="n">InputMultiObject</span><span class="p">,</span>
@@ -341,12 +341,16 @@
 <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_GetReadoutTimeInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_GetReadoutTimeInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;EPI image corresponding to the metadata&quot;</span><span class="p">)</span>
     <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;metadata corresponding to the inputs&quot;</span><span class="p">)</span>
+    <span class="n">use_estimate</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
+        <span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Use &quot;Estimated*&quot; fields to calculate TotalReadoutTime&#39;</span>
+    <span class="p">)</span>
+    <span class="n">fallback</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s2">&quot;A fallback value, in seconds.&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_GetReadoutTimeOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_GetReadoutTimeOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">readout_time</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span>
     <span class="n">pe_direction</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;i-&quot;</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="s2">&quot;j-&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;k-&quot;</span><span class="p">)</span>
     <span class="n">pe_dir_fsl</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;x-&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;y-&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;z-&quot;</span><span class="p">)</span>
@@ -354,18 +358,20 @@
 
 <div class="viewcode-block" id="GetReadoutTime">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.epi.html#sdcflows.interfaces.epi.GetReadoutTime">[docs]</a>
-<span class="k">class</span> <span class="nc">GetReadoutTime</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GetReadoutTime</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the readout time from available metadata.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_GetReadoutTimeInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_GetReadoutTimeOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">..utils.epimanip</span> <span class="kn">import</span> <span class="n">get_trt</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.epimanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trt</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;readout_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_trt</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span> <span class="k">if</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">use_estimate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">use_estimate</span><span class="p">,</span>
+            <span class="n">fallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s2">&quot;pe_dir_fsl&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -378,7 +384,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">_SortPEBlipsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SortPEBlipsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_data</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -396,7 +402,7 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_SortPEBlipsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SortPEBlipsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">out_data</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(),</span>
         <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;list of input data&quot;</span><span class="p">,</span>
@@ -417,13 +423,13 @@
 
 <div class="viewcode-block" id="SortPEBlips">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.epi.html#sdcflows.interfaces.epi.SortPEBlips">[docs]</a>
-<span class="k">class</span> <span class="nc">SortPEBlips</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SortPEBlips</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sort PE blips so they are consistently fed into TOPUP.&quot;&quot;&quot;</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_SortPEBlipsInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_SortPEBlipsOutputSpec</span>
 
-    <span class="k">def</span> <span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="c1"># Put sign first</span>
         <span class="n">blips</span> <span class="o">=</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="n">pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>

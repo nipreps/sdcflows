@@ -7,7 +7,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.utils.tools module - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/css/version-switch.css?v=3fffbac3" />
@@ -364,7 +364,7 @@ reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)</p>
 <p>Therefore, this function accepts one or two orientations, and precomputed transforms
 from a to b can be passed as the “source” orientation.</p>
 <p>Passing only a source orientation will rotate into RAS:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nibabel.orientations</span> <span class="kn">import</span> <span class="n">axcodes2ornt</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">nibabel.orientations</span><span class="w"> </span><span class="kn">import</span> <span class="n">axcodes2ornt</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;RAS&quot;</span><span class="p">))</span>
 <span class="go">&#39;j&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;PSL&quot;</span><span class="p">))</span>
@@ -385,7 +385,7 @@ from a to b can be passed as the “source” orientation.</p>
 </div>
 <p>Passing a transform orientation as source_ornt will perform the transform,
 and passing it as <code class="docutils literal notranslate"><span class="pre">target_ornt</span></code> will invert the transform:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nibabel.orientations</span> <span class="kn">import</span> <span class="n">ornt_transform</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">nibabel.orientations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ornt_transform</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">xfm</span> <span class="o">=</span> <span class="n">ornt_transform</span><span class="p">(</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;LPS&quot;</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;AIR&quot;</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">xfm</span><span class="p">)</span>
 <span class="go">&#39;i-&#39;</span>

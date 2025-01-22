@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.utils.telemetry - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/version-switch.css?v=3fffbac3" />
@@ -332,16 +332,16 @@
 <span class="c1"># The original file this work derives from is found at:</span>
 <span class="c1"># https://github.com/nipreps/mriqc/blob/8ceadba8669cc2a86119a97b9311ab968f11c6eb/mriqc/utils/telemetry.py</span>
 <span class="sd">&quot;&quot;&quot;Ping MIGAS for telemetry.&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">migas</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">migas</span>
 
-<span class="kn">from</span> <span class="nn">sdcflows</span> <span class="kn">import</span> <span class="n">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
 
 <span class="n">MIGAS_PACKAGE</span> <span class="o">=</span> <span class="s2">&quot;nipreps/sdcflows&quot;</span>
 
 
 <div class="viewcode-block" id="setup_migas">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.telemetry.html#sdcflows.utils.telemetry.setup_migas">[docs]</a>
-<span class="k">def</span> <span class="nf">setup_migas</span><span class="p">(</span><span class="n">init_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">exit_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_migas</span><span class="p">(</span><span class="n">init_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">exit_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Prepare the migas python client to communicate with a migas server.</span>
 <span class="sd">    If ``init`` is ``True``, send an initial breadcrumb.</span>
@@ -356,7 +356,7 @@
         <span class="c1"># send initial status ping</span>
         <span class="n">send_crumb</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">status_desc</span><span class="o">=</span><span class="s1">&#39;workflow start&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">exit_ping</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">migas.error.nipype</span> <span class="kn">import</span> <span class="n">node_execution_error</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">migas.error.nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_execution_error</span>
 
         <span class="n">migas</span><span class="o">.</span><span class="n">track_exit</span><span class="p">(</span>
             <span class="n">MIGAS_PACKAGE</span><span class="p">,</span>
@@ -368,7 +368,7 @@
 
 <div class="viewcode-block" id="send_crumb">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.telemetry.html#sdcflows.utils.telemetry.send_crumb">[docs]</a>
-<span class="k">def</span> <span class="nf">send_crumb</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">send_crumb</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Communicate with the migas telemetry server. This requires `migas.setup()` to be called.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

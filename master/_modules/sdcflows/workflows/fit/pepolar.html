@@ -6,7 +6,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>sdcflows.workflows.fit.pepolar - sdcflows 0+unknown documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/css/version-switch.css?v=3fffbac3" />
@@ -328,12 +328,12 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Datasets with multiple phase encoded directions.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">nipype.pipeline</span> <span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
-<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
 
-<span class="kn">from</span> <span class="nn">niworkflows.engine.workflows</span> <span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.engine.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
-<span class="kn">from</span> <span class="nn">...</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">...</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span>
 
 <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)</span>
 <span class="n">_PEPOLAR_DESC</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
@@ -343,7 +343,7 @@
 
 <div class="viewcode-block" id="init_topup_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.pepolar.html#sdcflows.workflows.fit.pepolar.init_topup_wf">[docs]</a>
-<span class="k">def</span> <span class="nf">init_topup_wf</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_topup_wf</span><span class="p">(</span>
     <span class="n">grid_reference</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -396,15 +396,15 @@
 <span class="sd">        Short description of the estimation method that was run.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces.fsl.epi</span> <span class="kn">import</span> <span class="n">TOPUP</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.nibabel</span> <span class="kn">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.images</span> <span class="kn">import</span> <span class="n">RobustAverage</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.fsl.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOPUP</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">RobustAverage</span>
 
-    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.epi</span> <span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span><span class="p">,</span> <span class="n">ReorientImageAndMetadata</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.bspline</span> <span class="kn">import</span> <span class="n">TOPUPCoeffReorient</span>
-    <span class="kn">from</span> <span class="nn">..ancillary</span> <span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">UniformGrid</span><span class="p">,</span> <span class="n">PadSlices</span><span class="p">,</span> <span class="n">ReorientImageAndMetadata</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOPUPCoeffReorient</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..ancillary</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
@@ -525,7 +525,7 @@
         <span class="c1"># fmt: on</span>
         <span class="k">return</span> <span class="n">workflow</span>
 
-    <span class="kn">from</span> <span class="nn">sdcflows.interfaces.bspline</span> <span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
     <span class="c1"># Separate the runs again, as our ApplyCoeffsField corrects them separately</span>
     <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unwarp&quot;</span><span class="p">)</span>
@@ -550,7 +550,7 @@
 
 <div class="viewcode-block" id="init_3dQwarp_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.pepolar.html#sdcflows.workflows.fit.pepolar.init_3dQwarp_wf">[docs]</a>
-<span class="k">def</span> <span class="nf">init_3dQwarp_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pepolar_estimate_wf&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_3dQwarp_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pepolar_estimate_wf&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create the PEPOLAR field estimation workflow based on AFNI&#39;s ``3dQwarp``.</span>
 
@@ -588,16 +588,16 @@
 <span class="sd">        The path of an unwarped conversion of the first element of ``in_data``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">afni</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.header</span> <span class="kn">import</span> <span class="n">CopyHeader</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.fixes</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">afni</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.header</span><span class="w"> </span><span class="kn">import</span> <span class="n">CopyHeader</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span><span class="p">,</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.interfaces.freesurfer</span> <span class="kn">import</span> <span class="n">StructuralReference</span>
-    <span class="kn">from</span> <span class="nn">niworkflows.func.util</span> <span class="kn">import</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span>
-    <span class="kn">from</span> <span class="nn">...utils.misc</span> <span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_last</span>
-    <span class="kn">from</span> <span class="nn">...interfaces.utils</span> <span class="kn">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">ConvertWarp</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.freesurfer</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuralReference</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.func.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span><span class="p">,</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_last</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">ConvertWarp</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> </span><span class="se">\</span>
@@ -703,7 +703,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_sorted_pe</span><span class="p">(</span><span class="n">inlist</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sorted_pe</span><span class="p">(</span><span class="n">inlist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate suitable inputs to ``3dQwarp``.</span>
 
