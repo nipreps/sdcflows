@@ -29,7 +29,14 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 INPUT_FIELDS = ("magnitude", "fieldmap")
 
 
-def init_fmap_wf(omp_nthreads=1, sloppy=False, debug=False, mode="phasediff", name="fmap_wf"):
+def init_fmap_wf(
+    omp_nthreads=1,
+    sloppy=False,
+    debug=False,
+    mode="phasediff",
+    name="fmap_wf",
+    **kwargs,  # Soak up unused keyword args
+):
     """
     Estimate the fieldmap based on a field-mapping MRI acquisition.
 
