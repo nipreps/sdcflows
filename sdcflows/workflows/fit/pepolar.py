@@ -36,6 +36,8 @@ echo-planar imaging (EPI) references """
 
 def init_topup_wf(
     grid_reference=0,
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
     omp_nthreads=1,
     sloppy=False,
     debug=False,
@@ -123,11 +125,15 @@ def init_topup_wf(
 
     # Calculate the total readout time of each run
     readout_time = pe.MapNode(
-        GetReadoutTime(),
+        GetReadoutTime(
+            use_estimate=use_metadata_estimates,
+        ),
         name="readout_time",
         iterfield=["metadata", "in_file"],
         run_without_submitting=True,
     )
+    if fallback_total_readout_time is not None:
+        readout_time.inputs.fallback = fallback_total_readout_time
     # Average each run so that topup is not overwhelmed (see #279)
     runwise_avg = pe.MapNode(
         RobustAverage(num_threads=omp_nthreads),

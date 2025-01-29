@@ -36,6 +36,8 @@ def init_fmap_preproc_wf(
     omp_nthreads,
     output_dir,
     subject,
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
     sloppy=False,
     debug=False,
     name="fmap_preproc_wf",
@@ -108,6 +110,8 @@ def init_fmap_preproc_wf(
 
     for n, estimator in enumerate(estimators, 1):
         est_wf = estimator.get_workflow(
+            use_metadata_estimates=use_metadata_estimates,
+            fallback_total_readout_time=fallback_total_readout_time,
             omp_nthreads=omp_nthreads,
             debug=debug,
             sloppy=sloppy,
