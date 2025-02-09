@@ -42,6 +42,8 @@ INPUT_FIELDS = (
 def init_syn_sdc_wf(
     *,
     atlas_threshold=3,
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
     sloppy=False,
     debug=False,
     name="syn_sdc_wf",
@@ -160,10 +162,14 @@ template [@fieldmapless3].
     outputnode.inputs.method = 'FLB ("fieldmap-less", SyN-based)'
 
     readout_time = pe.Node(
-        GetReadoutTime(),
+        GetReadoutTime(
+            use_estimate=use_metadata_estimates,
+        ),
         name="readout_time",
         run_without_submitting=True,
     )
+    if fallback_total_readout_time is not None:
+        readout_time.inputs.fallback = fallback_total_readout_time
 
     warp_dir = pe.Node(
         niu.Function(function=_warp_dir),
