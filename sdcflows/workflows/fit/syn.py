@@ -271,7 +271,6 @@ template [@fieldmapless3].
             (inputnode, atlas_msk, [("sd_prior", "in_file")]),
             (atlas_msk, fixed_masks, [("out_mask", "in3")]),
         ])  # fmt:skip
-
     else:
         workflow.connect(inputnode, "anat_mask", fixed_masks, "in3")
 
@@ -303,7 +302,6 @@ template [@fieldmapless3].
         (lap_epi, lap_epi_norm, [("output_image", "in_file")]),
         (lap_epi_norm, epi_merge, [("out", "in2")]),
         (find_zooms, zooms_epi, [("out", "zooms")]),
-        (atlas_msk, fixed_masks, [("out_mask", "in3")]),
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
