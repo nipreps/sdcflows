@@ -25,6 +25,7 @@ Estimating the susceptibility distortions without fieldmaps.
 """
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.interfaces.base import Undefined
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -526,7 +527,7 @@ def init_syn_preprocessing_wf(
         # no prior to be used
         # MG: Future goal is to allow using alternative mappings
         # i.e. in the case of infants, where priors change depending on development
-        outputnode.inputs.sd_prior = niu.Undefined
+        outputnode.inputs.sd_prior = Undefined
 
     workflow.connect([
         (inputnode, epi_reference_wf, [("in_epis", "inputnode.in_files")]),
