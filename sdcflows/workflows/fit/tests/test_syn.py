@@ -30,7 +30,8 @@ from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _se
 
 @pytest.mark.veryslow
 @pytest.mark.slow
-def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
+@pytest.mark.parametrize("sd_prior", [True, False])
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
@@ -42,6 +43,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
         debug=sloppy_mode,
         auto_bold_nss=True,
         t1w_inversion=True,
+        sd_prior=sd_prior,
     )
     prep_wf.inputs.inputnode.in_epis = [
         str(
@@ -72,7 +74,12 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
         smriprep / "sub-100185_desc-brain_mask.nii.gz"
     )
 
-    syn_wf = init_syn_sdc_wf(debug=sloppy_mode, sloppy=sloppy_mode, omp_nthreads=4)
+    syn_wf = init_syn_sdc_wf(
+        debug=sloppy_mode,
+        sloppy=sloppy_mode,
+        omp_nthreads=4,
+        sd_prior=sd_prior,
+    )
 
     # fmt: off
     wf.connect([

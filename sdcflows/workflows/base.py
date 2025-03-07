@@ -39,6 +39,7 @@ def init_fmap_preproc_wf(
     sloppy=False,
     debug=False,
     name="fmap_preproc_wf",
+    **kwargs,
 ):
     """
     Create and combine estimator workflows.
@@ -110,6 +111,7 @@ def init_fmap_preproc_wf(
             omp_nthreads=omp_nthreads,
             debug=debug,
             sloppy=sloppy,
+            **kwargs,
         )
         source_files = [
             str(f.path) for f in estimator.sources if f.suffix not in ("T1w", "T2w")
