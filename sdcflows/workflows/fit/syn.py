@@ -23,6 +23,7 @@
 """
 Estimating the susceptibility distortions without fieldmaps.
 """
+
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces.base import Undefined
@@ -120,7 +121,6 @@ def init_syn_sdc_wf(
         FixHeaderRegistration as Registration,
     )
     from niworkflows.interfaces.nibabel import (
-        Binarize,
         IntensityClip,
         RegridToZooms,
     )
@@ -174,7 +174,6 @@ template [@fieldmapless3].
         name="warp_dir",
     )
     warp_dir.inputs.nlevels = 2
-    atlas_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="atlas_msk")
     anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
     amask2epi = pe.Node(
         ApplyTransforms(interpolation="MultiLabel", transforms="identity"),
@@ -211,7 +210,7 @@ template [@fieldmapless3].
     )
 
     fixed_masks = pe.Node(
-        niu.Merge(3),
+        niu.Merge(2),
         name="fixed_masks",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
         run_without_submitting=True,
@@ -223,9 +222,7 @@ template [@fieldmapless3].
 
     # SyN Registration Core
     syn = pe.Node(
-        Registration(
-            from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")
-        ),
+        Registration(from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")),
         name="syn",
         n_procs=omp_nthreads,
     )
@@ -236,9 +233,7 @@ template [@fieldmapless3].
         syn.inputs.args = "--write-interval-volumes 2"
 
     # Extract the corresponding fieldmap in Hz
-    extract_field = pe.Node(
-        DisplacementsField2Fieldmap(), name="extract_field"
-    )
+    extract_field = pe.Node(DisplacementsField2Fieldmap(), name="extract_field")
 
     unwarp = pe.Node(ApplyCoeffsField(jacobian=False), name="unwarp")
 
@@ -266,14 +261,6 @@ template [@fieldmapless3].
 
     if sloppy:
         bs_filter.inputs.zooms_min = 4.0
-
-    if sd_prior:
-        workflow.connect([
-            (inputnode, atlas_msk, [("sd_prior", "in_file")]),
-            (atlas_msk, fixed_masks, [("out_mask", "in3")]),
-        ])  # fmt:skip
-    else:
-        workflow.connect(inputnode, "anat_mask", fixed_masks, "in3")
 
     workflow.connect([
         (inputnode, readout_time, [(("epi_ref", _pop), "in_file"),
@@ -504,7 +491,9 @@ def init_syn_preprocessing_wf(
             mem_gb=DEFAULT_MEMORY_MIN_GB,
             run_without_submitting=True,
         )
-        transform_list.inputs.in3 = data.load("fmap_atlas_2_MNI152NLin2009cAsym_affine.mat")
+        transform_list.inputs.in3 = data.load(
+            "fmap_atlas_2_MNI152NLin2009cAsym_affine.mat"
+        )
         prior2epi = pe.Node(
             ApplyTransforms(
                 invert_transform_flags=[True, False, False],
