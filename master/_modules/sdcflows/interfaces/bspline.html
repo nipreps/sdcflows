@@ -619,12 +619,12 @@
     <span class="n">fmap2data_xfm</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the transform by which the target EPI can be resampled on the fieldmap&#39;s grid.&quot;</span><span class="p">,</span>
-        <span class="n">xor</span><span class="o">=</span><span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">,</span>
+        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">data2fmap_xfm</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the transform by which the fieldmap can be resampled on the target EPI&#39;s grid.&quot;</span><span class="p">,</span>
-        <span class="n">xor</span><span class="o">=</span><span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">,</span>
+        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">in_xfms</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">)),</span>
@@ -691,6 +691,24 @@
 <span class="sd">       coordinates of each voxel.</span>
 <span class="sd">       With those coordinates known, interpolation is trivial.</span>
 <span class="sd">    4. Generate a spatial image with the new data.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &gt;&gt;&gt; from sdcflows.interfaces.bspline import ApplyCoeffsField</span>
+<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir=&#39;j&#39;, ro_time=0.03125)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / &#39;epi.nii.gz&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / &#39;topup-coeff.nii.gz&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.data2fmap_xfm = str(data_dir / &#39;epi2fmap_xfm.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; result = unwarp.run()  # doctest: +SKIP</span>
+
+<span class="sd">    Inverse transforms may be used instead:</span>
+
+<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir=&#39;j&#39;, ro_time=0.03125)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / &#39;epi.nii.gz&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / &#39;topup-coeff.nii.gz&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.fmap2data_xfm = str(data_dir / &#39;fmap2epi_xfm.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; result = unwarp.run()  # doctest: +SKIP</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
