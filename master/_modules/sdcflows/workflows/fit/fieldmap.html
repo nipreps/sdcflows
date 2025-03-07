@@ -338,7 +338,14 @@
 
 <div class="viewcode-block" id="init_fmap_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.fieldmap.html#sdcflows.workflows.fit.fieldmap.init_fmap_wf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init_fmap_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fmap_wf&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_fmap_wf</span><span class="p">(</span>
+    <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;phasediff&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fmap_wf&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Estimate the fieldmap based on a field-mapping MRI acquisition.</span>
 
