@@ -380,6 +380,24 @@ class ApplyCoeffsField(SimpleInterface):
        With those coordinates known, interpolation is trivial.
     4. Generate a spatial image with the new data.
 
+    Example
+    -------
+
+    >>> from sdcflows.interfaces.bspline import ApplyCoeffsField
+    >>> unwarp = ApplyCoeffsField(pe_dir='j', ro_time=0.03125)
+    >>> unwarp.inputs.in_data = str(data_dir / 'epi.nii.gz')
+    >>> unwarp.inputs.in_coeff = str(data_dir / 'topup-coeff.nii.gz')
+    >>> unwarp.inputs.data2fmap_xfm = str(data_dir / 'epi2fmap_xfm.txt')
+    >>> result = unwarp.run()  # doctest: +SKIP
+
+    Inverse transforms may be used instead:
+
+    >>> unwarp = ApplyCoeffsField(pe_dir='j', ro_time=0.03125)
+    >>> unwarp.inputs.in_data = str(data_dir / 'epi.nii.gz')
+    >>> unwarp.inputs.in_coeff = str(data_dir / 'topup-coeff.nii.gz')
+    >>> unwarp.inputs.fmap2data_xfm = str(data_dir / 'fmap2epi_xfm.txt')
+    >>> result = unwarp.run()  # doctest: +SKIP
+
     """
 
     input_spec = _ApplyCoeffsFieldInputSpec
