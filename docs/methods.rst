@@ -76,7 +76,7 @@ Direct B0 mapping sequences
 Some MR schemes such as :abbr:`SEI (spiral-echo imaging)` can directly
 reconstruct an estimate of *the fieldmap in Hz*, :math:`V(i,j,k)`.
 These *fieldmaps* are described with more detail `here
-<https://cni.stanford.edu/wiki/GE_Processing#Fieldmaps>`__.
+<https://cni.su.domains/wiki/index.php?title=GE_Processing#Fieldmaps>`__.
 
 .. _sdc_phasediff :
 
