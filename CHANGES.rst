@@ -1,3 +1,19 @@
+2.12.0 (March 21, 2025)
+=======================
+Feature release in the 2.12.x series.
+
+This release migrates from the deprecated ``niworkflows.reporting``
+module to the ``nireports`` package.
+
+* FIX: AttributeError for _ApplyCoeffsFieldInputSpec (#481)
+* ENH: Allow running SyN SDC without using prior (#480)
+* ENH: Allow estimated and fallback TotalReadoutTime (#477)
+* RF: Transition from niworkflows reporting interfaces (#473)
+* DOC: Fix broken link [skip ci] (#482)
+* MNT: Add `defaults` to `conda` channels in `build-test-publish` GHA (#474)
+* MNT: Update `niworkflows` version to 1.11.0 (#478)
+
+
 2.11.0 (December 18, 2024)
 ==========================
 Feature release in the 2.11.x series.
