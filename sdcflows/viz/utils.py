@@ -46,7 +46,7 @@ def plot_registration(
     from lxml import etree
     import matplotlib.pyplot as plt
     from nilearn.plotting import plot_anat
-    from svgutils.transform import SVGFigure
+    from nireports._vendored.svgutils.transform import SVGFigure
     from nireports.reportlets.utils import robust_set_limits, extract_svg, SVGNS
 
     plot_params = plot_params or {}
