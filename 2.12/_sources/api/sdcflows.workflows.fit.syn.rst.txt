@@ -1,0 +1,6 @@
+sdcflows.workflows.fit.syn module
+=================================
+
+.. automodule:: sdcflows.workflows.fit.syn
+   :members:
+   :show-inheritance:
