@@ -313,7 +313,7 @@ def epi_mask(in_file, out_file=None):
     maxnorm = np.percentile(closed[closed > 0], 90)
     closed = np.clip(closed, a_min=0.0, a_max=maxnorm)
     # Calculate index of center of masses
-    cm = tuple(np.round(ndimage.measurements.center_of_mass(closed)).astype(int))
+    cm = tuple(np.round(ndimage.center_of_mass(closed)).astype(int))
     # Erode the picture of the brain by a lot
     eroded = ndimage.grey_erosion(closed, structure=ball(5))
     # Calculate the residual
