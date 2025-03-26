@@ -425,7 +425,10 @@ def init_syn_preprocessing_wf(
 
     if t1w_inversion is not None:
         import warnings
-        warnings.warn("The `t1w_inversion` argument is deprecated and does nothing.", DeprecationWarning)
+        warnings.warn(
+            "The `t1w_inversion` argument is deprecated and does nothing.",
+            DeprecationWarning,
+        )
 
     workflow = Workflow(name=name)
 
