@@ -94,7 +94,7 @@ RUN /opt/conda/envs/sdcflows/bin/pip install --no-cache-dir -r /tmp/requirements
 #
 # Main stage
 #
-FROM --platform=linux/amd64 ${BASE_IMAGE} as sdcflows
+FROM --platform=linux/amd64 ${BASE_IMAGE} as dev
 
 # Configure apt
 ENV DEBIAN_FRONTEND="noninteractive" \
@@ -199,6 +199,8 @@ ENV SUBJECTS_DIR="$FREESURFER_HOME/subjects" \
 # will handle parallelization
 ENV MKL_NUM_THREADS=1 \
     OMP_NUM_THREADS=1
+
+FROM dev as sdcflows
 
 # Installing SDCFlows
 COPY --from=src /src/dist/*.whl .
