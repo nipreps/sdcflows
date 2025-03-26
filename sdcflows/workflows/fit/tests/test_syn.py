@@ -31,8 +31,7 @@ from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _se
 
 @pytest.mark.veryslow
 @pytest.mark.slow
-@pytest.mark.parametrize("sd_prior", [True, False])
-def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
@@ -44,7 +43,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
         debug=sloppy_mode,
         auto_bold_nss=True,
         t1w_inversion=True,
-        sd_prior=sd_prior,
     )
     prep_wf.inputs.inputnode.in_epis = [
         str(
@@ -79,7 +77,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
         debug=sloppy_mode,
         sloppy=sloppy_mode,
         omp_nthreads=4,
-        sd_prior=sd_prior,
     )
 
     # fmt: off
@@ -168,6 +165,24 @@ def test_syn_wf_inputs(sloppy, laplacian_weight):
     wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
 
     assert wf.inputs.syn.metric_weight == metric_weight
+
+
+@pytest.mark.parametrize("sd_prior", [True, False])
+def test_syn_preprocessing_wf_inputs(sd_prior):
+    """Test appropriate instantiation of the SDC-SyN preprocessing workflow."""
+
+    prep_wf = init_syn_preprocessing_wf(
+        omp_nthreads=4,
+        sd_prior=sd_prior,
+        auto_bold_nss=True,
+        t1w_inversion=True,
+    )
+
+    if not sd_prior:
+        with pytest.raises(AttributeError):
+            prep_wf.inputs.prior_msk.in_file
+    else:
+        assert prep_wf.inputs.prior_msk.thresh_low
 
 
 @pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
