@@ -42,7 +42,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
         omp_nthreads=4,
         debug=sloppy_mode,
         auto_bold_nss=True,
-        t1w_inversion=True,
         sd_prior=sd_prior,
     )
     prep_wf.inputs.inputnode.in_epis = [

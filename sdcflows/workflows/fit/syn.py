@@ -343,7 +343,7 @@ def init_syn_preprocessing_wf(
     name="syn_preprocessing_wf",
     omp_nthreads=1,
     auto_bold_nss=False,
-    t1w_inversion=False,
+    t1w_inversion=None,
     sd_prior=True,
 ):
     """
@@ -370,6 +370,7 @@ def init_syn_preprocessing_wf(
         of BOLD images.
     t1w_inversion : :obj:`bool`
         Run T1w intensity inversion so that it looks more like a T2 contrast.
+        (DEPRECATED. Does nothing.)
     sd_prior : :obj:`bool`
         Enable using a prior map to regularize the SyN cost function.
 
@@ -417,6 +418,10 @@ def init_syn_preprocessing_wf(
     from niworkflows.workflows.epi.refmap import init_epi_reference_wf
     from ...interfaces.utils import Deoblique, DenoiseImage
     from ...interfaces.brainmask import BrainExtraction, BinaryDilation
+
+    if t1w_inversion is not None:
+        import warnings
+        warnings.warn("The `t1w_inversion` argument is deprecated and does nothing.", DeprecationWarning)
 
     workflow = Workflow(name=name)
 
