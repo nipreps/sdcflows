@@ -39,6 +39,7 @@ INPUT_FIELDS = (
     "anat_mask",
     "sd_prior",
 )
+MAX_LAPLACIAN_WEIGHT = 0.5
 
 
 def init_syn_sdc_wf(
@@ -48,6 +49,7 @@ def init_syn_sdc_wf(
     debug=False,
     name="syn_sdc_wf",
     omp_nthreads=1,
+    laplacian_weight=None,
     sd_prior=True,
     **kwargs,
 ):
@@ -82,6 +84,11 @@ def init_syn_sdc_wf(
         Name for this workflow
     omp_nthreads : :obj:`int`
         Parallelize internal tasks across the number of CPUs given by this option.
+    laplacian_weight : :obj:`tuple` (optional)
+        Tuple of two weights of the Laplacian term in the SyN cost function (one weight per
+        registration level).
+    sd_prior : :obj:`bool`
+        Enable using a prior map to regularize the SyN cost function.
 
     Inputs
     ------
@@ -228,6 +235,16 @@ template [@fieldmapless3].
     )
     syn.inputs.output_warped_image = debug
     syn.inputs.output_inverse_warped_image = debug
+
+    if laplacian_weight is not None:
+        laplacian_weight = (
+            max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+            max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+        )
+        syn.inputs.metric_weight = [
+            [1.0 - laplacian_weight[0], laplacian_weight[0]],
+            [1.0 - laplacian_weight[1], laplacian_weight[1]],
+        ]
 
     if debug:
         syn.inputs.args = "--write-interval-volumes 2"
