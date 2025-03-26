@@ -235,7 +235,7 @@ template [@fieldmapless3].
     )
     syn.inputs.output_warped_image = debug
     syn.inputs.output_inverse_warped_image = debug
-    
+
     if laplacian_weight is not None:
         laplacian_weight = (
             max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
