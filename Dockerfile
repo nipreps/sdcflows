@@ -74,12 +74,6 @@ RUN mkdir -p /opt/afni-latest \
         -name "3dAutomask" -or \
         -name "3dvolreg" \) -delete
 
-# Convert3d 1.4.0
-FROM downloader as c3d
-RUN mkdir /opt/convert3d && \
-    curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/Experimental/c3d-1.4.0-Linux-gcc64.tar.gz/download \
-    | tar -xz -C /opt/convert3d --strip-components 1
-
 # Micromamba
 FROM downloader as micromamba
 WORKDIR /
@@ -155,7 +149,6 @@ RUN apt-get update -qq \
 
 # Install files from stages
 COPY --from=afni /opt/afni-latest /opt/afni-latest
-COPY --from=c3d /opt/convert3d/bin/c3d_affine_tool /usr/bin/c3d_affine_tool
 
 # AFNI config
 ENV PATH="/opt/afni-latest:$PATH" \
