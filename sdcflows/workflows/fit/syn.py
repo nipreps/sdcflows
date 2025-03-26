@@ -594,7 +594,7 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=3):
+def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=2):
     """Extract the ``restrict_deformation`` argument from metadata."""
     import numpy as np
     import nibabel as nb
