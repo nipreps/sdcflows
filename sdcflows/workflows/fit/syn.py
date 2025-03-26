@@ -23,6 +23,7 @@
 """
 Estimating the susceptibility distortions without fieldmaps.
 """
+import json
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -214,9 +215,14 @@ along the phase-encoding direction.
     find_zooms = pe.Node(niu.Function(function=_adjust_zooms), name="find_zooms")
     zooms_epi = pe.Node(RegridToZooms(), name="zooms_epi")
 
+    syn_config = data.load(f"sd_syn{'_sloppy' * sloppy}.json")
+
+    vox_params = pe.Node(niu.Function(function=_mm2vox), name="vox_params")
+    vox_params.inputs.registration_config = json.loads(syn_config.read_text())
+
     # SyN Registration Core
     syn = pe.Node(
-        Registration(from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")),
+        Registration(from_file=syn_config),
         name="syn",
         n_procs=omp_nthreads,
     )
@@ -295,11 +301,14 @@ along the phase-encoding direction.
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
+        (clip_epi, vox_params, [("out_file", "moving_image")]),
+        (readout_time, vox_params, [("pe_direction", "pe_dir")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (anat_merge, syn, [("out", "fixed_image")]),
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
         (epi_merge, syn, [("out", "moving_image")]),
         (moving_masks, syn, [("out", "moving_image_masks")]),
+        (vox_params, syn, [("out", "transform_parameters")]),
         (syn, extract_field, [(("forward_transforms", _pop), "transform")]),
         (clip_epi, extract_field, [("out_file", "epi")]),
         (readout_time, extract_field, [("readout_time", "ro_time"),
