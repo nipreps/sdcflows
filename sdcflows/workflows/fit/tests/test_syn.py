@@ -36,6 +36,7 @@ from ..syn import (
     _adjust_zooms,
     _set_dtype,
     _mm2vox,
+    _warp_dir,
 )
 
 
@@ -317,3 +318,37 @@ def test_mm2vox(tmp_path, fixed_ornt, moving_ornt, ijk, index):
         mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params)
     ]
     assert np.array_equal(vox_values, mm_values / [2, 3, 4][index])
+
+
+@pytest.mark.parametrize(
+    ("fixed_ornt", "moving_ornt", "ijk", "index"),
+    [
+        ("RAS", "RAS", "i", 0),
+        ("RAS", "RAS", "j", 1),
+        ("RAS", "RAS", "k", 2),
+        ("RAS", "PSL", "i", 1),
+        ("RAS", "PSL", "j", 2),
+        ("RAS", "PSL", "k", 0),
+        ("PSL", "RAS", "i", 2),
+        ("PSL", "RAS", "j", 0),
+        ("PSL", "RAS", "k", 1),
+    ],
+)
+def test_warp_dir(tmp_path, fixed_ornt, moving_ornt, ijk, index):
+    fixed_path = tmp_path / "fixed.nii.gz"
+    moving_path = tmp_path / "moving.nii.gz"
+
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(fixed_ornt)),
+        fixed_path,
+    )
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(moving_ornt)),
+        moving_path,
+    )
+
+    for nlevels in range(1, 3):
+        deformations = _warp_dir(str(moving_path), str(fixed_path), ijk, nlevels)
+        assert len(deformations) == nlevels
+        for val in deformations:
+            assert val == [1.0 if i == index else 0.1 for i in range(3)]
