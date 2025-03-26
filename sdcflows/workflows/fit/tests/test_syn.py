@@ -30,7 +30,13 @@ import pytest
 from nipype.pipeline import engine as pe
 
 from .... import data
-from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype, _mm2vox
+from ..syn import (
+    init_syn_sdc_wf,
+    init_syn_preprocessing_wf,
+    _adjust_zooms,
+    _set_dtype,
+    _mm2vox,
+)
 
 
 @pytest.mark.veryslow
@@ -260,25 +266,54 @@ def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
         assert out_file == f"{in_dtype}_{out_dtype}.nii.gz"
 
 
-def test_mm2vox(tmp_path):
-    img = nb.Nifti1Image(np.zeros((10, 10, 10)), np.diag((2, 3, 4, 1)))
-    img_file = tmp_path / "test.nii.gz"
-    img.to_filename(img_file)
+def axcodes2aff(axcodes):
+    """Return an affine matrix from axis codes."""
+    return nb.orientations.inv_ornt_aff(
+        nb.orientations.ornt_transform(
+            nb.orientations.axcodes2ornt("RAS"),
+            nb.orientations.axcodes2ornt(axcodes),
+        ),
+        (10, 10, 10),
+    )
+
+
+@pytest.mark.parametrize(
+    ("fixed_ornt", "moving_ornt", "ijk", "index"),
+    [
+        ("RAS", "RAS", "i", 0),
+        ("RAS", "RAS", "j", 1),
+        ("RAS", "RAS", "k", 2),
+        ("RAS", "PSL", "i", 1),
+        ("RAS", "PSL", "j", 2),
+        ("RAS", "PSL", "k", 0),
+        ("PSL", "RAS", "i", 2),
+        ("PSL", "RAS", "j", 0),
+        ("PSL", "RAS", "k", 1),
+    ],
+)
+def test_mm2vox(tmp_path, fixed_ornt, moving_ornt, ijk, index):
+    fixed_path = tmp_path / "fixed.nii.gz"
+    moving_path = tmp_path / "moving.nii.gz"
+
+    # Use separate zooms to make identifying the conversion easier
+    fixed_aff = np.diag((2, 3, 4, 1))
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(fixed_ornt) @ fixed_aff),
+        fixed_path,
+    )
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(moving_ornt)),
+        moving_path,
+    )
 
     config = json.loads(data.load.readable("sd_syn.json").read_text())
 
-    params = config['transform_parameters']
+    params = config["transform_parameters"]
     mm_values = np.array([level[2] for level in params])
 
-    vox_params_i = _mm2vox(str(img_file), 'i', config)
-    vox_values_i = [level[2] for level in vox_params_i]
-    assert [mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params_i)]
-    assert np.array_equal(vox_values_i, mm_values / 2)
-
-    vox_params_j = _mm2vox(str(img_file), 'j', config)
-    vox_values_j = [level[2] for level in vox_params_j]
-    assert np.array_equal(vox_values_j, mm_values / 3)
-
-    vox_params_k = _mm2vox(str(img_file), 'k', config)
-    vox_values_k = [level[2] for level in vox_params_k]
-    assert np.array_equal(vox_values_k, mm_values / 4)
+    vox_params = _mm2vox(str(moving_path), str(fixed_path), ijk, config)
+    vox_values = [level[2] for level in vox_params]
+    assert [
+        mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params)
+    ]
+    assert np.array_equal(vox_values, mm_values / [2, 3, 4][index])

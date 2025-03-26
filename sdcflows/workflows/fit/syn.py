@@ -301,6 +301,7 @@ along the phase-encoding direction.
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
+        (inputnode, vox_params, [("anat_ref", "fixed_image")]),
         (clip_epi, vox_params, [("out_file", "moving_image")]),
         (readout_time, vox_params, [("pe_direction", "pe_dir")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
@@ -613,14 +614,21 @@ def _warp_dir(fixed_image, pe_dir, nlevels=3):
     return nlevels * [retval.tolist()]
 
 
-def _mm2vox(moving_image, pe_dir, registration_config):
+def _mm2vox(moving_image, fixed_image, pe_dir, registration_config):
     import nibabel as nb
 
     params = registration_config['transform_parameters']
 
-    img = nb.load(moving_image)
-    zooms = nb.affines.voxel_sizes(img.affine)
-    pe_res = zooms["ijk".index(pe_dir[0])]
+    moving = nb.load(moving_image)
+    # Use duplicate axcodes to ignore sign
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
+
+    fixed = nb.load(fixed_image)
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    zooms = nb.affines.voxel_sizes(fixed.affine)
+    pe_res = zooms[fixed_axcodes.index(moving_pe_axis)]
 
     return [
         [*level_params[:2], level_params[2] / pe_res]
