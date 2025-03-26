@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test fieldmap-less SDC-SyN."""
+
 import json
 import pytest
 from nipype.pipeline import engine as pe
@@ -30,8 +31,7 @@ from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _se
 
 @pytest.mark.veryslow
 @pytest.mark.slow
-@pytest.mark.parametrize("sd_prior", [True, False])
-def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
@@ -43,7 +43,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
         debug=sloppy_mode,
         auto_bold_nss=True,
         t1w_inversion=True,
-        sd_prior=sd_prior,
     )
     prep_wf.inputs.inputnode.in_epis = [
         str(
@@ -78,7 +77,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
         debug=sloppy_mode,
         sloppy=sloppy_mode,
         omp_nthreads=4,
-        sd_prior=sd_prior,
     )
 
     # fmt: off
@@ -145,6 +143,72 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
     wf.run(plugin="Linear")
 
 
+@pytest.mark.parametrize("laplacian_weight", [None, (0.5, 0.1), (0.8, -1.0)])
+@pytest.mark.parametrize("sloppy", [True, False])
+def test_syn_wf_inputs(sloppy, laplacian_weight):
+    """Test the input validation of the SDC-SyN workflow."""
+    from sdcflows.workflows.fit.syn import MAX_LAPLACIAN_WEIGHT
+
+    laplacian_weight = (
+        (0.1, 0.2)
+        if laplacian_weight is None
+        else (
+            max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+            max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+        )
+    )
+    metric_weight = [
+        [1.0 - laplacian_weight[0], laplacian_weight[0]],
+        [1.0 - laplacian_weight[1], laplacian_weight[1]],
+    ]
+
+    wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
+
+    assert wf.inputs.syn.metric_weight == metric_weight
+
+
+@pytest.mark.parametrize("sd_prior", [True, False])
+def test_syn_preprocessing_wf_inputs(sd_prior):
+    """Test appropriate instantiation of the SDC-SyN preprocessing workflow."""
+
+    prep_wf = init_syn_preprocessing_wf(
+        omp_nthreads=4,
+        sd_prior=sd_prior,
+        auto_bold_nss=True,
+        t1w_inversion=True,
+    )
+
+    if not sd_prior:
+        with pytest.raises(AttributeError):
+            prep_wf.inputs.prior_msk.in_file
+    else:
+        assert prep_wf.inputs.prior_msk.thresh_low
+
+
+@pytest.mark.parametrize("laplacian_weight", [None, (0.5, 0.1), (0.8, -1.0)])
+@pytest.mark.parametrize("sloppy", [True, False])
+def test_syn_wf_inputs(sloppy, laplacian_weight):
+    """Test the input validation of the SDC-SyN workflow."""
+    from sdcflows.workflows.fit.syn import MAX_LAPLACIAN_WEIGHT
+
+    laplacian_weight = (
+        (0.1, 0.2)
+        if laplacian_weight is None
+        else (
+            max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+            max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+        )
+    )
+    metric_weight = [
+        [1.0 - laplacian_weight[0], laplacian_weight[0]],
+        [1.0 - laplacian_weight[1], laplacian_weight[1]],
+    ]
+
+    wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
+
+    assert wf.inputs.syn.metric_weight == metric_weight
+
+
 @pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
 def test_syn_wf_version(monkeypatch, ants_version):
     """Ensure errors are triggered with ANTs < 2.2."""
@@ -188,12 +252,15 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval
 
 
-@pytest.mark.parametrize("in_dtype,out_dtype", [
-    ("float32", "int16"),
-    ("int16", "int16"),
-    ("uint8", "int16"),
-    ("float64", "int16"),
-])
+@pytest.mark.parametrize(
+    "in_dtype,out_dtype",
+    [
+        ("float32", "int16"),
+        ("int16", "int16"),
+        ("uint8", "int16"),
+        ("float64", "int16"),
+    ],
+)
 def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
     """Exercise the set dtype function node."""
     import numpy as np
