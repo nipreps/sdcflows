@@ -346,6 +346,7 @@
     <span class="s2">&quot;anat_mask&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sd_prior&quot;</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">MAX_LAPLACIAN_WEIGHT</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 
 <div class="viewcode-block" id="init_syn_sdc_wf">
@@ -357,6 +358,7 @@
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;syn_sdc_wf&quot;</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">laplacian_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">sd_prior</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
@@ -391,6 +393,11 @@
 <span class="sd">        Name for this workflow</span>
 <span class="sd">    omp_nthreads : :obj:`int`</span>
 <span class="sd">        Parallelize internal tasks across the number of CPUs given by this option.</span>
+<span class="sd">    laplacian_weight : :obj:`tuple` (optional)</span>
+<span class="sd">        Tuple of two weights of the Laplacian term in the SyN cost function (one weight per</span>
+<span class="sd">        registration level).</span>
+<span class="sd">    sd_prior : :obj:`bool`</span>
+<span class="sd">        Enable using a prior map to regularize the SyN cost function.</span>
 
 <span class="sd">    Inputs</span>
 <span class="sd">    ------</span>
@@ -537,6 +544,16 @@
     <span class="p">)</span>
     <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_warped_image</span> <span class="o">=</span> <span class="n">debug</span>
     <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_inverse_warped_image</span> <span class="o">=</span> <span class="n">debug</span>
+
+    <span class="k">if</span> <span class="n">laplacian_weight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">laplacian_weight</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">MAX_LAPLACIAN_WEIGHT</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">MAX_LAPLACIAN_WEIGHT</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metric_weight</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">laplacian_weight</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+        <span class="p">]</span>
 
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
         <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="s2">&quot;--write-interval-volumes 2&quot;</span>
