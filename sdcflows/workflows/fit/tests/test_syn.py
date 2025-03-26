@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test fieldmap-less SDC-SyN."""
+
 import json
 import pytest
 from nipype.pipeline import engine as pe
@@ -151,18 +152,23 @@ def test_syn_wf_inputs(sloppy, laplacian_weight):
     """Test the input validation of the SDC-SyN workflow."""
     from sdcflows.workflows.fit.syn import MAX_LAPLACIAN_WEIGHT
 
-    laplacian_weight = (0.1, 0.2) if laplacian_weight is None else (
-        max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
-        max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+    laplacian_weight = (
+        (0.1, 0.2)
+        if laplacian_weight is None
+        else (
+            max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+            max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+        )
     )
     metric_weight = [
         [1.0 - laplacian_weight[0], laplacian_weight[0]],
         [1.0 - laplacian_weight[1], laplacian_weight[1]],
     ]
-    
+
     wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
 
     assert wf.inputs.syn.metric_weight == metric_weight
+
 
 @pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
 def test_syn_wf_version(monkeypatch, ants_version):
@@ -207,12 +213,15 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval
 
 
-@pytest.mark.parametrize("in_dtype,out_dtype", [
-    ("float32", "int16"),
-    ("int16", "int16"),
-    ("uint8", "int16"),
-    ("float64", "int16"),
-])
+@pytest.mark.parametrize(
+    "in_dtype,out_dtype",
+    [
+        ("float32", "int16"),
+        ("int16", "int16"),
+        ("uint8", "int16"),
+        ("float64", "int16"),
+    ],
+)
 def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
     """Exercise the set dtype function node."""
     import numpy as np
