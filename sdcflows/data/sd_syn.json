@@ -14,7 +14,7 @@
     "shrink_factors": [ [ 1, 1 ], [ 1 ] ],
     "sigma_units": [ "vox", "vox" ],
     "smoothing_sigmas": [ [ 2, 0 ], [ 0 ] ],
-    "transform_parameters": [ [ 0.8, 6.0, 3.0 ], [ 0.8, 2.0, 1.0 ] ],
+    "transform_parameters": [ [ 0.8, 6.0, 10.0 ], [ 0.8, 2.0, 0.5 ] ],
     "transforms": [ "SyN", "SyN" ],
     "use_histogram_matching": [ true, true ],
     "winsorize_lower_quantile": 0.001,

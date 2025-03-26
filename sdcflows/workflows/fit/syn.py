@@ -23,6 +23,7 @@
 """
 Estimating the susceptibility distortions without fieldmaps.
 """
+import json
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -214,9 +215,14 @@ along the phase-encoding direction.
     find_zooms = pe.Node(niu.Function(function=_adjust_zooms), name="find_zooms")
     zooms_epi = pe.Node(RegridToZooms(), name="zooms_epi")
 
+    syn_config = data.load(f"sd_syn{'_sloppy' * sloppy}.json")
+
+    vox_params = pe.Node(niu.Function(function=_mm2vox), name="vox_params")
+    vox_params.inputs.registration_config = json.loads(syn_config.read_text())
+
     # SyN Registration Core
     syn = pe.Node(
-        Registration(from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")),
+        Registration(from_file=syn_config),
         name="syn",
         n_procs=omp_nthreads,
     )
@@ -277,6 +283,7 @@ along the phase-encoding direction.
                                   ("sd_prior", "in2")]),
         (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
         (inputnode, warp_dir, [("anat_ref", "fixed_image")]),
+        (inputnode, vox_params, [("anat_ref", "fixed_image")]),
         (inputnode, anat_merge, [("anat_ref", "in1")]),
         (inputnode, lap_anat, [("anat_ref", "op1")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
@@ -295,11 +302,15 @@ along the phase-encoding direction.
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
+        (readout_time, vox_params, [("pe_direction", "pe_dir")]),
+        (clip_epi, warp_dir, [("out_file", "moving_image")]),
+        (clip_epi, vox_params, [("out_file", "moving_image")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (anat_merge, syn, [("out", "fixed_image")]),
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
         (epi_merge, syn, [("out", "moving_image")]),
         (moving_masks, syn, [("out", "moving_image_masks")]),
+        (vox_params, syn, [("out", "transform_parameters")]),
         (syn, extract_field, [(("forward_transforms", _pop), "transform")]),
         (clip_epi, extract_field, [("out_file", "epi")]),
         (readout_time, extract_field, [("readout_time", "ro_time"),
@@ -583,25 +594,52 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(fixed_image, pe_dir, nlevels=3):
+def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=2):
     """Extract the ``restrict_deformation`` argument from metadata."""
     import numpy as np
     import nibabel as nb
 
-    img = nb.load(fixed_image)
+    moving = nb.load(moving_image)
+    fixed = nb.load(fixed_image)
 
-    if np.any(nb.affines.obliquity(img.affine) > 0.05):
+    if np.any(nb.affines.obliquity(fixed.affine) > 0.05):
         from nipype import logging
 
         logging.getLogger("nipype.interface").warn(
             "Running fieldmap-less registration on an oblique dataset"
         )
 
-    vs = nb.affines.voxel_sizes(img.affine)
-    order = np.around(np.abs(img.affine[:3, :3] / vs))
-    retval = order @ [1 if pe_dir[0] == ax else 0.1 for ax in "ijk"]
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
 
-    return nlevels * [retval.tolist()]
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    deformation = [0.1, 0.1, 0.1]
+    deformation[fixed_axcodes.index(moving_pe_axis)] = 1.0
+
+    return nlevels * [deformation]
+
+
+def _mm2vox(moving_image, fixed_image, pe_dir, registration_config):
+    import nibabel as nb
+
+    params = registration_config['transform_parameters']
+
+    moving = nb.load(moving_image)
+    # Use duplicate axcodes to ignore sign
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
+
+    fixed = nb.load(fixed_image)
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    zooms = nb.affines.voxel_sizes(fixed.affine)
+    pe_res = zooms[fixed_axcodes.index(moving_pe_axis)]
+
+    return [
+        [*level_params[:2], level_params[2] / pe_res]
+        for level_params in params
+    ]
 
 
 def _merge_meta(epi_ref, meta_list):
