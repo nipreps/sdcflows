@@ -23,10 +23,14 @@
 """Test fieldmap-less SDC-SyN."""
 
 import json
+
+import numpy as np
+import nibabel as nb
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype
+from .... import data
+from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype, _mm2vox
 
 
 @pytest.mark.veryslow
@@ -254,3 +258,27 @@ def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
         assert out_file == f"{in_dtype}.nii.gz"
     else:
         assert out_file == f"{in_dtype}_{out_dtype}.nii.gz"
+
+
+def test_mm2vox(tmp_path):
+    img = nb.Nifti1Image(np.zeros((10, 10, 10)), np.diag((2, 3, 4, 1)))
+    img_file = tmp_path / "test.nii.gz"
+    img.to_filename(img_file)
+
+    config = json.loads(data.load.readable("sd_syn.json").read_text())
+
+    params = config['transform_parameters']
+    mm_values = np.array([level[2] for level in params])
+
+    vox_params_i = _mm2vox(str(img_file), 'i', config)
+    vox_values_i = [level[2] for level in vox_params_i]
+    assert [mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params_i)]
+    assert np.array_equal(vox_values_i, mm_values / 2)
+
+    vox_params_j = _mm2vox(str(img_file), 'j', config)
+    vox_values_j = [level[2] for level in vox_params_j]
+    assert np.array_equal(vox_values_j, mm_values / 3)
+
+    vox_params_k = _mm2vox(str(img_file), 'k', config)
+    vox_values_k = [level[2] for level in vox_params_k]
+    assert np.array_equal(vox_values_k, mm_values / 4)

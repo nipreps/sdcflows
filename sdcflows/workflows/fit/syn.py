@@ -604,6 +604,21 @@ def _warp_dir(fixed_image, pe_dir, nlevels=3):
     return nlevels * [retval.tolist()]
 
 
+def _mm2vox(moving_image, pe_dir, registration_config):
+    import nibabel as nb
+
+    params = registration_config['transform_parameters']
+
+    img = nb.load(moving_image)
+    zooms = nb.affines.voxel_sizes(img.affine)
+    pe_res = zooms["ijk".index(pe_dir[0])]
+
+    return [
+        [*level_params[:2], level_params[2] / pe_res]
+        for level_params in params
+    ]
+
+
 def _merge_meta(epi_ref, meta_list):
     """Prepare a tuple of EPI reference and metadata."""
     return (epi_ref, meta_list[0])
