@@ -145,6 +145,25 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, sd_prior):
     wf.run(plugin="Linear")
 
 
+@pytest.mark.parametrize("laplacian_weight", [None, (0.5, 0.1), (0.8, -1.0)])
+@pytest.mark.parametrize("sloppy", [True, False])
+def test_syn_wf_inputs(sloppy, laplacian_weight):
+    """Test the input validation of the SDC-SyN workflow."""
+    from sdcflows.workflows.fit.syn import MAX_LAPLACIAN_WEIGHT
+
+    laplacian_weight = (0.1, 0.2) if laplacian_weight is None else (
+        max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+        max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+    )
+    metric_weight = [
+        [1.0 - laplacian_weight[0], laplacian_weight[0]],
+        [1.0 - laplacian_weight[1], laplacian_weight[1]],
+    ]
+    
+    wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
+
+    assert wf.inputs.syn.metric_weight == metric_weight
+
 @pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
 def test_syn_wf_version(monkeypatch, ants_version):
     """Ensure errors are triggered with ANTs < 2.2."""
