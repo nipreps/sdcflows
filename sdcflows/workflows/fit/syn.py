@@ -283,6 +283,7 @@ along the phase-encoding direction.
                                   ("sd_prior", "in2")]),
         (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
         (inputnode, warp_dir, [("anat_ref", "fixed_image")]),
+        (inputnode, vox_params, [("anat_ref", "fixed_image")]),
         (inputnode, anat_merge, [("anat_ref", "in1")]),
         (inputnode, lap_anat, [("anat_ref", "op1")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
@@ -301,9 +302,9 @@ along the phase-encoding direction.
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
-        (inputnode, vox_params, [("anat_ref", "fixed_image")]),
-        (clip_epi, vox_params, [("out_file", "moving_image")]),
         (readout_time, vox_params, [("pe_direction", "pe_dir")]),
+        (clip_epi, warp_dir, [("out_file", "moving_image")]),
+        (clip_epi, vox_params, [("out_file", "moving_image")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (anat_merge, syn, [("out", "fixed_image")]),
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
@@ -593,25 +594,30 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(fixed_image, pe_dir, nlevels=3):
+def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=3):
     """Extract the ``restrict_deformation`` argument from metadata."""
     import numpy as np
     import nibabel as nb
 
-    img = nb.load(fixed_image)
+    moving = nb.load(moving_image)
+    fixed = nb.load(fixed_image)
 
-    if np.any(nb.affines.obliquity(img.affine) > 0.05):
+    if np.any(nb.affines.obliquity(fixed.affine) > 0.05):
         from nipype import logging
 
         logging.getLogger("nipype.interface").warn(
             "Running fieldmap-less registration on an oblique dataset"
         )
 
-    vs = nb.affines.voxel_sizes(img.affine)
-    order = np.around(np.abs(img.affine[:3, :3] / vs))
-    retval = order @ [1 if pe_dir[0] == ax else 0.1 for ax in "ijk"]
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
 
-    return nlevels * [retval.tolist()]
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    deformation = [0.1, 0.1, 0.1]
+    deformation[fixed_axcodes.index(moving_pe_axis)] = 1.0
+
+    return nlevels * [deformation]
 
 
 def _mm2vox(moving_image, fixed_image, pe_dir, registration_config):
