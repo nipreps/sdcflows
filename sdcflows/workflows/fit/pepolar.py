@@ -40,6 +40,7 @@ def init_topup_wf(
     sloppy=False,
     debug=False,
     name="pepolar_estimate_wf",
+    **kwargs,
 ):
     """
     Create the PEPOLAR field estimation workflow based on FSL's ``topup``.

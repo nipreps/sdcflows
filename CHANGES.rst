@@ -1,3 +1,34 @@
+2.12.0 (March 21, 2025)
+=======================
+Feature release in the 2.12.x series.
+
+This release migrates from the deprecated ``niworkflows.reporting``
+module to the ``nireports`` package.
+
+* FIX: AttributeError for _ApplyCoeffsFieldInputSpec (#481)
+* ENH: Allow running SyN SDC without using prior (#480)
+* ENH: Allow estimated and fallback TotalReadoutTime (#477)
+* RF: Transition from niworkflows reporting interfaces (#473)
+* DOC: Fix broken link [skip ci] (#482)
+* MNT: Add `defaults` to `conda` channels in `build-test-publish` GHA (#474)
+* MNT: Update `niworkflows` version to 1.11.0 (#478)
+
+
+2.11.0 (December 18, 2024)
+==========================
+Feature release in the 2.11.x series.
+
+This release supports numpy 2 and Python 3.13.
+
+* FIX: Normalize BIDS-URIs to subject-relative (#458)
+* FIX: Only fit high-frequency spline for SyN-SDC (#457)
+* ENH: Allow Jacobian correction to be toggled on/off (#462)
+* ENH: Dilate fmap and bold masks during coregistration (#463)
+* TEST: Clear registry consistently to avoid order dependency (#464)
+* DOC: Plot correct workflow in init_syn_preprocessing_wf docstring (#460)
+* CI: Drop CircleCI, using GHA only (#459)
+
+
 2.10.0 (July 04, 2024)
 ======================
 Feature release in the 2.10.x series.
