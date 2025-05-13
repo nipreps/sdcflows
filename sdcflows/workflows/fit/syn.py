@@ -23,10 +23,10 @@
 """
 Estimating the susceptibility distortions without fieldmaps.
 """
+import json
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-from nipype.interfaces.base import Undefined
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -44,13 +44,11 @@ MAX_LAPLACIAN_WEIGHT = 0.5
 
 def init_syn_sdc_wf(
     *,
-    atlas_threshold=3,
     sloppy=False,
     debug=False,
     name="syn_sdc_wf",
     omp_nthreads=1,
     laplacian_weight=None,
-    sd_prior=True,
     **kwargs,
 ):
     """
@@ -58,10 +56,6 @@ def init_syn_sdc_wf(
 
     SyN deformation is restricted to the phase-encoding (PE) direction.
     If no PE direction is specified, anterior-posterior PE is assumed.
-
-    SyN deformation is also restricted to regions that are expected to have a
-    >3mm (approximately 1 voxel) warp, based on the fieldmap atlas.
-
 
     Workflow Graph
         .. workflow ::
@@ -73,9 +67,6 @@ def init_syn_sdc_wf(
 
     Parameters
     ----------
-    atlas_threshold : :obj:`float`
-        Exclude from the registration metric computation areas with average distortions
-        below this threshold (in mm).
     sloppy : :obj:`bool`
         Whether a fast (less accurate) configuration of the workflow should be applied.
     debug : :obj:`bool`
@@ -102,9 +93,6 @@ def init_syn_sdc_wf(
         A preprocessed, skull-stripped anatomical (T1w or T2w) image resampled in EPI space.
     anat_mask : :obj:`str`
         Path to the brain mask corresponding to ``anat_ref`` in EPI space.
-    sd_prior : :obj:`str`
-        A template map of areas with strong susceptibility distortions (SD) to regularize
-        the cost function of SyN
 
     Outputs
     -------
@@ -150,16 +138,15 @@ def init_syn_sdc_wf(
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""\
 A deformation field to correct for susceptibility distortions was estimated
-based on *fMRIPrep*'s *fieldmap-less* approach.
+based on *SDCFlows*' *fieldmap-less* approach.
 The deformation field is that resulting from co-registering the EPI reference
-to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
-@fieldmapless2].
+to the same-subject's T1w-reference [@fieldmapless1; @fieldmapless2].
 Registration is performed with `antsRegistration`
 (ANTs {ants_version or "-- version unknown"}), and
 the process regularized by constraining deformation to be nonzero only
-along the phase-encoding direction, and modulated with an average fieldmap
-template [@fieldmapless3].
+along the phase-encoding direction.
 """
+
     inputnode = pe.Node(niu.IdentityInterface(INPUT_FIELDS), name="inputnode")
     outputnode = pe.Node(
         niu.IdentityInterface(
@@ -211,10 +198,11 @@ template [@fieldmapless3].
 
     epi_umask = pe.Node(Union(), name="epi_umask")
     moving_masks = pe.Node(
-        niu.Merge(3),
+        niu.Merge(2),
         name="moving_masks",
         run_without_submitting=True,
     )
+    moving_masks.inputs.in1 = "NULL"
 
     fixed_masks = pe.Node(
         niu.Merge(2),
@@ -227,9 +215,14 @@ template [@fieldmapless3].
     find_zooms = pe.Node(niu.Function(function=_adjust_zooms), name="find_zooms")
     zooms_epi = pe.Node(RegridToZooms(), name="zooms_epi")
 
+    syn_config = data.load(f"sd_syn{'_sloppy' * sloppy}.json")
+
+    vox_params = pe.Node(niu.Function(function=_mm2vox), name="vox_params")
+    vox_params.inputs.registration_config = json.loads(syn_config.read_text())
+
     # SyN Registration Core
     syn = pe.Node(
-        Registration(from_file=data.load(f"sd_syn{'_sloppy' * sloppy}.json")),
+        Registration(from_file=syn_config),
         name="syn",
         n_procs=omp_nthreads,
     )
@@ -287,9 +280,10 @@ template [@fieldmapless3].
         (inputnode, amask2epi, [("epi_mask", "reference_image")]),
         (inputnode, zooms_bmask, [("anat_mask", "input_image")]),
         (inputnode, fixed_masks, [("anat_mask", "in1"),
-                                  ("anat_mask", "in2")]),
+                                  ("sd_prior", "in2")]),
         (inputnode, anat_dilmsk, [("anat_mask", "in_file")]),
         (inputnode, warp_dir, [("anat_ref", "fixed_image")]),
+        (inputnode, vox_params, [("anat_ref", "fixed_image")]),
         (inputnode, anat_merge, [("anat_ref", "in1")]),
         (inputnode, lap_anat, [("anat_ref", "op1")]),
         (inputnode, find_zooms, [("anat_ref", "in_anat"),
@@ -298,9 +292,7 @@ template [@fieldmapless3].
         (inputnode, epi_umask, [("epi_mask", "in1")]),
         (lap_anat, lap_anat_norm, [("output_image", "in_file")]),
         (lap_anat_norm, anat_merge, [("out", "in2")]),
-        (epi_umask, moving_masks, [("out_file", "in1"),
-                                   ("out_file", "in2"),
-                                   ("out_file", "in3")]),
+        (epi_umask, moving_masks, [("out_file", "in2")]),
         (clip_epi, epi_merge, [("out_file", "in1")]),
         (clip_epi, lap_epi, [("out_file", "op1")]),
         (clip_epi, zooms_epi, [("out_file", "in_file")]),
@@ -310,11 +302,15 @@ template [@fieldmapless3].
         (anat_dilmsk, amask2epi, [("out_file", "input_image")]),
         (amask2epi, epi_umask, [("output_image", "in2")]),
         (readout_time, warp_dir, [("pe_direction", "pe_dir")]),
+        (readout_time, vox_params, [("pe_direction", "pe_dir")]),
+        (clip_epi, warp_dir, [("out_file", "moving_image")]),
+        (clip_epi, vox_params, [("out_file", "moving_image")]),
         (warp_dir, syn, [("out", "restrict_deformation")]),
         (anat_merge, syn, [("out", "fixed_image")]),
         (fixed_masks, syn, [("out", "fixed_image_masks")]),
         (epi_merge, syn, [("out", "moving_image")]),
         (moving_masks, syn, [("out", "moving_image_masks")]),
+        (vox_params, syn, [("out", "transform_parameters")]),
         (syn, extract_field, [(("forward_transforms", _pop), "transform")]),
         (clip_epi, extract_field, [("out_file", "epi")]),
         (readout_time, extract_field, [("readout_time", "ro_time"),
@@ -339,6 +335,7 @@ template [@fieldmapless3].
 
 def init_syn_preprocessing_wf(
     *,
+    atlas_threshold=3,
     debug=False,
     name="syn_preprocessing_wf",
     omp_nthreads=1,
@@ -360,6 +357,9 @@ def init_syn_preprocessing_wf(
 
     Parameters
     ----------
+    atlas_threshold : :obj:`float`
+        Mask excluding areas with average distortions below this threshold (in mm)
+        on the prior.
     debug : :obj:`bool`
         Whether a fast (less accurate) configuration of the workflow should be applied.
     name : :obj:`str`
@@ -528,6 +528,8 @@ def init_syn_preprocessing_wf(
         ])
 
     if sd_prior:
+        from niworkflows.interfaces.nibabel import Binarize
+
         # Mapping & preparing prior knowledge
         # Concatenate transform files:
         # 1) MNI -> anat; 2) ATLAS -> MNI
@@ -550,11 +552,14 @@ def init_syn_preprocessing_wf(
             mem_gb=0.3,
         )
 
+        prior_msk = pe.Node(Binarize(thresh_low=atlas_threshold), name="prior_msk")
+
         workflow.connect([
             (inputnode, transform_list, [("std2anat_xfm", "in2")]),
             (transform_list, prior2epi, [("out", "transforms")]),
             (sampling_ref, prior2epi, [("out_file", "reference_image")]),
-            (prior2epi, outputnode, [("output_image", "sd_prior")]),
+            (prior2epi, prior_msk, [("output_image", "in_file")]),
+            (prior_msk, outputnode, [("out_mask", "sd_prior")]),
         ])  # fmt:skip
 
         if coregister:
@@ -567,10 +572,8 @@ def init_syn_preprocessing_wf(
             ])
 
     else:
-        # no prior to be used
-        # MG: Future goal is to allow using alternative mappings
-        # i.e. in the case of infants, where priors change depending on development
-        outputnode.inputs.sd_prior = Undefined
+        # no prior to be used -> set anatomical mask as prior
+        workflow.connect(mask_dtype, "out", outputnode, "sd_prior")
 
     workflow.connect([
         (inputnode, epi_reference_wf, [("in_epis", "inputnode.in_files")]),
@@ -621,25 +624,52 @@ def init_syn_preprocessing_wf(
     return workflow
 
 
-def _warp_dir(fixed_image, pe_dir, nlevels=3):
+def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=2):
     """Extract the ``restrict_deformation`` argument from metadata."""
     import numpy as np
     import nibabel as nb
 
-    img = nb.load(fixed_image)
+    moving = nb.load(moving_image)
+    fixed = nb.load(fixed_image)
 
-    if np.any(nb.affines.obliquity(img.affine) > 0.05):
+    if np.any(nb.affines.obliquity(fixed.affine) > 0.05):
         from nipype import logging
 
         logging.getLogger("nipype.interface").warn(
             "Running fieldmap-less registration on an oblique dataset"
         )
 
-    vs = nb.affines.voxel_sizes(img.affine)
-    order = np.around(np.abs(img.affine[:3, :3] / vs))
-    retval = order @ [1 if pe_dir[0] == ax else 0.1 for ax in "ijk"]
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
 
-    return nlevels * [retval.tolist()]
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    deformation = [0.1, 0.1, 0.1]
+    deformation[fixed_axcodes.index(moving_pe_axis)] = 1.0
+
+    return nlevels * [deformation]
+
+
+def _mm2vox(moving_image, fixed_image, pe_dir, registration_config):
+    import nibabel as nb
+
+    params = registration_config['transform_parameters']
+
+    moving = nb.load(moving_image)
+    # Use duplicate axcodes to ignore sign
+    moving_axcodes = nb.aff2axcodes(moving.affine, ["RR", "AA", "SS"])
+    moving_pe_axis = moving_axcodes["ijk".index(pe_dir[0])]
+
+    fixed = nb.load(fixed_image)
+    fixed_axcodes = nb.aff2axcodes(fixed.affine, ["RR", "AA", "SS"])
+
+    zooms = nb.affines.voxel_sizes(fixed.affine)
+    pe_res = zooms[fixed_axcodes.index(moving_pe_axis)]
+
+    return [
+        [*level_params[:2], level_params[2] / pe_res]
+        for level_params in params
+    ]
 
 
 def _merge_meta(epi_ref, meta_list):

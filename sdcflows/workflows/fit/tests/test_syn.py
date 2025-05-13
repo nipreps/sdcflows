@@ -21,13 +21,24 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test fieldmap-less SDC-SyN."""
+
 import json
 
 import acres
+import numpy as np
+import nibabel as nb
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _set_dtype
+from .... import data
+from ..syn import (
+    init_syn_sdc_wf,
+    init_syn_preprocessing_wf,
+    _adjust_zooms,
+    _set_dtype,
+    _mm2vox,
+    _warp_dir,
+)
 
 
 @pytest.mark.veryslow
@@ -35,12 +46,11 @@ from ..syn import init_syn_sdc_wf, init_syn_preprocessing_wf, _adjust_zooms, _se
 @pytest.mark.parametrize(
     ("n_bold", "coregister", "sd_prior"),
     [
-        (1, True, True),
-        # Switch to False once we have a transform in tests/data
-        (2, True, False),
+        (1, True),
+        (2, True),
     ]
 )
-def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregister, sd_prior):
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregister):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
@@ -51,7 +61,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregiste
         omp_nthreads=4,
         debug=sloppy_mode,
         auto_bold_nss=True,
-        sd_prior=sd_prior,
         coregister=coregister,
     )
     prep_wf.inputs.inputnode.in_epis = [
@@ -92,7 +101,6 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregiste
         debug=sloppy_mode,
         sloppy=sloppy_mode,
         omp_nthreads=4,
-        sd_prior=sd_prior,
     )
 
     # fmt: off
@@ -159,6 +167,48 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregiste
     wf.run(plugin="Linear")
 
 
+@pytest.mark.parametrize("laplacian_weight", [None, (0.5, 0.1), (0.8, -1.0)])
+@pytest.mark.parametrize("sloppy", [True, False])
+def test_syn_wf_inputs(sloppy, laplacian_weight):
+    """Test the input validation of the SDC-SyN workflow."""
+    from sdcflows.workflows.fit.syn import MAX_LAPLACIAN_WEIGHT
+
+    laplacian_weight = (
+        (0.1, 0.2)
+        if laplacian_weight is None
+        else (
+            max(min(laplacian_weight[0], MAX_LAPLACIAN_WEIGHT), 0.0),
+            max(min(laplacian_weight[1], MAX_LAPLACIAN_WEIGHT), 0.0),
+        )
+    )
+    metric_weight = [
+        [1.0 - laplacian_weight[0], laplacian_weight[0]],
+        [1.0 - laplacian_weight[1], laplacian_weight[1]],
+    ]
+
+    wf = init_syn_sdc_wf(sloppy=sloppy, laplacian_weight=laplacian_weight)
+
+    assert wf.inputs.syn.metric_weight == metric_weight
+
+
+@pytest.mark.parametrize("sd_prior", [True, False])
+def test_syn_preprocessing_wf_inputs(sd_prior):
+    """Test appropriate instantiation of the SDC-SyN preprocessing workflow."""
+
+    prep_wf = init_syn_preprocessing_wf(
+        omp_nthreads=4,
+        sd_prior=sd_prior,
+        auto_bold_nss=True,
+        t1w_inversion=True,
+    )
+
+    if not sd_prior:
+        with pytest.raises(AttributeError):
+            prep_wf.inputs.prior_msk.in_file
+    else:
+        assert prep_wf.inputs.prior_msk.thresh_low
+
+
 @pytest.mark.parametrize("ants_version", ["2.2.0", "2.1.0", None])
 def test_syn_wf_version(monkeypatch, ants_version):
     """Ensure errors are triggered with ANTs < 2.2."""
@@ -202,12 +252,15 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     assert _adjust_zooms("anat.nii.gz", "epi.nii.gz") == retval
 
 
-@pytest.mark.parametrize("in_dtype,out_dtype", [
-    ("float32", "int16"),
-    ("int16", "int16"),
-    ("uint8", "int16"),
-    ("float64", "int16"),
-])
+@pytest.mark.parametrize(
+    "in_dtype,out_dtype",
+    [
+        ("float32", "int16"),
+        ("int16", "int16"),
+        ("uint8", "int16"),
+        ("float64", "int16"),
+    ],
+)
 def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
     """Exercise the set dtype function node."""
     import numpy as np
@@ -225,3 +278,90 @@ def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
         assert out_file == f"{in_dtype}.nii.gz"
     else:
         assert out_file == f"{in_dtype}_{out_dtype}.nii.gz"
+
+
+def axcodes2aff(axcodes):
+    """Return an affine matrix from axis codes."""
+    return nb.orientations.inv_ornt_aff(
+        nb.orientations.ornt_transform(
+            nb.orientations.axcodes2ornt("RAS"),
+            nb.orientations.axcodes2ornt(axcodes),
+        ),
+        (10, 10, 10),
+    )
+
+
+@pytest.mark.parametrize(
+    ("fixed_ornt", "moving_ornt", "ijk", "index"),
+    [
+        ("RAS", "RAS", "i", 0),
+        ("RAS", "RAS", "j", 1),
+        ("RAS", "RAS", "k", 2),
+        ("RAS", "PSL", "i", 1),
+        ("RAS", "PSL", "j", 2),
+        ("RAS", "PSL", "k", 0),
+        ("PSL", "RAS", "i", 2),
+        ("PSL", "RAS", "j", 0),
+        ("PSL", "RAS", "k", 1),
+    ],
+)
+def test_mm2vox(tmp_path, fixed_ornt, moving_ornt, ijk, index):
+    fixed_path = tmp_path / "fixed.nii.gz"
+    moving_path = tmp_path / "moving.nii.gz"
+
+    # Use separate zooms to make identifying the conversion easier
+    fixed_aff = np.diag((2, 3, 4, 1))
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(fixed_ornt) @ fixed_aff),
+        fixed_path,
+    )
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(moving_ornt)),
+        moving_path,
+    )
+
+    config = json.loads(data.load.readable("sd_syn.json").read_text())
+
+    params = config["transform_parameters"]
+    mm_values = np.array([level[2] for level in params])
+
+    vox_params = _mm2vox(str(moving_path), str(fixed_path), ijk, config)
+    vox_values = [level[2] for level in vox_params]
+    assert [
+        mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params)
+    ]
+    assert np.array_equal(vox_values, mm_values / [2, 3, 4][index])
+
+
+@pytest.mark.parametrize(
+    ("fixed_ornt", "moving_ornt", "ijk", "index"),
+    [
+        ("RAS", "RAS", "i", 0),
+        ("RAS", "RAS", "j", 1),
+        ("RAS", "RAS", "k", 2),
+        ("RAS", "PSL", "i", 1),
+        ("RAS", "PSL", "j", 2),
+        ("RAS", "PSL", "k", 0),
+        ("PSL", "RAS", "i", 2),
+        ("PSL", "RAS", "j", 0),
+        ("PSL", "RAS", "k", 1),
+    ],
+)
+def test_warp_dir(tmp_path, fixed_ornt, moving_ornt, ijk, index):
+    fixed_path = tmp_path / "fixed.nii.gz"
+    moving_path = tmp_path / "moving.nii.gz"
+
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(fixed_ornt)),
+        fixed_path,
+    )
+    nb.save(
+        nb.Nifti1Image(np.zeros((10, 10, 10)), axcodes2aff(moving_ornt)),
+        moving_path,
+    )
+
+    for nlevels in range(1, 3):
+        deformations = _warp_dir(str(moving_path), str(fixed_path), ijk, nlevels)
+        assert len(deformations) == nlevels
+        for val in deformations:
+            assert val == [1.0 if i == index else 0.1 for i in range(3)]
