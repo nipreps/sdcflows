@@ -113,12 +113,7 @@ class FieldmapFile:
     >>> f.suffix
     'T1w'
 
-    >>> FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
-    ...     find_meta=False
-    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-    MetadataError:
+    By default, the immediate JSON sidecar file is consulted for metadata.
 
     >>> f = FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
@@ -127,11 +122,26 @@ class FieldmapFile:
     0.005
 
     >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
-    ...     metadata={"TotalReadoutTime": None},
-    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-    MetadataError:
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
+    ... )
+    >>> f.metadata['EchoTime2']
+    0.00746
+
+    >>> f = FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
+    ... )
+    >>> f.metadata['EchoTime']
+    0.00746
+
+    >>> f = FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
+    ... )
+    >>> f.metadata['Units']
+    'rad/s'
+
+    However, it is possible to provide alternative metadata.
+    It is recommended to load the metadata with an external tool that
+    fully implements the BIDS inheritance rules to ensure correctness.
 
     >>> f = FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
@@ -140,18 +150,21 @@ class FieldmapFile:
     >>> f.metadata['TotalReadoutTime']
     0.006
 
+    If metadata is present, warnings or errors may be presented.
+
+    >>> FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     find_meta=False
+    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    MetadataError: Missing 'PhaseEncodingDirection' ...
+
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
-
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
-    ... )
-    >>> f.metadata['EchoTime2']
-    0.00746
 
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz",
@@ -160,12 +173,6 @@ class FieldmapFile:
     Traceback (most recent call last):
     MetadataError:
 
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
-    ... )
-    >>> f.metadata['EchoTime']
-    0.00746
-
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz",
     ...     find_meta=False
@@ -173,11 +180,26 @@ class FieldmapFile:
     Traceback (most recent call last):
     MetadataError:
 
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
-    ... )
-    >>> f.metadata['Units']
-    'rad/s'
+    Readout timing information is required to estimate PEPOLAR fieldmaps,
+    but it is possible to provide a fallback values.
+    Therefore, warnings are logged if the metadata are missing.
+
+    >>> with caplog.at_level(logging.WARNING, "sdcflows.fieldmaps"):
+    ...     f = FieldmapFile(
+    ...         dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...         metadata={"TotalReadoutTime": None},
+    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> print(caplog.text)
+    WARNING ... Missing readout timing information ... Explicit fallback must be provided.
+
+    >>> with caplog.at_level(logging.WARNING, "sdcflows.fieldmaps"):
+    ...     f = FieldmapFile(
+    ...         dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...         metadata={"PhaseEncodingDirection": "i", "EstimatedTotalReadoutTime": 0.05},
+    ...         find_meta=False,
+    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> print(caplog.text)
+    WARNING ... Missing readout timing information ... Estimated timing is available.
 
     """
 

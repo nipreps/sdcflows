@@ -21,7 +21,9 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """py.test configuration."""
+
 import os
+import logging
 from pathlib import Path
 import numpy
 import nibabel
@@ -60,7 +62,7 @@ TEST_WORK_DIR={test_workdir or '<unset> (intermediate files will be discarded)'}
 
 
 @pytest.fixture(autouse=True)
-def doctest_fixture(doctest_namespace, request):
+def doctest_fixture(doctest_namespace, request, caplog):
     doctest_plugin = request.config.pluginmanager.getplugin("doctest")
     if isinstance(request.node, doctest_plugin.DoctestItem):
         doctest_namespace.update(
@@ -73,6 +75,8 @@ def doctest_fixture(doctest_namespace, request):
             dsB_dir=data_dir / "dsB",
             dsC_dir=data_dir / "dsC",
             data_dir=data_dir,
+            caplog=caplog,
+            logging=logging,
         )
         doctest_namespace.update((key, Path(val.root)) for key, val in layouts.items())
 
