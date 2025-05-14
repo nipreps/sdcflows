@@ -21,10 +21,13 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
+
 from nipype import logging
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
+
+from ..utils.epimanip import get_trt
 
 LOGGER = logging.getLogger("nipype.workflow")
 DEFAULT_MEMORY_MIN_GB = 0.01
@@ -109,6 +112,19 @@ def init_fmap_preproc_wf(
     )
 
     for n, estimator in enumerate(estimators, 1):
+        if fallback_total_readout_time is None:
+            for f in estimator.sources:
+                if f.suffix in ("bold", "dwi", "epi", "sbref", "asl", "m0scan"):
+                    try:
+                        get_trt(
+                            f.metadata,
+                            in_file=f.path,
+                            use_estimate=use_metadata_estimates,
+                        )
+                    except ValueError:
+                        msg = f"Missing readout timing information for <{f.path}>."
+                        raise RuntimeError(msg)
+
         est_wf = estimator.get_workflow(
             use_metadata_estimates=use_metadata_estimates,
             fallback_total_readout_time=fallback_total_readout_time,
