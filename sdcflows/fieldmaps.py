@@ -24,6 +24,7 @@
 from pathlib import Path
 from enum import Enum, auto
 from collections import defaultdict
+from contextlib import suppress
 import re
 import attr
 from json import loads
@@ -31,7 +32,10 @@ from bids.layout import parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
 from .utils.bimap import EstimatorRegistry
+from .utils.misc import create_logger
 
+
+logger = create_logger('sdcflows.fieldmaps')
 
 _estimators = EstimatorRegistry()
 _intents = defaultdict(set)
@@ -251,12 +255,19 @@ class FieldmapFile:
 
             from .utils.epimanip import get_trt
 
+            msg = "Missing readout timing information for <%s>. %s"
+            extra = "Explicit fallback must be provided."
+            have_trt = False
             try:
                 get_trt(self.metadata, in_file=self.path)
-            except ValueError as exc:
-                raise MetadataError(
-                    f"Missing readout timing information for <{self.path}>."
-                ) from exc
+                have_trt = True
+            except ValueError:
+                with suppress(ValueError):
+                    get_trt(self.metadata, in_file=self.path, use_estimate=True)
+                    extra = "Estimated timing is available."
+
+            if not have_trt:
+                logger.warning(msg, self.path, extra)
 
         elif self.suffix == "fieldmap" and "Units" not in self.metadata:
             raise MetadataError(f"Missing 'Units' for <{self.path}>.")

@@ -623,10 +623,8 @@ def find_anatomical_estimators(
             if not meta.get("PhaseEncodingDirection"):
                 continue
 
-            trt = 1.0
             with suppress(ValueError):
-                trt = get_trt(meta, candidate.path)
-            meta.update({"TotalReadoutTime": trt})
+                meta.update({"TotalReadoutTime": get_trt(meta, candidate.path)})
             epi_targets.append(fm.FieldmapFile(candidate, metadata=meta))
 
         def sort_key(fmap):
