@@ -328,19 +328,21 @@
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Utilities for fieldmap estimation.&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">attr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">loads</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">attr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bids.layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_file_entities</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bids.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">listify</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.utils.bids</span><span class="w"> </span><span class="kn">import</span> <span class="n">relative_to_root</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.bimap</span><span class="w"> </span><span class="kn">import</span> <span class="n">EstimatorRegistry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_logger</span>
-
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">create_logger</span><span class="p">(</span><span class="s1">&#39;sdcflows.fieldmaps&#39;</span><span class="p">)</span>
 
@@ -369,21 +371,21 @@
 
 
 <span class="n">MODALITIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;bold&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;dwi&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;epi&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;asl&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;m0scan&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;fieldmap&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
-    <span class="s2">&quot;magnitude&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="s2">&quot;magnitude1&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="s2">&quot;magnitude2&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="s2">&quot;phase1&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
-    <span class="s2">&quot;phase2&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
-    <span class="s2">&quot;phasediff&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
-    <span class="s2">&quot;sbref&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
-    <span class="s2">&quot;T1w&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
-    <span class="s2">&quot;T2w&quot;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
+    <span class="s1">&#39;bold&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;dwi&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;epi&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;asl&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;m0scan&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;fieldmap&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
+    <span class="s1">&#39;magnitude&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;magnitude1&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;magnitude2&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;phase1&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s1">&#39;phase2&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s1">&#39;phasediff&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">,</span>
+    <span class="s1">&#39;sbref&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
+    <span class="s1">&#39;T1w&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
+    <span class="s1">&#39;T2w&#39;</span><span class="p">:</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -392,7 +394,7 @@
     <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot change determined method </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Cannot change determined method </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">,</span>
@@ -400,7 +402,7 @@
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid estimation method type </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid estimation method type </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">value</span>
 
@@ -408,7 +410,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_id_setter</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">bids_id</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">bids_id</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot edit the bids_id&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot edit the bids_id&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FieldmapFile">
@@ -546,30 +548,29 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate a fieldmap path.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not exist, is a broken link, or it is not a file&quot;</span>
+                <span class="sa">f</span><span class="s1">&#39;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&gt; does not exist, is a broken link, or it is not a file&#39;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;.nii&quot;</span><span class="p">,</span> <span class="s2">&quot;.nii.gz&quot;</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; does not look like a NIfTI file.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.nii&#39;</span><span class="p">,</span> <span class="s1">&#39;.nii.gz&#39;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&gt; does not look like a NIfTI file.&#39;</span><span class="p">)</span>
 
-        <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?&lt;=_)\w+(?=\.nii)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?&lt;=_)\w+(?=\.nii)&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">MODALITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt; with suffix &lt;</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&gt; is not a valid &quot;</span>
-                <span class="s2">&quot;fieldmap sourcefile.&quot;</span>
+                <span class="sa">f</span><span class="s1">&#39;File path &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&gt; with suffix &lt;</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s1">&gt; is not a valid fieldmap sourcefile.&#39;</span>
             <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate metadata and additional checks.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">entities</span> <span class="o">=</span> <span class="n">parse_file_entities</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;suffix&quot;</span><span class="p">)</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;extension&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;suffix&#39;</span><span class="p">)</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;extension&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
 
         <span class="c1"># Automatically fill metadata in when possible</span>
         <span class="c1"># TODO: implement BIDS hierarchy of metadata</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_meta</span><span class="p">:</span>
-            <span class="n">sidecar</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">))</span>
+            <span class="n">sidecar</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s1">&#39;json&#39;</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">sidecar</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
                 <span class="n">_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">sidecar</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
@@ -583,20 +584,18 @@
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;T1w&quot;</span><span class="p">,</span> <span class="s2">&quot;T2w&quot;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;T1w&#39;</span><span class="p">,</span> <span class="s1">&#39;T2w&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
 
         <span class="c1"># Check for REQUIRED metadata (depends on suffix.)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s2">&quot;PhaseEncodingDirection&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Missing &#39;PhaseEncodingDirection&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
-                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;dwi&#39;</span><span class="p">,</span> <span class="s1">&#39;epi&#39;</span><span class="p">,</span> <span class="s1">&#39;sbref&#39;</span><span class="p">,</span> <span class="s1">&#39;asl&#39;</span><span class="p">,</span> <span class="s1">&#39;m0scan&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;PhaseEncodingDirection&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;PhaseEncodingDirection&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
 
             <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.epimanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trt</span>
 
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Missing readout timing information for &lt;</span><span class="si">%s</span><span class="s2">&gt;. </span><span class="si">%s</span><span class="s2">&quot;</span>
-            <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;Explicit fallback must be provided.&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Missing readout timing information for &lt;</span><span class="si">%s</span><span class="s1">&gt;. </span><span class="si">%s</span><span class="s1">&#39;</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="s1">&#39;Explicit fallback must be provided.&#39;</span>
             <span class="n">have_trt</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
@@ -604,22 +603,20 @@
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                 <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
                     <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;Estimated timing is available.&quot;</span>
+                    <span class="n">extra</span> <span class="o">=</span> <span class="s1">&#39;Estimated timing is available.&#39;</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">have_trt</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;fieldmap&quot;</span> <span class="ow">and</span> <span class="s2">&quot;Units&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;fieldmap&#39;</span> <span class="ow">and</span> <span class="s1">&#39;Units&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;Units&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;phasediff&quot;</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="s2">&quot;EchoTime1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="s2">&quot;EchoTime2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;phasediff&#39;</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s1">&#39;EchoTime1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="s1">&#39;EchoTime2&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Missing &#39;EchoTime1&#39; and/or &#39;EchoTime2&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
-            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;EchoTime1&#39; and/or &#39;EchoTime2&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;EchoTime&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;EchoTime&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;EchoTime&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span></div>
 
 
@@ -641,10 +638,9 @@
     <span class="n">sources</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">converter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">[</span>
-            <span class="n">FieldmapFile</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FieldmapFile</span><span class="p">)</span> <span class="k">else</span> <span class="n">f</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">FieldmapFile</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">FieldmapFile</span><span class="p">)</span> <span class="k">else</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="p">],</span>
-        <span class="nb">repr</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2"> files&gt;&quot;</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s1"> files&gt;&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;File path or list of paths indicating the source data to estimate a fieldmap.&quot;&quot;&quot;</span>
 
@@ -666,24 +662,22 @@
         <span class="n">suffix_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">suffix_list</span><span class="p">)</span>
 
         <span class="c1"># Fieldmap option 1: actual field-mapping sequences</span>
-        <span class="n">fmap_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
-            <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible suffices found: &lt;</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>
+        <span class="n">fmap_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;phasediff&#39;</span><span class="p">,</span> <span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Incompatible suffices found: &lt;</span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">fmap_types</span><span class="p">:</span>
             <span class="n">sources</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">path</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;phasediff&#39;</span><span class="p">,</span> <span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">)</span>
             <span class="p">)</span>
 
             <span class="c1"># Automagically add the corresponding phase2 file if missing as argument</span>
-            <span class="n">missing_phases</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;phase1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">)</span>
+            <span class="n">missing_phases</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;phase1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fmap_types</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">missing_phases</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">mis_ph</span> <span class="o">=</span> <span class="s2">&quot;phase1&quot;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;phase2&quot;</span>
-                <span class="n">hit_ph</span> <span class="o">=</span> <span class="s2">&quot;phase2&quot;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;phase1&quot;</span>
+                <span class="n">mis_ph</span> <span class="o">=</span> <span class="s1">&#39;phase1&#39;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s1">&#39;phase2&#39;</span>
+                <span class="n">hit_ph</span> <span class="o">=</span> <span class="s1">&#39;phase2&#39;</span> <span class="k">if</span> <span class="n">missing_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s1">&#39;phase1&#39;</span>
                 <span class="n">new_source</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hit_ph</span><span class="p">,</span> <span class="n">mis_ph</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_source</span><span class="p">))</span>
                 <span class="n">sources</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">missing_phases</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">new_source</span><span class="p">)</span>
@@ -692,83 +686,70 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">fmap_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
 
             <span class="c1"># Determine the name of the corresponding (first) magnitude file(s)</span>
-            <span class="n">magnitude</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;magnitude</span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;magnitude</span><span class="si">{</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="k">if</span> <span class="n">magnitude</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">new_path</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;_magnitude&quot;</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;_phase1&quot;</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_phase&quot;</span><span class="p">,</span> <span class="s2">&quot;_magnitude&quot;</span><span class="p">)</span>
-                    <span class="p">)</span>
+                    <span class="n">new_path</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                        <span class="s1">&#39;_fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;_magnitude&#39;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_phasediff&#39;</span><span class="p">,</span> <span class="s1">&#39;_phase1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_phase&#39;</span><span class="p">,</span> <span class="s1">&#39;_magnitude&#39;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="s2">&quot;A fieldmap or phase-difference estimation type was found, &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;but an anatomical reference (</span><span class="si">{</span><span class="n">magnitude</span><span class="si">}</span><span class="s2"> file) is missing.&quot;</span>
+                        <span class="s1">&#39;A fieldmap or phase-difference estimation type was found, &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;but an anatomical reference (</span><span class="si">{</span><span class="n">magnitude</span><span class="si">}</span><span class="s1"> file) is missing.&#39;</span>
                     <span class="p">)</span>
 
             <span class="c1"># Check presence and try to find (if necessary) the second magnitude file</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span>
-                <span class="ow">and</span> <span class="s2">&quot;magnitude2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span> <span class="ow">and</span> <span class="s1">&#39;magnitude2&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">new_path</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;diff&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">)</span>
-                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
+                    <span class="n">new_path</span> <span class="o">=</span> <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">sources</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;diff&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                        <span class="s1">&#39;phase&#39;</span><span class="p">,</span> <span class="s1">&#39;magnitude&#39;</span>
                     <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">new_path</span><span class="p">))</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="s2">&quot;phase2&quot;</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;phase2&#39;</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="s2">&quot;A phase-difference estimation (phase1/2) type was found, &quot;</span>
-                            <span class="s2">&quot;but an anatomical reference (magnitude2 file) is missing.&quot;</span>
+                            <span class="s1">&#39;A phase-difference estimation (phase1/2) type was found, &#39;</span>
+                            <span class="s1">&#39;but an anatomical reference (magnitude2 file) is missing.&#39;</span>
                         <span class="p">)</span>
 
         <span class="c1"># Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)</span>
         <span class="c1"># IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s</span>
-        <span class="n">pepolar_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">))</span>
-        <span class="n">anat_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s2">&quot;T1w&quot;</span><span class="p">,</span> <span class="s2">&quot;T2w&quot;</span><span class="p">))</span>
+        <span class="n">pepolar_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;dwi&#39;</span><span class="p">,</span> <span class="s1">&#39;epi&#39;</span><span class="p">,</span> <span class="s1">&#39;sbref&#39;</span><span class="p">,</span> <span class="s1">&#39;asl&#39;</span><span class="p">,</span> <span class="s1">&#39;m0scan&#39;</span><span class="p">))</span>
+        <span class="n">anat_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s1">&#39;T1w&#39;</span><span class="p">,</span> <span class="s1">&#39;T2w&#39;</span><span class="p">))</span>
         <span class="n">_pepolar_estimation</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">suffix_list</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">)]</span>
-            <span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="nb">len</span><span class="p">([</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">suffix_list</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;dwi&#39;</span><span class="p">,</span> <span class="s1">&#39;epi&#39;</span><span class="p">,</span> <span class="s1">&#39;sbref&#39;</span><span class="p">,</span> <span class="s1">&#39;asl&#39;</span><span class="p">,</span> <span class="s1">&#39;m0scan&#39;</span><span class="p">)])</span>
+            <span class="o">&gt;</span> <span class="mi">1</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">_pepolar_estimation</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">anat_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">pepolar_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
-            <span class="n">_pe</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+            <span class="n">_pe</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Only one phase-encoding direction &lt;</span><span class="si">{</span><span class="n">_pe</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="si">}</span><span class="s2">&gt; found across sources.&quot;</span>
+                    <span class="sa">f</span><span class="s1">&#39;Only one phase-encoding direction &lt;</span><span class="si">{</span><span class="n">_pe</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="si">}</span><span class="s1">&gt; found across sources.&#39;</span>
                 <span class="p">)</span>
         <span class="k">elif</span> <span class="n">anat_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">anat_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pepolar_types</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Only anatomical sources were found, cannot estimate fieldmap.&quot;</span>
-                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Only anatomical sources were found, cannot estimate fieldmap.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
             <span class="c1"># No method has been identified -&gt; fail.</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Insufficient sources to estimate a fieldmap.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Insufficient sources to estimate a fieldmap.&#39;</span><span class="p">)</span>
 
         <span class="n">intents_meta</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
-            <span class="n">el</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-            <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;IntendedFor&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+            <span class="n">el</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;IntendedFor&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
         <span class="p">)</span>
 
         <span class="c1"># Register this estimation method</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">:</span>
             <span class="c1"># If not manually set, try to get it from BIDS metadata</span>
             <span class="n">b0_ids</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;B0FieldIdentifier&quot;</span><span class="p">))</span>
+                <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;B0FieldIdentifier&#39;</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;B0FieldIdentifier&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;B0FieldIdentifier&#39;</span><span class="p">)</span>
             <span class="p">]</span>
 
             <span class="k">if</span> <span class="n">b0_ids</span><span class="p">:</span>
@@ -776,19 +757,19 @@
                 <span class="n">bids_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">b0_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="n">b0_ids</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">bids_ids</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;No common ``B0FieldIdentifier`` found: &lt;</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">b0_ids</span><span class="p">))</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                        <span class="sa">f</span><span class="s1">&#39;No common ``B0FieldIdentifier`` found: &lt;</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">b0_ids</span><span class="p">))</span><span class="si">}</span><span class="s1">&gt;&#39;</span>
                     <span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Multiple common ``B0FieldIdentifier``s found: &lt;</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                        <span class="sa">f</span><span class="s1">&#39;Multiple common ``B0FieldIdentifier``s found: &lt;</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bids_ids</span><span class="p">)</span><span class="si">}</span><span class="s1">&gt;&#39;</span>
                     <span class="p">)</span>
-                <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;bids_id&quot;</span><span class="p">,</span> <span class="n">bids_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
+                <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;bids_id&#39;</span><span class="p">,</span> <span class="n">bids_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">:</span>
             <span class="n">_estimators</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">bids_id</span> <span class="o">=</span> <span class="n">_estimators</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">())</span>
-            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;bids_id&quot;</span><span class="p">,</span> <span class="n">bids_id</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;bids_id&#39;</span><span class="p">,</span> <span class="n">bids_id</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">intent_file</span> <span class="ow">in</span> <span class="n">intents_meta</span><span class="p">:</span>
             <span class="n">_intents</span><span class="p">[</span><span class="n">intent_file</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">)</span>
@@ -812,22 +793,23 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span>
 
         <span class="c1"># Override workflow name</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;wf_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;wf_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EstimatorType</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span><span class="p">):</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">.workflows.fit.fieldmap</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_fmap_wf</span>
 
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_fmap_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">magnitude</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
-                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
+                    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;magnitude&#39;</span><span class="p">)</span>
                 <span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fieldmap</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()),</span> <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">,</span> <span class="s2">&quot;phase2&quot;</span><span class="p">,</span> <span class="s2">&quot;phase1&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;phasediff&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">,</span> <span class="s1">&#39;phase1&#39;</span><span class="p">)</span>
                 <span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PEPOLAR</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">.workflows.fit.pepolar</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_topup_wf</span>
@@ -835,12 +817,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span> <span class="o">=</span> <span class="n">init_topup_wf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">set_inputs</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">in_data</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                <span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span>
-                <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">in_data</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">.workflows.fit.syn</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_syn_sdc_wf</span>
 
@@ -853,7 +831,7 @@
 
 <div class="viewcode-block" id="get_identifier">
 <a class="viewcode-back" href="../../api/sdcflows.fieldmaps.html#sdcflows.fieldmaps.get_identifier">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_identifier</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;IntendedFor&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_identifier</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s1">&#39;IntendedFor&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the fieldmap identifier for a given filename.</span>
 
@@ -865,10 +843,10 @@
 <span class="sd">        Index table in which the search should be performed.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;IntendedFor&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s1">&#39;IntendedFor&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_intents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="p">())))</span>
 
-    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;sources&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s1">&#39;sources&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&#39;</span><span class="si">{by}</span><span class="s2">&#39;&quot;</span><span class="p">)</span></div>

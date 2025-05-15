@@ -335,8 +335,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_workflow</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="n">retval</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the Nipype Workflow that supports the whole execution graph.&quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
     <span class="c1"># We do not need OMP &gt; 1 for workflow creation</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.fit.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_sdcflows_wf</span>
@@ -347,17 +348,20 @@
     <span class="c1"># Make sure loggers are started</span>
     <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
 
-    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+        <span class="mi">25</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">Running SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">:</span>
 <span class="s2">             * BIDS dataset path: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span><span class="si">}</span><span class="s2">.</span>
 <span class="s2">             * Output folder: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">.</span>
 <span class="s2">             * Analysis levels: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">analysis_level</span><span class="si">}</span><span class="s2">.</span>
-<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;return_code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_sdcflows_wf</span><span class="p">()</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s2">&quot;return_code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;return_code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_sdcflows_wf</span><span class="p">()</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;return_code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">retval</span></div>
 
 </pre></div>

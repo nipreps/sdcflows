@@ -417,6 +417,7 @@
 <span class="sd">    :py:class:`~bids.layout.BIDSLayout`, etc.)</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -430,53 +431,51 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">importlib_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">get_version</span>
 
 <span class="c1"># Ignore annoying warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows._warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows._warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span>
 
 <span class="n">_pre_exec_env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">)</span>
 
 <span class="c1"># Reduce numpy&#39;s vms by limiting OMP_NUM_THREADS</span>
-<span class="n">_default_omp_threads</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()))</span>
+<span class="n">_default_omp_threads</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()))</span>
 
 <span class="c1"># Disable NiPype etelemetry always</span>
-<span class="n">_disable_et</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NO_ET&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NIPYPE_NO_ET&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-<span class="p">)</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NIPYPE_NO_ET&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NO_ET&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+<span class="n">_disable_et</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;NO_ET&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;NIPYPE_NO_ET&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NIPYPE_NO_ET&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NO_ET&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
 
-<span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;_is_pytest_session&quot;</span><span class="p">):</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s1">&#39;_is_pytest_session&#39;</span><span class="p">):</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">_is_pytest_session</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Trick to avoid sklearn&#39;s FutureWarnings</span>
 <span class="c1"># Disable all warnings in main and children processes only on production versions</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
     <span class="p">(</span>
-        <span class="s2">&quot;+&quot;</span> <span class="ow">in</span> <span class="n">__version__</span><span class="p">,</span>
-        <span class="n">__version__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.dirty&quot;</span><span class="p">),</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SDCFLOWS_DEV&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">),</span>
+        <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">__version__</span><span class="p">,</span>
+        <span class="n">__version__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.dirty&#39;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SDCFLOWS_DEV&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;on&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;yes&#39;</span><span class="p">),</span>
     <span class="p">)</span>
 <span class="p">):</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PYTHONWARNINGS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ignore&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYTHONWARNINGS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ignore&#39;</span>
 
-<span class="n">logging</span><span class="o">.</span><span class="n">addLevelName</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s2">&quot;IMPORTANT&quot;</span><span class="p">)</span>  <span class="c1"># Add a new level between INFO and WARNING</span>
-<span class="n">logging</span><span class="o">.</span><span class="n">addLevelName</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;VERBOSE&quot;</span><span class="p">)</span>  <span class="c1"># Add a new level between INFO and DEBUG</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">addLevelName</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s1">&#39;IMPORTANT&#39;</span><span class="p">)</span>  <span class="c1"># Add a new level between INFO and WARNING</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">addLevelName</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s1">&#39;VERBOSE&#39;</span><span class="p">)</span>  <span class="c1"># Add a new level between INFO and DEBUG</span>
 
 <span class="n">DEFAULT_MEMORY_MIN_GB</span> <span class="o">=</span> <span class="mf">0.01</span>
 
 <span class="n">_exec_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span>
 <span class="n">_docker_ver</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="c1"># special variable set in the container</span>
-<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;IS_DOCKER_8395080871&quot;</span><span class="p">):</span>
-    <span class="n">_exec_env</span> <span class="o">=</span> <span class="s2">&quot;singularity&quot;</span>
-    <span class="n">_cgroup</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/1/cgroup&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">_cgroup</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">&quot;docker&quot;</span> <span class="ow">in</span> <span class="n">_cgroup</span><span class="o">.</span><span class="n">read_text</span><span class="p">():</span>
-        <span class="n">_docker_ver</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;DOCKER_VERSION_8395080871&quot;</span><span class="p">)</span>
-        <span class="n">_exec_env</span> <span class="o">=</span> <span class="s2">&quot;docker&quot;</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;IS_DOCKER_8395080871&#39;</span><span class="p">):</span>
+    <span class="n">_exec_env</span> <span class="o">=</span> <span class="s1">&#39;singularity&#39;</span>
+    <span class="n">_cgroup</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/proc/1/cgroup&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_cgroup</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;docker&#39;</span> <span class="ow">in</span> <span class="n">_cgroup</span><span class="o">.</span><span class="n">read_text</span><span class="p">():</span>
+        <span class="n">_docker_ver</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;DOCKER_VERSION_8395080871&#39;</span><span class="p">)</span>
+        <span class="n">_exec_env</span> <span class="o">=</span> <span class="s1">&#39;docker&#39;</span>
     <span class="k">del</span> <span class="n">_cgroup</span>
 
 <span class="n">_templateflow_home</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
     <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
-        <span class="s2">&quot;TEMPLATEFLOW_HOME&quot;</span><span class="p">,</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;HOME&quot;</span><span class="p">),</span> <span class="s2">&quot;.cache&quot;</span><span class="p">,</span> <span class="s2">&quot;templateflow&quot;</span><span class="p">),</span>
+        <span class="s1">&#39;TEMPLATEFLOW_HOME&#39;</span><span class="p">,</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;HOME&#39;</span><span class="p">),</span> <span class="s1">&#39;.cache&#39;</span><span class="p">,</span> <span class="s1">&#39;templateflow&#39;</span><span class="p">),</span>
     <span class="p">)</span>
 <span class="p">)</span>
 
@@ -487,39 +486,34 @@
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
     <span class="n">_free_mem_at_start</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="n">_oc_limit</span> <span class="o">=</span> <span class="s2">&quot;n/a&quot;</span>
-<span class="n">_oc_policy</span> <span class="o">=</span> <span class="s2">&quot;n/a&quot;</span>
+<span class="n">_oc_limit</span> <span class="o">=</span> <span class="s1">&#39;n/a&#39;</span>
+<span class="n">_oc_policy</span> <span class="o">=</span> <span class="s1">&#39;n/a&#39;</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># Memory policy may have a large effect on types of errors experienced</span>
-    <span class="n">_proc_oc_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/sys/vm/overcommit_memory&quot;</span><span class="p">)</span>
+    <span class="n">_proc_oc_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/proc/sys/vm/overcommit_memory&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">_proc_oc_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">_oc_policy</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;0&quot;</span><span class="p">:</span> <span class="s2">&quot;heuristic&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span> <span class="s2">&quot;always&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">:</span> <span class="s2">&quot;never&quot;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">_proc_oc_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">&quot;unknown&quot;</span>
+        <span class="n">_oc_policy</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="s1">&#39;heuristic&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="s1">&#39;always&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="s1">&#39;never&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">_proc_oc_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s1">&#39;unknown&#39;</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">_oc_policy</span> <span class="o">!=</span> <span class="s2">&quot;never&quot;</span><span class="p">:</span>
-            <span class="n">_proc_oc_kbytes</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/sys/vm/overcommit_kbytes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_oc_policy</span> <span class="o">!=</span> <span class="s1">&#39;never&#39;</span><span class="p">:</span>
+            <span class="n">_proc_oc_kbytes</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/proc/sys/vm/overcommit_kbytes&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">_proc_oc_kbytes</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="n">_oc_limit</span> <span class="o">=</span> <span class="n">_proc_oc_kbytes</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">_oc_limit</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;n/a&quot;</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/sys/vm/overcommit_ratio&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-            <span class="p">):</span>
-                <span class="n">_oc_limit</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/sys/vm/overcommit_ratio&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">_oc_limit</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;n/a&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/proc/sys/vm/overcommit_ratio&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">_oc_limit</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">%&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/proc/sys/vm/overcommit_ratio&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
     <span class="k">pass</span>
 
 <span class="n">_memory_gb</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="k">if</span> <span class="s2">&quot;linux&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/proc/meminfo&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;linux&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/proc/meminfo&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
             <span class="n">_meminfo_lines</span> <span class="o">=</span> <span class="n">f_in</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-            <span class="n">_mem_total_line</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_meminfo_lines</span> <span class="k">if</span> <span class="s2">&quot;MemTotal&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_mem_total_line</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_meminfo_lines</span> <span class="k">if</span> <span class="s1">&#39;MemTotal&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">_mem_total</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">_mem_total_line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">_memory_gb</span> <span class="o">=</span> <span class="n">_mem_total</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1024.0</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="s2">&quot;darwin&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">:</span>
-        <span class="n">_mem_str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="s2">&quot;sysctl hw.memsize&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s1">&#39;darwin&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">:</span>
+        <span class="n">_mem_str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="s1">&#39;sysctl hw.memsize&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">_memory_gb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">_mem_str</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1024.0</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
     <span class="k">pass</span>
@@ -537,7 +531,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Avert instantiation.&quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Configuration type is not instantiable.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Configuration type is not instantiable.&#39;</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -562,7 +556,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return defined settings.&quot;&quot;&quot;</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">)):</span>
                 <span class="k">continue</span>
@@ -600,9 +594,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Linux&#39;s kernel virtual memory overcommit policy.&quot;&quot;&quot;</span>
     <span class="n">overcommit_limit</span> <span class="o">=</span> <span class="n">_oc_limit</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Linux&#39;s kernel virtual memory overcommit limits.&quot;&quot;&quot;</span>
-    <span class="n">nipype_version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="s2">&quot;nipype&quot;</span><span class="p">)</span>
+    <span class="n">nipype_version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="s1">&#39;nipype&#39;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Nipype&#39;s current version.&quot;&quot;&quot;</span>
-    <span class="n">templateflow_version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="s2">&quot;templateflow&quot;</span><span class="p">)</span>
+    <span class="n">templateflow_version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="s1">&#39;templateflow&#39;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The TemplateFlow client version installed.&quot;&quot;&quot;</span>
     <span class="n">total_memory</span> <span class="o">=</span> <span class="n">_memory_gb</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Total memory available, in GB.&quot;&quot;&quot;</span>
@@ -618,7 +612,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">nipype</span><span class="p">(</span><span class="n">_Config</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Nipype settings.&quot;&quot;&quot;</span>
 
-    <span class="n">crashfile_format</span> <span class="o">=</span> <span class="s2">&quot;txt&quot;</span>
+    <span class="n">crashfile_format</span> <span class="o">=</span> <span class="s1">&#39;txt&#39;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The file format for crashfiles, either text or pickle.&quot;&quot;&quot;</span>
     <span class="n">get_linked_libs</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run NiPype&#39;s tool to enlist linked libraries for every interface.&quot;&quot;&quot;</span>
@@ -630,11 +624,11 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of processes (compute tasks) that can be run in parallel (multiprocessing only).&quot;&quot;&quot;</span>
     <span class="n">omp_nthreads</span> <span class="o">=</span> <span class="n">_default_omp_threads</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of CPUs a single process can access for multithreaded execution.&quot;&quot;&quot;</span>
-    <span class="n">plugin</span> <span class="o">=</span> <span class="s2">&quot;MultiProc&quot;</span>
+    <span class="n">plugin</span> <span class="o">=</span> <span class="s1">&#39;MultiProc&#39;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;NiPype&#39;s execution plugin.&quot;&quot;&quot;</span>
     <span class="n">plugin_args</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;maxtasksperchild&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="s2">&quot;raise_insufficient&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">&#39;maxtasksperchild&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;raise_insufficient&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Settings for NiPype&#39;s execution plugin.&quot;&quot;&quot;</span>
     <span class="n">remove_node_directories</span> <span class="o">=</span> <span class="kc">False</span>
@@ -650,13 +644,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_plugin</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Format a dictionary for Nipype consumption.&quot;&quot;&quot;</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;plugin&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin</span><span class="p">,</span>
-            <span class="s2">&quot;plugin_args&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin_args</span><span class="p">,</span>
+            <span class="s1">&#39;plugin&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin</span><span class="p">,</span>
+            <span class="s1">&#39;plugin_args&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin_args</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;MultiProc&quot;</span><span class="p">,</span> <span class="s2">&quot;LegacyMultiProc&quot;</span><span class="p">):</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;plugin_args&quot;</span><span class="p">][</span><span class="s2">&quot;n_procs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">nprocs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiProc&#39;</span><span class="p">,</span> <span class="s1">&#39;LegacyMultiProc&#39;</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;plugin_args&#39;</span><span class="p">][</span><span class="s1">&#39;n_procs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">nprocs</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">memory_gb</span><span class="p">:</span>
-                <span class="n">out</span><span class="p">[</span><span class="s2">&quot;plugin_args&quot;</span><span class="p">][</span><span class="s2">&quot;memory_gb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">memory_gb</span><span class="p">)</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;plugin_args&#39;</span><span class="p">][</span><span class="s1">&#39;memory_gb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">memory_gb</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
 
@@ -670,11 +664,11 @@
         <span class="c1"># Nipype config (logs and execution)</span>
         <span class="n">ncfg</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;execution&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;crashdump_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span><span class="p">),</span>
-                    <span class="s2">&quot;crashfile_format&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">crashfile_format</span><span class="p">,</span>
-                    <span class="s2">&quot;get_linked_libs&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_linked_libs</span><span class="p">,</span>
-                    <span class="s2">&quot;stop_on_first_crash&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">stop_on_first_crash</span><span class="p">,</span>
+                <span class="s1">&#39;execution&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;crashdump_dir&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span><span class="p">),</span>
+                    <span class="s1">&#39;crashfile_format&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">crashfile_format</span><span class="p">,</span>
+                    <span class="s1">&#39;get_linked_libs&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_linked_libs</span><span class="p">,</span>
+                    <span class="s1">&#39;stop_on_first_crash&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">stop_on_first_crash</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">}</span>
         <span class="p">)</span></div>
@@ -719,7 +713,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;List of participant identifiers that are to be preprocessed.&quot;&quot;&quot;</span>
     <span class="n">pdb</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop into PDB when exceptions are encountered.&quot;&quot;&quot;</span>
-    <span class="n">run_uuid</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S&quot;</span><span class="p">),</span> <span class="n">uuid4</span><span class="p">())</span>
+    <span class="n">run_uuid</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">-%H%M%S&#39;</span><span class="p">),</span> <span class="n">uuid4</span><span class="p">())</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Unique identifier of this particular run.&quot;&quot;&quot;</span>
     <span class="n">session_label</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter input dataset by session identifier.&quot;&quot;&quot;</span>
@@ -727,7 +721,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run in sloppy mode (meaning, suboptimal parameters that minimize run-time).&quot;&quot;&quot;</span>
     <span class="n">templateflow_home</span> <span class="o">=</span> <span class="n">_templateflow_home</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The root folder of the TemplateFlow client.&quot;&quot;&quot;</span>
-    <span class="n">work_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;work&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+    <span class="n">work_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;work&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to a working directory where intermediate results will be available.&quot;&quot;&quot;</span>
     <span class="n">write_graph</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write out the computational graph corresponding to the planned preprocessing.&quot;&quot;&quot;</span>
@@ -735,13 +729,13 @@
     <span class="n">_layout</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">_paths</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;bids_dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;bids_database_dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;layout&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;log_dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;output_dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;templateflow_home&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;work_dir&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;bids_dir&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;bids_database_dir&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;layout&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;log_dir&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;output_dir&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;templateflow_home&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;work_dir&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="execution.init">
@@ -755,25 +749,24 @@
 
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_layout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bids.layout.index</span><span class="w"> </span><span class="kn">import</span> <span class="n">BIDSLayoutIndexer</span>
+
             <span class="kn">from</span><span class="w"> </span><span class="nn">bids.layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">BIDSLayout</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">bids.layout.index</span><span class="w"> </span><span class="kn">import</span> <span class="n">BIDSLayoutIndexer</span>
 
             <span class="n">ignore_paths</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="c1"># Ignore folders at the top if they don&#39;t start with /sub-&lt;label&gt;/</span>
-                <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?!/sub-[a-zA-Z0-9]+)&quot;</span><span class="p">),</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(?!/sub-[a-zA-Z0-9]+)&#39;</span><span class="p">),</span>
                 <span class="c1"># Ignore all modality subfolders, except for func/ or anat/</span>
                 <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-                    <span class="sa">r</span><span class="s2">&quot;^/sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/&quot;</span>
-                    <span class="sa">r</span><span class="s2">&quot;(beh|pet|perf|meg|eeg|ieeg|micr|nirs)&quot;</span>
+                    <span class="sa">r</span><span class="s1">&#39;^/sub-[a-zA-Z0-9]+(/ses-[a-zA-Z0-9]+)?/&#39;</span>
+                    <span class="sa">r</span><span class="s1">&#39;(beh|pet|perf|meg|eeg|ieeg|micr|nirs)&#39;</span>
                 <span class="p">),</span>
             <span class="p">]</span>
 
             <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span><span class="p">:</span>
                 <span class="c1"># If we know participant labels, ignore all other</span>
                 <span class="n">ignore_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-                    <span class="sa">r</span><span class="s2">&quot;^(?!/sub-(&quot;</span>
-                    <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span><span class="p">)</span>
-                    <span class="o">+</span> <span class="s2">&quot;))&quot;</span>
+                    <span class="sa">r</span><span class="s1">&#39;^(?!/sub-(&#39;</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;))&#39;</span>
                 <span class="p">)</span>
 
             <span class="c1"># Recommended after PyBIDS 12.1</span>
@@ -785,12 +778,11 @@
             <span class="c1"># Initialize database in a multiprocessing-safe manner</span>
             <span class="n">_db_path</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">work_dir</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="n">output_dir</span>
-            <span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;.bids_db-</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">run_uuid</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;.bids_db-</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">run_uuid</span><span class="si">}</span><span class="s1">&#39;</span>
 
             <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bids_database_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">bids_database_dir</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="bp">cls</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;.bids_db&quot;</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span> <span class="k">else</span> <span class="n">_db_path</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">/</span> <span class="s1">&#39;.bids_db&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">participant_label</span> <span class="k">else</span> <span class="n">_db_path</span>
                 <span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bids_database_wipe</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bids_database_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -829,13 +821,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">workflow</span><span class="p">(</span><span class="n">_Config</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure the particular execution graph of this workflow.&quot;&quot;&quot;</span>
 
-    <span class="n">analysis_level</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;participant&quot;</span><span class="p">]</span>
+    <span class="n">analysis_level</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;participant&#39;</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Level of analysis.&quot;&quot;&quot;</span>
     <span class="n">fmapless</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow fieldmap-less estimation&quot;&quot;&quot;</span>
-    <span class="n">species</span> <span class="o">=</span> <span class="s2">&quot;human&quot;</span>
+    <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;human&#39;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Subject species to choose most appropriate template&quot;&quot;&quot;</span>
-    <span class="n">template_id</span> <span class="o">=</span> <span class="s2">&quot;MNI152NLin2009cAsym&quot;</span>
+    <span class="n">template_id</span> <span class="o">=</span> <span class="s1">&#39;MNI152NLin2009cAsym&#39;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;TemplateFlow ID of template used for the anatomical processing.&quot;&quot;&quot;</span></div>
 
 
@@ -845,13 +837,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">loggers</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep loggers easily accessible (see :py:func:`init`).&quot;&quot;&quot;</span>
 
-    <span class="n">_fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2">,</span><span class="si">%(msecs)d</span><span class="s2"> </span><span class="si">%(name)-2s</span><span class="s2"> &quot;</span> <span class="s2">&quot;</span><span class="si">%(levelname)-2s</span><span class="s2">:</span><span class="se">\n\t</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span>
-    <span class="n">_datefmt</span> <span class="o">=</span> <span class="s2">&quot;%y%m</span><span class="si">%d</span><span class="s2">-%H:%M:%S&quot;</span>
+    <span class="n">_fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1">,</span><span class="si">%(msecs)d</span><span class="s1"> </span><span class="si">%(name)-2s</span><span class="s1"> </span><span class="si">%(levelname)-2s</span><span class="s1">:</span><span class="se">\n\t</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+    <span class="n">_datefmt</span> <span class="o">=</span> <span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">-%H:%M:%S&#39;</span>
     <span class="n">_init</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="n">default</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The root logger.&quot;&quot;&quot;</span>
-    <span class="n">cli</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;cli&quot;</span><span class="p">)</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;cli&#39;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Command-line interface logging.&quot;&quot;&quot;</span>
     <span class="n">workflow</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;NiPype&#39;s workflow logger.&quot;&quot;&quot;</span>
@@ -873,25 +865,23 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_init</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span> <span class="k">as</span> <span class="n">nlogging</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">ncfg</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span> <span class="k">as</span> <span class="n">nlogging</span>
 
-            <span class="bp">cls</span><span class="o">.</span><span class="n">workflow</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;nipype.workflow&quot;</span><span class="p">)</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;nipype.interface&quot;</span><span class="p">)</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">utils</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;nipype.utils&quot;</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">workflow</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.workflow&#39;</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.interface&#39;</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">utils</span> <span class="o">=</span> <span class="n">nlogging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.utils&#39;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">handlers</span><span class="p">):</span>
                 <span class="n">_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-                <span class="n">_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_fmt</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_datefmt</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_fmt</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_datefmt</span><span class="p">))</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">_handler</span><span class="p">)</span>
 
             <span class="n">ncfg</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;logging&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;log_directory&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span><span class="p">),</span>
-                        <span class="s2">&quot;log_to_file&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s1">&#39;logging&#39;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s1">&#39;log_directory&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span><span class="p">),</span>
+                        <span class="s1">&#39;log_to_file&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
                     <span class="p">},</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -940,7 +930,7 @@
     <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="n">settings</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
     <span class="k">for</span> <span class="n">sectionname</span><span class="p">,</span> <span class="n">configs</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">sectionname</span> <span class="o">!=</span> <span class="s2">&quot;environment&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sectionname</span> <span class="o">!=</span> <span class="s1">&#39;environment&#39;</span><span class="p">:</span>
             <span class="n">section</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="vm">__name__</span><span class="p">],</span> <span class="n">sectionname</span><span class="p">)</span>
             <span class="n">section</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span></div>
 
@@ -951,16 +941,16 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get config as a dict.&quot;&quot;&quot;</span>
     <span class="n">settings</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;environment&quot;</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
-        <span class="s2">&quot;execution&quot;</span><span class="p">:</span> <span class="n">execution</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
-        <span class="s2">&quot;workflow&quot;</span><span class="p">:</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
-        <span class="s2">&quot;nipype&quot;</span><span class="p">:</span> <span class="n">nipype</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="s1">&#39;environment&#39;</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="s1">&#39;execution&#39;</span><span class="p">:</span> <span class="n">execution</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="s1">&#39;workflow&#39;</span><span class="p">:</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="s1">&#39;nipype&#39;</span><span class="p">:</span> <span class="n">nipype</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">flat</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">settings</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">section</span><span class="p">,</span> <span class="n">k</span><span class="p">)):</span> <span class="n">v</span>
+        <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">section</span><span class="p">,</span> <span class="n">k</span><span class="p">)):</span> <span class="n">v</span>
         <span class="k">for</span> <span class="n">section</span><span class="p">,</span> <span class="n">configs</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">configs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">}</span></div>
@@ -992,8 +982,8 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
 
     <span class="c1"># Disable eTelemetry</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NIPYPE_NO_ET&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NO_ET&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NIPYPE_NO_ET&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NO_ET&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
 
     <span class="c1"># Load config</span>
     <span class="n">config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
@@ -1008,7 +998,7 @@
     <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
 
     <span class="c1"># Set the maximal number of threads per process</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">omp_nthreads</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">omp_nthreads</span><span class="si">}</span><span class="s1">&#39;</span>
 
 
 <div class="viewcode-block" id="restore_env">

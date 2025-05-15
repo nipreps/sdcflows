@@ -540,41 +540,41 @@
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
     <span class="c1"># Use case 1: TRT is defined</span>
-    <span class="k">if</span> <span class="s2">&quot;TotalReadoutTime&quot;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
-        <span class="n">trt</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;TotalReadoutTime&#39;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
+        <span class="n">trt</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">trt</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">trt</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">trt</span>
-    <span class="k">elif</span> <span class="n">use_estimate</span> <span class="ow">and</span> <span class="s2">&quot;EstimatedTotalReadoutTime&quot;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
-        <span class="n">trt</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;EstimatedTotalReadoutTime&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">use_estimate</span> <span class="ow">and</span> <span class="s1">&#39;EstimatedTotalReadoutTime&#39;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
+        <span class="n">trt</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;EstimatedTotalReadoutTime&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">trt</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">trt</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">trt</span>
 
     <span class="k">if</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">{</span>
-        <span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;EffectiveEchoSpacing&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;EstimatedEffectiveEchoSpacing&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;EchoSpacing&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;WaterFatShift&quot;</span><span class="p">,</span>
-    <span class="p">}</span> <span class="o">&gt;</span> <span class="p">{</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">}:</span>
+        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;EffectiveEchoSpacing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;EstimatedEffectiveEchoSpacing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;EchoSpacing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;WaterFatShift&#39;</span><span class="p">,</span>
+    <span class="p">}</span> <span class="o">&gt;</span> <span class="p">{</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">}:</span>
         <span class="c1"># npe = N voxels PE direction</span>
-        <span class="n">pe_index</span> <span class="o">=</span> <span class="s2">&quot;ijk&quot;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">pe_index</span> <span class="o">=</span> <span class="s1">&#39;ijk&#39;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">in_meta</span><span class="p">[</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">npe</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">pe_index</span><span class="p">]</span>
 
         <span class="c1"># Use case 2: EES is defined</span>
-        <span class="n">ees</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;EffectiveEchoSpacing&quot;</span><span class="p">)</span>
+        <span class="n">ees</span> <span class="o">=</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;EffectiveEchoSpacing&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ees</span><span class="p">:</span>
             <span class="c1"># Effective echo spacing means that acceleration factors have been accounted for.</span>
             <span class="k">return</span> <span class="n">ees</span> <span class="o">*</span> <span class="p">(</span><span class="n">npe</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">use_estimate</span> <span class="ow">and</span> <span class="s2">&quot;EstimatedEffectiveEchoSpacing&quot;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;EstimatedEffectiveEchoSpacing&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">npe</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">use_estimate</span> <span class="ow">and</span> <span class="s1">&#39;EstimatedEffectiveEchoSpacing&#39;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;EstimatedEffectiveEchoSpacing&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">npe</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">echospacing</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;EchoSpacing&quot;</span><span class="p">]</span>
-            <span class="n">acc_factor</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;ParallelReductionFactorInPlane&quot;</span><span class="p">]</span>
+            <span class="n">echospacing</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s1">&#39;EchoSpacing&#39;</span><span class="p">]</span>
+            <span class="n">acc_factor</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s1">&#39;ParallelReductionFactorInPlane&#39;</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
@@ -584,14 +584,14 @@
 
         <span class="c1"># Use case 3 (Philips scans)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">wfs</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;WaterFatShift&quot;</span><span class="p">]</span>
-            <span class="n">epifactor</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;EPIFactor&quot;</span><span class="p">]</span>
+            <span class="n">wfs</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s1">&#39;WaterFatShift&#39;</span><span class="p">]</span>
+            <span class="n">epifactor</span> <span class="o">=</span> <span class="n">in_meta</span><span class="p">[</span><span class="s1">&#39;EPIFactor&#39;</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">wfs_hz</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ImagingFrequency&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">3.39941</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="p">(</span><span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MagneticFieldStrength&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">144.7383333</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ImagingFrequency&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">3.39941</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">in_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MagneticFieldStrength&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">144.7383333</span><span class="p">)</span>
                 <span class="ow">or</span> <span class="kc">None</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">wfs_hz</span><span class="p">:</span>
@@ -601,7 +601,7 @@
     <span class="k">if</span> <span class="n">fallback</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">fallback</span>
 
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown total-readout time specification&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown total-readout time specification&#39;</span><span class="p">)</span></div>
 
 
 
@@ -610,16 +610,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">epi_mask</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Use grayscale morphological operations to obtain a quick mask of EPI data.&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">skimage.morphology</span><span class="w"> </span><span class="kn">import</span> <span class="n">ball</span>
 
     <span class="k">if</span> <span class="n">out_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;mask.nii.gz&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+        <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;mask.nii.gz&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
     <span class="c1"># First open to blur out the skull around the brain</span>
     <span class="n">opened</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">grey_opening</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">ball</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
     <span class="c1"># Second, close large vessels and the ventricles</span>
@@ -645,9 +646,9 @@
     <span class="n">labels</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">watershed_ift</span><span class="p">(</span><span class="n">wshed</span><span class="p">,</span> <span class="n">markers</span><span class="p">)</span>
 
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s2">&quot;uint8&quot;</span><span class="p">)</span>
+    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
     <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span>
-        <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;uint8&quot;</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span>
+        <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span>
     <span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_file</span></div>
 

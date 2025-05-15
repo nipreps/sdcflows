@@ -334,11 +334,12 @@
 <a class="viewcode-back" href="../../../api/sdcflows.cli.main.html#sdcflows.cli.main.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for SDCFlows&#39; CLI.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">mktemp</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.cli.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_args</span>
 
@@ -351,25 +352,24 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.utils.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_exceptionhook</span>
 
         <span class="n">setup_exceptionhook</span><span class="p">()</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="s2">&quot;Linear&quot;</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="s1">&#39;Linear&#39;</span>
 
     <span class="c1"># CRITICAL Save the config to a file. This is necessary because the execution graph</span>
     <span class="c1"># is built as a separate process to keep the memory footprint low. The most</span>
     <span class="c1"># straightforward way to communicate with the child process is via the filesystem.</span>
     <span class="c1"># The config file name needs to be unique, otherwise multiple sdcflows instances</span>
     <span class="c1"># will create write conflicts.</span>
-    <span class="n">config_file</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span>
-        <span class="nb">dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;.sdcflows.&quot;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.toml&quot;</span>
-    <span class="p">)</span>
+    <span class="n">config_file</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;.sdcflows.&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.toml&#39;</span><span class="p">)</span>
     <span class="n">config</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
     <span class="n">config</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="n">config_file</span>
     <span class="n">exitcode</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">analysis_level</span> <span class="o">!=</span> <span class="p">[</span><span class="s2">&quot;participant&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">analysis_level</span> <span class="o">!=</span> <span class="p">[</span><span class="s1">&#39;participant&#39;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Analysis level can only be &#39;participant&#39;&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">dry_run</span><span class="p">:</span>  <span class="c1"># --dry-run: pretty print results</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.utils.bids</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_participants</span>
+
         <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.wrangler</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_estimators</span>
 
         <span class="n">subjects</span> <span class="o">=</span> <span class="n">collect_participants</span><span class="p">(</span>
@@ -385,31 +385,31 @@
                 <span class="n">logger</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Estimation for &lt;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span><span class="si">}</span><span class="s2">&gt; complete. Found:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Estimation for &lt;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span><span class="si">}</span><span class="s1">&gt; complete. Found:&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">subject</span><span class="p">,</span> <span class="n">estimators</span> <span class="ow">in</span> <span class="n">estimators_record</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">estimators</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="s2">No estimators found&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t\t</span><span class="s1">No estimators found&#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">for</span> <span class="n">estimator</span> <span class="ow">in</span> <span class="n">estimators</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">estimator</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\t\t</span><span class="si">{</span><span class="n">estimator</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">fl</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
-                    <span class="n">fl_relpath</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">)</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t\t\t</span><span class="si">{</span><span class="n">pe_dir</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">fl_relpath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">fl_relpath</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\t\t\t</span><span class="si">{</span><span class="n">pe_dir</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">fl_relpath</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">exitcode</span><span class="p">)</span>
 
     <span class="c1"># Initialize process pool if multiprocessing</span>
     <span class="n">_pool</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;MultiProc&quot;</span><span class="p">,</span> <span class="s2">&quot;LegacyMultiProc&quot;</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiProc&#39;</span><span class="p">,</span> <span class="s1">&#39;LegacyMultiProc&#39;</span><span class="p">):</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
 
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OMP_NUM_THREADS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
 
         <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-            <span class="n">mp</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s2">&quot;fork&quot;</span><span class="p">)</span>
+            <span class="n">mp</span><span class="o">.</span><span class="n">set_start_method</span><span class="p">(</span><span class="s1">&#39;fork&#39;</span><span class="p">)</span>
         <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 
         <span class="n">_pool</span> <span class="o">=</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span>
@@ -436,8 +436,8 @@
         <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
 
-        <span class="n">sdcflows_wf</span> <span class="o">=</span> <span class="n">retval</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workflow&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">exitcode</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">exitcode</span> <span class="ow">or</span> <span class="n">retval</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;return_code&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">sdcflows_wf</span> <span class="o">=</span> <span class="n">retval</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;workflow&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">exitcode</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">exitcode</span> <span class="ow">or</span> <span class="n">retval</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;return_code&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
     <span class="c1"># CRITICAL Load the config from the file. This is necessary because the ``build_workflow``</span>
     <span class="c1"># function executed constrained in a process may change the config (and thus the global</span>
@@ -460,12 +460,12 @@
     <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
 
     <span class="c1"># Resource management options</span>
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;MultiProc&quot;</span><span class="p">,</span> <span class="s2">&quot;LegacyMultiProc&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiProc&#39;</span><span class="p">,</span> <span class="s1">&#39;LegacyMultiProc&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
         <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span> <span class="o">&lt;</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">omp_nthreads</span>
     <span class="p">):</span>
         <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;Per-process threads (--omp-nthreads=</span><span class="si">%d</span><span class="s2">) exceed total &quot;</span>
-            <span class="s2">&quot;threads (--nthreads/--n_cpus=</span><span class="si">%d</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="s1">&#39;Per-process threads (--omp-nthreads=</span><span class="si">%d</span><span class="s1">) exceed total &#39;</span>
+            <span class="s1">&#39;threads (--nthreads/--n_cpus=</span><span class="si">%d</span><span class="s1">)&#39;</span><span class="p">,</span>
             <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">omp_nthreads</span><span class="p">,</span>
             <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span><span class="p">,</span>
         <span class="p">)</span>
@@ -474,7 +474,7 @@
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">EX_SOFTWARE</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">sdcflows_wf</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">write_graph</span><span class="p">:</span>
-        <span class="n">sdcflows_wf</span><span class="o">.</span><span class="n">write_graph</span><span class="p">(</span><span class="n">graph2use</span><span class="o">=</span><span class="s2">&quot;colored&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;svg&quot;</span><span class="p">,</span> <span class="n">simple_form</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sdcflows_wf</span><span class="o">.</span><span class="n">write_graph</span><span class="p">(</span><span class="n">graph2use</span><span class="o">=</span><span class="s1">&#39;colored&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;svg&#39;</span><span class="p">,</span> <span class="n">simple_form</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Clean up master process before running workflow, which may create forks</span>
     <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
@@ -484,16 +484,14 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.engine.plugin</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiProcPlugin</span>
 
         <span class="n">_plugin</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;plugin&quot;</span><span class="p">:</span> <span class="n">MultiProcPlugin</span><span class="p">(</span>
-                <span class="n">pool</span><span class="o">=</span><span class="n">_pool</span><span class="p">,</span> <span class="n">plugin_args</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span>
-            <span class="p">),</span>
+            <span class="s1">&#39;plugin&#39;</span><span class="p">:</span> <span class="n">MultiProcPlugin</span><span class="p">(</span><span class="n">pool</span><span class="o">=</span><span class="n">_pool</span><span class="p">,</span> <span class="n">plugin_args</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span><span class="p">),</span>
         <span class="p">}</span>
     <span class="n">sdcflows_wf</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="o">**</span><span class="n">_plugin</span><span class="p">)</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s2">&quot;Finished all workload&quot;</span><span class="p">)</span></div>
+    <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s1">&#39;Finished all workload&#39;</span><span class="p">)</span></div>
 
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
         </article>

@@ -329,11 +329,11 @@
 <span class="c1">#</span>
 <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Processing phase-difference and *directly measured* :math:`B_0` maps.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.engine.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
-<span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">)</span>
+<span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;magnitude&#39;</span><span class="p">,</span> <span class="s1">&#39;fieldmap&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="init_fmap_wf">
@@ -342,8 +342,8 @@
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;phasediff&quot;</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fmap_wf&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;phasediff&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fmap_wf&#39;</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -401,32 +401,32 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-        <span class="n">BSplineApprox</span><span class="p">,</span>
         <span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">,</span>
+        <span class="n">BSplineApprox</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.fmap</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckRegister</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputnode&quot;</span><span class="p">)</span>
+    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_unzip</span><span class="p">(</span><span class="n">fmap_spec</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">fmap_spec</span>
 
     <span class="n">unzip</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_unzip</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fmap_file&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">]),</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_unzip</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap_file&#39;</span><span class="p">,</span> <span class="s1">&#39;meta&#39;</span><span class="p">]),</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fmap_spec&quot;</span><span class="p">],</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unzip&quot;</span><span class="p">,</span>
+        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap_spec&#39;</span><span class="p">],</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unzip&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">check_register</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">CheckRegister</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;check_register&#39;</span><span class="p">)</span>
 
     <span class="n">magnitude_wf</span> <span class="o">=</span> <span class="n">init_magnitude_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">)</span>
-    <span class="n">bs_filter</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BSplineApprox</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bs_filter&quot;</span><span class="p">)</span>
+    <span class="n">bs_filter</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BSplineApprox</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bs_filter&#39;</span><span class="p">)</span>
     <span class="n">bs_filter</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="n">debug</span>
     <span class="n">bs_filter</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">bs_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">]</span>
 
@@ -452,14 +452,14 @@
     <span class="p">])</span>
     <span class="c1"># fmt: on</span>
 
-    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;phasediff&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;phasediff&#39;</span><span class="p">:</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">A *B&lt;sub&gt;0&lt;/sub&gt;* nonuniformity map (or *fieldmap*) was estimated from the</span>
 <span class="s2">phase-drift map(s) measure with two consecutive GRE (gradient-recalled echo)</span>
 <span class="s2">acquisitions.</span>
 <span class="s2">&quot;&quot;&quot;</span>
         <span class="n">phdiff_wf</span> <span class="o">=</span> <span class="n">init_phdiff_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">)</span>
-        <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;FMB (fieldmap-based) - phase-difference map&quot;</span>
+        <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;FMB (fieldmap-based) - phase-difference map&#39;</span>
 
         <span class="c1"># fmt: off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
@@ -476,19 +476,20 @@
         <span class="c1"># fmt: on</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntraModalMerge</span>
+
         <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.fmap</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckB0Units</span>
 
         <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">A *B&lt;sub&gt;0&lt;/sub&gt;* nonuniformity map (or *fieldmap*) was directly measured with</span>
 <span class="s2">an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).</span>
 <span class="s2">&quot;&quot;&quot;</span>
-        <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;FMB (fieldmap-based) - directly measured B0 map&quot;</span>
+        <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;FMB (fieldmap-based) - directly measured B0 map&#39;</span>
         <span class="c1"># Merge input fieldmap images (assumes all are given in the same units!)</span>
         <span class="n">fmapmrg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
             <span class="n">IntraModalMerge</span><span class="p">(</span><span class="n">zero_based_avg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hmc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">to_ras</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fmapmrg&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fmapmrg&#39;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">units</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">CheckB0Units</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;units&quot;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">CheckB0Units</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># fmt: off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
@@ -505,7 +506,7 @@
 
 <div class="viewcode-block" id="init_magnitude_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.fieldmap.html#sdcflows.workflows.fit.fieldmap.init_magnitude_wf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init_magnitude_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;magnitude_wf&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_magnitude_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;magnitude_wf&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Prepare the magnitude part of :abbr:`GRE (gradient-recalled echo)` fieldmaps.</span>
 
@@ -543,18 +544,19 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntraModalMerge</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">..ancillary</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputnode&quot;</span><span class="p">)</span>
+    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;magnitude&#39;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;mask_report&quot;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;mask_report&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Merge input magnitude images</span>
     <span class="c1"># Do not reorient to RAS to preserve the validity of PhaseEncodingDirection</span>
-    <span class="n">magmrg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntraModalMerge</span><span class="p">(</span><span class="n">hmc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">to_ras</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;magmrg&quot;</span><span class="p">)</span>
+    <span class="n">magmrg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntraModalMerge</span><span class="p">(</span><span class="n">hmc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">to_ras</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;magmrg&#39;</span><span class="p">)</span>
     <span class="n">brainextraction_wf</span> <span class="o">=</span> <span class="n">init_brainextraction_wf</span><span class="p">()</span>
 
     <span class="c1"># fmt: off</span>
@@ -574,7 +576,7 @@
 
 <div class="viewcode-block" id="init_phdiff_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.fieldmap.html#sdcflows.workflows.fit.fieldmap.init_phdiff_wf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init_phdiff_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;phdiff_wf&quot;</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_phdiff_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;phdiff_wf&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a :math:`B_0` field from consecutive-phases and phase-difference maps.</span>
 
@@ -629,6 +631,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.fsl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PRELUDE</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.fmap</span><span class="w"> </span><span class="kn">import</span> <span class="n">Phasediff2Fieldmap</span><span class="p">,</span> <span class="n">PhaseMap2rads</span><span class="p">,</span> <span class="n">SubtractPhases</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
@@ -637,30 +640,28 @@
 <span class="s2">&quot;&quot;&quot;</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span> <span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;phase_meta&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputnode&quot;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;magnitude&#39;</span><span class="p">,</span> <span class="s1">&#39;phase&#39;</span><span class="p">,</span> <span class="s1">&#39;phase_meta&#39;</span><span class="p">,</span> <span class="s1">&#39;mask&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># phase diff -&gt; radians</span>
     <span class="n">phmap2rads</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
         <span class="n">PhaseMap2rads</span><span class="p">(),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;phmap2rads&quot;</span><span class="p">,</span>
-        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;in_file&quot;</span><span class="p">],</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;phmap2rads&#39;</span><span class="p">,</span>
+        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># FSL PRELUDE will perform phase-unwrapping</span>
-    <span class="n">prelude</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">PRELUDE</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;prelude&quot;</span><span class="p">)</span>
+    <span class="n">prelude</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">PRELUDE</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prelude&#39;</span><span class="p">)</span>
 
-    <span class="n">calc_phdiff</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">SubtractPhases</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;calc_phdiff&quot;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span>
+    <span class="n">calc_phdiff</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SubtractPhases</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;calc_phdiff&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">calc_phdiff</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="n">debug</span>
-    <span class="n">compfmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Phasediff2Fieldmap</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;compfmap&quot;</span><span class="p">)</span>
+    <span class="n">compfmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Phasediff2Fieldmap</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;compfmap&#39;</span><span class="p">)</span>
 
     <span class="c1"># fmt: off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
@@ -708,7 +709,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="n">intuple</span> <span class="o">=</span> <span class="n">intuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">intuple</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;Units&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">intuple</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;Units&#39;</span><span class="p">]</span>
 </pre></div>
         </article>
       </div>
