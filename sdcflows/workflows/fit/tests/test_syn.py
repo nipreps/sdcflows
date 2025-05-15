@@ -24,6 +24,7 @@
 
 import json
 
+import acres
 import numpy as np
 import nibabel as nb
 import pytest
@@ -42,7 +43,14 @@ from ..syn import (
 
 @pytest.mark.veryslow
 @pytest.mark.slow
-def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
+@pytest.mark.parametrize(
+    ("n_bold", "coregister", "sd_prior"),
+    [
+        (1, True),
+        (2, True),
+    ]
+)
+def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode, n_bold, coregister):
     """Build and run an SDC-SyN workflow."""
     derivs_path = datadir / "ds000054" / "derivatives"
     smriprep = derivs_path / "smriprep-0.6" / "sub-100185" / "anat"
@@ -53,7 +61,7 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
         omp_nthreads=4,
         debug=sloppy_mode,
         auto_bold_nss=True,
-        t1w_inversion=True,
+        coregister=coregister,
     )
     prep_wf.inputs.inputnode.in_epis = [
         str(
@@ -70,10 +78,10 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
             / "func"
             / "sub-100185_task-machinegame_run-02_bold.nii.gz"
         ),
-    ]
+    ][:n_bold]
     prep_wf.inputs.inputnode.in_meta = [
         json.loads((datadir / "ds000054" / "task-machinegame_bold.json").read_text()),
-    ] * 2
+    ] * n_bold
     prep_wf.inputs.inputnode.std2anat_xfm = str(
         smriprep / "sub-100185_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
     )
@@ -83,6 +91,11 @@ def test_syn_wf(tmpdir, datadir, workdir, outdir, sloppy_mode):
     prep_wf.inputs.inputnode.mask_anat = str(
         smriprep / "sub-100185_desc-brain_mask.nii.gz"
     )
+    if not coregister:
+        test_data = acres.Loader('sdcflows.tests')
+        prep_wf.inputs.inputnode.epi_ref = str(
+            test_data('data/anat2epi_xfm.txt')
+        )
 
     syn_wf = init_syn_sdc_wf(
         debug=sloppy_mode,

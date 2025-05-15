@@ -345,8 +345,9 @@ def init_syn_preprocessing_wf(
     debug=False,
     name="syn_preprocessing_wf",
     omp_nthreads=1,
+    coregister=True,
     auto_bold_nss=False,
-    t1w_inversion=False,
+    t1w_inversion=None,
     sd_prior=True,
 ):
     """
@@ -371,11 +372,15 @@ def init_syn_preprocessing_wf(
         Name for this workflow
     omp_nthreads : :obj:`int`
         Parallelize internal tasks across the number of CPUs given by this option.
+    coregister: :class:`bool`
+        Run BOLD-to-Anat coregistration. If set to ``False``, ``epi2anat_xfm`` must be
+        provided.
     auto_bold_nss : :obj:`bool`
         Set up the reference workflow to automatically execute nonsteady states detection
         of BOLD images.
     t1w_inversion : :obj:`bool`
         Run T1w intensity inversion so that it looks more like a T2 contrast.
+        (DEPRECATED. Does nothing.)
     sd_prior : :obj:`bool`
         Enable using a prior map to regularize the SyN cost function.
 
@@ -424,6 +429,13 @@ def init_syn_preprocessing_wf(
     from ...interfaces.utils import Deoblique, DenoiseImage
     from ...interfaces.brainmask import BrainExtraction, BinaryDilation
 
+    if t1w_inversion is not None:
+        import warnings
+        warnings.warn(
+            "The `t1w_inversion` argument is deprecated and does nothing.",
+            DeprecationWarning,
+        )
+
     workflow = Workflow(name=name)
 
     inputnode = pe.Node(
@@ -435,6 +447,7 @@ def init_syn_preprocessing_wf(
                 "in_anat",
                 "mask_anat",
                 "std2anat_xfm",
+                "epi2anat_xfm",
             ]
         ),
         name="inputnode",
@@ -482,27 +495,43 @@ def init_syn_preprocessing_wf(
         DenoiseImage(copy_header=True), name="ref_anat", n_procs=omp_nthreads
     )
 
-    epi2anat = pe.Node(
-        Registration(from_file=data.load("affine.json")),
-        name="epi2anat",
-        n_procs=omp_nthreads,
-    )
-    epi2anat.inputs.output_warped_image = debug
-    epi2anat.inputs.output_inverse_warped_image = debug
-    if debug:
-        epi2anat.inputs.args = "--write-interval-volumes 5"
-
-    def _remove_first_mask(in_file):
-        if not isinstance(in_file, list):
-            in_file = [in_file]
-
-        in_file.insert(0, "NULL")
-        return in_file
-
     anat_dilmsk = pe.Node(BinaryDilation(), name="anat_dilmsk")
     epi_dilmsk = pe.Node(BinaryDilation(), name="epi_dilmsk")
 
     sampling_ref = pe.Node(GenerateSamplingReference(), name="sampling_ref")
+
+    if coregister:
+        epi2anat = pe.Node(
+            Registration(from_file=data.load("affine.json")),
+            name="epi2anat",
+            n_procs=omp_nthreads,
+        )
+        epi2anat.inputs.output_warped_image = debug
+        epi2anat.inputs.output_inverse_warped_image = debug
+        if debug:
+            epi2anat.inputs.args = "--write-interval-volumes 5"
+
+        def _remove_first_mask(in_file):
+            if not isinstance(in_file, list):
+                in_file = [in_file]
+
+            in_file.insert(0, "NULL")
+            return in_file
+
+        workflow.connect([
+            (ref_anat, epi2anat, [("output_image", "fixed_image")]),
+            (anat_dilmsk, epi2anat, [("out_file", "fixed_image_masks")]),
+            (deob_epi, epi2anat, [("out_file", "moving_image")]),
+            (epi_dilmsk, epi2anat, [
+                (("out_file", _remove_first_mask), "moving_image_masks")]),
+            (epi2anat, anat2epi, [("forward_transforms", "transforms")]),
+            (epi2anat, mask2epi, [("forward_transforms", "transforms")]),
+        ])  # fmt:skip
+    else:
+        workflow.connect([
+            (inputnode, anat2epi, [("epi2anat_xfm", "transforms")]),
+            (inputnode, mask2epi, [("epi2anat_xfm", "transforms")]),
+        ])
 
     if sd_prior:
         from niworkflows.interfaces.nibabel import Binarize
@@ -533,12 +562,20 @@ def init_syn_preprocessing_wf(
 
         workflow.connect([
             (inputnode, transform_list, [("std2anat_xfm", "in2")]),
-            (epi2anat, transform_list, [("forward_transforms", "in1")]),
             (transform_list, prior2epi, [("out", "transforms")]),
             (sampling_ref, prior2epi, [("out_file", "reference_image")]),
             (prior2epi, prior_msk, [("output_image", "in_file")]),
             (prior_msk, outputnode, [("out_mask", "sd_prior")]),
         ])  # fmt:skip
+
+        if coregister:
+            workflow.connect([
+                (epi2anat, transform_list, [("forward_transforms", "in1")]),
+            ])  # fmt:skip
+        else:
+            workflow.connect([
+                (inputnode, transform_list, [("epi2anat_xfm", "in1")]),
+            ])
 
     else:
         # no prior to be used -> set anatomical mask as prior
@@ -557,16 +594,9 @@ def init_syn_preprocessing_wf(
         (clip_anat, ref_anat, [("out_file", "input_image")]),
         (deob_epi, epi_brain, [("out_file", "in_file")]),
         (epi_brain, epi_dilmsk, [("out_mask", "in_file")]),
-        (ref_anat, epi2anat, [("output_image", "fixed_image")]),
-        (anat_dilmsk, epi2anat, [("out_file", "fixed_image_masks")]),
-        (deob_epi, epi2anat, [("out_file", "moving_image")]),
-        (epi_dilmsk, epi2anat, [
-            (("out_file", _remove_first_mask), "moving_image_masks")]),
         (deob_epi, sampling_ref, [("out_file", "fixed_image")]),
         (ref_anat, anat2epi, [("output_image", "input_image")]),
-        (epi2anat, anat2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, anat2epi, [("out_file", "reference_image")]),
-        (epi2anat, mask2epi, [("forward_transforms", "transforms")]),
         (sampling_ref, mask2epi, [("out_file", "reference_image")]),
         (mask2epi, mask_dtype, [("output_image", "in_file")]),
         (anat2epi, outputnode, [("output_image", "anat_ref")]),
