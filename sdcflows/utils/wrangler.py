@@ -607,7 +607,7 @@ def find_anatomical_estimators(
                 meta.update({'TotalReadoutTime': get_trt(meta, candidate.path)})
             epi_targets.append(fm.FieldmapFile(candidate, metadata=meta))
 
-        def sort_key(fmap):
+        def sort_key(fmap, suffixes=suffixes):
             # Return sbref before DWI/BOLD and shortest echo first
             return suffixes.index(fmap.suffix), fmap.metadata.get('EchoTime', 1)
 

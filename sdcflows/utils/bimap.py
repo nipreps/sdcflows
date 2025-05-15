@@ -135,11 +135,11 @@ class bidict(dict):
         try:
             hash(value)
         except TypeError as exc:
-            raise TypeError(f"value '{value}' of {exc}")
+            raise TypeError(f"value '{value}' of {exc}") from None
         try:
             hash(key)
         except TypeError as exc:
-            raise TypeError(f"key '{key}' of {exc}")
+            raise TypeError(f"key '{key}' of {exc}") from None
 
         if self.__contains__(key):
             raise KeyError(f"'{key}' is already {'a value' * (key in self._inverse)} in mapping")

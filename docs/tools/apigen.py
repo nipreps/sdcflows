@@ -185,9 +185,8 @@ class ApiDocWriter:
             # nothing that we could handle here.
             return ([], [])
 
-        f = open(filename)
-        functions, classes = self._parse_lines(f)
-        f.close()
+        with open(filename) as f:
+            functions, classes = self._parse_lines(f)
         return functions, classes
 
     def _parse_module_with_import(self, uri):
@@ -346,15 +345,7 @@ class ApiDocWriter:
         L = len(self.package_name)
         if matchstr[:L] == self.package_name:
             matchstr = matchstr[L:]
-        for pat in patterns:
-            try:
-                pat.search
-            except AttributeError:
-                pat = re.compile(pat)
-            if pat.search(matchstr):
-                return False
-
-        return True
+        return not any(re.search(pat, matchstr) for pat in patterns)
 
     def discover_modules(self):
         r"""Return module sequence discovered from ``self.package_name``
@@ -434,11 +425,8 @@ class ApiDocWriter:
                 document_body.append(body)
 
             out_module = ulm + self.rst_extension
-            outfile = os.path.join(outdir, out_module)
-            fileobj = open(outfile, 'w')
-
-            fileobj.writelines(document_head + document_body)
-            fileobj.close()
+            with open(os.path.join(outdir, out_module), 'w') as fileobj:
+                fileobj.writelines(document_head + document_body)
             written_modules.append(out_module)
 
         self.written_modules = written_modules
@@ -493,14 +481,13 @@ class ApiDocWriter:
             relpath = (outdir + os.path.sep).replace(relative_to + os.path.sep, '')
         else:
             relpath = outdir
-        idx = open(path, 'w')
-        w = idx.write
-        w('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
+        with open(path, 'w') as idx:
+            w = idx.write
+            w('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
 
-        title = 'API Reference'
-        w(title + '\n')
-        w('=' * len(title) + '\n\n')
-        w('.. toctree::\n\n')
-        for f in self.written_modules:
-            w(f'   {os.path.join(relpath, f)}\n')
-        idx.close()
+            title = 'API Reference'
+            w(title + '\n')
+            w('=' * len(title) + '\n\n')
+            w('.. toctree::\n\n')
+            for f in self.written_modules:
+                w(f'   {os.path.join(relpath, f)}\n')
