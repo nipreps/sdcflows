@@ -49,9 +49,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Sequence
 from functools import partial
 from pathlib import Path
-from typing import Callable, Sequence, Tuple
+from typing import Callable, Tuple
 from warnings import warn
 
 import attr

@@ -288,7 +288,7 @@ def publication(
 
     print(
         '\n\nAffiliations:\n%s'
-        % '\n'.join(['{0: >2}. {1}'.format(i + 1, a) for i, a in enumerate(affiliations)])
+        % '\n'.join([f'{i + 1: >2}. {a}' for i, a in enumerate(affiliations)])
     )
 
 
