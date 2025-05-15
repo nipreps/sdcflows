@@ -24,6 +24,7 @@
 from pathlib import Path
 from enum import Enum, auto
 from collections import defaultdict
+from contextlib import suppress
 import re
 import attr
 from json import loads
@@ -31,7 +32,10 @@ from bids.layout import parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
 from .utils.bimap import EstimatorRegistry
+from .utils.misc import create_logger
 
+
+logger = create_logger('sdcflows.fieldmaps')
 
 _estimators = EstimatorRegistry()
 _intents = defaultdict(set)
@@ -109,12 +113,7 @@ class FieldmapFile:
     >>> f.suffix
     'T1w'
 
-    >>> FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
-    ...     find_meta=False
-    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-    MetadataError:
+    By default, the immediate JSON sidecar file is consulted for metadata.
 
     >>> f = FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
@@ -123,11 +122,26 @@ class FieldmapFile:
     0.005
 
     >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
-    ...     metadata={"TotalReadoutTime": None},
-    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-    MetadataError:
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
+    ... )
+    >>> f.metadata['EchoTime2']
+    0.00746
+
+    >>> f = FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
+    ... )
+    >>> f.metadata['EchoTime']
+    0.00746
+
+    >>> f = FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
+    ... )
+    >>> f.metadata['Units']
+    'rad/s'
+
+    However, it is possible to provide alternative metadata.
+    It is recommended to load the metadata with an external tool that
+    fully implements the BIDS inheritance rules to ensure correctness.
 
     >>> f = FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
@@ -136,18 +150,21 @@ class FieldmapFile:
     >>> f.metadata['TotalReadoutTime']
     0.006
 
+    If metadata is present, warnings or errors may be presented.
+
+    >>> FieldmapFile(
+    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...     find_meta=False
+    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    MetadataError: Missing 'PhaseEncodingDirection' ...
+
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz",
     ...     find_meta=False
     ... )  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     MetadataError:
-
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phasediff.nii.gz"
-    ... )
-    >>> f.metadata['EchoTime2']
-    0.00746
 
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz",
@@ -156,12 +173,6 @@ class FieldmapFile:
     Traceback (most recent call last):
     MetadataError:
 
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_phase2.nii.gz"
-    ... )
-    >>> f.metadata['EchoTime']
-    0.00746
-
     >>> FieldmapFile(
     ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz",
     ...     find_meta=False
@@ -169,11 +180,26 @@ class FieldmapFile:
     Traceback (most recent call last):
     MetadataError:
 
-    >>> f = FieldmapFile(
-    ...     dsA_dir / "sub-01" / "fmap" / "sub-01_fieldmap.nii.gz"
-    ... )
-    >>> f.metadata['Units']
-    'rad/s'
+    Readout timing information is required to estimate PEPOLAR fieldmaps,
+    but it is possible to provide a fallback values.
+    Therefore, warnings are logged if the metadata are missing.
+
+    >>> with caplog.at_level(logging.WARNING, "sdcflows.fieldmaps"):
+    ...     f = FieldmapFile(
+    ...         dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...         metadata={"TotalReadoutTime": None},
+    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> print(caplog.text)
+    WARNING ... Missing readout timing information ... Explicit fallback must be provided.
+
+    >>> with caplog.at_level(logging.WARNING, "sdcflows.fieldmaps"):
+    ...     f = FieldmapFile(
+    ...         dsA_dir / "sub-01" / "fmap" / "sub-01_dir-LR_epi.nii.gz",
+    ...         metadata={"PhaseEncodingDirection": "i", "EstimatedTotalReadoutTime": 0.05},
+    ...         find_meta=False,
+    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> print(caplog.text)
+    WARNING ... Missing readout timing information ... Estimated timing is available.
 
     """
 
@@ -251,12 +277,19 @@ class FieldmapFile:
 
             from .utils.epimanip import get_trt
 
+            msg = "Missing readout timing information for <%s>. %s"
+            extra = "Explicit fallback must be provided."
+            have_trt = False
             try:
                 get_trt(self.metadata, in_file=self.path)
-            except ValueError as exc:
-                raise MetadataError(
-                    f"Missing readout timing information for <{self.path}>."
-                ) from exc
+                have_trt = True
+            except ValueError:
+                with suppress(ValueError):
+                    get_trt(self.metadata, in_file=self.path, use_estimate=True)
+                    extra = "Estimated timing is available."
+
+            if not have_trt:
+                logger.warning(msg, self.path, extra)
 
         elif self.suffix == "fieldmap" and "Units" not in self.metadata:
             raise MetadataError(f"Missing 'Units' for <{self.path}>.")

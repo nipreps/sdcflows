@@ -29,6 +29,8 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 def init_unwarp_wf(
     *,
     jacobian=True,
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
     free_mem=None,
     omp_nthreads=1,
     debug=False,
@@ -117,8 +119,16 @@ def init_unwarp_wf(
         name="outputnode",
     )
 
-    rotime = pe.Node(GetReadoutTime(), name="rotime")
+    rotime = pe.Node(
+        GetReadoutTime(
+            use_estimate=use_metadata_estimates,
+        ),
+        name="rotime",
+        run_without_submitting=True,
+    )
     rotime.interface._always_run = debug
+    if fallback_total_readout_time is not None:
+        rotime.inputs.fallback = fallback_total_readout_time
 
     # resample is memory-hungry; choose a smaller number of threads
     # if we know how much memory we have to work with

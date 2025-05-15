@@ -244,7 +244,13 @@ def get_trt(
 
         return trt
 
-    if "PhaseEncodingDirection" in in_meta:
+    if in_meta.keys() & {
+        "PhaseEncodingDirection",
+        "EffectiveEchoSpacing",
+        "EstimatedEffectiveEchoSpacing",
+        "EchoSpacing",
+        "WaterFatShift",
+    } > {"PhaseEncodingDirection"}:
         # npe = N voxels PE direction
         pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
         npe = nb.load(in_file).shape[pe_index]
