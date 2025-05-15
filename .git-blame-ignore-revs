@@ -1,0 +1,6 @@
+# Thu May 15 09:29:29 2025 -0400 - markiewicz@stanford.edu - run: ruff format [ignore-rev]
+d97ae316c0bdf71084a0732760ceed5221033fc2
+# Thu May 15 09:26:57 2025 -0400 - markiewicz@stanford.edu - run: ruff check --fix [ignore-rev]
+cacd409cce71f2e530ad1bd1e8b79f397cab81d4
+# Thu May 15 09:22:00 2025 -0400 - markiewicz@stanford.edu - run: pre-commit run --all [ignore-rev]
+2b40bee0d6b2c88628760a8b1513851a439411e8
