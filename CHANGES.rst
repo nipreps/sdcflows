@@ -1,3 +1,24 @@
+2.13.0 (May 15, 2025)
+=====================
+Feature release in the 2.13.x series.
+
+This release addresses some longstanding issues with the SyN-SDC workflow,
+improving the registration quality in adult humans by utilizing a spatial prior,
+as well as allowing Laplacians to be up- or down-weighted in the cost function,
+making it more usable across species.
+
+Additionally, this release allows for the use of ``EstimatedTotalReadoutTime`` or
+``EstimatedEchoSpacing``, or a manually provided fallback ``TotalReadoutTime`` value,
+permitting the use of SDCFlows on datasets that do not have reliable timing information
+without introducing incorrect metadata into the datasets.
+
+* fix(syn): Re-enable priors respecting ``sd_priors`` argument (#488)
+* feat: Add workflow arguments for metadata estimates and fallback TRT (#479)
+* feat(syn): Update totalFieldVarianceInVoxel space based on voxel resolution (#487)
+* feat(syn): Allow changing laplacians weights in SyN registration metric (#484)
+* test(syn): Add a test to exercise SyN workflow creation and check parameters (#486)
+
+
 2.12.0 (March 21, 2025)
 =======================
 Feature release in the 2.12.x series.
