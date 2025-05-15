@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """Script to auto-generate API docs."""
 
-from __future__ import division, print_function
-
 # stdlib imports
 import sys
 

@@ -200,7 +200,7 @@ except Exception:
 _memory_gb = None
 try:
     if 'linux' in sys.platform:
-        with open('/proc/meminfo', 'r') as f_in:
+        with open('/proc/meminfo') as f_in:
             _meminfo_lines = f_in.readlines()
             _mem_total_line = [line for line in _meminfo_lines if 'MemTotal' in line][0]
             _mem_total = float(_mem_total_line.split()[1])
