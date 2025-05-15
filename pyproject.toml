@@ -179,6 +179,12 @@ ignore = [
 line-length = 99
 
 [tool.ruff.lint]
+select = [
+  "F",
+  "E",
+  "W",
+  "I",
+]
 ignore = [
   "E203",
   "B019",
