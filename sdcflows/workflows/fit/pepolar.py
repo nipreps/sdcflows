@@ -293,9 +293,8 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name='pepolar_estimate_wf'):
     from ...utils.misc import last as _last
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = f"""{_PEPOLAR_DESC} \
-with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
-"""
+    afni_ver = ''.join(f'{v:02d}' for v in afni.Info().version() or [])
+    workflow.__desc__ = f'{_PEPOLAR_DESC} with `3dQwarp` (@afni; AFNI {afni_ver}).'
 
     inputnode = pe.Node(niu.IdentityInterface(fields=['in_data', 'metadata']), name='inputnode')
 

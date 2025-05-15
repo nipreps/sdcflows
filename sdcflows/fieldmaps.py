@@ -376,7 +376,7 @@ class FieldmapEstimation:
                     raise ValueError(
                         'A fieldmap or phase-difference estimation type was found, '
                         f'but an anatomical reference ({magnitude} file) is missing.'
-                    )
+                    ) from None
 
             # Check presence and try to find (if necessary) the second magnitude file
             if self.method == EstimatorType.PHASEDIFF and 'magnitude2' not in suffix_set:
@@ -390,7 +390,7 @@ class FieldmapEstimation:
                         raise ValueError(
                             'A phase-difference estimation (phase1/2) type was found, '
                             'but an anatomical reference (magnitude2 file) is missing.'
-                        )
+                        ) from None
 
         # Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)
         # IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s
