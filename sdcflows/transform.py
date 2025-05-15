@@ -490,19 +490,12 @@ class B0FieldTransform:
             ro_time *= n_volumes
 
         pe_info = []
-        for volid in range(n_volumes):
-            pe_axis = 'ijk'.index(pe_dir[volid][0])
-            axis_flip = axcodes[pe_axis] in ('LPI')
-            pe_flip = pe_dir[volid].endswith('-')
+        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time):
+            pe_axis = 'ijk'.index(vol_pe_dir[0])
+            # Displacements are reversed if either is true (after ensuring positive cosines)
+            flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
 
-            pe_info.append(
-                (
-                    pe_axis,
-                    # Displacements are reversed if either is true
-                    # (after ensuring positive cosines)
-                    -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
-                )
-            )
+            pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
 
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = (
