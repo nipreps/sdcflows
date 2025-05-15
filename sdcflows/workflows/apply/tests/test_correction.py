@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test unwarp."""
+
 import json
 import pytest
 from nipype.pipeline import engine as pe
@@ -29,80 +30,74 @@ from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBe
 from sdcflows.workflows.apply.correction import init_unwarp_wf
 
 
-@pytest.mark.parametrize("with_affine", [False, True])
+@pytest.mark.parametrize('with_affine', [False, True])
 def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
     """Test the unwarping workflow."""
     tmpdir.chdir()
 
-    derivs_path = datadir / "HCP101006" / "derivatives" / "sdcflows-2.x"
+    derivs_path = datadir / 'HCP101006' / 'derivatives' / 'sdcflows-2.x'
 
     distorted = (
-        datadir
-        / "HCP101006"
-        / "sub-101006"
-        / "func"
-        / "sub-101006_task-rest_dir-LR_sbref.nii.gz"
+        datadir / 'HCP101006' / 'sub-101006' / 'func' / 'sub-101006_task-rest_dir-LR_sbref.nii.gz'
     )
 
     workflow = init_unwarp_wf(omp_nthreads=2, debug=True)
     workflow.inputs.inputnode.distorted = str(distorted)
     workflow.inputs.inputnode.metadata = json.loads(
-        (distorted.parent / distorted.name.replace(".nii.gz", ".json")).read_text()
+        (distorted.parent / distorted.name.replace('.nii.gz', '.json')).read_text()
     )
     workflow.inputs.inputnode.fmap_coeff = [
-        str(derivs_path / "sub-101006_coeff-1_desc-topup_fieldmap.nii.gz")
+        str(derivs_path / 'sub-101006_coeff-1_desc-topup_fieldmap.nii.gz')
     ]
 
     if with_affine:
         workflow.inputs.inputnode.fmap2data_xfm = str(
-            str(derivs_path / "sub-101006_from-sbrefLR_to-fieldmapref_mode-image_xfm.mat")
+            str(derivs_path / 'sub-101006_from-sbrefLR_to-fieldmapref_mode-image_xfm.mat')
         )
 
     if outdir:
         from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
 
-        outdir = outdir / f"with{'' if with_affine else 'out'}-affine"
+        outdir = outdir / f'with{"" if with_affine else "out"}-affine'
         outdir.mkdir(exist_ok=True, parents=True)
         unwarp_wf = workflow  # Change variable name
-        workflow = pe.Workflow(name="outputs_unwarp_wf")
-        squeeze = pe.Node(niu.Function(function=_squeeze), name="squeeze")
+        workflow = pe.Workflow(name='outputs_unwarp_wf')
+        squeeze = pe.Node(niu.Function(function=_squeeze), name='squeeze')
 
         report = pe.Node(
             SimpleBeforeAfter(
-                before_label="Distorted",
-                after_label="Corrected",
-                before=str(distorted)
+                before_label='Distorted', after_label='Corrected', before=str(distorted)
             ),
-            name="report",
+            name='report',
             mem_gb=0.1,
         )
         ds_report = pe.Node(
             DerivativesDataSink(
                 base_directory=str(outdir),
-                suffix="bold",
-                desc="corrected",
-                datatype="figures",
-                dismiss_entities=("fmap",),
+                suffix='bold',
+                desc='corrected',
+                datatype='figures',
+                dismiss_entities=('fmap',),
                 source_file=distorted,
             ),
-            name="ds_report",
+            name='ds_report',
             run_without_submitting=True,
         )
 
-        rep = pe.Node(FieldmapReportlet(), "simple_report")
+        rep = pe.Node(FieldmapReportlet(), 'simple_report')
         rep.interface._always_run = True
 
         ds_fmap_report = pe.Node(
             DerivativesDataSink(
                 base_directory=str(outdir),
-                datatype="figures",
-                suffix="bold",
-                desc="fieldmap",
-                dismiss_entities=("fmap",),
+                datatype='figures',
+                suffix='bold',
+                desc='fieldmap',
+                dismiss_entities=('fmap',),
                 source_file=distorted,
             ),
-            name="ds_fmap_report",
+            name='ds_fmap_report',
         )
 
         # fmt: off
@@ -122,7 +117,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
 
     if workdir:
         workflow.base_dir = str(workdir)
-    workflow.run(plugin="Linear")
+    workflow.run(plugin='Linear')
 
 
 def _squeeze(in_file):

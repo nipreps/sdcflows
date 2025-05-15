@@ -38,8 +38,8 @@ from nireports.interfaces.reporting.base import (
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("pe0", ["LR", "PA"])
-@pytest.mark.parametrize("mode", ["pepolar", "phasediff"])
+@pytest.mark.parametrize('pe0', ['LR', 'PA'])
+@pytest.mark.parametrize('mode', ['pepolar', 'phasediff'])
 def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
     """Build a ``FieldmapEstimation`` workflow and test estimation and correction."""
 
@@ -48,49 +48,45 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
     if not outdir:
         outdir = Path.cwd()
 
-    session = "15" if pe0 == "LR" else "14"
+    session = '15' if pe0 == 'LR' else '14'
 
     pe1 = pe0[::-1]
 
-    datadir = datadir / "hcph-pilot_fieldmaps"
+    datadir = datadir / 'hcph-pilot_fieldmaps'
 
-    wf = pe.Workflow(name=f"hcph_{mode}_{pe0}")
+    wf = pe.Workflow(name=f'hcph_{mode}_{pe0}')
 
     # Execute in temporary directory
     wf.base_dir = str(workdir or tmpdir)
 
     # Prepare some necessary data and metadata
     metadata = json.loads(
-        (datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_dwi.json").read_text()
+        (datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_dwi.json').read_text()
     )
     unwarp_input = (
-        datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz"
+        datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz'
     ).absolute()
     unwarp_xfms = np.load(
-        datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-mockmotion_dwi.npy"
+        datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-mockmotion_dwi.npy'
     ).tolist()
 
     # Generate a warped reference for reportlet
-    warped_ref = pe.Node(
-        niu.Function(function=_transform_and_average), name="warped_ref"
-    )
+    warped_ref = pe.Node(niu.Function(function=_transform_and_average), name='warped_ref')
     warped_ref.inputs.in_file = str(unwarp_input)
     warped_ref.inputs.in_xfm = unwarp_xfms
 
     # Create an unwarp workflow and connect
-    step2 = swac.init_unwarp_wf(
-        omp_nthreads=6
-    )  # six async threads should be doable on Circle
+    step2 = swac.init_unwarp_wf(omp_nthreads=6)  # six async threads should be doable on Circle
     step2.inputs.inputnode.metadata = metadata
     step2.inputs.inputnode.distorted = str(unwarp_input)
     step2.inputs.inputnode.hmc_xforms = unwarp_xfms
 
-    if mode == "pepolar":
+    if mode == 'pepolar':
         # Generate an estimator workflow with the estimator object
         estimator = sfm.FieldmapEstimation(
             sources=[
-                datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.nii.gz",
-                datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz",
+                datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.nii.gz',
+                datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz',
             ],
         )
         step1 = estimator.get_workflow(omp_nthreads=6, debug=False, sloppy=True)
@@ -98,23 +94,22 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
         # Set inputs to estimator
         step1.inputs.inputnode.metadata = [
             json.loads(
-                (datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.json").read_text()
+                (datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.json').read_text()
             ),
             metadata,
         ]
         step1.inputs.inputnode.in_data = [
-            str((datadir / f"sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.nii.gz").absolute()),
+            str((datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe1}_epi.nii.gz').absolute()),
             str(
                 (
-                    datadir
-                    / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz"
+                    datadir / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz'
                 ).absolute()
             ),
         ]
     else:
         # Generate an estimator workflow with the estimator object
         estimator = sfm.FieldmapEstimation(
-            sources=[datadir / f"sub-pilot_ses-{session}_phasediff.nii.gz"],
+            sources=[datadir / f'sub-pilot_ses-{session}_phasediff.nii.gz'],
         )
         step1 = estimator.get_workflow(omp_nthreads=6, debug=False)
 
@@ -122,21 +117,21 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
         coeff2epi_wf.inputs.inputnode.target_mask = str(
             (
                 datadir
-                / f"sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-aftersdcbrain_mask.nii.gz"
+                / f'sub-pilot_ses-{session}_acq-b0_dir-{pe0}_desc-aftersdcbrain_mask.nii.gz'
             ).absolute()
         )
 
         # Check fmap2epi alignment
         rpt_coeff2epi = pe.Node(
             SimpleBeforeAfter(
-                after_label="GRE (mag)",
-                before_label="EPI (ref)",
+                after_label='GRE (mag)',
+                before_label='EPI (ref)',
                 out_report=str(
-                    outdir / f"sub-pilot_ses-{session}_desc-aligned+{pe0}_fieldmap.svg"
+                    outdir / f'sub-pilot_ses-{session}_desc-aligned+{pe0}_fieldmap.svg'
                 ),
                 dismiss_affine=True,
             ),
-            name="rpt_coeff2epi",
+            name='rpt_coeff2epi',
         )
 
         # fmt:off
@@ -158,22 +153,20 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
     # Show a reportlet
     rpt_fieldmap = pe.Node(
         FieldmapReportlet(
-            out_report=str(
-                outdir / f"sub-pilot_ses-{session}_desc-{mode}+{pe0}_fieldmap.svg"
-            ),
+            out_report=str(outdir / f'sub-pilot_ses-{session}_desc-{mode}+{pe0}_fieldmap.svg'),
         ),
-        name="rpt_fieldmap",
+        name='rpt_fieldmap',
     )
 
     # Write reportlet
     rpt_correct = pe.Node(
         SimpleBeforeAfter(
-            after_label="Corrected",
-            before_label="Distorted",
-            out_report=str(outdir / f"sub-pilot_ses-{session}_desc-{mode}+{pe0}_dwi.svg"),
+            after_label='Corrected',
+            before_label='Distorted',
+            out_report=str(outdir / f'sub-pilot_ses-{session}_desc-{mode}+{pe0}_dwi.svg'),
             # dismiss_affine=True,
         ),
-        name="rpt_correct",
+        name='rpt_correct',
     )
 
     # fmt:off
@@ -201,13 +194,9 @@ def _transform_and_average(in_file, in_xfm):
     from nitransforms.linear import LinearTransformsMapping
     from nipype.utils.filemanip import fname_presuffix
 
-    out = fname_presuffix(
-        in_file, suffix="_reference", newpath=str(Path.cwd().absolute())
-    )
+    out = fname_presuffix(in_file, suffix='_reference', newpath=str(Path.cwd().absolute()))
 
-    realigned = LinearTransformsMapping(np.array(in_xfm), reference=in_file).apply(
-        in_file
-    )
+    realigned = LinearTransformsMapping(np.array(in_xfm), reference=in_file).apply(in_file)
 
     data = np.asanyarray(realigned.dataobj).mean(-1)
 

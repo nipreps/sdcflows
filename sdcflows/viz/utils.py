@@ -27,12 +27,12 @@ def plot_registration(
     anat_nii,
     div_id,
     plot_params=None,
-    order=("z", "x", "y"),
+    order=('z', 'x', 'y'),
     cuts=None,
     estimate_brightness=False,
     label=None,
     contour=None,
-    compress="auto",
+    compress='auto',
     overlay=None,
     overlay_params=None,
 ):
@@ -58,31 +58,31 @@ def plot_registration(
     out_files = []
     if estimate_brightness:
         plot_params = robust_set_limits(
-            anat_nii.get_fdata(dtype="float32").reshape(-1), plot_params
+            anat_nii.get_fdata(dtype='float32').reshape(-1), plot_params
         )
 
     # Plot each cut axis
     for i, mode in enumerate(list(order)):
-        plot_params["display_mode"] = mode
-        plot_params["cut_coords"] = cuts[mode]
+        plot_params['display_mode'] = mode
+        plot_params['cut_coords'] = cuts[mode]
         if i == 0:
-            plot_params["title"] = label
+            plot_params['title'] = label
         else:
-            plot_params["title"] = None
+            plot_params['title'] = None
 
         # Generate nilearn figure
         display = plot_anat(anat_nii, **plot_params)
         if overlay is not None:
             _overlay_params = {
-                "vmin": overlay.get_fdata(dtype="float32").min(),
-                "vmax": overlay.get_fdata(dtype="float32").max(),
-                "cmap": plt.cm.gray,
-                "interpolation": "nearest",
+                'vmin': overlay.get_fdata(dtype='float32').min(),
+                'vmax': overlay.get_fdata(dtype='float32').max(),
+                'cmap': plt.cm.gray,
+                'interpolation': 'nearest',
             }
             _overlay_params.update(overlay_params)
             display.add_overlay(overlay, **_overlay_params)
         if contour is not None:
-            display.add_contours(contour, colors="g", levels=[0.5], linewidths=0.5)
+            display.add_contours(contour, colors='g', levels=[0.5], linewidths=0.5)
 
         svg = extract_svg(display, compress=compress)
         display.close()
@@ -90,7 +90,7 @@ def plot_registration(
         # Find and replace the figure_1 id.
         xml_data = etree.fromstring(svg)
         find_text = etree.ETXPath("//{%s}g[@id='figure_1']" % SVGNS)
-        find_text(xml_data)[0].set("id", "%s-%s-%s" % (div_id, mode, uuid4()))
+        find_text(xml_data)[0].set('id', '%s-%s-%s' % (div_id, mode, uuid4()))
 
         svg_fig = SVGFigure()
         svg_fig.root = xml_data

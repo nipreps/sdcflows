@@ -34,22 +34,25 @@ from .fieldmaps import clear_registry
 # disable ET
 os.environ['NO_ET'] = '1'
 
-test_data_env = os.getenv("TEST_DATA_HOME", str(Path.home() / "sdcflows-tests"))
-test_output_dir = os.getenv("TEST_OUTPUT_DIR")
-test_workdir = os.getenv("TEST_WORK_DIR")
-_sloppy_mode = os.getenv("TEST_PRODUCTION", "off").lower() not in ("on", "1", "true", "yes", "y")
+test_data_env = os.getenv('TEST_DATA_HOME', str(Path.home() / 'sdcflows-tests'))
+test_output_dir = os.getenv('TEST_OUTPUT_DIR')
+test_workdir = os.getenv('TEST_WORK_DIR')
+_sloppy_mode = os.getenv('TEST_PRODUCTION', 'off').lower() not in ('on', '1', 'true', 'yes', 'y')
 
 layouts = {
     p.name: BIDSLayout(str(p), validate=False, derivatives=True)
-    for p in Path(test_data_env).glob("*")
+    for p in Path(test_data_env).glob('*')
     if p.is_dir()
 }
 
-data_dir = Path(__file__).parent / "tests" / "data"
-layouts.update({
-    folder.name: BIDSLayout(folder, validate=False, derivatives=False)
-    for folder in data_dir.glob("ds*") if folder.is_dir()
-})
+data_dir = Path(__file__).parent / 'tests' / 'data'
+layouts.update(
+    {
+        folder.name: BIDSLayout(folder, validate=False, derivatives=False)
+        for folder in data_dir.glob('ds*')
+        if folder.is_dir()
+    }
+)
 
 
 def pytest_report_header(config):
@@ -63,7 +66,7 @@ TEST_WORK_DIR={test_workdir or '<unset> (intermediate files will be discarded)'}
 
 @pytest.fixture(autouse=True)
 def doctest_fixture(doctest_namespace, request, caplog):
-    doctest_plugin = request.config.pluginmanager.getplugin("doctest")
+    doctest_plugin = request.config.pluginmanager.getplugin('doctest')
     if isinstance(request.node, doctest_plugin.DoctestItem):
         doctest_namespace.update(
             np=numpy,
@@ -71,9 +74,9 @@ def doctest_fixture(doctest_namespace, request, caplog):
             os=os,
             Path=Path,
             layouts=layouts,
-            dsA_dir=data_dir / "dsA",
-            dsB_dir=data_dir / "dsB",
-            dsC_dir=data_dir / "dsC",
+            dsA_dir=data_dir / 'dsA',
+            dsB_dir=data_dir / 'dsB',
+            dsC_dir=data_dir / 'dsC',
             data_dir=data_dir,
             caplog=caplog,
             logging=logging,
@@ -117,7 +120,7 @@ def testdata_dir():
 
 @pytest.fixture
 def dsA_dir():
-    return data_dir / "dsA"
+    return data_dir / 'dsA'
 
 
 @pytest.fixture

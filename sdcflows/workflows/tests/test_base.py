@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test the base workflow."""
+
 from pathlib import Path
 import pytest
 from sdcflows import fieldmaps as fm
@@ -30,15 +31,13 @@ from sdcflows.workflows.base import init_fmap_preproc_wf
 
 @pytest.mark.veryslow
 @pytest.mark.slow
-@pytest.mark.parametrize(
-    "dataset,subject", [("ds000054", "100185"), ("HCP101006", "101006")]
-)
+@pytest.mark.parametrize('dataset,subject', [('ds000054', '100185'), ('HCP101006', '101006')])
 def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
     """Test the encompassing of the wrangler and the workflow creator."""
     if outdir is None:
         outdir = Path(str(tmpdir))
 
-    outdir = outdir / "test_base" / dataset
+    outdir = outdir / 'test_base' / dataset
     fm._estimators.clear()
     estimators = find_estimators(layout=bids_layouts[dataset], subject=subject)
     wf = init_fmap_preproc_wf(
@@ -56,19 +55,19 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
         if estimator.method != fm.EstimatorType.PEPOLAR:
             continue
 
-        inputnode = wf.get_node(f"in_{estimator.bids_id}")
+        inputnode = wf.get_node(f'in_{estimator.bids_id}')
         inputnode.inputs.in_data = [str(f.path) for f in estimator.sources]
         inputnode.inputs.metadata = [f.metadata for f in estimator.sources]
 
     if workdir:
         wf.base_dir = str(workdir)
 
-    res = wf.run(plugin="Linear")
+    res = wf.run(plugin='Linear')
 
     # Regression test for when out_merge_fmap_coeff was flattened and would
     # have twice as many elements as the other nodes
     assert all(
         len(node.result.outputs.out) == len(estimators)
         for node in res.nodes
-        if node.name.startswith("out_merge_")
+        if node.name.startswith('out_merge_')
     )

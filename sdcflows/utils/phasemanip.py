@@ -30,7 +30,7 @@ def au2rads(in_file, newpath=None):
     from nipype.utils.filemanip import fname_presuffix
 
     im = nb.load(in_file)
-    data = im.get_fdata(caching="unchanged")  # Read as float64 for safety
+    data = im.get_fdata(caching='unchanged')  # Read as float64 for safety
     hdr = im.header.copy()
 
     # Rescale to [0, 2*pi]
@@ -40,8 +40,8 @@ def au2rads(in_file, newpath=None):
     data = np.clip(np.float32(data), 0.0, 2 * np.pi)
 
     hdr.set_data_dtype(np.float32)
-    hdr.set_xyzt_units("mm")
-    out_file = fname_presuffix(str(in_file), suffix="_rads", newpath=newpath)
+    hdr.set_xyzt_units('mm')
+    out_file = fname_presuffix(str(in_file), suffix='_rads', newpath=newpath)
     nb.Nifti1Image(data, None, hdr).to_filename(out_file)
     return out_file
 
@@ -52,15 +52,15 @@ def subtract_phases(in_phases, in_meta, newpath=None):
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
-    echo_times = tuple([m.pop("EchoTime", None) for m in in_meta])
+    echo_times = tuple([m.pop('EchoTime', None) for m in in_meta])
     if echo_times[0] > echo_times[1]:
         in_phases = (in_phases[1], in_phases[0])
         in_meta = (in_meta[1], in_meta[0])
         echo_times = (echo_times[1], echo_times[0])
 
     in_phases_nii = [nb.load(ph) for ph in in_phases]
-    sub_data = in_phases_nii[1].get_fdata(dtype="float32") - in_phases_nii[0].get_fdata(
-        dtype="float32"
+    sub_data = in_phases_nii[1].get_fdata(dtype='float32') - in_phases_nii[0].get_fdata(
+        dtype='float32'
     )
 
     # wrap negative radians back to [0, 2pi]
@@ -69,14 +69,14 @@ def subtract_phases(in_phases, in_meta, newpath=None):
 
     new_meta = in_meta[1].copy()
     new_meta.update(in_meta[0])
-    new_meta["EchoTime1"] = echo_times[0]
-    new_meta["EchoTime2"] = echo_times[1]
+    new_meta['EchoTime1'] = echo_times[0]
+    new_meta['EchoTime2'] = echo_times[1]
 
     hdr = in_phases_nii[0].header.copy()
     hdr.set_data_dtype(np.float32)
-    hdr.set_xyzt_units("mm")
+    hdr.set_xyzt_units('mm')
     nii = nb.Nifti1Image(sub_data, in_phases_nii[0].affine, hdr)
-    out_phdiff = fname_presuffix(in_phases[0], suffix="_phdiff", newpath=newpath)
+    out_phdiff = fname_presuffix(in_phases[0], suffix='_phdiff', newpath=newpath)
     nii.to_filename(out_phdiff)
     return out_phdiff, new_meta
 
@@ -87,9 +87,9 @@ def phdiff2fmap(in_file, delta_te, newpath=None):
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
 
-    out_file = fname_presuffix(str(in_file), suffix="_fmap", newpath=newpath)
+    out_file = fname_presuffix(str(in_file), suffix='_fmap', newpath=newpath)
     image = nb.load(in_file)
-    data = image.get_fdata(dtype="float32") / (2.0 * np.pi * delta_te)
+    data = image.get_fdata(dtype='float32') / (2.0 * np.pi * delta_te)
     nii = nb.Nifti1Image(data, image.affine, image.header)
     nii.set_data_dtype(np.float32)
     nii.to_filename(out_file)
@@ -127,25 +127,21 @@ def delta_te(in_values):
     ValueError:
 
     """
-    te2 = in_values.get("EchoTime2")
-    te1 = in_values.get("EchoTime1")
+    te2 = in_values.get('EchoTime2')
+    te1 = in_values.get('EchoTime1')
 
     if te2 is None and te1 is None:
         try:
-            te2 = float(in_values.get("EchoTimeDifference"))
+            te2 = float(in_values.get('EchoTimeDifference'))
             return abs(te2)
         except TypeError:
-            raise ValueError(
-                "Phase/phase-difference fieldmaps: no echo-times information."
-            )
+            raise ValueError('Phase/phase-difference fieldmaps: no echo-times information.')
         except ValueError:
-            raise ValueError(
-                f"Could not interpret metadata <EchoTimeDifference={te2}>."
-            )
+            raise ValueError(f'Could not interpret metadata <EchoTimeDifference={te2}>.')
     try:
-        te2 = float(te2 or "unknown")
-        te1 = float(te1 or "unknown")
+        te2 = float(te2 or 'unknown')
+        te1 = float(te1 or 'unknown')
     except ValueError:
-        raise ValueError(f"Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>.")
+        raise ValueError(f'Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>.')
 
     return abs(te2 - te1)

@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test pepolar type of fieldmaps."""
+
 import pytest
 from nipype.pipeline import engine as pe
 
@@ -28,17 +29,17 @@ from ..pepolar import init_topup_wf
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("ds", ("ds001771", "HCP101006"))
+@pytest.mark.parametrize('ds', ('ds001771', 'HCP101006'))
 def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     """Test preparation workflow."""
     layout = bids_layouts[ds]
     epi_path = sorted(
-        layout.get(suffix="epi", extension=["nii", "nii.gz"], scope="raw"),
+        layout.get(suffix='epi', extension=['nii', 'nii.gz'], scope='raw'),
         key=lambda k: k.path,
     )
     in_data = [f.path for f in epi_path]
 
-    wf = pe.Workflow(name=f"topup_{ds}")
+    wf = pe.Workflow(name=f'topup_{ds}')
     topup_wf = init_topup_wf(omp_nthreads=2, debug=True, sloppy=True)
     metadata = [layout.get_metadata(f.path) for f in epi_path]
 
@@ -48,18 +49,18 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     if outdir:
         from ...outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
-        outdir = outdir / "unittests" / f"topup_{ds}"
+        outdir = outdir / 'unittests' / f'topup_{ds}'
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(outdir),
             write_coeff=True,
-            bids_fmap_id="pepolar_id",
+            bids_fmap_id='pepolar_id',
         )
         fmap_derivatives_wf.inputs.inputnode.source_files = in_data
         fmap_derivatives_wf.inputs.inputnode.fmap_meta = metadata
 
         fmap_reports_wf = init_fmap_reports_wf(
             output_dir=str(outdir),
-            fmap_type="pepolar",
+            fmap_type='pepolar',
         )
         fmap_reports_wf.inputs.inputnode.source_files = in_data
 
@@ -81,4 +82,4 @@ def test_topup_wf(tmpdir, bids_layouts, workdir, outdir, ds):
     if workdir:
         wf.base_dir = str(workdir)
 
-    wf.run(plugin="Linear")
+    wf.run(plugin='Linear')

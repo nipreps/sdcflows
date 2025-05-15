@@ -33,7 +33,7 @@ def init_sdcflows_wf():
     from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
     # Create parent workflow
-    workflow = Workflow(name="sdcflows_wf")
+    workflow = Workflow(name='sdcflows_wf')
     workflow.base_dir = config.execution.work_dir
 
     subjects = collect_participants(
@@ -61,22 +61,18 @@ def init_sdcflows_wf():
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
                 write_coeff=True,
-                name=f"fmap_derivatives_{estim.sanitized_id}",
+                name=f'fmap_derivatives_{estim.sanitized_id}',
             )
 
-            source_paths = [
-                str(source.path.absolute()) for source in estim.sources
-            ]
+            source_paths = [str(source.path.absolute()) for source in estim.sources]
             derivs_wf.inputs.inputnode.source_files = source_paths
-            derivs_wf.inputs.inputnode.fmap_meta = [
-                source.metadata for source in estim.sources
-            ]
+            derivs_wf.inputs.inputnode.fmap_meta = [source.metadata for source in estim.sources]
 
             reportlets_wf = init_fmap_reports_wf(
                 fmap_type=estim.method,
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
-                name=f"fmap_reports_{estim.sanitized_id}",
+                name=f'fmap_reports_{estim.sanitized_id}',
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 

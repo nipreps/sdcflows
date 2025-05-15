@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Check the CLI."""
+
 from importlib import reload
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
@@ -40,95 +41,95 @@ bids_id='{estimator_id}')
 """
 
 intendedfor_config = {
-    "01": [
-        {"anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}]},
+    '01': [
+        {'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}]},
         {
-            "fmap": [
+            'fmap': [
                 {
-                    "dir": "AP",
-                    "suffix": "epi",
-                    "metadata": {
-                        "TotalReadoutTime": 0.1,
-                        "PhaseEncodingDirection": "j-",
-                        "IntendedFor": "func/sub-01_task-rest_bold.nii.gz",
+                    'dir': 'AP',
+                    'suffix': 'epi',
+                    'metadata': {
+                        'TotalReadoutTime': 0.1,
+                        'PhaseEncodingDirection': 'j-',
+                        'IntendedFor': 'func/sub-01_task-rest_bold.nii.gz',
                     },
                 },
                 {
-                    "dir": "PA",
-                    "suffix": "epi",
-                    "metadata": {
-                        "TotalReadoutTime": 0.1,
-                        "PhaseEncodingDirection": "j",
-                        "IntendedFor": "func/sub-01_task-rest_bold.nii.gz",
+                    'dir': 'PA',
+                    'suffix': 'epi',
+                    'metadata': {
+                        'TotalReadoutTime': 0.1,
+                        'PhaseEncodingDirection': 'j',
+                        'IntendedFor': 'func/sub-01_task-rest_bold.nii.gz',
                     },
                 },
             ]
         },
         {
-            "func": [
+            'func': [
                 {
-                    "task": "rest",
-                    "suffix": "bold",
-                    "metadata": {
-                        "RepetitionTime": 0.8,
-                        "PhaseEncodingDirection": "j",
+                    'task': 'rest',
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'PhaseEncodingDirection': 'j',
                     },
                 }
             ]
         },
     ],
-    "02": [{"anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}]}],
+    '02': [{'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}]}],
 }
 
 
 b0field_config = {
-    "01": [
-        {"anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}]},
+    '01': [
+        {'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}]},
         {
-            "fmap": [
+            'fmap': [
                 {
-                    "dir": "AP",
-                    "suffix": "epi",
-                    "metadata": {
-                        "B0FieldIdentifier": "pepolar",
-                        "TotalReadoutTime": 0.1,
-                        "PhaseEncodingDirection": "j-",
+                    'dir': 'AP',
+                    'suffix': 'epi',
+                    'metadata': {
+                        'B0FieldIdentifier': 'pepolar',
+                        'TotalReadoutTime': 0.1,
+                        'PhaseEncodingDirection': 'j-',
                     },
                 },
                 {
-                    "dir": "PA",
-                    "suffix": "epi",
-                    "metadata": {
-                        "B0FieldIdentifier": "pepolar",
-                        "TotalReadoutTime": 0.1,
-                        "PhaseEncodingDirection": "j",
+                    'dir': 'PA',
+                    'suffix': 'epi',
+                    'metadata': {
+                        'B0FieldIdentifier': 'pepolar',
+                        'TotalReadoutTime': 0.1,
+                        'PhaseEncodingDirection': 'j',
                     },
                 },
             ]
         },
         {
-            "func": [
+            'func': [
                 {
-                    "task": "rest",
-                    "suffix": "bold",
-                    "metadata": {
-                        "B0FieldSource": "pepolar",
-                        "RepetitionTime": 0.8,
-                        "PhaseEncodingDirection": "j",
+                    'task': 'rest',
+                    'suffix': 'bold',
+                    'metadata': {
+                        'B0FieldSource': 'pepolar',
+                        'RepetitionTime': 0.8,
+                        'PhaseEncodingDirection': 'j',
                     },
                 }
             ]
         },
     ],
-    "02": [{"anat": [{"suffix": "T1w", "metadata": {"EchoTime": 1}}]}],
+    '02': [{'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}]}],
 }
 
 
 @pytest.mark.parametrize(
-    "test_id,config,estimator_id",
+    'test_id,config,estimator_id',
     [
-        ("intendedfor", intendedfor_config, "auto_00000"),
-        ("b0field", b0field_config, "pepolar"),
+        ('intendedfor', intendedfor_config, 'auto_00000'),
+        ('b0field', b0field_config, 'pepolar'),
     ],
 )
 def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
@@ -141,7 +142,7 @@ def test_cli_finder_wrapper(tmp_path, capsys, test_id, config, estimator_id):
     path = (tmp_path / test_id).absolute()
     generate_bids_skeleton(path, config)
     with pytest.raises(SystemExit) as wrapped_exit:
-        cli_finder_wrapper([str(path), str(tmp_path / "out"), "participant", "--dry-run"])
+        cli_finder_wrapper([str(path), str(tmp_path / 'out'), 'participant', '--dry-run'])
 
     assert wrapped_exit.value.code == 0
     output = OUTPUT.format(path=path, estimator_id=estimator_id)

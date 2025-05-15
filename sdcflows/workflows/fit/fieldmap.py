@@ -26,15 +26,15 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-INPUT_FIELDS = ("magnitude", "fieldmap")
+INPUT_FIELDS = ('magnitude', 'fieldmap')
 
 
 def init_fmap_wf(
     omp_nthreads=1,
     sloppy=False,
     debug=False,
-    mode="phasediff",
-    name="fmap_wf",
+    mode='phasediff',
+    name='fmap_wf',
     **kwargs,
 ):
     """
@@ -98,26 +98,26 @@ def init_fmap_wf(
     from ...interfaces.fmap import CheckRegister
 
     workflow = Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap", "fmap_ref", "fmap_mask", "fmap_coeff", "method"]),
-        name="outputnode",
+        niu.IdentityInterface(fields=['fmap', 'fmap_ref', 'fmap_mask', 'fmap_coeff', 'method']),
+        name='outputnode',
     )
 
     def _unzip(fmap_spec):
         return fmap_spec
 
     unzip = pe.MapNode(
-        niu.Function(function=_unzip, output_names=["fmap_file", "meta"]),
+        niu.Function(function=_unzip, output_names=['fmap_file', 'meta']),
         run_without_submitting=True,
-        iterfield=["fmap_spec"],
-        name="unzip",
+        iterfield=['fmap_spec'],
+        name='unzip',
     )
 
     check_register = pe.Node(CheckRegister(), name='check_register')
 
     magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
-    bs_filter = pe.Node(BSplineApprox(), name="bs_filter")
+    bs_filter = pe.Node(BSplineApprox(), name='bs_filter')
     bs_filter.interface._always_run = debug
     bs_filter.inputs.bs_spacing = [DEFAULT_HF_ZOOMS_MM]
 
@@ -143,14 +143,14 @@ def init_fmap_wf(
     ])
     # fmt: on
 
-    if mode == "phasediff":
+    if mode == 'phasediff':
         workflow.__desc__ = """\
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was estimated from the
 phase-drift map(s) measure with two consecutive GRE (gradient-recalled echo)
 acquisitions.
 """
         phdiff_wf = init_phdiff_wf(omp_nthreads, debug=debug)
-        outputnode.inputs.method = "FMB (fieldmap-based) - phase-difference map"
+        outputnode.inputs.method = 'FMB (fieldmap-based) - phase-difference map'
 
         # fmt: off
         workflow.connect([
@@ -173,13 +173,13 @@ acquisitions.
 A *B<sub>0</sub>* nonuniformity map (or *fieldmap*) was directly measured with
 an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
 """
-        outputnode.inputs.method = "FMB (fieldmap-based) - directly measured B0 map"
+        outputnode.inputs.method = 'FMB (fieldmap-based) - directly measured B0 map'
         # Merge input fieldmap images (assumes all are given in the same units!)
         fmapmrg = pe.Node(
             IntraModalMerge(zero_based_avg=False, hmc=False, to_ras=False),
-            name="fmapmrg",
+            name='fmapmrg',
         )
-        units = pe.Node(CheckB0Units(), name="units", run_without_submitting=True)
+        units = pe.Node(CheckB0Units(), name='units', run_without_submitting=True)
 
         # fmt: off
         workflow.connect([
@@ -193,7 +193,7 @@ an MRI scheme designed with that purpose such as SEI (Spiral-Echo Imaging).
     return workflow
 
 
-def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
+def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     """
     Prepare the magnitude part of :abbr:`GRE (gradient-recalled echo)` fieldmaps.
 
@@ -234,15 +234,15 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(fields=["magnitude"]), name="inputnode")
+    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude']), name='inputnode')
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap_ref", "fmap_mask", "mask_report"]),
-        name="outputnode",
+        niu.IdentityInterface(fields=['fmap_ref', 'fmap_mask', 'mask_report']),
+        name='outputnode',
     )
 
     # Merge input magnitude images
     # Do not reorient to RAS to preserve the validity of PhaseEncodingDirection
-    magmrg = pe.Node(IntraModalMerge(hmc=False, to_ras=False), name="magmrg")
+    magmrg = pe.Node(IntraModalMerge(hmc=False, to_ras=False), name='magmrg')
     brainextraction_wf = init_brainextraction_wf()
 
     # fmt: off
@@ -259,7 +259,7 @@ def init_magnitude_wf(omp_nthreads, name="magnitude_wf"):
     return workflow
 
 
-def init_phdiff_wf(omp_nthreads, debug=False, name="phdiff_wf"):
+def init_phdiff_wf(omp_nthreads, debug=False, name='phdiff_wf'):
     r"""
     Generate a :math:`B_0` field from consecutive-phases and phase-difference maps.
 
@@ -322,30 +322,28 @@ The corresponding phase-map(s) were phase-unwrapped with `prelude` (FSL {PRELUDE
 """
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["magnitude", "phase", "phase_meta", "mask"]),
-        name="inputnode",
+        niu.IdentityInterface(fields=['magnitude', 'phase', 'phase_meta', 'mask']),
+        name='inputnode',
     )
 
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fieldmap"]),
-        name="outputnode",
+        niu.IdentityInterface(fields=['fieldmap']),
+        name='outputnode',
     )
 
     # phase diff -> radians
     phmap2rads = pe.MapNode(
         PhaseMap2rads(),
-        name="phmap2rads",
-        iterfield=["in_file"],
+        name='phmap2rads',
+        iterfield=['in_file'],
         run_without_submitting=True,
     )
     # FSL PRELUDE will perform phase-unwrapping
-    prelude = pe.Node(PRELUDE(), name="prelude")
+    prelude = pe.Node(PRELUDE(), name='prelude')
 
-    calc_phdiff = pe.Node(
-        SubtractPhases(), name="calc_phdiff", run_without_submitting=True
-    )
+    calc_phdiff = pe.Node(SubtractPhases(), name='calc_phdiff', run_without_submitting=True)
     calc_phdiff.interface._always_run = debug
-    compfmap = pe.Node(Phasediff2Fieldmap(), name="compfmap")
+    compfmap = pe.Node(Phasediff2Fieldmap(), name='compfmap')
 
     # fmt: off
     workflow.connect([
@@ -392,4 +390,4 @@ def _get_units(intuple):
     """
     if isinstance(intuple, list):
         intuple = intuple[0]
-    return intuple[1]["Units"]
+    return intuple[1]['Units']

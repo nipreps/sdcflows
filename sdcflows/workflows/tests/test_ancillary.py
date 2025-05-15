@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Check the tools submodule."""
+
 import pytest
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -29,22 +30,20 @@ from ..ancillary import init_brainextraction_wf
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("folder", ["magnitude/ds000054", "magnitude/ds000217"])
+@pytest.mark.parametrize('folder', ['magnitude/ds000054', 'magnitude/ds000217'])
 def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     """Exercise the brain masking tool."""
     tmpdir.chdir()
 
-    wf = pe.Workflow(name=f"test_mask_{folder.replace('/', '_')}")
+    wf = pe.Workflow(name=f'test_mask_{folder.replace("/", "_")}')
     if workdir:
         wf.base_dir = str(workdir)
 
-    input_files = [
-        str(f) for f in (datadir / "brain-extraction-tests" / folder).glob("*.nii.gz")
-    ]
+    input_files = [str(f) for f in (datadir / 'brain-extraction-tests' / folder).glob('*.nii.gz')]
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=("in_file",)), name="inputnode")
-    inputnode.iterables = ("in_file", input_files)
-    merger = pe.Node(niu.Function(function=_merge), name="merger")
+    inputnode = pe.Node(niu.IdentityInterface(fields=('in_file',)), name='inputnode')
+    inputnode.iterables = ('in_file', input_files)
+    merger = pe.Node(niu.Function(function=_merge), name='merger')
 
     brainmask_wf = init_brainextraction_wf()
 
@@ -56,9 +55,9 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
     # fmt:on
 
     if outdir:
-        out_path = outdir / "masks" / folder.split("/")[-1]
+        out_path = outdir / 'masks' / folder.split('/')[-1]
         out_path.mkdir(exist_ok=True, parents=True)
-        report = pe.Node(SimpleShowMaskRPT(), name="report")
+        report = pe.Node(SimpleShowMaskRPT(), name='report')
         report.interface._always_run = True
 
         def _report_name(fname, out_path):
@@ -67,9 +66,9 @@ def test_brainmasker(tmpdir, datadir, workdir, outdir, folder):
             return str(
                 out_path
                 / Path(fname)
-                .name.replace(".nii", "_mask.svg")
-                .replace("_magnitude", "_desc-magnitude")
-                .replace(".gz", "")
+                .name.replace('.nii', '_mask.svg')
+                .replace('_magnitude', '_desc-magnitude')
+                .replace('.gz', '')
             )
 
         # fmt: off
@@ -96,6 +95,6 @@ def _merge(in_file):
     from pathlib import Path
 
     data = data.mean(-1)
-    out_file = (Path() / "merged.nii.gz").absolute()
+    out_file = (Path() / 'merged.nii.gz').absolute()
     img.__class__(data, img.affine, img.header).to_filename(out_file)
     return str(out_file)

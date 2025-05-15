@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Filtering of :math:`B_0` field mappings with B-Splines."""
+
 from itertools import product
 from pathlib import Path
 import numpy as np
@@ -49,44 +50,40 @@ LOW_MEM_BLOCK_SIZE = 1000
 DEFAULT_ZOOMS_MM = (40.0, 40.0, 20.0)  # For human adults (mid-frequency), in mm
 DEFAULT_LF_ZOOMS_MM = (100.0, 100.0, 40.0)  # For human adults (low-frequency), in mm
 DEFAULT_HF_ZOOMS_MM = (16.0, 16.0, 10.0)  # For human adults (high-frequency), in mm
-LOGGER = logging.getLogger("nipype.interface")
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class _BSplineApproxInputSpec(BaseInterfaceInputSpec):
-    in_data = File(exists=True, mandatory=True, desc="path to a fieldmap")
-    in_mask = File(exists=True, desc="path to a brain mask")
+    in_data = File(exists=True, mandatory=True, desc='path to a fieldmap')
+    in_mask = File(exists=True, desc='path to a brain mask')
     bs_spacing = InputMultiObject(
         [DEFAULT_HF_ZOOMS_MM],
         traits.Tuple(traits.Float, traits.Float, traits.Float),
         usedefault=True,
-        desc="spacing between B-Spline control points",
+        desc='spacing between B-Spline control points',
     )
-    ridge_alpha = traits.Float(
-        1e-4, usedefault=True, desc="controls the regularization"
-    )
+    ridge_alpha = traits.Float(1e-4, usedefault=True, desc='controls the regularization')
     recenter = traits.Enum(
-        "median",
-        "mode",
-        "mean",
+        'median',
+        'mode',
+        'mean',
         False,
         usedefault=True,
-        desc="strategy to recenter the distribution of the input fieldmap",
+        desc='strategy to recenter the distribution of the input fieldmap',
     )
     extrapolate = traits.Bool(
         True,
         usedefault=True,
-        desc="generate a field, extrapolated outside the brain mask",
+        desc='generate a field, extrapolated outside the brain mask',
     )
     zooms_min = traits.Union(
         traits.Float,
         traits.Tuple(traits.Float, traits.Float, traits.Float),
         default_value=1.0,
         usedefault=True,
-        desc="limit minimum image zooms, set 0.0 to use the original image",
+        desc='limit minimum image zooms, set 0.0 to use the original image',
     )
-    debug = traits.Bool(
-        False, usedefault=True, desc="generate extra assets for debugging"
-    )
+    debug = traits.Bool(False, usedefault=True, desc='generate extra assets for debugging')
 
 
 class _BSplineApproxOutputSpec(TraitedSpec):
@@ -134,9 +131,7 @@ class BSplineApprox(SimpleInterface):
         from scipy.sparse import hstack as sparse_hstack
 
         # Output name baseline
-        out_name = fname_presuffix(
-            self.inputs.in_data, suffix="_field", newpath=runtime.cwd
-        )
+        out_name = fname_presuffix(self.inputs.in_data, suffix='_field', newpath=runtime.cwd)
 
         # Load in the fieldmap
         fmapnii = nb.load(self.inputs.in_data)
@@ -144,17 +139,13 @@ class BSplineApprox(SimpleInterface):
         zooms = fmapnii.header.get_zooms()
 
         # Get a mask (or define on the spot to cover the full extent)
-        masknii = (
-            nb.load(self.inputs.in_mask) if isdefined(self.inputs.in_mask) else None
-        )
+        masknii = nb.load(self.inputs.in_mask) if isdefined(self.inputs.in_mask) else None
         # if masknii is not None:
         #     masknii = nb.as_closest_canonical(masknii)
 
         # Determine the shape of bspline coefficients
         # This should not change with resizing, so do it first
-        bs_grids = [
-            bspline_grid(fmapnii, control_zooms_mm=sp) for sp in self.inputs.bs_spacing
-        ]
+        bs_grids = [bspline_grid(fmapnii, control_zooms_mm=sp) for sp in self.inputs.bs_spacing]
 
         need_resize = np.any(np.array(zooms) < self.inputs.zooms_min)
         if need_resize:
@@ -164,15 +155,15 @@ class BSplineApprox(SimpleInterface):
 
             LOGGER.info(
                 "Resampling image with resolution exceeding 'zooms_min' "
-                f"({'x'.join(str(s) for s in zooms)} → "
-                f"{'x'.join(str(s) for s in target_zooms)})."
+                f'({"x".join(str(s) for s in zooms)} → '
+                f'{"x".join(str(s) for s in target_zooms)}).'
             )
             fmapnii = resample_to_zooms(fmapnii, target_zooms)
 
             if masknii is not None:
                 masknii = resample_to_zooms(masknii, target_zooms)
 
-        data = fmapnii.get_fdata(dtype="float32")
+        data = fmapnii.get_fdata(dtype='float32')
 
         # Generate a numpy array with the mask
         mask = (
@@ -183,32 +174,30 @@ class BSplineApprox(SimpleInterface):
 
         # Recenter the fieldmap
         center = 0
-        if self.inputs.recenter == "mode":
+        if self.inputs.recenter == 'mode':
             from scipy.stats import mode
 
             # Handle pre- and post-1.9 mode behavior.
             # squeeze can be dropped when the minimum version reaches 1.9
             # Will become: data -= mode(data[mask], keepdims=False).mode
             center = np.squeeze(mode(data[mask]).mode)
-        elif self.inputs.recenter == "median":
+        elif self.inputs.recenter == 'median':
             center = np.median(data[mask])
-        elif self.inputs.recenter == "mean":
+        elif self.inputs.recenter == 'mean':
             center = np.mean(data[mask])
 
         data -= center
         data[~mask] = 0
 
         # Calculate collocation matrix from (possibly resized) image and knot grids
-        colmat = sparse_hstack(
-            [grid_bspline_weights(fmapnii, grid) for grid in bs_grids]
-        ).tocsr()
+        colmat = sparse_hstack([grid_bspline_weights(fmapnii, grid) for grid in bs_grids]).tocsr()
 
-        bs_grids_str = ["x".join(str(s) for s in grid.shape) for grid in bs_grids]
-        bs_grids_str[-1] = f"and {bs_grids_str[-1]}"
+        bs_grids_str = ['x'.join(str(s) for s in grid.shape) for grid in bs_grids]
+        bs_grids_str[-1] = f'and {bs_grids_str[-1]}'
         LOGGER.info(
-            f"Approximating B-Splines grids ({', '.join(bs_grids_str)} [knots]) on a grid of "
-            f"{'x'.join(str(s) for s in fmapnii.shape)} ({np.prod(fmapnii.shape)}) voxels,"
-            f" of which {mask.sum()} fall within the mask."
+            f'Approximating B-Splines grids ({", ".join(bs_grids_str)} [knots]) on a grid of '
+            f'{"x".join(str(s) for s in fmapnii.shape)} ({np.prod(fmapnii.shape)}) voxels,'
+            f' of which {mask.sum()} fall within the mask.'
         )
 
         # Fit the model
@@ -216,40 +205,38 @@ class BSplineApprox(SimpleInterface):
         for attempt in range(3):
             model.fit(colmat, data.reshape(-1))
             extreme = np.abs(model.coef_).max()
-            LOGGER.debug(f"Model fit attempt {attempt}: max(|coeffs|) = {extreme}")
+            LOGGER.debug(f'Model fit attempt {attempt}: max(|coeffs|) = {extreme}')
             # Normal values seem to be ~1e2, bad ~1e8. May want to tweak this if
             # these distributions are wider than I think.
             if extreme < 1e4:
                 break
         else:
             raise RuntimeError(
-                f"Spline fit of input file {self.inputs.in_data} failed. "
-                f"Extreme value {extreme:.2e} detected in spline coefficients."
+                f'Spline fit of input file {self.inputs.in_data} failed. '
+                f'Extreme value {extreme:.2e} detected in spline coefficients.'
             )
 
-        self._results["out_intercept"] = model.intercept_
+        self._results['out_intercept'] = model.intercept_
 
         # Store coefficients
         index = 0
-        self._results["out_coeff"] = []
+        self._results['out_coeff'] = []
         for i, bsl in enumerate(bs_grids):
             n = bsl.dataobj.size
-            out_level = out_name.replace("_field.", f"_coeff{i:03}.")
+            out_level = out_name.replace('_field.', f'_coeff{i:03}.')
             bsl.__class__(
-                np.array(model.coef_, dtype="float32")[index : index + n].reshape(
-                    bsl.shape
-                ),
+                np.array(model.coef_, dtype='float32')[index : index + n].reshape(bsl.shape),
                 bsl.affine,
                 bsl.header,
             ).to_filename(out_level)
             index += n
-            self._results["out_coeff"].append(out_level)
+            self._results['out_coeff'].append(out_level)
 
         # Interpolating in the original grid will require a new collocation matrix
         if need_resize:
             fmapnii = nb.load(self.inputs.in_data)
             # fmapnii = nb.as_closest_canonical(fmapnii)
-            data = fmapnii.get_fdata(dtype="float32") - center
+            data = fmapnii.get_fdata(dtype='float32') - center
             if masknii is not None:
                 masknii = nb.load(self.inputs.in_mask)
                 # masknii = nb.as_closest_canonical(masknii)
@@ -267,79 +254,75 @@ class BSplineApprox(SimpleInterface):
 
         # Store interpolated field
         hdr = fmapnii.header.copy()
-        hdr.set_data_dtype("float32")
+        hdr.set_data_dtype('float32')
         outnii = fmapnii.__class__(interp_data, fmapnii.affine, hdr)
-        outnii.header["cal_max"] = np.abs(outnii.dataobj).max()
-        outnii.header["cal_min"] = -outnii.header["cal_max"]
+        outnii.header['cal_max'] = np.abs(outnii.dataobj).max()
+        outnii.header['cal_min'] = -outnii.header['cal_max']
         outnii.to_filename(out_name)
-        self._results["out_field"] = out_name
+        self._results['out_field'] = out_name
 
         # Write out fitting-error map
-        self._results["out_error"] = out_name.replace("_field.", "_error.")
-        errornii = fmapnii.__class__(
-            (data - interp_data) * mask, fmapnii.affine, fmapnii.header
-        )
-        errornii.header["cal_min"] = 0
-        errornii.header["cal_max"] = np.max(errornii.dataobj)
-        errornii.to_filename(self._results["out_error"])
+        self._results['out_error'] = out_name.replace('_field.', '_error.')
+        errornii = fmapnii.__class__((data - interp_data) * mask, fmapnii.affine, fmapnii.header)
+        errornii.header['cal_min'] = 0
+        errornii.header['cal_max'] = np.max(errornii.dataobj)
+        errornii.to_filename(self._results['out_error'])
 
         if not self.inputs.extrapolate:
             return runtime
 
         if np.all(mask):
-            self._results["out_extrapolated"] = self._results["out_field"]
+            self._results['out_extrapolated'] = self._results['out_field']
             return runtime
 
         extrapolators = colmat[~mask.reshape(-1), :]
         interp_data[~mask] = extrapolators @ model.coef_  # Extrapolation
-        self._results["out_extrapolated"] = out_name.replace("_field.", "_extra.")
+        self._results['out_extrapolated'] = out_name.replace('_field.', '_extra.')
         fmapnii.__class__(interp_data, fmapnii.affine, hdr).to_filename(
-            self._results["out_extrapolated"]
+            self._results['out_extrapolated']
         )
         return runtime
 
 
 class _ApplyCoeffsFieldInputSpec(BaseInterfaceInputSpec):
-    in_data = File(exist=True, mandatory=True, desc="input EPI data to be corrected")
+    in_data = File(exist=True, mandatory=True, desc='input EPI data to be corrected')
     in_coeff = InputMultiObject(
         File(exists=True),
         mandatory=True,
-        desc="input coefficients as calculated in the estimation stage",
+        desc='input coefficients as calculated in the estimation stage',
     )
     fmap2data_xfm = InputMultiObject(
         File(exists=True),
         desc="the transform by which the target EPI can be resampled on the fieldmap's grid.",
-        xor=["data2fmap_xfm"],
+        xor=['data2fmap_xfm'],
     )
     data2fmap_xfm = InputMultiObject(
         File(exists=True),
         desc="the transform by which the fieldmap can be resampled on the target EPI's grid.",
-        xor=["fmap2data_xfm"],
+        xor=['fmap2data_xfm'],
     )
     in_xfms = traits.List(
         traits.List(traits.List(traits.Float)),
-        desc="list of head-motion correction matrices",
+        desc='list of head-motion correction matrices',
     )
-    ro_time = InputMultiObject(
-        traits.Float(), mandatory=True, desc="EPI readout time (s)."
-    )
+    ro_time = InputMultiObject(traits.Float(), mandatory=True, desc='EPI readout time (s).')
     pe_dir = InputMultiObject(
-        traits.Enum("i", "i-", "j", "j-", "k", "k-"),
+        traits.Enum('i', 'i-', 'j', 'j-', 'k', 'k-'),
         mandatory=True,
-        desc="the phase-encoding direction corresponding to in_data",
+        desc='the phase-encoding direction corresponding to in_data',
     )
     jacobian = traits.Bool(
         False,
         usedefault=True,
-        desc="apply Jacobian determinant correction after unwarping",
+        desc='apply Jacobian determinant correction after unwarping',
     )
-    num_threads = traits.Int(nohash=True, desc="number of threads")
+    num_threads = traits.Int(nohash=True, desc='number of threads')
     approx = traits.Bool(
         True,
         usedefault=True,
         desc=(
-            "reconstruct the fieldmap on its original grid and then interpolate on the "
-            "rotated grid, rather than reconstructing directly on the rotated grid."
+            'reconstruct the fieldmap on its original grid and then interpolate on the '
+            'rotated grid, rather than reconstructing directly on the rotated grid.'
         ),
     )
 
@@ -410,33 +393,35 @@ class ApplyCoeffsField(SimpleInterface):
 
         if isdefined(self.inputs.data2fmap_xfm):
             data2fmap_xfm = Affine.from_filename(
-                self.inputs.data2fmap_xfm if not isinstance(self.inputs.data2fmap_xfm, list)
+                self.inputs.data2fmap_xfm
+                if not isinstance(self.inputs.data2fmap_xfm, list)
                 else self.inputs.data2fmap_xfm[0],
-                fmt="itk"
+                fmt='itk',
             ).matrix
         elif isdefined(self.inputs.fmap2data_xfm):
             # Same, but inverting direction
-            data2fmap_xfm = (~Affine.from_filename(
-                self.inputs.fmap2data_xfm if not isinstance(self.inputs.fmap2data_xfm, list)
-                else self.inputs.fmap2data_xfm[0],
-                fmt="itk"
-            )).matrix
+            data2fmap_xfm = (
+                ~Affine.from_filename(
+                    self.inputs.fmap2data_xfm
+                    if not isinstance(self.inputs.fmap2data_xfm, list)
+                    else self.inputs.fmap2data_xfm[0],
+                    fmt='itk',
+                )
+            ).matrix
 
         # Pre-cached interpolator object
-        unwarp = B0FieldTransform(
-            coeffs=[nb.load(cname) for cname in self.inputs.in_coeff]
-        )
+        unwarp = B0FieldTransform(coeffs=[nb.load(cname) for cname in self.inputs.in_coeff])
 
         # We can now write out the fieldmap
-        self._results["out_field"] = fname_presuffix(
+        self._results['out_field'] = fname_presuffix(
             self.inputs.in_data,
-            suffix="_field",
+            suffix='_field',
             newpath=runtime.cwd,
         )
 
-        self._results["out_corrected"] = fname_presuffix(
+        self._results['out_corrected'] = fname_presuffix(
             self.inputs.in_data,
-            suffix="_sdc",
+            suffix='_sdc',
             newpath=runtime.cwd,
         )
 
@@ -449,24 +434,22 @@ class ApplyCoeffsField(SimpleInterface):
             xfm_data2fmap=data2fmap_xfm,
             approx=self.inputs.approx,
             num_threads=self.inputs.num_threads or None,
-        ).to_filename(self._results["out_corrected"])
-        unwarp.mapped.to_filename(self._results["out_field"])
+        ).to_filename(self._results['out_corrected'])
+        unwarp.mapped.to_filename(self._results['out_field'])
         return runtime
 
 
 class _TransformCoefficientsInputSpec(BaseInterfaceInputSpec):
     in_coeff = InputMultiObject(
-        File(exist=True), mandatory=True, desc="input coefficients file(s)"
+        File(exist=True), mandatory=True, desc='input coefficients file(s)'
     )
-    fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
-    transform = File(exists=True, mandatory=True, desc="rigid-body transform file")
-    fmap_target = File(
-        exists=True, desc="the distorted EPI target (feed to set debug mode on)"
-    )
+    fmap_ref = File(exists=True, mandatory=True, desc='the fieldmap reference')
+    transform = File(exists=True, mandatory=True, desc='rigid-body transform file')
+    fmap_target = File(exists=True, desc='the distorted EPI target (feed to set debug mode on)')
 
 
 class _TransformCoefficientsOutputSpec(TraitedSpec):
-    out_coeff = OutputMultiObject(File(exists=True), desc="moved coefficients")
+    out_coeff = OutputMultiObject(File(exists=True), desc='moved coefficients')
 
 
 class TransformCoefficients(SimpleInterface):
@@ -478,39 +461,35 @@ class TransformCoefficients(SimpleInterface):
     def _run_interface(self, runtime):
         from sdcflows.transform import _move_coeff
 
-        self._results["out_coeff"] = []
+        self._results['out_coeff'] = []
 
         for level in self.inputs.in_coeff:
             movednii = _move_coeff(
                 level,
                 self.inputs.fmap_ref,
                 self.inputs.transform,
-                fmap_target=(
-                    self.inputs.fmap_target or None
-                ),
+                fmap_target=(self.inputs.fmap_target or None),
             )
-            out_file = fname_presuffix(
-                level, suffix="_space-target", newpath=runtime.cwd
-            )
+            out_file = fname_presuffix(level, suffix='_space-target', newpath=runtime.cwd)
             movednii.to_filename(out_file)
-            self._results["out_coeff"].append(out_file)
+            self._results['out_coeff'].append(out_file)
         return runtime
 
 
 class _TOPUPCoeffReorientInputSpec(BaseInterfaceInputSpec):
     in_coeff = InputMultiObject(
-        File(exist=True), mandatory=True, desc="input coefficients file(s) from TOPUP"
+        File(exist=True), mandatory=True, desc='input coefficients file(s) from TOPUP'
     )
-    fmap_ref = File(exists=True, mandatory=True, desc="the fieldmap reference")
+    fmap_ref = File(exists=True, mandatory=True, desc='the fieldmap reference')
     pe_dir = traits.Enum(
-        *["".join(p) for p in product("ijkxyz", ("", "-"))],
+        *[''.join(p) for p in product('ijkxyz', ('', '-'))],
         mandatory=True,
-        desc="phase encoding direction",
+        desc='phase encoding direction',
     )
 
 
 class _TOPUPCoeffReorientOutputSpec(TraitedSpec):
-    out_coeff = OutputMultiObject(File(exists=True), desc="patched coefficients")
+    out_coeff = OutputMultiObject(File(exists=True), desc='patched coefficients')
 
 
 class TOPUPCoeffReorient(SimpleInterface):
@@ -545,15 +524,13 @@ class TOPUPCoeffReorient(SimpleInterface):
     output_spec = _TOPUPCoeffReorientOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_coeff"] = [
+        self._results['out_coeff'] = [
             str(
                 _fix_topup_fieldcoeff(
                     in_coeff,
                     self.inputs.fmap_ref,
                     self.inputs.pe_dir,
-                    out_file=fname_presuffix(
-                        in_coeff, suffix="_fixed", newpath=runtime.cwd
-                    ),
+                    out_file=fname_presuffix(in_coeff, suffix='_fixed', newpath=runtime.cwd),
                 )
             )
             for in_coeff in self.inputs.in_coeff
@@ -586,7 +563,7 @@ def bspline_grid(img, control_zooms_mm=DEFAULT_ZOOMS_MM):
         bs_affine, 0.5 * (bs_shape - 1)
     )
 
-    return img.__class__(np.zeros(bs_shape, dtype="float32"), bs_affine)
+    return img.__class__(np.zeros(bs_shape, dtype='float32'), bs_affine)
 
 
 def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
@@ -596,7 +573,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     import nibabel as nb
 
     if out_file is None:
-        out_file = Path("coefficients.nii.gz").absolute()
+        out_file = Path('coefficients.nii.gz').absolute()
 
     refnii = nb.load(fmap_ref)
     coeffnii = nb.load(in_coeff)
@@ -613,7 +590,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     # always is implicit.
     # If the PE direction is x/i, the flip in the axis direction causes that the
     # fieldmap estimation must also be inverted in direction (multiply by -1.0)
-    reverse_pe = -1.0 if coeff_pe_dir[0] == "i" else 1.0
+    reverse_pe = -1.0 if coeff_pe_dir[0] == 'i' else 1.0
     coeffnii = coeffnii.__class__(
         reverse_pe * np.flip(np.asanyarray(coeffnii.dataobj), axis=0),
         coeffnii.affine,
@@ -629,8 +606,8 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     exp_shape = ref_shape // factors + 3 * (factors > 1)
     if not np.all(coeff_shape == exp_shape):
         raise ValueError(
-            f"Shape of coefficients file {coeff_shape} does not meet the "
-            f"expected shape {exp_shape} (toupup factors are {factors})."
+            f'Shape of coefficients file {coeff_shape} does not meet the '
+            f'expected shape {exp_shape} (toupup factors are {factors}).'
         )
 
     # Contextualize the control points in space with a proper NIfTI affine
@@ -644,14 +621,14 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
     header = coeffnii.header.copy()
     header.set_qform(newaff, code=1)
     header.set_sform(newaff, code=1)
-    header["cal_max"] = max(
+    header['cal_max'] = max(
         (
             abs(np.asanyarray(coeffnii.dataobj).min()),
             np.asanyarray(coeffnii.dataobj).max(),
         )
     )
-    header["cal_min"] = -header["cal_max"]
-    header.set_intent("estimate", tuple(), name="B-Spline coefficients")
+    header['cal_min'] = -header['cal_max']
+    header.set_intent('estimate', tuple(), name='B-Spline coefficients')
 
     # Write out fixed (generalized) coefficients
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
@@ -666,10 +643,10 @@ def _split_itk_file(in_file):
 
     def _chunks(inlist, chunksize):
         for i in range(0, len(inlist), chunksize):
-            yield "\n".join([header] + inlist[i : i + chunksize])
+            yield '\n'.join([header] + inlist[i : i + chunksize])
 
     for i, xfm in enumerate(_chunks(lines, 4)):
-        p = Path(f"{i:05}")
+        p = Path(f'{i:05}')
         p.write_text(xfm)
         yield str(p)
 
@@ -680,7 +657,7 @@ def _b0_resampler(in_file, coeffs, pe, ro, hmc_xfm=None, unwarp=None, newpath=No
 
     # Prepare output names
     filename = partial(fname_presuffix, newpath=newpath)
-    retval = [filename(in_file, suffix=s) for s in ("_unwarped", "_xfm", "_field")]
+    retval = [filename(in_file, suffix=s) for s in ('_unwarped', '_xfm', '_field')]
 
     if unwarp is None:
         from sdcflows.transform import B0FieldTransform

@@ -26,8 +26,9 @@
 def build_workflow(config_file, retval):
     """Create the Nipype Workflow that supports the whole execution graph."""
     import os
+
     # We do not need OMP > 1 for workflow creation
-    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ['OMP_NUM_THREADS'] = '1'
 
     from sdcflows import config
     from sdcflows.workflows.fit.base import init_sdcflows_wf
@@ -38,15 +39,18 @@ def build_workflow(config_file, retval):
     # Make sure loggers are started
     config.loggers.init()
 
-    config.loggers.cli.log(25, f"""\
+    config.loggers.cli.log(
+        25,
+        f"""\
 Running SDCFlows {config.environment.version}:
              * BIDS dataset path: {config.execution.bids_dir}.
              * Output folder: {config.execution.output_dir}.
              * Analysis levels: {config.workflow.analysis_level}.
-""")
+""",
+    )
 
-    retval["return_code"] = 1
-    retval["workflow"] = None
-    retval["workflow"] = init_sdcflows_wf()
-    retval["return_code"] = int(retval["workflow"] is None)
+    retval['return_code'] = 1
+    retval['workflow'] = None
+    retval['workflow'] = init_sdcflows_wf()
+    retval['return_code'] = int(retval['workflow'] is None)
     return retval

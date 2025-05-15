@@ -231,41 +231,41 @@ def get_trt(
     import nibabel as nb
 
     # Use case 1: TRT is defined
-    if "TotalReadoutTime" in in_meta:
-        trt = in_meta.get("TotalReadoutTime")
+    if 'TotalReadoutTime' in in_meta:
+        trt = in_meta.get('TotalReadoutTime')
         if not trt:
             raise ValueError(f"'{trt}'")
 
         return trt
-    elif use_estimate and "EstimatedTotalReadoutTime" in in_meta:
-        trt = in_meta.get("EstimatedTotalReadoutTime")
+    elif use_estimate and 'EstimatedTotalReadoutTime' in in_meta:
+        trt = in_meta.get('EstimatedTotalReadoutTime')
         if not trt:
             raise ValueError(f"'{trt}'")
 
         return trt
 
     if in_meta.keys() & {
-        "PhaseEncodingDirection",
-        "EffectiveEchoSpacing",
-        "EstimatedEffectiveEchoSpacing",
-        "EchoSpacing",
-        "WaterFatShift",
-    } > {"PhaseEncodingDirection"}:
+        'PhaseEncodingDirection',
+        'EffectiveEchoSpacing',
+        'EstimatedEffectiveEchoSpacing',
+        'EchoSpacing',
+        'WaterFatShift',
+    } > {'PhaseEncodingDirection'}:
         # npe = N voxels PE direction
-        pe_index = "ijk".index(in_meta["PhaseEncodingDirection"][0])
+        pe_index = 'ijk'.index(in_meta['PhaseEncodingDirection'][0])
         npe = nb.load(in_file).shape[pe_index]
 
         # Use case 2: EES is defined
-        ees = in_meta.get("EffectiveEchoSpacing")
+        ees = in_meta.get('EffectiveEchoSpacing')
         if ees:
             # Effective echo spacing means that acceleration factors have been accounted for.
             return ees * (npe - 1)
-        elif use_estimate and "EstimatedEffectiveEchoSpacing" in in_meta:
-            return in_meta.get("EstimatedEffectiveEchoSpacing") * (npe - 1)
+        elif use_estimate and 'EstimatedEffectiveEchoSpacing' in in_meta:
+            return in_meta.get('EstimatedEffectiveEchoSpacing') * (npe - 1)
 
         try:
-            echospacing = in_meta["EchoSpacing"]
-            acc_factor = in_meta["ParallelReductionFactorInPlane"]
+            echospacing = in_meta['EchoSpacing']
+            acc_factor = in_meta['ParallelReductionFactorInPlane']
         except KeyError:
             pass
         else:
@@ -275,14 +275,14 @@ def get_trt(
 
         # Use case 3 (Philips scans)
         try:
-            wfs = in_meta["WaterFatShift"]
-            epifactor = in_meta["EPIFactor"]
+            wfs = in_meta['WaterFatShift']
+            epifactor = in_meta['EPIFactor']
         except KeyError:
             pass
         else:
             wfs_hz = (
-                (in_meta.get("ImagingFrequency", 0) * 3.39941)
-                or (in_meta.get("MagneticFieldStrength", 0) * 144.7383333)
+                (in_meta.get('ImagingFrequency', 0) * 3.39941)
+                or (in_meta.get('MagneticFieldStrength', 0) * 144.7383333)
                 or None
             )
             if wfs_hz:
@@ -292,7 +292,7 @@ def get_trt(
     if fallback:
         return fallback
 
-    raise ValueError("Unknown total-readout time specification")
+    raise ValueError('Unknown total-readout time specification')
 
 
 def epi_mask(in_file, out_file=None):
@@ -304,10 +304,10 @@ def epi_mask(in_file, out_file=None):
     from skimage.morphology import ball
 
     if out_file is None:
-        out_file = Path("mask.nii.gz").absolute()
+        out_file = Path('mask.nii.gz').absolute()
 
     img = nb.load(in_file)
-    data = img.get_fdata(dtype="float32")
+    data = img.get_fdata(dtype='float32')
     # First open to blur out the skull around the brain
     opened = ndimage.grey_opening(data, structure=ball(3))
     # Second, close large vessels and the ventricles
@@ -333,8 +333,8 @@ def epi_mask(in_file, out_file=None):
     labels = ndimage.watershed_ift(wshed, markers)
 
     hdr = img.header.copy()
-    hdr.set_data_dtype("uint8")
+    hdr.set_data_dtype('uint8')
     nb.Nifti1Image(
-        ndimage.binary_dilation(labels == 2, ball(2)).astype("uint8"), img.affine, hdr
+        ndimage.binary_dilation(labels == 2, ball(2)).astype('uint8'), img.affine, hdr
     ).to_filename(out_file)
     return out_file
