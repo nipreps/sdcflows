@@ -174,11 +174,11 @@ class bidict(dict):
 
     def add(self, value):
         """Insert a new value in the bidict, generating an automatic key."""
-        _used = set(
+        _used = {
             int(i.groups()[0])
             for i in [_autokey_pat.match(k) for k in self.keys() if k.startswith('auto_')]
             if i is not None
-        )
+        }
         for i in range(len(_used) + 1):
             if i not in _used:
                 newkey = f'auto_{i:05d}'
@@ -222,11 +222,11 @@ class EstimatorRegistry(bidict):
     @property
     def sources(self):
         """Return a flattened list of fieldmap sources."""
-        return sorted(set([el for group in self.values() for el in group]))
+        return sorted({el for group in self.values() for el in group})
 
     def get_key(self, value):
         """Get the key(s) containing a particular value."""
         if value not in self.sources:
-            return tuple()
+            return ()
 
         return tuple(sorted(k for k, v in self.items() if value in v))

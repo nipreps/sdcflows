@@ -14,7 +14,7 @@ from apigen import ApiDocWriter
 
 
 def abort(error):
-    print('*WARNING* API documentation not generated: %s' % error)
+    print(f'*WARNING* API documentation not generated: {error}')
     exit()
 
 
@@ -41,7 +41,7 @@ def writeapi(package, outdir, source_version, other_defines=True):
     docwriter = ApiDocWriter(package, rst_extension='.rst', other_defines=other_defines)
 
     docwriter.package_skip_patterns += [
-        r'\.%s$' % package,
+        rf'\.{package}$',
         r'.*test.*$',
         r'\.version.*$',
     ]

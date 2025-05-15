@@ -61,7 +61,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
     def __init__(self, **kwargs):
         """Instantiate FieldmapReportlet."""
         self._n_cuts = kwargs.pop('n_cuts', self._n_cuts)
-        super(FieldmapReportlet, self).__init__(generate_report=True, **kwargs)
+        super().__init__(generate_report=True, **kwargs)
 
     def _run_interface(self, runtime):
         return runtime
@@ -77,7 +77,7 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
         fmapnii = nb.squeeze_image(rotate_affine(load_img(self.inputs.fieldmap), rot=canonical_r))
 
         if fmapnii.dataobj.ndim == 4:
-            for i, tstep in enumerate(nb.four_to_three(fmapnii)):
+            for tstep in nb.four_to_three(fmapnii):
                 if np.any(np.asanyarray(tstep.dataobj) != 0):
                     fmapnii = tstep
                     break

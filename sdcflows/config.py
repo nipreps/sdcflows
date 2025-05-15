@@ -124,6 +124,8 @@ except ImportError:
     from importlib_metadata import version as get_version
 
 # Ignore annoying warnings
+import contextlib
+
 from sdcflows import __version__
 from sdcflows._warnings import logging
 
@@ -220,7 +222,7 @@ Path to configuration file.
 class _Config:
     """An abstract class forbidding instantiation."""
 
-    _paths = tuple()
+    _paths = ()
 
     def __init__(self):
         """Avert instantiation."""
@@ -239,10 +241,8 @@ class _Config:
                 setattr(cls, k, v)
 
         if init:
-            try:
+            with contextlib.suppress(AttributeError):
                 cls.init()
-            except AttributeError:
-                pass
 
     @classmethod
     def get(cls):
