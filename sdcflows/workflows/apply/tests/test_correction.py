@@ -23,10 +23,12 @@
 """Test unwarp."""
 
 import json
+
 import pytest
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
+
 from sdcflows.workflows.apply.correction import init_unwarp_wf
 
 
@@ -56,8 +58,8 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
         )
 
     if outdir:
-        from ...outputs import DerivativesDataSink
         from ....interfaces.reportlets import FieldmapReportlet
+        from ...outputs import DerivativesDataSink
 
         outdir = outdir / f'with{"" if with_affine else "out"}-affine'
         outdir.mkdir(exist_ok=True, parents=True)
@@ -122,6 +124,7 @@ def test_unwarp_wf(tmpdir, datadir, workdir, outdir, with_affine):
 
 def _squeeze(in_file):
     from pathlib import Path
+
     import nibabel as nb
 
     img = nb.load(in_file)

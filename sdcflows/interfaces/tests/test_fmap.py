@@ -22,8 +22,8 @@
 #
 """Test fieldmap interfaces."""
 
-import numpy as np
 import nibabel as nb
+import numpy as np
 import pytest
 
 from ..fmap import CheckB0Units

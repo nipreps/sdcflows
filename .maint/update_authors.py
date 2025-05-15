@@ -9,9 +9,10 @@
 # ///
 """Update and sort the creators list of the zenodo record."""
 
+import json
 import sys
 from pathlib import Path
-import json
+
 import click
 from fuzzywuzzy import fuzz, process
 
@@ -123,7 +124,7 @@ def get_git_lines(fname='line-contributors.txt'):
     if not lines and cmd[0]:
         print(f'Running {" ".join(cmd)!r} on repo')
         lines = sp.check_output(cmd).decode().splitlines()
-        lines = [l for l in lines if 'Not Committed Yet' not in l]
+        lines = [line for line in lines if 'Not Committed Yet' not in line]
         contrib_file.write_text('\n'.join(lines))
 
     if not lines:

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 """Script to auto-generate API docs."""
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 # stdlib imports
 import sys
 
-# local imports
-from apigen import ApiDocWriter
-
 # version comparison
 from distutils.version import LooseVersion as V
+
+# local imports
+from apigen import ApiDocWriter
 
 # *****************************************************************************
 

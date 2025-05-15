@@ -23,19 +23,22 @@
 """Utilities."""
 
 from itertools import product
-from nipype.interfaces.base import (
-    BaseInterfaceInputSpec,
-    TraitedSpec,
-    File,
-    traits,
-    SimpleInterface,
-    InputMultiObject,
-    OutputMultiObject,
-    isdefined,
-)
+
 from nipype.interfaces.ants.segmentation import (
     DenoiseImage as _DenoiseImageBase,
+)
+from nipype.interfaces.ants.segmentation import (
     DenoiseImageInputSpec as _DenoiseImageInputSpecBase,
+)
+from nipype.interfaces.base import (
+    BaseInterfaceInputSpec,
+    File,
+    InputMultiObject,
+    OutputMultiObject,
+    SimpleInterface,
+    TraitedSpec,
+    isdefined,
+    traits,
 )
 from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 
@@ -111,8 +114,8 @@ class UniformGrid(SimpleInterface):
     def _run_interface(self, runtime):
         import nibabel as nb
         import numpy as np
-        from nitransforms.linear import Affine
         from nipype.utils.filemanip import fname_presuffix
+        from nitransforms.linear import Affine
 
         retval = [None] * len(self.inputs.in_data)
         self._results['reference'] = self.inputs.in_data[self.inputs.reference]
@@ -177,8 +180,8 @@ class ReorientImageAndMetadata(SimpleInterface):
     output_spec = _ReorientImageAndMetadataOutputSpec
 
     def _run_interface(self, runtime):
-        import numpy as np
         import nibabel as nb
+        import numpy as np
         from nipype.utils.filemanip import fname_presuffix
 
         target = self.inputs.target_orientation.upper()
@@ -396,6 +399,7 @@ def _flatten(inlist, max_trs=50, out_dir=None):
 
     """
     from pathlib import Path
+
     import nibabel as nb
 
     out_dir = Path(out_dir) if out_dir is not None else Path()
@@ -419,8 +423,8 @@ def _flatten(inlist, max_trs=50, out_dir=None):
 
 def _qwarp2ants(in_file, newpath=None):
     """Ensure the data type and intent of a warp is acceptable by ITK-based tools."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
@@ -434,8 +438,8 @@ def _qwarp2ants(in_file, newpath=None):
 
 
 def _deoblique(in_file, in_affine=None, newpath=None):
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
@@ -464,8 +468,8 @@ def _deoblique(in_file, in_affine=None, newpath=None):
 
 
 def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     epinii = nb.load(in_epi)
@@ -519,8 +523,8 @@ def _pad_num_slices(in_file, ax=2, newpath=None):
 
     """
     import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
     import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
 
     img = nb.load(in_file)
     if img.shape[ax] % 2 == 0:
@@ -547,6 +551,7 @@ def _ensure_positive_cosines(in_file: str, newpath: str = None):
     """
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
+
     from sdcflows.utils.tools import ensure_positive_cosines
 
     out_file = fname_presuffix(in_file, suffix='_flipfree', newpath=newpath)

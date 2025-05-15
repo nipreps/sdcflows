@@ -23,8 +23,9 @@
 """Test _version.py."""
 
 import sys
-from importlib.metadata import PackageNotFoundError
 from importlib import reload
+from importlib.metadata import PackageNotFoundError
+
 import sdcflows
 
 

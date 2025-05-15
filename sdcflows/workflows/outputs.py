@@ -24,8 +24,8 @@
 
 import re
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.interfaces.bids import DerivativesDataSink as _DDS
 from niworkflows.interfaces.nibabel import MergeSeries
 

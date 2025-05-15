@@ -21,7 +21,6 @@ is an MIT-licensed project.
 import os
 import re
 from inspect import getmodule
-
 from types import BuiltinFunctionType, FunctionType
 
 # suppress print statements (warnings for empty files)
@@ -43,7 +42,7 @@ class ApiDocWriter(object):
         module_skip_patterns=None,
         other_defines=True,
     ):
-        """Initialize package for parsing
+        r"""Initialize package for parsing
 
         Parameters
         ----------
@@ -362,7 +361,7 @@ class ApiDocWriter(object):
         return True
 
     def discover_modules(self):
-        """Return module sequence discovered from ``self.package_name``
+        r"""Return module sequence discovered from ``self.package_name``
 
 
         Parameters
@@ -410,7 +409,6 @@ class ApiDocWriter(object):
 
     def write_modules_api(self, modules, outdir):
         # upper-level modules
-        main_module = modules[0].split('.')[0]
         ulms = [
             '.'.join(m.split('.')[:2]) if m.count('.') >= 1 else m.split('.')[0] for m in modules
         ]

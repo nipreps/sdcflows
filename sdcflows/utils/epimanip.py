@@ -298,6 +298,7 @@ def get_trt(
 def epi_mask(in_file, out_file=None):
     """Use grayscale morphological operations to obtain a quick mask of EPI data."""
     from pathlib import Path
+
     import nibabel as nb
     import numpy as np
     from scipy import ndimage

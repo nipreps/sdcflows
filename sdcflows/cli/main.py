@@ -25,11 +25,12 @@
 
 def main(argv=None):
     """Entry point for SDCFlows' CLI."""
+    import atexit
     import gc
     import os
     import sys
     from tempfile import mktemp
-    import atexit
+
     from sdcflows import config
     from sdcflows.cli.parser import parse_args
 
@@ -59,6 +60,7 @@ def main(argv=None):
 
     if config.execution.dry_run:  # --dry-run: pretty print results
         from niworkflows.utils.bids import collect_participants
+
         from sdcflows.utils.wrangler import find_estimators
 
         subjects = collect_participants(
@@ -91,9 +93,9 @@ def main(argv=None):
     # Initialize process pool if multiprocessing
     _pool = None
     if config.nipype.plugin in ('MultiProc', 'LegacyMultiProc'):
-        from contextlib import suppress
         import multiprocessing as mp
         from concurrent.futures import ProcessPoolExecutor
+        from contextlib import suppress
 
         os.environ['OMP_NUM_THREADS'] = '1'
 

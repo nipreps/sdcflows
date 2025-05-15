@@ -5,7 +5,7 @@ __copyright__ = '2022, The NiPreps developers'
 try:
     from ._version import __version__
 except ModuleNotFoundError:
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         __version__ = version(__packagename__)

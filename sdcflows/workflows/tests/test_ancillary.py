@@ -23,9 +23,10 @@
 """Check the tools submodule."""
 
 import pytest
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from nireports.interfaces.reporting.masks import SimpleShowMaskRPT
+
 from ..ancillary import init_brainextraction_wf
 
 

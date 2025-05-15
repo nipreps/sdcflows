@@ -22,9 +22,8 @@
 #
 """Datasets with multiple phase encoded directions."""
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
-
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -92,13 +91,13 @@ def init_topup_wf(
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
-    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
     from niworkflows.interfaces.images import RobustAverage
+    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
 
-    from ...utils.misc import front as _front
-    from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import UniformGrid, PadSlices, ReorientImageAndMetadata
     from ...interfaces.bspline import TOPUPCoeffReorient
+    from ...interfaces.epi import GetReadoutTime, SortPEBlips
+    from ...interfaces.utils import PadSlices, ReorientImageAndMetadata, UniformGrid
+    from ...utils.misc import front as _front
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -279,15 +278,19 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name='pepolar_estimate_wf'):
 
     """
     from nipype.interfaces import afni
-    from niworkflows.interfaces.header import CopyHeader
+    from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
     from niworkflows.interfaces.fixes import (
-        FixHeaderRegistration as Registration,
         FixHeaderApplyTransforms as ApplyTransforms,
     )
+    from niworkflows.interfaces.fixes import (
+        FixHeaderRegistration as Registration,
+    )
     from niworkflows.interfaces.freesurfer import StructuralReference
-    from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
-    from ...utils.misc import front as _front, last as _last
-    from ...interfaces.utils import Flatten, ConvertWarp
+    from niworkflows.interfaces.header import CopyHeader
+
+    from ...interfaces.utils import ConvertWarp, Flatten
+    from ...utils.misc import front as _front
+    from ...utils.misc import last as _last
 
     workflow = Workflow(name=name)
     workflow.__desc__ = f"""{_PEPOLAR_DESC} \

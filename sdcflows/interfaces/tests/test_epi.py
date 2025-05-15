@@ -23,6 +23,7 @@
 """Test EPI interfaces."""
 
 from pathlib import Path
+
 from ..epi import SortPEBlips
 
 

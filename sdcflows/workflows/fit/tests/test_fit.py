@@ -22,12 +22,15 @@
 #
 """Test that workflows build."""
 
-import pytest
 import sys
 
-from .. import fieldmap  # noqa
-from .. import pepolar  # noqa
-from .. import syn  # noqa
+import pytest
+
+from .. import (
+    fieldmap,  # noqa
+    pepolar,  # noqa
+    syn,  # noqa
+)
 
 
 @pytest.mark.parametrize(

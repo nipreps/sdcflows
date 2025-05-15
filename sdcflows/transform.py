@@ -47,24 +47,23 @@ see Eq. :math:`\eqref{eq:2}`).
 
 from __future__ import annotations
 
+import asyncio
 import os
 from functools import partial
-import asyncio
 from pathlib import Path
 from typing import Callable, Sequence, Tuple
+from warnings import warn
 
 import attr
-import numpy as np
-from warnings import warn
-from scipy import ndimage as ndi
-from scipy.interpolate import BSpline
-from scipy.sparse import hstack as sparse_hstack, kron, lil_array
-
 import nibabel as nb
 import nitransforms as nt
+import numpy as np
 from bids.utils import listify
-
 from niworkflows.interfaces.nibabel import reorient_image
+from scipy import ndimage as ndi
+from scipy.interpolate import BSpline
+from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import kron, lil_array
 
 from sdcflows.utils.tools import ensure_positive_cosines
 

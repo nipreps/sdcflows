@@ -23,6 +23,7 @@
 """Check the CLI."""
 
 from importlib import reload
+
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
 

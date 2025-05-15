@@ -22,19 +22,21 @@
 #
 """Test the base workflow."""
 
-from pathlib import Path
 import json
-import pytest
+from pathlib import Path
+
 import numpy as np
+import pytest
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
+from nireports.interfaces.reporting.base import (
+    SimpleBeforeAfterRPT as SimpleBeforeAfter,
+)
+
 from sdcflows import fieldmaps as sfm
 from sdcflows.interfaces.reportlets import FieldmapReportlet
 from sdcflows.workflows.apply import correction as swac
 from sdcflows.workflows.apply import registration as swar
-from nireports.interfaces.reporting.base import (
-    SimpleBeforeAfterRPT as SimpleBeforeAfter,
-)
 
 
 @pytest.mark.slow
@@ -189,10 +191,11 @@ def test_integration_wf(tmpdir, workdir, outdir, datadir, pe0, mode):
 
 
 def _transform_and_average(in_file, in_xfm):
-    import numpy as np
     from pathlib import Path
-    from nitransforms.linear import LinearTransformsMapping
+
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
+    from nitransforms.linear import LinearTransformsMapping
 
     out = fname_presuffix(in_file, suffix='_reference', newpath=str(Path.cwd().absolute()))
 

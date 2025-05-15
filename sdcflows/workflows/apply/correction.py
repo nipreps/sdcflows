@@ -22,8 +22,8 @@
 #
 """Applying a fieldmap given its B-Spline coefficients in Hz."""
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 
@@ -88,10 +88,11 @@ def init_unwarp_wf(
     """
     from niworkflows.interfaces.images import RobustAverage
     from niworkflows.interfaces.nibabel import MergeSeries
-    from sdcflows.interfaces.epi import GetReadoutTime
+
     from sdcflows.interfaces.bspline import ApplyCoeffsField
-    from sdcflows.workflows.ancillary import init_brainextraction_wf
+    from sdcflows.interfaces.epi import GetReadoutTime
     from sdcflows.utils.misc import front as _pop
+    from sdcflows.workflows.ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
     inputnode = pe.Node(

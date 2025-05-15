@@ -22,15 +22,16 @@
 #
 """Unit tests of the transform object."""
 
-from subprocess import check_call
 from itertools import product
-import pytest
-import numpy as np
+from subprocess import check_call
+
 import nibabel as nb
-from nitransforms.linear import LinearTransformsMapping
-from skimage.morphology import ball
+import numpy as np
+import pytest
 import scipy.ndimage as nd
 from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
+from nitransforms.linear import LinearTransformsMapping
+from skimage.morphology import ball
 
 from sdcflows import transform as tf
 from sdcflows.interfaces.bspline import bspline_grid

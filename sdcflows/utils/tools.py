@@ -52,6 +52,7 @@ def deoblique_and_zooms(
 
     """
     from itertools import product
+
     import numpy as np
     from nibabel.affines import apply_affine, rescale_affine
 
@@ -95,8 +96,9 @@ def deoblique_and_zooms(
 def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
     """Resample the input data to a new grid with the requested zooms."""
     from pathlib import Path
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
     from nibabel.affines import rescale_affine
     from nitransforms.linear import Affine
 
@@ -150,13 +152,14 @@ def ensure_positive_cosines(img):
 
 def brain_masker(in_file, out_file=None, padding=5):
     """Use grayscale morphological operations to obtain a quick mask of EPI data."""
-    from pathlib import Path
     import re
+    from pathlib import Path
+
     import nibabel as nb
     import numpy as np
     from scipy import ndimage
-    from skimage.morphology import ball
     from skimage.filters import threshold_otsu
+    from skimage.morphology import ball
     from skimage.segmentation import random_walker
 
     # Load data

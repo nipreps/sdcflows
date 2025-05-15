@@ -23,8 +23,8 @@
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
 
 from nipype import logging
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 LOGGER = logging.getLogger('nipype.workflow')
@@ -61,6 +61,7 @@ def init_brainextraction_wf(name='brainextraction_wf'):
     """
     from nipype.interfaces.ants import N4BiasFieldCorrection
     from niworkflows.interfaces.nibabel import IntensityClip
+
     from ..interfaces.brainmask import BrainExtraction
 
     wf = Workflow(name=name)

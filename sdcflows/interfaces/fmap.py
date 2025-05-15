@@ -23,21 +23,22 @@
 """Interfaces to deal with the various types of fieldmap sources."""
 
 import os
-import numpy as np
+
 import nibabel as nb
 import nitransforms as nt
-from nipype.utils.filemanip import fname_presuffix
+import numpy as np
 from nipype import logging
+from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
-    TraitedSpec,
     File,
-    traits,
-    SimpleInterface,
     InputMultiObject,
     OutputMultiObject,
+    SimpleInterface,
+    TraitedSpec,
+    traits,
 )
-from nipype.interfaces import freesurfer as fs
+from nipype.utils.filemanip import fname_presuffix
 
 LOGGER = logging.getLogger('nipype.interface')
 
@@ -118,7 +119,8 @@ class Phasediff2Fieldmap(SimpleInterface):
     output_spec = _Phasediff2FieldmapOutputSpec
 
     def _run_interface(self, runtime):
-        from ..utils.phasemanip import phdiff2fmap, delta_te as _delta_te
+        from ..utils.phasemanip import delta_te as _delta_te
+        from ..utils.phasemanip import phdiff2fmap
 
         self._results['out_file'] = phdiff2fmap(
             self.inputs.in_file, _delta_te(self.inputs.metadata), newpath=runtime.cwd

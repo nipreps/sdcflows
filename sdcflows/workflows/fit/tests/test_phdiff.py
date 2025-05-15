@@ -22,12 +22,12 @@
 #
 """Test phase-difference type of fieldmaps."""
 
-from pathlib import Path
 from json import loads
+from pathlib import Path
 
 import pytest
 
-from ..fieldmap import init_fmap_wf, Workflow
+from ..fieldmap import Workflow, init_fmap_wf
 
 
 @pytest.mark.slow

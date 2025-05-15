@@ -22,8 +22,8 @@
 #
 r"""Processing phase-difference and *directly measured* :math:`B_0` maps."""
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 INPUT_FIELDS = ('magnitude', 'fieldmap')
@@ -92,8 +92,8 @@ def init_fmap_wf(
 
     """
     from ...interfaces.bspline import (
-        BSplineApprox,
         DEFAULT_HF_ZOOMS_MM,
+        BSplineApprox,
     )
     from ...interfaces.fmap import CheckRegister
 
@@ -167,6 +167,7 @@ acquisitions.
         # fmt: on
     else:
         from niworkflows.interfaces.images import IntraModalMerge
+
         from ...interfaces.fmap import CheckB0Units
 
         workflow.__desc__ = """\
@@ -231,6 +232,7 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
 
     """
     from niworkflows.interfaces.images import IntraModalMerge
+
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -314,6 +316,7 @@ def init_phdiff_wf(omp_nthreads, debug=False, name='phdiff_wf'):
 
     """
     from nipype.interfaces.fsl import PRELUDE
+
     from ...interfaces.fmap import Phasediff2Fieldmap, PhaseMap2rads, SubtractPhases
 
     workflow = Workflow(name=name)

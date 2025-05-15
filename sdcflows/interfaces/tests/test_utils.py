@@ -22,11 +22,11 @@
 #
 """Test utilities."""
 
-import pytest
-import numpy as np
 import nibabel as nb
+import numpy as np
+import pytest
 
-from ..utils import Flatten, ConvertWarp, Deoblique, Reoblique, PadSlices
+from ..utils import ConvertWarp, Deoblique, Flatten, PadSlices, Reoblique
 
 
 def test_Flatten(tmpdir):

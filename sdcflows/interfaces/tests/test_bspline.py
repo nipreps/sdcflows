@@ -23,16 +23,17 @@
 """Test B-Spline interfaces."""
 
 import os
-import numpy as np
+
 import nibabel as nb
+import numpy as np
 import pytest
 
 from ..bspline import (
-    bspline_grid,
     ApplyCoeffsField,
     BSplineApprox,
     TOPUPCoeffReorient,
     _fix_topup_fieldcoeff,
+    bspline_grid,
 )
 
 rng = np.random.default_rng(seed=20160305)  # First commit in nipreps/sdcflows

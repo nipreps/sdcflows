@@ -23,9 +23,11 @@
 """Test the fieldmap reportlets."""
 
 from pathlib import Path
+
 import pytest
-from ..reportlets import FieldmapReportlet
+
 from ...utils.epimanip import epi_mask
+from ..reportlets import FieldmapReportlet
 
 
 @pytest.mark.parametrize('mask', [True, False])

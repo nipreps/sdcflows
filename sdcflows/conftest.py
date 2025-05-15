@@ -22,13 +22,15 @@
 #
 """py.test configuration."""
 
-import os
 import logging
+import os
 from pathlib import Path
-import numpy
+
 import nibabel
+import numpy
 import pytest
 from bids.layout import BIDSLayout
+
 from .fieldmaps import clear_registry
 
 # disable ET

@@ -23,7 +23,9 @@
 """Test the base workflow."""
 
 from pathlib import Path
+
 import pytest
+
 from sdcflows import fieldmaps as fm
 from sdcflows.utils.wrangler import find_estimators
 from sdcflows.workflows.base import init_fmap_preproc_wf

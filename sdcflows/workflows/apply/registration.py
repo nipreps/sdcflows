@@ -31,8 +31,9 @@ The target EPI is the distorted dataset (or a reference thereof).
 """
 
 from warnings import warn
-from nipype.pipeline import engine as pe
+
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -95,8 +96,9 @@ def init_coeff2epi_wf(
         as moving, resampling the latter into the fieldmap space.
 
     """
-    from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+    from packaging.version import Version
+    from packaging.version import parse as parseversion
 
     from sdcflows.interfaces import brainmask
 

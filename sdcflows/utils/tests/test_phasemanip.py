@@ -22,8 +22,8 @@
 #
 """Test phase manipulation routines."""
 
-import numpy as np
 import nibabel as nb
+import numpy as np
 
 from ..phasemanip import au2rads, phdiff2fmap
 

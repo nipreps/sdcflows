@@ -43,11 +43,11 @@ def plot_registration(
     """
     from uuid import uuid4
 
-    from lxml import etree
     import matplotlib.pyplot as plt
+    from lxml import etree
     from nilearn.plotting import plot_anat
     from nireports._vendored.svgutils.transform import SVGFigure
-    from nireports.reportlets.utils import robust_set_limits, extract_svg, SVGNS
+    from nireports.reportlets.utils import SVGNS, extract_svg, robust_set_limits
 
     plot_params = plot_params or {}
 
@@ -101,8 +101,8 @@ def plot_registration(
 
 def coolwarm_transparent(max_alpha=0.7, opaque_perc=30, transparent_perc=8):
     """Modify the coolwarm color scale to have full transparency around the middle."""
-    import numpy as np
     import matplotlib.pylab as pl
+    import numpy as np
     from matplotlib.colors import ListedColormap
 
     # Choose colormap

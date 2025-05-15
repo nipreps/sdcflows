@@ -26,8 +26,8 @@ Estimating the susceptibility distortions without fieldmaps.
 
 import json
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -112,25 +112,30 @@ def init_syn_sdc_wf(
         Short description of the estimation method that was run.
 
     """
-    from packaging.version import parse as parseversion, Version
     from nipype.interfaces.ants import ImageMath
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
+    )
+    from niworkflows.interfaces.fixes import (
         FixHeaderRegistration as Registration,
     )
     from niworkflows.interfaces.nibabel import (
         IntensityClip,
         RegridToZooms,
     )
-    from ...utils.misc import front as _pop, last as _pull
-    from ...interfaces.epi import GetReadoutTime
-    from ...interfaces.fmap import DisplacementsField2Fieldmap
+    from packaging.version import Version
+    from packaging.version import parse as parseversion
+
+    from ...interfaces.brainmask import BinaryDilation, Union
     from ...interfaces.bspline import (
+        DEFAULT_HF_ZOOMS_MM,
         ApplyCoeffsField,
         BSplineApprox,
-        DEFAULT_HF_ZOOMS_MM,
     )
-    from ...interfaces.brainmask import BinaryDilation, Union
+    from ...interfaces.epi import GetReadoutTime
+    from ...interfaces.fmap import DisplacementsField2Fieldmap
+    from ...utils.misc import front as _pop
+    from ...utils.misc import last as _pull
 
     ants_version = Registration().version
     if ants_version and parseversion(ants_version) < Version('2.2.0'):
@@ -406,18 +411,21 @@ def init_syn_preprocessing_wf(
         the cost function of SyN.
 
     """
-    from niworkflows.interfaces.nibabel import (
-        IntensityClip,
-        ApplyMask,
-        GenerateSamplingReference,
-    )
     from niworkflows.interfaces.fixes import (
         FixHeaderApplyTransforms as ApplyTransforms,
+    )
+    from niworkflows.interfaces.fixes import (
         FixHeaderRegistration as Registration,
     )
+    from niworkflows.interfaces.nibabel import (
+        ApplyMask,
+        GenerateSamplingReference,
+        IntensityClip,
+    )
     from niworkflows.workflows.epi.refmap import init_epi_reference_wf
-    from ...interfaces.utils import Deoblique, DenoiseImage
-    from ...interfaces.brainmask import BrainExtraction, BinaryDilation
+
+    from ...interfaces.brainmask import BinaryDilation, BrainExtraction
+    from ...interfaces.utils import DenoiseImage, Deoblique
 
     workflow = Workflow(name=name)
 
@@ -591,8 +599,8 @@ def init_syn_preprocessing_wf(
 
 def _warp_dir(moving_image, fixed_image, pe_dir, nlevels=2):
     """Extract the ``restrict_deformation`` argument from metadata."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
 
     moving = nb.load(moving_image)
     fixed = nb.load(fixed_image)
@@ -641,8 +649,8 @@ def _merge_meta(epi_ref, meta_list):
 
 def _set_dtype(in_file, dtype='int16'):
     """Change the dtype of an image."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
 
     img = nb.load(in_file)
     if img.header.get_data_dtype() == np.dtype(dtype):
@@ -672,8 +680,9 @@ def _adjust_zooms(in_anat, in_epi, z_max=2.2, z_min=1.8):
 def match_histogram(reference, image, ref_mask=None, img_mask=None):
     """Match the histogram of the T2-like anatomical with the EPI."""
     import os
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
     from skimage.exposure import match_histograms
 
@@ -710,8 +719,9 @@ def match_histogram(reference, image, ref_mask=None, img_mask=None):
 def _norm_lap(in_file):
     """Brought over from nirodents."""
     from pathlib import Path
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     img = nb.load(in_file)

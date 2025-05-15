@@ -22,19 +22,20 @@
 #
 """Utilities for fieldmap estimation."""
 
-from pathlib import Path
-from enum import Enum, auto
+import re
 from collections import defaultdict
 from contextlib import suppress
-import re
-import attr
+from enum import Enum, auto
 from json import loads
+from pathlib import Path
+
+import attr
 from bids.layout import parse_file_entities
 from bids.utils import listify
 from niworkflows.utils.bids import relative_to_root
+
 from .utils.bimap import EstimatorRegistry
 from .utils.misc import create_logger
-
 
 logger = create_logger('sdcflows.fieldmaps')
 

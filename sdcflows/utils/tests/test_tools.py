@@ -22,10 +22,11 @@
 #
 """Test EPI manipulation routines."""
 
+import nibabel as nb
 import numpy as np
 import pytest
-import nibabel as nb
 from nitransforms.linear import Affine
+
 from sdcflows.utils.tools import brain_masker, deoblique_and_zooms
 
 

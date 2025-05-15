@@ -3,15 +3,15 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
-
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from sdcflows.utils.wrangler import find_estimators
 from sdcflows.fieldmaps import clear_registry, get_identifier
+from sdcflows.utils.wrangler import find_estimators
 
 
 def gen_layout(bids_dir, database_dir=None):
     import re
+
     from bids.layout import BIDSLayout, BIDSLayoutIndexer
 
     _indexer = BIDSLayoutIndexer(

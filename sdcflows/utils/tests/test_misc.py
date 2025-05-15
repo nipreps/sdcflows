@@ -23,9 +23,11 @@
 """Test miscellaneous utilities."""
 
 import sys
-from collections import namedtuple
 import types
+from collections import namedtuple
+
 import pytest
+
 from ..misc import get_free_mem
 
 

@@ -23,12 +23,13 @@
 """Brain extraction interfaces."""
 
 from nipype.interfaces.base import (
-    traits,
     BaseInterfaceInputSpec,
-    TraitedSpec,
     File,
     SimpleInterface,
+    TraitedSpec,
+    traits,
 )
+
 from ..utils.tools import brain_masker
 
 
@@ -113,11 +114,12 @@ class Union(SimpleInterface):
 def _dilate(in_file, radius=3, newpath=None):
     """Dilate (binary) input mask."""
     from pathlib import Path
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
     from scipy import ndimage
     from skimage.morphology import ball
-    from nipype.utils.filemanip import fname_presuffix
 
     mask = nb.load(in_file)
     newdata = ndimage.binary_dilation(np.asanyarray(mask.dataobj) > 0, ball(radius))
@@ -132,8 +134,9 @@ def _dilate(in_file, radius=3, newpath=None):
 def _union(in1, in2, newpath=None):
     """Dilate (binary) input mask."""
     from pathlib import Path
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     mask = nb.load(in1)

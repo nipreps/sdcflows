@@ -270,8 +270,8 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
 
 def parse_args(args=None, namespace=None):
     """Parse args and run further checks on the command line."""
-    from logging import DEBUG
     from json import loads
+    from logging import DEBUG
 
     parser = _parser()
     opts = parser.parse_args(args, namespace)

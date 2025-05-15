@@ -22,10 +22,12 @@
 #
 """test_fieldmaps."""
 
-from collections import namedtuple
 import shutil
-import pytest
+from collections import namedtuple
+
 import bids
+import pytest
+
 from .. import fieldmaps as fm
 
 

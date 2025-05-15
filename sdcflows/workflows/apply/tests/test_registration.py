@@ -23,10 +23,10 @@
 """Test pepolar type of fieldmaps."""
 
 import os
-import pytest
 
-from nipype.pipeline import engine as pe
+import pytest
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
 
 from ...fit.fieldmap import init_magnitude_wf
@@ -119,6 +119,7 @@ def test_registration_wf(tmpdir, datadir, workdir, outdir):
 
 def _gen_coeff(img):
     from pathlib import Path
+
     from sdcflows.interfaces.bspline import bspline_grid
 
     out_file = Path('coeff.nii.gz').absolute()

@@ -24,19 +24,19 @@
 
 import json
 
-import numpy as np
 import nibabel as nb
+import numpy as np
 import pytest
 from nipype.pipeline import engine as pe
 
 from .... import data
 from ..syn import (
-    init_syn_sdc_wf,
-    init_syn_preprocessing_wf,
     _adjust_zooms,
-    _set_dtype,
     _mm2vox,
+    _set_dtype,
     _warp_dir,
+    init_syn_preprocessing_wf,
+    init_syn_sdc_wf,
 )
 
 
@@ -211,8 +211,8 @@ def test_syn_wf_version(monkeypatch, ants_version):
 )
 def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
     """Exercise the adjust zooms function node."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
 
     tmpdir.chdir()
     nb.Nifti1Image(
@@ -240,8 +240,8 @@ def test_adjust_zooms(anat_res, epi_res, retval, tmpdir, datadir):
 )
 def test_ensure_dtype(in_dtype, out_dtype, tmpdir):
     """Exercise the set dtype function node."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
 
     tmpdir.chdir()
     nb.Nifti1Image(

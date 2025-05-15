@@ -23,8 +23,8 @@
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
 
 from nipype import logging
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ..utils.epimanip import get_trt
@@ -81,10 +81,10 @@ def init_fmap_preproc_wf(
         The preprocessed fieldmap coefficients.
 
     """
+    from sdcflows.fieldmaps import EstimatorType
     from sdcflows.workflows.fit.pepolar import INPUT_FIELDS as _pepolar_fields
     from sdcflows.workflows.fit.syn import INPUT_FIELDS as _syn_fields
     from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
-    from sdcflows.fieldmaps import EstimatorType
 
     INPUT_FIELDS = {
         EstimatorType.ANAT: _syn_fields,

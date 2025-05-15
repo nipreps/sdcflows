@@ -22,16 +22,16 @@
 #
 """Interfaces to generate speciality reportlets."""
 
-import numpy as np
 import nibabel as nb
-from nilearn.image import threshold_img, load_img
-from niworkflows import NIWORKFLOWS_LOG
-from niworkflows.utils.images import rotation2canonical, rotate_affine
-from nireports.reportlets.utils import cuts_from_bbox, compose_view
+import numpy as np
+from nilearn.image import load_img, threshold_img
 from nipype.interfaces.base import File, isdefined, traits
 from nipype.interfaces.mixins import reporting
+from nireports.reportlets.utils import compose_view, cuts_from_bbox
+from niworkflows import NIWORKFLOWS_LOG
+from niworkflows.utils.images import rotate_affine, rotation2canonical
 
-from ..viz.utils import plot_registration, coolwarm_transparent
+from ..viz.utils import coolwarm_transparent, plot_registration
 
 
 class _FieldmapReportletInputSpec(reporting.ReportCapableInputSpec):

@@ -25,8 +25,8 @@
 
 def au2rads(in_file, newpath=None):
     """Convert the input phase map in arbitrary units (a.u.) to rads."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     im = nb.load(in_file)
@@ -48,8 +48,8 @@ def au2rads(in_file, newpath=None):
 
 def subtract_phases(in_phases, in_meta, newpath=None):
     """Calculate the phase-difference map, given two input phase maps."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     echo_times = tuple([m.pop('EchoTime', None) for m in in_meta])
@@ -83,8 +83,8 @@ def subtract_phases(in_phases, in_meta, newpath=None):
 
 def phdiff2fmap(in_file, delta_te, newpath=None):
     """Convert the input phase-difference map into a *fieldmap* in Hz."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     out_file = fname_presuffix(str(in_file), suffix='_fmap', newpath=newpath)

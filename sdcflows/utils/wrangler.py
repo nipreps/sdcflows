@@ -23,13 +23,15 @@
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
 
 from __future__ import annotations
+
 import logging
+from contextlib import suppress
 from functools import reduce
 from itertools import product
-from contextlib import suppress
 from pathlib import Path
-from typing import Optional, Union, List, Dict, Any
-from bids.layout import BIDSLayout, BIDSFile
+from typing import Any, Dict, List, Optional, Union
+
+from bids.layout import BIDSFile, BIDSLayout
 from bids.utils import listify
 
 from .. import fieldmaps as fm
@@ -313,9 +315,10 @@ def find_estimators(
                        bids_id='auto_...')]
 
     """
-    from .misc import create_logger
-    from bids.layout import Query
     from bids.exceptions import BIDSEntityError
+    from bids.layout import Query
+
+    from .misc import create_logger
 
     # The created logger is set to ERROR log level
     logger = logger or create_logger('sdcflows.wrangler')

@@ -124,8 +124,8 @@ except ImportError:
     from importlib_metadata import version as get_version
 
 # Ignore annoying warnings
-from sdcflows._warnings import logging
 from sdcflows import __version__
+from sdcflows._warnings import logging
 
 _pre_exec_env = dict(os.environ)
 
@@ -426,8 +426,9 @@ class execution(_Config):
 
         if cls._layout is None:
             import re
-            from bids.layout.index import BIDSLayoutIndexer
+
             from bids.layout import BIDSLayout
+            from bids.layout.index import BIDSLayoutIndexer
 
             ignore_paths = [
                 # Ignore folders at the top if they don't start with /sub-<label>/
@@ -532,8 +533,8 @@ class loggers:
 
         """
         if not cls._init:
-            from nipype import logging as nlogging
             from nipype import config as ncfg
+            from nipype import logging as nlogging
 
             cls.workflow = nlogging.getLogger('nipype.workflow')
             cls.interface = nlogging.getLogger('nipype.interface')
