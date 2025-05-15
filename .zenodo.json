@@ -20,9 +20,15 @@
   ],
   "contributors": [
     {
-      "orcid": "0000-0003-3007-1056",
-      "affiliation": "Department of Psychology, Stanford University, CA, USA",
-      "name": "Ross W. Blair",
+      "orcid": "0009-0003-7070-5217",
+      "affiliation": "Lausanne University Hospital and University of Lausanne, Lausanne, Switzerland",
+      "name": "Julien Marabotto",
+      "type": "Researcher"
+    },
+    {
+      "orcid": "0000-0002-4391-3075",
+      "affiliation": "University of Montréal, Montréal, Canada",
+      "name": "Basile Pinsard",
       "type": "Researcher"
     },
     {
@@ -32,16 +38,32 @@
       "type": "Researcher"
     },
     {
+      "orcid": "0000-0003-4141-1343",
+      "affiliation": "Johns Hopkins Bloomberg School of Public Health",
+      "name": "Patrick Sadil",
+      "type": "Researcher"
+    },
+    {
+      "orcid": "0000-0003-2828-6031",
+      "affiliation": "Concordia University",
+      "name": "Mathieu Dugré",
+      "type": "Researcher"
+    },
+    {
       "orcid": "0000-0003-3715-7012",
       "affiliation": "Department of Neuroimaging, King's College London",
       "name": "Eilidh MacNicol",
       "type": "Researcher"
     },
     {
-      "orcid": "0000-0002-1931-4734",
-      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
-      "name": "Matthew Cieslak",
-      "type": "Researcher"
+      "name": "Marcel Zwiers",
+      "type": "Researcher",
+      "affiliation": "Unknown affiliation"
+    },
+    {
+      "name": "Yasser Aleman",
+      "type": "Researcher",
+      "affiliation": "Unknown affiliation"
     },
     {
       "orcid": "0000-0002-8888-1572",
@@ -50,9 +72,26 @@
       "type": "Researcher"
     },
     {
-      "orcid": "0000-0002-4391-3075",
-      "affiliation": "University of Montréal, Montréal, Canada",
-      "name": "Basile Pinsard",
+      "orcid": "0000-0002-3239-6957",
+      "affiliation": "Charite Universitatsmedizin Berlin, Germany",
+      "name": "Lea Waller",
+      "type": "Researcher"
+    },
+    {
+      "name": "Milton Camacho",
+      "type": "Researcher",
+      "affiliation": "Unknown affiliation"
+    },
+    {
+      "orcid": "0000-0002-9661-1396",
+      "affiliation": "Brigham and Women's Hospital, Mass General Brigham, Harvard Medical School, MA, USA",
+      "name": "Jon Haitz Legarreta Gorroño",
+      "type": "Researcher"
+    },
+    {
+      "orcid": "0000-0001-9049-0135",
+      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
+      "name": "Azeez Adebimpe",
       "type": "Researcher"
     },
     {
@@ -68,15 +107,21 @@
       "type": "Researcher"
     },
     {
+      "orcid": "0000-0002-1931-4734",
+      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
+      "name": "Matthew Cieslak",
+      "type": "Researcher"
+    },
+    {
       "orcid": "0000-0001-6948-9068",
       "affiliation": "Cyceron, UMS 3408 (CNRS - UCBN), France",
       "name": "Mikaël Naveau",
       "type": "Researcher"
     },
     {
-      "orcid": "0000-0001-9049-0135",
-      "affiliation": "Perelman School of Medicine, University of Pennsylvania, PA, USA",
-      "name": "Azeez Adebimpe",
+      "orcid": "0000-0003-3007-1056",
+      "affiliation": "Department of Psychology, Stanford University, CA, USA",
+      "name": "Ross W. Blair",
       "type": "Researcher"
     },
     {
