@@ -21,20 +21,24 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Utilities."""
+
 from itertools import product
-from nipype.interfaces.base import (
-    BaseInterfaceInputSpec,
-    TraitedSpec,
-    File,
-    traits,
-    SimpleInterface,
-    InputMultiObject,
-    OutputMultiObject,
-    isdefined,
-)
+
 from nipype.interfaces.ants.segmentation import (
     DenoiseImage as _DenoiseImageBase,
+)
+from nipype.interfaces.ants.segmentation import (
     DenoiseImageInputSpec as _DenoiseImageInputSpecBase,
+)
+from nipype.interfaces.base import (
+    BaseInterfaceInputSpec,
+    File,
+    InputMultiObject,
+    OutputMultiObject,
+    SimpleInterface,
+    TraitedSpec,
+    isdefined,
+    traits,
 )
 from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 
@@ -47,14 +51,14 @@ class _FlattenInputSpec(BaseInterfaceInputSpec):
     in_data = InputMultiObject(
         File(exists=True),
         mandatory=True,
-        desc="list of input data",
+        desc='list of input data',
     )
     in_meta = InputMultiObject(
         traits.Dict(traits.Str),
         mandatory=True,
-        desc="list of metadata",
+        desc='list of metadata',
     )
-    max_trs = traits.Int(50, usedefault=True, desc="only pick first TRs")
+    max_trs = traits.Int(50, usedefault=True, desc='only pick first TRs')
 
 
 class _FlattenOutputSpec(TraitedSpec):
@@ -63,7 +67,7 @@ class _FlattenOutputSpec(TraitedSpec):
             File(exists=True),
             traits.Dict(traits.Str),
         ),
-        desc="list of output files",
+        desc='list of output files',
     )
     out_data = OutputMultiObject(File(exists=True))
     out_meta = OutputMultiObject(traits.Dict(traits.Str))
@@ -76,14 +80,14 @@ class Flatten(SimpleInterface):
     output_spec = _FlattenOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_list"] = _flatten(
+        self._results['out_list'] = _flatten(
             zip(self.inputs.in_data, self.inputs.in_meta),
             max_trs=self.inputs.max_trs,
             out_dir=runtime.cwd,
         )
 
         # Unzip out_data, out_meta outputs.
-        self._results["out_data"], self._results["out_meta"] = zip(*self._results["out_list"])
+        self._results['out_data'], self._results['out_meta'] = zip(*self._results['out_list'])
         return runtime
 
 
@@ -91,9 +95,9 @@ class _UniformGridInputSpec(BaseInterfaceInputSpec):
     in_data = InputMultiObject(
         File(exists=True),
         mandatory=True,
-        desc="list of input data",
+        desc='list of input data',
     )
-    reference = traits.Int(0, usedefault=True, desc="reference index")
+    reference = traits.Int(0, usedefault=True, desc='reference index')
 
 
 class _UniformGridOutputSpec(TraitedSpec):
@@ -110,14 +114,14 @@ class UniformGrid(SimpleInterface):
     def _run_interface(self, runtime):
         import nibabel as nb
         import numpy as np
-        from nitransforms.linear import Affine
         from nipype.utils.filemanip import fname_presuffix
+        from nitransforms.linear import Affine
 
         retval = [None] * len(self.inputs.in_data)
-        self._results["reference"] = self.inputs.in_data[self.inputs.reference]
-        retval[self.inputs.reference] = self._results["reference"]
+        self._results['reference'] = self.inputs.in_data[self.inputs.reference]
+        retval[self.inputs.reference] = self._results['reference']
 
-        refnii = nb.load(self._results["reference"])
+        refnii = nb.load(self._results['reference'])
         refshape = refnii.shape[:3]
         refaff = refnii.affine
 
@@ -127,7 +131,7 @@ class UniformGrid(SimpleInterface):
                 continue
 
             nii = nb.load(fname)
-            retval[i] = fname_presuffix(fname, suffix=f"_regrid{i:03d}", newpath=runtime.cwd)
+            retval[i] = fname_presuffix(fname, suffix=f'_regrid{i:03d}', newpath=runtime.cwd)
 
             if np.allclose(nii.shape[:3], refshape) and np.allclose(nii.affine, refaff):
                 if np.all(nii.affine == refaff):
@@ -144,29 +148,29 @@ class UniformGrid(SimpleInterface):
             # Restore the original on-disk data type
             nii.__class__(regridded_img.dataobj, refaff, nii.header).to_filename(retval[i])
 
-        self._results["out_data"] = retval
+        self._results['out_data'] = retval
 
         return runtime
 
 
 class _ReorientImageAndMetadataInputSpec(TraitedSpec):
-    in_file = File(exists=True, mandatory=True, desc="Input 3- or 4D image")
-    target_orientation = traits.Str(desc="Axis codes of coordinate system to reorient to")
+    in_file = File(exists=True, mandatory=True, desc='Input 3- or 4D image')
+    target_orientation = traits.Str(desc='Axis codes of coordinate system to reorient to')
     pe_dir = InputMultiObject(
         traits.Enum(
-            *["".join(p) for p in product("ijkxyz", ("", "-"))],
+            *[''.join(p) for p in product('ijkxyz', ('', '-'))],
             mandatory=True,
-            desc="Phase encoding direction",
+            desc='Phase encoding direction',
         )
     )
 
 
 class _ReorientImageAndMetadataOutputSpec(TraitedSpec):
-    out_file = File(desc="Reoriented image")
+    out_file = File(desc='Reoriented image')
     pe_dir = OutputMultiObject(
         traits.Enum(
-            *["".join(p) for p in product("ijkxyz", ("", "-"))],
-            desc="Phase encoding direction in reoriented image",
+            *[''.join(p) for p in product('ijkxyz', ('', '-'))],
+            desc='Phase encoding direction in reoriented image',
         )
     )
 
@@ -176,13 +180,13 @@ class ReorientImageAndMetadata(SimpleInterface):
     output_spec = _ReorientImageAndMetadataOutputSpec
 
     def _run_interface(self, runtime):
-        import numpy as np
         import nibabel as nb
+        import numpy as np
         from nipype.utils.filemanip import fname_presuffix
 
         target = self.inputs.target_orientation.upper()
-        if not all(code in "RASLPI" for code in target):
-            raise ValueError(f"Invalid orientation code {self.inputs.target_orientation}")
+        if not all(code in 'RASLPI' for code in target):
+            raise ValueError(f'Invalid orientation code {self.inputs.target_orientation}')
 
         img = nb.load(self.inputs.in_file)
         img2target = nb.orientations.ornt_transform(
@@ -207,17 +211,17 @@ class ReorientImageAndMetadata(SimpleInterface):
             pe_dir=pe_dirs,
         )
 
-        reoriented.to_filename(self._results["out_file"])
+        reoriented.to_filename(self._results['out_file'])
 
         return runtime
 
 
 class _ConvertWarpInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="output of 3dQwarp")
+    in_file = File(exists=True, mandatory=True, desc='output of 3dQwarp')
 
 
 class _ConvertWarpOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc="the warp converted into ANTs")
+    out_file = File(exists=True, desc='the warp converted into ANTs')
 
 
 class ConvertWarp(SimpleInterface):
@@ -227,21 +231,21 @@ class ConvertWarp(SimpleInterface):
     output_spec = _ConvertWarpOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_file"] = _qwarp2ants(self.inputs.in_file, newpath=runtime.cwd)
+        self._results['out_file'] = _qwarp2ants(self.inputs.in_file, newpath=runtime.cwd)
         return runtime
 
 
 class _DeobliqueInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="the input dataset potentially oblique")
+    in_file = File(exists=True, mandatory=True, desc='the input dataset potentially oblique')
     in_mask = File(
         exists=True,
-        desc="a binary mask corresponding to the input dataset",
+        desc='a binary mask corresponding to the input dataset',
     )
 
 
 class _DeobliqueOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc="the input dataset, after correcting obliquity")
-    out_mask = File(exists=True, desc="the input mask, after correcting obliquity")
+    out_file = File(exists=True, desc='the input dataset, after correcting obliquity')
+    out_mask = File(exists=True, desc='the input mask, after correcting obliquity')
 
 
 class Deoblique(SimpleInterface):
@@ -251,15 +255,15 @@ class Deoblique(SimpleInterface):
     output_spec = _DeobliqueOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_file"] = _deoblique(
+        self._results['out_file'] = _deoblique(
             self.inputs.in_file,
             newpath=runtime.cwd,
         )
 
         if isdefined(self.inputs.in_mask):
-            self._results["out_mask"] = _deoblique(
+            self._results['out_mask'] = _deoblique(
                 self.inputs.in_mask,
-                in_affine=self._results["out_file"],
+                in_affine=self._results['out_file'],
                 newpath=runtime.cwd,
             )
 
@@ -267,23 +271,23 @@ class Deoblique(SimpleInterface):
 
 
 class _ReobliqueInputSpec(BaseInterfaceInputSpec):
-    in_plumb = File(exists=True, mandatory=True, desc="the plumb EPI image")
+    in_plumb = File(exists=True, mandatory=True, desc='the plumb EPI image')
     in_field = File(
         exists=True,
         mandatory=True,
-        desc="the plumb field map, extracted from the displacements field estimated by SyN",
+        desc='the plumb field map, extracted from the displacements field estimated by SyN',
     )
-    in_epi = File(exists=True, mandatory=True, desc="the original, potentially oblique EPI image")
+    in_epi = File(exists=True, mandatory=True, desc='the original, potentially oblique EPI image')
     in_mask = File(
         exists=True,
-        desc="a binary mask corresponding to the input dataset",
+        desc='a binary mask corresponding to the input dataset',
     )
 
 
 class _ReobliqueOutputSpec(TraitedSpec):
     out_epi = File(exists=True, desc="the reoblique'd EPI image")
     out_field = File(exists=True, desc="the reoblique'd EPI image")
-    out_mask = File(exists=True, desc="the input mask, after correcting obliquity")
+    out_mask = File(exists=True, desc='the input mask, after correcting obliquity')
 
 
 class Reoblique(SimpleInterface):
@@ -295,9 +299,9 @@ class Reoblique(SimpleInterface):
     def _run_interface(self, runtime):
         in_mask = self.inputs.in_mask if isdefined(self.inputs.in_mask) else None
         (
-            self._results["out_epi"],
-            self._results["out_field"],
-            self._results["out_mask"],
+            self._results['out_epi'],
+            self._results['out_field'],
+            self._results['out_mask'],
         ) = _reoblique(
             self.inputs.in_epi,
             self.inputs.in_plumb,
@@ -306,7 +310,7 @@ class Reoblique(SimpleInterface):
             newpath=runtime.cwd,
         )
         if not in_mask:
-            self._results.pop("out_mask")
+            self._results.pop('out_mask')
 
         return runtime
 
@@ -315,7 +319,7 @@ class _DenoiseImageInputSpec(_DenoiseImageInputSpecBase):
     copy_header = traits.Bool(
         True,
         usedefault=True,
-        desc="copy headers of the original image into the output (corrected) file",
+        desc='copy headers of the original image into the output (corrected) file',
     )
 
 
@@ -323,19 +327,19 @@ class DenoiseImage(_DenoiseImageBase, _CopyHeaderInterface):
     """Add copy_header capability to DenoiseImage from nipype."""
 
     input_spec = _DenoiseImageInputSpec
-    _copy_header_map = {"output_image": "input_image"}
+    _copy_header_map = {'output_image': 'input_image'}
 
 
 class _PadSlicesInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="3D or 4D NIfTI image")
+    in_file = File(exists=True, mandatory=True, desc='3D or 4D NIfTI image')
     axis = traits.Int(
-        2, usedefault=True, desc="The axis through which slices are stacked in the input data"
+        2, usedefault=True, desc='The axis through which slices are stacked in the input data'
     )
 
 
 class _PadSlicesOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc="The output file with even number of slices")
-    padded = traits.Bool(desc="Indicator if the input image was padded")
+    out_file = File(exists=True, desc='The output file with even number of slices')
+    padded = traits.Bool(desc='Indicator if the input image was padded')
 
 
 class PadSlices(SimpleInterface):
@@ -349,7 +353,7 @@ class PadSlices(SimpleInterface):
     output_spec = _PadSlicesOutputSpec
 
     def _run_interface(self, runtime):
-        self._results["out_file"], self._results["padded"] = _pad_num_slices(
+        self._results['out_file'], self._results['padded'] = _pad_num_slices(
             self.inputs.in_file,
             self.inputs.axis,
             runtime.cwd,
@@ -358,7 +362,7 @@ class PadSlices(SimpleInterface):
 
 
 class _PositiveDirectionCosinesInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="input image")
+    in_file = File(exists=True, mandatory=True, desc='input image')
 
 
 class _PositiveDirectionCosinesOutputSpec(TraitedSpec):
@@ -373,7 +377,7 @@ class PositiveDirectionCosines(SimpleInterface):
     output_spec = _PositiveDirectionCosinesOutputSpec
 
     def _run_interface(self, runtime):
-        (self._results["out_file"], self._results["in_orientation"]) = _ensure_positive_cosines(
+        (self._results['out_file'], self._results['in_orientation']) = _ensure_positive_cosines(
             self.inputs.in_file,
             newpath=runtime.cwd,
         )
@@ -395,6 +399,7 @@ def _flatten(inlist, max_trs=50, out_dir=None):
 
     """
     from pathlib import Path
+
     import nibabel as nb
 
     out_dir = Path(out_dir) if out_dir is not None else Path()
@@ -406,10 +411,10 @@ def _flatten(inlist, max_trs=50, out_dir=None):
             output.append((path, meta))
         else:
             splitnii = nb.four_to_three(img.slicer[:, :, :, :max_trs])
-            stem = Path(path).name.rpartition(".nii")[0]
+            stem = Path(path).name.rpartition('.nii')[0]
 
             for j, nii in enumerate(splitnii):
-                out_name = (out_dir / f"{stem}_idx-{j:03}.nii.gz").absolute()
+                out_name = (out_dir / f'{stem}_idx-{j:03}.nii.gz').absolute()
                 nii.to_filename(out_name)
                 output.append((str(out_name), meta))
 
@@ -418,23 +423,23 @@ def _flatten(inlist, max_trs=50, out_dir=None):
 
 def _qwarp2ants(in_file, newpath=None):
     """Ensure the data type and intent of a warp is acceptable by ITK-based tools."""
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
     hdr = nii.header.copy()
-    hdr.set_data_dtype("<f4")
-    hdr.set_intent("vector", (), "")
-    out_file = fname_presuffix(in_file, "_warpfield", newpath=newpath)
-    data = np.squeeze(nii.get_fdata(dtype="float32"))[..., np.newaxis, :]
+    hdr.set_data_dtype('<f4')
+    hdr.set_intent('vector', (), '')
+    out_file = fname_presuffix(in_file, '_warpfield', newpath=newpath)
+    data = np.squeeze(nii.get_fdata(dtype='float32'))[..., np.newaxis, :]
     nb.Nifti1Image(data, nii.affine, hdr).to_filename(out_file)
     return out_file
 
 
 def _deoblique(in_file, in_affine=None, newpath=None):
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     nii = nb.load(in_file)
@@ -444,7 +449,7 @@ def _deoblique(in_file, in_affine=None, newpath=None):
     if in_affine is None:
         orientation = nb.aff2axcodes(nii.affine)
         directions = (
-            np.array([int(l1 == l2) for l1, l2 in zip(orientation, "RAS")], dtype="float32") * 2
+            np.array([int(l1 == l2) for l1, l2 in zip(orientation, 'RAS')], dtype='float32') * 2
             - 1
         )
         newaff = np.eye(4)
@@ -457,14 +462,14 @@ def _deoblique(in_file, in_affine=None, newpath=None):
     hdr.set_qform(newaff, code=1)
     hdr.set_sform(newaff, code=1)
     newnii = nii.__class__(nii.dataobj, newaff, hdr)
-    out_file = fname_presuffix(in_file, suffix="_plumb", newpath=newpath)
+    out_file = fname_presuffix(in_file, suffix='_plumb', newpath=newpath)
     newnii.to_filename(out_file)
     return out_file
 
 
 def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
-    import numpy as np
     import nibabel as nb
+    import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
     epinii = nb.load(in_epi)
@@ -472,7 +477,7 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
         return in_plumb, in_field, in_mask
 
     out_files = [
-        fname_presuffix(f, suffix="_oriented", newpath=newpath) for f in (in_plumb, in_field)
+        fname_presuffix(f, suffix='_oriented', newpath=newpath) for f in (in_plumb, in_field)
     ] + [None]
     plumbnii = nb.load(in_plumb)
     plumbnii.__class__(plumbnii.dataobj, epinii.affine, epinii.header).to_filename(out_files[0])
@@ -484,7 +489,7 @@ def _reoblique(in_epi, in_plumb, in_field, in_mask=None, newpath=None):
     fmapnii.__class__(fmapnii.dataobj, epinii.affine, hdr).to_filename(out_files[1])
 
     if in_mask:
-        out_files[2] = fname_presuffix(in_mask, suffix="_oriented", newpath=newpath)
+        out_files[2] = fname_presuffix(in_mask, suffix='_oriented', newpath=newpath)
         masknii = nb.load(in_mask)
         hdr = masknii.header.copy()
         hdr.set_qform(*epinii.header.get_qform(coded=True))
@@ -518,8 +523,8 @@ def _pad_num_slices(in_file, ax=2, newpath=None):
 
     """
     import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
     import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
 
     img = nb.load(in_file)
     if img.shape[ax] % 2 == 0:
@@ -530,7 +535,7 @@ def _pad_num_slices(in_file, ax=2, newpath=None):
     padded = np.pad(img.dataobj, pwidth)
     hdr = img.header
     hdr.set_data_shape(padded.shape)
-    out_file = fname_presuffix(in_file, suffix="_padded", newpath=newpath)
+    out_file = fname_presuffix(in_file, suffix='_padded', newpath=newpath)
     img.__class__(padded, img.affine, header=hdr).to_filename(out_file)
     return out_file, True
 
@@ -546,9 +551,10 @@ def _ensure_positive_cosines(in_file: str, newpath: str = None):
     """
     import nibabel as nb
     from nipype.utils.filemanip import fname_presuffix
+
     from sdcflows.utils.tools import ensure_positive_cosines
 
-    out_file = fname_presuffix(in_file, suffix="_flipfree", newpath=newpath)
+    out_file = fname_presuffix(in_file, suffix='_flipfree', newpath=newpath)
     reoriented, axcodes = ensure_positive_cosines(nb.load(in_file))
     reoriented.to_filename(out_file)
-    return out_file, "".join(axcodes)
+    return out_file, ''.join(axcodes)

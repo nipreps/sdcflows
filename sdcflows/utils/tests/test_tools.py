@@ -21,25 +21,27 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test EPI manipulation routines."""
+
+import nibabel as nb
 import numpy as np
 import pytest
-import nibabel as nb
 from nitransforms.linear import Affine
+
 from sdcflows.utils.tools import brain_masker, deoblique_and_zooms
 
 
 def test_epi_mask(tmpdir, testdata_dir):
     """Check mask algorithm."""
     tmpdir.chdir()
-    mask = brain_masker(testdata_dir / "epi.nii.gz")[-1]
+    mask = brain_masker(testdata_dir / 'epi.nii.gz')[-1]
     assert abs(np.asanyarray(nb.load(mask).dataobj).sum() - 166476) < 10
 
 
-@pytest.mark.parametrize("padding", [0, 1, 4])
-@pytest.mark.parametrize("factor", [1, 4, 0.8])
-@pytest.mark.parametrize("centered", [True, False])
+@pytest.mark.parametrize('padding', [0, 1, 4])
+@pytest.mark.parametrize('factor', [1, 4, 0.8])
+@pytest.mark.parametrize('centered', [True, False])
 @pytest.mark.parametrize(
-    "rotate",
+    'rotate',
     [
         np.eye(4),
         # Rotate 90 degrees around x-axis
@@ -92,17 +94,14 @@ def test_deoblique_and_zooms(tmpdir, padding, factor, centered, rotate, debug=Fa
     ref_back = Affine(reference=ref_img).apply(ref_resampled, order=0)
     resampled = Affine(reference=out_img).apply(mov_img, order=2)
     if debug:
-        ref_img.to_filename("reference.nii.gz")
-        ref_back.to_filename("reference_back.nii.gz")
-        ref_resampled.to_filename("reference_resampled.nii.gz")
-        mov_img.to_filename("moving.nii.gz")
-        resampled.to_filename("resampled.nii.gz")
+        ref_img.to_filename('reference.nii.gz')
+        ref_back.to_filename('reference_back.nii.gz')
+        ref_resampled.to_filename('reference_resampled.nii.gz')
+        mov_img.to_filename('moving.nii.gz')
+        resampled.to_filename('resampled.nii.gz')
 
     # Allow up to 3% pixels wrong after up(down)sampling and walk back.
-    assert (
-        np.abs(np.clip(ref_back.get_fdata(), 0, 1) - ref_data).sum()
-        < ref_data.size * 0.03
-    )
+    assert np.abs(np.clip(ref_back.get_fdata(), 0, 1) - ref_data).sum() < ref_data.size * 0.03
 
     vox_vol_out = np.prod(out_img.header.get_zooms())
     vox_vol_mov = np.prod(mov_img.header.get_zooms())

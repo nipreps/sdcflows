@@ -6,8 +6,10 @@ full list see the documentation:
 http://www.sphinx-doc.org/en/master/config
 
 """
+
 from packaging.version import Version
-from sdcflows import __version__, __copyright__, __packagename__
+
+from sdcflows import __copyright__, __packagename__, __version__
 
 # -- Path setup --------------------------------------------------------------
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -18,7 +20,7 @@ from sdcflows import __version__, __copyright__, __packagename__
 # -- Project information -----------------------------------------------------
 project = __packagename__
 copyright = __copyright__
-author = "The SDCflows Developers"
+author = 'The SDCflows Developers'
 
 # The short X.Y version
 version = Version(__version__).public
@@ -27,57 +29,57 @@ release = __version__
 
 # -- General configuration ---------------------------------------------------
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.coverage",
-    "sphinx.ext.doctest",
-    "sphinx.ext.githubpages",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.viewcode",
-    "sphinxarg.ext",
-    "sphinxcontrib.apidoc",
-    "nbsphinx",
-    "nipype.sphinxext.apidoc",
-    "nipype.sphinxext.plot_workflow",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.githubpages',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    'sphinxarg.ext',
+    'sphinxcontrib.apidoc',
+    'nbsphinx',
+    'nipype.sphinxext.apidoc',
+    'nipype.sphinxext.plot_workflow',
 ]
 
 autodoc_mock_imports = [
-    "matplotlib",
-    "migas",
-    "nilearn",
-    "nipy",
-    "nitime",
-    "nireports",
-    "pandas",
-    "seaborn",
-    "skimage",
-    "svgutils",
-    "transforms3d",
+    'matplotlib',
+    'migas',
+    'nilearn',
+    'nipy',
+    'nitime',
+    'nireports',
+    'pandas',
+    'seaborn',
+    'skimage',
+    'svgutils',
+    'transforms3d',
 ]
 
 # Accept custom section names to be parsed for numpy-style docstrings
 # of parameters.
 napoleon_use_param = False
 napoleon_custom_sections = [
-    ("Inputs", "Parameters"),
-    ("Outputs", "Parameters"),
-    ("Attributes", "Parameters"),
-    ("Mandatory Inputs", "Parameters"),
-    ("Optional Inputs", "Parameters"),
+    ('Inputs', 'Parameters'),
+    ('Outputs', 'Parameters'),
+    ('Attributes', 'Parameters'),
+    ('Mandatory Inputs', 'Parameters'),
+    ('Optional Inputs', 'Parameters'),
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = "index"
+master_doc = 'index'
 
 numfig = True
 
@@ -86,16 +88,16 @@ numfig = True
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = "en"
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    "_build",
-    "Thumbs.db",
-    ".DS_Store",
-    "api/sdcflows.rst",
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    'api/sdcflows.rst',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -107,7 +109,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "furo"
+html_theme = 'furo'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -118,12 +120,12 @@ html_theme = "furo"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = ['_static']
 html_js_files = [
-    "js/version-switch.js",
+    'js/version-switch.js',
 ]
 html_css_files = [
-    "css/version-switch.css",
+    'css/version-switch.css',
 ]
 
 # Custom sidebar templates, must be a dictionary that maps document names
@@ -140,7 +142,7 @@ html_css_files = [
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "sdcflowsdoc"
+htmlhelp_basename = 'sdcflowsdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -166,10 +168,10 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "sdcflows.tex",
-        "SDCFlows Documentation",
-        "The SDCFlows Developers",
-        "manual",
+        'sdcflows.tex',
+        'SDCFlows Documentation',
+        'The SDCFlows Developers',
+        'manual',
     ),
 ]
 
@@ -178,7 +180,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "sdcflows", "SDCFlows Documentation", [author], 1)]
+man_pages = [(master_doc, 'sdcflows', 'SDCFlows Documentation', [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -189,12 +191,12 @@ man_pages = [(master_doc, "sdcflows", "SDCFlows Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "sdcflows",
-        "SDCFlows Documentation",
+        'sdcflows',
+        'SDCFlows Documentation',
         author,
-        "SDCFlows",
-        "One line description of project.",
-        "Miscellaneous",
+        'SDCFlows',
+        'One line description of project.',
+        'Miscellaneous',
     ),
 ]
 
@@ -214,31 +216,31 @@ epub_title = project
 # epub_uid = ''
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ["search.html"]
+epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
 
-apidoc_module_dir = "../sdcflows"
-apidoc_output_dir = "api"
-apidoc_excluded_paths = ["conftest.py", "*/tests/*", "tests/*"]
+apidoc_module_dir = '../sdcflows'
+apidoc_output_dir = 'api'
+apidoc_excluded_paths = ['conftest.py', '*/tests/*', 'tests/*']
 apidoc_separate_modules = True
-apidoc_extra_args = ["--module-first", "-d 1", "-T"]
+apidoc_extra_args = ['--module-first', '-d 1', '-T']
 
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "matplotlib": ("https://matplotlib.org/stable", None),
-    "bids": ("https://bids-standard.github.io/pybids/", None),
-    "nibabel": ("https://nipy.org/nibabel/", None),
-    "nipype": ("https://nipype.readthedocs.io/en/latest/", None),
-    "niworkflows": ("https://www.nipreps.org/niworkflows/", None),
-    "smriprep": ("https://www.nipreps.org/smriprep/", None),
-    "templateflow": ("https://www.templateflow.org/python-client", None),
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+    'bids': ('https://bids-standard.github.io/pybids/', None),
+    'nibabel': ('https://nipy.org/nibabel/', None),
+    'nipype': ('https://nipype.readthedocs.io/en/latest/', None),
+    'niworkflows': ('https://www.nipreps.org/niworkflows/', None),
+    'smriprep': ('https://www.nipreps.org/smriprep/', None),
+    'templateflow': ('https://www.templateflow.org/python-client', None),
 }
 
 # -- Options for versioning extension ----------------------------------------

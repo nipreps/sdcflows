@@ -21,23 +21,26 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test miscellaneous utilities."""
+
 import sys
-from collections import namedtuple
 import types
+from collections import namedtuple
+
 import pytest
+
 from ..misc import get_free_mem
 
 
-@pytest.mark.parametrize("retval", [None, 10])
+@pytest.mark.parametrize('retval', [None, 10])
 def test_get_free_mem(monkeypatch, retval):
     """Test the get_free_mem utility."""
 
     def mock_func():
         if retval is None:
             raise ImportError
-        return namedtuple("Mem", ("free",))(free=retval)
+        return namedtuple('Mem', ('free',))(free=retval)
 
-    psutil = types.ModuleType("psutil")
+    psutil = types.ModuleType('psutil')
     psutil.virtual_memory = mock_func
-    monkeypatch.setitem(sys.modules, "psutil", psutil)
+    monkeypatch.setitem(sys.modules, 'psutil', psutil)
     assert get_free_mem() == retval

@@ -21,32 +21,34 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Interfaces to deal with the various types of fieldmap sources."""
+
 import os
-import numpy as np
+
 import nibabel as nb
 import nitransforms as nt
-from nipype.utils.filemanip import fname_presuffix
+import numpy as np
 from nipype import logging
+from nipype.interfaces import freesurfer as fs
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
-    TraitedSpec,
     File,
-    traits,
-    SimpleInterface,
     InputMultiObject,
     OutputMultiObject,
+    SimpleInterface,
+    TraitedSpec,
+    traits,
 )
-from nipype.interfaces import freesurfer as fs
+from nipype.utils.filemanip import fname_presuffix
 
-LOGGER = logging.getLogger("nipype.interface")
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class _PhaseMap2radsInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="input (wrapped) phase map")
+    in_file = File(exists=True, mandatory=True, desc='input (wrapped) phase map')
 
 
 class _PhaseMap2radsOutputSpec(TraitedSpec):
-    out_file = File(desc="the phase map in the range 0 - 6.28")
+    out_file = File(desc='the phase map in the range 0 - 6.28')
 
 
 class PhaseMap2rads(SimpleInterface):
@@ -58,20 +60,18 @@ class PhaseMap2rads(SimpleInterface):
     def _run_interface(self, runtime):
         from ..utils.phasemanip import au2rads
 
-        self._results["out_file"] = au2rads(self.inputs.in_file, newpath=runtime.cwd)
+        self._results['out_file'] = au2rads(self.inputs.in_file, newpath=runtime.cwd)
         return runtime
 
 
 class _SubtractPhasesInputSpec(BaseInterfaceInputSpec):
-    in_phases = traits.List(File(exists=True), min=1, max=2, desc="input phase maps")
-    in_meta = traits.List(
-        traits.Dict(), min=1, max=2, desc="metadata corresponding to the inputs"
-    )
+    in_phases = traits.List(File(exists=True), min=1, max=2, desc='input phase maps')
+    in_meta = traits.List(traits.Dict(), min=1, max=2, desc='metadata corresponding to the inputs')
 
 
 class _SubtractPhasesOutputSpec(TraitedSpec):
-    phase_diff = File(exists=True, desc="phase difference map")
-    metadata = traits.Dict(desc="output metadata")
+    phase_diff = File(exists=True, desc='phase difference map')
+    metadata = traits.Dict(desc='output metadata')
 
 
 class SubtractPhases(SimpleInterface):
@@ -83,19 +83,18 @@ class SubtractPhases(SimpleInterface):
     def _run_interface(self, runtime):
         if len(self.inputs.in_phases) != len(self.inputs.in_meta):
             raise ValueError(
-                "Length of input phase-difference maps and metadata files "
-                "should match."
+                'Length of input phase-difference maps and metadata files should match.'
             )
 
         if len(self.inputs.in_phases) == 1:
-            self._results["phase_diff"] = self.inputs.in_phases[0]
-            self._results["metadata"] = self.inputs.in_meta[0]
+            self._results['phase_diff'] = self.inputs.in_phases[0]
+            self._results['metadata'] = self.inputs.in_meta[0]
             return runtime
 
         from ..utils.phasemanip import subtract_phases as _subtract_phases
 
         # Discard in_meta traits with copy(), so that pop() works.
-        self._results["phase_diff"], self._results["metadata"] = _subtract_phases(
+        self._results['phase_diff'], self._results['metadata'] = _subtract_phases(
             self.inputs.in_phases,
             (self.inputs.in_meta[0].copy(), self.inputs.in_meta[1].copy()),
             newpath=runtime.cwd,
@@ -105,12 +104,12 @@ class SubtractPhases(SimpleInterface):
 
 
 class _Phasediff2FieldmapInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="input fieldmap")
-    metadata = traits.Dict(mandatory=True, desc="BIDS metadata dictionary")
+    in_file = File(exists=True, mandatory=True, desc='input fieldmap')
+    metadata = traits.Dict(mandatory=True, desc='BIDS metadata dictionary')
 
 
 class _Phasediff2FieldmapOutputSpec(TraitedSpec):
-    out_file = File(desc="the output fieldmap")
+    out_file = File(desc='the output fieldmap')
 
 
 class Phasediff2Fieldmap(SimpleInterface):
@@ -120,21 +119,22 @@ class Phasediff2Fieldmap(SimpleInterface):
     output_spec = _Phasediff2FieldmapOutputSpec
 
     def _run_interface(self, runtime):
-        from ..utils.phasemanip import phdiff2fmap, delta_te as _delta_te
+        from ..utils.phasemanip import delta_te as _delta_te
+        from ..utils.phasemanip import phdiff2fmap
 
-        self._results["out_file"] = phdiff2fmap(
+        self._results['out_file'] = phdiff2fmap(
             self.inputs.in_file, _delta_te(self.inputs.metadata), newpath=runtime.cwd
         )
         return runtime
 
 
 class _CheckB0UnitsInputSpec(BaseInterfaceInputSpec):
-    in_file = File(exists=True, mandatory=True, desc="input fieldmap")
-    units = traits.Enum("Hz", "rad/s", mandatory=True, desc="fieldmap units")
+    in_file = File(exists=True, mandatory=True, desc='input fieldmap')
+    units = traits.Enum('Hz', 'rad/s', mandatory=True, desc='fieldmap units')
 
 
 class _CheckB0UnitsOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc="output fieldmap in Hz")
+    out_file = File(exists=True, desc='output fieldmap in Hz')
 
 
 class CheckB0Units(SimpleInterface):
@@ -144,36 +144,34 @@ class CheckB0Units(SimpleInterface):
     output_spec = _CheckB0UnitsOutputSpec
 
     def _run_interface(self, runtime):
-        if self.inputs.units == "Hz":
-            self._results["out_file"] = self.inputs.in_file
+        if self.inputs.units == 'Hz':
+            self._results['out_file'] = self.inputs.in_file
             return runtime
 
-        self._results["out_file"] = fname_presuffix(
-            self.inputs.in_file, suffix="_Hz", newpath=runtime.cwd
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.in_file, suffix='_Hz', newpath=runtime.cwd
         )
         img = nb.load(self.inputs.in_file)
         data = np.asanyarray(img.dataobj) / (2.0 * np.pi)
-        img.__class__(data, img.affine, img.header).to_filename(
-            self._results["out_file"]
-        )
+        img.__class__(data, img.affine, img.header).to_filename(self._results['out_file'])
         return runtime
 
 
 class _DisplacementsField2FieldmapInputSpec(BaseInterfaceInputSpec):
-    transform = File(exists=True, mandatory=True, desc="input displacements field")
-    epi = File(exists=True, mandatory=True, desc="source EPI image")
-    ro_time = traits.Float(mandatory=True, desc="total readout time")
+    transform = File(exists=True, mandatory=True, desc='input displacements field')
+    epi = File(exists=True, mandatory=True, desc='source EPI image')
+    ro_time = traits.Float(mandatory=True, desc='total readout time')
     pe_dir = traits.Enum(
-        "j-", "j", "i", "i-", "k", "k-", mandatory=True, desc="phase encoding direction"
+        'j-', 'j', 'i', 'i-', 'k', 'k-', mandatory=True, desc='phase encoding direction'
     )
-    demean = traits.Bool(False, usedefault=True, desc="regress field to the mean")
+    demean = traits.Bool(False, usedefault=True, desc='regress field to the mean')
     itk_transform = traits.Bool(
-        True, usedefault=True, desc="whether this is an ITK/ANTs transform"
+        True, usedefault=True, desc='whether this is an ITK/ANTs transform'
     )
 
 
 class _DisplacementsField2FieldmapOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc="output fieldmap in Hz")
+    out_file = File(exists=True, desc='output fieldmap in Hz')
 
 
 class DisplacementsField2Fieldmap(SimpleInterface):
@@ -185,8 +183,8 @@ class DisplacementsField2Fieldmap(SimpleInterface):
     def _run_interface(self, runtime):
         from sdcflows.transform import disp_to_fmap
 
-        self._results["out_file"] = fname_presuffix(
-            self.inputs.transform, suffix="_Hz", newpath=runtime.cwd
+        self._results['out_file'] = fname_presuffix(
+            self.inputs.transform, suffix='_Hz', newpath=runtime.cwd
         )
         fmapnii = disp_to_fmap(
             nb.load(self.inputs.transform),
@@ -201,12 +199,12 @@ class DisplacementsField2Fieldmap(SimpleInterface):
             data -= np.median(data)
 
             fmapnii = fmapnii.__class__(
-                data.astype("float32"),
+                data.astype('float32'),
                 fmapnii.affine,
                 fmapnii.header,
             )
 
-        fmapnii.to_filename(self._results["out_file"])
+        fmapnii.to_filename(self._results['out_file'])
         return runtime
 
 
@@ -216,31 +214,31 @@ class _CheckRegisterInputSpec(TraitedSpec):
         mandatory=True,
         minlen=1,
         maxlen=2,
-        desc="Magnitude image(s) to verify registration",
+        desc='Magnitude image(s) to verify registration',
     )
     fmap_files = InputMultiObject(
         File(exists=True),
         mandatory=True,
         minlen=1,
         maxlen=2,
-        desc="Phase(diff) or fieldmap image(s) to update affines",
+        desc='Phase(diff) or fieldmap image(s) to update affines',
     )
     rot_thresh = traits.Float(
-        0.02, usedefault=True, mandatory=True, desc="rotation threshold in radians"
+        0.02, usedefault=True, mandatory=True, desc='rotation threshold in radians'
     )
     trans_thresh = traits.Float(
-        1., usedefault=True, mandatory=True, desc="translation threshold in mm"
+        1.0, usedefault=True, mandatory=True, desc='translation threshold in mm'
     )
 
 
 class _CheckRegisterOutputSpec(TraitedSpec):
     mag_files = OutputMultiObject(
         File,
-        desc="Magnitude image(s) verified to be in register, with consistent affines",
+        desc='Magnitude image(s) verified to be in register, with consistent affines',
     )
     fmap_files = OutputMultiObject(
         File,
-        desc="Fieldmap files with consistent affines",
+        desc='Fieldmap files with consistent affines',
     )
 
 
@@ -323,14 +321,12 @@ class CheckRegister(SimpleInterface):
 
                 if np.any(angles > rot_thresh) or np.any(vec > trans_thresh):
                     LOGGER.critical(
-                        "Magnitude files {mag_files} are not in register with rotation "
-                        f"threshold {self.inputs.rot_thresh} and translation threshold "
-                        f"{self.inputs.trans_thresh}. Please manually verify images "
-                        "are in register and update the image headers before running SDC."
+                        'Magnitude files {mag_files} are not in register with rotation '
+                        f'threshold {self.inputs.rot_thresh} and translation threshold '
+                        f'{self.inputs.trans_thresh}. Please manually verify images '
+                        'are in register and update the image headers before running SDC.'
                     )
-                    raise ValueError(
-                        "Magnitude 1/2 orientation mismatch too big to ignore."
-                    )
+                    raise ValueError('Magnitude 1/2 orientation mismatch too big to ignore.')
 
         # Probably redundant, but we could hit this error
         # with phase1/magnitude1 + wonky phase2 + no magnitude2
@@ -345,8 +341,8 @@ class CheckRegister(SimpleInterface):
         out_fmaps = [_conform_img(fmap, mag_imgs[0], runtime.cwd) for fmap in fmap_imgs]
 
         self._results = {
-            "mag_files": out_mags,
-            "fmap_files": out_fmaps,
+            'mag_files': out_mags,
+            'fmap_files': out_fmaps,
         }
 
         return runtime
@@ -367,7 +363,7 @@ def _conform_img(
     basename = os.path.basename(img.get_filename())
     out_file = os.path.join(cwd, basename)
 
-    LOGGER.info(f"Copying affine to {basename}")
+    LOGGER.info(f'Copying affine to {basename}')
     new_img = img.__class__(img.dataobj, target_img.affine, img.header)
     new_img.to_filename(out_file)
 
@@ -380,13 +376,13 @@ def _check_gross_geometry(
 ):
     if img1.shape[:3] != img2.shape[:3]:
         return (
-            "Images have shape mismatch: "
-            f"{img1.get_filename()} {img1.shape}, "
-            f"{img2.get_filename()} {img2.shape}"
+            'Images have shape mismatch: '
+            f'{img1.get_filename()} {img1.shape}, '
+            f'{img2.get_filename()} {img2.shape}'
         )
     if nb.aff2axcodes(img1.affine) != nb.aff2axcodes(img2.affine):
         return (
-            "Images have orientation mismatch: "
-            f"{img1.get_filename()} {''.join(nb.aff2axcodes(img1.affine))}, "
-            f"{img2.get_filename()} {''.join(nb.aff2axcodes(img2.affine))}"
+            'Images have orientation mismatch: '
+            f'{img1.get_filename()} {"".join(nb.aff2axcodes(img1.affine))}, '
+            f'{img2.get_filename()} {"".join(nb.aff2axcodes(img2.affine))}'
         )

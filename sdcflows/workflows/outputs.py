@@ -21,10 +21,11 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Writing out outputs."""
+
 import re
 
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.interfaces.bids import DerivativesDataSink as _DDS
 from niworkflows.interfaces.nibabel import MergeSeries
 
@@ -32,7 +33,7 @@ from niworkflows.interfaces.nibabel import MergeSeries
 class DerivativesDataSink(_DDS):
     """Overload the ``out_path_base`` setting."""
 
-    out_path_base = "sdcflows"
+    out_path_base = 'sdcflows'
 
 
 del _DDS
@@ -44,7 +45,7 @@ def init_fmap_reports_wf(
     fmap_type,
     bids_fmap_id=None,
     custom_entities=None,
-    name="fmap_reports_wf",
+    name='fmap_reports_wf',
 ):
     """
     Set up a battery of datasinks to store reports in the right location.
@@ -79,29 +80,27 @@ def init_fmap_reports_wf(
 
     custom_entities = custom_entities or {}
     if bids_fmap_id:
-        custom_entities["fmapid"] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
+        custom_entities['fmapid'] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
-        niu.IdentityInterface(
-            fields=["source_files", "fieldmap", "fmap_ref", "fmap_mask"]
-        ),
-        name="inputnode",
+        niu.IdentityInterface(fields=['source_files', 'fieldmap', 'fmap_ref', 'fmap_mask']),
+        name='inputnode',
     )
 
-    fmap_rpt = pe.Node(FieldmapReportlet(), "fmap_rpt")
+    fmap_rpt = pe.Node(FieldmapReportlet(), 'fmap_rpt')
     fmap_rpt.interface._always_run = True
 
     ds_fmap_report = pe.Node(
         DerivativesDataSink(
             base_directory=str(output_dir),
-            datatype="figures",
-            suffix="fieldmap",
+            datatype='figures',
+            suffix='fieldmap',
             desc=fmap_type,
-            dismiss_entities=("fmap",),
+            dismiss_entities=('fmap',),
             allowed_entities=tuple(custom_entities.keys()),
         ),
-        name="ds_fmap_report",
+        name='ds_fmap_report',
     )
     for k, v in custom_entities.items():
         setattr(ds_fmap_report.inputs, k, v)
@@ -125,7 +124,7 @@ def init_fmap_derivatives_wf(
     output_dir,
     bids_fmap_id=None,
     custom_entities=None,
-    name="fmap_derivatives_wf",
+    name='fmap_derivatives_wf',
     write_coeff=False,
 ):
     """
@@ -158,42 +157,42 @@ def init_fmap_derivatives_wf(
     """
     custom_entities = custom_entities or {}
     if bids_fmap_id:
-        custom_entities["fmapid"] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
+        custom_entities['fmapid'] = re.sub(r'[^a-zA-Z0-9]', '', bids_fmap_id)
 
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["source_files", "fieldmap", "fmap_coeff", "fmap_ref", "fmap_meta"]
+            fields=['source_files', 'fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_meta']
         ),
-        name="inputnode",
+        name='inputnode',
     )
 
-    merge_fmap = pe.Node(MergeSeries(), name="merge_fmap")
+    merge_fmap = pe.Node(MergeSeries(), name='merge_fmap')
 
     ds_reference = pe.Node(
         DerivativesDataSink(
             base_directory=output_dir,
             compress=True,
-            suffix="fieldmap",
-            datatype="fmap",
-            dismiss_entities=("fmap",),
+            suffix='fieldmap',
+            datatype='fmap',
+            dismiss_entities=('fmap',),
             allowed_entities=tuple(custom_entities.keys()),
         ),
-        name="ds_reference",
+        name='ds_reference',
     )
 
     ds_fieldmap = pe.Node(
         DerivativesDataSink(
             base_directory=output_dir,
-            desc="preproc",
-            suffix="fieldmap",
-            datatype="fmap",
+            desc='preproc',
+            suffix='fieldmap',
+            datatype='fmap',
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
-        name="ds_fieldmap",
+        name='ds_fieldmap',
     )
-    ds_fieldmap.inputs.Units = "Hz"
+    ds_fieldmap.inputs.Units = 'Hz'
     if bids_fmap_id:
         ds_fieldmap.inputs.B0FieldIdentifier = bids_fmap_id
 
@@ -223,16 +222,16 @@ def init_fmap_derivatives_wf(
     ds_coeff = pe.MapNode(
         DerivativesDataSink(
             base_directory=output_dir,
-            suffix="fieldmap",
-            datatype="fmap",
+            suffix='fieldmap',
+            datatype='fmap',
             compress=True,
             allowed_entities=tuple(custom_entities.keys()),
         ),
-        name="ds_coeff",
-        iterfield=("in_file", "desc"),
+        name='ds_coeff',
+        iterfield=('in_file', 'desc'),
     )
 
-    gen_desc = pe.Node(niu.Function(function=_gendesc), name="gen_desc")
+    gen_desc = pe.Node(niu.Function(function=_gendesc), name='gen_desc')
 
     for k, v in custom_entities.items():
         setattr(ds_coeff.inputs, k, v)
@@ -267,9 +266,9 @@ def _gendesc(infiles):
         infiles = [infiles]
 
     if len(infiles) == 1:
-        return "coeff"
+        return 'coeff'
 
-    return [f"coeff{i}" for i, _ in enumerate(infiles)]
+    return [f'coeff{i}' for i, _ in enumerate(infiles)]
 
 
 def _getname(infile):
@@ -308,7 +307,7 @@ def _getsourcetype(infiles):
     from pathlib import Path
 
     fname = Path(infiles[0]).name
-    return "epi" if fname.endswith(("_epi.nii.gz", "_epi.nii")) else "magnitude"
+    return 'epi' if fname.endswith(('_epi.nii.gz', '_epi.nii')) else 'magnitude'
 
 
 def _selectintent(metadata):
@@ -338,6 +337,4 @@ def _selectintent(metadata):
     """
     from bids.utils import listify
 
-    return sorted(
-        set([el for m in listify(metadata) for el in listify(m.get("IntendedFor", []))])
-    )
+    return sorted(set([el for m in listify(metadata) for el in listify(m.get('IntendedFor', []))]))

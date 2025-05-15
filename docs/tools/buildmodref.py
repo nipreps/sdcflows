@@ -1,23 +1,22 @@
 #!/usr/bin/env python
-"""Script to auto-generate API docs.
-"""
-from __future__ import print_function, division
+"""Script to auto-generate API docs."""
+
+from __future__ import division, print_function
 
 # stdlib imports
 import sys
-import re
-
-# local imports
-from apigen import ApiDocWriter
 
 # version comparison
 from distutils.version import LooseVersion as V
+
+# local imports
+from apigen import ApiDocWriter
 
 # *****************************************************************************
 
 
 def abort(error):
-    print("*WARNING* API documentation not generated: %s" % error)
+    print('*WARNING* API documentation not generated: %s' % error)
     exit()
 
 
@@ -28,7 +27,7 @@ def writeapi(package, outdir, source_version, other_defines=True):
     try:
         __import__(package)
     except ImportError:
-        abort("Can not import " + package)
+        abort('Can not import ' + package)
 
     module = sys.modules[package]
 
@@ -39,21 +38,21 @@ def writeapi(package, outdir, source_version, other_defines=True):
 
     installed_version = V(module.__version__)
     if source_version != installed_version:
-        abort("Installed version does not match source version")
+        abort('Installed version does not match source version')
 
-    docwriter = ApiDocWriter(package, rst_extension=".rst", other_defines=other_defines)
+    docwriter = ApiDocWriter(package, rst_extension='.rst', other_defines=other_defines)
 
     docwriter.package_skip_patterns += [
-        r"\.%s$" % package,
-        r".*test.*$",
-        r"\.version.*$",
+        r'\.%s$' % package,
+        r'.*test.*$',
+        r'\.version.*$',
     ]
     docwriter.write_api_docs(outdir)
-    docwriter.write_index(outdir, "index", relative_to=outdir)
-    print("%d files written" % len(docwriter.written_modules))
+    docwriter.write_index(outdir, 'index', relative_to=outdir)
+    print('%d files written' % len(docwriter.written_modules))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     package = sys.argv[1]
     outdir = sys.argv[2]
     try:
@@ -61,6 +60,6 @@ if __name__ == "__main__":
     except IndexError:
         other_defines = True
     else:
-        other_defines = other_defines in ("True", "true", "1")
+        other_defines = other_defines in ('True', 'true', '1')
 
     writeapi(package, outdir, other_defines=other_defines)

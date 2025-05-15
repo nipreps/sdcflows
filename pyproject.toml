@@ -65,10 +65,8 @@ mem = [
 ]
 
 dev = [
-    "black",
     "pre-commit",
-    "isort",
-    "flake8-pyproject",
+    "ruff",
 ]
 
 test = [
@@ -117,39 +115,9 @@ version-file = "sdcflows/_version.py"
 # Developer tool configurations
 #
 
+# Disable black, use ruff below
 [tool.black]
-line-length = 99
-target-version = ['py39']
-skip-string-normalization = true
-exclude = '''
-# Directories
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | venv
-  | _build
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = 'black'
-skip_gitignore = true
-
-[tool.flake8]
-max-line-length = "99"
-doctests = "False"
-exclude = "*build/"
-ignore = ["W503", "E203"]
-per-file-ignores = [
-    "**/__init__.py : F401",
-    "docs/conf.py : E265",
-]
+exclude = "*"
 
 [tool.pytest.ini_options]
 minversion = "6"
@@ -206,3 +174,30 @@ skip = """
 ignore = [
   "W002",  # Test data contains duplicates
 ]
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.lint]
+select = [
+  "F",
+  "E",
+  "W",
+  "I",
+]
+ignore = [
+  "E203",
+  "B019",
+  "SIM108",
+  "C901",
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"*/__init__.py" = ["F401"]
+"docs/conf.py" = ["E265"]
+
+[tool.ruff.format]
+quote-style = "single"

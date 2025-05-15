@@ -21,15 +21,16 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`."""
+
 from nipype import logging
-from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-LOGGER = logging.getLogger("nipype.workflow")
+LOGGER = logging.getLogger('nipype.workflow')
 
 
-def init_brainextraction_wf(name="brainextraction_wf"):
+def init_brainextraction_wf(name='brainextraction_wf'):
     """
     Remove nonbrain tissue from images.
 
@@ -60,25 +61,26 @@ def init_brainextraction_wf(name="brainextraction_wf"):
     """
     from nipype.interfaces.ants import N4BiasFieldCorrection
     from niworkflows.interfaces.nibabel import IntensityClip
+
     from ..interfaces.brainmask import BrainExtraction
 
     wf = Workflow(name=name)
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=("in_file", "bspline_dist")), name="inputnode"
+        niu.IdentityInterface(fields=('in_file', 'bspline_dist')), name='inputnode'
     )
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=(
-                "out_file",
-                "out_brain",
-                "out_mask",
-                "out_probseg",
+                'out_file',
+                'out_brain',
+                'out_mask',
+                'out_probseg',
             )
         ),
-        name="outputnode",
+        name='outputnode',
     )
-    clipper_pre = pe.Node(IntensityClip(), name="clipper_pre")
+    clipper_pre = pe.Node(IntensityClip(), name='clipper_pre')
 
     # de-gradient the fields ("bias/illumination artifact")
     n4 = pe.Node(
@@ -90,10 +92,10 @@ def init_brainextraction_wf(name="brainextraction_wf"):
             shrink_factor=4,
         ),
         n_procs=8,
-        name="n4",
+        name='n4',
     )
-    clipper_post = pe.Node(IntensityClip(p_min=0.01, p_max=99.9), name="clipper_post")
-    masker = pe.Node(BrainExtraction(), name="masker")
+    clipper_post = pe.Node(IntensityClip(p_min=0.01, p_max=99.9), name='clipper_post')
+    masker = pe.Node(BrainExtraction(), name='masker')
 
     # fmt:off
     wf.connect([

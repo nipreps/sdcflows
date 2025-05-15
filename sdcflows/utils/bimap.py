@@ -21,9 +21,10 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """A bidirectional hashmap."""
+
 import re
 
-_autokey_pat = re.compile(r"^auto_(\d+)$")
+_autokey_pat = re.compile(r'^auto_(\d+)$')
 
 
 class bidict(dict):
@@ -125,7 +126,7 @@ class bidict(dict):
         super().__init__(*args, **kwargs)
         self._inverse = {v: k for k, v in self.items()}
         if len(self) != len(self._inverse):
-            raise TypeError("Bidirectional dictionary cannot contain repeated values")
+            raise TypeError('Bidirectional dictionary cannot contain repeated values')
 
     def __setitem__(self, key, value):
         if key == value:
@@ -141,9 +142,7 @@ class bidict(dict):
             raise TypeError(f"key '{key}' of {exc}")
 
         if self.__contains__(key):
-            raise KeyError(
-                f"'{key}' is already {'a value' * (key in self._inverse)} in mapping"
-            )
+            raise KeyError(f"'{key}' is already {'a value' * (key in self._inverse)} in mapping")
         if self.__contains__(value):
             raise ValueError(
                 f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping"
@@ -177,14 +176,12 @@ class bidict(dict):
         """Insert a new value in the bidict, generating an automatic key."""
         _used = set(
             int(i.groups()[0])
-            for i in [
-                _autokey_pat.match(k) for k in self.keys() if k.startswith("auto_")
-            ]
+            for i in [_autokey_pat.match(k) for k in self.keys() if k.startswith('auto_')]
             if i is not None
         )
         for i in range(len(_used) + 1):
             if i not in _used:
-                newkey = f"auto_{i:05d}"
+                newkey = f'auto_{i:05d}'
 
         self.__setitem__(newkey, value)
         return newkey

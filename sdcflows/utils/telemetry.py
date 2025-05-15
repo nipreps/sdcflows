@@ -25,11 +25,12 @@
 # The original file this work derives from is found at:
 # https://github.com/nipreps/mriqc/blob/8ceadba8669cc2a86119a97b9311ab968f11c6eb/mriqc/utils/telemetry.py
 """Ping MIGAS for telemetry."""
+
 import migas
 
 from sdcflows import config
 
-MIGAS_PACKAGE = "nipreps/sdcflows"
+MIGAS_PACKAGE = 'nipreps/sdcflows'
 
 
 def setup_migas(init_ping: bool = True, exit_ping: bool = True) -> None:
