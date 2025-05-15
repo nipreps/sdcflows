@@ -94,7 +94,7 @@ jobs:
     - name: Push "master" docs to gh-pages after a push to master (typically, a PR merge).
       if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
       run: |
-        if [[ "${CURBRANCH}" != "master" -a "${CURBRANCH}" != "main" ]]; then
+        if [[ "${CURBRANCH}" != "master" && "${CURBRANCH}" != "main" ]]; then
             echo "$CURBRANCH is not the default development branch"
             exit 1
         fi
