@@ -135,13 +135,15 @@ def delta_te(in_values):
             te2 = float(in_values.get('EchoTimeDifference'))
             return abs(te2)
         except TypeError:
-            raise ValueError('Phase/phase-difference fieldmaps: no echo-times information.')
+            raise ValueError(
+                'Phase/phase-difference fieldmaps: no echo-times information.'
+            ) from None
         except ValueError:
-            raise ValueError(f'Could not interpret metadata <EchoTimeDifference={te2}>.')
+            raise ValueError(f'Could not interpret metadata <EchoTimeDifference={te2}>.') from None
     try:
         te2 = float(te2 or 'unknown')
         te1 = float(te1 or 'unknown')
     except ValueError:
-        raise ValueError(f'Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>.')
+        raise ValueError(f'Could not interpret metadata <EchoTime(1,2)={(te1, te2)}>.') from None
 
     return abs(te2 - te1)

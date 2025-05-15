@@ -115,9 +115,9 @@ def init_fmap_preproc_wf(
                             in_file=f.path,
                             use_estimate=use_metadata_estimates,
                         )
-                    except ValueError:
+                    except ValueError as e:
                         msg = f'Missing readout timing information for <{f.path}>.'
-                        raise RuntimeError(msg)
+                        raise RuntimeError(msg) from e
 
         est_wf = estimator.get_workflow(
             use_metadata_estimates=use_metadata_estimates,

@@ -124,6 +124,8 @@ except ImportError:
     from importlib_metadata import version as get_version
 
 # Ignore annoying warnings
+import contextlib
+
 from sdcflows import __version__
 from sdcflows._warnings import logging
 
@@ -200,7 +202,7 @@ except Exception:
 _memory_gb = None
 try:
     if 'linux' in sys.platform:
-        with open('/proc/meminfo', 'r') as f_in:
+        with open('/proc/meminfo') as f_in:
             _meminfo_lines = f_in.readlines()
             _mem_total_line = [line for line in _meminfo_lines if 'MemTotal' in line][0]
             _mem_total = float(_mem_total_line.split()[1])
@@ -220,7 +222,7 @@ Path to configuration file.
 class _Config:
     """An abstract class forbidding instantiation."""
 
-    _paths = tuple()
+    _paths = ()
 
     def __init__(self):
         """Avert instantiation."""
@@ -239,10 +241,8 @@ class _Config:
                 setattr(cls, k, v)
 
         if init:
-            try:
+            with contextlib.suppress(AttributeError):
                 cls.init()
-            except AttributeError:
-                pass
 
     @classmethod
     def get(cls):
@@ -647,13 +647,3 @@ def _process_initializer(config_file: Path):
 
     # Set the maximal number of threads per process
     os.environ['OMP_NUM_THREADS'] = f'{config.nipype.omp_nthreads}'
-
-
-def restore_env():
-    """Restore the original environment."""
-
-    for k in os.environ.keys():
-        del os.environ[k]
-
-    for k, v in environment._pre_sdcflows.items():
-        os.environ[k] = v

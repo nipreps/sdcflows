@@ -27,7 +27,7 @@ from types import BuiltinFunctionType, FunctionType
 DEBUG = True
 
 
-class ApiDocWriter(object):
+class ApiDocWriter:
     """Class for automatic detection and parsing of API docs
     to Sphinx-parsable reST format"""
 
@@ -185,9 +185,8 @@ class ApiDocWriter(object):
             # nothing that we could handle here.
             return ([], [])
 
-        f = open(filename, 'rt')
-        functions, classes = self._parse_lines(f)
-        f.close()
+        with open(filename) as f:
+            functions, classes = self._parse_lines(f)
         return functions, classes
 
     def _parse_module_with_import(self, uri):
@@ -217,14 +216,10 @@ class ApiDocWriter(object):
                 continue
             obj = mod.__dict__[obj_str]
             # Check if function / class defined in module
-            if not self.other_defines and not getmodule(obj) == mod:
+            if not self.other_defines and getmodule(obj) != mod:
                 continue
             # figure out if obj is a function or class
-            if (
-                hasattr(obj, 'func_name')
-                or isinstance(obj, BuiltinFunctionType)
-                or isinstance(obj, FunctionType)
-            ):
+            if hasattr(obj, 'func_name') or isinstance(obj, (BuiltinFunctionType, FunctionType)):
                 functions.append(obj_str)
             else:
                 try:
@@ -278,7 +273,7 @@ class ApiDocWriter(object):
 
         # Make a shorter version of the uri that omits the package name for
         # titles
-        uri_short = re.sub(r'^%s\.' % self.package_name, '', uri)
+        uri_short = re.sub(rf'^{self.package_name}\.', '', uri)
 
         head = '.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n'
         body = ''
@@ -345,20 +340,12 @@ class ApiDocWriter(object):
         elif match_type == 'package':
             patterns = self.package_skip_patterns
         else:
-            raise ValueError('Cannot interpret match type "%s"' % match_type)
+            raise ValueError(f'Cannot interpret match type "{match_type}"')
         # Match to URI without package name
         L = len(self.package_name)
         if matchstr[:L] == self.package_name:
             matchstr = matchstr[L:]
-        for pat in patterns:
-            try:
-                pat.search
-            except AttributeError:
-                pat = re.compile(pat)
-            if pat.search(matchstr):
-                return False
-
-        return True
+        return not any(re.search(pat, matchstr) for pat in patterns)
 
     def discover_modules(self):
         r"""Return module sequence discovered from ``self.package_name``
@@ -426,7 +413,7 @@ class ApiDocWriter(object):
         written_modules = []
 
         for ulm, mods in module_by_ulm.items():
-            print('Generating docs for %s:' % ulm)
+            print(f'Generating docs for {ulm}:')
             document_head = []
             document_body = []
 
@@ -438,11 +425,8 @@ class ApiDocWriter(object):
                 document_body.append(body)
 
             out_module = ulm + self.rst_extension
-            outfile = os.path.join(outdir, out_module)
-            fileobj = open(outfile, 'wt')
-
-            fileobj.writelines(document_head + document_body)
-            fileobj.close()
+            with open(os.path.join(outdir, out_module), 'w') as fileobj:
+                fileobj.writelines(document_head + document_body)
             written_modules.append(out_module)
 
         self.written_modules = written_modules
@@ -497,14 +481,13 @@ class ApiDocWriter(object):
             relpath = (outdir + os.path.sep).replace(relative_to + os.path.sep, '')
         else:
             relpath = outdir
-        idx = open(path, 'wt')
-        w = idx.write
-        w('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
+        with open(path, 'w') as idx:
+            w = idx.write
+            w('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
 
-        title = 'API Reference'
-        w(title + '\n')
-        w('=' * len(title) + '\n\n')
-        w('.. toctree::\n\n')
-        for f in self.written_modules:
-            w('   %s\n' % os.path.join(relpath, f))
-        idx.close()
+            title = 'API Reference'
+            w(title + '\n')
+            w('=' * len(title) + '\n\n')
+            w('.. toctree::\n\n')
+            for f in self.written_modules:
+                w(f'   {os.path.join(relpath, f)}\n')

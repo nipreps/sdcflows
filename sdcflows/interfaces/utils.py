@@ -196,20 +196,20 @@ class ReorientImageAndMetadata(SimpleInterface):
 
         # Identity transform
         if np.array_equal(img2target, [[0, 1], [1, 1], [2, 1]]):
-            self._results = dict(
-                out_file=self.inputs.in_file,
-                pe_dir=self.inputs.pe_dir,
-            )
+            self._results = {
+                'out_file': self.inputs.in_file,
+                'pe_dir': self.inputs.pe_dir,
+            }
             return runtime
 
         reoriented = img.as_reoriented(img2target)
 
         pe_dirs = [reorient_pedir(pe_dir, img2target) for pe_dir in self.inputs.pe_dir]
 
-        self._results = dict(
-            out_file=fname_presuffix(self.inputs.in_file, suffix=target, newpath=runtime.cwd),
-            pe_dir=pe_dirs,
-        )
+        self._results = {
+            'out_file': fname_presuffix(self.inputs.in_file, suffix=target, newpath=runtime.cwd),
+            'pe_dir': pe_dirs,
+        }
 
         reoriented.to_filename(self._results['out_file'])
 
@@ -405,7 +405,7 @@ def _flatten(inlist, max_trs=50, out_dir=None):
     out_dir = Path(out_dir) if out_dir is not None else Path()
 
     output = []
-    for i, (path, meta) in enumerate(inlist):
+    for path, meta in inlist:
         img = nb.load(path)
         if len(img.shape) == 3:
             output.append((path, meta))

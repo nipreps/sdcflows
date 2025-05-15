@@ -2,4 +2,5 @@
 
 import sdcflows
 
-print(sdcflows.__version__, end='', file=open('/tmp/.docker-version.txt', 'w'))
+with open('/tmp/.docker-version.txt', 'w') as f:
+    f.write(sdcflows.__version__)

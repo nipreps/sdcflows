@@ -337,4 +337,4 @@ def _selectintent(metadata):
     """
     from bids.utils import listify
 
-    return sorted(set([el for m in listify(metadata) for el in listify(m.get('IntendedFor', []))]))
+    return sorted({el for m in listify(metadata) for el in listify(m.get('IntendedFor', []))})

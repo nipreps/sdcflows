@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """Script to auto-generate API docs."""
 
-from __future__ import division, print_function
-
 # stdlib imports
 import sys
 
@@ -16,7 +14,7 @@ from apigen import ApiDocWriter
 
 
 def abort(error):
-    print('*WARNING* API documentation not generated: %s' % error)
+    print(f'*WARNING* API documentation not generated: {error}')
     exit()
 
 
@@ -43,13 +41,13 @@ def writeapi(package, outdir, source_version, other_defines=True):
     docwriter = ApiDocWriter(package, rst_extension='.rst', other_defines=other_defines)
 
     docwriter.package_skip_patterns += [
-        r'\.%s$' % package,
+        rf'\.{package}$',
         r'.*test.*$',
         r'\.version.*$',
     ]
     docwriter.write_api_docs(outdir)
     docwriter.write_index(outdir, 'index', relative_to=outdir)
-    print('%d files written' % len(docwriter.written_modules))
+    print(f'{len(docwriter.written_modules)} files written')
 
 
 if __name__ == '__main__':

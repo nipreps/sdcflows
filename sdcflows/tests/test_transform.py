@@ -197,7 +197,7 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
     error_margin = 0.5
     if fmap is False:  # If no fieldmap, this is equivalent to only HMC
         realigned = LinearTransformsMapping(hmc_xfms, reference=in_file).apply(in_file)
-        error = np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2))
+        error = np.sqrt((corrected.dataobj - realigned.dataobj) ** 2)
 
         if outdir:
             # Do not include the first volume in the average to enhance differences
@@ -226,7 +226,7 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
             )
     else:
         realigned = nb.load(in_file)
-        error = np.nan_to_num(np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2)), nan=0)
+        error = np.nan_to_num(np.sqrt((corrected.dataobj - realigned.dataobj) ** 2), nan=0)
         error_margin = 200  # test oracle is pretty bad here - needs revision.
 
         if outdir:
@@ -290,7 +290,7 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
             out_report=str(outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmcdiff_dwi.svg'),
         ).run()
 
-        error = np.sqrt(((corrected.dataobj - corrected_nohmc.dataobj) ** 2))
+        error = np.sqrt((corrected.dataobj - corrected_nohmc.dataobj) ** 2)
         realigned.__class__(
             error,
             realigned.affine,

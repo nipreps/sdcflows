@@ -125,7 +125,7 @@ def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources):
 
     # Exercise workflow creation
     wf = fe.get_workflow()
-    wf == fe.get_workflow()
+    assert wf == fe.get_workflow()
 
 
 @pytest.mark.parametrize(

@@ -25,7 +25,6 @@
 
 def main(argv=None):
     """Entry point for SDCFlows' CLI."""
-    import atexit
     import gc
     import os
     import sys
@@ -33,8 +32,6 @@ def main(argv=None):
 
     from sdcflows import config
     from sdcflows.cli.parser import parse_args
-
-    atexit.register(config.restore_env)
 
     # Run parser
     parse_args(argv)

@@ -182,8 +182,12 @@ line-length = 99
 select = [
   "F",
   "E",
+  "C",
   "W",
+  "B",
   "I",
+  "SIM",
+  "UP",
 ]
 ignore = [
   "E203",
@@ -198,6 +202,9 @@ inline-quotes = "single"
 [tool.ruff.lint.extend-per-file-ignores]
 "*/__init__.py" = ["F401"]
 "docs/conf.py" = ["E265"]
+"*/test_*.py" = [
+  "B018",  # Unassigned expressions are fine
+]
 
 [tool.ruff.format]
 quote-style = "single"
