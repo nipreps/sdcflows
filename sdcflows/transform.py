@@ -52,7 +52,7 @@ import os
 from collections.abc import Sequence
 from functools import partial
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable
 from warnings import warn
 
 import attr
@@ -72,7 +72,7 @@ from sdcflows.utils.tools import ensure_positive_cosines
 def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray | None,
     jacobian: bool,
     fmap_hz: np.ndarray,
@@ -121,7 +121,7 @@ def _sdc_unwarp(
 async def worker(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray,
     func: Callable,
     semaphore: asyncio.Semaphore,
@@ -137,7 +137,7 @@ async def unwarp_parallel(
     fulldataset: np.ndarray,
     coordinates: np.ndarray,
     fmap_hz: np.ndarray,
-    pe_info: Sequence[Tuple[int, float]],
+    pe_info: Sequence[tuple[int, float]],
     xfms: Sequence[np.ndarray],
     jacobian: bool,
     order: int = 3,
@@ -464,7 +464,8 @@ class B0FieldTransform:
         if self.mapped is not None:
             warn(
                 'The fieldmap has been already fit, the user is responsible for '
-                'ensuring the parameters of the EPI target are consistent.'
+                'ensuring the parameters of the EPI target are consistent.',
+                stacklevel=2,
             )
         else:
             # Generate warp field (before ensuring positive cosines)
@@ -519,7 +520,8 @@ class B0FieldTransform:
             warn(
                 'Head-motion compensating (realignment) transforms are ignored when applying '
                 'the unwarp with SDCFlows. This feature will be enabled as soon as unit tests '
-                'are implemented for its quality assurance.'
+                'are implemented for its quality assurance.',
+                stacklevel=1,
             )
 
         # Resample
@@ -733,7 +735,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype='float32'):
         0,
         atol=1e-3,
     ):
-        warn("Image's and B-Spline's grids are not aligned.")
+        warn("Image's and B-Spline's grids are not aligned.", stacklevel=2)
 
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []

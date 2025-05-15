@@ -22,7 +22,6 @@
 #
 """Standalone command line executable for estimation of fieldmaps."""
 
-import re
 from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
 from functools import partial
 from pathlib import Path
@@ -46,9 +45,7 @@ def _parse_participant_labels(value):
     ['s060']
 
     """
-    return sorted(
-        set(re.sub(r'^sub-', '', item.strip()) for item in re.split(r'\s+', f'{value}'.strip()))
-    )
+    return sorted({item.removeprefix('sub-') for item in value.split()})
 
 
 def _parser():
@@ -301,12 +298,10 @@ def parse_args(args=None, namespace=None):
 
     # Ensure input and output folders are not the same
     if output_dir == bids_dir:
+        suggested_path = bids_dir / 'derivatives' / f'sdcflows_{version.split("+")[0]}'
         parser.error(
             'The selected output folder is the same as the input BIDS folder. '
-            'Please modify the output path (suggestion: %s).'
-            % bids_dir
-            / 'derivatives'
-            / ('sdcflows_%s' % version.split('+')[0])
+            f'Please modify the output path (suggestion: {suggested_path}).'
         )
 
     if bids_dir in work_dir.parents:

@@ -342,7 +342,7 @@ class FieldmapEstimation:
 
         # Fieldmap option 1: actual field-mapping sequences
         fmap_types = suffix_set.intersection(('fieldmap', 'phasediff', 'phase1', 'phase2'))
-        if len(fmap_types) > 1 and fmap_types - set(('phase1', 'phase2')):
+        if len(fmap_types) > 1 and fmap_types - {'phase1', 'phase2'}:
             raise TypeError(f'Incompatible suffices found: <{",".join(fmap_types)}>.')
 
         if fmap_types:
@@ -403,7 +403,7 @@ class FieldmapEstimation:
 
         if _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]
-            _pe = set(f.metadata['PhaseEncodingDirection'] for f in self.sources)
+            _pe = {f.metadata['PhaseEncodingDirection'] for f in self.sources}
             if len(_pe) == 1:
                 raise ValueError(
                     f'Only one phase-encoding direction <{_pe.pop()}> found across sources.'
@@ -418,9 +418,9 @@ class FieldmapEstimation:
             # No method has been identified -> fail.
             raise ValueError('Insufficient sources to estimate a fieldmap.')
 
-        intents_meta = set(
+        intents_meta = {
             el for f in self.sources for el in listify(f.metadata.get('IntendedFor') or [])
-        )
+        }
 
         # Register this estimation method
         if not self.bids_id:

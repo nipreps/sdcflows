@@ -628,7 +628,7 @@ def _fix_topup_fieldcoeff(in_coeff, fmap_ref, pe_dir, out_file=None):
         )
     )
     header['cal_min'] = -header['cal_max']
-    header.set_intent('estimate', tuple(), name='B-Spline coefficients')
+    header.set_intent('estimate', (), name='B-Spline coefficients')
 
     # Write out fixed (generalized) coefficients
     coeffnii.__class__(coeffnii.dataobj, newaff, header).to_filename(out_file)
