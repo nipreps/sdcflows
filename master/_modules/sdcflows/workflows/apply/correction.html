@@ -338,6 +338,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">init_unwarp_wf</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_metadata_estimates</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">fallback_total_readout_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">free_mem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -426,8 +428,16 @@
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">rotime</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">GetReadoutTime</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rotime&quot;</span><span class="p">)</span>
+    <span class="n">rotime</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">GetReadoutTime</span><span class="p">(</span>
+            <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rotime&quot;</span><span class="p">,</span>
+        <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">rotime</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="n">debug</span>
+    <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rotime</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback_total_readout_time</span>
 
     <span class="c1"># resample is memory-hungry; choose a smaller number of threads</span>
     <span class="c1"># if we know how much memory we have to work with</span>

@@ -331,6 +331,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">attr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">loads</span>
@@ -338,7 +339,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">bids.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">listify</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.utils.bids</span><span class="w"> </span><span class="kn">import</span> <span class="n">relative_to_root</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.bimap</span><span class="w"> </span><span class="kn">import</span> <span class="n">EstimatorRegistry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_logger</span>
 
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">create_logger</span><span class="p">(</span><span class="s1">&#39;sdcflows.fieldmaps&#39;</span><span class="p">)</span>
 
 <span class="n">_estimators</span> <span class="o">=</span> <span class="n">EstimatorRegistry</span><span class="p">()</span>
 <span class="n">_intents</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
@@ -424,12 +428,7 @@
 <span class="sd">    &gt;&gt;&gt; f.suffix</span>
 <span class="sd">    &#39;T1w&#39;</span>
 
-<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
-<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
-<span class="sd">    ...     find_meta=False</span>
-<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
-<span class="sd">    Traceback (most recent call last):</span>
-<span class="sd">    MetadataError:</span>
+<span class="sd">    By default, the immediate JSON sidecar file is consulted for metadata.</span>
 
 <span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
 <span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
@@ -438,11 +437,26 @@
 <span class="sd">    0.005</span>
 
 <span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
-<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
-<span class="sd">    ...     metadata={&quot;TotalReadoutTime&quot;: None},</span>
-<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
-<span class="sd">    Traceback (most recent call last):</span>
-<span class="sd">    MetadataError:</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phasediff.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime2&#39;]</span>
+<span class="sd">    0.00746</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phase2.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime&#39;]</span>
+<span class="sd">    0.00746</span>
+
+<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_fieldmap.nii.gz&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;Units&#39;]</span>
+<span class="sd">    &#39;rad/s&#39;</span>
+
+<span class="sd">    However, it is possible to provide alternative metadata.</span>
+<span class="sd">    It is recommended to load the metadata with an external tool that</span>
+<span class="sd">    fully implements the BIDS inheritance rules to ensure correctness.</span>
 
 <span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
 <span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
@@ -451,18 +465,21 @@
 <span class="sd">    &gt;&gt;&gt; f.metadata[&#39;TotalReadoutTime&#39;]</span>
 <span class="sd">    0.006</span>
 
+<span class="sd">    If metadata is present, warnings or errors may be presented.</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
+<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...     find_meta=False</span>
+<span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    MetadataError: Missing &#39;PhaseEncodingDirection&#39; ...</span>
+
 <span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
 <span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phasediff.nii.gz&quot;,</span>
 <span class="sd">    ...     find_meta=False</span>
 <span class="sd">    ... )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">    MetadataError:</span>
-
-<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
-<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phasediff.nii.gz&quot;</span>
-<span class="sd">    ... )</span>
-<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime2&#39;]</span>
-<span class="sd">    0.00746</span>
 
 <span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
 <span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phase2.nii.gz&quot;,</span>
@@ -471,12 +488,6 @@
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">    MetadataError:</span>
 
-<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
-<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_phase2.nii.gz&quot;</span>
-<span class="sd">    ... )</span>
-<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;EchoTime&#39;]</span>
-<span class="sd">    0.00746</span>
-
 <span class="sd">    &gt;&gt;&gt; FieldmapFile(</span>
 <span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_fieldmap.nii.gz&quot;,</span>
 <span class="sd">    ...     find_meta=False</span>
@@ -484,11 +495,26 @@
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">    MetadataError:</span>
 
-<span class="sd">    &gt;&gt;&gt; f = FieldmapFile(</span>
-<span class="sd">    ...     dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_fieldmap.nii.gz&quot;</span>
-<span class="sd">    ... )</span>
-<span class="sd">    &gt;&gt;&gt; f.metadata[&#39;Units&#39;]</span>
-<span class="sd">    &#39;rad/s&#39;</span>
+<span class="sd">    Readout timing information is required to estimate PEPOLAR fieldmaps,</span>
+<span class="sd">    but it is possible to provide a fallback values.</span>
+<span class="sd">    Therefore, warnings are logged if the metadata are missing.</span>
+
+<span class="sd">    &gt;&gt;&gt; with caplog.at_level(logging.WARNING, &quot;sdcflows.fieldmaps&quot;):</span>
+<span class="sd">    ...     f = FieldmapFile(</span>
+<span class="sd">    ...         dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...         metadata={&quot;TotalReadoutTime&quot;: None},</span>
+<span class="sd">    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    &gt;&gt;&gt; print(caplog.text)</span>
+<span class="sd">    WARNING ... Missing readout timing information ... Explicit fallback must be provided.</span>
+
+<span class="sd">    &gt;&gt;&gt; with caplog.at_level(logging.WARNING, &quot;sdcflows.fieldmaps&quot;):</span>
+<span class="sd">    ...     f = FieldmapFile(</span>
+<span class="sd">    ...         dsA_dir / &quot;sub-01&quot; / &quot;fmap&quot; / &quot;sub-01_dir-LR_epi.nii.gz&quot;,</span>
+<span class="sd">    ...         metadata={&quot;PhaseEncodingDirection&quot;: &quot;i&quot;, &quot;EstimatedTotalReadoutTime&quot;: 0.05},</span>
+<span class="sd">    ...         find_meta=False,</span>
+<span class="sd">    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="sd">    &gt;&gt;&gt; print(caplog.text)</span>
+<span class="sd">    WARNING ... Missing readout timing information ... Estimated timing is available.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -569,12 +595,19 @@
 
             <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.epimanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trt</span>
 
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Missing readout timing information for &lt;</span><span class="si">%s</span><span class="s2">&gt;. </span><span class="si">%s</span><span class="s2">&quot;</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;Explicit fallback must be provided.&quot;</span>
+            <span class="n">have_trt</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Missing readout timing information for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
-                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+                <span class="n">have_trt</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+                    <span class="n">get_trt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">in_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;Estimated timing is available.&quot;</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">have_trt</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;fieldmap&quot;</span> <span class="ow">and</span> <span class="s2">&quot;Units&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">MetadataError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing &#39;Units&#39; for &lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span><span class="p">)</span>

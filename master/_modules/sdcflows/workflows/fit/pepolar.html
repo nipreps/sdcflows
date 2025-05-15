@@ -345,6 +345,8 @@
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.pepolar.html#sdcflows.workflows.fit.pepolar.init_topup_wf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init_topup_wf</span><span class="p">(</span>
     <span class="n">grid_reference</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">use_metadata_estimates</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">fallback_total_readout_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -432,11 +434,15 @@
 
     <span class="c1"># Calculate the total readout time of each run</span>
     <span class="n">readout_time</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
-        <span class="n">GetReadoutTime</span><span class="p">(),</span>
+        <span class="n">GetReadoutTime</span><span class="p">(</span>
+            <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span>
         <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">],</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">readout_time</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback_total_readout_time</span>
     <span class="c1"># Average each run so that topup is not overwhelmed (see #279)</span>
     <span class="n">runwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
         <span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span>

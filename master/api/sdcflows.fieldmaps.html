@@ -382,14 +382,7 @@ This class may receive metadata as a keyword argument at initialization.</p>
 <span class="go">&#39;T1w&#39;</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FieldmapFile</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">find_meta</span><span class="o">=</span><span class="kc">False</span>
-<span class="gp">... </span><span class="p">)</span>  
-<span class="gt">Traceback (most recent call last):</span>
-<span class="gr">MetadataError</span><span class="w">:</span>
-</pre></div>
-</div>
+<p>By default, the immediate JSON sidecar file is consulted for metadata.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
@@ -398,19 +391,44 @@ This class may receive metadata as a keyword argument at initialization.</p>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
-<span class="gp">... </span><span class="p">)</span>  
-<span class="gt">Traceback (most recent call last):</span>
-<span class="gr">MetadataError</span><span class="w">:</span>
+<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_phasediff.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;EchoTime2&#39;</span><span class="p">]</span>
+<span class="go">0.00746</span>
 </pre></div>
 </div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_phase2.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;EchoTime&#39;</span><span class="p">]</span>
+<span class="go">0.00746</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_fieldmap.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Units&#39;</span><span class="p">]</span>
+<span class="go">&#39;rad/s&#39;</span>
+</pre></div>
+</div>
+<p>However, it is possible to provide alternative metadata.
+It is recommended to load the metadata with an external tool that
+fully implements the BIDS inheritance rules to ensure correctness.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">:</span> <span class="mf">0.006</span><span class="p">}</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">]</span>
 <span class="go">0.006</span>
+</pre></div>
+</div>
+<p>If metadata is present, warnings or errors may be presented.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FieldmapFile</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">find_meta</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>  
+<span class="gt">Traceback (most recent call last):</span>
+<span class="gr">MetadataError</span>: <span class="n">Missing &#39;PhaseEncodingDirection&#39; ...</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FieldmapFile</span><span class="p">(</span>
@@ -421,26 +439,12 @@ This class may receive metadata as a keyword argument at initialization.</p>
 <span class="gr">MetadataError</span><span class="w">:</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_phasediff.nii.gz&quot;</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;EchoTime2&#39;</span><span class="p">]</span>
-<span class="go">0.00746</span>
-</pre></div>
-</div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FieldmapFile</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_phase2.nii.gz&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">find_meta</span><span class="o">=</span><span class="kc">False</span>
 <span class="gp">... </span><span class="p">)</span>  
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">MetadataError</span><span class="w">:</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_phase2.nii.gz&quot;</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;EchoTime&#39;</span><span class="p">]</span>
-<span class="go">0.00746</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">FieldmapFile</span><span class="p">(</span>
@@ -451,11 +455,26 @@ This class may receive metadata as a keyword argument at initialization.</p>
 <span class="gr">MetadataError</span><span class="w">:</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_fieldmap.nii.gz&quot;</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;Units&#39;</span><span class="p">]</span>
-<span class="go">&#39;rad/s&#39;</span>
+<p>Readout timing information is required to estimate PEPOLAR fieldmaps,
+but it is possible to provide a fallback values.
+Therefore, warnings are logged if the metadata are missing.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">caplog</span><span class="o">.</span><span class="n">at_level</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">&quot;sdcflows.fieldmaps&quot;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">caplog</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">WARNING ... Missing readout timing information ... Explicit fallback must be provided.</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">caplog</span><span class="o">.</span><span class="n">at_level</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">&quot;sdcflows.fieldmaps&quot;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">f</span> <span class="o">=</span> <span class="n">FieldmapFile</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">dsA_dir</span> <span class="o">/</span> <span class="s2">&quot;sub-01&quot;</span> <span class="o">/</span> <span class="s2">&quot;fmap&quot;</span> <span class="o">/</span> <span class="s2">&quot;sub-01_dir-LR_epi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">:</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;EstimatedTotalReadoutTime&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
+<span class="gp">... </span>        <span class="n">find_meta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">caplog</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">WARNING ... Missing readout timing information ... Estimated timing is available.</span>
 </pre></div>
 </div>
 <dl class="py attribute">

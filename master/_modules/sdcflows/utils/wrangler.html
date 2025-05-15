@@ -935,10 +935,8 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">):</span>
                 <span class="k">continue</span>
 
-            <span class="n">trt</span> <span class="o">=</span> <span class="mf">1.0</span>
             <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-                <span class="n">trt</span> <span class="o">=</span> <span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-            <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">:</span> <span class="n">trt</span><span class="p">})</span>
+                <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;TotalReadoutTime&quot;</span><span class="p">:</span> <span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">)})</span>
             <span class="n">epi_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">sort_key</span><span class="p">(</span><span class="n">fmap</span><span class="p">):</span>

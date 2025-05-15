@@ -553,7 +553,13 @@
 
         <span class="k">return</span> <span class="n">trt</span>
 
-    <span class="k">if</span> <span class="s2">&quot;PhaseEncodingDirection&quot;</span> <span class="ow">in</span> <span class="n">in_meta</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">in_meta</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">{</span>
+        <span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;EffectiveEchoSpacing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;EstimatedEffectiveEchoSpacing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;EchoSpacing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;WaterFatShift&quot;</span><span class="p">,</span>
+    <span class="p">}</span> <span class="o">&gt;</span> <span class="p">{</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">}:</span>
         <span class="c1"># npe = N voxels PE direction</span>
         <span class="n">pe_index</span> <span class="o">=</span> <span class="s2">&quot;ijk&quot;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">in_meta</span><span class="p">[</span><span class="s2">&quot;PhaseEncodingDirection&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">npe</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">pe_index</span><span class="p">]</span>

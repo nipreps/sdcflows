@@ -353,6 +353,8 @@
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.syn.html#sdcflows.workflows.fit.syn.init_syn_sdc_wf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init_syn_sdc_wf</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">use_metadata_estimates</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">fallback_total_readout_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;syn_sdc_wf&quot;</span><span class="p">,</span>
@@ -466,10 +468,14 @@
     <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;FLB (&quot;fieldmap-less&quot;, SyN-based)&#39;</span>
 
     <span class="n">readout_time</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">GetReadoutTime</span><span class="p">(),</span>
+        <span class="n">GetReadoutTime</span><span class="p">(</span>
+            <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">readout_time</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback_total_readout_time</span>
 
     <span class="n">warp_dir</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_warp_dir</span><span class="p">),</span>
