@@ -498,7 +498,8 @@ class B0FieldTransform:
             pe_info.append(
                 (
                     pe_axis,
-                    # Displacements are reversed if either is true (after ensuring positive cosines)
+                    # Displacements are reversed if either is true
+                    # (after ensuring positive cosines)
                     -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
                 )
             )

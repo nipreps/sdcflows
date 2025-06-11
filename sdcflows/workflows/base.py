@@ -130,7 +130,7 @@ def init_fmap_preproc_wf(
         source_files = [str(f.path) for f in estimator.sources if f.suffix not in ('T1w', 'T2w')]
 
         out_map = pe.Node(
-            niu.IdentityInterface(fields=out_fields), name=f'out_{estimator.bids_id}'
+            niu.IdentityInterface(fields=out_fields), name=f'out_{estimator.sanitized_id}'
         )
         out_map.inputs.fmap_id = estimator.bids_id
 

@@ -57,7 +57,7 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
         if estimator.method != fm.EstimatorType.PEPOLAR:
             continue
 
-        inputnode = wf.get_node(f'in_{estimator.bids_id}')
+        inputnode = wf.get_node(f'in_{estimator.sanitized_id}')
         inputnode.inputs.in_data = [str(f.path) for f in estimator.sources]
         inputnode.inputs.metadata = [f.metadata for f in estimator.sources]
 
