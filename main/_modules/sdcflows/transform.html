@@ -818,7 +818,8 @@
             <span class="n">pe_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">(</span>
                     <span class="n">pe_axis</span><span class="p">,</span>
-                    <span class="c1"># Displacements are reversed if either is true (after ensuring positive cosines)</span>
+                    <span class="c1"># Displacements are reversed if either is true</span>
+                    <span class="c1"># (after ensuring positive cosines)</span>
                     <span class="o">-</span><span class="n">ro_time</span><span class="p">[</span><span class="n">volid</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">axis_flip</span> <span class="o">^</span> <span class="n">pe_flip</span><span class="p">)</span> <span class="k">else</span> <span class="n">ro_time</span><span class="p">[</span><span class="n">volid</span><span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">)</span>

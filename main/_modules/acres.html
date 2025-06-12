@@ -344,34 +344,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractContextManager</span><span class="p">,</span> <span class="n">ExitStack</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleType</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span>
-
-<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.resources.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Traversable</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib_resources.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Traversable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">typ</span> <span class="k">as</span> <span class="n">t</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Loader&#39;</span><span class="p">]</span>
-
-
-<span class="c1"># Use one global exit stack</span>
-<span class="n">EXIT_STACK</span> <span class="o">=</span> <span class="n">ExitStack</span><span class="p">()</span>
-<span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">EXIT_STACK</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
-
-
-<span class="nd">@cache</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_cache_resource</span><span class="p">(</span><span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ModuleType</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-    <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
-    <span class="k">return</span> <span class="n">EXIT_STACK</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)))</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span>
 
 
 <div class="viewcode-block" id="Loader">
@@ -403,7 +378,7 @@
 
 <span class="sd">        from acres import Loader</span>
 
-<span class="sd">        load_data = Loader(__spec__.name)</span>
+<span class="sd">        load_data = Loader(__spec__.name, list_contents=True)</span>
 
 <span class="sd">    :class:`~Loader` objects implement the :func:`callable` interface</span>
 <span class="sd">    and generate a docstring, and are intended to be treated and documented</span>
@@ -441,45 +416,45 @@
 <span class="sd">        with as_file(files(other_package) / &#39;data&#39;) as pkgdata:</span>
 <span class="sd">            func(pkgdata)</span>
 
-<span class="sd">    .. automethod:: readable</span>
-
-<span class="sd">    .. automethod:: as_path</span>
-
-<span class="sd">    .. automethod:: cached</span>
+<span class="sd">    When creating a :class:`Loader` as a module attribute, it is frequently</span>
+<span class="sd">    useful for the docstring to list the contents of the package.</span>
+<span class="sd">    There is a slight cost to updating the docstring, so this is disabled by</span>
+<span class="sd">    default, for better performance in short-lived :class:`Loader` instances.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">ModuleType</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">t</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">list_contents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span> <span class="o">=</span> <span class="n">anchor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span>
         <span class="c1"># Allow class to have a different docstring from instances</span>
-        <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span><span class="p">(</span><span class="n">list_contents</span><span class="o">=</span><span class="n">list_contents</span><span class="p">)</span>
 
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_contents</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct docstring for instances</span>
 
-<span class="sd">        Lists the public top-level paths inside the location, where</span>
-<span class="sd">        non-public means has a `.` or `_` prefix or is a &#39;tests&#39;</span>
-<span class="sd">        directory.</span>
+<span class="sd">        Optionally lists the public top-level paths inside the location, where</span>
+<span class="sd">        non-public means has a `.` or `_` prefix or is a &#39;tests&#39; directory.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">top_level</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&#39;</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;tests&#39;</span>
-        <span class="p">)</span>
-        <span class="n">doclines</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="s1">&#39;Load package files relative to ``</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="si">}</span><span class="s1">``.&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;This package contains the following (top-level) files/directories:&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;&#39;</span><span class="p">,</span>
-            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;* ``</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">``&#39;</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">top_level</span><span class="p">),</span>
-        <span class="p">]</span>
+        <span class="n">docstring</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Load package files relative to ``</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="si">}</span><span class="s1">``.&#39;</span>
 
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doclines</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">list_contents</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
 
-<div class="viewcode-block" id="Loader.readable">
-<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.readable">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">readable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Traversable</span><span class="p">:</span>
+            <span class="n">top_level</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&#39;</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;tests&#39;</span>
+            <span class="p">)</span>
+            <span class="n">doclines</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">docstring</span><span class="p">,</span>
+                <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;This package contains the following (top-level) files/directories:&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;* ``</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">``&#39;</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">top_level</span><span class="p">),</span>
+            <span class="p">]</span>
+            <span class="n">docstring</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doclines</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">docstring</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">readable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Traversable</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide read access to a resource through a Path-like interface.</span>
 
 <span class="sd">        This file may or may not exist on the filesystem, and may be</span>
@@ -488,13 +463,11 @@
 <span class="sd">        This result is not cached or copied to the filesystem in cases where</span>
 <span class="sd">        that would be necessary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span></div>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
 
+        <span class="k">return</span> <span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Loader.as_path">
-<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.as_path">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">as_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Path</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data is available as a :class:`~pathlib.Path`.</span>
 
 <span class="sd">        This method generates a context manager that yields a Path when</span>
@@ -503,13 +476,11 @@
 <span class="sd">        This result is not cached, and any temporary files that are created</span>
 <span class="sd">        are deleted when the context is exited.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># PY310(importlib_resources): no-any-return, PY311+(importlib.resources): unused-ignore</span>
-        <span class="k">return</span> <span class="n">as_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">))</span>  <span class="c1"># type: ignore[no-any-return,unused-ignore]</span></div>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
 
+        <span class="k">return</span> <span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">))</span>
 
-<div class="viewcode-block" id="Loader.cached">
-<a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader.cached">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Path</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data resource is available as a :class:`~pathlib.Path`.</span>
 
 <span class="sd">        Any temporary files that are created remain available throughout</span>
@@ -519,10 +490,9 @@
 <span class="sd">        data multiple times, but directories and their contents being</span>
 <span class="sd">        requested separately may result in some duplication.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Use self._anchor and segments to ensure the cache does not depend on id(self.files)</span>
-        <span class="c1"># PY310(importlib_resources): unused-ignore, PY311+(importlib.resources) arg-type</span>
-        <span class="k">return</span> <span class="n">_cache_resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type,unused-ignore]</span></div>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_resource</span>
 
+        <span class="k">return</span> <span class="n">cached_resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>
 
     <span class="fm">__call__</span> <span class="o">=</span> <span class="n">cached</span></div>
 
