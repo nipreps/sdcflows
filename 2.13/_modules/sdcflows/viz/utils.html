@@ -336,12 +336,12 @@
     <span class="n">anat_nii</span><span class="p">,</span>
     <span class="n">div_id</span><span class="p">,</span>
     <span class="n">plot_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span>
+    <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">),</span>
     <span class="n">cuts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">estimate_brightness</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">contour</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">compress</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
     <span class="n">overlay</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">overlay_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
@@ -352,11 +352,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_anat</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nireports._vendored.svgutils.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVGFigure</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">nireports.reportlets.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_set_limits</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">SVGNS</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nireports.reportlets.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVGNS</span><span class="p">,</span> <span class="n">extract_svg</span><span class="p">,</span> <span class="n">robust_set_limits</span>
 
     <span class="n">plot_params</span> <span class="o">=</span> <span class="n">plot_params</span> <span class="ow">or</span> <span class="p">{}</span>
 
@@ -367,31 +367,31 @@
     <span class="n">out_files</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">estimate_brightness</span><span class="p">:</span>
         <span class="n">plot_params</span> <span class="o">=</span> <span class="n">robust_set_limits</span><span class="p">(</span>
-            <span class="n">anat_nii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">plot_params</span>
+            <span class="n">anat_nii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">plot_params</span>
         <span class="p">)</span>
 
     <span class="c1"># Plot each cut axis</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">order</span><span class="p">)):</span>
-        <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;display_mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
-        <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;cut_coords&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
+        <span class="n">plot_params</span><span class="p">[</span><span class="s1">&#39;display_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="n">plot_params</span><span class="p">[</span><span class="s1">&#39;cut_coords&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">plot_params</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">plot_params</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">plot_params</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Generate nilearn figure</span>
         <span class="n">display</span> <span class="o">=</span> <span class="n">plot_anat</span><span class="p">(</span><span class="n">anat_nii</span><span class="p">,</span> <span class="o">**</span><span class="n">plot_params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">overlay</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_overlay_params</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;vmin&quot;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
-                <span class="s2">&quot;vmax&quot;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
-                <span class="s2">&quot;cmap&quot;</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">,</span>
-                <span class="s2">&quot;interpolation&quot;</span><span class="p">:</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+                <span class="s1">&#39;vmin&#39;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="s1">&#39;vmax&#39;</span><span class="p">:</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                <span class="s1">&#39;cmap&#39;</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">,</span>
+                <span class="s1">&#39;interpolation&#39;</span><span class="p">:</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">_overlay_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overlay_params</span><span class="p">)</span>
             <span class="n">display</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="o">**</span><span class="n">_overlay_params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">contour</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">display</span><span class="o">.</span><span class="n">add_contours</span><span class="p">(</span><span class="n">contour</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">display</span><span class="o">.</span><span class="n">add_contours</span><span class="p">(</span><span class="n">contour</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
         <span class="n">svg</span> <span class="o">=</span> <span class="n">extract_svg</span><span class="p">(</span><span class="n">display</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
         <span class="n">display</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -399,7 +399,7 @@
         <span class="c1"># Find and replace the figure_1 id.</span>
         <span class="n">xml_data</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">svg</span><span class="p">)</span>
         <span class="n">find_text</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">ETXPath</span><span class="p">(</span><span class="s2">&quot;//{</span><span class="si">%s</span><span class="s2">}g[@id=&#39;figure_1&#39;]&quot;</span> <span class="o">%</span> <span class="n">SVGNS</span><span class="p">)</span>
-        <span class="n">find_text</span><span class="p">(</span><span class="n">xml_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">div_id</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">uuid4</span><span class="p">()))</span>
+        <span class="n">find_text</span><span class="p">(</span><span class="n">xml_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">div_id</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">uuid4</span><span class="p">()))</span>
 
         <span class="n">svg_fig</span> <span class="o">=</span> <span class="n">SVGFigure</span><span class="p">()</span>
         <span class="n">svg_fig</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">xml_data</span>
@@ -413,8 +413,8 @@
 <a class="viewcode-back" href="../../../api/sdcflows.viz.utils.html#sdcflows.viz.utils.coolwarm_transparent">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">opaque_perc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">transparent_perc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Modify the coolwarm color scale to have full transparency around the middle.&quot;&quot;&quot;</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pylab</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListedColormap</span>
 
     <span class="c1"># Choose colormap</span>

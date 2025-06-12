@@ -330,13 +330,13 @@
 <span class="sd">&quot;&quot;&quot;Estimate fieldmaps for :abbr:`SDC (susceptibility distortion correction)`.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.engine.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.epimanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trt</span>
 
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;nipype.workflow&quot;</span><span class="p">)</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.workflow&#39;</span><span class="p">)</span>
 <span class="n">DEFAULT_MEMORY_MIN_GB</span> <span class="o">=</span> <span class="mf">0.01</span>
 
 
@@ -352,7 +352,7 @@
     <span class="n">fallback_total_readout_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fmap_preproc_wf&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fmap_preproc_wf&#39;</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -390,10 +390,10 @@
 <span class="sd">        The preprocessed fieldmap coefficients.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.fieldmaps</span><span class="w"> </span><span class="kn">import</span> <span class="n">EstimatorType</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.fit.pepolar</span><span class="w"> </span><span class="kn">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_pepolar_fields</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.fit.syn</span><span class="w"> </span><span class="kn">import</span> <span class="n">INPUT_FIELDS</span> <span class="k">as</span> <span class="n">_syn_fields</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_fmap_derivatives_wf</span><span class="p">,</span> <span class="n">init_fmap_reports_wf</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.fieldmaps</span><span class="w"> </span><span class="kn">import</span> <span class="n">EstimatorType</span>
 
     <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">EstimatorType</span><span class="o">.</span><span class="n">ANAT</span><span class="p">:</span> <span class="n">_syn_fields</span><span class="p">,</span>
@@ -402,28 +402,22 @@
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="n">out_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_id&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">)</span>
-    <span class="n">out_merge</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">f</span><span class="p">:</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimators</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;out_merge_</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">out_fields</span>
-    <span class="p">}</span>
+    <span class="n">out_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_id&#39;</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">)</span>
+    <span class="n">out_merge</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">estimators</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;out_merge_</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">out_fields</span><span class="p">}</span>
     <span class="c1"># Fieldmaps and coefficient files can come in pairs, ensure they are not flattened</span>
-    <span class="n">out_merge</span><span class="p">[</span><span class="s2">&quot;fmap&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">no_flatten</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">out_merge</span><span class="p">[</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">no_flatten</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">out_merge</span><span class="p">[</span><span class="s1">&#39;fmap&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">no_flatten</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">out_merge</span><span class="p">[</span><span class="s1">&#39;fmap_coeff&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">no_flatten</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">)</span>
+    <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">)</span>
 
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="p">(</span><span class="n">mergenode</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="n">field</span><span class="p">)])</span>
-            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span> <span class="ow">in</span> <span class="n">out_merge</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">]</span>
+        <span class="p">[(</span><span class="n">mergenode</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">field</span><span class="p">)])</span> <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span> <span class="ow">in</span> <span class="n">out_merge</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
     <span class="p">)</span>
 
     <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">estimator</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">estimators</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;dwi&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">,</span> <span class="s2">&quot;sbref&quot;</span><span class="p">,</span> <span class="s2">&quot;asl&quot;</span><span class="p">,</span> <span class="s2">&quot;m0scan&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;dwi&#39;</span><span class="p">,</span> <span class="s1">&#39;epi&#39;</span><span class="p">,</span> <span class="s1">&#39;sbref&#39;</span><span class="p">,</span> <span class="s1">&#39;asl&#39;</span><span class="p">,</span> <span class="s1">&#39;m0scan&#39;</span><span class="p">):</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">get_trt</span><span class="p">(</span>
                             <span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
@@ -431,7 +425,7 @@
                             <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
                         <span class="p">)</span>
                     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Missing readout timing information for &lt;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&gt;.&quot;</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Missing readout timing information for &lt;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s1">&gt;.&#39;</span>
                         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">est_wf</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">get_workflow</span><span class="p">(</span>
@@ -442,12 +436,10 @@
             <span class="n">sloppy</span><span class="o">=</span><span class="n">sloppy</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">source_files</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;T1w&quot;</span><span class="p">,</span> <span class="s2">&quot;T2w&quot;</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="n">source_files</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;T1w&#39;</span><span class="p">,</span> <span class="s1">&#39;T2w&#39;</span><span class="p">)]</span>
 
         <span class="n">out_map</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-            <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">out_fields</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;out_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="p">)</span>
         <span class="n">out_map</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_id</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span>
 
@@ -455,18 +447,16 @@
             <span class="n">output_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span>
             <span class="n">write_coeff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_derivatives_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fmap_derivatives_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fmap_derivatives_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_files</span>
-        <span class="n">fmap_derivatives_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fmap_meta</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span>
-        <span class="p">]</span>
+        <span class="n">fmap_derivatives_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">fmap_meta</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">estimator</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
 
         <span class="n">fmap_reports_wf</span> <span class="o">=</span> <span class="n">init_fmap_reports_wf</span><span class="p">(</span>
             <span class="n">output_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span>
-            <span class="n">fmap_type</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="n">fmap_type</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
             <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fmap_reports_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fmap_reports_wf_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fmap_reports_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_files</span>
 
@@ -474,7 +464,7 @@
             <span class="n">fields</span> <span class="o">=</span> <span class="n">INPUT_FIELDS</span><span class="p">[</span><span class="n">estimator</span><span class="o">.</span><span class="n">method</span><span class="p">]</span>
             <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
                 <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">),</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;in_</span><span class="si">{</span><span class="n">estimator</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="c1"># fmt:off</span>
             <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
@@ -505,7 +495,7 @@
         <span class="c1"># fmt:on</span>
 
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span> <span class="ow">in</span> <span class="n">out_merge</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">out_map</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;in</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">out_map</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">mergenode</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;in</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 

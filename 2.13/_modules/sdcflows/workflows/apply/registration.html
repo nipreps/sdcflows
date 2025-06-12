@@ -336,9 +336,11 @@
 <span class="sd">The target EPI is the distorted dataset (or a reference thereof).</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.engine.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiterateWorkflow</span> <span class="k">as</span> <span class="n">Workflow</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">...</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span>
@@ -351,7 +353,7 @@
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">write_coeff</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coeff2epi_wf&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;coeff2epi_wf&#39;</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Move the field coefficients on to the target (distorted) EPI space.</span>
@@ -403,8 +405,9 @@
 <span class="sd">        as moving, resampling the latter into the fieldmap space.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parseversion</span><span class="p">,</span> <span class="n">Version</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parseversion</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">brainmask</span>
 
@@ -416,34 +419,34 @@
 <span class="s2">&quot;&quot;&quot;</span>
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;target_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;target_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">]</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;target_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;target_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputnode&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;target_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;target2fmap_xfm&quot;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputnode&quot;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;target_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;target2fmap_xfm&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Dilate only for coregistration purposes</span>
     <span class="c1"># https://github.com/nipreps/sdcflows/issues/461</span>
-    <span class="n">dilate_target_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dilate_target_mask&quot;</span><span class="p">)</span>
-    <span class="n">dilate_fmap_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dilate_fmap_mask&quot;</span><span class="p">)</span>
+    <span class="n">dilate_target_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dilate_target_mask&#39;</span><span class="p">)</span>
+    <span class="n">dilate_fmap_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dilate_fmap_mask&#39;</span><span class="p">)</span>
 
     <span class="c1"># Register the reference of the fieldmap to the reference</span>
     <span class="c1"># of the target image (the one that shall be corrected)</span>
     <span class="n">coregister</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">Registration</span><span class="p">(</span>
-            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fmap-any_registration</span><span class="si">{</span><span class="s1">&#39;_testing&#39;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">),</span>
+            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fmap-any_registration</span><span class="si">{</span><span class="s2">&quot;_testing&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.json&#39;</span><span class="p">),</span>
             <span class="n">output_warped_image</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
             <span class="n">output_inverse_warped_image</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coregister&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;coregister&#39;</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">ver</span> <span class="o">=</span> <span class="n">coregister</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span> <span class="s2">&quot;2.2.0&quot;</span>
-    <span class="n">mask_trait_s</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="k">if</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ver</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s2">&quot;2.2.0&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">ver</span> <span class="o">=</span> <span class="n">coregister</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span> <span class="s1">&#39;2.2.0&#39;</span>
+    <span class="n">mask_trait_s</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span> <span class="k">if</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ver</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s1">&#39;2.2.0&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
 
     <span class="c1"># fmt: off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
@@ -469,8 +472,8 @@
 
     <span class="k">if</span> <span class="n">write_coeff</span><span class="p">:</span>
         <span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;SDCFlows does not tinker with the coefficients file anymore, &quot;</span>
-            <span class="s2">&quot;the `write_coeff` parameter will be removed in a future release.&quot;</span>
+            <span class="s1">&#39;SDCFlows does not tinker with the coefficients file anymore, &#39;</span>
+            <span class="s1">&#39;the `write_coeff` parameter will be removed in a future release.&#39;</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
