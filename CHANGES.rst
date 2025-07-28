@@ -1,4 +1,4 @@
-2.13.1 (Jane 12, 2025)
+2.13.1 (June 12, 2025)
 ======================
 Patch release in the 2.13.x series.
 
