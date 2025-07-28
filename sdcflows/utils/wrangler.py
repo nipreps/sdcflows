@@ -377,7 +377,8 @@ def find_estimators(
                     [
                         fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
                         for fmap in bare_ids + listed_ids
-                    ]
+                    ],
+                    bids_id=b0_id,
                 )
             except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
