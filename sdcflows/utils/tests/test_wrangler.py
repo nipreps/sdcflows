@@ -202,6 +202,146 @@ pepolar = {
 }
 
 
+pepolar_b0ids = {
+    '01': [
+        {
+            'session': '01',
+            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+            'func': [
+                {
+                    'task': 'rest',
+                    'run': 1,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'B0FieldIdentifier': 'b0_pepolar',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 2,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j-',
+                        'B0FieldIdentifier': 'b0_pepolar',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+            ],
+        },
+        {
+            'session': '02',
+            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+            'func': [
+                {
+                    'task': 'rest',
+                    'run': 1,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 2,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j-',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 1,
+                    'suffix': 'sbref',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'B0FieldIdentifier': 'b0_pepolar',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 2,
+                    'suffix': 'sbref',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j-',
+                        'B0FieldIdentifier': 'b0_pepolar',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+            ],
+        },
+        {
+            'session': '03',
+            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+            'func': [
+                {
+                    'task': 'rest',
+                    'run': 1,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 2,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j-',
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 1,
+                    'suffix': 'sbref',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'B0FieldIdentifier': ['b0_pepolar', 'b0_pepolar_dup'],
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+                {
+                    'task': 'rest',
+                    'run': 2,
+                    'suffix': 'sbref',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j-',
+                        'B0FieldIdentifier': ['b0_pepolar', 'b0_pepolar_dup'],
+                        'B0FieldSource': 'b0_pepolar',
+                    },
+                },
+            ],
+        },
+    ]
+}
+
+
 phasediff = {
     '01': [
         {
@@ -304,26 +444,28 @@ filters = {
 
 
 @pytest.mark.parametrize(
-    'name,skeleton,estimations',
+    'name,skeleton,estimations,bids_filters',
     [
-        ('pepolar', pepolar, 1),
-        ('phasediff', phasediff, 1),
+        ('pepolar', pepolar, 1, 'fmap'),
+        ('pepolar_b0ids', pepolar_b0ids, 1, 'bold'),
+        ('phasediff', phasediff, 1, 'fmap'),
     ],
 )
-def test_wrangler_filter(tmpdir, name, skeleton, estimations):
+def test_wrangler_filter(tmpdir, name, skeleton, estimations, bids_filters):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)
     layout = gen_layout(bids_dir)
-    est = find_estimators(layout=layout, subject='01', bids_filters=filters['fmap'])
+    est = find_estimators(layout=layout, subject='01', bids_filters=filters[bids_filters])
     assert len(est) == estimations
     clear_registry()
 
 
 @pytest.mark.parametrize(
-    'name,skeleton,total_estimations',
+    'name,skeleton,total_estimations,test_auto',
     [
-        ('pepolar', pepolar, 5),
-        ('phasediff', phasediff, 3),
+        ('pepolar', pepolar, 5, True),
+        ('pepolar_b0ids', pepolar_b0ids, 2, False),
+        ('phasediff', phasediff, 3, True),
     ],
 )
 @pytest.mark.parametrize(
@@ -335,7 +477,7 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations):
         (None, None),
     ],
 )
-def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estimations):
+def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estimations, test_auto):
     bids_dir = str(tmpdir / name)
     generate_bids_skeleton(bids_dir, skeleton)
     layout = gen_layout(bids_dir)
@@ -345,7 +487,7 @@ def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estim
         sessions=[session] if session else None,
     )
     assert len(est) == estimations or total_estimations
-    if session:
+    if session and test_auto:
         bold = layout.get(session=session, suffix='bold', extension='.nii.gz')[0]
         intended_rel = re.sub(r'^sub-[a-zA-Z0-9]*/', '', str(Path(bold).relative_to(layout.root)))
         b0_id = get_identifier(intended_rel)
