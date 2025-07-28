@@ -1,3 +1,12 @@
+2.13.2 (July 28, 2025)
+======================
+Patch release in the 2.13.x series.
+
+This includes a fix for cases where a scan contributes to multiple ``B0FieldIdentifier``\s.
+
+* [FIX] Fixes conditions of overlapping B0FieldIdentifier, resulting in no estimators (#497)
+
+
 2.13.1 (June 12, 2025)
 ======================
 Patch release in the 2.13.x series.
@@ -5,6 +14,7 @@ Patch release in the 2.13.x series.
 This includes a fix to ``init_fmap_preproc_wf`` node naming.
 
 * FIX: Use the sanitized id when naming through nipype (#495)
+
 
 2.13.0 (May 15, 2025)
 =====================
