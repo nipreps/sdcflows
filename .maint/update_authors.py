@@ -130,10 +130,11 @@ def get_git_lines(fname='line-contributors.txt'):
     if not lines:
         raise RuntimeError(
             """\
-Could not find line-contributors from git repository.%s"""
-            % """ \
+Could not find line-contributors from git repository.{}""".format(
+                """ \
 git-line-summary not found, please install git-extras. """
-            * (cmd[0] is None)
+                * (cmd[0] is None)
+            )
         )
     return [' '.join(line.strip().split()[1:-1]) for line in lines if '%' in line]
 
@@ -219,7 +220,7 @@ def zenodo(
         elif isinstance(creator['affiliation'], list):
             creator['affiliation'] = creator['affiliation'][0]
 
-    Path(zenodo_file).write_text('%s\n' % json.dumps(zenodo, indent=2, ensure_ascii=False))
+    Path(zenodo_file).write_text(f'{json.dumps(zenodo, indent=2, ensure_ascii=False)}\n')
 
 
 @cli.command()
@@ -266,10 +267,8 @@ def publication(
 
     aff_indexes = [
         ', '.join(
-            [
-                '%d' % (affiliations.index(a) + 1)
-                for a in _aslist(author.get('affiliation', 'Unaffiliated'))
-            ]
+            str(affiliations.index(a) + 1)
+            for a in _aslist(author.get('affiliation', 'Unaffiliated'))
         )
         for author in hits
     ]
@@ -280,15 +279,13 @@ def publication(
             file=sys.stderr,
         )
 
-    print('Authors (%d):' % len(hits))
-    print(
-        '%s.'
-        % '; '.join(['%s \\ :sup:`%s`\\ ' % (i['name'], idx) for i, idx in zip(hits, aff_indexes)])
-    )
+    print(f'Authors ({len(hits)}):')
+    print('; '.join([rf'{i["name"]} \ :sup:`{idx}`\ ' for i, idx in zip(hits, aff_indexes)]) + '.')
 
     print(
-        '\n\nAffiliations:\n%s'
-        % '\n'.join(['{0: >2}. {1}'.format(i + 1, a) for i, a in enumerate(affiliations)])
+        '\n\nAffiliations:\n{}'.format(
+            '\n'.join([f'{i + 1: >2}. {a}' for i, a in enumerate(affiliations)])
+        )
     )
 
 

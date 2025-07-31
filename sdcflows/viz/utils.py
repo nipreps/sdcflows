@@ -89,8 +89,8 @@ def plot_registration(
 
         # Find and replace the figure_1 id.
         xml_data = etree.fromstring(svg)
-        find_text = etree.ETXPath("//{%s}g[@id='figure_1']" % SVGNS)
-        find_text(xml_data)[0].set('id', '%s-%s-%s' % (div_id, mode, uuid4()))
+        find_text = etree.ETXPath(f"//{{{SVGNS}}}g[@id='figure_1']")
+        find_text(xml_data)[0].set('id', f'{div_id}-{mode}-{uuid4()}')
 
         svg_fig = SVGFigure()
         svg_fig.root = xml_data

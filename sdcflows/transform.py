@@ -49,9 +49,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Sequence
 from functools import partial
 from pathlib import Path
-from typing import Callable, Sequence, Tuple
+from typing import Callable
 from warnings import warn
 
 import attr
@@ -71,7 +72,7 @@ from sdcflows.utils.tools import ensure_positive_cosines
 def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray | None,
     jacobian: bool,
     fmap_hz: np.ndarray,
@@ -120,7 +121,7 @@ def _sdc_unwarp(
 async def worker(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray,
     func: Callable,
     semaphore: asyncio.Semaphore,
@@ -136,7 +137,7 @@ async def unwarp_parallel(
     fulldataset: np.ndarray,
     coordinates: np.ndarray,
     fmap_hz: np.ndarray,
-    pe_info: Sequence[Tuple[int, float]],
+    pe_info: Sequence[tuple[int, float]],
     xfms: Sequence[np.ndarray],
     jacobian: bool,
     order: int = 3,
@@ -463,7 +464,8 @@ class B0FieldTransform:
         if self.mapped is not None:
             warn(
                 'The fieldmap has been already fit, the user is responsible for '
-                'ensuring the parameters of the EPI target are consistent.'
+                'ensuring the parameters of the EPI target are consistent.',
+                stacklevel=2,
             )
         else:
             # Generate warp field (before ensuring positive cosines)
@@ -490,19 +492,12 @@ class B0FieldTransform:
             ro_time *= n_volumes
 
         pe_info = []
-        for volid in range(n_volumes):
-            pe_axis = 'ijk'.index(pe_dir[volid][0])
-            axis_flip = axcodes[pe_axis] in ('LPI')
-            pe_flip = pe_dir[volid].endswith('-')
+        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time):
+            pe_axis = 'ijk'.index(vol_pe_dir[0])
+            # Displacements are reversed if either is true (after ensuring positive cosines)
+            flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
 
-            pe_info.append(
-                (
-                    pe_axis,
-                    # Displacements are reversed if either is true
-                    # (after ensuring positive cosines)
-                    -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
-                )
-            )
+            pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
 
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = (
@@ -525,7 +520,8 @@ class B0FieldTransform:
             warn(
                 'Head-motion compensating (realignment) transforms are ignored when applying '
                 'the unwarp with SDCFlows. This feature will be enabled as soon as unit tests '
-                'are implemented for its quality assurance.'
+                'are implemented for its quality assurance.',
+                stacklevel=1,
             )
 
         # Resample
@@ -739,7 +735,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype='float32'):
         0,
         atol=1e-3,
     ):
-        warn("Image's and B-Spline's grids are not aligned.")
+        warn("Image's and B-Spline's grids are not aligned.", stacklevel=2)
 
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []

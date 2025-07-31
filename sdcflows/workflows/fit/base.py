@@ -49,7 +49,7 @@ def init_sdcflows_wf():
             logger=config.loggers.cli,
         )
 
-    for subject, sub_estimators in estimators_record.items():
+    for sub_estimators in estimators_record.values():
         for estim in sub_estimators:
             estim_wf = estim.get_workflow(
                 omp_nthreads=config.nipype.omp_nthreads,

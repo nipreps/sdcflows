@@ -29,7 +29,7 @@ from contextlib import suppress
 from functools import reduce
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from bids.layout import BIDSFile, BIDSLayout
 from bids.utils import listify
@@ -59,7 +59,7 @@ def _resolve_intent(intent: str, layout: BIDSLayout, subject: str) -> str | None
     return intent
 
 
-def _filter_metadata(metadata: Dict[str, Any], subject: str) -> Dict[str, Any]:
+def _filter_metadata(metadata: dict[str, Any], subject: str) -> dict[str, Any]:
     intents = metadata.get('IntendedFor')
     if intents:
         updated = [_normalize_intent(intent, subject) for intent in listify(intents)]
@@ -71,12 +71,12 @@ def find_estimators(
     *,
     layout: BIDSLayout,
     subject: str,
-    sessions: Optional[List[str]] = None,
-    fmapless: Union[bool, set] = True,
+    sessions: list[str] | None = None,
+    fmapless: bool | set = True,
     force_fmapless: bool = False,
-    logger: Optional[logging.Logger] = None,
-    bids_filters: Optional[dict] = None,
-    anat_suffix: Union[str, List[str]] = 'T1w',
+    logger: logging.Logger | None = None,
+    bids_filters: dict | None = None,
+    anat_suffix: str | list[str] = 'T1w',
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
@@ -346,7 +346,7 @@ def find_estimators(
     estimators = []
 
     # Step 1. Use B0FieldIdentifier metadata
-    b0_ids = tuple()
+    b0_ids = ()
     with suppress(BIDSEntityError):
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
@@ -446,7 +446,7 @@ def find_estimators(
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
-        has_intended = tuple()
+        has_intended = ()
         with suppress(ValueError):
             has_intended = layout.get(
                 **{
@@ -546,10 +546,10 @@ def find_anatomical_estimators(
     anat_file: BIDSFile,
     layout: BIDSLayout,
     subject: str,
-    sessions: List[str],
-    base_entities: Dict[str, Any],
-    suffixes: List[str],
-) -> List[List[fm.FieldmapFile]]:
+    sessions: list[str],
+    base_entities: dict[str, Any],
+    suffixes: list[str],
+) -> list[list[fm.FieldmapFile]]:
     r"""Find anatomical estimators
 
     Given an anatomical reference image, create lists of files for estimating
@@ -607,7 +607,7 @@ def find_anatomical_estimators(
                 meta.update({'TotalReadoutTime': get_trt(meta, candidate.path)})
             epi_targets.append(fm.FieldmapFile(candidate, metadata=meta))
 
-        def sort_key(fmap):
+        def sort_key(fmap, suffixes=suffixes):
             # Return sbref before DWI/BOLD and shortest echo first
             return suffixes.index(fmap.suffix), fmap.metadata.get('EchoTime', 1)
 
@@ -645,7 +645,7 @@ def _log_debug_estimation(
 
 
 def _log_debug_estimator_fail(
-    logger: logging.Logger, b0_id: str, files: List[BIDSFile], bids_root: str, message: str
+    logger: logging.Logger, b0_id: str, files: list[BIDSFile], bids_root: str, message: str
 ) -> None:
     """A helper function to log failures to build an estimator when running with verbosity."""
     logger.debug(
