@@ -663,7 +663,7 @@
 
         <span class="c1"># Fieldmap option 1: actual field-mapping sequences</span>
         <span class="n">fmap_types</span> <span class="o">=</span> <span class="n">suffix_set</span><span class="o">.</span><span class="n">intersection</span><span class="p">((</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;phasediff&#39;</span><span class="p">,</span> <span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="nb">set</span><span class="p">((</span><span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fmap_types</span> <span class="o">-</span> <span class="p">{</span><span class="s1">&#39;phase1&#39;</span><span class="p">,</span> <span class="s1">&#39;phase2&#39;</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Incompatible suffices found: &lt;</span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmap_types</span><span class="p">)</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">fmap_types</span><span class="p">:</span>
@@ -697,7 +697,7 @@
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="s1">&#39;A fieldmap or phase-difference estimation type was found, &#39;</span>
                         <span class="sa">f</span><span class="s1">&#39;but an anatomical reference (</span><span class="si">{</span><span class="n">magnitude</span><span class="si">}</span><span class="s1"> file) is missing.&#39;</span>
-                    <span class="p">)</span>
+                    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
             <span class="c1"># Check presence and try to find (if necessary) the second magnitude file</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">EstimatorType</span><span class="o">.</span><span class="n">PHASEDIFF</span> <span class="ow">and</span> <span class="s1">&#39;magnitude2&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suffix_set</span><span class="p">:</span>
@@ -711,7 +711,7 @@
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                             <span class="s1">&#39;A phase-difference estimation (phase1/2) type was found, &#39;</span>
                             <span class="s1">&#39;but an anatomical reference (magnitude2 file) is missing.&#39;</span>
-                        <span class="p">)</span>
+                        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
         <span class="c1"># Fieldmap option 2: PEPOLAR (and fieldmap-less or ANAT)</span>
         <span class="c1"># IMPORTANT NOTE: fieldmap-less approaches can be considered PEPOLAR with RO = 0.0s</span>
@@ -724,7 +724,7 @@
 
         <span class="k">if</span> <span class="n">_pepolar_estimation</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">anat_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">MODALITIES</span><span class="p">[</span><span class="n">pepolar_types</span><span class="o">.</span><span class="n">pop</span><span class="p">()]</span>
-            <span class="n">_pe</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
+            <span class="n">_pe</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">}</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_pe</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s1">&#39;Only one phase-encoding direction &lt;</span><span class="si">{</span><span class="n">_pe</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span><span class="si">}</span><span class="s1">&gt; found across sources.&#39;</span>
@@ -739,9 +739,9 @@
             <span class="c1"># No method has been identified -&gt; fail.</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Insufficient sources to estimate a fieldmap.&#39;</span><span class="p">)</span>
 
-        <span class="n">intents_meta</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="n">intents_meta</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">el</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;IntendedFor&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
-        <span class="p">)</span>
+        <span class="p">}</span>
 
         <span class="c1"># Register this estimation method</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bids_id</span><span class="p">:</span>

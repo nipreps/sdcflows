@@ -950,7 +950,7 @@
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span>
-    <span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s1">&#39;estimate&#39;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;B-Spline coefficients&#39;</span><span class="p">)</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s1">&#39;estimate&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;B-Spline coefficients&#39;</span><span class="p">)</span>
 
     <span class="c1"># Write out fixed (generalized) coefficients</span>
     <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newaff</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>

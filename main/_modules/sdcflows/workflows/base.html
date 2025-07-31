@@ -424,9 +424,9 @@
                             <span class="n">in_file</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
                             <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
                         <span class="p">)</span>
-                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Missing readout timing information for &lt;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s1">&gt;.&#39;</span>
-                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="n">est_wf</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">get_workflow</span><span class="p">(</span>
             <span class="n">use_metadata_estimates</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>

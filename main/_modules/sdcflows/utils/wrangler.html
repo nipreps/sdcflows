@@ -336,7 +336,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bids.layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">BIDSFile</span><span class="p">,</span> <span class="n">BIDSLayout</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bids.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">listify</span>
@@ -366,7 +366,7 @@
     <span class="k">return</span> <span class="n">intent</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_filter_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="n">intents</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;IntendedFor&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">intents</span><span class="p">:</span>
         <span class="n">updated</span> <span class="o">=</span> <span class="p">[</span><span class="n">_normalize_intent</span><span class="p">(</span><span class="n">intent</span><span class="p">,</span> <span class="n">subject</span><span class="p">)</span> <span class="k">for</span> <span class="n">intent</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">intents</span><span class="p">)]</span>
@@ -380,12 +380,12 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">layout</span><span class="p">:</span> <span class="n">BIDSLayout</span><span class="p">,</span>
     <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">sessions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fmapless</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">sessions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fmapless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">set</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">force_fmapless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">logger</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">bids_filters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">anat_suffix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s1">&#39;T1w&#39;</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bids_filters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">anat_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T1w&#39;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply basic heuristics to automatically find available data for fieldmap estimation.</span>
@@ -655,7 +655,7 @@
     <span class="n">estimators</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># Step 1. Use B0FieldIdentifier metadata</span>
-    <span class="n">b0_ids</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+    <span class="n">b0_ids</span> <span class="o">=</span> <span class="p">()</span>
     <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">BIDSEntityError</span><span class="p">):</span>
         <span class="c1"># flatten lists from json (tupled in pybids for hashing), then unique</span>
         <span class="n">b0_ids</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
@@ -755,7 +755,7 @@
 
         <span class="c1"># At this point, only single-PE _epi files WITH ``IntendedFor`` can</span>
         <span class="c1"># be automatically processed.</span>
-        <span class="n">has_intended</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+        <span class="n">has_intended</span> <span class="o">=</span> <span class="p">()</span>
         <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
             <span class="n">has_intended</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="o">**</span><span class="p">{</span>
@@ -858,10 +858,10 @@
     <span class="n">anat_file</span><span class="p">:</span> <span class="n">BIDSFile</span><span class="p">,</span>
     <span class="n">layout</span><span class="p">:</span> <span class="n">BIDSLayout</span><span class="p">,</span>
     <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">sessions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">base_entities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">suffixes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">]]:</span>
+    <span class="n">sessions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">base_entities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">suffixes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Find anatomical estimators</span>
 
 <span class="sd">    Given an anatomical reference image, create lists of files for estimating</span>
@@ -919,7 +919,7 @@
                 <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">:</span> <span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">path</span><span class="p">)})</span>
             <span class="n">epi_targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">FieldmapFile</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">sort_key</span><span class="p">(</span><span class="n">fmap</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">sort_key</span><span class="p">(</span><span class="n">fmap</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="n">suffixes</span><span class="p">):</span>
             <span class="c1"># Return sbref before DWI/BOLD and shortest echo first</span>
             <span class="k">return</span> <span class="n">suffixes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">fmap</span><span class="o">.</span><span class="n">suffix</span><span class="p">),</span> <span class="n">fmap</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;EchoTime&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -958,7 +958,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_log_debug_estimator_fail</span><span class="p">(</span>
-    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">b0_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BIDSFile</span><span class="p">],</span> <span class="n">bids_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span> <span class="n">b0_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BIDSFile</span><span class="p">],</span> <span class="n">bids_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A helper function to log failures to build an estimator when running with verbosity.&quot;&quot;&quot;</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>

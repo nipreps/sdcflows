@@ -453,14 +453,16 @@
             <span class="n">te2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">in_values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;EchoTimeDifference&#39;</span><span class="p">))</span>
             <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">te2</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Phase/phase-difference fieldmaps: no echo-times information.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Phase/phase-difference fieldmaps: no echo-times information.&#39;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not interpret metadata &lt;EchoTimeDifference=</span><span class="si">{</span><span class="n">te2</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not interpret metadata &lt;EchoTimeDifference=</span><span class="si">{</span><span class="n">te2</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">te2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">te2</span> <span class="ow">or</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span>
         <span class="n">te1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">te1</span> <span class="ow">or</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not interpret metadata &lt;EchoTime(1,2)=</span><span class="si">{</span><span class="p">(</span><span class="n">te1</span><span class="p">,</span><span class="w"> </span><span class="n">te2</span><span class="p">)</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not interpret metadata &lt;EchoTime(1,2)=</span><span class="si">{</span><span class="p">(</span><span class="n">te1</span><span class="p">,</span><span class="w"> </span><span class="n">te2</span><span class="p">)</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
     <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">te2</span> <span class="o">-</span> <span class="n">te1</span><span class="p">)</span></div>
 

@@ -329,7 +329,6 @@
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Standalone command line executable for estimation of fieldmaps.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span><span class="p">,</span> <span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">,</span> <span class="n">ArgumentParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -353,9 +352,7 @@
 <span class="sd">    [&#39;s060&#39;]</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="nb">set</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^sub-&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
-    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">item</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s1">&#39;sub-&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">()})</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parser</span><span class="p">():</span>
@@ -610,12 +607,10 @@
 
     <span class="c1"># Ensure input and output folders are not the same</span>
     <span class="k">if</span> <span class="n">output_dir</span> <span class="o">==</span> <span class="n">bids_dir</span><span class="p">:</span>
+        <span class="n">suggested_path</span> <span class="o">=</span> <span class="n">bids_dir</span> <span class="o">/</span> <span class="s1">&#39;derivatives&#39;</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;sdcflows_</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="s1">&#39;The selected output folder is the same as the input BIDS folder. &#39;</span>
-            <span class="s1">&#39;Please modify the output path (suggestion: </span><span class="si">%s</span><span class="s1">).&#39;</span>
-            <span class="o">%</span> <span class="n">bids_dir</span>
-            <span class="o">/</span> <span class="s1">&#39;derivatives&#39;</span>
-            <span class="o">/</span> <span class="p">(</span><span class="s1">&#39;sdcflows_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="sa">f</span><span class="s1">&#39;Please modify the output path (suggestion: </span><span class="si">{</span><span class="n">suggested_path</span><span class="si">}</span><span class="s1">).&#39;</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">bids_dir</span> <span class="ow">in</span> <span class="n">work_dir</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
