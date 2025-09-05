@@ -797,7 +797,7 @@
                 <span class="n">targets</span> <span class="o">=</span> <span class="n">all_targets</span>
                 <span class="n">intent_map</span> <span class="o">=</span> <span class="p">[[</span><span class="n">target</span><span class="p">]</span> <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">all_targets</span><span class="p">]</span>
 
-            <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">intent</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">intent_map</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">intent</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">intent_map</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Found single PE target </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">relpath</span><span class="p">)</span>
                 <span class="c1"># The new estimator is IntendedFor the individual targets,</span>
                 <span class="c1"># even if the EPI file is IntendedFor multiple</span>
