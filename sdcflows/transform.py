@@ -502,7 +502,7 @@ class B0FieldTransform:
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = (
             nt.linear.Affine(reference=moving)
-            .reference.ndindex.reshape((ndim, *data.shape[:ndim]))
+            .reference.ndindex.T.reshape((ndim, *data.shape[:ndim]))
             .astype('float32')
         )
 
