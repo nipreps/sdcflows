@@ -81,13 +81,15 @@ class Flatten(SimpleInterface):
 
     def _run_interface(self, runtime):
         self._results['out_list'] = _flatten(
-            zip(self.inputs.in_data, self.inputs.in_meta),
+            zip(self.inputs.in_data, self.inputs.in_meta, strict=False),
             max_trs=self.inputs.max_trs,
             out_dir=runtime.cwd,
         )
 
         # Unzip out_data, out_meta outputs.
-        self._results['out_data'], self._results['out_meta'] = zip(*self._results['out_list'])
+        self._results['out_data'], self._results['out_meta'] = zip(
+            *self._results['out_list'], strict=False
+        )
         return runtime
 
 
@@ -449,7 +451,11 @@ def _deoblique(in_file, in_affine=None, newpath=None):
     if in_affine is None:
         orientation = nb.aff2axcodes(nii.affine)
         directions = (
-            np.array([int(l1 == l2) for l1, l2 in zip(orientation, 'RAS')], dtype='float32') * 2
+            np.array(
+                [int(l1 == l2) for l1, l2 in zip(orientation, 'RAS', strict=False)],
+                dtype='float32',
+            )
+            * 2
             - 1
         )
         newaff = np.eye(4)

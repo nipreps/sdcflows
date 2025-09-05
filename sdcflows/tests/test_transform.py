@@ -48,7 +48,7 @@ def generate_oracle(
     data[19:22, ...] = 0
     data = np.pad(data + nd.binary_erosion(data, ball(3)), 8)
 
-    zooms = [z if not f else -z for z, f in zip(zooms, flip)]
+    zooms = [z if not f else -z for z, f in zip(zooms, flip, strict=False)]
     affine = np.diag(zooms + [1])
     affine[:3, 3] = -affine[:3, :3] @ ((np.array(data.shape) - 1) * 0.5)
 
@@ -123,7 +123,9 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
     assert np.all((np.sqrt(((ours - theirs) ** 2).sum()) / ours.size) < 1e-1)
 
     if outdir:
-        orientation = ''.join([ax[bool(f)] for ax, f in zip(('RL', 'AP', 'SI'), flip)])
+        orientation = ''.join(
+            [ax[bool(f)] for ax, f in zip(('RL', 'AP', 'SI'), flip, strict=False)]
+        )
 
         SimpleBeforeAfter(
             after_label='Theirs (ANTs)',

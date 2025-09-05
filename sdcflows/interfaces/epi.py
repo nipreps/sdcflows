@@ -120,6 +120,7 @@ class SortPEBlips(SimpleInterface):
                 blips,
                 self.inputs.readout_times,
                 self.inputs.in_data,
+                strict=False,
             )
         )
 
@@ -127,7 +128,7 @@ class SortPEBlips(SimpleInterface):
             self._results['pe_dirs_fsl'],
             self._results['readout_times'],
             self._results['out_data'],
-        ) = zip(*sorted_inputs)
+        ) = zip(*sorted_inputs, strict=False)
 
         # Put sign back last
         self._results['pe_dirs_fsl'] = [

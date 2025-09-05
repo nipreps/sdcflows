@@ -488,7 +488,7 @@ def find_estimators(
                 targets = all_targets
                 intent_map = [[target] for target in all_targets]
 
-            for target, intent in zip(targets, intent_map):
+            for target, intent in zip(targets, intent_map, strict=False):
                 logger.debug('Found single PE target %s', target.relpath)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple

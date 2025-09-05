@@ -49,10 +49,9 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from functools import partial
 from pathlib import Path
-from typing import Callable
 from warnings import warn
 
 import attr
@@ -492,7 +491,7 @@ class B0FieldTransform:
             ro_time *= n_volumes
 
         pe_info = []
-        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time):
+        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time, strict=False):
             pe_axis = 'ijk'.index(vol_pe_dir[0])
             # Displacements are reversed if either is true (after ensuring positive cosines)
             flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
@@ -502,7 +501,7 @@ class B0FieldTransform:
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = (
             nt.linear.Affine(reference=moving)
-            .reference.ndindex.reshape((ndim, *data.shape[:ndim]))
+            .reference.ndindex.T.reshape((ndim, *data.shape[:ndim]))
             .astype('float32')
         )
 

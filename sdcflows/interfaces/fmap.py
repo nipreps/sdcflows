@@ -289,7 +289,7 @@ class CheckRegister(SimpleInterface):
         fmap_imgs = [nb.load(fname) for fname in fmap_files]
 
         # Baseline check: paired magnitude/phase maps are basically the same
-        for mag, fmap in zip(mag_imgs, fmap_imgs):
+        for mag, fmap in zip(mag_imgs, fmap_imgs, strict=False):
             msg = _check_gross_geometry(mag, fmap)
             if msg is not None:
                 LOGGER.critical(msg)

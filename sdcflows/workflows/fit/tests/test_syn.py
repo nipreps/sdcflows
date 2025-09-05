@@ -304,7 +304,10 @@ def test_mm2vox(tmp_path, fixed_ornt, moving_ornt, ijk, index):
 
     vox_params = _mm2vox(str(moving_path), str(fixed_path), ijk, config)
     vox_values = [level[2] for level in vox_params]
-    assert [mm_level[:2] == vox_level[:2] for mm_level, vox_level in zip(params, vox_params)]
+    assert all(
+        mm_level[:2] == vox_level[:2]
+        for mm_level, vox_level in zip(params, vox_params, strict=False)
+    )
     assert np.array_equal(vox_values, mm_values / [2, 3, 4][index])
 
 
