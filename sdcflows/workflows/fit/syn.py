@@ -348,6 +348,10 @@ def init_syn_preprocessing_wf(
     auto_bold_nss=False,
     t1w_inversion=False,
     sd_prior=True,
+    n4_iterations=(50,) * 5,
+    n4_shrink_factor=4,
+    calculate_n4_spline_grid=False,
+    **kwargs,
 ):
     """
     Prepare EPI references and co-registration to anatomical for SyN.
@@ -470,6 +474,9 @@ def init_syn_preprocessing_wf(
     epi_reference_wf = init_epi_reference_wf(
         omp_nthreads=omp_nthreads,
         auto_bold_nss=auto_bold_nss,
+        n4_iterations=n4_iterations,
+        n4_shrink_factor=n4_shrink_factor,
+        calculate_bspline_grid=calculate_n4_spline_grid,
     )
     epi_brain = pe.Node(BrainExtraction(), name='epi_brain')
     merge_output = pe.Node(
