@@ -404,7 +404,7 @@ class ApiDocWriter:
 
         module_by_ulm = OrderedDict()
 
-        for v, k in zip(modules, ulms):
+        for v, k in zip(modules, ulms, strict=False):
             if k in module_by_ulm:
                 module_by_ulm[k].append(v)
             else:

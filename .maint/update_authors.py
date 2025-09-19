@@ -57,7 +57,7 @@ def read_md_table(md_text):
             break
 
         values = [v.strip() or None for v in line.split('|')][1:-1]
-        retval.append({k: v for k, v in zip(keys, values) if v})
+        retval.append({k: v for k, v in zip(keys, values, strict=False) if v})
 
     return retval
 
@@ -280,7 +280,12 @@ def publication(
         )
 
     print(f'Authors ({len(hits)}):')
-    print('; '.join([rf'{i["name"]} \ :sup:`{idx}`\ ' for i, idx in zip(hits, aff_indexes)]) + '.')
+    print(
+        '; '.join(
+            [rf'{i["name"]} \ :sup:`{idx}`\ ' for i, idx in zip(hits, aff_indexes, strict=False)]
+        )
+        + '.'
+    )
 
     print(
         '\n\nAffiliations:\n{}'.format(
