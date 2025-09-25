@@ -1,3 +1,14 @@
+2.14.0 (September 22, 2025)
+===========================
+Feature release in the 2.13.x series.
+
+This release requires a recent nitransforms release that in turn requires NumPy 2.
+Since this is a major dependency increment, a new feature release is justified.
+
+* fix: Adapt to transposed ndindex in nitransforms (#501)
+* fix: Adopt some more opinionated ruff rules, manual resolutions (#493)
+
+
 2.13.2 (July 28, 2025)
 ======================
 Patch release in the 2.13.x series.
