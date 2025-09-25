@@ -157,13 +157,10 @@ def init_fmap_preproc_wf(
                 niu.IdentityInterface(fields=fields),
                 name=f'in_{estimator.sanitized_id}',
             )
-            # fmt:off
             workflow.connect([
                 (inputnode, est_wf, [(f, f"inputnode.{f}") for f in fields])
-            ])
-            # fmt:on
+            ])  # fmt:skip
 
-        # fmt:off
         workflow.connect([
             (est_wf, fmap_derivatives_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
@@ -182,8 +179,7 @@ def init_fmap_preproc_wf(
                 ("outputnode.fmap_mask", "fmap_mask"),
                 ("outputnode.method", "method")
             ]),
-        ])
-        # fmt:on
+        ])  # fmt:skip
 
         for field, mergenode in out_merge.items():
             workflow.connect(out_map, field, mergenode, f'in{n}')

@@ -105,7 +105,6 @@ def init_fmap_reports_wf(
     for k, v in custom_entities.items():
         setattr(ds_fmap_report.inputs, k, v)
 
-    # fmt:off
     workflow.connect([
         (inputnode, fmap_rpt, [(("fieldmap", _pop), "fieldmap"),
                                ("fmap_ref", "reference"),
@@ -113,8 +112,7 @@ def init_fmap_reports_wf(
         (fmap_rpt, ds_fmap_report, [("out_report", "in_file")]),
         (inputnode, ds_fmap_report, [("source_files", "source_file")]),
 
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     return workflow
 
@@ -200,7 +198,6 @@ def init_fmap_derivatives_wf(
         setattr(ds_reference.inputs, k, v)
         setattr(ds_fieldmap.inputs, k, v)
 
-    # fmt:off
     workflow.connect([
         (inputnode, merge_fmap, [("fieldmap", "in_files")]),
         (inputnode, ds_reference, [("source_files", "source_file"),
@@ -213,8 +210,7 @@ def init_fmap_derivatives_wf(
             (("out_file", _getname), "AnatomicalReference"),
         ]),
         (inputnode, ds_fieldmap, [(("fmap_meta", _selectintent), "IntendedFor")]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     if not write_coeff:
         return workflow
@@ -236,15 +232,13 @@ def init_fmap_derivatives_wf(
     for k, v in custom_entities.items():
         setattr(ds_coeff.inputs, k, v)
 
-    # fmt:off
     workflow.connect([
         (inputnode, ds_coeff, [("source_files", "source_file"),
                                ("fmap_coeff", "in_file")]),
         (inputnode, gen_desc, [("fmap_coeff", "infiles")]),
         (gen_desc, ds_coeff, [("out", "desc")]),
         (ds_coeff, ds_fieldmap, [(("out_file", _getname), "AssociatedCoefficients")]),
-    ])
-    # fmt:on
+    ])  # fmt:skip
 
     return workflow
 
