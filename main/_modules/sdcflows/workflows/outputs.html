@@ -401,14 +401,12 @@
             <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span>
             <span class="n">desc</span><span class="o">=</span><span class="n">fmap_type</span><span class="p">,</span>
             <span class="n">dismiss_entities</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;fmap&#39;</span><span class="p">,),</span>
-            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ds_fmap_report&#39;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">custom_entities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">ds_fmap_report</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">ds_fmap_report</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trait_set</span><span class="p">(</span><span class="o">**</span><span class="n">custom_entities</span><span class="p">)</span>
 
-    <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">fmap_rpt</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">),</span>
                                <span class="p">(</span><span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;reference&quot;</span><span class="p">),</span>
@@ -416,8 +414,7 @@
         <span class="p">(</span><span class="n">fmap_rpt</span><span class="p">,</span> <span class="n">ds_fmap_report</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_report&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">ds_fmap_report</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;source_files&quot;</span><span class="p">,</span> <span class="s2">&quot;source_file&quot;</span><span class="p">)]),</span>
 
-    <span class="p">])</span>
-    <span class="c1"># fmt:on</span>
+    <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 
@@ -432,6 +429,7 @@
     <span class="n">custom_entities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fmap_derivatives_wf&#39;</span><span class="p">,</span>
     <span class="n">write_coeff</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">write_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up datasinks to store derivatives in the right location.</span>
@@ -468,9 +466,13 @@
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;source_files&#39;</span><span class="p">,</span> <span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_meta&#39;</span><span class="p">]</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;source_files&#39;</span><span class="p">,</span> <span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_meta&#39;</span><span class="p">]</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">merge_fmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;merge_fmap&#39;</span><span class="p">)</span>
@@ -482,7 +484,7 @@
             <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span>
             <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span>
             <span class="n">dismiss_entities</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;fmap&#39;</span><span class="p">,),</span>
-            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ds_reference&#39;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -494,7 +496,7 @@
             <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span>
             <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span>
             <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ds_fieldmap&#39;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -502,11 +504,9 @@
     <span class="k">if</span> <span class="n">bids_fmap_id</span><span class="p">:</span>
         <span class="n">ds_fieldmap</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">B0FieldIdentifier</span> <span class="o">=</span> <span class="n">bids_fmap_id</span>
 
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">custom_entities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">ds_reference</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">ds_fieldmap</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">ds_reference</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trait_set</span><span class="p">(</span><span class="o">**</span><span class="n">custom_entities</span><span class="p">)</span>
+    <span class="n">ds_fieldmap</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trait_set</span><span class="p">(</span><span class="o">**</span><span class="n">custom_entities</span><span class="p">)</span>
 
-    <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">merge_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;fieldmap&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">ds_reference</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;source_files&quot;</span><span class="p">,</span> <span class="s2">&quot;source_file&quot;</span><span class="p">),</span>
@@ -519,8 +519,31 @@
             <span class="p">((</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="n">_getname</span><span class="p">),</span> <span class="s2">&quot;AnatomicalReference&quot;</span><span class="p">),</span>
         <span class="p">]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">ds_fieldmap</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;fmap_meta&quot;</span><span class="p">,</span> <span class="n">_selectintent</span><span class="p">),</span> <span class="s2">&quot;IntendedFor&quot;</span><span class="p">)]),</span>
-    <span class="p">])</span>
-    <span class="c1"># fmt:on</span>
+        <span class="p">(</span><span class="n">ds_fieldmap</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">ds_reference</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">)]),</span>
+    <span class="p">])</span>  <span class="c1"># fmt:skip</span>
+
+    <span class="k">if</span> <span class="n">write_mask</span><span class="p">:</span>
+        <span class="n">ds_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+            <span class="n">DerivativesDataSink</span><span class="p">(</span>
+                <span class="n">base_directory</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+                <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;brain&#39;</span><span class="p">,</span>
+                <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;mask&#39;</span><span class="p">,</span>
+                <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span>
+                <span class="n">dismiss_entities</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;fmap&#39;</span><span class="p">,),</span>
+                <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ds_mask&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ds_mask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trait_set</span><span class="p">(</span><span class="o">**</span><span class="n">custom_entities</span><span class="p">)</span>
+
+        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
+            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">ds_mask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;source_files&quot;</span><span class="p">,</span> <span class="s2">&quot;source_file&quot;</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">ds_mask</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">)]),</span>
+        <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">write_coeff</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">workflow</span>
@@ -531,7 +554,7 @@
             <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span>
             <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span>
             <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">allowed_entities</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">custom_entities</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ds_coeff&#39;</span><span class="p">,</span>
         <span class="n">iterfield</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;desc&#39;</span><span class="p">),</span>
@@ -539,18 +562,16 @@
 
     <span class="n">gen_desc</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_gendesc</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gen_desc&#39;</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">custom_entities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">ds_coeff</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">ds_coeff</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trait_set</span><span class="p">(</span><span class="o">**</span><span class="n">custom_entities</span><span class="p">)</span>
 
-    <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">ds_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;source_files&quot;</span><span class="p">,</span> <span class="s2">&quot;source_file&quot;</span><span class="p">),</span>
                                <span class="p">(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">gen_desc</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;infiles&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">gen_desc</span><span class="p">,</span> <span class="n">ds_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;desc&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">ds_coeff</span><span class="p">,</span> <span class="n">ds_fieldmap</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="n">_getname</span><span class="p">),</span> <span class="s2">&quot;AssociatedCoefficients&quot;</span><span class="p">)]),</span>
-    <span class="p">])</span>
-    <span class="c1"># fmt:on</span>
+        <span class="p">(</span><span class="n">ds_coeff</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">)]),</span>
+    <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 

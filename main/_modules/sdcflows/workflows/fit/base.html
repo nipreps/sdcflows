@@ -361,6 +361,7 @@
                 <span class="n">output_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
                 <span class="n">write_coeff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">write_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fmap_derivatives_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
             <span class="p">)</span>
 
@@ -376,21 +377,19 @@
             <span class="p">)</span>
             <span class="n">reportlets_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_paths</span>
 
-            <span class="c1"># fmt:off</span>
             <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
                 <span class="p">(</span><span class="n">estim_wf</span><span class="p">,</span> <span class="n">derivs_wf</span><span class="p">,</span> <span class="p">[</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fieldmap&quot;</span><span class="p">),</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_ref&quot;</span><span class="p">),</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_coeff&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_mask&quot;</span><span class="p">),</span>
                 <span class="p">]),</span>
                 <span class="p">(</span><span class="n">estim_wf</span><span class="p">,</span> <span class="n">reportlets_wf</span><span class="p">,</span> <span class="p">[</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fieldmap&quot;</span><span class="p">),</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_ref&quot;</span><span class="p">),</span>
                     <span class="p">(</span><span class="s2">&quot;outputnode.fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_mask&quot;</span><span class="p">),</span>
                 <span class="p">]),</span>
-
-            <span class="p">])</span>
-            <span class="c1"># fmt:on</span>
+            <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 
