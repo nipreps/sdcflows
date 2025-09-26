@@ -230,6 +230,13 @@ def init_fmap_derivatives_wf(
             ),
             name='ds_mask',
         )
+        ds_mask._interface._file_patterns += (
+            'sub-{subject}[/ses-{session}]/{datatype<fmap>|fmap}/'
+            'sub-{subject}[_ses-{session}][_hash-{hash}][_acq-{acquisition}]'
+            '[_dir-{direction}][_run-{run}][_part-{part}][_space-{space}]'
+            '[_cohort-{cohort}][_res-{resolution}][_fmapid-{fmapid}]'
+            '[_desc-{desc}]_{suffix<mask>}{extension<.nii|.nii.gz|.json>|.nii.gz}',
+        )
 
         ds_mask.inputs.trait_set(**custom_entities)
 
