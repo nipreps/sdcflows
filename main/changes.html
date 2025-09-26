@@ -304,9 +304,20 @@
         <article role="main" id="furo-main-content">
           <section id="what-s-new">
 <h1>What’s new?<a class="headerlink" href="#what-s-new" title="Link to this heading">¶</a></h1>
+<section id="september-26-2025">
+<h2>2.15.0 (September 26, 2025)<a class="headerlink" href="#september-26-2025" title="Link to this heading">¶</a></h2>
+<p>Feature release in the 2.15.x series.</p>
+<p>This release reworks derivatives a bit to ensure that everything needed for
+downstream processing is placed in the output directory.
+The results from the output directory are aggregated into the workflow outputnode,
+allowing consistency in workflows that can accept precomputed derivatives.</p>
+<ul class="simple">
+<li><p>feat: Save mask to derivatives, pass derivatives to outputnode (#506)</p></li>
+</ul>
+</section>
 <section id="september-22-2025">
 <h2>2.14.0 (September 22, 2025)<a class="headerlink" href="#september-22-2025" title="Link to this heading">¶</a></h2>
-<p>Feature release in the 2.13.x series.</p>
+<p>Feature release in the 2.14.x series.</p>
 <p>This release requires a recent nitransforms release that in turn requires NumPy 2.
 Since this is a major dependency increment, a new feature release is justified.</p>
 <ul class="simple">
@@ -451,7 +462,7 @@ considered a minor release.</p>
 <p>This release includes an updated CLI, which allows <code class="docutils literal notranslate"><span class="pre">sdcflows</span></code> to be
 run as a BIDS App. To achieve the previous behavior of <code class="docutils literal notranslate"><span class="pre">sdcflows-find-estimators</span></code>,
 use the <code class="docutils literal notranslate"><span class="pre">-n</span></code> flag.</p>
-<p>Addtional bug fixes and enhancements are included.</p>
+<p>Additional bug fixes and enhancements are included.</p>
 <ul class="simple">
 <li><p>FIX: Drop header before resampling image to avoid unsafe cast (#415)</p></li>
 <li><p>FIX: Wrangler now ignores <code class="docutils literal notranslate"><span class="pre">part-phase</span></code> EPI files (#407)</p></li>
@@ -482,7 +493,7 @@ and expansion effects on signal intensity.</p>
 <li><p>RF: Use scipy.interpolate.BSpline to construct spline basis (#393)</p></li>
 <li><p>DOC: Use latest sphinx to fix bad sphinx/furo interaction (#390)</p></li>
 <li><p>DOC: Fix missing dependency when merging new data loader (#380)</p></li>
-<li><p>MNT: Update emprical values in test to allow transition to new scipy’s BSpline (#387)</p></li>
+<li><p>MNT: Update empirical values in test to allow transition to new scipy’s BSpline (#387)</p></li>
 <li><p>MNT: Add pre-commit config (#375)</p></li>
 <li><p>MNT: Add a seed to random generator of coefficients (#368)</p></li>
 </ul>
@@ -632,7 +643,7 @@ that contribute to multiple <code class="docutils literal notranslate"><span cla
 <li><p>MAINT: Housekeeping and more verbose debugging outputs (#302)</p></li>
 <li><p>MAINT: Simplify build tests on GH Actions to latest standards (#282)</p></li>
 <li><p>MAINT: Keep CircleCI settings up to date (#281)</p></li>
-<li><p>MAINT: Unavilable data from OSF remote (datalad) for CircleCI tests. (#277)</p></li>
+<li><p>MAINT: Unavailable data from OSF remote (datalad) for CircleCI tests. (#277)</p></li>
 <li><p>MAINT: Remove unused argument from <code class="docutils literal notranslate"><span class="pre">topup</span></code> related interface (#276)</p></li>
 <li><p>CI: Update concurrency, permissions and actions (#313)</p></li>
 <li><p>CI: Roll unittests runner back to Ubuntu 20.04 (#310)</p></li>
@@ -754,7 +765,7 @@ along with corresponding updates to the CI tests.</p>
 </section>
 <section id="may-11-2021">
 <h2>2.0.2 (May 11, 2021)<a class="headerlink" href="#may-11-2021" title="Link to this heading">¶</a></h2>
-<p>A patch release including hot-fixes and some relevant improvements inteded for the reliability
+<p>A patch release including hot-fixes and some relevant improvements intended for the reliability
 of the new API.
 The most relevant advance is the new <span class="math notranslate nohighlight">\(B_0\)</span> fieldmap unwarping object which is compatible
 with <em>NiTranforms</em> and evades the problem of fiddling with the target image’s x-forms.</p>
@@ -960,7 +971,7 @@ To do so, please move the author(s) name(s) to the front of the following list:<
 </section>
 <section id="february-15-2020">
 <h3>1.2.0 (February 15, 2020)<a class="headerlink" href="#february-15-2020" title="Link to this heading">¶</a></h3>
-<p>A minor version release that changes phasediff caclulations to improve robustness.
+<p>A minor version release that changes phasediff calculations to improve robustness.
 This release is preparation for <em>fMRIPrep</em> 20.0.0.</p>
 <ul class="simple">
 <li><p>FIX: Scale all phase maps to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">2pi]</span></code> range (#88)</p></li>
@@ -1127,6 +1138,7 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">What’s new?</a><ul>
+<li><a class="reference internal" href="#september-26-2025">2.15.0 (September 26, 2025)</a></li>
 <li><a class="reference internal" href="#september-22-2025">2.14.0 (September 22, 2025)</a></li>
 <li><a class="reference internal" href="#july-28-2025">2.13.2 (July 28, 2025)</a></li>
 <li><a class="reference internal" href="#june-12-2025">2.13.1 (June 12, 2025)</a></li>
