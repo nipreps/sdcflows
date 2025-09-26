@@ -172,10 +172,12 @@ def init_fmap_preproc_wf(
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                 ("outputnode.fmap_mask", "inputnode.fmap_mask"),
             ]),
-            (est_wf, out_map, [
-                ("outputnode.fmap", "fmap"),
+            (fmap_derivatives_wf, out_map, [
+                ("outputnode.fieldmap", "fmap"),
                 ("outputnode.fmap_ref", "fmap_ref"),
                 ("outputnode.fmap_coeff", "fmap_coeff"),
+            ]),
+            (est_wf, out_map, [
                 ("outputnode.fmap_mask", "fmap_mask"),
                 ("outputnode.method", "method")
             ]),

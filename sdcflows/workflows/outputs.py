@@ -163,6 +163,10 @@ def init_fmap_derivatives_wf(
         ),
         name='inputnode',
     )
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['fieldmap', 'fmap_coeff', 'fmap_ref']),
+        name='outputnode',
+    )
 
     merge_fmap = pe.Node(MergeSeries(), name='merge_fmap')
 
@@ -208,6 +212,8 @@ def init_fmap_derivatives_wf(
             (("out_file", _getname), "AnatomicalReference"),
         ]),
         (inputnode, ds_fieldmap, [(("fmap_meta", _selectintent), "IntendedFor")]),
+        (ds_fieldmap, outputnode, [("out_file", "fieldmap")]),
+        (ds_reference, outputnode, [("out_file", "fmap_ref")]),
     ])  # fmt:skip
 
     if not write_coeff:
@@ -235,6 +241,7 @@ def init_fmap_derivatives_wf(
         (inputnode, gen_desc, [("fmap_coeff", "infiles")]),
         (gen_desc, ds_coeff, [("out", "desc")]),
         (ds_coeff, ds_fieldmap, [(("out_file", _getname), "AssociatedCoefficients")]),
+        (ds_coeff, outputnode, [("out_file", "fmap_coeff")]),
     ])  # fmt:skip
 
     return workflow
