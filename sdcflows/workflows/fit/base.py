@@ -61,6 +61,7 @@ def init_sdcflows_wf():
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
                 write_coeff=True,
+                write_mask=True,
                 name=f'fmap_derivatives_{estim.sanitized_id}',
             )
 
@@ -76,20 +77,18 @@ def init_sdcflows_wf():
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 
-            # fmt:off
             workflow.connect([
                 (estim_wf, derivs_wf, [
                     ("outputnode.fmap", "inputnode.fieldmap"),
                     ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                     ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+                    ("outputnode.fmap_mask", "inputnode.fmap_mask"),
                 ]),
                 (estim_wf, reportlets_wf, [
                     ("outputnode.fmap", "inputnode.fieldmap"),
                     ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                     ("outputnode.fmap_mask", "inputnode.fmap_mask"),
                 ]),
-
-            ])
-            # fmt:on
+            ])  # fmt:skip
 
     return workflow
