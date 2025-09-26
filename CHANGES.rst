@@ -1,6 +1,18 @@
+2.15.0 (September 26, 2025)
+===========================
+Feature release in the 2.15.x series.
+
+This release reworks derivatives a bit to ensure that everything needed for
+downstream processing is placed in the output directory.
+The results from the output directory are aggregated into the workflow outputnode,
+allowing consistency in workflows that can accept precomputed derivatives.
+
+* feat: Save mask to derivatives, pass derivatives to outputnode (#506)
+
+
 2.14.0 (September 22, 2025)
 ===========================
-Feature release in the 2.13.x series.
+Feature release in the 2.14.x series.
 
 This release requires a recent nitransforms release that in turn requires NumPy 2.
 Since this is a major dependency increment, a new feature release is justified.
@@ -157,7 +169,7 @@ This release includes an updated CLI, which allows ``sdcflows`` to be
 run as a BIDS App. To achieve the previous behavior of ``sdcflows-find-estimators``,
 use the ``-n`` flag.
 
-Addtional bug fixes and enhancements are included.
+Additional bug fixes and enhancements are included.
 
 * FIX: Drop header before resampling image to avoid unsafe cast (#415)
 * FIX: Wrangler now ignores ``part-phase`` EPI files (#407)
@@ -188,7 +200,7 @@ and expansion effects on signal intensity.
 * RF: Use scipy.interpolate.BSpline to construct spline basis (#393)
 * DOC: Use latest sphinx to fix bad sphinx/furo interaction (#390)
 * DOC: Fix missing dependency when merging new data loader (#380)
-* MNT: Update emprical values in test to allow transition to new scipy's BSpline (#387)
+* MNT: Update empirical values in test to allow transition to new scipy's BSpline (#387)
 * MNT: Add pre-commit config (#375)
 * MNT: Add a seed to random generator of coefficients (#368)
 
@@ -342,7 +354,7 @@ that contribute to multiple ``B0FieldIdentifier``\s.
 * MAINT: Housekeeping and more verbose debugging outputs (#302)
 * MAINT: Simplify build tests on GH Actions to latest standards (#282)
 * MAINT: Keep CircleCI settings up to date (#281)
-* MAINT: Unavilable data from OSF remote (datalad) for CircleCI tests. (#277)
+* MAINT: Unavailable data from OSF remote (datalad) for CircleCI tests. (#277)
 * MAINT: Remove unused argument from ``topup`` related interface (#276)
 * CI: Update concurrency, permissions and actions (#313)
 * CI: Roll unittests runner back to Ubuntu 20.04 (#310)
@@ -448,7 +460,7 @@ along with corresponding updates to the CI tests.
 
 2.0.2 (May 11, 2021)
 ====================
-A patch release including hot-fixes and some relevant improvements inteded for the reliability
+A patch release including hot-fixes and some relevant improvements intended for the reliability
 of the new API.
 The most relevant advance is the new :math:`B_0` fieldmap unwarping object which is compatible
 with *NiTranforms* and evades the problem of fiddling with the target image's x-forms.
@@ -651,7 +663,7 @@ A patch release to make *SDCFlows* more amicable to downstream software.
 
 1.2.0 (February 15, 2020)
 -------------------------
-A minor version release that changes phasediff caclulations to improve robustness.
+A minor version release that changes phasediff calculations to improve robustness.
 This release is preparation for *fMRIPrep* 20.0.0.
 
 * FIX: Scale all phase maps to ``[0, 2pi]`` range (#88)
