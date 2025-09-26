@@ -29,9 +29,11 @@ in the case of PEPOLAR estimation).
 The target EPI is the distorted dataset (or a reference thereof).
 
 """
+
 from warnings import warn
-from nipype.pipeline import engine as pe
+
 from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
@@ -42,7 +44,7 @@ def init_coeff2epi_wf(
     sloppy=False,
     debug=False,
     write_coeff=False,
-    name="coeff2epi_wf",
+    name='coeff2epi_wf',
 ):
     """
     Move the field coefficients on to the target (distorted) EPI space.
@@ -94,8 +96,9 @@ def init_coeff2epi_wf(
         as moving, resampling the latter into the fieldmap space.
 
     """
-    from packaging.version import parse as parseversion, Version
     from niworkflows.interfaces.fixes import FixHeaderRegistration as Registration
+    from packaging.version import Version
+    from packaging.version import parse as parseversion
 
     from sdcflows.interfaces import brainmask
 
@@ -107,34 +110,34 @@ The field coefficients were mapped on to the reference EPI using the transform.
 """
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=["target_ref", "target_mask", "fmap_ref", "fmap_mask", "fmap_coeff"]
+            fields=['target_ref', 'target_mask', 'fmap_ref', 'fmap_mask', 'fmap_coeff']
         ),
-        name="inputnode",
+        name='inputnode',
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=["target_ref", "fmap_coeff", "target2fmap_xfm"]),
-        name="outputnode",
+        niu.IdentityInterface(fields=['target_ref', 'fmap_coeff', 'target2fmap_xfm']),
+        name='outputnode',
     )
 
     # Dilate only for coregistration purposes
     # https://github.com/nipreps/sdcflows/issues/461
-    dilate_target_mask = pe.Node(brainmask.BinaryDilation(radius=5), name="dilate_target_mask")
-    dilate_fmap_mask = pe.Node(brainmask.BinaryDilation(radius=5), name="dilate_fmap_mask")
+    dilate_target_mask = pe.Node(brainmask.BinaryDilation(radius=5), name='dilate_target_mask')
+    dilate_fmap_mask = pe.Node(brainmask.BinaryDilation(radius=5), name='dilate_fmap_mask')
 
     # Register the reference of the fieldmap to the reference
     # of the target image (the one that shall be corrected)
     coregister = pe.Node(
         Registration(
-            from_file=data.load(f"fmap-any_registration{'_testing' * sloppy}.json"),
+            from_file=data.load(f'fmap-any_registration{"_testing" * sloppy}.json'),
             output_warped_image=debug,
             output_inverse_warped_image=debug,
         ),
-        name="coregister",
+        name='coregister',
         n_procs=omp_nthreads,
     )
 
-    ver = coregister.interface.version or "2.2.0"
-    mask_trait_s = "s" if parseversion(ver) >= Version("2.2.0") else ""
+    ver = coregister.interface.version or '2.2.0'
+    mask_trait_s = 's' if parseversion(ver) >= Version('2.2.0') else ''
 
     # fmt: off
     workflow.connect([
@@ -160,8 +163,9 @@ The field coefficients were mapped on to the reference EPI using the transform.
 
     if write_coeff:
         warn(
-            "SDCFlows does not tinker with the coefficients file anymore, "
-            "the `write_coeff` parameter will be removed in a future release."
+            'SDCFlows does not tinker with the coefficients file anymore, '
+            'the `write_coeff` parameter will be removed in a future release.',
+            stacklevel=2,
         )
 
     return workflow

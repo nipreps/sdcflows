@@ -29,11 +29,9 @@ def main(argv=None):
     import os
     import sys
     from tempfile import mktemp
-    import atexit
+
     from sdcflows import config
     from sdcflows.cli.parser import parse_args
-
-    atexit.register(config.restore_env)
 
     # Run parser
     parse_args(argv)
@@ -42,25 +40,24 @@ def main(argv=None):
         from niworkflows.utils.debug import setup_exceptionhook
 
         setup_exceptionhook()
-        config.nipype.plugin = "Linear"
+        config.nipype.plugin = 'Linear'
 
     # CRITICAL Save the config to a file. This is necessary because the execution graph
     # is built as a separate process to keep the memory footprint low. The most
     # straightforward way to communicate with the child process is via the filesystem.
     # The config file name needs to be unique, otherwise multiple sdcflows instances
     # will create write conflicts.
-    config_file = mktemp(
-        dir=config.execution.work_dir, prefix=".sdcflows.", suffix=".toml"
-    )
+    config_file = mktemp(dir=config.execution.work_dir, prefix='.sdcflows.', suffix='.toml')
     config.to_filename(config_file)
     config.file_path = config_file
     exitcode = 0
 
-    if config.workflow.analysis_level != ["participant"]:
+    if config.workflow.analysis_level != ['participant']:
         raise ValueError("Analysis level can only be 'participant'")
 
     if config.execution.dry_run:  # --dry-run: pretty print results
         from niworkflows.utils.bids import collect_participants
+
         from sdcflows.utils.wrangler import find_estimators
 
         subjects = collect_participants(
@@ -76,31 +73,31 @@ def main(argv=None):
                 logger=config.loggers.cli,
             )
 
-        print(f"Estimation for <{config.execution.bids_dir}> complete. Found:")
+        print(f'Estimation for <{config.execution.bids_dir}> complete. Found:')
         for subject, estimators in estimators_record.items():
-            print(f"\tsub-{subject}")
+            print(f'\tsub-{subject}')
             if not estimators:
-                print("\t\tNo estimators found")
+                print('\t\tNo estimators found')
                 continue
             for estimator in estimators:
-                print(f"\t\t{estimator}")
+                print(f'\t\t{estimator}')
                 for fl in estimator.sources:
-                    fl_relpath = fl.path.relative_to(config.execution.bids_dir / f"sub-{subject}")
-                    pe_dir = fl.metadata.get("PhaseEncodingDirection")
-                    print(f"\t\t\t{pe_dir}\t{fl_relpath}")
+                    fl_relpath = fl.path.relative_to(config.execution.bids_dir / f'sub-{subject}')
+                    pe_dir = fl.metadata.get('PhaseEncodingDirection')
+                    print(f'\t\t\t{pe_dir}\t{fl_relpath}')
         sys.exit(exitcode)
 
     # Initialize process pool if multiprocessing
     _pool = None
-    if config.nipype.plugin in ("MultiProc", "LegacyMultiProc"):
-        from contextlib import suppress
+    if config.nipype.plugin in ('MultiProc', 'LegacyMultiProc'):
         import multiprocessing as mp
         from concurrent.futures import ProcessPoolExecutor
+        from contextlib import suppress
 
-        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ['OMP_NUM_THREADS'] = '1'
 
         with suppress(RuntimeError):
-            mp.set_start_method("fork")
+            mp.set_start_method('fork')
         gc.collect()
 
         _pool = ProcessPoolExecutor(
@@ -127,8 +124,8 @@ def main(argv=None):
         p.start()
         p.join()
 
-        sdcflows_wf = retval.get("workflow", None)
-        exitcode = p.exitcode or retval.get("return_code", 0)
+        sdcflows_wf = retval.get('workflow', None)
+        exitcode = p.exitcode or retval.get('return_code', 0)
 
     # CRITICAL Load the config from the file. This is necessary because the ``build_workflow``
     # function executed constrained in a process may change the config (and thus the global
@@ -151,12 +148,12 @@ def main(argv=None):
     config.loggers.init()
 
     # Resource management options
-    if config.nipype.plugin in ("MultiProc", "LegacyMultiProc") and (
+    if config.nipype.plugin in ('MultiProc', 'LegacyMultiProc') and (
         1 < config.nipype.nprocs < config.nipype.omp_nthreads
     ):
         config.loggers.cli.warning(
-            "Per-process threads (--omp-nthreads=%d) exceed total "
-            "threads (--nthreads/--n_cpus=%d)",
+            'Per-process threads (--omp-nthreads=%d) exceed total '
+            'threads (--nthreads/--n_cpus=%d)',
             config.nipype.omp_nthreads,
             config.nipype.nprocs,
         )
@@ -165,7 +162,7 @@ def main(argv=None):
         sys.exit(os.EX_SOFTWARE)
 
     if sdcflows_wf and config.execution.write_graph:
-        sdcflows_wf.write_graph(graph2use="colored", format="svg", simple_form=True)
+        sdcflows_wf.write_graph(graph2use='colored', format='svg', simple_form=True)
 
     # Clean up master process before running workflow, which may create forks
     gc.collect()
@@ -175,13 +172,11 @@ def main(argv=None):
         from niworkflows.engine.plugin import MultiProcPlugin
 
         _plugin = {
-            "plugin": MultiProcPlugin(
-                pool=_pool, plugin_args=config.nipype.plugin_args
-            ),
+            'plugin': MultiProcPlugin(pool=_pool, plugin_args=config.nipype.plugin_args),
         }
     sdcflows_wf.run(**_plugin)
-    config.loggers.cli.log(25, "Finished all workload")
+    config.loggers.cli.log(25, 'Finished all workload')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

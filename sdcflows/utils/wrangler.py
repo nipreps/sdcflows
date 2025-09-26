@@ -21,56 +21,49 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Find fieldmaps on the BIDS inputs for :abbr:`SDC (susceptibility distortion correction)`."""
+
 from __future__ import annotations
+
 import logging
+from contextlib import suppress
 from functools import reduce
 from itertools import product
-from contextlib import suppress
 from pathlib import Path
-from typing import Optional, Union, List, Dict, Any
-from bids.layout import BIDSLayout, BIDSFile
+from typing import Any
+
+from bids.layout import BIDSFile, BIDSLayout
 from bids.utils import listify
 
 from .. import fieldmaps as fm
 
 
-def _normalize_intent(
-    intent: str,
-    subject: str
-) -> str | None:
+def _normalize_intent(intent: str, subject: str) -> str | None:
     """Convert BIDS-URI intent to subject-relative intent
 
     SDCFlows currently makes strong assumptions about old-style intents,
     and a change to that needs to be carefully considered and tested.
     """
-    if intent.startswith("bids::"):
+    if intent.startswith('bids::'):
         # bids::sub-<subject>/
         #          ^- 10     ^- 11
-        return intent[11 + len(subject):]
+        return intent[11 + len(subject) :]
     return intent
 
 
-def _resolve_intent(
-    intent: str,
-    layout: BIDSLayout,
-    subject: str
-) -> str | None:
+def _resolve_intent(intent: str, layout: BIDSLayout, subject: str) -> str | None:
     root = Path(layout.root)
-    if intent.startswith("bids::"):
+    if intent.startswith('bids::'):
         return str(root / intent[6:])
-    if not intent.startswith("bids:"):
-        return str(root / f"sub-{subject}" / intent)
+    if not intent.startswith('bids:'):
+        return str(root / f'sub-{subject}' / intent)
     return intent
 
 
-def _filter_metadata(
-    metadata: Dict[str, Any],
-    subject: str
-) -> Dict[str, Any]:
-    intents = metadata.get("IntendedFor")
+def _filter_metadata(metadata: dict[str, Any], subject: str) -> dict[str, Any]:
+    intents = metadata.get('IntendedFor')
     if intents:
         updated = [_normalize_intent(intent, subject) for intent in listify(intents)]
-        return {**metadata, "IntendedFor": updated}
+        return {**metadata, 'IntendedFor': updated}
     return metadata
 
 
@@ -78,12 +71,12 @@ def find_estimators(
     *,
     layout: BIDSLayout,
     subject: str,
-    sessions: Optional[List[str]] = None,
-    fmapless: Union[bool, set] = True,
+    sessions: list[str] | None = None,
+    fmapless: bool | set = True,
     force_fmapless: bool = False,
-    logger: Optional[logging.Logger] = None,
-    bids_filters: Optional[dict] = None,
-    anat_suffix: Union[str, List[str]] = 'T1w',
+    logger: logging.Logger | None = None,
+    bids_filters: dict | None = None,
+    anat_suffix: str | list[str] = 'T1w',
 ) -> list:
     """
     Apply basic heuristics to automatically find available data for fieldmap estimation.
@@ -322,55 +315,56 @@ def find_estimators(
                        bids_id='auto_...')]
 
     """
-    from .misc import create_logger
-    from bids.layout import Query
     from bids.exceptions import BIDSEntityError
+    from bids.layout import Query
+
+    from .misc import create_logger
 
     # The created logger is set to ERROR log level
     logger = logger or create_logger('sdcflows.wrangler')
 
     base_entities = {
-        "subject": subject,
-        "extension": [".nii", ".nii.gz"],
-        "part": ["mag", None],
-        "scope": "raw",  # Ensure derivatives are not captured
+        'subject': subject,
+        'extension': ['.nii', '.nii.gz'],
+        'part': ['mag', None],
+        'scope': 'raw',  # Ensure derivatives are not captured
     }
 
     if bids_filters:
         filters = bids_filters.copy()  # copy to avoid altering in place
         if 'session' in bids_filters and sessions is not None:
-            raise ValueError("Filters include session, but session is already defined.")
+            raise ValueError('Filters include session, but session is already defined.')
         sessions = listify(filters.pop('session', None))
         base_entities.update(filters)
 
-    subject_root = Path(layout.root) / f"sub-{subject}"
+    subject_root = Path(layout.root) / f'sub-{subject}'
     sessions = sessions or layout.get_sessions(subject=subject) or [None]
     fmapless = fmapless or {}
     if fmapless is True:
-        fmapless = {"bold", "dwi", "asl"}
+        fmapless = {'bold', 'dwi', 'asl'}
 
     estimators = []
 
     # Step 1. Use B0FieldIdentifier metadata
-    b0_ids = tuple()
+    b0_ids = ()
     with suppress(BIDSEntityError):
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
             (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
-            set()
+            set(),
         )
 
     if b0_ids:
         logger.debug(
-            "Dataset includes `B0FieldIdentifier` metadata."
-            "Any data missing this metadata will be ignored."
+            'Dataset includes `B0FieldIdentifier` metadata.'
+            'Any data missing this metadata will be ignored.'
         )
 
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
             b0_entities = base_entities.copy()
-            b0_entities["B0FieldIdentifier"] = b0_id
+            b0_entities['B0FieldIdentifier'] = b0_id
 
             bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
@@ -383,7 +377,8 @@ def find_estimators(
                     [
                         fm.FieldmapFile(fmap.path, metadata=fmap.get_metadata())
                         for fmap in bare_ids + listed_ids
-                    ]
+                    ],
+                    bids_id=b0_id,
                 )
             except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
@@ -399,7 +394,7 @@ def find_estimators(
         for fmap in layout.get(
             **{
                 **base_entities,
-                **{'suffix': ["fieldmap", "phasediff", "phase1"], 'session': sessions}
+                **{'suffix': ['fieldmap', 'phasediff', 'phase1'], 'session': sessions},
             }
         ):
             try:
@@ -411,26 +406,22 @@ def find_estimators(
                 )
             except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
-                    logger, "unnamed fieldmap", [fmap], layout.root, str(err)
+                    logger, 'unnamed fieldmap', [fmap], layout.root, str(err)
                 )
             else:
                 _log_debug_estimation(logger, e, layout.root)
                 estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        acqs = (
-            base_entities.get('acquisitions')
-            or layout.get_acquisitions(subject=subject, suffix="epi") + [None]
-        )
-        contrasts = (
-            base_entities.get('ceagent')
-            or layout.get_ceagents(subject=subject, suffix="epi") + [None]
-        )
+        acqs = base_entities.get('acquisitions') or layout.get_acquisitions(
+            subject=subject, suffix='epi'
+        ) + [None]
+        contrasts = base_entities.get('ceagent') or layout.get_ceagents(
+            subject=subject, suffix='epi'
+        ) + [None]
         for ses, acq, ce in product(sessions, acqs, contrasts):
             entities = base_entities.copy()
-            entities.update(
-                {"suffix": "epi", "session": ses, "acquisition": acq, "ceagent": ce}
-            )
+            entities.update({'suffix': 'epi', 'session': ses, 'acquisition': acq, 'ceagent': ce})
             dirs = layout.get_directions(**entities)
             if len(dirs) > 1:
                 by_intent = {}
@@ -447,7 +438,7 @@ def find_estimators(
                         e = fm.FieldmapEstimation(collection)
                     except (ValueError, TypeError) as err:
                         _log_debug_estimator_fail(
-                            logger, "unnamed PEPOLAR", collection, layout.root, str(err)
+                            logger, 'unnamed PEPOLAR', collection, layout.root, str(err)
                         )
                     else:
                         _log_debug_estimation(logger, e, layout.root)
@@ -455,77 +446,66 @@ def find_estimators(
 
         # At this point, only single-PE _epi files WITH ``IntendedFor`` can
         # be automatically processed.
-        has_intended = tuple()
+        has_intended = ()
         with suppress(ValueError):
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions}
+                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions},
                 }
             )
 
         for epi_fmap in has_intended:
             if epi_fmap.path in fm._estimators.sources:
-                logger.debug("Skipping fieldmap %s (already in use)", epi_fmap.relpath)
+                logger.debug('Skipping fieldmap %s (already in use)', epi_fmap.relpath)
                 continue  # skip EPI images already considered above
 
-            logger.debug("Found single PE fieldmap %s", epi_fmap.relpath)
+            logger.debug('Found single PE fieldmap %s', epi_fmap.relpath)
             epi_base_md = epi_fmap.get_metadata()
 
             # Find existing IntendedFor targets and warn if missing
             all_targets = []
-            for intent in listify(epi_base_md["IntendedFor"]):
+            for intent in listify(epi_base_md['IntendedFor']):
                 target = layout.get_file(_resolve_intent(intent, layout, subject))
                 if target is None:
-                    logger.debug("Single PE target %s not found", intent)
+                    logger.debug('Single PE target %s not found', intent)
                     continue
                 all_targets.append(target)
 
             # If sbrefs are targets, then the goal is generally to estimate with epi+sbref
             # and correct bold/dwi/asl
-            sbrefs = [
-                target for target in all_targets if target.entities["suffix"] == "sbref"
-            ]
+            sbrefs = [target for target in all_targets if target.entities['suffix'] == 'sbref']
             if sbrefs:
                 targets = sbrefs
                 intent_map = []
                 for sbref in sbrefs:
                     ents = sbref.get_entities(metadata=False)
-                    ents["suffix"] = ["bold", "dwi", "asl"]
+                    ents['suffix'] = ['bold', 'dwi', 'asl']
                     intent_map.append(
-                        [
-                            target
-                            for target in layout.get(**ents)
-                            if target in all_targets
-                        ]
+                        [target for target in layout.get(**ents) if target in all_targets]
                     )
             else:
                 targets = all_targets
                 intent_map = [[target] for target in all_targets]
 
-            for target, intent in zip(targets, intent_map):
-                logger.debug("Found single PE target %s", target.relpath)
+            for target, intent in zip(targets, intent_map, strict=False):
+                logger.debug('Found single PE target %s', target.relpath)
                 # The new estimator is IntendedFor the individual targets,
                 # even if the EPI file is IntendedFor multiple
                 estimator_md = epi_base_md.copy()
-                estimator_md["IntendedFor"] = [
-                    str(Path(pathlike).relative_to(subject_root))
-                    for pathlike in intent
+                estimator_md['IntendedFor'] = [
+                    str(Path(pathlike).relative_to(subject_root)) for pathlike in intent
                 ]
                 try:
                     e = fm.FieldmapEstimation(
                         [
                             fm.FieldmapFile(epi_fmap.path, metadata=estimator_md),
-                            fm.FieldmapFile(target.path, metadata=target.get_metadata())
+                            fm.FieldmapFile(target.path, metadata=target.get_metadata()),
                         ]
                     )
                 except (ValueError, TypeError) as err:
                     _log_debug_estimator_fail(
-                        logger,
-                        "unnamed PEPOLAR",
-                        [epi_fmap, target],
-                        layout.root,
-                        str(err)
+                        logger, 'unnamed PEPOLAR', [epi_fmap, target], layout.root, str(err)
                     )
                 else:
                     _log_debug_estimation(logger, e, layout.root)
@@ -538,10 +518,10 @@ def find_estimators(
     anat_file = layout.get(**{**base_entities, **{'suffix': anat_suffix, 'session': sessions}})
 
     if not fmapless or not anat_file:
-        logger.debug("Skipping fmap-less estimation")
+        logger.debug('Skipping fmap-less estimation')
         return estimators
 
-    logger.debug("Attempting fmap-less estimation")
+    logger.debug('Attempting fmap-less estimation')
     estimator_specs = find_anatomical_estimators(
         anat_file=anat_file[0],
         layout=layout,
@@ -554,7 +534,7 @@ def find_estimators(
         try:
             estimator = fm.FieldmapEstimation(spec)
         except (ValueError, TypeError) as err:
-            _log_debug_estimator_fail(logger, "ANAT", spec, layout.root, str(err))
+            _log_debug_estimator_fail(logger, 'ANAT', spec, layout.root, str(err))
         else:
             _log_debug_estimation(logger, estimator, layout.root)
             estimators.append(estimator)
@@ -566,10 +546,10 @@ def find_anatomical_estimators(
     anat_file: BIDSFile,
     layout: BIDSLayout,
     subject: str,
-    sessions: List[str],
-    base_entities: Dict[str, Any],
-    suffixes: List[str],
-) -> List[List[fm.FieldmapFile]]:
+    sessions: list[str],
+    base_entities: dict[str, Any],
+    suffixes: list[str],
+) -> list[list[fm.FieldmapFile]]:
     r"""Find anatomical estimators
 
     Given an anatomical reference image, create lists of files for estimating
@@ -596,21 +576,21 @@ def find_anatomical_estimators(
 
     from .epimanip import get_trt
 
-    subject_root = Path(layout.root) / f"sub-{subject}"
+    subject_root = Path(layout.root) / f'sub-{subject}'
 
     hits = set()  # Avoid duplicates
     estimators = []
     for ses, suffix in sorted(product(sessions, suffixes)):
-        suffixes = ["sbref", suffix]  # Order indicates preference; prefer sbref
+        suffixes = ['sbref', suffix]  # Order indicates preference; prefer sbref
         datatype = {
-            "bold": "func",
-            "dwi": "dwi",
-            "asl": "perf",
+            'bold': 'func',
+            'dwi': 'dwi',
+            'asl': 'perf',
         }[suffix]
         candidates = layout.get(
             **{
                 **base_entities,
-                **{"suffix": suffixes, "session": ses, "datatype": datatype},
+                **{'suffix': suffixes, 'session': ses, 'datatype': datatype},
             }
         )
 
@@ -620,16 +600,16 @@ def find_anatomical_estimators(
         for candidate in candidates:
             meta = candidate.get_metadata()
 
-            if not meta.get("PhaseEncodingDirection"):
+            if not meta.get('PhaseEncodingDirection'):
                 continue
 
             with suppress(ValueError):
-                meta.update({"TotalReadoutTime": get_trt(meta, candidate.path)})
+                meta.update({'TotalReadoutTime': get_trt(meta, candidate.path)})
             epi_targets.append(fm.FieldmapFile(candidate, metadata=meta))
 
-        def sort_key(fmap):
+        def sort_key(fmap, suffixes=suffixes):
             # Return sbref before DWI/BOLD and shortest echo first
-            return suffixes.index(fmap.suffix), fmap.metadata.get("EchoTime", 1)
+            return suffixes.index(fmap.suffix), fmap.metadata.get('EchoTime', 1)
 
         for target in sorted(epi_targets, key=sort_key):
             if target.path in hits:
@@ -637,15 +617,13 @@ def find_anatomical_estimators(
             query = {**base_entities, **target.entities}
 
             # Find all echos, so strip from query, if present
-            query.pop("echo", None)
+            query.pop('echo', None)
 
             # Include sbref and EPI images in IntendedFor
             # No harm in including sbrefs that won't be corrected,
             # and ensures the hits set prevents doubling up
             intent = [Path(epi) for epi in layout.get(suffix=suffixes, **query)]
-            metadata = {
-                "IntendedFor": [str(epi.relative_to(subject_root)) for epi in intent]
-            }
+            metadata = {'IntendedFor': [str(epi.relative_to(subject_root)) for epi in intent]}
             estimators.append([fm.FieldmapFile(anat_file, metadata=metadata), target])
             hits.update(intent)
 
@@ -659,27 +637,21 @@ def _log_debug_estimation(
 ) -> None:
     """A helper function to log estimation information when running with verbosity."""
     logger.debug(
-        "Found %s estimation from %d sources:\n- %s",
+        'Found %s estimation from %d sources:\n- %s',
         estimation.method.name,
         len(estimation.sources),
-        "\n- ".join(
-            [str(Path(s.path).relative_to(bids_root)) for s in estimation.sources]
-        ),
+        '\n- '.join([str(Path(s.path).relative_to(bids_root)) for s in estimation.sources]),
     )
 
 
 def _log_debug_estimator_fail(
-    logger: logging.Logger,
-    b0_id: str,
-    files: List[BIDSFile],
-    bids_root: str,
-    message: str
+    logger: logging.Logger, b0_id: str, files: list[BIDSFile], bids_root: str, message: str
 ) -> None:
     """A helper function to log failures to build an estimator when running with verbosity."""
     logger.debug(
-        "Failed to construct %s estimation from %d sources:\n- %s\nError: %s",
+        'Failed to construct %s estimation from %d sources:\n- %s\nError: %s',
         b0_id,
         len(files),
-        "\n- ".join([str(Path(s.path).relative_to(bids_root)) for s in files]),
+        '\n- '.join([str(Path(s.path).relative_to(bids_root)) for s in files]),
         message,
     )

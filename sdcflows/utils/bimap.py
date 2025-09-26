@@ -21,9 +21,10 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """A bidirectional hashmap."""
+
 import re
 
-_autokey_pat = re.compile(r"^auto_(\d+)$")
+_autokey_pat = re.compile(r'^auto_(\d+)$')
 
 
 class bidict(dict):
@@ -125,7 +126,7 @@ class bidict(dict):
         super().__init__(*args, **kwargs)
         self._inverse = {v: k for k, v in self.items()}
         if len(self) != len(self._inverse):
-            raise TypeError("Bidirectional dictionary cannot contain repeated values")
+            raise TypeError('Bidirectional dictionary cannot contain repeated values')
 
     def __setitem__(self, key, value):
         if key == value:
@@ -134,16 +135,14 @@ class bidict(dict):
         try:
             hash(value)
         except TypeError as exc:
-            raise TypeError(f"value '{value}' of {exc}")
+            raise TypeError(f"value '{value}' of {exc}") from None
         try:
             hash(key)
         except TypeError as exc:
-            raise TypeError(f"key '{key}' of {exc}")
+            raise TypeError(f"key '{key}' of {exc}") from None
 
         if self.__contains__(key):
-            raise KeyError(
-                f"'{key}' is already {'a value' * (key in self._inverse)} in mapping"
-            )
+            raise KeyError(f"'{key}' is already {'a value' * (key in self._inverse)} in mapping")
         if self.__contains__(value):
             raise ValueError(
                 f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping"
@@ -175,16 +174,14 @@ class bidict(dict):
 
     def add(self, value):
         """Insert a new value in the bidict, generating an automatic key."""
-        _used = set(
+        _used = {
             int(i.groups()[0])
-            for i in [
-                _autokey_pat.match(k) for k in self.keys() if k.startswith("auto_")
-            ]
+            for i in [_autokey_pat.match(k) for k in self.keys() if k.startswith('auto_')]
             if i is not None
-        )
+        }
         for i in range(len(_used) + 1):
             if i not in _used:
-                newkey = f"auto_{i:05d}"
+                newkey = f'auto_{i:05d}'
 
         self.__setitem__(newkey, value)
         return newkey
@@ -225,11 +222,11 @@ class EstimatorRegistry(bidict):
     @property
     def sources(self):
         """Return a flattened list of fieldmap sources."""
-        return sorted(set([el for group in self.values() for el in group]))
+        return sorted({el for group in self.values() for el in group})
 
     def get_key(self, value):
         """Get the key(s) containing a particular value."""
         if value not in self.sources:
-            return tuple()
+            return ()
 
         return tuple(sorted(k for k, v in self.items() if value in v))

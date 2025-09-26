@@ -17,14 +17,15 @@ permissions:
   contents: read
 
 jobs:
-  flake8:
+  style:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - run: pipx run flake8-pyproject sdcflows/
+    - uses: actions/checkout@v5
+    - run: pipx run ruff check sdcflows/
+    - run: pipx run ruff format --diff sdcflows/
 
   # codespell:
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v4
+  #   - uses: actions/checkout@v5
   #   - uses: codespell-project/actions-codespell@v2

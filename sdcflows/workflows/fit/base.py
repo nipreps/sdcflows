@@ -33,7 +33,7 @@ def init_sdcflows_wf():
     from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
 
     # Create parent workflow
-    workflow = Workflow(name="sdcflows_wf")
+    workflow = Workflow(name='sdcflows_wf')
     workflow.base_dir = config.execution.work_dir
 
     subjects = collect_participants(
@@ -49,7 +49,7 @@ def init_sdcflows_wf():
             logger=config.loggers.cli,
         )
 
-    for subject, sub_estimators in estimators_record.items():
+    for sub_estimators in estimators_record.values():
         for estim in sub_estimators:
             estim_wf = estim.get_workflow(
                 omp_nthreads=config.nipype.omp_nthreads,
@@ -61,39 +61,34 @@ def init_sdcflows_wf():
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
                 write_coeff=True,
-                name=f"fmap_derivatives_{estim.sanitized_id}",
+                write_mask=True,
+                name=f'fmap_derivatives_{estim.sanitized_id}',
             )
 
-            source_paths = [
-                str(source.path.absolute()) for source in estim.sources
-            ]
+            source_paths = [str(source.path.absolute()) for source in estim.sources]
             derivs_wf.inputs.inputnode.source_files = source_paths
-            derivs_wf.inputs.inputnode.fmap_meta = [
-                source.metadata for source in estim.sources
-            ]
+            derivs_wf.inputs.inputnode.fmap_meta = [source.metadata for source in estim.sources]
 
             reportlets_wf = init_fmap_reports_wf(
                 fmap_type=estim.method,
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
-                name=f"fmap_reports_{estim.sanitized_id}",
+                name=f'fmap_reports_{estim.sanitized_id}',
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 
-            # fmt:off
             workflow.connect([
                 (estim_wf, derivs_wf, [
                     ("outputnode.fmap", "inputnode.fieldmap"),
                     ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                     ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+                    ("outputnode.fmap_mask", "inputnode.fmap_mask"),
                 ]),
                 (estim_wf, reportlets_wf, [
                     ("outputnode.fmap", "inputnode.fieldmap"),
                     ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                     ("outputnode.fmap_mask", "inputnode.fmap_mask"),
                 ]),
-
-            ])
-            # fmt:on
+            ])  # fmt:skip
 
     return workflow

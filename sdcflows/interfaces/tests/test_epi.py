@@ -21,20 +21,21 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Test EPI interfaces."""
+
 from pathlib import Path
+
 from ..epi import SortPEBlips
 
 
 def test_sort_pe_blips(tmpdir):
-
     tmpdir.chdir()
 
-    input_comb = [("x-", 0.08), ("x-", 0.04), ("y-", 0.05), ("y", 0.05), ("x", 0.05)]
+    input_comb = [('x-', 0.08), ('x-', 0.04), ('y-', 0.05), ('y', 0.05), ('x', 0.05)]
 
     fnames = []
     for i in range(len(input_comb)):
-        fnames.append(f"file{i}.nii")
-        Path(fnames[-1]).write_text("")
+        fnames.append(f'file{i}.nii')
+        Path(fnames[-1]).write_text('')
 
     result = SortPEBlips(
         in_data=fnames,
@@ -42,4 +43,4 @@ def test_sort_pe_blips(tmpdir):
         readout_times=[trt for _, trt in input_comb],
     ).run()
 
-    assert result.outputs.out_data == [f"file{i}.nii" for i in (4, 3, 1, 0, 2)]
+    assert result.outputs.out_data == [f'file{i}.nii' for i in (4, 3, 1, 0, 2)]

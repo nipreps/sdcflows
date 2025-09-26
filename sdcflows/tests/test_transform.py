@@ -21,15 +21,17 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Unit tests of the transform object."""
-from subprocess import check_call
+
 from itertools import product
-import pytest
-import numpy as np
+from subprocess import check_call
+
 import nibabel as nb
-from nitransforms.linear import LinearTransformsMapping
-from skimage.morphology import ball
+import numpy as np
+import pytest
 import scipy.ndimage as nd
 from nireports.interfaces.reporting.base import SimpleBeforeAfterRPT as SimpleBeforeAfter
+from nitransforms.linear import LinearTransformsMapping
+from skimage.morphology import ball
 
 from sdcflows import transform as tf
 from sdcflows.interfaces.bspline import bspline_grid
@@ -46,7 +48,7 @@ def generate_oracle(
     data[19:22, ...] = 0
     data = np.pad(data + nd.binary_erosion(data, ball(3)), 8)
 
-    zooms = [z if not f else -z for z, f in zip(zooms, flip)]
+    zooms = [z if not f else -z for z, f in zip(zooms, flip, strict=False)]
     affine = np.diag(zooms + [1])
     affine[:3, 3] = -affine[:3, :3] @ ((np.array(data.shape) - 1) * 0.5)
 
@@ -67,7 +69,7 @@ def generate_oracle(
     )
 
     # Generate the grid with our tools, but fill data with cached file
-    coeff_data = nb.load(coeff_file).get_fdata(dtype="float32")
+    coeff_data = nb.load(coeff_file).get_fdata(dtype='float32')
     coeff_nii = bspline_grid(
         phantom_nii,
         np.array(nb.load(coeff_file).header.get_zooms()),
@@ -80,16 +82,16 @@ def generate_oracle(
     return phantom_nii, coeff_nii
 
 
-@pytest.mark.parametrize("pe_dir", ["j", "j-", "i", "i-", "k", "k-"])
-@pytest.mark.parametrize("rotation", [(None, None, None), (0.2, None, None)])
-@pytest.mark.parametrize("flip", list(product(*[(False, True)] * 3)))
+@pytest.mark.parametrize('pe_dir', ['j', 'j-', 'i', 'i-', 'k', 'k-'])
+@pytest.mark.parametrize('rotation', [(None, None, None), (0.2, None, None)])
+@pytest.mark.parametrize('flip', list(product(*[(False, True)] * 3)))
 def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, flip):
     """Check the generated displacements fields."""
     tmpdir.chdir()
 
     # Generate test oracle
     phantom_nii, coeff_nii = generate_oracle(
-        testdata_dir / "field-coeff-tests.nii.gz",
+        testdata_dir / 'field-coeff-tests.nii.gz',
         rotation=rotation,
     )
 
@@ -98,55 +100,57 @@ def test_displacements_field(tmpdir, testdata_dir, outdir, pe_dir, rotation, fli
         phantom_nii,
         pe_dir=pe_dir,
         ro_time=0.2,
-        output_dtype="float32",
-    ).to_filename("warped-sdcflows.nii.gz")
+        output_dtype='float32',
+    ).to_filename('warped-sdcflows.nii.gz')
     b0.to_displacements(
         ro_time=0.2,
         pe_dir=pe_dir,
-    ).to_filename("itk-displacements.nii.gz")
+    ).to_filename('itk-displacements.nii.gz')
 
-    phantom_nii.to_filename("phantom.nii.gz")
+    phantom_nii.to_filename('phantom.nii.gz')
     # Run antsApplyTransform
     exit_code = check_call(
         [
-            "antsApplyTransforms -d 3 -r phantom.nii.gz -i phantom.nii.gz "
-            "-o warped-ants.nii.gz -n BSpline -t itk-displacements.nii.gz"
+            'antsApplyTransforms -d 3 -r phantom.nii.gz -i phantom.nii.gz '
+            '-o warped-ants.nii.gz -n BSpline -t itk-displacements.nii.gz'
         ],
         shell=True,
     )
     assert exit_code == 0
 
-    ours = np.asanyarray(nb.load("warped-sdcflows.nii.gz").dataobj)
-    theirs = np.asanyarray(nb.load("warped-ants.nii.gz").dataobj)
+    ours = np.asanyarray(nb.load('warped-sdcflows.nii.gz').dataobj)
+    theirs = np.asanyarray(nb.load('warped-ants.nii.gz').dataobj)
     assert np.all((np.sqrt(((ours - theirs) ** 2).sum()) / ours.size) < 1e-1)
 
     if outdir:
-        orientation = "".join([ax[bool(f)] for ax, f in zip(("RL", "AP", "SI"), flip)])
+        orientation = ''.join(
+            [ax[bool(f)] for ax, f in zip(('RL', 'AP', 'SI'), flip, strict=False)]
+        )
 
         SimpleBeforeAfter(
-            after_label="Theirs (ANTs)",
-            before_label="Ours (SDCFlows)",
-            after="warped-ants.nii.gz",
-            before="warped-sdcflows.nii.gz",
+            after_label='Theirs (ANTs)',
+            before_label='Ours (SDCFlows)',
+            after='warped-ants.nii.gz',
+            before='warped-sdcflows.nii.gz',
             out_report=str(
-                outdir / f"xfm_pe-{pe_dir}_flip-{orientation}_x-{rotation[0] or 0}"
-                f"_y-{rotation[1] or 0}_z-{rotation[2] or 0}.svg"
+                outdir / f'xfm_pe-{pe_dir}_flip-{orientation}_x-{rotation[0] or 0}'
+                f'_y-{rotation[1] or 0}_z-{rotation[2] or 0}.svg'
             ),
         ).run()
 
 
 @pytest.mark.parametrize(
-    "pe0",
+    'pe0',
     [
-        "LR",
+        'LR',
     ],
 )
 # @pytest.mark.parametrize("hmc", (True, False))
-@pytest.mark.parametrize("hmc", (False, ))
-@pytest.mark.parametrize("fmap", (True, False))
+@pytest.mark.parametrize('hmc', (False,))
+@pytest.mark.parametrize('fmap', (True, False))
 def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
     """Test the .apply() member of the B0Transform object."""
-    datadir = datadir / "hcph-pilot_fieldmaps"
+    datadir = datadir / 'hcph-pilot_fieldmaps'
     tmpdir.chdir()
 
     if not hmc and not fmap:
@@ -154,10 +158,7 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
 
     # Get coefficients file (at least for a quick reference if fmap is False)
     coeffs = [
-        nb.load(
-            datadir
-            / f"sub-pilot_ses-15_desc-topup+coeff+{pe0}+{pe0[::-1]}_fieldmap.nii.gz"
-        )
+        nb.load(datadir / f'sub-pilot_ses-15_desc-topup+coeff+{pe0}+{pe0[::-1]}_fieldmap.nii.gz')
     ]
 
     if fmap is False:
@@ -169,36 +170,36 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
     warp = tf.B0FieldTransform(coeffs=coeffs)
 
     hmc_xfms = (
-        np.load(datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.npy")
+        np.load(datadir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.npy')
         if hmc
         else None
     )
 
     in_file = (
-        datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz"
+        datadir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-mockmotion_dwi.nii.gz'
         if hmc
-        else datadir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz"
+        else datadir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwi.nii.gz'
     )
 
     corrected = warp.apply(
         in_file,
         ro_time=0.0502149,
-        pe_dir="i-",
+        pe_dir='i-',
         xfms=hmc_xfms,
         num_threads=6,
     )
-    corrected.to_filename(f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwi.nii.gz")
+    corrected.to_filename(f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwi.nii.gz')
 
     corrected.__class__(
         np.asanyarray(corrected.dataobj).mean(-1),
         corrected.affine,
         corrected.header,
-    ).to_filename(f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz")
+    ).to_filename(f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz')
 
     error_margin = 0.5
     if fmap is False:  # If no fieldmap, this is equivalent to only HMC
         realigned = LinearTransformsMapping(hmc_xfms, reference=in_file).apply(in_file)
-        error = np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2))
+        error = np.sqrt((corrected.dataobj - realigned.dataobj) ** 2)
 
         if outdir:
             # Do not include the first volume in the average to enhance differences
@@ -208,29 +209,26 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
                 realigned_data,
                 realigned.affine,
                 realigned.header,
-            ).to_filename(
-                f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz"
-            )
+            ).to_filename(f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz')
 
             SimpleBeforeAfter(
-                after_label="Theirs (3dvolreg)",
-                before_label="Ours (SDCFlows)",
-                after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz",
-                before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
-                out_report=str(
-                    outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc_dwi.svg"
-                ),
+                after_label='Theirs (3dvolreg)',
+                before_label='Ours (SDCFlows)',
+                after=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-nitransforms_dwiref.nii.gz',
+                before=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz',
+                out_report=str(outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc_dwi.svg'),
             ).run()
 
-            realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
-                outdir
-                / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc+error_dwi.nii.gz"
+            realigned.__class__(
+                error,
+                realigned.affine,
+                realigned.header,
+            ).to_filename(
+                outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-justhmc+error_dwi.nii.gz'
             )
     else:
         realigned = nb.load(in_file)
-        error = np.nan_to_num(
-            np.sqrt(((corrected.dataobj - realigned.dataobj) ** 2)), nan=0
-        )
+        error = np.nan_to_num(np.sqrt((corrected.dataobj - realigned.dataobj) ** 2), nan=0)
         error_margin = 200  # test oracle is pretty bad here - needs revision.
 
         if outdir:
@@ -241,24 +239,26 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
                 realigned_data,
                 realigned.affine,
                 realigned.header,
-            ).to_filename(
-                f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz"
-            )
+            ).to_filename(f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz')
 
             SimpleBeforeAfter(
-                after_label="Theirs (NiTransforms)",
-                before_label="Ours (SDCFlows)",
-                after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz",
-                before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
+                after_label='Theirs (NiTransforms)',
+                before_label='Ours (SDCFlows)',
+                after=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-3dvolreg_dwiref.nii.gz',
+                before=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz',
                 out_report=str(
-                    outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-"
-                    f"{'just' if not hmc else 'hmc+'}fmap_dwi.svg"
+                    outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-'
+                    f'{"just" if not hmc else "hmc+"}fmap_dwi.svg'
                 ),
             ).run()
 
-            realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
-                outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-"
-                f"{'' if not hmc else 'hmc+'}fmap+error_dwi.nii.gz"
+            realigned.__class__(
+                error,
+                realigned.affine,
+                realigned.header,
+            ).to_filename(
+                outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-'
+                f'{"" if not hmc else "hmc+"}fmap+error_dwi.nii.gz'
             )
 
     # error is below 0.5 in 95% of the voxels clipping margins
@@ -269,12 +269,12 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
         corrected_nohmc = warp.apply(
             in_file,
             ro_time=0.0502149,
-            pe_dir="i-",
+            pe_dir='i-',
             xfms=None,
             num_threads=6,
         )
         corrected_nohmc.to_filename(
-            f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwi.nii.gz"
+            f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwi.nii.gz'
         )
 
         # Do not include the first volume in the average to enhance differences
@@ -282,32 +282,30 @@ def test_apply_transform(tmpdir, outdir, datadir, pe0, hmc, fmap):
             np.asanyarray(corrected.dataobj)[..., 1:].mean(-1),
             corrected.affine,
             corrected.header,
-        ).to_filename(
-            f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz"
-        )
+        ).to_filename(f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz')
 
         SimpleBeforeAfter(
-            after_label="W/o HMC",
-            before_label="With HMC",
-            after=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz",
-            before=f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz",
-            out_report=str(
-                outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmcdiff_dwi.svg"
-            ),
+            after_label='W/o HMC',
+            before_label='With HMC',
+            after=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows+nohmc_dwiref.nii.gz',
+            before=f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-sdcflows_dwiref.nii.gz',
+            out_report=str(outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmcdiff_dwi.svg'),
         ).run()
 
-        error = np.sqrt(((corrected.dataobj - corrected_nohmc.dataobj) ** 2))
-        realigned.__class__(error, realigned.affine, realigned.header,).to_filename(
-            outdir / f"sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmdiff+error_dwi.nii.gz"
-        )
+        error = np.sqrt((corrected.dataobj - corrected_nohmc.dataobj) ** 2)
+        realigned.__class__(
+            error,
+            realigned.affine,
+            realigned.header,
+        ).to_filename(outdir / f'sub-pilot_ses-15_acq-b0_dir-{pe0}_desc-hmdiff+error_dwi.nii.gz')
 
 
-@pytest.mark.parametrize("pe_dir", ["j", "j-", "i", "i-", "k", "k-"])
+@pytest.mark.parametrize('pe_dir', ['j', 'j-', 'i', 'i-', 'k', 'k-'])
 def test_conversions(tmpdir, testdata_dir, pe_dir):
     """Check inverse functions."""
     tmpdir.chdir()
 
-    fmap_nii = nb.load(testdata_dir / "topup-field.nii.gz")
+    fmap_nii = nb.load(testdata_dir / 'topup-field.nii.gz')
     new_nii = tf.disp_to_fmap(
         tf.fmap_to_disp(
             fmap_nii,
@@ -320,8 +318,8 @@ def test_conversions(tmpdir, testdata_dir, pe_dir):
     )
 
     assert np.allclose(
-        fmap_nii.get_fdata(dtype="float32"),
-        new_nii.get_fdata(dtype="float32"),
+        fmap_nii.get_fdata(dtype='float32'),
+        new_nii.get_fdata(dtype='float32'),
     )
 
 

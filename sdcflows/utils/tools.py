@@ -21,6 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Image processing tools."""
+
 import nibabel as nb
 
 
@@ -51,6 +52,7 @@ def deoblique_and_zooms(
 
     """
     from itertools import product
+
     import numpy as np
     from nibabel.affines import apply_affine, rescale_affine
 
@@ -63,15 +65,11 @@ def deoblique_and_zooms(
     _, qcode = in_reference.get_qform(coded=True)
 
     # Calculate the 8 most extreme coordinates of oblique in in_reference space
-    corners = np.array(list(product((0, 1), repeat=3))) * (
-        np.array(oblique.shape[:3]) - 1
-    )
+    corners = np.array(list(product((0, 1), repeat=3))) * (np.array(oblique.shape[:3]) - 1)
     extent_ijk = apply_affine(np.linalg.inv(affine) @ oblique.affine, corners)
 
     underflow = np.clip(extent_ijk.min(0) - padding, None, 0).astype(int)
-    overflow = np.ceil(
-        np.clip(extent_ijk.max(0) + padding + 1 - ref_shape, 0, None)
-    ).astype(int)
+    overflow = np.ceil(np.clip(extent_ijk.max(0) + padding + 1 - ref_shape, 0, None)).astype(int)
     if np.any(underflow < 0) or np.any(overflow > 0):
         # Add under/overflow voxels
         ref_shape += overflow - underflow
@@ -98,8 +96,9 @@ def deoblique_and_zooms(
 def resample_to_zooms(in_file, zooms, order=3, prefilter=True):
     """Resample the input data to a new grid with the requested zooms."""
     from pathlib import Path
-    import numpy as np
+
     import nibabel as nb
+    import numpy as np
     from nibabel.affines import rescale_affine
     from nitransforms.linear import Affine
 
@@ -153,18 +152,19 @@ def ensure_positive_cosines(img):
 
 def brain_masker(in_file, out_file=None, padding=5):
     """Use grayscale morphological operations to obtain a quick mask of EPI data."""
-    from pathlib import Path
     import re
+    from pathlib import Path
+
     import nibabel as nb
     import numpy as np
     from scipy import ndimage
-    from skimage.morphology import ball
     from skimage.filters import threshold_otsu
+    from skimage.morphology import ball
     from skimage.segmentation import random_walker
 
     # Load data
     img = nb.load(in_file)
-    data = np.pad(img.get_fdata(dtype="float32"), padding)
+    data = np.pad(img.get_fdata(dtype='float32'), padding)
     hdr = img.header.copy()
 
     # Cleanup background and invert intensity
@@ -182,16 +182,16 @@ def brain_masker(in_file, out_file=None, padding=5):
     # Rough binary mask
     closedbin = np.zeros_like(closed)
     closedbin[closed < th] = 1
-    closedbin = ndimage.binary_opening(closedbin, ball(3)).astype("uint8")
+    closedbin = ndimage.binary_opening(closedbin, ball(3)).astype('uint8')
 
     label_im, nb_labels = ndimage.label(closedbin)
     sizes = ndimage.sum(closedbin, label_im, range(nb_labels + 1))
     mask = sizes == sizes.max()
     closedbin = mask[label_im]
-    closedbin = ndimage.binary_closing(closedbin, ball(5)).astype("uint8")
+    closedbin = ndimage.binary_closing(closedbin, ball(5)).astype('uint8')
 
     # Prepare markers
-    markers = np.ones_like(closed, dtype="int8") * 2
+    markers = np.ones_like(closed, dtype='int8') * 2
     markers[1:-1, 1:-1, 1:-1] = 0
     closedbin_dil = ndimage.binary_dilation(closedbin, ball(5))
     markers[closedbin_dil] = 0
@@ -205,21 +205,17 @@ def brain_masker(in_file, out_file=None, padding=5):
         segtarget, markers, spacing=img.header.get_zooms()[:3], return_full_prob=True
     )[..., padding:-padding, padding:-padding, padding:-padding]
 
-    out_mask = Path(out_file or "brain_mask.nii.gz").absolute()
+    out_mask = Path(out_file or 'brain_mask.nii.gz').absolute()
 
-    hdr.set_data_dtype("uint8")
-    img.__class__((labels[0, ...] >= 0.5).astype("uint8"), img.affine, hdr).to_filename(
-        out_mask
-    )
+    hdr.set_data_dtype('uint8')
+    img.__class__((labels[0, ...] >= 0.5).astype('uint8'), img.affine, hdr).to_filename(out_mask)
 
-    out_probseg = re.sub(
-        r"\.nii(\.gz)$", r"_probseg.nii\1", str(out_mask).replace("_mask.", ".")
-    )
-    hdr.set_data_dtype("float32")
+    out_probseg = re.sub(r'\.nii(\.gz)$', r'_probseg.nii\1', str(out_mask).replace('_mask.', '.'))
+    hdr.set_data_dtype('float32')
     img.__class__((labels[0, ...]), img.affine, hdr).to_filename(out_probseg)
 
     out_brain = re.sub(
-        r"\.nii(\.gz)$", r"_brainmasked.nii\1", str(out_mask).replace("_mask.", ".")
+        r'\.nii(\.gz)$', r'_brainmasked.nii\1', str(out_mask).replace('_mask.', '.')
     )
     data = np.asanyarray(img.dataobj)
     data[labels[0, ...] < 0.5] = 0
@@ -282,14 +278,14 @@ def reorient_pedir(pe_dir, source_ornt, target_ornt=None):
 
     xfm = ornt_transform(source_ornt, target_ornt).astype(int)  # shape: (3, 2)
 
-    directions = "ijk" if pe_dir[0] in "ijk" else "xyz"
+    directions = 'ijk' if pe_dir[0] in 'ijk' else 'xyz'
 
     source_axis = directions.index(pe_dir[0])
-    source_flip = pe_dir[1:] == "-"
+    source_flip = pe_dir[1:] == '-'
 
     axis_xfm = xfm[source_axis, :]  # shape: (2,)
 
     target_axis = directions[axis_xfm[0]]
     target_flip = source_flip ^ (axis_xfm[1] == -1)
 
-    return f"{target_axis}-" if target_flip else target_axis
+    return f'{target_axis}-' if target_flip else target_axis

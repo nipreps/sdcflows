@@ -44,26 +44,26 @@ see Eq. :math:`\eqref{eq:2}`).
 
 
 """
+
 from __future__ import annotations
 
-import os
-from functools import partial
 import asyncio
+import os
+from collections.abc import Callable, Sequence
+from functools import partial
 from pathlib import Path
-from typing import Callable, Sequence, Tuple
+from warnings import warn
 
 import attr
-import numpy as np
-from warnings import warn
-from scipy import ndimage as ndi
-from scipy.interpolate import BSpline
-from scipy.sparse import hstack as sparse_hstack, kron, lil_array
-
 import nibabel as nb
 import nitransforms as nt
+import numpy as np
 from bids.utils import listify
-
 from niworkflows.interfaces.nibabel import reorient_image
+from scipy import ndimage as ndi
+from scipy.interpolate import BSpline
+from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import kron, lil_array
 
 from sdcflows.utils.tools import ensure_positive_cosines
 
@@ -71,13 +71,13 @@ from sdcflows.utils.tools import ensure_positive_cosines
 def _sdc_unwarp(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray | None,
     jacobian: bool,
     fmap_hz: np.ndarray,
     output_dtype: str | np.dtype | None = None,
     order: int = 3,
-    mode: str = "constant",
+    mode: str = 'constant',
     cval: float = 0.0,
     prefilter: bool = True,
 ) -> np.ndarray:
@@ -120,7 +120,7 @@ def _sdc_unwarp(
 async def worker(
     data: np.ndarray,
     coordinates: np.ndarray,
-    pe_info: Tuple[int, float],
+    pe_info: tuple[int, float],
     hmc_xfm: np.ndarray,
     func: Callable,
     semaphore: asyncio.Semaphore,
@@ -128,9 +128,7 @@ async def worker(
     """Create one worker and attach it to the execution loop."""
     async with semaphore:
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None, func, data, coordinates, pe_info, hmc_xfm
-        )
+        result = await loop.run_in_executor(None, func, data, coordinates, pe_info, hmc_xfm)
         return result
 
 
@@ -138,11 +136,11 @@ async def unwarp_parallel(
     fulldataset: np.ndarray,
     coordinates: np.ndarray,
     fmap_hz: np.ndarray,
-    pe_info: Sequence[Tuple[int, float]],
+    pe_info: Sequence[tuple[int, float]],
     xfms: Sequence[np.ndarray],
     jacobian: bool,
     order: int = 3,
-    mode: str = "constant",
+    mode: str = 'constant',
     cval: float = 0.0,
     prefilter: bool = True,
     output_dtype: str | np.dtype | None = None,
@@ -338,7 +336,7 @@ class B0FieldTransform:
             [grid_bspline_weights(projected_reference, level) for level in coeffs]
         ).tocsr()
         coefficients = np.hstack(
-            [level.get_fdata(dtype="float32").reshape(-1) for level in coeffs]
+            [level.get_fdata(dtype='float32').reshape(-1) for level in coeffs]
         )
 
         # Reconstruct the fieldmap (in Hz) from coefficients
@@ -346,10 +344,10 @@ class B0FieldTransform:
 
         # Generate a NIfTI object
         hdr = target_reference.header.copy()
-        hdr.set_intent("estimate", name="fieldmap Hz")
-        hdr.set_data_dtype("float32")
-        hdr["cal_max"] = max((abs(fmap.min()), fmap.max()))
-        hdr["cal_min"] = -hdr["cal_max"]
+        hdr.set_intent('estimate', name='fieldmap Hz')
+        hdr.set_data_dtype('float32')
+        hdr['cal_max'] = max((abs(fmap.min()), fmap.max()))
+        hdr['cal_min'] = -hdr['cal_max']
 
         # Cache
         self.mapped = nb.Nifti1Image(fmap, projected_reference.affine, hdr)
@@ -358,9 +356,7 @@ class B0FieldTransform:
             from nitransforms.linear import Affine
 
             _tmp_reference = nb.Nifti1Image(
-                np.zeros(
-                    target_reference.shape[:3], dtype=target_reference.get_data_dtype()
-                ),
+                np.zeros(target_reference.shape[:3], dtype=target_reference.get_data_dtype()),
                 target_reference.affine,
                 target_reference.header,
             )
@@ -380,7 +376,7 @@ class B0FieldTransform:
         xfm_data2fmap: np.ndarray | None = None,
         approx: bool = True,
         order: int = 3,
-        mode: str = "constant",
+        mode: str = 'constant',
         cval: float = 0.0,
         prefilter: bool = True,
         output_dtype: str | np.dtype | None = None,
@@ -466,8 +462,9 @@ class B0FieldTransform:
 
         if self.mapped is not None:
             warn(
-                "The fieldmap has been already fit, the user is responsible for "
-                "ensuring the parameters of the EPI target are consistent."
+                'The fieldmap has been already fit, the user is responsible for '
+                'ensuring the parameters of the EPI target are consistent.',
+                stacklevel=2,
             )
         else:
             # Generate warp field (before ensuring positive cosines)
@@ -494,22 +491,18 @@ class B0FieldTransform:
             ro_time *= n_volumes
 
         pe_info = []
-        for volid in range(n_volumes):
-            pe_axis = "ijk".index(pe_dir[volid][0])
-            axis_flip = axcodes[pe_axis] in ("LPI")
-            pe_flip = pe_dir[volid].endswith("-")
+        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time, strict=False):
+            pe_axis = 'ijk'.index(vol_pe_dir[0])
+            # Displacements are reversed if either is true (after ensuring positive cosines)
+            flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
 
-            pe_info.append((
-                pe_axis,
-                # Displacements are reversed if either is true (after ensuring positive cosines)
-                -ro_time[volid] if (axis_flip ^ pe_flip) else ro_time[volid],
-            ))
+            pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
 
         # Reference image's voxel coordinates (in voxel units)
         voxcoords = (
             nt.linear.Affine(reference=moving)
-            .reference.ndindex.reshape((ndim, *data.shape[:ndim]))
-            .astype("float32")
+            .reference.ndindex.T.reshape((ndim, *data.shape[:ndim]))
+            .astype('float32')
         )
 
         # Convert head-motion transforms to voxel-to-voxel:
@@ -524,9 +517,10 @@ class B0FieldTransform:
             # xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
             xfms = None
             warn(
-                "Head-motion compensating (realignment) transforms are ignored when applying "
-                "the unwarp with SDCFlows. This feature will be enabled as soon as unit tests "
-                "are implemented for its quality assurance."
+                'Head-motion compensating (realignment) transforms are ignored when applying '
+                'the unwarp with SDCFlows. This feature will be enabled as soon as unit tests '
+                'are implemented for its quality assurance.',
+                stacklevel=1,
             )
 
         # Resample
@@ -534,7 +528,7 @@ class B0FieldTransform:
             unwarp_parallel(
                 data,
                 voxcoords,
-                self.mapped.get_fdata(dtype="float32"),  # fieldmap in Hz
+                self.mapped.get_fdata(dtype='float32'),  # fieldmap in Hz
                 pe_info,
                 xfms,
                 jacobian,
@@ -602,15 +596,15 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
 
     """
     # Set polarity & scale VSM (voxel-shift-map) by readout time
-    vsm = fmap_nii.get_fdata().copy() * (-ro_time if pe_dir.endswith("-") else ro_time)
+    vsm = fmap_nii.get_fdata().copy() * (-ro_time if pe_dir.endswith('-') else ro_time)
 
     # Shape of displacements field
     # Note that ITK NIfTI fields are 5D (have an empty 4th dimension)
     fieldshape = vsm.shape[:3] + (1, 3)
 
     # Convert VSM to voxel displacements
-    pe_axis = "ijk".index(pe_dir[0])
-    ijk_deltas = np.zeros((vsm.size, 3), dtype="float32")
+    pe_axis = 'ijk'.index(pe_dir[0])
+    ijk_deltas = np.zeros((vsm.size, 3), dtype='float32')
     ijk_deltas[:, pe_axis] = vsm.reshape(-1)
 
     # To convert from VSM to RAS field we just apply the affine
@@ -622,8 +616,8 @@ def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
         xyz_deltas[..., (0, 1)] *= -1.0
 
     xyz_nii = nb.Nifti1Image(xyz_deltas.reshape(fieldshape), fmap_nii.affine)
-    xyz_nii.header.set_intent("vector", name="SDC")
-    xyz_nii.header.set_xyzt_units("mm")
+    xyz_nii.header.set_intent('vector', name='SDC')
+    xyz_nii.header.set_xyzt_units('mm')
     return xyz_nii
 
 
@@ -650,7 +644,7 @@ def disp_to_fmap(xyz_nii, epi_nii, ro_time, pe_dir, itk_format=True):
         A NIfTI 1.0 object containing the field in Hz.
 
     """
-    xyz_deltas = np.squeeze(xyz_nii.get_fdata(dtype="float32")).reshape((-1, 3))
+    xyz_deltas = np.squeeze(xyz_nii.get_fdata(dtype='float32')).reshape((-1, 3))
 
     if itk_format:
         # ITK displacement vectors are in LPS orientation
@@ -662,25 +656,25 @@ def disp_to_fmap(xyz_nii, epi_nii, ro_time, pe_dir, itk_format=True):
 
     # Convert displacements from mm to voxel units
     # Using the inverse affine accounts for reordering of axes, etc.
-    ijk_deltas = (xyz_deltas @ inv_mat.T).astype("float32")
-    pe_axis = "ijk".index(pe_dir[0])
+    ijk_deltas = (xyz_deltas @ inv_mat.T).astype('float32')
+    pe_axis = 'ijk'.index(pe_dir[0])
     vsm = ijk_deltas[:, pe_axis].reshape(xyz_nii.shape[:3])
-    scale_factor = -ro_time if pe_dir.endswith("-") else ro_time
+    scale_factor = -ro_time if pe_dir.endswith('-') else ro_time
 
     fmap_nii = nb.Nifti1Image(vsm / scale_factor, xyz_nii.affine)
-    fmap_nii.header.set_intent("estimate", name="Delta_B0 [Hz]")
-    fmap_nii.header.set_xyzt_units("mm")
-    fmap_nii.header["cal_max"] = max(
+    fmap_nii.header.set_intent('estimate', name='Delta_B0 [Hz]')
+    fmap_nii.header.set_xyzt_units('mm')
+    fmap_nii.header['cal_max'] = max(
         (
             abs(np.asanyarray(fmap_nii.dataobj).min()),
             np.asanyarray(fmap_nii.dataobj).max(),
         )
     )
-    fmap_nii.header["cal_min"] = -fmap_nii.header["cal_max"]
+    fmap_nii.header['cal_min'] = -fmap_nii.header['cal_max']
     return fmap_nii
 
 
-def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
+def grid_bspline_weights(target_nii, ctrl_nii, dtype='float32'):
     r"""
     Evaluate tensor-product B-Spline weights on a grid.
 
@@ -740,7 +734,7 @@ def grid_bspline_weights(target_nii, ctrl_nii, dtype="float32"):
         0,
         atol=1e-3,
     ):
-        warn("Image's and B-Spline's grids are not aligned.")
+        warn("Image's and B-Spline's grids are not aligned.", stacklevel=2)
 
     target_to_grid = np.linalg.inv(ctrl_nii.affine) @ target_nii.affine
     wd = []
@@ -786,7 +780,7 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
         debug_ref = (~xfm).apply(fmap_ref, reference=nii_target)
         debug_ref.header.set_qform(nii_target.affine, code=1)
         debug_ref.header.set_sform(nii_target.affine, code=1)
-        debug_ref.to_filename(Path() / "debug_fmapref.nii.gz")
+        debug_ref.to_filename(Path() / 'debug_fmapref.nii.gz')
 
     # Generate a new transform
     newaff = np.linalg.inv(np.linalg.inv(coeff.affine) @ (~xfm).matrix)
@@ -796,11 +790,11 @@ def _move_coeff(in_coeff, fmap_ref, transform, fmap_target=None):
     hdr.set_sform(newaff, code=1)
 
     # Make it easy on viz software to render proper range
-    hdr["cal_max"] = max(
+    hdr['cal_max'] = max(
         (
             abs(np.asanyarray(coeff.dataobj).min()),
             np.asanyarray(coeff.dataobj).max(),
         )
     )
-    hdr["cal_min"] = -hdr["cal_max"]
+    hdr['cal_min'] = -hdr['cal_max']
     return coeff.__class__(coeff.dataobj, newaff, hdr)

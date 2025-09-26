@@ -21,14 +21,14 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Datasets with multiple phase encoded directions."""
-from nipype.pipeline import engine as pe
-from nipype.interfaces import utility as niu
 
+from nipype.interfaces import utility as niu
+from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 from ... import data
 
-INPUT_FIELDS = ("metadata", "in_data")
+INPUT_FIELDS = ('metadata', 'in_data')
 _PEPOLAR_DESC = """\
 A *B<sub>0</sub>*-nonuniformity map (or *fieldmap*) was estimated based on two (or more)
 echo-planar imaging (EPI) references """
@@ -41,7 +41,7 @@ def init_topup_wf(
     omp_nthreads=1,
     sloppy=False,
     debug=False,
-    name="pepolar_estimate_wf",
+    name='pepolar_estimate_wf',
     **kwargs,
 ):
     """
@@ -91,13 +91,13 @@ def init_topup_wf(
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
-    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
     from niworkflows.interfaces.images import RobustAverage
+    from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
 
-    from ...utils.misc import front as _front
-    from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import UniformGrid, PadSlices, ReorientImageAndMetadata
     from ...interfaces.bspline import TOPUPCoeffReorient
+    from ...interfaces.epi import GetReadoutTime, SortPEBlips
+    from ...interfaces.utils import PadSlices, ReorientImageAndMetadata, UniformGrid
+    from ...utils.misc import front as _front
     from ..ancillary import init_brainextraction_wf
 
     workflow = Workflow(name=name)
@@ -105,31 +105,31 @@ def init_topup_wf(
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
 
-    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name="inputnode")
+    inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "fmap",
-                "fmap_ref",
-                "fmap_coeff",
-                "fmap_mask",
-                "jacobians",
-                "xfms",
-                "out_warps",
-                "method",
+                'fmap',
+                'fmap_ref',
+                'fmap_coeff',
+                'fmap_mask',
+                'jacobians',
+                'xfms',
+                'out_warps',
+                'method',
             ]
         ),
-        name="outputnode",
+        name='outputnode',
     )
-    outputnode.inputs.method = "PEB/PEPOLAR (phase-encoding based / PE-POLARity)"
+    outputnode.inputs.method = 'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'
 
     # Calculate the total readout time of each run
     readout_time = pe.MapNode(
         GetReadoutTime(
             use_estimate=use_metadata_estimates,
         ),
-        name="readout_time",
-        iterfield=["metadata", "in_file"],
+        name='readout_time',
+        iterfield=['metadata', 'in_file'],
         run_without_submitting=True,
     )
     if fallback_total_readout_time is not None:
@@ -137,38 +137,32 @@ def init_topup_wf(
     # Average each run so that topup is not overwhelmed (see #279)
     runwise_avg = pe.MapNode(
         RobustAverage(num_threads=omp_nthreads),
-        name="runwise_avg",
-        iterfield="in_file",
+        name='runwise_avg',
+        iterfield='in_file',
     )
     # Regrid all to the reference (grid_reference=0 means first averaged run)
-    regrid = pe.Node(UniformGrid(reference=grid_reference), name="regrid")
+    regrid = pe.Node(UniformGrid(reference=grid_reference), name='regrid')
     # Sort PE blips to ensure reproducibility
-    sort_pe_blips = pe.Node(
-        SortPEBlips(), name="sort_pe_blips", run_without_submitting=True
-    )
+    sort_pe_blips = pe.Node(SortPEBlips(), name='sort_pe_blips', run_without_submitting=True)
     # Merge into one 4D file
-    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name="concat_blips")
+    concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name='concat_blips')
     # Pad dimensions so that they meet TOPUP's expectations
-    pad_blip_slices = pe.Node(PadSlices(), name="pad_blip_slices")
+    pad_blip_slices = pe.Node(PadSlices(), name='pad_blip_slices')
     # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name="setwise_avg")
+    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name='setwise_avg')
     # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
-    to_las = pe.Node(ReorientImageAndMetadata(target_orientation="LAS"), name="to_las")
+    to_las = pe.Node(ReorientImageAndMetadata(target_orientation='LAS'), name='to_las')
     topup = pe.Node(
-        TOPUP(
-            config=str(data.load(f"flirtsch/b02b0{'_quick' * sloppy}.cnf"))
-        ),
-        name="topup",
+        TOPUP(config=str(data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf'))),
+        name='topup',
     )
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
-    fix_coeff = pe.Node(
-        TOPUPCoeffReorient(), name="fix_coeff", run_without_submitting=True
-    )
+    fix_coeff = pe.Node(TOPUPCoeffReorient(), name='fix_coeff', run_without_submitting=True)
 
     # Average the output
-    ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name="ref_average")
+    ref_average = pe.Node(RobustAverage(num_threads=omp_nthreads), name='ref_average')
 
     # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
@@ -208,8 +202,8 @@ def init_topup_wf(
 
     if not debug:
         # Roll orientation back to original
-        from_las = pe.Node(ReorientImage(), name="from_las")
-        from_las_fmap = pe.Node(ReorientImage(), name="from_las_fmap")
+        from_las = pe.Node(ReorientImage(), name='from_las')
+        from_las_fmap = pe.Node(ReorientImage(), name='from_las_fmap')
         # fmt: off
         workflow.connect([
             (setwise_avg, from_las, [("out_file", "target_file")]),
@@ -226,9 +220,9 @@ def init_topup_wf(
     from sdcflows.interfaces.bspline import ApplyCoeffsField
 
     # Separate the runs again, as our ApplyCoeffsField corrects them separately
-    unwarp = pe.Node(ApplyCoeffsField(jacobian=True), name="unwarp")
+    unwarp = pe.Node(ApplyCoeffsField(jacobian=True), name='unwarp')
     unwarp.interface._always_run = True
-    concat_corrected = pe.Node(MergeSeries(), name="concat_corrected")
+    concat_corrected = pe.Node(MergeSeries(), name='concat_corrected')
 
     # fmt:off
     workflow.connect([
@@ -245,7 +239,7 @@ def init_topup_wf(
     return workflow
 
 
-def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
+def init_3dQwarp_wf(omp_nthreads=1, debug=False, name='pepolar_estimate_wf'):
     """
     Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.
 
@@ -284,33 +278,32 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name="pepolar_estimate_wf"):
 
     """
     from nipype.interfaces import afni
-    from niworkflows.interfaces.header import CopyHeader
+    from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
     from niworkflows.interfaces.fixes import (
-        FixHeaderRegistration as Registration,
         FixHeaderApplyTransforms as ApplyTransforms,
     )
+    from niworkflows.interfaces.fixes import (
+        FixHeaderRegistration as Registration,
+    )
     from niworkflows.interfaces.freesurfer import StructuralReference
-    from niworkflows.func.util import init_enhance_and_skullstrip_bold_wf
-    from ...utils.misc import front as _front, last as _last
-    from ...interfaces.utils import Flatten, ConvertWarp
+    from niworkflows.interfaces.header import CopyHeader
+
+    from ...interfaces.utils import ConvertWarp, Flatten
+    from ...utils.misc import front as _front
+    from ...utils.misc import last as _last
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = f"""{_PEPOLAR_DESC} \
-with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() or []])}).
-"""
+    afni_ver = ''.join(f'{v:02d}' for v in afni.Info().version() or [])
+    workflow.__desc__ = f'{_PEPOLAR_DESC} with `3dQwarp` (@afni; AFNI {afni_ver}).'
 
-    inputnode = pe.Node(
-        niu.IdentityInterface(fields=["in_data", "metadata"]), name="inputnode"
-    )
+    inputnode = pe.Node(niu.IdentityInterface(fields=['in_data', 'metadata']), name='inputnode')
 
-    outputnode = pe.Node(
-        niu.IdentityInterface(fields=["fmap", "fmap_ref"]), name="outputnode"
-    )
+    outputnode = pe.Node(niu.IdentityInterface(fields=['fmap', 'fmap_ref']), name='outputnode')
 
-    flatten = pe.Node(Flatten(), name="flatten")
+    flatten = pe.Node(Flatten(), name='flatten')
     sort_pe = pe.Node(
-        niu.Function(function=_sorted_pe, output_names=["sorted", "qwarp_args"]),
-        name="sort_pe",
+        niu.Function(function=_sorted_pe, output_names=['sorted', 'qwarp_args']),
+        name='sort_pe',
         run_without_submitting=True,
     )
 
@@ -323,52 +316,48 @@ with `3dQwarp` (@afni; AFNI {''.join(['%02d' % v for v in afni.Info().version() 
             # 7-DOF (rigid + intensity)
             no_iteration=True,
             subsample_threshold=200,
-            out_file="template.nii.gz",
+            out_file='template.nii.gz',
         ),
-        name="merge_pes",
-        iterfield=["in_files"],
+        name='merge_pes',
+        iterfield=['in_files'],
     )
 
-    pe0_wf = init_enhance_and_skullstrip_bold_wf(
-        omp_nthreads=omp_nthreads, name="pe0_wf"
-    )
-    pe1_wf = init_enhance_and_skullstrip_bold_wf(
-        omp_nthreads=omp_nthreads, name="pe1_wf"
-    )
+    pe0_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name='pe0_wf')
+    pe1_wf = init_enhance_and_skullstrip_bold_wf(omp_nthreads=omp_nthreads, name='pe1_wf')
 
     align_pes = pe.Node(
         Registration(
-            from_file=data.load("translation_rigid.json"),
+            from_file=data.load('translation_rigid.json'),
             output_warped_image=True,
         ),
-        name="align_pes",
+        name='align_pes',
         n_procs=omp_nthreads,
     )
 
     qwarp = pe.Node(
         afni.QwarpPlusMinus(
             blur=[-1, -1],
-            environ={"OMP_NUM_THREADS": f"{min(omp_nthreads, 4)}"},
+            environ={'OMP_NUM_THREADS': f'{min(omp_nthreads, 4)}'},
             minpatch=9,
             nopadWARP=True,
             noweight=True,
             pblur=[0.05, 0.05],
         ),
-        name="qwarp",
+        name='qwarp',
         n_procs=min(omp_nthreads, 4),
     )
 
-    to_ants = pe.Node(ConvertWarp(), name="to_ants", mem_gb=0.01)
+    to_ants = pe.Node(ConvertWarp(), name='to_ants', mem_gb=0.01)
 
-    cphdr_warp = pe.Node(CopyHeader(), name="cphdr_warp", mem_gb=0.01)
+    cphdr_warp = pe.Node(CopyHeader(), name='cphdr_warp', mem_gb=0.01)
 
     unwarp_reference = pe.Node(
         ApplyTransforms(
             dimension=3,
             float=True,
-            interpolation="LanczosWindowedSinc",
+            interpolation='LanczosWindowedSinc',
         ),
-        name="unwarp_reference",
+        name='unwarp_reference',
     )
 
     # fmt: off
@@ -431,19 +420,17 @@ def _sorted_pe(inlist):
     out_ref = [inlist[0][0]]
     out_opp = []
 
-    ref_pe = inlist[0][1]["PhaseEncodingDirection"]
+    ref_pe = inlist[0][1]['PhaseEncodingDirection']
     for d, m in inlist[1:]:
-        pe = m["PhaseEncodingDirection"]
+        pe = m['PhaseEncodingDirection']
         if pe == ref_pe:
             out_ref.append(d)
         elif pe[0] == ref_pe[0]:
             out_opp.append(d)
         else:
-            raise ValueError("Cannot handle orthogonal PE encodings.")
+            raise ValueError('Cannot handle orthogonal PE encodings.')
 
     return (
         [out_ref, out_opp],
-        {"i": "-noYdis -noZdis", "j": "-noXdis -noZdis", "k": "-noXdis -noYdis"}[
-            ref_pe[0]
-        ],
+        {'i': '-noYdis -noZdis', 'j': '-noXdis -noZdis', 'k': '-noXdis -noYdis'}[ref_pe[0]],
     )
