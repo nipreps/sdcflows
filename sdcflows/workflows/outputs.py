@@ -98,12 +98,11 @@ def init_fmap_reports_wf(
             suffix='fieldmap',
             desc=fmap_type,
             dismiss_entities=('fmap',),
-            allowed_entities=tuple(custom_entities.keys()),
+            allowed_entities=tuple(custom_entities),
         ),
         name='ds_fmap_report',
     )
-    for k, v in custom_entities.items():
-        setattr(ds_fmap_report.inputs, k, v)
+    ds_fmap_report.inputs.trait_set(**custom_entities)
 
     workflow.connect([
         (inputnode, fmap_rpt, [(("fieldmap", _pop), "fieldmap"),
@@ -174,7 +173,7 @@ def init_fmap_derivatives_wf(
             suffix='fieldmap',
             datatype='fmap',
             dismiss_entities=('fmap',),
-            allowed_entities=tuple(custom_entities.keys()),
+            allowed_entities=tuple(custom_entities),
         ),
         name='ds_reference',
     )
@@ -186,7 +185,7 @@ def init_fmap_derivatives_wf(
             suffix='fieldmap',
             datatype='fmap',
             compress=True,
-            allowed_entities=tuple(custom_entities.keys()),
+            allowed_entities=tuple(custom_entities),
         ),
         name='ds_fieldmap',
     )
@@ -194,9 +193,8 @@ def init_fmap_derivatives_wf(
     if bids_fmap_id:
         ds_fieldmap.inputs.B0FieldIdentifier = bids_fmap_id
 
-    for k, v in custom_entities.items():
-        setattr(ds_reference.inputs, k, v)
-        setattr(ds_fieldmap.inputs, k, v)
+    ds_reference.inputs.trait_set(**custom_entities)
+    ds_fieldmap.inputs.trait_set(**custom_entities)
 
     workflow.connect([
         (inputnode, merge_fmap, [("fieldmap", "in_files")]),
@@ -221,7 +219,7 @@ def init_fmap_derivatives_wf(
             suffix='fieldmap',
             datatype='fmap',
             compress=True,
-            allowed_entities=tuple(custom_entities.keys()),
+            allowed_entities=tuple(custom_entities),
         ),
         name='ds_coeff',
         iterfield=('in_file', 'desc'),
@@ -229,8 +227,7 @@ def init_fmap_derivatives_wf(
 
     gen_desc = pe.Node(niu.Function(function=_gendesc), name='gen_desc')
 
-    for k, v in custom_entities.items():
-        setattr(ds_coeff.inputs, k, v)
+    ds_coeff.inputs.trait_set(**custom_entities)
 
     workflow.connect([
         (inputnode, ds_coeff, [("source_files", "source_file"),
