@@ -123,6 +123,7 @@ def init_fmap_derivatives_wf(
     custom_entities=None,
     name='fmap_derivatives_wf',
     write_coeff=False,
+    write_mask=False,
 ):
     """
     Set up datasinks to store derivatives in the right location.
@@ -159,12 +160,12 @@ def init_fmap_derivatives_wf(
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_files', 'fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_meta']
+            fields=['source_files', 'fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask', 'fmap_meta']
         ),
         name='inputnode',
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['fieldmap', 'fmap_coeff', 'fmap_ref']),
+        niu.IdentityInterface(fields=['fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask']),
         name='outputnode',
     )
 
@@ -215,6 +216,28 @@ def init_fmap_derivatives_wf(
         (ds_fieldmap, outputnode, [("out_file", "fieldmap")]),
         (ds_reference, outputnode, [("out_file", "fmap_ref")]),
     ])  # fmt:skip
+
+    if write_mask:
+        ds_mask = pe.Node(
+            DerivativesDataSink(
+                base_directory=output_dir,
+                compress=True,
+                desc='brain',
+                suffix='mask',
+                datatype='fmap',
+                dismiss_entities=('fmap',),
+                allowed_entities=tuple(custom_entities),
+            ),
+            name='ds_mask',
+        )
+
+        ds_mask.inputs.trait_set(**custom_entities)
+
+        workflow.connect([
+            (inputnode, ds_mask, [("source_files", "source_file"),
+                                  ("fmap_mask", "in_file")]),
+            (ds_mask, outputnode, [("out_file", "fmap_mask")]),
+        ])  # fmt:skip
 
     if not write_coeff:
         return workflow

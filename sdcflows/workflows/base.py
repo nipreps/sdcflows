@@ -137,6 +137,7 @@ def init_fmap_preproc_wf(
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
             write_coeff=True,
+            write_mask=True,
             bids_fmap_id=estimator.bids_id,
             name=f'fmap_derivatives_wf_{estimator.sanitized_id}',
         )
@@ -166,20 +167,21 @@ def init_fmap_preproc_wf(
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                 ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
+                ("outputnode.fmap_mask", "inputnode.fmap_mask"),
             ]),
             (est_wf, fmap_reports_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
                 ("outputnode.fmap_mask", "inputnode.fmap_mask"),
             ]),
+            (est_wf, out_map, [
+                ("outputnode.method", "method")
+            ]),
             (fmap_derivatives_wf, out_map, [
                 ("outputnode.fieldmap", "fmap"),
                 ("outputnode.fmap_ref", "fmap_ref"),
                 ("outputnode.fmap_coeff", "fmap_coeff"),
-            ]),
-            (est_wf, out_map, [
                 ("outputnode.fmap_mask", "fmap_mask"),
-                ("outputnode.method", "method")
             ]),
         ])  # fmt:skip
 
