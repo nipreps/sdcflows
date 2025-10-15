@@ -120,8 +120,8 @@ def test_FieldmapEstimation(dsA_dir, inputfiles, method, nsources):
         fm.FieldmapEstimation(sources, bids_id=fe.bids_id)
 
     # Ensure we can't instantiate one more estimation with same sources
-    with pytest.raises(ValueError):
-        fm.FieldmapEstimation(sources, bids_id=f'my{fe.bids_id}')
+    with pytest.warns(UserWarning, match=r"is already .* in mapping"):
+        fm.FieldmapEstimation(sources, bids_id=f"my{fe.bids_id}")
 
     # Exercise workflow creation
     wf = fe.get_workflow()
