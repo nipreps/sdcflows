@@ -145,7 +145,10 @@ class bidict(dict):
         if self.__contains__(key):
             raise KeyError(f"'{key}' is already {'a value' * (key in self._inverse)} in mapping")
         if self.__contains__(value):
-            warnings.warn( f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping", UserWarning )
+            warnings.warn(
+                f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping",
+                UserWarning,
+            )
 
         super().__setitem__(key, value)
         self._inverse[value] = key
