@@ -148,6 +148,7 @@ class bidict(dict):
             warnings.warn(
                 f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping",
                 UserWarning,
+                stacklevel=2,
             )
 
         super().__setitem__(key, value)
