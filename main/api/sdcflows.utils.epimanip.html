@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sdcflows.utils.misc module" href="sdcflows.utils.misc.html"><link rel="prev" title="sdcflows.utils.bimap module" href="sdcflows.utils.bimap.html">
 
-    <!-- Generated with Sphinx 8.1.3 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>sdcflows.utils.epimanip module - sdcflows 0+unknown documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -313,7 +313,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sdcflows.utils.epimanip.get_trt">
-<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.epimanip.</span></span><span class="sig-name descname"><span class="pre">get_trt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_estimate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/epimanip.html#get_trt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.epimanip.get_trt" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sdcflows.utils.epimanip.</span></span><span class="sig-name descname"><span class="pre">get_trt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_estimate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/epimanip.html#get_trt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.epimanip.get_trt" title="Link to this definition">¶</a></dt>
 <dd><p>Obtain the <em>total readout time</em> <span class="math notranslate nohighlight">\(T_\text{ro}\)</span> from available metadata.</p>
 <p>BIDS provides two standard mechanisms to store the total readout time,
 <span class="math notranslate nohighlight">\(T_\text{ro}\)</span>, of <abbr title="echo-planar imaging">EPI</abbr> scans.
@@ -440,7 +440,7 @@ can then be calculated with Eq. <span class="math notranslate nohighlight">\(\eq
 </div>
 <p>If enough metadata is not available, raise an error:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">({</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">},</span>
-<span class="gp">... </span>        <span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span>  
+<span class="gp">... </span>        <span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>
