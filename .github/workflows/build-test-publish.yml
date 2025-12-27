@@ -86,7 +86,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: /var/lib/apt
         key: apt-cache-v3
@@ -102,7 +102,7 @@ jobs:
                         libglu1-mesa-dev libglw1-mesa     \
                         libxm4 build-essential
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: /opt/afni
         key: afni-v1
@@ -130,7 +130,7 @@ jobs:
         auto-activate-base: true
         python-version: ${{ matrix.python-version }}
         channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge,defaults
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       id: conda
       env:
         CACHE_NUM: v5
@@ -148,7 +148,7 @@ jobs:
       run: |
         # libitk 5.4.1+ segfaults with ants 2.5.4
         conda install fsl-fugue fsl-topup ants 'libitk=5.4.0'
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/templateflow
         key: tf-cache-v1
@@ -158,7 +158,7 @@ jobs:
       run: |
         uv run tools/cache_templateflow.py
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ${{ env.TEST_DATA_HOME }}
         key: data-cache-v2
