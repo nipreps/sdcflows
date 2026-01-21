@@ -229,10 +229,8 @@ class FieldmapFile:
     @path.validator
     def check_path(self, attribute, value):
         """Validate a fieldmap path."""
-        if not value.is_file():
-            raise FileNotFoundError(
-                f'File path <{value}> does not exist, is a broken link, or it is not a file'
-            )
+        if not value.is_file() and not value.is_symlink():
+            raise FileNotFoundError(f'File path <{value}> does not exist, or it is not a file')
 
         if not value.name.endswith(('.nii', '.nii.gz')):
             raise ValueError(f'File path <{value}> does not look like a NIfTI file.')
@@ -471,6 +469,13 @@ class FieldmapEstimation:
 
         if self.method in (EstimatorType.MAPPED, EstimatorType.PHASEDIFF):
             from .workflows.fit.fieldmap import init_fmap_wf
+
+            for f in self.sources:
+                if not f.path.is_file():
+                    raise FileNotFoundError(
+                        f'File path <{f.path}> does not exist, '
+                        'is a broken link, or it is not a file'
+                    )
 
             kwargs['mode'] = str(self.method).rpartition('.')[-1].lower()
             self._wf = init_fmap_wf(**kwargs)
