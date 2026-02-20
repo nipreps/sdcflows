@@ -42,6 +42,7 @@ def init_topup_wf(
     sloppy=False,
     debug=False,
     name='pepolar_estimate_wf',
+    topup_config=None,
     **kwargs,
 ):
     """
@@ -67,6 +68,8 @@ def init_topup_wf(
         Name for this workflow
     omp_nthreads : :obj:`int`
         Parallelize internal tasks across the number of CPUs given by this option.
+    topup_config : :obj:`str`
+        Path to custom topup config file.
 
     Inputs
     ------
@@ -104,6 +107,9 @@ def init_topup_wf(
     workflow.__desc__ = f"""\
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
+
+    if topup_config is None:
+        topup_config = str(data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf'))
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
@@ -155,7 +161,7 @@ def init_topup_wf(
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation='LAS'), name='to_las')
     topup = pe.Node(
-        TOPUP(config=str(data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf'))),
+        TOPUP(config=topup_config),
         name='topup',
     )
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
