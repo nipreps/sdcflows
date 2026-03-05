@@ -64,8 +64,6 @@ def init_fmap_preproc_wf(
         Enable debugging outputs
     sloppy : :obj:`bool`
         Enable faster but less precise calculations
-    topup_config: :obj:`str`, optional
-        Path to a custom topup configuration file
     name : :obj:`str`, optional
         Workflow name (default: ``"fmap_preproc_wf"``)
 
