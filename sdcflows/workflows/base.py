@@ -43,7 +43,6 @@ def init_fmap_preproc_wf(
     fallback_total_readout_time=None,
     sloppy=False,
     debug=False,
-    topup_config=None,
     name='fmap_preproc_wf',
     **kwargs,
 ):
