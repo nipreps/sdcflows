@@ -111,8 +111,7 @@ def init_topup_wf(
     if topup_config is None:
         topup_config = str(data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf'))
     else:
-        workflow.__desc__ += f" A custom `topup` configuration file was used: {topup_config}"
-        
+        workflow.__desc__ += f' A custom `topup` configuration file was used: {topup_config}'
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
