@@ -342,6 +342,7 @@
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pepolar_estimate_wf&#39;</span><span class="p">,</span>
+    <span class="n">topup_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -367,6 +368,8 @@
 <span class="sd">        Name for this workflow</span>
 <span class="sd">    omp_nthreads : :obj:`int`</span>
 <span class="sd">        Parallelize internal tasks across the number of CPUs given by this option.</span>
+<span class="sd">    topup_config : :obj:`str`</span>
+<span class="sd">        Path to custom topup config file.</span>
 
 <span class="sd">    Inputs</span>
 <span class="sd">    ------</span>
@@ -404,6 +407,11 @@
     <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> with `topup` (@topup; FSL </span><span class="si">{</span><span class="n">TOPUP</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">).</span>
 <span class="s2">&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">topup_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">topup_config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0</span><span class="si">{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">&#39; A custom `topup` configuration file was used.&#39;</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
@@ -455,7 +463,7 @@
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
     <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">&#39;LAS&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_las&#39;</span><span class="p">)</span>
     <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">TOPUP</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0</span><span class="si">{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">))),</span>
+        <span class="n">TOPUP</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">topup_config</span><span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;topup&#39;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># &quot;Generalize&quot; topup coefficients and store them in a spatially-correct NIfTI file</span>
