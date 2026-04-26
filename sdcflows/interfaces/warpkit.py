@@ -68,9 +68,7 @@ def _as_str_list(x) -> list[str]:
 
 
 class _MEDICInputSpec(BaseInterfaceInputSpec):
-    phase = InputMultiObject(
-        File(exists=True), mandatory=True, desc='phase NIfTI, one per echo'
-    )
+    phase = InputMultiObject(File(exists=True), mandatory=True, desc='phase NIfTI, one per echo')
     magnitude = InputMultiObject(
         File(exists=True), mandatory=True, desc='magnitude NIfTI, one per echo'
     )
@@ -79,9 +77,7 @@ class _MEDICInputSpec(BaseInterfaceInputSpec):
         xor=['metadata'],
         desc='echo times in milliseconds, one per echo',
     )
-    total_readout_time = traits.Float(
-        xor=['metadata'], desc='EPI total readout time in seconds'
-    )
+    total_readout_time = traits.Float(xor=['metadata'], desc='EPI total readout time in seconds')
     phase_encoding_direction = traits.Enum(
         *PE_DIRECTIONS,
         xor=['metadata'],
@@ -93,9 +89,7 @@ class _MEDICInputSpec(BaseInterfaceInputSpec):
         desc='BIDS sidecar JSONs, one per echo (alternative to direct args)',
     )
     out_prefix = traits.Str('medic', usedefault=True, desc='prefix for output filenames')
-    noise_frames = traits.Int(
-        0, usedefault=True, desc='number of trailing noise frames to drop'
-    )
+    noise_frames = traits.Int(0, usedefault=True, desc='number of trailing noise frames to drop')
     n_cpus = traits.Int(4, usedefault=True, desc='number of CPUs to use')
     wrap_limit = traits.Bool(
         False, usedefault=True, desc='disable some phase-unwrapping heuristics'
@@ -124,11 +118,7 @@ class MEDIC(WarpkitBaseInterface, SimpleInterface):
                 phase=list(self.inputs.phase),
                 magnitude=list(self.inputs.magnitude),
                 out_prefix=out_prefix,
-                tes=(
-                    list(self.inputs.echo_times)
-                    if isdefined(self.inputs.echo_times)
-                    else None
-                ),
+                tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
                 total_readout_time=(
                     self.inputs.total_readout_time
                     if isdefined(self.inputs.total_readout_time)
@@ -139,11 +129,7 @@ class MEDIC(WarpkitBaseInterface, SimpleInterface):
                     if isdefined(self.inputs.phase_encoding_direction)
                     else None
                 ),
-                metadata=(
-                    list(self.inputs.metadata)
-                    if isdefined(self.inputs.metadata)
-                    else None
-                ),
+                metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
                 noise_frames=self.inputs.noise_frames,
                 n_cpus=self.inputs.n_cpus,
                 wrap_limit=self.inputs.wrap_limit,
@@ -195,16 +181,8 @@ class UnwrapPhase(WarpkitBaseInterface, SimpleInterface):
                 phase=list(self.inputs.phase),
                 magnitude=list(self.inputs.magnitude),
                 out_prefix=out_prefix,
-                tes=(
-                    list(self.inputs.echo_times)
-                    if isdefined(self.inputs.echo_times)
-                    else None
-                ),
-                metadata=(
-                    list(self.inputs.metadata)
-                    if isdefined(self.inputs.metadata)
-                    else None
-                ),
+                tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
+                metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
                 noise_frames=self.inputs.noise_frames,
                 n_cpus=self.inputs.n_cpus,
                 wrap_limit=self.inputs.wrap_limit,
@@ -230,9 +208,7 @@ class _ComputeFieldmapInputSpec(BaseInterfaceInputSpec):
         desc='unwrapped phase per echo (output of UnwrapPhase)',
     )
     magnitude = InputMultiObject(File(exists=True), mandatory=True)
-    masks = File(
-        exists=True, mandatory=True, desc='per-frame masks (output of UnwrapPhase)'
-    )
+    masks = File(exists=True, mandatory=True, desc='per-frame masks (output of UnwrapPhase)')
     echo_times = traits.List(traits.Float, xor=['metadata'])
     total_readout_time = traits.Float(xor=['metadata'])
     phase_encoding_direction = traits.Enum(*PE_DIRECTIONS, xor=['metadata'])
@@ -274,11 +250,7 @@ class ComputeFieldmap(WarpkitBaseInterface, SimpleInterface):
                 magnitude=list(self.inputs.magnitude),
                 masks=self.inputs.masks,
                 out_prefix=out_prefix,
-                tes=(
-                    list(self.inputs.echo_times)
-                    if isdefined(self.inputs.echo_times)
-                    else None
-                ),
+                tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
                 total_readout_time=(
                     self.inputs.total_readout_time
                     if isdefined(self.inputs.total_readout_time)
@@ -289,11 +261,7 @@ class ComputeFieldmap(WarpkitBaseInterface, SimpleInterface):
                     if isdefined(self.inputs.phase_encoding_direction)
                     else None
                 ),
-                metadata=(
-                    list(self.inputs.metadata)
-                    if isdefined(self.inputs.metadata)
-                    else None
-                ),
+                metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
                 border_filt=tuple(self.inputs.border_filt),
                 svd_filt=self.inputs.svd_filt,
                 n_cpus=self.inputs.n_cpus,
@@ -345,11 +313,7 @@ class ApplyWarp(WarpkitBaseInterface, SimpleInterface):
                 transform=list(self.inputs.transform),
                 output=out_file,
                 transform_type=self.inputs.transform_type,
-                reference=(
-                    self.inputs.reference
-                    if isdefined(self.inputs.reference)
-                    else None
-                ),
+                reference=(self.inputs.reference if isdefined(self.inputs.reference) else None),
                 phase_encoding_axis=(
                     self.inputs.phase_encoding_axis
                     if isdefined(self.inputs.phase_encoding_axis)
