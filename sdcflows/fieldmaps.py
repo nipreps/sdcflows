@@ -55,6 +55,7 @@ class EstimatorType(Enum):
     PHASEDIFF = auto()
     MAPPED = auto()
     ANAT = auto()
+    MEDIC = auto()
 
 
 MODALITIES = {
@@ -88,6 +89,7 @@ def _type_setter(obj, attribute, value):
         EstimatorType.PHASEDIFF,
         EstimatorType.MAPPED,
         EstimatorType.ANAT,
+        EstimatorType.MEDIC,
     ):
         raise ValueError(f'Invalid estimation method type {value}.')
 
@@ -338,6 +340,27 @@ class FieldmapEstimation:
         suffix_list = [f.suffix for f in self.sources]
         suffix_set = set(suffix_list)
 
+        # Fieldmap option 0: MEDIC — multi-echo phase + magnitude
+        # ``bold`` / ``epi`` sources tagged with the BIDS ``part-{phase,mag}``
+        # entity. PEPOLAR uses ``dir-`` instead, so the part entity is the
+        # cleanest way to disambiguate.
+        parts = {f.entities.get('part') for f in self.sources}
+        if parts == {'phase', 'mag'} and suffix_set <= {'bold', 'epi', 'sbref'}:
+            phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
+            mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
+            if len(phase_files) < 2:
+                raise ValueError(
+                    'MEDIC requires at least two echoes of phase data; '
+                    f'got {len(phase_files)}.'
+                )
+            if len(phase_files) != len(mag_files):
+                raise ValueError(
+                    f'MEDIC requires matched magnitude/phase pairs per echo; '
+                    f'got {len(phase_files)} phase and {len(mag_files)} '
+                    'magnitude file(s).'
+                )
+            self.method = EstimatorType.MEDIC
+
         # Fieldmap option 1: actual field-mapping sequences
         fmap_types = suffix_set.intersection(('fieldmap', 'phasediff', 'phase1', 'phase2'))
         if len(fmap_types) > 1 and fmap_types - {'phase1', 'phase2'}:
@@ -399,7 +422,11 @@ class FieldmapEstimation:
             > 1
         )
 
-        if _pepolar_estimation and not anat_types:
+        if (
+            self.method == EstimatorType.UNKNOWN
+            and _pepolar_estimation
+            and not anat_types
+        ):
             self.method = MODALITIES[pepolar_types.pop()]
             _pe = {f.metadata['PhaseEncodingDirection'] for f in self.sources}
             if len(_pe) == 1:
