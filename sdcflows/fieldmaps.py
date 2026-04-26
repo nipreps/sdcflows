@@ -350,8 +350,7 @@ class FieldmapEstimation:
             mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
             if len(phase_files) < 2:
                 raise ValueError(
-                    'MEDIC requires at least two echoes of phase data; '
-                    f'got {len(phase_files)}.'
+                    f'MEDIC requires at least two echoes of phase data; got {len(phase_files)}.'
                 )
             if len(phase_files) != len(mag_files):
                 raise ValueError(
@@ -422,11 +421,7 @@ class FieldmapEstimation:
             > 1
         )
 
-        if (
-            self.method == EstimatorType.UNKNOWN
-            and _pepolar_estimation
-            and not anat_types
-        ):
+        if self.method == EstimatorType.UNKNOWN and _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]
             _pe = {f.metadata['PhaseEncodingDirection'] for f in self.sources}
             if len(_pe) == 1:
