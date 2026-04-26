@@ -76,6 +76,10 @@ test = [
     "pytest-xdist >= 2.5",
 ]
 
+warpkit = [
+    "warpkit >= 1.2.1",
+]
+
 # Aliases
 docs = ["sdcflows[doc]"]
 tests = ["sdcflows[test]"]
