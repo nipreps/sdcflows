@@ -124,6 +124,7 @@ def init_fmap_derivatives_wf(
     name='fmap_derivatives_wf',
     write_coeff=False,
     write_mask=False,
+    write_dynamic=False,
 ):
     """
     Set up datasinks to store derivatives in the right location.
@@ -140,6 +141,9 @@ def init_fmap_derivatives_wf(
         Workflow name (default: ``"fmap_derivatives_wf"``)
     write_coeff : :obj:`bool`
         Build the workflow path to map coefficients into target space.
+    write_dynamic : :obj:`bool`
+        Build the workflow path to write the per-volume dynamic fieldmap,
+        magnitude reference, and brain-mask series. Used by MEDIC.
 
     Inputs
     ------
@@ -151,6 +155,12 @@ def init_fmap_derivatives_wf(
         Field coefficient(s) file(s)
     fmap_ref
         An anatomical reference (e.g., magnitude file)
+    fmap_dynamic
+        4D per-volume fieldmap (Hz). Only consumed when ``write_dynamic``.
+    fmap_dynamic_ref
+        4D per-volume magnitude reference. Only consumed when ``write_dynamic``.
+    fmap_dynamic_mask
+        4D per-volume brain mask. Only consumed when ``write_dynamic``.
 
     """
     custom_entities = custom_entities or {}
@@ -160,12 +170,32 @@ def init_fmap_derivatives_wf(
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_files', 'fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask', 'fmap_meta']
+            fields=[
+                'source_files',
+                'fieldmap',
+                'fmap_coeff',
+                'fmap_ref',
+                'fmap_mask',
+                'fmap_meta',
+                'fmap_dynamic',
+                'fmap_dynamic_ref',
+                'fmap_dynamic_mask',
+            ]
         ),
         name='inputnode',
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask']),
+        niu.IdentityInterface(
+            fields=[
+                'fieldmap',
+                'fmap_coeff',
+                'fmap_ref',
+                'fmap_mask',
+                'fmap_dynamic',
+                'fmap_dynamic_ref',
+                'fmap_dynamic_mask',
+            ]
+        ),
         name='outputnode',
     )
 
@@ -237,6 +267,66 @@ def init_fmap_derivatives_wf(
             (inputnode, ds_mask, [("source_files", "source_file"),
                                   ("fmap_mask", "in_file")]),
             (ds_mask, outputnode, [("out_file", "fmap_mask")]),
+        ])  # fmt:skip
+
+    if write_dynamic:
+        # 4D Hz fieldmap (one volume per timepoint, undistorted space).
+        ds_fmap_dynamic = pe.Node(
+            DerivativesDataSink(
+                base_directory=output_dir,
+                desc='dynamic',
+                suffix='fieldmap',
+                datatype='fmap',
+                compress=True,
+                allowed_entities=tuple(custom_entities),
+            ),
+            name='ds_fmap_dynamic',
+        )
+        ds_fmap_dynamic.inputs.Units = 'Hz'
+        if bids_fmap_id:
+            ds_fmap_dynamic.inputs.B0FieldIdentifier = bids_fmap_id
+        ds_fmap_dynamic.inputs.trait_set(**custom_entities)
+
+        # 4D first-echo magnitude reference (raw passthrough, for QC).
+        ds_fmap_dynamic_ref = pe.Node(
+            DerivativesDataSink(
+                base_directory=output_dir,
+                desc='dynamic',
+                suffix='magnitude',
+                datatype='fmap',
+                compress=True,
+                dismiss_entities=('fmap',),
+                allowed_entities=tuple(custom_entities),
+            ),
+            name='ds_fmap_dynamic_ref',
+        )
+        ds_fmap_dynamic_ref.inputs.trait_set(**custom_entities)
+
+        # 4D per-frame brain mask.
+        ds_fmap_dynamic_mask = pe.Node(
+            DerivativesDataSink(
+                base_directory=output_dir,
+                desc='dynamicbrain',
+                suffix='mask',
+                datatype='fmap',
+                compress=True,
+                dismiss_entities=('fmap',),
+                allowed_entities=tuple(custom_entities),
+            ),
+            name='ds_fmap_dynamic_mask',
+        )
+        ds_fmap_dynamic_mask.inputs.trait_set(**custom_entities)
+
+        workflow.connect([
+            (inputnode, ds_fmap_dynamic, [('source_files', 'source_file'),
+                                          ('fmap_dynamic', 'in_file')]),
+            (inputnode, ds_fmap_dynamic_ref, [('source_files', 'source_file'),
+                                              ('fmap_dynamic_ref', 'in_file')]),
+            (inputnode, ds_fmap_dynamic_mask, [('source_files', 'source_file'),
+                                               ('fmap_dynamic_mask', 'in_file')]),
+            (ds_fmap_dynamic, outputnode, [('out_file', 'fmap_dynamic')]),
+            (ds_fmap_dynamic_ref, outputnode, [('out_file', 'fmap_dynamic_ref')]),
+            (ds_fmap_dynamic_mask, outputnode, [('out_file', 'fmap_dynamic_mask')]),
         ])  # fmt:skip
 
     if not write_coeff:

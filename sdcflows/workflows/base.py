@@ -95,7 +95,17 @@ def init_fmap_preproc_wf(
 
     workflow = Workflow(name=name)
 
-    out_fields = ('fmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask', 'fmap_id', 'method')
+    out_fields = (
+        'fmap',
+        'fmap_coeff',
+        'fmap_ref',
+        'fmap_mask',
+        'fmap_id',
+        'method',
+        'fmap_dynamic',
+        'fmap_dynamic_ref',
+        'fmap_dynamic_mask',
+    )
     out_merge = {f: pe.Node(niu.Merge(len(estimators)), name=f'out_merge_{f}') for f in out_fields}
     # Fieldmaps and coefficient files can come in pairs, ensure they are not flattened
     out_merge['fmap'].inputs.no_flatten = True
@@ -136,10 +146,12 @@ def init_fmap_preproc_wf(
         )
         out_map.inputs.fmap_id = estimator.bids_id
 
+        is_medic = estimator.method == EstimatorType.MEDIC
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
             write_coeff=True,
             write_mask=True,
+            write_dynamic=is_medic,
             bids_fmap_id=estimator.bids_id,
             name=f'fmap_derivatives_wf_{estimator.sanitized_id}',
         )
@@ -186,6 +198,20 @@ def init_fmap_preproc_wf(
                 ("outputnode.fmap_mask", "fmap_mask"),
             ]),
         ])  # fmt:skip
+
+        if is_medic:
+            workflow.connect([
+                (est_wf, fmap_derivatives_wf, [
+                    ('outputnode.fmap_dynamic', 'inputnode.fmap_dynamic'),
+                    ('outputnode.fmap_dynamic_ref', 'inputnode.fmap_dynamic_ref'),
+                    ('outputnode.fmap_dynamic_mask', 'inputnode.fmap_dynamic_mask'),
+                ]),
+                (fmap_derivatives_wf, out_map, [
+                    ('outputnode.fmap_dynamic', 'fmap_dynamic'),
+                    ('outputnode.fmap_dynamic_ref', 'fmap_dynamic_ref'),
+                    ('outputnode.fmap_dynamic_mask', 'fmap_dynamic_mask'),
+                ]),
+            ])  # fmt:skip
 
         for field, mergenode in out_merge.items():
             workflow.connect(out_map, field, mergenode, f'in{n}')
