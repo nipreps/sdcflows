@@ -108,21 +108,6 @@ def init_dynamic_unwarp_wf(
 
     rotime = pe.Node(GetReadoutTime(), name='rotime', run_without_submitting=True)
 
-    # Split the BIDS PE direction (e.g. 'j-') into the unsigned axis the
-    # warpkit interfaces accept ('j') and a flip_sign boolean. The sign
-    # only matters for the Hz->mm conversion in convert_fmap; ApplyWarp
-    # doesn't need it because the resulting displacement map already
-    # encodes direction in its data values.
-    pe_axis = pe.Node(
-        niu.Function(
-            input_names=['pe_direction'],
-            output_names=['axis', 'flip_sign'],
-            function=_pe_axis,
-        ),
-        name='pe_axis',
-        run_without_submitting=True,
-    )
-
     # Hz fieldmap → 1-channel mm displacement map along the PE axis.
     convert_fmap = pe.Node(
         ConvertFieldmap(from_type='fieldmap', to_type='map'),
@@ -144,12 +129,10 @@ def init_dynamic_unwarp_wf(
     workflow.connect([
         (inputnode, rotime, [('distorted', 'in_file'),
                              ('metadata', 'metadata')]),
-        (rotime, pe_axis, [('pe_direction', 'pe_direction')]),
-        (pe_axis, convert_fmap, [('axis', 'phase_encoding_direction'),
-                                 ('flip_sign', 'flip_sign')]),
-        (rotime, convert_fmap, [('readout_time', 'total_readout_time')]),
+        (rotime, convert_fmap, [('pe_direction', 'phase_encoding_direction'),
+                                ('readout_time', 'total_readout_time')]),
         (inputnode, convert_fmap, [('fmap_dynamic', 'in_file')]),
-        (pe_axis, apply_warp, [('axis', 'phase_encoding_axis')]),
+        (rotime, apply_warp, [('pe_direction', 'phase_encoding_axis')]),
         (convert_fmap, apply_warp, [('out_file', 'transform')]),
         (inputnode, apply_warp, [('distorted', 'in_file')]),
         (apply_warp, average, [('out_file', 'in_file')]),
@@ -164,13 +147,3 @@ def init_dynamic_unwarp_wf(
     # fmt: on
 
     return workflow
-
-
-def _pe_axis(pe_direction):
-    """Split a BIDS PE direction into (unsigned axis, flip_sign).
-
-    warpkit's APIs take the axis index alone — the sign of the encoding
-    is conveyed separately via the ``flip_sign`` boolean on
-    :func:`warpkit.api.convert_fieldmap`.
-    """
-    return pe_direction.rstrip('-'), pe_direction.endswith('-')

@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from ..dynamic import INPUT_FIELDS, _pe_axis, init_dynamic_unwarp_wf
+from ..dynamic import INPUT_FIELDS, init_dynamic_unwarp_wf
 
 
 def test_dynamic_unwarp_construct():
@@ -46,23 +46,8 @@ def test_dynamic_unwarp_construct():
         'fieldwarp',
     }
 
-    for node_name in ('rotime', 'pe_axis', 'convert_fmap', 'apply_warp', 'average'):
+    for node_name in ('rotime', 'convert_fmap', 'apply_warp', 'average'):
         assert wf.get_node(node_name) is not None, f'missing node {node_name!r}'
-
-
-@pytest.mark.parametrize(
-    'pe_direction,expected',
-    [
-        ('i', ('i', False)),
-        ('i-', ('i', True)),
-        ('j', ('j', False)),
-        ('j-', ('j', True)),
-        ('k', ('k', False)),
-        ('k-', ('k', True)),
-    ],
-)
-def test_pe_axis_splits_axis_and_sign(pe_direction, expected):
-    assert _pe_axis(pe_direction) == expected
 
 
 @pytest.mark.slow

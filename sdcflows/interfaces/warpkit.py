@@ -286,7 +286,10 @@ class _ApplyWarpInputSpec(BaseInterfaceInputSpec):
     out_file = traits.Str(desc='output path; defaults to <cwd>/applied.nii.gz')
     transform_type = traits.Enum('map', 'field', mandatory=True)
     reference = File(exists=True)
-    phase_encoding_axis = traits.Enum(*PE_AXES)
+    # warpkit folds signed forms ('j-') to the same axis index as their
+    # unsigned counterparts here — the sign in the displacement-map values
+    # is what carries direction. Accept both to spare callers a strip step.
+    phase_encoding_axis = traits.Enum(*PE_DIRECTIONS)
     format = traits.Enum(*WARP_FORMATS, usedefault=True, default='itk')
 
 
@@ -402,9 +405,14 @@ class _ConvertFieldmapInputSpec(BaseInterfaceInputSpec):
     from_type = traits.Enum('map', 'field', 'fieldmap', mandatory=True)
     to_type = traits.Enum('map', 'field', 'fieldmap', mandatory=True)
     total_readout_time = traits.Float(mandatory=True)
-    phase_encoding_direction = traits.Enum(*PE_AXES, mandatory=True)
+    # Accept signed PE direction strings ('j-' etc.); warpkit's
+    # field_maps_to_displacement_maps peeks at the trailing '-' to set the
+    # voxel-size sign, so the sign IS meaningful on the Hz->mm path.
+    phase_encoding_direction = traits.Enum(*PE_DIRECTIONS, mandatory=True)
     from_format = traits.Enum(*WARP_FORMATS, usedefault=True, default='itk')
     to_format = traits.Enum(*WARP_FORMATS, usedefault=True, default='itk')
+    # flip_sign is only used on the inverse (mm->Hz) path; it is ignored
+    # when ``to_type='map'``/``'field'``.
     flip_sign = traits.Bool(False, usedefault=True)
     frame = traits.Int()
 
