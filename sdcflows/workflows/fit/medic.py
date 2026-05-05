@@ -189,7 +189,9 @@ def init_medic_wf(
     # and (b) temporally averaged for the static brain extraction.
     pick_mag1 = pe.Node(
         niu.Function(
-            input_names=['in_list'], output_names=['out_file'], function=_first,
+            input_names=['in_list'],
+            output_names=['out_file'],
+            function=_first,
         ),
         name='pick_mag1',
         run_without_submitting=True,
@@ -255,9 +257,7 @@ def _unpack_metadata(metadata):
     phase_encoding_direction = metadata[0]['PhaseEncodingDirection']
     peds = {m['PhaseEncodingDirection'] for m in metadata}
     if len(peds) > 1:
-        raise ValueError(
-            f'MEDIC echoes must share PhaseEncodingDirection; got {sorted(peds)}.'
-        )
+        raise ValueError(f'MEDIC echoes must share PhaseEncodingDirection; got {sorted(peds)}.')
     return echo_times, total_readout_time, phase_encoding_direction
 
 

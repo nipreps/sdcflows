@@ -352,9 +352,7 @@ def find_estimators(
             set.union,
             (
                 listify(ids)
-                for ids in layout.get_B0FieldIdentifiers(
-                    session=sessions, **base_entities
-                )
+                for ids in layout.get_B0FieldIdentifiers(session=sessions, **base_entities)
             ),
             set(),
         )
@@ -470,8 +468,7 @@ def find_estimators(
             # Pull every echo + part for this run. ``get_entities()`` already
             # includes extension; we override part/echo to widen the query.
             run_entities = {
-                k: v for k, v in bold_fmap.get_entities().items()
-                if k not in ('part', 'echo')
+                k: v for k, v in bold_fmap.get_entities().items() if k not in ('part', 'echo')
             }
             run_entities['part'] = ['phase', 'mag']
             run_entities['echo'] = Query.ANY
@@ -480,11 +477,7 @@ def find_estimators(
             if not complex_imgs:
                 continue
 
-            already_claimed = {
-                str(s.path)
-                for est in estimators
-                for s in est.sources
-            }
+            already_claimed = {str(s.path) for est in estimators for s in est.sources}
             if str(complex_imgs[0].path) in already_claimed:
                 logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
                 continue

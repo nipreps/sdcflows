@@ -107,8 +107,7 @@ def test_medic_run(tmpdir, datadir, workdir, outdir):
 
     phase_files = [f.with_name(f.name.replace('part-mag', 'part-phase')) for f in magnitude_files]
     metadata = [
-        loads(f.with_name(f.name.replace('.nii.gz', '.json')).read_text())
-        for f in phase_files
+        loads(f.with_name(f.name.replace('.nii.gz', '.json')).read_text()) for f in phase_files
     ]
 
     tmpdir.chdir()

@@ -454,24 +454,28 @@ def _build_medic_skeleton():
         func = []
         for echo, te in echo_times.items():
             for part in ('mag', 'phase'):
-                func.append({
-                    'task': 'rest',
-                    'echo': echo,
-                    'part': part,
-                    'suffix': 'bold',
-                    'metadata': {
-                        'EchoTime': te,
-                        'RepetitionTime': 0.8,
-                        'TotalReadoutTime': 0.5,
-                        'PhaseEncodingDirection': 'j',
-                        'IntendedFor': intended_for,
-                    },
-                })
-        sessions.append({
-            'session': ses,
-            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
-            'func': func,
-        })
+                func.append(
+                    {
+                        'task': 'rest',
+                        'echo': echo,
+                        'part': part,
+                        'suffix': 'bold',
+                        'metadata': {
+                            'EchoTime': te,
+                            'RepetitionTime': 0.8,
+                            'TotalReadoutTime': 0.5,
+                            'PhaseEncodingDirection': 'j',
+                            'IntendedFor': intended_for,
+                        },
+                    }
+                )
+        sessions.append(
+            {
+                'session': ses,
+                'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+                'func': func,
+            }
+        )
     return {'01': sessions}
 
 
