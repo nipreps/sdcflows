@@ -52,9 +52,16 @@ def test_dynamic_unwarp_construct():
 
 @pytest.mark.parametrize(
     'pe_direction,expected',
-    [('i', 'i'), ('i-', 'i'), ('j', 'j'), ('j-', 'j'), ('k', 'k'), ('k-', 'k')],
+    [
+        ('i', ('i', False)),
+        ('i-', ('i', True)),
+        ('j', ('j', False)),
+        ('j-', ('j', True)),
+        ('k', ('k', False)),
+        ('k-', ('k', True)),
+    ],
 )
-def test_pe_axis_strips_sign(pe_direction, expected):
+def test_pe_axis_splits_axis_and_sign(pe_direction, expected):
     assert _pe_axis(pe_direction) == expected
 
 

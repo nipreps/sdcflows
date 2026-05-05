@@ -88,19 +88,6 @@ def init_dynamic_unwarp_wf(
         Binary brain mask co-registered with ``corrected_ref``.
     fieldwarp : :obj:`str`
         4D displacement map (mm along PE axis) used for the resampling.
-
-    Notes
-    -----
-    Unlike :func:`~sdcflows.workflows.apply.correction.init_unwarp_wf`,
-    this workflow does **not** consume B-spline coefficients, head-motion
-    transforms, or fmap-to-data transforms. It assumes the fieldmap is
-    already in the EPI's space and frame-aligned with the target — the
-    canonical MEDIC case where the fieldmap and the EPI are computed from
-    the same multi-echo series.
-
-    A future enhancement could add Jacobian-determinant intensity
-    correction; ``warpkit`` exposes :class:`~sdcflows.interfaces.warpkit.ComputeJacobian`
-    for that, but it is not wired here yet.
     """
     # Project-internal imports only; warpkit stays unloaded until interfaces run.
     from niworkflows.interfaces.images import RobustAverage
@@ -121,10 +108,17 @@ def init_dynamic_unwarp_wf(
 
     rotime = pe.Node(GetReadoutTime(), name='rotime', run_without_submitting=True)
 
-    # Strip the optional trailing '-' from PE direction since the warpkit
-    # interfaces want the axis only ('i'/'j'/'k').
+    # Split the BIDS PE direction (e.g. 'j-') into the unsigned axis the
+    # warpkit interfaces accept ('j') and a flip_sign boolean. The sign
+    # only matters for the Hz->mm conversion in convert_fmap; ApplyWarp
+    # doesn't need it because the resulting displacement map already
+    # encodes direction in its data values.
     pe_axis = pe.Node(
-        niu.Function(input_names=['pe_direction'], output_names=['axis'], function=_pe_axis),
+        niu.Function(
+            input_names=['pe_direction'],
+            output_names=['axis', 'flip_sign'],
+            function=_pe_axis,
+        ),
         name='pe_axis',
         run_without_submitting=True,
     )
@@ -151,7 +145,8 @@ def init_dynamic_unwarp_wf(
         (inputnode, rotime, [('distorted', 'in_file'),
                              ('metadata', 'metadata')]),
         (rotime, pe_axis, [('pe_direction', 'pe_direction')]),
-        (pe_axis, convert_fmap, [('axis', 'phase_encoding_direction')]),
+        (pe_axis, convert_fmap, [('axis', 'phase_encoding_direction'),
+                                 ('flip_sign', 'flip_sign')]),
         (rotime, convert_fmap, [('readout_time', 'total_readout_time')]),
         (inputnode, convert_fmap, [('fmap_dynamic', 'in_file')]),
         (pe_axis, apply_warp, [('axis', 'phase_encoding_axis')]),
@@ -172,5 +167,10 @@ def init_dynamic_unwarp_wf(
 
 
 def _pe_axis(pe_direction):
-    """Strip optional trailing '-' from a BIDS PE direction string."""
-    return pe_direction.rstrip('-')
+    """Split a BIDS PE direction into (unsigned axis, flip_sign).
+
+    warpkit's APIs take the axis index alone — the sign of the encoding
+    is conveyed separately via the ``flip_sign`` boolean on
+    :func:`warpkit.api.convert_fieldmap`.
+    """
+    return pe_direction.rstrip('-'), pe_direction.endswith('-')
