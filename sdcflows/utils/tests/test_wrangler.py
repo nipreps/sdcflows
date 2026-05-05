@@ -433,6 +433,51 @@ phasediff = {
 }
 
 
+def _build_medic_skeleton():
+    """Generate a 3-session × 3-echo × {mag,phase} BIDS skeleton for MEDIC.
+
+    Each phase BOLD carries an ``IntendedFor`` listing all 6 mag/phase
+    siblings in its session, so the wrangler can detect the run via the
+    IntendedFor branch.
+    """
+    echo_times = {'1': 0.0142, '2': 0.03893, '3': 0.06366}
+    sessions = []
+    for ses in ('01', '02', '03'):
+        intended_for = [
+            (
+                f'bids::sub-01/ses-{ses}/func/'
+                f'sub-01_ses-{ses}_task-rest_echo-{echo}_part-{part}_bold.nii.gz'
+            )
+            for echo in echo_times
+            for part in ('mag', 'phase')
+        ]
+        func = []
+        for echo, te in echo_times.items():
+            for part in ('mag', 'phase'):
+                func.append({
+                    'task': 'rest',
+                    'echo': echo,
+                    'part': part,
+                    'suffix': 'bold',
+                    'metadata': {
+                        'EchoTime': te,
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                        'IntendedFor': intended_for,
+                    },
+                })
+        sessions.append({
+            'session': ses,
+            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+            'func': func,
+        })
+    return {'01': sessions}
+
+
+medic = _build_medic_skeleton()
+
+
 filters = {
     'fmap': {
         'datatype': 'fmap',
@@ -440,6 +485,7 @@ filters = {
     },
     't1w': {'datatype': 'anat', 'session': '01', 'suffix': 'T1w'},
     'bold': {'datatype': 'func', 'session': '01', 'suffix': 'bold'},
+    'medic': {'datatype': ['fmap', 'func'], 'session': '01'},
 }
 
 
@@ -449,6 +495,7 @@ filters = {
         ('pepolar', pepolar, 1, 'fmap'),
         ('pepolar_b0ids', pepolar_b0ids, 1, 'bold'),
         ('phasediff', phasediff, 1, 'fmap'),
+        ('medic', medic, 1, 'medic'),
     ],
 )
 def test_wrangler_filter(tmpdir, name, skeleton, estimations, bids_filters):
@@ -466,6 +513,7 @@ def test_wrangler_filter(tmpdir, name, skeleton, estimations, bids_filters):
         ('pepolar', pepolar, 5, True),
         ('pepolar_b0ids', pepolar_b0ids, 2, False),
         ('phasediff', phasediff, 3, True),
+        ('medic', medic, 3, False),
     ],
 )
 @pytest.mark.parametrize(

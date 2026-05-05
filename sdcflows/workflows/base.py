@@ -82,6 +82,7 @@ def init_fmap_preproc_wf(
 
     """
     from sdcflows.fieldmaps import EstimatorType
+    from sdcflows.workflows.fit.medic import INPUT_FIELDS as _medic_fields
     from sdcflows.workflows.fit.pepolar import INPUT_FIELDS as _pepolar_fields
     from sdcflows.workflows.fit.syn import INPUT_FIELDS as _syn_fields
     from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
@@ -89,6 +90,7 @@ def init_fmap_preproc_wf(
     INPUT_FIELDS = {
         EstimatorType.ANAT: _syn_fields,
         EstimatorType.PEPOLAR: _pepolar_fields,
+        EstimatorType.MEDIC: _medic_fields,
     }
 
     workflow = Workflow(name=name)

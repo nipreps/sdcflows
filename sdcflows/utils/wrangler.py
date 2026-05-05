@@ -326,7 +326,6 @@ def find_estimators(
     base_entities = {
         'subject': subject,
         'extension': ['.nii', '.nii.gz'],
-        'part': ['mag', None],
         'scope': 'raw',  # Ensure derivatives are not captured
     }
 
@@ -351,7 +350,12 @@ def find_estimators(
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            (
+                listify(ids)
+                for ids in layout.get_B0FieldIdentifiers(
+                    session=sessions, **base_entities
+                )
+            ),
             set(),
         )
 
@@ -444,14 +448,77 @@ def find_estimators(
                         _log_debug_estimation(logger, e, layout.root)
                         estimators.append(e)
 
-        # At this point, only single-PE _epi files WITH ``IntendedFor`` can
-        # be automatically processed.
+        # MEDIC: multi-echo BOLD with mag+phase parts and ``IntendedFor``.
+        # The query keys on ``part='phase'`` so we get one hit per (run, echo)
+        # phase BOLD; we then expand to all matching mag+phase siblings.
+        bold_phase_with_intent = ()
+        with suppress(ValueError):
+            bold_phase_with_intent = layout.get(
+                **{
+                    **base_entities,
+                    **{
+                        'session': sessions,
+                        'suffix': 'bold',
+                        'part': 'phase',
+                        'echo': Query.REQUIRED,
+                        'IntendedFor': Query.REQUIRED,
+                    },
+                }
+            )
+
+        for bold_fmap in bold_phase_with_intent:
+            # Pull every echo + part for this run. ``get_entities()`` already
+            # includes extension; we override part/echo to widen the query.
+            run_entities = {
+                k: v for k, v in bold_fmap.get_entities().items()
+                if k not in ('part', 'echo')
+            }
+            run_entities['part'] = ['phase', 'mag']
+            run_entities['echo'] = Query.ANY
+            run_entities['scope'] = base_entities['scope']
+            complex_imgs = layout.get(**run_entities)
+            if not complex_imgs:
+                continue
+
+            already_claimed = {
+                str(s.path)
+                for est in estimators
+                for s in est.sources
+            }
+            if str(complex_imgs[0].path) in already_claimed:
+                logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
+                continue
+
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            img.path,
+                            metadata=_filter_metadata(img.get_metadata(), subject),
+                        )
+                        for img in complex_imgs
+                    ]
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger, 'unnamed MEDIC', list(complex_imgs), layout.root, str(err)
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
+
+        # At this point, only single-PE _epi/_bold files WITH ``IntendedFor``
+        # can be automatically processed.
         has_intended = ()
         with suppress(ValueError):
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions},
+                    **{
+                        'suffix': ['epi', 'bold'],
+                        'IntendedFor': Query.REQUIRED,
+                        'session': sessions,
+                    },
                 }
             )
 

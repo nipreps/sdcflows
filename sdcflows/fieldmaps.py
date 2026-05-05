@@ -524,6 +524,21 @@ class FieldmapEstimation:
             from .workflows.fit.syn import init_syn_sdc_wf
 
             self._wf = init_syn_sdc_wf(**kwargs)
+        elif self.method == EstimatorType.MEDIC:
+            from .workflows.fit.medic import init_medic_wf
+
+            self._wf = init_medic_wf(**kwargs)
+
+            if set_inputs:
+                phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
+                mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
+                # Order both lists by EchoTime so warpkit gets aligned echo
+                # series. BIDS does not guarantee echo entity == numeric order.
+                phase_files = sorted(phase_files, key=lambda f: f.metadata['EchoTime'])
+                mag_files = sorted(mag_files, key=lambda f: f.metadata['EchoTime'])
+                self._wf.inputs.inputnode.phase = [str(f.path.absolute()) for f in phase_files]
+                self._wf.inputs.inputnode.magnitude = [str(f.path.absolute()) for f in mag_files]
+                self._wf.inputs.inputnode.metadata = [f.metadata for f in phase_files]
 
         return self._wf
 

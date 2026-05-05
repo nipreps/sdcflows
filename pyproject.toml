@@ -76,6 +76,12 @@ test = [
     "pytest-xdist >= 2.5",
 ]
 
+# warpkit is a Washington University-licensed tool that powers the MEDIC
+# workflow. Its license permits non-commercial use only; commercial users
+# need a separate agreement with WUSTL OTM. Keep this extra opt-in and
+# DO NOT add it to the `all` alias below — the default install must remain
+# clean-Apache.
+# See: https://github.com/vanandrew/warpkit/blob/main/LICENSE
 warpkit = [
     "warpkit >= 1.2.1",
 ]
