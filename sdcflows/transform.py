@@ -106,15 +106,41 @@ def _sdc_unwarp(
         prefilter=prefilter,
     )
 
-    # The Jacobian determinant image is the amount of stretching in the PE direction.
-    # Using central differences accounts for the shift in neighboring voxels.
-    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
-    # only warping in one direction, we end up with a diagonal matrix with two 1s.
-    # The following is the other entry at each voxel, and hence the determinant.
     if jacobian:
-        resampled *= 1 + np.gradient(vsm, axis=pe_info[0])
+        resampled *= fieldmap_jacobian(fmap_hz, pe_info[1], pe_info[0])
 
     return resampled
+
+
+def fieldmap_jacobian(
+    fmap_hz: np.ndarray,
+    ro_time: float,
+    pe_axis: int,
+) -> np.ndarray:
+    r"""
+    Voxel-wise Jacobian determinant of a one-axis (PE) EPI distortion.
+
+    EPI distortion only acts along the phase-encoding axis, so the full
+    3×3 Jacobian collapses to a diagonal with two 1s and one nontrivial
+    entry: :math:`|J| \approx 1 + \partial(\mathrm{VSM})/\partial(\mathrm{PE})`,
+    where the voxel shift map is :math:`\mathrm{VSM} = f_{\mathrm{Hz}}\cdot t_{\mathrm{ro}}`
+    (central differences capture the relative shift of neighboring voxels).
+    Multiplying a resampled EPI by this scalar field preserves total signal
+    through the regions that compress and expand under unwarping.
+
+    Parameters
+    ----------
+    fmap_hz : :class:`numpy.ndarray`
+        :math:`B_0` field in Hz. 3D ``(I, J, K)`` for a static fieldmap, or
+        4D ``(I, J, K, T)`` for a per-volume dynamic fieldmap (e.g. MEDIC).
+    ro_time : :obj:`float`
+        Signed total readout time (seconds). The sign carries PE polarity
+        and any data-orientation flip — callers must apply that sign before
+        passing it in.
+    pe_axis : :obj:`int`
+        Spatial axis index (``0``, ``1`` or ``2``) along which the EPI distorts.
+    """
+    return 1 + np.gradient(fmap_hz * ro_time, axis=pe_axis)
 
 
 async def worker(

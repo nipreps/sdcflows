@@ -43,8 +43,8 @@ INPUT_FIELDS = ('distorted', 'metadata', 'fmap_dynamic')
 
 def init_dynamic_unwarp_wf(
     *,
+    jacobian=True,
     omp_nthreads=1,
-    debug=False,
     name='dynamic_unwarp_wf',
 ):
     r"""
@@ -60,10 +60,16 @@ def init_dynamic_unwarp_wf(
 
     Parameters
     ----------
+    jacobian : :obj:`bool`
+        If :obj:`True`, apply Jacobian determinant correction after
+        resampling, preserving total signal through compression/expansion
+        regions of the EPI distortion. Mirrors the
+        :func:`~sdcflows.workflows.apply.correction.init_unwarp_wf` default.
     omp_nthreads : :obj:`int`
-        Maximum number of threads warpkit may use.
-    debug : :obj:`bool`
-        Reserved.
+        Per-node ``n_procs`` hint for the Nipype scheduler. Note that
+        warpkit's ``apply_warp`` / ``convert_fieldmap`` C++ paths don't
+        accept a thread count, so this only affects scheduling, not
+        warpkit's internal parallelism.
     name : :obj:`str`
         Workflow name.
 
@@ -108,6 +114,11 @@ def init_dynamic_unwarp_wf(
 
     rotime = pe.Node(GetReadoutTime(), name='rotime', run_without_submitting=True)
 
+    # No coregistration step: warpkit emits ``fmap_dynamic`` on the EPI grid
+    # by construction (the fieldmap is computed from the same multi-echo
+    # acquisition being corrected here), so the static path's
+    # ``fmap2data_xfm`` plumbing has no analog.
+
     # Hz fieldmap → 1-channel mm displacement map along the PE axis.
     convert_fmap = pe.Node(
         ConvertFieldmap(from_type='fieldmap', to_type='map'),
@@ -122,6 +133,20 @@ def init_dynamic_unwarp_wf(
         n_procs=omp_nthreads,
     )
 
+    # Optional Jacobian-determinant intensity correction. Mirrors what
+    # ``init_unwarp_wf`` does via ``ApplyCoeffsField(jacobian=True)`` —
+    # we just call the same numpy formula (``transform.fieldmap_jacobian``)
+    # against the dynamic 4D fieldmap, post-resampling.
+    if jacobian:
+        jac_correct = pe.Node(
+            niu.Function(
+                input_names=['in_file', 'fmap_dynamic', 'pe_direction', 'readout_time'],
+                output_names=['out_file'],
+                function=_apply_jacobian,
+            ),
+            name='jac_correct',
+        )
+
     average = pe.Node(RobustAverage(mc_method=None), name='average')
     brainextraction_wf = init_brainextraction_wf()
 
@@ -135,9 +160,7 @@ def init_dynamic_unwarp_wf(
         (rotime, apply_warp, [('pe_direction', 'phase_encoding_axis')]),
         (convert_fmap, apply_warp, [('out_file', 'transform')]),
         (inputnode, apply_warp, [('distorted', 'in_file')]),
-        (apply_warp, average, [('out_file', 'in_file')]),
         (average, brainextraction_wf, [('out_file', 'inputnode.in_file')]),
-        (apply_warp, outputnode, [('out_file', 'corrected')]),
         (convert_fmap, outputnode, [('out_file', 'fieldwarp')]),
         (brainextraction_wf, outputnode, [
             ('outputnode.out_file', 'corrected_ref'),
@@ -146,4 +169,56 @@ def init_dynamic_unwarp_wf(
     ])
     # fmt: on
 
+    if jacobian:
+        # fmt: off
+        workflow.connect([
+            (apply_warp, jac_correct, [('out_file', 'in_file')]),
+            (inputnode, jac_correct, [('fmap_dynamic', 'fmap_dynamic')]),
+            (rotime, jac_correct, [('pe_direction', 'pe_direction'),
+                                   ('readout_time', 'readout_time')]),
+            (jac_correct, average, [('out_file', 'in_file')]),
+            (jac_correct, outputnode, [('out_file', 'corrected')]),
+        ])
+        # fmt: on
+    else:
+        # fmt: off
+        workflow.connect([
+            (apply_warp, average, [('out_file', 'in_file')]),
+            (apply_warp, outputnode, [('out_file', 'corrected')]),
+        ])
+        # fmt: on
+
     return workflow
+
+
+def _apply_jacobian(in_file, fmap_dynamic, pe_direction, readout_time):
+    """Multiply ``in_file`` by the per-frame Jacobian determinant of ``fmap_dynamic``.
+
+    ``in_file`` and ``fmap_dynamic`` must share the spatial grid (the
+    dynamic apply path guarantees this — ``fmap_dynamic`` is on the EPI
+    grid by construction). The PE-axis sign convention matches warpkit's
+    ``ConvertFieldmap``: ``pe_direction`` ending in ``-`` flips the
+    readout time, the result is fed to
+    :func:`~sdcflows.transform.fieldmap_jacobian`.
+    """
+    import os
+
+    import nibabel as nb
+    import numpy as np
+
+    from sdcflows.transform import fieldmap_jacobian
+
+    pe_axis = 'ijk'.index(pe_direction[0])
+    ro_signed = -float(readout_time) if pe_direction.endswith('-') else float(readout_time)
+
+    img = nb.load(in_file)
+    fmap_img = nb.load(fmap_dynamic)
+    data = np.asanyarray(img.dataobj, dtype='float32')
+    fmap_hz = np.asanyarray(fmap_img.dataobj, dtype='float32')
+
+    jac = fieldmap_jacobian(fmap_hz, ro_signed, pe_axis)
+    corrected = data * jac
+
+    out_file = os.path.abspath('corrected_jac.nii.gz')
+    nb.Nifti1Image(corrected.astype('float32'), img.affine, img.header).to_filename(out_file)
+    return out_file

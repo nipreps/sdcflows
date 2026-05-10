@@ -46,8 +46,65 @@ def test_dynamic_unwarp_construct():
         'fieldwarp',
     }
 
-    for node_name in ('rotime', 'convert_fmap', 'apply_warp', 'average'):
+    for node_name in ('rotime', 'convert_fmap', 'apply_warp', 'jac_correct', 'average'):
         assert wf.get_node(node_name) is not None, f'missing node {node_name!r}'
+
+
+def test_dynamic_unwarp_jacobian_disabled():
+    """``jacobian=False`` drops the correction node; default is True."""
+    wf = init_dynamic_unwarp_wf(jacobian=False)
+    assert wf.get_node('jac_correct') is None
+    assert wf.get_node('apply_warp') is not None
+
+
+def test_apply_jacobian_preserves_signal(tmp_path, monkeypatch):
+    """End-to-end check on the helper: |J| = 1 + dVSM/dPE for a Hz ramp.
+
+    A linear Hz ramp along PE produces a constant gradient, hence a
+    constant Jacobian. Multiplying a uniform image by it must give
+    that constant everywhere — a sanity check the formula and sign
+    plumbing match :func:`sdcflows.transform.fieldmap_jacobian`.
+    """
+    import nibabel as nb
+    import numpy as np
+
+    from sdcflows.transform import fieldmap_jacobian
+    from sdcflows.workflows.apply.dynamic import _apply_jacobian
+
+    monkeypatch.chdir(tmp_path)
+
+    shape = (4, 6, 4, 2)
+    affine = np.eye(4)
+    # Hz ramp along axis j (PE='j'); 1 Hz per voxel along j.
+    j_idx = np.arange(shape[1], dtype='float32')
+    fmap_hz = np.broadcast_to(j_idx[None, :, None, None], shape).astype('float32')
+    distorted = np.ones(shape, dtype='float32')
+
+    distorted_path = tmp_path / 'distorted.nii.gz'
+    fmap_path = tmp_path / 'fmap_dynamic.nii.gz'
+    nb.Nifti1Image(distorted, affine).to_filename(distorted_path)
+    nb.Nifti1Image(fmap_hz, affine).to_filename(fmap_path)
+
+    out = _apply_jacobian(
+        in_file=str(distorted_path),
+        fmap_dynamic=str(fmap_path),
+        pe_direction='j',
+        readout_time=0.5,
+    )
+    out_data = nb.load(out).get_fdata()
+    # |J| = 1 + d(0.5*j_idx)/dj = 1 + 0.5 everywhere (interior).
+    expected = fieldmap_jacobian(fmap_hz, 0.5, pe_axis=1)
+    assert np.allclose(out_data, expected, atol=1e-5)
+
+    # Sign flip with j-: |J| = 1 - 0.5
+    out_neg = _apply_jacobian(
+        in_file=str(distorted_path),
+        fmap_dynamic=str(fmap_path),
+        pe_direction='j-',
+        readout_time=0.5,
+    )
+    expected_neg = fieldmap_jacobian(fmap_hz, -0.5, pe_axis=1)
+    assert np.allclose(nb.load(out_neg).get_fdata(), expected_neg, atol=1e-5)
 
 
 # Mirror of ``MEDIC_FIXTURES`` in ``test_medic.py``. Kept duplicated rather than
