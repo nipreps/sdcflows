@@ -89,21 +89,45 @@ def test_unpack_metadata_rejects_mixed_pe():
         _unpack_metadata(metadata)
 
 
-@pytest.mark.slow
-def test_medic_run(tmpdir, datadir, workdir, outdir):
+# Each entry is (dataset, mag_glob_under_dataset).
+# Add new fixtures here — the test self-skips when a dataset isn't on disk.
+MEDIC_FIXTURES = [
+    pytest.param(
+        'ds005250',
+        'sub-04/ses-2/func/*_part-mag_bold.nii.gz',
+        id='ds005250',
+    ),
+    pytest.param(
+        'ds006926',
+        'sub-a01/func/sub-a01_task-VisMot_acq-tr1800_echo-*_part-mag_bold.nii.gz',
+        id='ds006926',
+    ),
+]
+
+
+@pytest.mark.veryslow
+@pytest.mark.parametrize(('dataset', 'pattern'), MEDIC_FIXTURES)
+def test_medic_run(tmpdir, datadir, workdir, outdir, dataset, pattern):
     """End-to-end MEDIC run on a real multi-echo BOLD.
 
     Skipped if ``warpkit`` is unavailable (default CI install) or if the
-    expected ``ds005250`` multi-echo dataset is not present in the test data
-    fixture directory. Use ``TEST_DATA_HOME`` and install
-    ``sdcflows[warpkit]`` locally to opt in.
+    expected dataset is not present under ``$TEST_DATA_HOME``. To opt in,
+    install ``sdcflows[warpkit]`` and stage the dataset, e.g.
+
+    .. code-block:: console
+
+        # ds006926: OpenNeuro multi-echo mag+phase BOLD (publicly available)
+        cd $TEST_DATA_HOME
+        datalad install https://github.com/OpenNeuroDatasets/ds006926.git
+        datalad get -d ds006926 sub-a01/func/sub-a01_task-VisMot_acq-tr1800_*
+
     """
     pytest.importorskip('warpkit')
 
-    pattern = 'ds005250/sub-04/ses-2/func/*_part-mag_bold.nii.gz'
-    magnitude_files = sorted(Path(datadir).glob(pattern))
+    full_pattern = f'{dataset}/{pattern}'
+    magnitude_files = sorted(Path(datadir).glob(full_pattern))
     if not magnitude_files:
-        pytest.skip(f'no MEDIC fixtures found under {datadir}/ds005250')
+        pytest.skip(f'no MEDIC fixtures found under {datadir}/{dataset}')
 
     phase_files = [f.with_name(f.name.replace('part-mag', 'part-phase')) for f in magnitude_files]
     metadata = [
@@ -111,7 +135,7 @@ def test_medic_run(tmpdir, datadir, workdir, outdir):
     ]
 
     tmpdir.chdir()
-    medic_wf = init_medic_wf(omp_nthreads=2, debug=True)
+    medic_wf = init_medic_wf(omp_nthreads=2)
     medic_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]
     medic_wf.inputs.inputnode.phase = [str(f) for f in phase_files]
     medic_wf.inputs.inputnode.metadata = metadata

@@ -50,20 +50,38 @@ def test_dynamic_unwarp_construct():
         assert wf.get_node(node_name) is not None, f'missing node {node_name!r}'
 
 
-@pytest.mark.slow
-def test_dynamic_unwarp_run(tmpdir, datadir, workdir):
+# Mirror of ``MEDIC_FIXTURES`` in ``test_medic.py``. Kept duplicated rather than
+# imported to avoid cross-test-module coupling; update both lists together.
+MEDIC_FIXTURES = [
+    pytest.param(
+        'ds005250',
+        'sub-04/ses-2/func/*_part-mag_bold.nii.gz',
+        id='ds005250',
+    ),
+    pytest.param(
+        'ds006926',
+        'sub-a01/func/sub-a01_task-VisMot_acq-tr1800_echo-*_part-mag_bold.nii.gz',
+        id='ds006926',
+    ),
+]
+
+
+@pytest.mark.veryslow
+@pytest.mark.parametrize(('dataset', 'pattern'), MEDIC_FIXTURES)
+def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
     """End-to-end run: estimate via MEDIC then apply via this workflow.
 
-    Skipped without ``warpkit`` or without the multi-echo fixture.
+    Skipped without ``warpkit`` or without the multi-echo fixture under
+    ``$TEST_DATA_HOME``. See ``test_medic_run`` for fetch instructions.
     """
     pytest.importorskip('warpkit')
 
     from sdcflows.workflows.fit.medic import init_medic_wf
 
-    pattern = 'ds005250/sub-04/ses-2/func/*_part-mag_bold.nii.gz'
-    magnitude_files = sorted(Path(datadir).glob(pattern))
+    full_pattern = f'{dataset}/{pattern}'
+    magnitude_files = sorted(Path(datadir).glob(full_pattern))
     if not magnitude_files:
-        pytest.skip(f'no MEDIC fixtures found under {datadir}/ds005250')
+        pytest.skip(f'no MEDIC fixtures found under {datadir}/{dataset}')
 
     phase_files = [f.with_name(f.name.replace('part-mag', 'part-phase')) for f in magnitude_files]
     metadata = [
@@ -71,7 +89,7 @@ def test_dynamic_unwarp_run(tmpdir, datadir, workdir):
     ]
 
     tmpdir.chdir()
-    fit_wf = init_medic_wf(omp_nthreads=2, debug=True)
+    fit_wf = init_medic_wf(omp_nthreads=2)
     fit_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]
     fit_wf.inputs.inputnode.phase = [str(f) for f in phase_files]
     fit_wf.inputs.inputnode.metadata = metadata
