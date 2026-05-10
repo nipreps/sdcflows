@@ -447,24 +447,29 @@ def find_estimators(
                         estimators.append(e)
 
         # MEDIC: multi-echo BOLD with mag+phase parts and ``IntendedFor``.
-        # The query keys on ``part='phase'`` so we get one hit per (run, echo)
-        # phase BOLD; we then expand to all matching mag+phase siblings.
-        bold_phase_with_intent = ()
-        with suppress(ValueError):
-            bold_phase_with_intent = layout.get(
-                **{
-                    **base_entities,
-                    **{
-                        'session': sessions,
-                        'suffix': 'bold',
-                        'part': 'phase',
-                        'echo': Query.REQUIRED,
-                        'IntendedFor': Query.REQUIRED,
-                    },
-                }
-            )
+        # We query both parts as seeds — datasets vary on which side carries
+        # ``IntendedFor`` — and rely on the dedup check below to keep the
+        # estimator unique per (run, echo-set). Each seed is then expanded
+        # to all matching mag+phase echo siblings of its run.
+        medic_seeds = []
+        for part in ('phase', 'mag'):
+            with suppress(ValueError):
+                medic_seeds.extend(
+                    layout.get(
+                        **{
+                            **base_entities,
+                            **{
+                                'session': sessions,
+                                'suffix': 'bold',
+                                'part': part,
+                                'echo': Query.REQUIRED,
+                                'IntendedFor': Query.REQUIRED,
+                            },
+                        }
+                    )
+                )
 
-        for bold_fmap in bold_phase_with_intent:
+        for bold_fmap in medic_seeds:
             # Pull every echo + part for this run. ``get_entities()`` already
             # includes extension; we override part/echo to widen the query.
             run_entities = {
@@ -477,8 +482,12 @@ def find_estimators(
             if not complex_imgs:
                 continue
 
+            # Dedup against every prior estimator's full source set, not just
+            # the first complex image — pybids ordering is not contractual,
+            # and the same run can be seeded twice (once via phase, once via
+            # mag) when both parts carry ``IntendedFor``.
             already_claimed = {str(s.path) for est in estimators for s in est.sources}
-            if str(complex_imgs[0].path) in already_claimed:
+            if any(str(c.path) in already_claimed for c in complex_imgs):
                 logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
                 continue
 
