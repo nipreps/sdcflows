@@ -253,6 +253,12 @@ def _unpack_metadata(metadata):
     """Pull echo times (s→ms), TRT, and PE direction from BIDS sidecars."""
     if not metadata:
         raise ValueError('MEDIC requires per-echo metadata.')
+    if len(metadata) < 2:
+        raise ValueError(
+            f'MEDIC requires at least two echoes; got {len(metadata)}. '
+            '(FieldmapEstimation enforces this for wrangler-built workflows; '
+            'this guard catches direct callers that bypass it.)'
+        )
     echo_times = [float(m['EchoTime']) * 1000.0 for m in metadata]
     total_readout_time = float(metadata[0]['TotalReadoutTime'])
     phase_encoding_direction = metadata[0]['PhaseEncodingDirection']

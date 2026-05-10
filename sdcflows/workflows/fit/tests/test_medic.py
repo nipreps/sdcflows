@@ -80,6 +80,12 @@ def test_unpack_metadata_converts_te_to_ms():
     assert ped == 'j'
 
 
+def test_unpack_metadata_rejects_single_echo():
+    metadata = [{'EchoTime': 0.0142, 'TotalReadoutTime': 0.5, 'PhaseEncodingDirection': 'j'}]
+    with pytest.raises(ValueError, match='at least two echoes'):
+        _unpack_metadata(metadata)
+
+
 def test_unpack_metadata_rejects_mixed_pe():
     metadata = [
         {'EchoTime': 0.0142, 'TotalReadoutTime': 0.5, 'PhaseEncodingDirection': 'j'},
