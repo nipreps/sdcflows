@@ -54,9 +54,9 @@ def test_dynamic_unwarp_construct():
 # imported to avoid cross-test-module coupling; update both lists together.
 MEDIC_FIXTURES = [
     pytest.param(
-        'ds005250',
-        'sub-04/ses-2/func/*_part-mag_bold.nii.gz',
-        id='ds005250',
+        'ds007637',
+        'sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz',
+        id='ds007637',
     ),
     pytest.param(
         'ds006926',

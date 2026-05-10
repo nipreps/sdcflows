@@ -211,6 +211,11 @@ jobs:
         datalad update -r --merge -d ds006926/
         datalad get -r -J 2 -d ds006926/ ds006926/sub-a01/func/sub-a01_task-VisMot_acq-tr1800_*
 
+        # ds007637 — MEDIC multi-echo mag+phase BOLD (sub-04/ses-2 fracback only)
+        datalad install -r https://github.com/OpenNeuroDatasets/ds007637.git
+        datalad update -r --merge -d ds007637/
+        datalad get -r -J 2 -d ds007637/ ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-phase_bold.nii.gz
+
     - name: Set FreeSurfer variables
       run: |
         echo "FREESURFER_HOME=$HOME/.cache/freesurfer" >> $GITHUB_ENV
