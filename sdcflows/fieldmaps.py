@@ -345,7 +345,17 @@ class FieldmapEstimation:
         # entity. PEPOLAR uses ``dir-`` instead, so the part entity is the
         # cleanest way to disambiguate.
         parts = {f.entities.get('part') for f in self.sources}
-        if parts == {'phase', 'mag'} and suffix_set <= {'bold', 'epi', 'sbref'}:
+        medic_parts = parts & {'phase', 'mag'}
+        if suffix_set <= {'bold', 'epi', 'sbref'} and medic_parts:
+            # Any sources is ``part``-tagged: this is a MEDIC-shaped input.
+            # Reject incomplete sets explicitly rather than letting them slip
+            # through to the PEPOLAR branch and produce a confusing failure.
+            if parts != {'phase', 'mag'}:
+                raise ValueError(
+                    'MEDIC requires every source to be tagged ``part-mag`` or '
+                    '``part-phase``, with both present; got '
+                    f'parts={sorted(str(p) for p in parts)!r}.'
+                )
             phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
             mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
             if len(phase_files) < 2:
@@ -526,6 +536,13 @@ class FieldmapEstimation:
             self._wf = init_syn_sdc_wf(**kwargs)
         elif self.method == EstimatorType.MEDIC:
             from .workflows.fit.medic import init_medic_wf
+
+            for f in self.sources:
+                if not f.path.is_file():
+                    raise FileNotFoundError(
+                        f'File path <{f.path}> does not exist, '
+                        'is a broken link, or it is not a file'
+                    )
 
             self._wf = init_medic_wf(**kwargs)
 
