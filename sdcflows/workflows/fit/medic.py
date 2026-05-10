@@ -48,7 +48,6 @@ def init_medic_wf(
     sloppy=False,
     debug=False,
     name='medic_wf',
-    **kwargs,
 ):
     """
     Estimate a fieldmap via MEDIC from multi-echo magnitude + phase EPI.
@@ -66,7 +65,8 @@ def init_medic_wf(
     omp_nthreads : :obj:`int`
         Maximum number of threads warpkit may use.
     sloppy : :obj:`bool`
-        Currently unused; reserved for future fast-path knobs.
+        Lower the B-spline ``zooms_min`` for a faster, lower-resolution
+        spline fit. Affects the static ``fmap`` only.
     debug : :obj:`bool`
         Pass through to :class:`~sdcflows.interfaces.warpkit.MEDIC`.
     name : :obj:`str`
@@ -85,8 +85,10 @@ def init_medic_wf(
     Outputs
     -------
     fmap : :obj:`str`
-        Static :math:`B_0` map in Hz (temporal mean of the dynamic series),
-        for compatibility with the rest of sdcflows.
+        Static :math:`B_0` map in Hz: a B-spline approximation of the
+        temporal mean of the dynamic series, on the EPI grid. Emitted
+        as a compatibility shim for the existing apply path — see
+        ``fmap_coeff`` below for context.
     fmap_dynamic : :obj:`str`
         4D :math:`B_0` map in Hz, one volume per timepoint (undistorted
         space). The actual MEDIC output; consumers wanting per-volume
@@ -121,11 +123,9 @@ def init_medic_wf(
     # import time. The warpkit dependency is resolved lazily inside
     # MEDIC._run_interface, so this workflow can be constructed (and the
     # module can be imported) without warpkit installed.
-    from niworkflows.interfaces.images import IntraModalMerge
-
     from ...interfaces.bspline import DEFAULT_HF_ZOOMS_MM, BSplineApprox
     from ...interfaces.warpkit import ComputeFieldmap, UnwrapPhase
-    from ..ancillary import init_brainextraction_wf
+    from .fieldmap import init_magnitude_wf
 
     workflow = Workflow(name=name)
     workflow.__desc__ = _MEDIC_DESC
@@ -168,6 +168,8 @@ def init_medic_wf(
     unwrap.inputs.n_cpus = omp_nthreads
     unwrap.inputs.debug = debug
 
+    # ComputeFieldmap doesn't expose a ``debug`` input — only UnwrapPhase
+    # does, so the asymmetry is intentional.
     compute_fmap = pe.Node(ComputeFieldmap(), name='compute_fmap', n_procs=omp_nthreads)
     compute_fmap.inputs.n_cpus = omp_nthreads
 
@@ -185,8 +187,9 @@ def init_medic_wf(
         run_without_submitting=True,
     )
 
-    # First-echo magnitude — used (a) as the dynamic reference passthrough
-    # and (b) temporally averaged for the static brain extraction.
+    # First-echo magnitude. The 4D file is the dynamic reference passthrough
+    # (``fmap_dynamic_ref``); ``init_magnitude_wf`` then time-averages it via
+    # IntraModalMerge before brain extraction for ``fmap_ref`` / ``fmap_mask``.
     pick_mag1 = pe.Node(
         niu.Function(
             input_names=['in_list'],
@@ -196,8 +199,7 @@ def init_medic_wf(
         name='pick_mag1',
         run_without_submitting=True,
     )
-    magmrg = pe.Node(IntraModalMerge(hmc=False, to_ras=False), name='magmrg')
-    brainextraction_wf = init_brainextraction_wf()
+    magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
 
     # B-spline fit on the static fieldmap. Compatibility shim for the
     # existing init_unwarp_wf, which only consumes B-spline coefficients
@@ -230,13 +232,12 @@ def init_medic_wf(
         (unwrap, outputnode, [('masks', 'fmap_dynamic_mask')]),
         (inputnode, pick_mag1, [('magnitude', 'in_list')]),
         (pick_mag1, outputnode, [('out_file', 'fmap_dynamic_ref')]),
-        (pick_mag1, magmrg, [('out_file', 'in_files')]),
-        (magmrg, brainextraction_wf, [('out_avg', 'inputnode.in_file')]),
-        (brainextraction_wf, outputnode, [
-            ('outputnode.out_file', 'fmap_ref'),
-            ('outputnode.out_mask', 'fmap_mask'),
+        (pick_mag1, magnitude_wf, [('out_file', 'inputnode.magnitude')]),
+        (magnitude_wf, outputnode, [
+            ('outputnode.fmap_ref', 'fmap_ref'),
+            ('outputnode.fmap_mask', 'fmap_mask'),
         ]),
-        (brainextraction_wf, bs_filter, [('outputnode.out_mask', 'in_mask')]),
+        (magnitude_wf, bs_filter, [('outputnode.fmap_mask', 'in_mask')]),
         (fmap_mean, bs_filter, [('out_file', 'in_data')]),
         (bs_filter, outputnode, [
             ('out_extrapolated' if not debug else 'out_field', 'fmap'),

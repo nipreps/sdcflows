@@ -63,7 +63,7 @@ def test_medic_construct():
         'compute_fmap',
         'fmap_mean',
         'pick_mag1',
-        'magmrg',
+        'magnitude_wf',
         'bs_filter',
     ):
         assert wf.get_node(name) is not None, f'missing node {name!r}'
