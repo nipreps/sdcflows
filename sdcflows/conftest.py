@@ -41,10 +41,17 @@ test_output_dir = os.getenv('TEST_OUTPUT_DIR')
 test_workdir = os.getenv('TEST_WORK_DIR')
 _sloppy_mode = os.getenv('TEST_PRODUCTION', 'off').lower() not in ('on', '1', 'true', 'yes', 'y')
 
+# MEDIC fixtures live in full OpenNeuro trees (tens of thousands of JSON
+# sidecars) but only a few files are actually fetched via ``datalad get``.
+# Indexing those trees with ``BIDSLayout(derivatives=True)`` at collection
+# time stalled CI past the 20-minute tox watchdog. The MEDIC tests reach
+# their files via the ``datadir`` fixture directly, not via ``layouts``.
+_SKIP_LAYOUTS = {'ds006926', 'ds007637'}
+
 layouts = {
     p.name: BIDSLayout(str(p), validate=False, derivatives=True)
     for p in Path(test_data_env).glob('*')
-    if p.is_dir()
+    if p.is_dir() and p.name not in _SKIP_LAYOUTS
 }
 
 data_dir = Path(__file__).parent / 'tests' / 'data'
