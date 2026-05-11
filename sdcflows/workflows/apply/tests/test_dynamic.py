@@ -29,6 +29,23 @@ import pytest
 
 from ..dynamic import INPUT_FIELDS, init_dynamic_unwarp_wf
 
+# See test_medic._MEDIC_TEST_VOLUMES — keep these in sync.
+_MEDIC_TEST_VOLUMES = 3
+
+
+def _truncate_to_volumes(in_files, volumes, dest):
+    import nibabel as nb
+
+    out = []
+    for f in in_files:
+        img = nb.load(str(f))
+        if img.shape[-1] > volumes:
+            img = img.slicer[..., :volumes]
+        new = dest / f.name
+        img.to_filename(new)
+        out.append(new)
+    return out
+
 
 def test_dynamic_unwarp_construct():
     """Build the workflow without warpkit installed and verify shape."""
@@ -146,6 +163,11 @@ def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
     ]
 
     tmpdir.chdir()
+    trunc_dir = Path(str(tmpdir)) / 'trunc'
+    trunc_dir.mkdir(exist_ok=True)
+    magnitude_files = _truncate_to_volumes(magnitude_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+    phase_files = _truncate_to_volumes(phase_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+
     fit_wf = init_medic_wf(omp_nthreads=2)
     fit_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]
     fit_wf.inputs.inputnode.phase = [str(f) for f in phase_files]

@@ -29,6 +29,25 @@ import pytest
 
 from ..medic import INPUT_FIELDS, _unpack_metadata, init_medic_wf
 
+# A handful of timepoints is enough to exercise the full per-volume MEDIC
+# path; the source datasets ship 200+ volumes × 5 echoes × mag+phase, which
+# OOM-kills CI runners when xdist schedules these fixtures in parallel.
+_MEDIC_TEST_VOLUMES = 3
+
+
+def _truncate_to_volumes(in_files, volumes, dest):
+    import nibabel as nb
+
+    out = []
+    for f in in_files:
+        img = nb.load(str(f))
+        if img.shape[-1] > volumes:
+            img = img.slicer[..., :volumes]
+        new = dest / f.name
+        img.to_filename(new)
+        out.append(new)
+    return out
+
 
 def test_medic_construct():
     """Build the workflow and verify its surface — no warpkit required.
@@ -141,6 +160,11 @@ def test_medic_run(tmpdir, datadir, workdir, outdir, dataset, pattern):
     ]
 
     tmpdir.chdir()
+    trunc_dir = Path(str(tmpdir)) / 'trunc'
+    trunc_dir.mkdir(exist_ok=True)
+    magnitude_files = _truncate_to_volumes(magnitude_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+    phase_files = _truncate_to_volumes(phase_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+
     medic_wf = init_medic_wf(omp_nthreads=2)
     medic_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]
     medic_wf.inputs.inputnode.phase = [str(f) for f in phase_files]
