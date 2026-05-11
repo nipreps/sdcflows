@@ -43,6 +43,7 @@ def init_topup_wf(
     debug=False,
     name='pepolar_estimate_wf',
     topup_config=None,
+    mc_method='AFNI',
     **kwargs,
 ):
     """
@@ -156,9 +157,16 @@ def init_topup_wf(
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name='concat_blips')
     # Pad dimensions so that they meet TOPUP's expectations
     pad_blip_slices = pe.Node(PadSlices(), name='pad_blip_slices')
-    # Run 3dVolReg between runs: uses RobustAverage for consistency and to generate
+    # uses RobustAverage for consistency and to generate
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    setwise_avg = pe.Node(RobustAverage(num_threads=omp_nthreads), name='setwise_avg')
+    # default to use AFNI's 3dvolreg, but allow for FSL MCFLIRT.
+    setwise_avg = pe.Node(
+        RobustAverage(
+            mc_method=mc_method,
+            num_threads=omp_nthreads
+        ),
+        name='setwise_avg',
+    )
     # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation='LAS'), name='to_las')
