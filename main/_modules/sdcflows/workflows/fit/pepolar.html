@@ -410,7 +410,7 @@
 <span class="s2">&quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">topup_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">topup_config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0</span><span class="si">{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">))</span>
+        <span class="n">topup_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0</span><span class="si">{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">&#39; A custom `topup` configuration file was used.&#39;</span>
 
@@ -468,7 +468,7 @@
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
     <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">&#39;LAS&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_las&#39;</span><span class="p">)</span>
     <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">TOPUP</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">topup_config</span><span class="p">),</span>
+        <span class="n">TOPUP</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;topup&#39;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># &quot;Generalize&quot; topup coefficients and store them in a spatially-correct NIfTI file</span>
