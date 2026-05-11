@@ -161,10 +161,7 @@ def init_topup_wf(
     # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
     # default to use AFNI's 3dvolreg, but allow for FSL MCFLIRT.
     setwise_avg = pe.Node(
-        RobustAverage(
-            mc_method=mc_method,
-            num_threads=omp_nthreads
-        ),
+        RobustAverage(mc_method=mc_method, num_threads=omp_nthreads),
         name='setwise_avg',
     )
     # The core of the implementation
