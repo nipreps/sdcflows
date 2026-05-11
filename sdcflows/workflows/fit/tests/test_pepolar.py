@@ -22,10 +22,26 @@
 #
 """Test pepolar type of fieldmaps."""
 
+import pathlib
+
 import pytest
 from nipype.pipeline import engine as pe
 
 from ..pepolar import init_topup_wf
+
+
+@pytest.mark.parametrize(
+    'topup_config',
+    [
+        None,
+        '/path/to/custom.cnf',
+        pathlib.Path('/path/to/custom.cnf'),
+    ],
+)
+def test_topup_config(topup_config):
+    """Ensure the topup node always receives a str config, not a Path."""
+    wf = init_topup_wf(topup_config=topup_config)
+    assert isinstance(wf.get_node('topup').inputs.config, str), 'topup config must be str'
 
 
 @pytest.mark.slow
