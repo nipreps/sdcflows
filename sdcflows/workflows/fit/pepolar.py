@@ -110,7 +110,7 @@ def init_topup_wf(
 """
 
     if topup_config is None:
-        topup_config = str(data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf'))
+        topup_config = data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf')
     else:
         workflow.__desc__ += ' A custom `topup` configuration file was used.'
 
@@ -168,7 +168,7 @@ def init_topup_wf(
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation='LAS'), name='to_las')
     topup = pe.Node(
-        TOPUP(config=topup_config),
+        TOPUP(config=str(topup_config)),
         name='topup',
     )
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
