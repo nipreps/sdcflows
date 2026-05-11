@@ -343,6 +343,7 @@
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pepolar_estimate_wf&#39;</span><span class="p">,</span>
     <span class="n">topup_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">mc_method</span><span class="o">=</span><span class="s1">&#39;AFNI&#39;</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -456,9 +457,13 @@
     <span class="n">concat_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(</span><span class="n">affine_tolerance</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat_blips&#39;</span><span class="p">)</span>
     <span class="c1"># Pad dimensions so that they meet TOPUP&#39;s expectations</span>
     <span class="n">pad_blip_slices</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">PadSlices</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pad_blip_slices&#39;</span><span class="p">)</span>
-    <span class="c1"># Run 3dVolReg between runs: uses RobustAverage for consistency and to generate</span>
+    <span class="c1"># uses RobustAverage for consistency and to generate</span>
     <span class="c1"># debugging artifacts (typically, one wants to look at the average across uncorrected runs)</span>
-    <span class="n">setwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;setwise_avg&#39;</span><span class="p">)</span>
+    <span class="c1"># default to use AFNI&#39;s 3dvolreg, but allow for FSL MCFLIRT.</span>
+    <span class="n">setwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">RobustAverage</span><span class="p">(</span><span class="n">mc_method</span><span class="o">=</span><span class="n">mc_method</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;setwise_avg&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="c1"># The core of the implementation</span>
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
     <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">&#39;LAS&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_las&#39;</span><span class="p">)</span>
