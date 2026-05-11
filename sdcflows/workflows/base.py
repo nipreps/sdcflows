@@ -212,6 +212,12 @@ def init_fmap_preproc_wf(
                     ('outputnode.fmap_dynamic_mask', 'fmap_dynamic_mask'),
                 ]),
             ])  # fmt:skip
+        else:
+            # Keep the dynamic merge nodes aligned with len(estimators) so the
+            # outputnode shape is uniform across non-MEDIC estimators.
+            out_map.inputs.fmap_dynamic = None
+            out_map.inputs.fmap_dynamic_ref = None
+            out_map.inputs.fmap_dynamic_mask = None
 
         for field, mergenode in out_merge.items():
             workflow.connect(out_map, field, mergenode, f'in{n}')
