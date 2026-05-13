@@ -48,6 +48,8 @@ def init_medic_wf(
     sloppy=False,
     debug=False,
     name='medic_wf',
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
 ):
     """
     Estimate a fieldmap via MEDIC from multi-echo magnitude + phase EPI.
