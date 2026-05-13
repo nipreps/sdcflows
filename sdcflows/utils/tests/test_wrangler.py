@@ -433,12 +433,13 @@ phasediff = {
 }
 
 
-def _build_medic_skeleton():
+def _build_medic_skeleton(*, with_intended_for: bool = True):
     """Generate a 3-session × 3-echo × {mag,phase} BIDS skeleton for MEDIC.
 
-    Each phase BOLD carries an ``IntendedFor`` listing all 6 mag/phase
-    siblings in its session, so the wrangler can detect the run via the
-    IntendedFor branch.
+    When ``with_intended_for`` is ``True``, each complex BOLD carries an
+    ``IntendedFor`` listing all 6 mag/phase siblings in its session so the
+    wrangler picks the run up via the default discovery path. Setting it to
+    ``False`` produces the no-metadata case exercised by ``force_medic``.
     """
     echo_times = {'1': 0.0142, '2': 0.03893, '3': 0.06366}
     sessions = []
@@ -454,19 +455,21 @@ def _build_medic_skeleton():
         func = []
         for echo, te in echo_times.items():
             for part in ('mag', 'phase'):
+                metadata = {
+                    'EchoTime': te,
+                    'RepetitionTime': 0.8,
+                    'TotalReadoutTime': 0.5,
+                    'PhaseEncodingDirection': 'j',
+                }
+                if with_intended_for:
+                    metadata['IntendedFor'] = intended_for
                 func.append(
                     {
                         'task': 'rest',
                         'echo': echo,
                         'part': part,
                         'suffix': 'bold',
-                        'metadata': {
-                            'EchoTime': te,
-                            'RepetitionTime': 0.8,
-                            'TotalReadoutTime': 0.5,
-                            'PhaseEncodingDirection': 'j',
-                            'IntendedFor': intended_for,
-                        },
+                        'metadata': metadata,
                     }
                 )
         sessions.append(
@@ -480,6 +483,7 @@ def _build_medic_skeleton():
 
 
 medic = _build_medic_skeleton()
+medic_no_intended_for = _build_medic_skeleton(with_intended_for=False)
 
 
 filters = {
@@ -545,6 +549,28 @@ def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estim
         b0_id = get_identifier(intended_rel)
         assert b0_id == ('auto_00000',)
 
+    clear_registry()
+
+
+@pytest.mark.parametrize(
+    'force_medic, expected',
+    [
+        (False, 0),  # no IntendedFor, no B0FieldIdentifier → nothing found
+        (True, 3),  # ``force_medic`` discovers all three sessions
+    ],
+)
+def test_wrangler_force_medic_without_intended_for(tmp_path, force_medic, expected):
+    bids_dir = str(tmp_path / 'medic_no_intended')
+    generate_bids_skeleton(bids_dir, medic_no_intended_for)
+    layout = gen_layout(bids_dir)
+    # ``fmapless=False`` disables the SyN-SDC ANAT fallback so this test only
+    # exercises the MEDIC discovery path.
+    est = find_estimators(layout=layout, subject='01', fmapless=False, force_medic=force_medic)
+    assert len(est) == expected
+    if force_medic:
+        # Each estimator should claim all 6 (3 echoes × {mag, phase}) for its session.
+        for estimator in est:
+            assert len(estimator.sources) == 6
     clear_registry()
 
 

@@ -74,6 +74,7 @@ def find_estimators(
     sessions: list[str] | None = None,
     fmapless: bool | set = True,
     force_fmapless: bool = False,
+    force_medic: bool = False,
     logger: logging.Logger | None = None,
     bids_filters: dict | None = None,
     anat_suffix: str | list[str] = 'T1w',
@@ -103,6 +104,14 @@ def find_estimators(
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
+    force_medic : :obj:`bool`
+        Auto-discover MEDIC estimators from multi-echo BOLD with ``part-mag``
+        and ``part-phase`` even when neither ``IntendedFor`` nor
+        ``B0FieldIdentifier`` is set on the complex BOLD sidecars. Useful for
+        public datasets that ship complex multi-echo BOLD without the metadata
+        needed for the default discovery path. Pairing is unambiguous because
+        the part-mag and part-phase echoes of the same run are the MEDIC
+        sources by construction.
     logger
         The logger used to relay messages. If not provided, one will be created.
     bids_filters
@@ -446,69 +455,6 @@ def find_estimators(
                         _log_debug_estimation(logger, e, layout.root)
                         estimators.append(e)
 
-        # MEDIC: multi-echo BOLD with mag+phase parts and ``IntendedFor``.
-        # We query both parts as seeds — datasets vary on which side carries
-        # ``IntendedFor`` — and rely on the dedup check below to keep the
-        # estimator unique per (run, echo-set). Each seed is then expanded
-        # to all matching mag+phase echo siblings of its run.
-        medic_seeds = []
-        for part in ('phase', 'mag'):
-            with suppress(ValueError):
-                medic_seeds.extend(
-                    layout.get(
-                        **{
-                            **base_entities,
-                            **{
-                                'session': sessions,
-                                'suffix': 'bold',
-                                'part': part,
-                                'echo': Query.REQUIRED,
-                                'IntendedFor': Query.REQUIRED,
-                            },
-                        }
-                    )
-                )
-
-        for bold_fmap in medic_seeds:
-            # Pull every echo + part for this run. ``get_entities()`` already
-            # includes extension; we override part/echo to widen the query.
-            run_entities = {
-                k: v for k, v in bold_fmap.get_entities().items() if k not in ('part', 'echo')
-            }
-            run_entities['part'] = ['phase', 'mag']
-            run_entities['echo'] = Query.ANY
-            run_entities['scope'] = base_entities['scope']
-            complex_imgs = layout.get(**run_entities)
-            if not complex_imgs:
-                continue
-
-            # Dedup against every prior estimator's full source set, not just
-            # the first complex image — pybids ordering is not contractual,
-            # and the same run can be seeded twice (once via phase, once via
-            # mag) when both parts carry ``IntendedFor``.
-            already_claimed = {str(s.path) for est in estimators for s in est.sources}
-            if any(str(c.path) in already_claimed for c in complex_imgs):
-                logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
-                continue
-
-            try:
-                e = fm.FieldmapEstimation(
-                    [
-                        fm.FieldmapFile(
-                            img.path,
-                            metadata=_filter_metadata(img.get_metadata(), subject),
-                        )
-                        for img in complex_imgs
-                    ]
-                )
-            except (ValueError, TypeError) as err:
-                _log_debug_estimator_fail(
-                    logger, 'unnamed MEDIC', list(complex_imgs), layout.root, str(err)
-                )
-            else:
-                _log_debug_estimation(logger, e, layout.root)
-                estimators.append(e)
-
         # At this point, only single-PE _epi/_bold files WITH ``IntendedFor``
         # can be automatically processed.
         has_intended = ()
@@ -579,6 +525,78 @@ def find_estimators(
                 else:
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
+
+    # MEDIC: multi-echo BOLD with mag+phase parts.
+    #
+    # Runs in two modes:
+    #   * Default: ``IntendedFor`` is required on the complex BOLD sidecars,
+    #     matching how the other heuristics gate auto-discovery. Skipped when
+    #     ``B0FieldIdentifier`` was used to build estimators above (those
+    #     paths already let users opt complex multi-echo runs into MEDIC).
+    #   * ``force_medic=True``: ``IntendedFor`` is dropped from the seed
+    #     query. Useful for public datasets that ship complex multi-echo
+    #     BOLD without the metadata needed for the default path. Runs
+    #     regardless of ``B0FieldIdentifier`` so a forced MEDIC can coexist
+    #     with other tagged estimators.
+    if force_medic or not b0_ids:
+        medic_seed_query = {
+            **base_entities,
+            'session': sessions,
+            'suffix': 'bold',
+            'echo': Query.REQUIRED,
+        }
+        if not force_medic:
+            medic_seed_query['IntendedFor'] = Query.REQUIRED
+
+        # Query both parts as seeds — datasets vary on which side carries
+        # ``IntendedFor`` — and rely on the dedup check below to keep the
+        # estimator unique per (run, echo-set). Each seed is then expanded
+        # to all matching mag+phase echo siblings of its run.
+        medic_seeds = []
+        for part in ('phase', 'mag'):
+            with suppress(ValueError):
+                medic_seeds.extend(layout.get(**{**medic_seed_query, 'part': part}))
+
+        for bold_fmap in medic_seeds:
+            # Pull every echo + part for this run. ``get_entities()`` already
+            # includes extension; we override part/echo to widen the query.
+            run_entities = {
+                k: v for k, v in bold_fmap.get_entities().items() if k not in ('part', 'echo')
+            }
+            run_entities['part'] = ['phase', 'mag']
+            run_entities['echo'] = Query.ANY
+            run_entities['scope'] = base_entities['scope']
+            complex_imgs = layout.get(**run_entities)
+            if not complex_imgs:
+                continue
+
+            # Dedup against every prior estimator's full source set, not just
+            # the first complex image — pybids ordering is not contractual,
+            # and the same run can be seeded twice (once via phase, once via
+            # mag) when both parts carry ``IntendedFor`` (or under
+            # ``force_medic`` when both parts exist on disk).
+            already_claimed = {str(s.path) for est in estimators for s in est.sources}
+            if any(str(c.path) in already_claimed for c in complex_imgs):
+                logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
+                continue
+
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            img.path,
+                            metadata=_filter_metadata(img.get_metadata(), subject),
+                        )
+                        for img in complex_imgs
+                    ]
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger, 'unnamed MEDIC', list(complex_imgs), layout.root, str(err)
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
 
     if estimators and not force_fmapless:
         fmapless = False
