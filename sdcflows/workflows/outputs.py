@@ -288,11 +288,14 @@ def init_fmap_derivatives_wf(
         ds_fmap_dynamic.inputs.trait_set(**custom_entities)
 
         # 4D first-echo magnitude reference (raw passthrough, for QC).
+        # NOTE: suffix is `fieldmap` (not `magnitude`) because niworkflows'
+        # nipreps.json only ships fmap path patterns for suffix<fieldmap|mask>.
+        # Distinguished from the Hz fieldmap by desc='dynamicref'.
         ds_fmap_dynamic_ref = pe.Node(
             DerivativesDataSink(
                 base_directory=output_dir,
-                desc='dynamic',
-                suffix='magnitude',
+                desc='dynamicref',
+                suffix='fieldmap',
                 datatype='fmap',
                 compress=True,
                 dismiss_entities=('fmap', 'task'),
