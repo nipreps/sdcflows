@@ -217,10 +217,14 @@ class _ComputeFieldmapInputSpec(BaseInterfaceInputSpec):
         xor=['echo_times', 'total_readout_time', 'phase_encoding_direction'],
     )
     out_prefix = traits.Str('fieldmap', usedefault=True)
+    # NOTE: `traits.Tuple(Int(), Int(), default=(1, 5))` is silently ignored —
+    # the inner Int()s default to 0, and the outer `default` kwarg loses.
+    # That collapses the border-filter to 0 SVD components, which zeros the
+    # mask==1 ring in warpkit.unwrap.svd_filtering and makes the dynamic
+    # fieldmap appear hard-brain-masked. Pass defaults to the inner Ints.
     border_filt = traits.Tuple(
-        traits.Int(),
-        traits.Int(),
-        default=(1, 5),
+        traits.Int(1),
+        traits.Int(5),
         usedefault=True,
         desc='SVD components for the two-pass border filter',
     )
