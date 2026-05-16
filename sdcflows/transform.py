@@ -598,6 +598,154 @@ class B0FieldTransform:
         return fmap_to_disp(self.mapped, ro_time, pe_dir, itk_format=itk_format)
 
 
+async def _dynamic_unwarp_parallel(
+    fulldataset: np.ndarray,
+    coordinates: np.ndarray,
+    fmap_dynamic: np.ndarray,
+    pe_info: Sequence[tuple[int, float]],
+    jacobian: bool,
+    order: int = 3,
+    mode: str = 'constant',
+    cval: float = 0.0,
+    prefilter: bool = True,
+    output_dtype: str | np.dtype | None = None,
+    max_concurrent: int = min(os.cpu_count(), 12),
+) -> np.ndarray:
+    """Per-volume unwarp where each EPI frame uses its matching fmap frame."""
+    semaphore = asyncio.Semaphore(max_concurrent)
+    if fulldataset.ndim == 3:
+        fulldataset = fulldataset[..., np.newaxis]
+
+    tasks = []
+    for volid, volume in enumerate(np.rollaxis(fulldataset, -1, 0)):
+        func = partial(
+            _sdc_unwarp,
+            jacobian=jacobian,
+            fmap_hz=fmap_dynamic[..., volid],
+            output_dtype=output_dtype,
+            order=order,
+            mode=mode,
+            cval=cval,
+            prefilter=prefilter,
+        )
+        tasks.append(
+            asyncio.create_task(
+                worker(
+                    volume,
+                    coordinates.copy(),
+                    pe_info[volid],
+                    None,
+                    func,
+                    semaphore,
+                )
+            )
+        )
+
+    await asyncio.gather(*tasks)
+    return np.stack([t.result() for t in tasks], -1)
+
+
+def apply_dynamic_unwarp(
+    moving,
+    fmap_dynamic,
+    pe_dir,
+    ro_time,
+    jacobian: bool = True,
+    order: int = 3,
+    mode: str = 'constant',
+    cval: float = 0.0,
+    prefilter: bool = True,
+    output_dtype: str | np.dtype | None = None,
+    num_threads: int | None = None,
+    allow_negative: bool = False,
+):
+    r"""Apply a per-frame 4D Hz fieldmap to unwarp a 4D EPI series.
+
+    Unlike :class:`B0FieldTransform`, the fieldmap is assumed to already be on
+    the EPI grid (one Hz volume per EPI volume), so no B-spline reconstruction
+    or coregistration takes place. Each EPI volume is resampled through its
+    matching fieldmap frame using the same scipy-backed primitives that the
+    static apply path uses (:func:`_sdc_unwarp`).
+
+    Parameters
+    ----------
+    moving : :obj:`str` or :class:`~nibabel.spatialimages.SpatialImage`
+        4D EPI image to unwarp.
+    fmap_dynamic : :obj:`str` or :class:`~nibabel.spatialimages.SpatialImage`
+        4D Hz fieldmap, one volume per ``moving`` frame, on ``moving``'s grid.
+    pe_dir : :obj:`str` or list of :obj:`str`
+        ``PhaseEncodingDirection`` metadata value(s). A scalar is broadcast
+        across frames.
+    ro_time : :obj:`float` or list of :obj:`float`
+        Total readout time(s) in seconds. A scalar is broadcast across frames.
+    jacobian : :obj:`bool`
+        Apply Jacobian determinant correction after resampling.
+    num_threads : :obj:`int`, optional
+        Cap on parallel volume resamplings.
+    """
+    if isinstance(moving, (str, bytes, Path)):
+        moving = nb.load(moving)
+    if isinstance(fmap_dynamic, (str, bytes, Path)):
+        fmap_dynamic = nb.load(fmap_dynamic)
+
+    moving, axcodes = ensure_positive_cosines(moving)
+    fmap_dynamic, _ = ensure_positive_cosines(fmap_dynamic)
+
+    newshape = moving.shape[:3] + tuple(d for d in moving.shape[3:] if d > 1)
+    data = np.asarray(nb.arrayproxy.reshape_dataobj(moving.dataobj, newshape))
+    n_volumes = data.shape[3] if data.ndim == 4 else 1
+    output_dtype = output_dtype or moving.header.get_data_dtype()
+
+    fmap_data = np.asanyarray(fmap_dynamic.dataobj, dtype='float32')
+    if fmap_data.ndim == 3:
+        fmap_data = fmap_data[..., np.newaxis]
+    if fmap_data.shape[-1] != n_volumes:
+        raise ValueError(
+            f'Dynamic fieldmap frame count ({fmap_data.shape[-1]}) does not match '
+            f'EPI volumes ({n_volumes}).'
+        )
+
+    if isinstance(pe_dir, str):
+        pe_dir = [pe_dir] * n_volumes
+    if isinstance(ro_time, (int, float)):
+        ro_time = [float(ro_time)] * n_volumes
+
+    pe_info = []
+    for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time, strict=False):
+        pe_axis = 'ijk'.index(vol_pe_dir[0])
+        flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
+        pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
+
+    voxcoords = (
+        nt.linear.Affine(reference=moving)
+        .reference.ndindex.T.reshape((3, *data.shape[:3]))
+        .astype('float32')
+    )
+
+    resampled = asyncio.run(
+        _dynamic_unwarp_parallel(
+            data,
+            voxcoords,
+            fmap_data,
+            pe_info,
+            jacobian=jacobian,
+            output_dtype='float32',
+            order=order,
+            mode=mode,
+            cval=cval,
+            prefilter=prefilter,
+            max_concurrent=num_threads or min(os.cpu_count(), 12),
+        )
+    )
+
+    if not allow_negative:
+        resampled[resampled < 0] = cval
+
+    moved = moving.__class__(resampled, moving.affine, moving.header)
+    moved.header.set_data_dtype(output_dtype)
+    return reorient_image(moved, axcodes)
+
+
 def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
     """
     Convert a fieldmap in Hz into an ITK/ANTs-compatible displacements field.

@@ -20,7 +20,7 @@
 #
 #     https://www.nipreps.org/community/licensing/
 #
-"""Tests for the per-volume MEDIC apply workflow."""
+"""Tests for the per-volume dynamic apply workflow."""
 
 from json import loads
 from pathlib import Path
@@ -48,7 +48,7 @@ def _truncate_to_volumes(in_files, volumes, dest):
 
 
 def test_dynamic_unwarp_construct():
-    """Build the workflow without warpkit installed and verify shape."""
+    """Build the workflow and verify shape."""
     wf = init_dynamic_unwarp_wf()
     assert wf.name == 'dynamic_unwarp_wf'
 
@@ -60,68 +60,91 @@ def test_dynamic_unwarp_construct():
         'corrected',
         'corrected_ref',
         'corrected_mask',
-        'fieldwarp',
     }
 
-    for node_name in ('rotime', 'convert_fmap', 'apply_warp', 'jac_correct', 'average'):
+    for node_name in ('rotime', 'unwarp', 'average'):
         assert wf.get_node(node_name) is not None, f'missing node {node_name!r}'
 
 
-def test_dynamic_unwarp_jacobian_disabled():
-    """``jacobian=False`` drops the correction node; default is True."""
+def test_dynamic_unwarp_jacobian_flag_propagates():
+    """The ``jacobian`` ctor flag forwards to the per-volume resampler."""
     wf = init_dynamic_unwarp_wf(jacobian=False)
-    assert wf.get_node('jac_correct') is None
-    assert wf.get_node('apply_warp') is not None
+    unwarp = wf.get_node('unwarp')
+    assert unwarp.inputs.jacobian is False
+
+    wf = init_dynamic_unwarp_wf(jacobian=True)
+    unwarp = wf.get_node('unwarp')
+    assert unwarp.inputs.jacobian is True
 
 
-def test_apply_jacobian_preserves_signal(tmp_path, monkeypatch):
-    """End-to-end check on the helper: |J| = 1 + dVSM/dPE for a Hz ramp.
+def test_apply_dynamic_unwarp_matches_static(tmp_path, monkeypatch):
+    """For a 4D fmap with identical frames, per-volume resampling matches the
+    static path frame-by-frame.
 
-    A linear Hz ramp along PE produces a constant gradient, hence a
-    constant Jacobian. Multiplying a uniform image by it must give
-    that constant everywhere — a sanity check the formula and sign
-    plumbing match :func:`sdcflows.transform.fieldmap_jacobian`.
+    This pins :func:`sdcflows.transform.apply_dynamic_unwarp` to the same
+    Hz→VSM + scipy.ndimage convention as the rest of the codebase — if the
+    static path ever changes its sign or pe_info handling, this test catches
+    the drift.
     """
     import nibabel as nb
     import numpy as np
 
-    from sdcflows.transform import fieldmap_jacobian
-    from sdcflows.workflows.apply.dynamic import _apply_jacobian
+    from sdcflows.transform import _sdc_unwarp, apply_dynamic_unwarp
+    from sdcflows.utils.tools import ensure_positive_cosines
 
     monkeypatch.chdir(tmp_path)
 
-    shape = (4, 6, 4, 2)
+    rng = np.random.default_rng(0)
+    shape = (5, 7, 5)
+    n_frames = 3
     affine = np.eye(4)
-    # Hz ramp along axis j (PE='j'); 1 Hz per voxel along j.
-    j_idx = np.arange(shape[1], dtype='float32')
-    fmap_hz = np.broadcast_to(j_idx[None, :, None, None], shape).astype('float32')
-    distorted = np.ones(shape, dtype='float32')
+
+    fmap_3d = rng.normal(scale=0.5, size=shape).astype('float32')
+    fmap_4d = np.broadcast_to(fmap_3d[..., None], (*shape, n_frames)).astype('float32')
+    distorted = rng.normal(size=(*shape, n_frames)).astype('float32')
 
     distorted_path = tmp_path / 'distorted.nii.gz'
-    fmap_path = tmp_path / 'fmap_dynamic.nii.gz'
+    fmap_path = tmp_path / 'fmap.nii.gz'
     nb.Nifti1Image(distorted, affine).to_filename(distorted_path)
-    nb.Nifti1Image(fmap_hz, affine).to_filename(fmap_path)
+    nb.Nifti1Image(fmap_4d, affine).to_filename(fmap_path)
 
-    out = _apply_jacobian(
-        in_file=str(distorted_path),
-        fmap_dynamic=str(fmap_path),
-        pe_direction='j',
-        readout_time=0.5,
+    resampled = apply_dynamic_unwarp(
+        str(distorted_path),
+        str(fmap_path),
+        pe_dir='j',
+        ro_time=0.1,
+        jacobian=True,
+        order=1,
+        prefilter=False,
+        num_threads=1,
+        allow_negative=True,
     )
-    out_data = nb.load(out).get_fdata()
-    # |J| = 1 + d(0.5*j_idx)/dj = 1 + 0.5 everywhere (interior).
-    expected = fieldmap_jacobian(fmap_hz, 0.5, pe_axis=1)
+    out_data = np.asanyarray(resampled.dataobj)
+
+    # Run the same primitive directly, per-frame, with no parallelism.
+    img, axcodes = ensure_positive_cosines(nb.load(str(distorted_path)))
+    voxcoords = np.indices(shape, dtype='float32')
+    pe_axis = 'ijk'.index('j')
+    flip = (axcodes[pe_axis] in 'LPI') ^ False
+    pe_info = (pe_axis, -0.1 if flip else 0.1)
+    expected = np.stack(
+        [
+            _sdc_unwarp(
+                distorted[..., t],
+                voxcoords.copy(),
+                pe_info,
+                None,
+                jacobian=True,
+                fmap_hz=fmap_3d,
+                output_dtype='float32',
+                order=1,
+                prefilter=False,
+            )
+            for t in range(n_frames)
+        ],
+        axis=-1,
+    )
     assert np.allclose(out_data, expected, atol=1e-5)
-
-    # Sign flip with j-: |J| = 1 - 0.5
-    out_neg = _apply_jacobian(
-        in_file=str(distorted_path),
-        fmap_dynamic=str(fmap_path),
-        pe_direction='j-',
-        readout_time=0.5,
-    )
-    expected_neg = fieldmap_jacobian(fmap_hz, -0.5, pe_axis=1)
-    assert np.allclose(nb.load(out_neg).get_fdata(), expected_neg, atol=1e-5)
 
 
 # Mirror of ``MEDIC_FIXTURES`` in ``test_medic.py``. Kept duplicated rather than
