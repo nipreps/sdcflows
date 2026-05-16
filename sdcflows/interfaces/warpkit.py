@@ -89,7 +89,6 @@ class _MEDICInputSpec(BaseInterfaceInputSpec):
         desc='BIDS sidecar JSONs, one per echo (alternative to direct args)',
     )
     out_prefix = traits.Str('medic', usedefault=True, desc='prefix for output filenames')
-    noise_frames = traits.Int(0, usedefault=True, desc='number of trailing noise frames to drop')
     n_cpus = traits.Int(4, usedefault=True, desc='number of CPUs to use')
     wrap_limit = traits.Bool(
         False, usedefault=True, desc='disable some phase-unwrapping heuristics'
@@ -130,7 +129,6 @@ class MEDIC(WarpkitBaseInterface, SimpleInterface):
                     else None
                 ),
                 metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
-                noise_frames=self.inputs.noise_frames,
                 n_cpus=self.inputs.n_cpus,
                 wrap_limit=self.inputs.wrap_limit,
                 debug=self.inputs.debug,
@@ -155,7 +153,6 @@ class _UnwrapPhaseInputSpec(BaseInterfaceInputSpec):
     echo_times = traits.List(traits.Float, xor=['metadata'])
     metadata = InputMultiObject(File(exists=True), xor=['echo_times'])
     out_prefix = traits.Str('unwrap', usedefault=True)
-    noise_frames = traits.Int(0, usedefault=True)
     n_cpus = traits.Int(4, usedefault=True)
     wrap_limit = traits.Bool(False, usedefault=True)
     debug = traits.Bool(False, usedefault=True)
@@ -183,7 +180,6 @@ class UnwrapPhase(WarpkitBaseInterface, SimpleInterface):
                 out_prefix=out_prefix,
                 tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
                 metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
-                noise_frames=self.inputs.noise_frames,
                 n_cpus=self.inputs.n_cpus,
                 wrap_limit=self.inputs.wrap_limit,
                 debug=self.inputs.debug,
