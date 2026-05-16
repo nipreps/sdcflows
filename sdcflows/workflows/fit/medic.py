@@ -166,14 +166,19 @@ def init_medic_wf(
     # Two-stage warpkit path: UnwrapPhase exposes per-frame masks, which
     # ComputeFieldmap then consumes. The one-shot MEDIC interface bundles
     # both but hides the masks; we want them for ``fmap_dynamic_mask``.
-    unwrap = pe.Node(UnwrapPhase(), name='unwrap', n_procs=omp_nthreads)
-    unwrap.inputs.n_cpus = omp_nthreads
-    unwrap.inputs.debug = debug
+    unwrap = pe.Node(
+        UnwrapPhase(n_cpus=omp_nthreads, debug=debug),
+        name='unwrap',
+        n_procs=omp_nthreads,
+    )
 
     # ComputeFieldmap doesn't expose a ``debug`` input — only UnwrapPhase
     # does, so the asymmetry is intentional.
-    compute_fmap = pe.Node(ComputeFieldmap(), name='compute_fmap', n_procs=omp_nthreads)
-    compute_fmap.inputs.n_cpus = omp_nthreads
+    compute_fmap = pe.Node(
+        ComputeFieldmap(n_cpus=omp_nthreads),
+        name='compute_fmap',
+        n_procs=omp_nthreads,
+    )
 
     # The 4D dynamic Hz fieldmap is the real MEDIC output — exposed below
     # as ``fmap_dynamic`` for consumers that want per-volume correction.
