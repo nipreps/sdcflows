@@ -34,7 +34,7 @@ from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
-INPUT_FIELDS = ('distorted', 'metadata', 'fmap_dynamic')
+INPUT_FIELDS = ('distorted', 'metadata', 'fmap')
 
 
 def init_dynamic_unwarp_wf(
@@ -69,11 +69,11 @@ def init_dynamic_unwarp_wf(
     Inputs
     ------
     distorted : :obj:`str`
-        4D EPI series to unwarp. Must share frame count with ``fmap_dynamic``.
+        4D EPI series to unwarp. Must share frame count with ``fmap``.
     metadata : :obj:`dict`
         BIDS sidecar metadata. ``TotalReadoutTime`` and
         ``PhaseEncodingDirection`` are required.
-    fmap_dynamic : :obj:`str`
+    fmap : :obj:`str`
         4D B\ :sub:`0` field map in Hz, already on the EPI grid (typically
         from :func:`~sdcflows.workflows.fit.medic.init_medic_wf`).
 
@@ -111,7 +111,7 @@ def init_dynamic_unwarp_wf(
         niu.Function(
             input_names=[
                 'distorted',
-                'fmap_dynamic',
+                'fmap',
                 'pe_direction',
                 'readout_time',
                 'jacobian',
@@ -134,7 +134,7 @@ def init_dynamic_unwarp_wf(
         (inputnode, rotime, [('distorted', 'in_file'),
                              ('metadata', 'metadata')]),
         (inputnode, unwarp, [('distorted', 'distorted'),
-                             ('fmap_dynamic', 'fmap_dynamic')]),
+                             ('fmap', 'fmap')]),
         (rotime, unwarp, [('pe_direction', 'pe_direction'),
                           ('readout_time', 'readout_time')]),
         (unwarp, average, [('out_file', 'in_file')]),
@@ -150,7 +150,7 @@ def init_dynamic_unwarp_wf(
     return workflow
 
 
-def _dynamic_unwarp(distorted, fmap_dynamic, pe_direction, readout_time, jacobian, num_threads):
+def _dynamic_unwarp(distorted, fmap, pe_direction, readout_time, jacobian, num_threads):
     """Resample a 4D EPI through a per-frame 4D Hz fieldmap on the same grid.
 
     Uses :func:`~sdcflows.transform.apply_dynamic_unwarp`, which delegates
@@ -163,7 +163,7 @@ def _dynamic_unwarp(distorted, fmap_dynamic, pe_direction, readout_time, jacobia
 
     resampled = apply_dynamic_unwarp(
         distorted,
-        fmap_dynamic,
+        fmap,
         pe_dir=pe_direction,
         ro_time=readout_time,
         jacobian=jacobian,

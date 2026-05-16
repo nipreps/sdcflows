@@ -102,9 +102,6 @@ def init_fmap_preproc_wf(
         'fmap_mask',
         'fmap_id',
         'method',
-        'fmap_dynamic',
-        'fmap_dynamic_ref',
-        'fmap_dynamic_mask',
     )
     out_merge = {f: pe.Node(niu.Merge(len(estimators)), name=f'out_merge_{f}') for f in out_fields}
     # Fieldmaps and coefficient files can come in pairs, ensure they are not flattened
@@ -146,12 +143,13 @@ def init_fmap_preproc_wf(
         )
         out_map.inputs.fmap_id = estimator.bids_id
 
+        # MEDIC emits a 4D fieldmap directly on the EPI grid; no B-spline
+        # coefficient representation is produced for it.
         is_medic = estimator.method == EstimatorType.MEDIC
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
-            write_coeff=True,
+            write_coeff=not is_medic,
             write_mask=True,
-            write_dynamic=is_medic,
             bids_fmap_id=estimator.bids_id,
             name=f'fmap_derivatives_wf_{estimator.sanitized_id}',
         )
@@ -176,13 +174,25 @@ def init_fmap_preproc_wf(
                 (inputnode, est_wf, [(f, f"inputnode.{f}") for f in fields])
             ])  # fmt:skip
 
+        deriv_conns = [
+            ('outputnode.fmap', 'inputnode.fieldmap'),
+            ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+            ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
+        ]
+        out_map_conns = [
+            ('outputnode.fieldmap', 'fmap'),
+            ('outputnode.fmap_ref', 'fmap_ref'),
+            ('outputnode.fmap_mask', 'fmap_mask'),
+        ]
+        if not is_medic:
+            deriv_conns.append(('outputnode.fmap_coeff', 'inputnode.fmap_coeff'))
+            out_map_conns.append(('outputnode.fmap_coeff', 'fmap_coeff'))
+        else:
+            # Keep the merge node aligned across estimators that don't emit coeffs.
+            out_map.inputs.fmap_coeff = None
+
         workflow.connect([
-            (est_wf, fmap_derivatives_wf, [
-                ("outputnode.fmap", "inputnode.fieldmap"),
-                ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
-                ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-            ]),
+            (est_wf, fmap_derivatives_wf, deriv_conns),
             (est_wf, fmap_reports_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
@@ -191,33 +201,8 @@ def init_fmap_preproc_wf(
             (est_wf, out_map, [
                 ("outputnode.method", "method")
             ]),
-            (fmap_derivatives_wf, out_map, [
-                ("outputnode.fieldmap", "fmap"),
-                ("outputnode.fmap_ref", "fmap_ref"),
-                ("outputnode.fmap_coeff", "fmap_coeff"),
-                ("outputnode.fmap_mask", "fmap_mask"),
-            ]),
+            (fmap_derivatives_wf, out_map, out_map_conns),
         ])  # fmt:skip
-
-        if is_medic:
-            workflow.connect([
-                (est_wf, fmap_derivatives_wf, [
-                    ('outputnode.fmap_dynamic', 'inputnode.fmap_dynamic'),
-                    ('outputnode.fmap_dynamic_ref', 'inputnode.fmap_dynamic_ref'),
-                    ('outputnode.fmap_dynamic_mask', 'inputnode.fmap_dynamic_mask'),
-                ]),
-                (fmap_derivatives_wf, out_map, [
-                    ('outputnode.fmap_dynamic', 'fmap_dynamic'),
-                    ('outputnode.fmap_dynamic_ref', 'fmap_dynamic_ref'),
-                    ('outputnode.fmap_dynamic_mask', 'fmap_dynamic_mask'),
-                ]),
-            ])  # fmt:skip
-        else:
-            # Keep the dynamic merge nodes aligned with len(estimators) so the
-            # outputnode shape is uniform across non-MEDIC estimators.
-            out_map.inputs.fmap_dynamic = None
-            out_map.inputs.fmap_dynamic_ref = None
-            out_map.inputs.fmap_dynamic_mask = None
 
         for field, mergenode in out_merge.items():
             workflow.connect(out_map, field, mergenode, f'in{n}')

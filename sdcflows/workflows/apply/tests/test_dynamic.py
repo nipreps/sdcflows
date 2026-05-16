@@ -204,7 +204,7 @@ def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
     from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
     wf = Workflow(name=f'medic_apply_{magnitude_files[0].stem.replace(".nii", "")}')
-    wf.connect([(fit_wf, apply_wf, [('outputnode.fmap_dynamic', 'inputnode.fmap_dynamic')])])
+    wf.connect([(fit_wf, apply_wf, [('outputnode.fmap', 'inputnode.fmap')])])
 
     if workdir:
         wf.base_dir = str(workdir)

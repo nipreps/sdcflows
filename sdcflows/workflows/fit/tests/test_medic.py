@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from ..medic import INPUT_FIELDS, _first, _temporal_mean, _unpack_metadata, init_medic_wf
+from ..medic import INPUT_FIELDS, _first, _unpack_metadata, init_medic_wf
 
 # A handful of timepoints is enough to exercise the full per-volume MEDIC
 # path; the source datasets ship 200+ volumes × 5 echoes × mag+phase, which
@@ -64,12 +64,8 @@ def test_medic_construct():
     assert set(inputnode.outputs.copyable_trait_names()) >= set(INPUT_FIELDS)
     assert set(outputnode.inputs.copyable_trait_names()) >= {
         'fmap',
-        'fmap_dynamic',
         'fmap_ref',
-        'fmap_dynamic_ref',
         'fmap_mask',
-        'fmap_dynamic_mask',
-        'fmap_coeff',
         'method',
     }
     # method is set unconditionally at construction.
@@ -80,10 +76,8 @@ def test_medic_construct():
         'extract_meta',
         'unwrap',
         'compute_fmap',
-        'fmap_mean',
         'pick_mag1',
         'magnitude_wf',
-        'bs_filter',
     ):
         assert wf.get_node(name) is not None, f'missing node {name!r}'
 
@@ -119,51 +113,10 @@ def test_unpack_metadata_rejects_empty():
         _unpack_metadata([])
 
 
-def test_medic_wf_sloppy_sets_zooms_min():
-    """``sloppy=True`` lowers the B-spline ``zooms_min`` for the static path."""
-    wf = init_medic_wf(sloppy=True)
-    bs_filter = wf.get_node('bs_filter')
-    assert bs_filter.inputs.zooms_min == 4.0
-
-
 def test_first_helper():
     """``_first`` returns the head of the list or ``None`` when empty."""
     assert _first(['a', 'b', 'c']) == 'a'
     assert _first([]) is None
-
-
-def test_temporal_mean_collapses_4d(tmp_path, monkeypatch):
-    """``_temporal_mean`` averages along the time axis and emits a 3D NIfTI."""
-    import nibabel as nb
-    import numpy as np
-
-    monkeypatch.chdir(tmp_path)
-
-    data = np.stack(
-        [np.ones((3, 4, 2), dtype='float32') * scalar for scalar in (1.0, 3.0, 5.0)],
-        axis=-1,
-    )
-    in_file = tmp_path / 'in.nii.gz'
-    nb.Nifti1Image(data, np.eye(4)).to_filename(in_file)
-
-    out_file = _temporal_mean(str(in_file))
-    out_img = nb.load(out_file)
-    assert out_img.ndim == 3
-    assert np.allclose(np.asanyarray(out_img.dataobj), 3.0)
-
-
-def test_temporal_mean_passthrough_3d(tmp_path, monkeypatch):
-    """3D inputs are written back unchanged (no axis to average over)."""
-    import nibabel as nb
-    import numpy as np
-
-    monkeypatch.chdir(tmp_path)
-    data = np.full((3, 4, 2), 7.0, dtype='float32')
-    in_file = tmp_path / 'in3d.nii.gz'
-    nb.Nifti1Image(data, np.eye(4)).to_filename(in_file)
-
-    out_file = _temporal_mean(str(in_file))
-    assert np.allclose(np.asanyarray(nb.load(out_file).dataobj), 7.0)
 
 
 # Each entry is (dataset, mag_glob_under_dataset).

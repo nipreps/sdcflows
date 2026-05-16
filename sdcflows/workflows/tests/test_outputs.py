@@ -30,52 +30,14 @@ def test_fmap_derivatives_wf_default(tmp_path):
     wf = init_fmap_derivatives_wf(output_dir=str(tmp_path))
     assert wf.get_node('ds_fieldmap') is not None
     assert wf.get_node('ds_reference') is not None
-    # write_dynamic / write_mask off by default.
+    # write_mask off by default.
     assert wf.get_node('ds_mask') is None
-    assert wf.get_node('ds_fmap_dynamic') is None
-    assert wf.get_node('ds_fmap_dynamic_ref') is None
-    assert wf.get_node('ds_fmap_dynamic_mask') is None
 
 
-def test_fmap_derivatives_wf_write_dynamic(tmp_path):
-    """``write_dynamic=True`` adds the 4D MEDIC sinks and tags the fieldmap."""
-    wf = init_fmap_derivatives_wf(
-        output_dir=str(tmp_path),
-        write_dynamic=True,
-        bids_fmap_id='medic_0',
-    )
-
-    ds_fmap_dynamic = wf.get_node('ds_fmap_dynamic')
-    ds_fmap_dynamic_ref = wf.get_node('ds_fmap_dynamic_ref')
-    ds_fmap_dynamic_mask = wf.get_node('ds_fmap_dynamic_mask')
-    assert ds_fmap_dynamic is not None
-    assert ds_fmap_dynamic_ref is not None
-    assert ds_fmap_dynamic_mask is not None
-
-    # The Hz dynamic sink carries Units + B0FieldIdentifier so downstream
-    # consumers can join it to the same B0 group as the static fieldmap.
-    assert ds_fmap_dynamic.inputs.Units == 'Hz'
-    assert ds_fmap_dynamic.inputs.B0FieldIdentifier == 'medic_0'
-
-    # `desc` distinguishes the three 4D outputs at the BIDS-path level —
-    # niworkflows' nipreps.json only has fmap path patterns for the
-    # fieldmap/mask suffixes, so the magnitude ref reuses the fieldmap suffix.
-    assert ds_fmap_dynamic.inputs.desc == 'dynamic'
-    assert ds_fmap_dynamic.inputs.suffix == 'fieldmap'
-    assert ds_fmap_dynamic_ref.inputs.desc == 'dynamicref'
-    assert ds_fmap_dynamic_ref.inputs.suffix == 'fieldmap'
-    assert ds_fmap_dynamic_mask.inputs.desc == 'dynamicbrain'
-    assert ds_fmap_dynamic_mask.inputs.suffix == 'mask'
-
-    # Each dynamic sink should land under the fmap/ datatype.
-    for node in (ds_fmap_dynamic, ds_fmap_dynamic_ref, ds_fmap_dynamic_mask):
-        assert node.inputs.datatype == 'fmap'
-
-
-def test_fmap_derivatives_wf_write_dynamic_no_b0id(tmp_path):
-    """Without ``bids_fmap_id``, the Hz dynamic sink omits B0FieldIdentifier."""
-    wf = init_fmap_derivatives_wf(output_dir=str(tmp_path), write_dynamic=True)
-    ds_fmap_dynamic = wf.get_node('ds_fmap_dynamic')
-    # ``B0FieldIdentifier`` is set as a dynamic trait only when bids_fmap_id is
-    # provided; without it the attribute should not exist on the sink inputs.
-    assert not hasattr(ds_fmap_dynamic.inputs, 'B0FieldIdentifier')
+def test_fmap_derivatives_wf_merge_fmap_allows_4d(tmp_path):
+    """``merge_fmap`` must accept 4D inputs so MEDIC's per-frame Hz fmap flows
+    through the same sink as the static estimators' 3D fmaps."""
+    wf = init_fmap_derivatives_wf(output_dir=str(tmp_path))
+    merge_fmap = wf.get_node('merge_fmap')
+    assert merge_fmap is not None
+    assert merge_fmap.inputs.allow_4D is True
