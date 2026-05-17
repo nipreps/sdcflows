@@ -92,9 +92,11 @@ def init_medic_wf(
         EPI grid. Consumers must dispatch on dimensionality (3D for static
         estimators, 4D for MEDIC) when applying.
     fmap_ref : :obj:`str`
-        Brain-extracted magnitude reference (first echo, temporal mean).
+        4D brain-extracted magnitude reference (first echo), with one volume
+        per timepoint matching ``fmap``.
     fmap_mask : :obj:`str`
-        Static binary brain mask co-registered with ``fmap_ref``.
+        4D binary brain mask (one mask per timepoint) co-registered with
+        ``fmap_ref``.
     method : :obj:`str`
         Short description string.
 
@@ -104,7 +106,7 @@ def init_medic_wf(
     # MEDIC interfaces at run time.
     del sloppy, use_metadata_estimates, fallback_total_readout_time
     from ...interfaces.warpkit import ComputeFieldmap, UnwrapPhase
-    from .fieldmap import init_magnitude_wf
+    from .fieldmap import init_dynamic_magnitude_wf
 
     workflow = Workflow(name=name)
     workflow.__desc__ = _MEDIC_DESC
@@ -153,8 +155,9 @@ def init_medic_wf(
         n_procs=omp_nthreads,
     )
 
-    # First-echo magnitude. ``init_magnitude_wf`` time-averages it via
-    # IntraModalMerge before brain extraction for ``fmap_ref`` / ``fmap_mask``.
+    # First-echo magnitude. ``init_dynamic_magnitude_wf`` splits the 4D
+    # series into per-frame volumes, brain-extracts each, and re-concatenates
+    # so ``fmap_ref`` / ``fmap_mask`` track the per-volume MEDIC fieldmap.
     pick_mag1 = pe.Node(
         niu.Function(
             input_names=['in_list'],
@@ -164,7 +167,7 @@ def init_medic_wf(
         name='pick_mag1',
         run_without_submitting=True,
     )
-    magnitude_wf = init_magnitude_wf(omp_nthreads=omp_nthreads)
+    magnitude_wf = init_dynamic_magnitude_wf(omp_nthreads=omp_nthreads, name='magnitude_wf')
 
     # fmt: off
     workflow.connect([

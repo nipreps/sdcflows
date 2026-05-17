@@ -261,6 +261,96 @@ def init_magnitude_wf(omp_nthreads, name='magnitude_wf'):
     return workflow
 
 
+def init_dynamic_magnitude_wf(omp_nthreads, name='dynamic_magnitude_wf'):
+    """
+    Per-frame counterpart to :func:`init_magnitude_wf` for 4D magnitude inputs.
+
+    Splits a 4D magnitude series into per-frame 3D volumes, runs N4 +
+    skull-stripping on each frame, and concatenates the per-frame outputs
+    back into 4D so the resulting ``fmap_ref`` and ``fmap_mask`` track a
+    time-varying fieldmap (typically MEDIC).
+
+    Workflow Graph
+        .. workflow ::
+            :graph2use: orig
+            :simple_form: yes
+
+            from sdcflows.workflows.fit.fieldmap import init_dynamic_magnitude_wf
+            wf = init_dynamic_magnitude_wf(omp_nthreads=6)
+
+    Parameters
+    ----------
+    omp_nthreads : :obj:`int`
+        Maximum number of threads an individual process may use.
+    name : :obj:`str`
+        Name of workflow (default: ``dynamic_magnitude_wf``).
+
+    Inputs
+    ------
+    magnitude : :obj:`os.PathLike`
+        Path to a 4D magnitude series (one volume per timepoint).
+
+    Outputs
+    -------
+    fmap_ref : :obj:`os.PathLike`
+        4D anatomical reference: per-frame N4-corrected and clipped magnitude.
+    fmap_mask : :obj:`os.PathLike`
+        4D binary brain mask: one mask per frame, aligned with ``fmap_ref``.
+
+    """
+    from nipype.interfaces.ants import N4BiasFieldCorrection
+    from niworkflows.interfaces.nibabel import IntensityClip, MergeSeries, SplitSeries
+
+    from ...interfaces.brainmask import BrainExtraction
+
+    workflow = Workflow(name=name)
+    inputnode = pe.Node(niu.IdentityInterface(fields=['magnitude']), name='inputnode')
+    outputnode = pe.Node(
+        niu.IdentityInterface(fields=['fmap_ref', 'fmap_mask']),
+        name='outputnode',
+    )
+
+    split = pe.Node(SplitSeries(), name='split', run_without_submitting=True)
+
+    clipper_pre = pe.MapNode(IntensityClip(), iterfield=['in_file'], name='clipper_pre')
+    n4 = pe.MapNode(
+        N4BiasFieldCorrection(
+            dimension=3,
+            copy_header=True,
+            n_iterations=[50] * 5,
+            convergence_threshold=1e-7,
+            shrink_factor=4,
+        ),
+        iterfield=['input_image'],
+        n_procs=omp_nthreads,
+        name='n4',
+    )
+    clipper_post = pe.MapNode(
+        IntensityClip(p_min=0.01, p_max=99.9),
+        iterfield=['in_file'],
+        name='clipper_post',
+    )
+    masker = pe.MapNode(BrainExtraction(), iterfield=['in_file'], name='masker')
+
+    merge_ref = pe.Node(MergeSeries(), name='merge_ref')
+    merge_mask = pe.Node(MergeSeries(), name='merge_mask')
+
+    # fmt: off
+    workflow.connect([
+        (inputnode, split, [('magnitude', 'in_file')]),
+        (split, clipper_pre, [('out_files', 'in_file')]),
+        (clipper_pre, n4, [('out_file', 'input_image')]),
+        (n4, clipper_post, [('output_image', 'in_file')]),
+        (clipper_post, masker, [('out_file', 'in_file')]),
+        (clipper_post, merge_ref, [('out_file', 'in_files')]),
+        (masker, merge_mask, [('out_mask', 'in_files')]),
+        (merge_ref, outputnode, [('out_file', 'fmap_ref')]),
+        (merge_mask, outputnode, [('out_file', 'fmap_mask')]),
+    ])
+    # fmt: on
+    return workflow
+
+
 def init_phdiff_wf(omp_nthreads, debug=False, name='phdiff_wf'):
     r"""
     Generate a :math:`B_0` field from consecutive-phases and phase-difference maps.
