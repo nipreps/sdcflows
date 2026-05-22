@@ -68,12 +68,20 @@ def init_medic_wf(
     omp_nthreads : :obj:`int`
         Maximum number of threads warpkit may use.
     sloppy : :obj:`bool`
-        Currently unused for MEDIC; accepted for parity with other
-        ``init_*_wf`` constructors.
+        Accepted for parity with other ``init_*_wf`` constructors; currently
+        unused for MEDIC.
     debug : :obj:`bool`
         Pass through to :class:`~sdcflows.interfaces.warpkit.UnwrapPhase`.
     name : :obj:`str`
         Workflow name.
+    use_metadata_estimates : :obj:`bool`
+        Accepted for parity with other ``init_*_wf`` constructors; currently
+        unused for MEDIC, which reads ``TotalReadoutTime`` straight from the
+        per-echo BIDS sidecars rather than going through
+        :func:`~sdcflows.utils.epimanip.get_trt`.
+    fallback_total_readout_time : :obj:`float`, optional
+        Accepted for parity with other ``init_*_wf`` constructors; currently
+        unused for MEDIC.
 
     Inputs
     ------
