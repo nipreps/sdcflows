@@ -574,6 +574,46 @@ def test_wrangler_force_medic_without_intended_for(tmp_path, force_medic, expect
     clear_registry()
 
 
+@pytest.mark.parametrize(
+    ('skeleton', 'force_medic', 'expected'),
+    [
+        # A: IntendedFor present, default discovery picks up one MEDIC per session.
+        (medic, False, 3),
+        # B: no IntendedFor + force_medic override picks up one MEDIC per session.
+        (medic_no_intended_for, True, 3),
+        # C: baseline — no IntendedFor, no override, no fmapless: nothing should fire.
+        (medic_no_intended_for, False, 0),
+    ],
+    ids=['default-IntendedFor', 'force_medic', 'baseline-no-trigger'],
+)
+def test_wrangler_medic_trigger(tmp_path, skeleton, force_medic, expected):
+    """The three trigger modes of MEDIC discovery, side-by-side.
+
+    * **default-IntendedFor**: complex BOLD sidecars carry ``IntendedFor`` and
+      the default discovery path picks them up.
+    * **force_medic**: sidecars carry no ``IntendedFor`` — the explicit flag
+      short-circuits the default gate.
+    * **baseline-no-trigger**: no metadata, no override, no fmapless fallback
+      — MEDIC must refuse to fire so that runs without the expected metadata
+      are not silently picked up.
+    """
+    bids_dir = str(tmp_path / 'medic_trigger')
+    generate_bids_skeleton(bids_dir, skeleton)
+    layout = gen_layout(bids_dir)
+    estimators = find_estimators(
+        layout=layout,
+        subject='01',
+        fmapless=False,
+        force_medic=force_medic,
+    )
+    assert len(estimators) == expected
+    for estimator in estimators:
+        assert estimator.method.name == 'MEDIC'
+        # 3 echoes × {mag, phase} per session.
+        assert len(estimator.sources) == 6
+    clear_registry()
+
+
 def test_single_reverse_pedir(tmp_path):
     bids_dir = tmp_path / 'bids'
     generate_bids_skeleton(bids_dir, pepolar)
