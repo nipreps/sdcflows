@@ -143,12 +143,12 @@ def init_fmap_preproc_wf(
         )
         out_map.inputs.fmap_id = estimator.bids_id
 
-        # MEDIC emits a 4D fieldmap directly on the EPI grid; no B-spline
-        # coefficient representation is produced for it.
-        is_medic = estimator.method == EstimatorType.MEDIC
+        # Dynamic estimators (currently MEDIC) emit a 4D fieldmap directly on
+        # the EPI grid; no B-spline coefficient representation is produced.
+        is_dynamic = estimator.is_dynamic
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
-            write_coeff=not is_medic,
+            write_coeff=not is_dynamic,
             write_mask=True,
             bids_fmap_id=estimator.bids_id,
             name=f'fmap_derivatives_wf_{estimator.sanitized_id}',
@@ -184,7 +184,7 @@ def init_fmap_preproc_wf(
             ('outputnode.fmap_ref', 'fmap_ref'),
             ('outputnode.fmap_mask', 'fmap_mask'),
         ]
-        if not is_medic:
+        if not is_dynamic:
             deriv_conns.append(('outputnode.fmap_coeff', 'inputnode.fmap_coeff'))
             out_map_conns.append(('outputnode.fmap_coeff', 'fmap_coeff'))
         else:

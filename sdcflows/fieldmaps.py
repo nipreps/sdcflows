@@ -76,6 +76,12 @@ MODALITIES = {
     'T2w': EstimatorType.ANAT,
 }
 
+# Estimator types that emit a per-volume 4D fieldmap on the EPI grid (and
+# therefore do not produce B-spline coefficients). Add new dynamic methods
+# here so consumers — ``init_fmap_preproc_wf`` in particular — pick them up
+# without per-method branching.
+_DYNAMIC_METHODS = frozenset({EstimatorType.MEDIC})
+
 
 def _type_setter(obj, attribute, value):
     """Make sure the type of estimation is not changed."""
@@ -486,6 +492,11 @@ class FieldmapEstimation:
         # Provide a sanitized identifier that can be used in cases where
         # special characters are not allowed.
         self.sanitized_id = re.sub(r'[^a-zA-Z0-9]', '_', self.bids_id)
+
+    @property
+    def is_dynamic(self) -> bool:
+        """The estimator emits a per-volume 4D fieldmap and no B-spline coefficients."""
+        return self.method in _DYNAMIC_METHODS
 
     def paths(self):
         """Return a tuple of paths that are sorted."""

@@ -378,6 +378,24 @@ def test_FieldmapEstimation_MEDIC_mismatched_pairs(tmp_path, dsA_dir):
         fm.FieldmapEstimation(files)
 
 
+def test_FieldmapEstimation_is_dynamic(tmp_path, dsA_dir):
+    """``is_dynamic`` flags MEDIC (4D fmap on EPI grid) and not the static estimators."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    medic_files = _make_medic_files(
+        tmp_path, src, [(1, 'mag'), (1, 'phase'), (2, 'mag'), (2, 'phase')]
+    )
+    assert fm.FieldmapEstimation(medic_files).is_dynamic is True
+
+    sub_dir = dsA_dir / 'sub-01'
+    phasediff = fm.FieldmapEstimation(
+        [
+            sub_dir / 'fmap/sub-01_phase1.nii.gz',
+            sub_dir / 'fmap/sub-01_phase2.nii.gz',
+        ]
+    )
+    assert phasediff.is_dynamic is False
+
+
 def test_FieldmapFile_filename(tmp_path, dsA_dir):
     datadir = tmp_path / 'phasediff'
     datadir.mkdir(exist_ok=True)
