@@ -85,6 +85,15 @@ jobs:
             dependencies: "pre"
 
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false
+        swap-storage: false
     - uses: actions/checkout@v5
     - uses: actions/cache@v4
       with:
