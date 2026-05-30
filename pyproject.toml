@@ -83,7 +83,7 @@ test = [
 # clean-Apache.
 # See: https://github.com/vanandrew/warpkit/blob/main/LICENSE
 warpkit = [
-    "warpkit >= 1.2.1; python_version >= '3.11'",
+    "warpkit >= 1.2.2; python_version >= '3.11'",
 ]
 
 # Aliases
