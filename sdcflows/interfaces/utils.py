@@ -21,7 +21,7 @@
 #     https://www.nipreps.org/community/licensing/
 #
 """Utilities."""
-
+import logging
 from itertools import product
 
 from nipype.interfaces.ants.segmentation import (
@@ -45,6 +45,7 @@ from nipype.interfaces.mixins import CopyHeaderInterface as _CopyHeaderInterface
 from sdcflows.utils.tools import reorient_pedir
 
 OBLIQUE_THRESHOLD_DEG = 0.5
+LOGGER = logging.getLogger('nipype.interface')
 
 
 class _FlattenInputSpec(BaseInterfaceInputSpec):
@@ -128,6 +129,7 @@ class UniformGrid(SimpleInterface):
         refaff = refnii.affine
 
         resampler = Affine(reference=refnii)
+        resampled = []
         for i, fname in enumerate(self.inputs.in_data):
             if retval[i] is not None:
                 continue
@@ -143,12 +145,25 @@ class UniformGrid(SimpleInterface):
                     nii.__class__(nii.dataobj, refaff, nii.header).to_filename(retval[i])
                 continue
 
+            # The input is genuinely on a different sampling grid and must be resampled.
+            resampled.append(fname)
             # Hack around nitransforms' unsafe cast by dropping get_data_dtype that conflicts
             # with effective dtype
             # NT23_0_1: Isssue in nitransforms.base.TransformBase.apply
             regridded_img = resampler.apply(nii.__class__(np.asanyarray(nii.dataobj), nii.affine))
             # Restore the original on-disk data type
             nii.__class__(regridded_img.dataobj, refaff, nii.header).to_filename(retval[i])
+
+        if resampled:
+            LOGGER.warning(
+                'UniformGrid resampled %d input image(s) onto the reference grid because '
+                'they were not on a common sampling grid: %s. When feeding TOPUP, the total '
+                'readout time is referenced to the original acquisition grid, so resampling '
+                'opposing phase-encoding runs that differ in matrix size or voxel spacing may '
+                'bias the estimated field. Verify that these inputs belong together.',
+                len(resampled),
+                ', '.join(resampled),
+            )
 
         self._results['out_data'] = retval
 
