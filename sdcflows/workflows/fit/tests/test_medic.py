@@ -77,7 +77,6 @@ def test_medic_construct():
         'unwrap',
         'compute_fmap',
         'pick_mag1',
-        'magnitude_wf',
     ):
         assert wf.get_node(name) is not None, f'missing node {name!r}'
 

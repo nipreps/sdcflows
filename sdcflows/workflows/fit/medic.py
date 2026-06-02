@@ -100,11 +100,11 @@ def init_medic_wf(
         EPI grid. Consumers must dispatch on dimensionality (3D for static
         estimators, 4D for MEDIC) when applying.
     fmap_ref : :obj:`str`
-        4D brain-extracted magnitude reference (first echo), with one volume
-        per timepoint matching ``fmap``.
+        First-echo magnitude series, unprocessed: one volume per timepoint
+        matching ``fmap``.
     fmap_mask : :obj:`str`
-        4D binary brain mask (one mask per timepoint) co-registered with
-        ``fmap_ref``.
+        4D binary brain mask (one mask per timepoint) as produced by MEDIC
+        (``warpkit``), aligned with ``fmap``.
     method : :obj:`str`
         Short description string.
 
@@ -114,7 +114,6 @@ def init_medic_wf(
     # MEDIC interfaces at run time.
     del sloppy, use_metadata_estimates, fallback_total_readout_time
     from ...interfaces.warpkit import ComputeFieldmap, UnwrapPhase
-    from .fieldmap import init_dynamic_magnitude_wf
 
     workflow = Workflow(name=name)
     workflow.__desc__ = _MEDIC_DESC
@@ -163,9 +162,10 @@ def init_medic_wf(
         n_procs=omp_nthreads,
     )
 
-    # First-echo magnitude. ``init_dynamic_magnitude_wf`` splits the 4D
-    # series into per-frame volumes, brain-extracts each, and re-concatenates
-    # so ``fmap_ref`` / ``fmap_mask`` track the per-volume MEDIC fieldmap.
+    # ``fmap_ref`` is just the first-echo magnitude series, passed through
+    # untouched. ``fmap_mask`` reuses the per-frame masks MEDIC already
+    # computes during phase unwrapping, so both track the per-volume fieldmap
+    # without any extra N4/skull-strip work.
     pick_mag1 = pe.Node(
         niu.Function(
             input_names=['in_list'],
@@ -175,7 +175,6 @@ def init_medic_wf(
         name='pick_mag1',
         run_without_submitting=True,
     )
-    magnitude_wf = init_dynamic_magnitude_wf(omp_nthreads=omp_nthreads, name='magnitude_wf')
 
     # fmt: off
     workflow.connect([
@@ -193,11 +192,8 @@ def init_medic_wf(
         ]),
         (compute_fmap, outputnode, [('fieldmap', 'fmap')]),
         (inputnode, pick_mag1, [('magnitude', 'in_list')]),
-        (pick_mag1, magnitude_wf, [('out_file', 'inputnode.magnitude')]),
-        (magnitude_wf, outputnode, [
-            ('outputnode.fmap_ref', 'fmap_ref'),
-            ('outputnode.fmap_mask', 'fmap_mask'),
-        ]),
+        (pick_mag1, outputnode, [('out_file', 'fmap_ref')]),
+        (unwrap, outputnode, [('masks', 'fmap_mask')]),
     ])
     # fmt: on
 
