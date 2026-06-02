@@ -39,7 +39,7 @@ INPUT_FIELDS = ('phase', 'magnitude', 'metadata')
 
 _MEDIC_DESC = """\
 A dynamic *B<sub>0</sub>* nonuniformity map was estimated from multi-echo
-magnitude and phase EPI series using MEDIC [@van2023medic], as implemented in
+magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
 ``warpkit``.
 """
 
