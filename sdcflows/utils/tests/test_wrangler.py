@@ -433,13 +433,20 @@ phasediff = {
 }
 
 
-def _build_medic_skeleton(*, with_intended_for: bool = True):
+def _build_medic_skeleton(*, intent: str | None = 'intended_for'):
     """Generate a 3-session × 3-echo × {mag,phase} BIDS skeleton for MEDIC.
 
-    When ``with_intended_for`` is ``True``, each complex BOLD carries an
-    ``IntendedFor`` listing all 6 mag/phase siblings in its session so the
-    wrangler picks the run up via the default discovery path. Setting it to
-    ``False`` produces the no-metadata case exercised by ``force_medic``.
+    MEDIC is discovered only from BIDS intent metadata, never from file
+    structure alone. ``intent`` selects how that intent is expressed on each
+    complex BOLD:
+
+    * ``"b0_identifier"`` — the BIDS-RECOMMENDED route: a self-referential
+      ``B0FieldIdentifier``/``B0FieldSource`` (the pattern BIDS endorses for
+      images that estimate their own B0 field).
+    * ``"intended_for"`` — the legacy route: ``IntendedFor`` listing the run's
+      6 mag/phase siblings.
+    * ``None`` — no intent metadata at all, to confirm MEDIC does **not** fire
+      on structure alone.
     """
     echo_times = {'1': 0.0142, '2': 0.03893, '3': 0.06366}
     sessions = []
@@ -461,8 +468,17 @@ def _build_medic_skeleton(*, with_intended_for: bool = True):
                     'TotalReadoutTime': 0.5,
                     'PhaseEncodingDirection': 'j',
                 }
-                if with_intended_for:
+                if intent == 'intended_for':
                     metadata['IntendedFor'] = intended_for
+                elif intent == 'b0_identifier':
+                    # Every mag+phase echo is an *input* to the estimation, so
+                    # all carry B0FieldIdentifier. Only the magnitude echoes are
+                    # *corrected* analysis targets, so B0FieldSource sits on mag
+                    # alone (the pepolar-style self-correction pattern).
+                    b0_id = f'medic_ses{ses}'
+                    metadata['B0FieldIdentifier'] = b0_id
+                    if part == 'mag':
+                        metadata['B0FieldSource'] = b0_id
                 func.append(
                     {
                         'task': 'rest',
@@ -482,8 +498,9 @@ def _build_medic_skeleton(*, with_intended_for: bool = True):
     return {'01': sessions}
 
 
-medic = _build_medic_skeleton()
-medic_no_intended_for = _build_medic_skeleton(with_intended_for=False)
+medic = _build_medic_skeleton(intent='intended_for')
+medic_b0_identifier = _build_medic_skeleton(intent='b0_identifier')
+medic_no_intent = _build_medic_skeleton(intent=None)
 
 
 filters = {
@@ -552,50 +569,43 @@ def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estim
     clear_registry()
 
 
-@pytest.mark.parametrize(
-    'force_medic, expected',
-    [
-        (False, 0),  # no IntendedFor, no B0FieldIdentifier → nothing found
-        (True, 3),  # ``force_medic`` discovers all three sessions
-    ],
-)
-def test_wrangler_force_medic_without_intended_for(tmp_path, force_medic, expected):
-    bids_dir = str(tmp_path / 'medic_no_intended')
-    generate_bids_skeleton(bids_dir, medic_no_intended_for)
+def test_wrangler_medic_no_intent_does_not_fire(tmp_path):
+    """Structure alone must not trigger MEDIC.
+
+    A complex multi-echo BOLD with no ``B0FieldIdentifier`` and no
+    ``IntendedFor`` carries no BIDS intent, so MEDIC must not be discovered
+    (``fmapless=False`` rules out the ANAT fallback, isolating the MEDIC path).
+    """
+    bids_dir = str(tmp_path / 'medic_no_intent')
+    generate_bids_skeleton(bids_dir, medic_no_intent)
     layout = gen_layout(bids_dir)
-    # ``fmapless=False`` disables the SyN-SDC ANAT fallback so this test only
-    # exercises the MEDIC discovery path.
-    est = find_estimators(layout=layout, subject='01', fmapless=False, force_medic=force_medic)
-    assert len(est) == expected
-    if force_medic:
-        # Each estimator should claim all 6 (3 echoes × {mag, phase}) for its session.
-        for estimator in est:
-            assert len(estimator.sources) == 6
+    est = find_estimators(layout=layout, subject='01', fmapless=False)
+    assert est == []
     clear_registry()
 
 
 @pytest.mark.parametrize(
-    ('skeleton', 'force_medic', 'expected'),
+    ('skeleton', 'no_medic', 'expected'),
     [
-        # A: IntendedFor present, default discovery picks up one MEDIC per session.
+        # A: BIDS-recommended route — self-referential B0FieldIdentifier.
+        (medic_b0_identifier, False, 3),
+        # B: legacy route — IntendedFor on the complex BOLD sidecars.
         (medic, False, 3),
-        # B: no IntendedFor + force_medic override picks up one MEDIC per session.
-        (medic_no_intended_for, True, 3),
-        # C: baseline — no IntendedFor, no override, no fmapless: nothing should fire.
-        (medic_no_intended_for, False, 0),
+        # C/D: ``no_medic`` suppresses discovery via either route.
+        (medic_b0_identifier, True, 0),
+        (medic, True, 0),
     ],
-    ids=['default-IntendedFor', 'force_medic', 'baseline-no-trigger'],
+    ids=['b0-identifier', 'intended-for', 'no_medic-b0', 'no_medic-intended-for'],
 )
-def test_wrangler_medic_trigger(tmp_path, skeleton, force_medic, expected):
-    """The three trigger modes of MEDIC discovery, side-by-side.
+def test_wrangler_medic_trigger(tmp_path, skeleton, no_medic, expected):
+    """Metadata-driven MEDIC discovery and the ``no_medic`` override.
 
-    * **default-IntendedFor**: complex BOLD sidecars carry ``IntendedFor`` and
-      the default discovery path picks them up.
-    * **force_medic**: sidecars carry no ``IntendedFor`` — the explicit flag
-      short-circuits the default gate.
-    * **baseline-no-trigger**: no metadata, no override, no fmapless fallback
-      — MEDIC must refuse to fire so that runs without the expected metadata
-      are not silently picked up.
+    * **b0-identifier**: complex BOLD carries a self-referential
+      ``B0FieldIdentifier`` (the BIDS-recommended route); discovered via Step 1.
+    * **intended-for**: complex BOLD carries ``IntendedFor`` (legacy route);
+      discovered via the dedicated MEDIC block.
+    * **no_medic-***: ``no_medic=True`` skips MEDIC via either route, so
+      nothing fires (``fmapless=False`` rules out the ANAT fallback).
     """
     bids_dir = str(tmp_path / 'medic_trigger')
     generate_bids_skeleton(bids_dir, skeleton)
@@ -604,13 +614,72 @@ def test_wrangler_medic_trigger(tmp_path, skeleton, force_medic, expected):
         layout=layout,
         subject='01',
         fmapless=False,
-        force_medic=force_medic,
+        no_medic=no_medic,
     )
     assert len(estimators) == expected
     for estimator in estimators:
         assert estimator.method.name == 'MEDIC'
         # 3 echoes × {mag, phase} per session.
         assert len(estimator.sources) == 6
+    clear_registry()
+
+
+def test_wrangler_medic_ordered_first(tmp_path):
+    """MEDIC precedes static estimators in the returned list.
+
+    Consumers (fMRIPrep) walk this list and select the first applicable
+    estimator per target, so a dynamic MEDIC estimator must come before a
+    coexisting static fieldmap. Here a PEPOLAR pair and a complex multi-echo
+    BOLD each carry their own ``B0FieldIdentifier``; both are discovered and
+    MEDIC must sort first regardless of ``B0FieldIdentifier`` iteration order.
+    """
+    skeleton = {
+        '01': [
+            {
+                'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
+                'func': [
+                    {
+                        'task': 'rest',
+                        'run': run,
+                        'suffix': 'bold',
+                        'metadata': {
+                            'RepetitionTime': 0.8,
+                            'TotalReadoutTime': 0.5,
+                            'PhaseEncodingDirection': ped,
+                            'B0FieldIdentifier': 'pepolar1',
+                            'B0FieldSource': 'pepolar1',
+                        },
+                    }
+                    for run, ped in ((1, 'j'), (2, 'j-'))
+                ]
+                + [
+                    {
+                        'task': 'medic',
+                        'echo': echo,
+                        'part': part,
+                        'suffix': 'bold',
+                        'metadata': {
+                            'EchoTime': te,
+                            'RepetitionTime': 0.8,
+                            'TotalReadoutTime': 0.5,
+                            'PhaseEncodingDirection': 'j',
+                            'B0FieldIdentifier': 'medic1',
+                            **({'B0FieldSource': 'medic1'} if part == 'mag' else {}),
+                        },
+                    }
+                    for echo, te in (('1', 0.0142), ('2', 0.0389))
+                    for part in ('mag', 'phase')
+                ],
+            }
+        ]
+    }
+    bids_dir = str(tmp_path / 'medic_first')
+    generate_bids_skeleton(bids_dir, skeleton)
+    layout = gen_layout(bids_dir)
+    estimators = find_estimators(layout=layout, subject='01', fmapless=False)
+    methods = [e.method.name for e in estimators]
+    assert methods[0] == 'MEDIC', methods
+    assert 'PEPOLAR' in methods
     clear_registry()
 
 
