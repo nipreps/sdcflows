@@ -1,7 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 #
-# Copyright 2025 The NiPreps Developers <nipreps@gmail.com>
+# Copyright The NiPreps Developers <nipreps@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -129,7 +129,6 @@ def init_dynamic_unwarp_wf(
     average = pe.Node(RobustAverage(mc_method=None), name='average')
     brainextraction_wf = init_brainextraction_wf()
 
-    # fmt: off
     workflow.connect([
         (inputnode, rotime, [('distorted', 'in_file'),
                              ('metadata', 'metadata')]),
@@ -144,8 +143,7 @@ def init_dynamic_unwarp_wf(
             ('outputnode.out_file', 'corrected_ref'),
             ('outputnode.out_mask', 'corrected_mask'),
         ]),
-    ])
-    # fmt: on
+    ])  # fmt:skip
 
     return workflow
 
@@ -157,7 +155,7 @@ def _dynamic_unwarp(distorted, fmap, pe_direction, readout_time, jacobian, num_t
     per-volume resampling to the same scipy-backed primitives that
     :class:`~sdcflows.transform.B0FieldTransform` uses for the static path.
     """
-    import os
+    from pathlib import Path
 
     from sdcflows.transform import apply_dynamic_unwarp
 
@@ -169,6 +167,6 @@ def _dynamic_unwarp(distorted, fmap, pe_direction, readout_time, jacobian, num_t
         jacobian=jacobian,
         num_threads=num_threads,
     )
-    out_file = os.path.abspath('corrected.nii.gz')
+    out_file = Path('corrected.nii.gz').absolute()
     resampled.to_filename(out_file)
     return out_file
