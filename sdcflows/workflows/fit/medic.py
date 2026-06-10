@@ -1,7 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 #
-# Copyright 2025 The NiPreps Developers <nipreps@gmail.com>
+# Copyright The NiPreps Developers <nipreps@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,20 +37,13 @@ from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
 INPUT_FIELDS = ('phase', 'magnitude', 'metadata')
 
-_MEDIC_DESC = """\
-A dynamic *B<sub>0</sub>* nonuniformity map was estimated from multi-echo
-magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
-``warpkit``.
-"""
-
 
 def init_medic_wf(
     omp_nthreads=1,
     sloppy=False,
     debug=False,
     name='medic_wf',
-    use_metadata_estimates=False,
-    fallback_total_readout_time=None,
+    **kwargs,
 ):
     """
     Estimate a fieldmap via MEDIC from multi-echo magnitude + phase EPI.
@@ -74,14 +67,6 @@ def init_medic_wf(
         Pass through to :class:`~sdcflows.interfaces.warpkit.UnwrapPhase`.
     name : :obj:`str`
         Workflow name.
-    use_metadata_estimates : :obj:`bool`
-        Accepted for parity with other ``init_*_wf`` constructors; currently
-        unused for MEDIC, which reads ``TotalReadoutTime`` straight from the
-        per-echo BIDS sidecars rather than going through
-        :func:`~sdcflows.utils.epimanip.get_trt`.
-    fallback_total_readout_time : :obj:`float`, optional
-        Accepted for parity with other ``init_*_wf`` constructors; currently
-        unused for MEDIC.
 
     Inputs
     ------
@@ -112,11 +97,14 @@ def init_medic_wf(
     # Project-internal imports only — none of these load warpkit at module
     # import time. The warpkit dependency is resolved lazily inside the
     # MEDIC interfaces at run time.
-    del sloppy, use_metadata_estimates, fallback_total_readout_time
     from ...interfaces.warpkit import ComputeFieldmap, UnwrapPhase
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = _MEDIC_DESC
+    workflow.__desc__ = """\
+A dynamic *B<sub>0</sub>* nonuniformity map was estimated from multi-echo
+magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
+``warpkit``.
+"""
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
