@@ -105,9 +105,9 @@ def test_medic_run(
 ):
     """End-to-end MEDIC run on a real multi-echo BOLD.
 
-    Skipped if ``warpkit`` is unavailable (default CI install) or if the
-    expected dataset is not present under ``$TEST_DATA_HOME``. To opt in,
-    install ``sdcflows[warpkit]`` and stage the dataset, e.g.
+    Skipped if ``warpkit`` is unavailable (e.g. Python 3.10) or if the
+    expected dataset is not present under ``$TEST_DATA_HOME``. To run it,
+    stage the dataset, e.g.
 
     .. code-block:: console
 

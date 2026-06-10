@@ -22,11 +22,11 @@
 #
 """MEDIC dynamic distortion correction (multi-echo phase + magnitude).
 
-Backed by `warpkit <https://github.com/vanandrew/warpkit>`__, which is an
-**optional** dependency carrying a Washington University non-commercial
-license. Installing ``sdcflows[warpkit]`` opts the user into those terms;
-the default ``sdcflows`` install never imports warpkit. Importing this
-module does not require warpkit — the dependency is only resolved when the
+Backed by `warpkit <https://github.com/vanandrew/warpkit>`__, a standard
+``sdcflows`` dependency (on Python >= 3.11) that carries a Washington
+University **non-commercial** license — commercial use requires a separate
+WUSTL OTM agreement. Importing this module does not require warpkit; the
+dependency is only resolved when the
 :class:`~sdcflows.interfaces.warpkit.UnwrapPhase` and
 :class:`~sdcflows.interfaces.warpkit.ComputeFieldmap` interfaces actually run.
 """

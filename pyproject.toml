@@ -35,6 +35,8 @@ dependencies = [
     "scipy >= 1.10",
     "templateflow >= 23.1",
     "toml >= 0.10",
+    # The marker keeps Python 3.10 installs working — warpkit requires >= 3.11.
+    "warpkit >= 1.2.2; python_version >= '3.11'",
 ]
 dynamic = ["version"]
 
@@ -74,16 +76,6 @@ test = [
     "pytest-cov >= 2.11",
     "pytest-env",
     "pytest-xdist >= 2.5",
-]
-
-# warpkit is a Washington University-licensed tool that powers the MEDIC
-# workflow. Its license permits non-commercial use only; commercial users
-# need a separate agreement with WUSTL OTM. Keep this extra opt-in and
-# DO NOT add it to the `all` alias below — the default install must remain
-# clean-Apache.
-# See: https://github.com/vanandrew/warpkit/blob/main/LICENSE
-warpkit = [
-    "warpkit >= 1.2.2; python_version >= '3.11'",
 ]
 
 # Aliases
