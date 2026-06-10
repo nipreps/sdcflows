@@ -1,7 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 #
-# Copyright 2025 The NiPreps Developers <nipreps@gmail.com>
+# Copyright The NiPreps Developers <nipreps@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,25 +28,6 @@ from pathlib import Path
 import pytest
 
 from ..medic import INPUT_FIELDS, _first, _unpack_metadata, init_medic_wf
-
-# A handful of timepoints is enough to exercise the full per-volume MEDIC
-# path; the source datasets ship 200+ volumes × 5 echoes × mag+phase, which
-# OOM-kills CI runners when xdist schedules these fixtures in parallel.
-_MEDIC_TEST_VOLUMES = 3
-
-
-def _truncate_to_volumes(in_files, volumes, dest):
-    import nibabel as nb
-
-    out = []
-    for f in in_files:
-        img = nb.load(str(f))
-        if img.shape[-1] > volumes:
-            img = img.slicer[..., :volumes]
-        new = dest / f.name
-        img.to_filename(new)
-        out.append(new)
-    return out
 
 
 def test_medic_construct():
@@ -118,25 +99,10 @@ def test_first_helper():
     assert _first([]) is None
 
 
-# Each entry is (dataset, mag_glob_under_dataset).
-# Add new fixtures here — the test self-skips when a dataset isn't on disk.
-MEDIC_FIXTURES = [
-    pytest.param(
-        'ds007637',
-        'sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz',
-        id='ds007637',
-    ),
-    pytest.param(
-        'ds006926',
-        'sub-a01/func/sub-a01_task-VisMot_acq-tr1800_echo-*_part-mag_bold.nii.gz',
-        id='ds006926',
-    ),
-]
-
-
 @pytest.mark.veryslow
-@pytest.mark.parametrize(('dataset', 'pattern'), MEDIC_FIXTURES)
-def test_medic_run(tmpdir, datadir, workdir, outdir, dataset, pattern):
+def test_medic_run(
+    tmpdir, datadir, workdir, outdir, medic_fixture, medic_test_volumes, truncate_to_volumes
+):
     """End-to-end MEDIC run on a real multi-echo BOLD.
 
     Skipped if ``warpkit`` is unavailable (default CI install) or if the
@@ -153,6 +119,7 @@ def test_medic_run(tmpdir, datadir, workdir, outdir, dataset, pattern):
     """
     pytest.importorskip('warpkit')
 
+    dataset, pattern = medic_fixture
     full_pattern = f'{dataset}/{pattern}'
     magnitude_files = sorted(Path(datadir).glob(full_pattern))
     if not magnitude_files:
@@ -166,8 +133,8 @@ def test_medic_run(tmpdir, datadir, workdir, outdir, dataset, pattern):
     tmpdir.chdir()
     trunc_dir = Path(str(tmpdir)) / 'trunc'
     trunc_dir.mkdir(exist_ok=True)
-    magnitude_files = _truncate_to_volumes(magnitude_files, _MEDIC_TEST_VOLUMES, trunc_dir)
-    phase_files = _truncate_to_volumes(phase_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+    magnitude_files = truncate_to_volumes(magnitude_files, medic_test_volumes, trunc_dir)
+    phase_files = truncate_to_volumes(phase_files, medic_test_volumes, trunc_dir)
 
     medic_wf = init_medic_wf(omp_nthreads=2)
     medic_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]

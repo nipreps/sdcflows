@@ -1,7 +1,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 #
-# Copyright 2025 The NiPreps Developers <nipreps@gmail.com>
+# Copyright The NiPreps Developers <nipreps@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,23 +28,6 @@ from pathlib import Path
 import pytest
 
 from ..dynamic import INPUT_FIELDS, init_dynamic_unwarp_wf
-
-# See test_medic._MEDIC_TEST_VOLUMES — keep these in sync.
-_MEDIC_TEST_VOLUMES = 3
-
-
-def _truncate_to_volumes(in_files, volumes, dest):
-    import nibabel as nb
-
-    out = []
-    for f in in_files:
-        img = nb.load(str(f))
-        if img.shape[-1] > volumes:
-            img = img.slicer[..., :volumes]
-        new = dest / f.name
-        img.to_filename(new)
-        out.append(new)
-    return out
 
 
 def test_dynamic_unwarp_construct():
@@ -147,25 +130,10 @@ def test_apply_dynamic_unwarp_matches_static(tmp_path, monkeypatch):
     assert np.allclose(out_data, expected, atol=1e-5)
 
 
-# Mirror of ``MEDIC_FIXTURES`` in ``test_medic.py``. Kept duplicated rather than
-# imported to avoid cross-test-module coupling; update both lists together.
-MEDIC_FIXTURES = [
-    pytest.param(
-        'ds007637',
-        'sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz',
-        id='ds007637',
-    ),
-    pytest.param(
-        'ds006926',
-        'sub-a01/func/sub-a01_task-VisMot_acq-tr1800_echo-*_part-mag_bold.nii.gz',
-        id='ds006926',
-    ),
-]
-
-
 @pytest.mark.veryslow
-@pytest.mark.parametrize(('dataset', 'pattern'), MEDIC_FIXTURES)
-def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
+def test_dynamic_unwarp_run(
+    tmpdir, datadir, workdir, medic_fixture, medic_test_volumes, truncate_to_volumes
+):
     """End-to-end run: estimate via MEDIC then apply via this workflow.
 
     Skipped without ``warpkit`` or without the multi-echo fixture under
@@ -175,6 +143,7 @@ def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
 
     from sdcflows.workflows.fit.medic import init_medic_wf
 
+    dataset, pattern = medic_fixture
     full_pattern = f'{dataset}/{pattern}'
     magnitude_files = sorted(Path(datadir).glob(full_pattern))
     if not magnitude_files:
@@ -188,8 +157,8 @@ def test_dynamic_unwarp_run(tmpdir, datadir, workdir, dataset, pattern):
     tmpdir.chdir()
     trunc_dir = Path(str(tmpdir)) / 'trunc'
     trunc_dir.mkdir(exist_ok=True)
-    magnitude_files = _truncate_to_volumes(magnitude_files, _MEDIC_TEST_VOLUMES, trunc_dir)
-    phase_files = _truncate_to_volumes(phase_files, _MEDIC_TEST_VOLUMES, trunc_dir)
+    magnitude_files = truncate_to_volumes(magnitude_files, medic_test_volumes, trunc_dir)
+    phase_files = truncate_to_volumes(phase_files, medic_test_volumes, trunc_dir)
 
     fit_wf = init_medic_wf(omp_nthreads=2)
     fit_wf.inputs.inputnode.magnitude = [str(f) for f in magnitude_files]
