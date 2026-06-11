@@ -167,6 +167,9 @@ def _dynamic_unwarp(distorted, fmap, pe_direction, readout_time, jacobian, num_t
         jacobian=jacobian,
         num_threads=num_threads,
     )
-    out_file = Path('corrected.nii.gz').absolute()
+    # Return a ``str`` (not ``Path``): nipype prunes a node's working dir to the
+    # files referenced by its string-valued outputs, so a ``PosixPath`` return
+    # leaves ``corrected.nii.gz`` unrecognized and it gets deleted post-run.
+    out_file = str(Path('corrected.nii.gz').absolute())
     resampled.to_filename(out_file)
     return out_file
