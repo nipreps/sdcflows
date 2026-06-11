@@ -60,19 +60,19 @@ def test_dynamic_unwarp_jacobian_flag_propagates():
     assert unwarp.inputs.jacobian is True
 
 
-def test_apply_dynamic_unwarp_matches_static(tmp_path, monkeypatch):
+def test_dynamic_unwarp_matches_static(tmp_path, monkeypatch):
     """For a 4D fmap with identical frames, per-volume resampling matches the
     static path frame-by-frame.
 
-    This pins :func:`sdcflows.transform.apply_dynamic_unwarp` to the same
-    Hz→VSM + scipy.ndimage convention as the rest of the codebase — if the
-    static path ever changes its sign or pe_info handling, this test catches
-    the drift.
+    This pins the pre-gridded :class:`sdcflows.transform.B0FieldTransform` path
+    to the same Hz→VSM + scipy.ndimage convention as the rest of the codebase —
+    if the static path ever changes its sign or pe_info handling, this test
+    catches the drift.
     """
     import nibabel as nb
     import numpy as np
 
-    from sdcflows.transform import _sdc_unwarp, apply_dynamic_unwarp
+    from sdcflows.transform import B0FieldTransform, _sdc_unwarp
     from sdcflows.utils.tools import ensure_positive_cosines
 
     monkeypatch.chdir(tmp_path)
@@ -91,9 +91,8 @@ def test_apply_dynamic_unwarp_matches_static(tmp_path, monkeypatch):
     nb.Nifti1Image(distorted, affine).to_filename(distorted_path)
     nb.Nifti1Image(fmap_4d, affine).to_filename(fmap_path)
 
-    resampled = apply_dynamic_unwarp(
+    resampled = B0FieldTransform(mapped=nb.load(str(fmap_path))).apply(
         str(distorted_path),
-        str(fmap_path),
         pe_dir='j',
         ro_time=0.1,
         jacobian=True,

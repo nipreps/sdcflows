@@ -151,17 +151,18 @@ def init_dynamic_unwarp_wf(
 def _dynamic_unwarp(distorted, fmap, pe_direction, readout_time, jacobian, num_threads):
     """Resample a 4D EPI through a per-frame 4D Hz fieldmap on the same grid.
 
-    Uses :func:`~sdcflows.transform.apply_dynamic_unwarp`, which delegates
-    per-volume resampling to the same scipy-backed primitives that
-    :class:`~sdcflows.transform.B0FieldTransform` uses for the static path.
+    The 4D fieldmap is handed to :class:`~sdcflows.transform.B0FieldTransform`
+    as a pre-gridded field (no B-spline reconstruction or coregistration), so it
+    flows through the same resampling machinery as the static path.
     """
     from pathlib import Path
 
-    from sdcflows.transform import apply_dynamic_unwarp
+    import nibabel as nb
 
-    resampled = apply_dynamic_unwarp(
+    from sdcflows.transform import B0FieldTransform
+
+    resampled = B0FieldTransform(mapped=nb.load(fmap)).apply(
         distorted,
-        fmap,
         pe_dir=pe_direction,
         ro_time=readout_time,
         jacobian=jacobian,
