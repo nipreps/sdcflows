@@ -139,7 +139,7 @@ class SelectPEVolumes(SimpleInterface):
             self.inputs.in_data,
             self.inputs.pe_dirs_fsl,
             self.inputs.readout_times,
-            strict=False,
+            strict=True,
         ):
             remaining = self.inputs.max_vols_per_pe - kept[pe_dir]
             if remaining <= 0:

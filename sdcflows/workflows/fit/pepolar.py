@@ -147,10 +147,8 @@ def init_topup_wf(
     )
     if fallback_total_readout_time is not None:
         readout_time.inputs.fallback = fallback_total_readout_time
-    # Keep only a few volumes per PE direction so topup is not overwhelmed
-    # FSL recommendation: (~3 spares/direction; extra pairs just increase runtime).
+    # Cap volumes per PE direction so topup isn't overwhelmed (FSL: ~3 spares/dir)
     # https://fsl.fmrib.ox.ac.uk/fsl/docs/diffusion/topup/users_guide/index.html
-    # Runs are split into volumes and the per-direction budget is filled in listed order.
     select_volumes = pe.Node(
         SelectPEVolumes(max_vols_per_pe=max_vols_per_pe), name='select_volumes'
     )
