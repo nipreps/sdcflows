@@ -238,21 +238,24 @@ def init_topup_wf(
         # fmt: on
         return workflow
 
-    from niworkflows.interfaces.nibabel import SplitSeries
-
     from sdcflows.interfaces.bspline import ApplyCoeffsField
 
-    # Separate the runs again, as our ApplyCoeffsField corrects them separately
-    split_blips = pe.Node(SplitSeries(), name='split_blips')
     unwarp = pe.Node(ApplyCoeffsField(jacobian=True), name='unwarp')
     unwarp.interface._always_run = True
     concat_corrected = pe.Node(MergeSeries(), name='concat_corrected')
+    convert_xfms = pe.Node(
+        niu.Function(function=_topup_mats_to_world, output_names=['out_xfms']),
+        name='convert_xfms',
+        run_without_submitting=True,
+    )
 
     # fmt:off
     workflow.connect([
-        (concat_blips, split_blips, [("out_file", "in_file")]),
-        (split_blips, unwarp, [("out_files", "in_data")]),
+        (concat_blips, unwarp, [("out_file", "in_data")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
+        (topup, convert_xfms, [("out_mats", "in_mats")]),
+        (to_las, convert_xfms, [("out_file", "in_reference")]),
+        (convert_xfms, unwarp, [("out_xfms", "in_xfms")]),
         (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
                                  ("pe_dirs", "pe_dir")]),
         (unwarp, outputnode, [("out_field", "fmap")]),
@@ -468,6 +471,23 @@ def _select_topup_config(in_file, sloppy=False):
         tier = '1'
 
     return str(load_data(f'flirtsch/b02b0_{tier}{"_quick" * sloppy}.cnf'))
+
+
+def _topup_mats_to_world(in_mats, in_reference):
+    """
+    Convert TOPUP's per-volume FSL motion matrices to world (RAS) affines.
+
+    ``in_reference`` MUST be the image TOPUP realigned (the LAS-reoriented input):
+    FSL matrices live in the voxel frame they were estimated in, so the same matrix
+    yields a different physical transform under a different orientation. The resulting
+    RAS-to-RAS affines are orientation-agnostic.
+    """
+    import nitransforms as nt
+
+    return [
+        nt.linear.load(mat, fmt='fsl', reference=in_reference, moving=in_reference).matrix.tolist()
+        for mat in in_mats
+    ]
 
 
 def _sorted_pe(inlist):
