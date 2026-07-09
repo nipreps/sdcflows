@@ -24,7 +24,54 @@
 
 from pathlib import Path
 
-from ..epi import SortPEBlips
+import nibabel as nb
+import numpy as np
+
+from ..epi import SelectPEVolumes, SortPEBlips
+
+
+def _write_epi(path, nvols):
+    shape = (4, 4, 4, nvols) if nvols > 1 else (4, 4, 4)
+    nb.Nifti1Image(np.zeros(shape, dtype='float32'), np.eye(4)).to_filename(path)
+    return str(path)
+
+
+def test_select_pe_volumes_caps(tmp_path, monkeypatch):
+    """At most ``max_vols_per_pe`` volumes are kept for each PE direction."""
+    monkeypatch.chdir(tmp_path)
+    ap = _write_epi(tmp_path / 'ap.nii.gz', 10)
+    pa = _write_epi(tmp_path / 'pa.nii.gz', 10)
+
+    result = SelectPEVolumes(
+        in_data=[ap, pa],
+        pe_dirs_fsl=['y', 'y-'],
+        readout_times=[0.05, 0.05],
+    ).run()
+
+    assert result.outputs.pe_dirs_fsl == ['y', 'y', 'y', 'y-', 'y-', 'y-']
+    assert result.outputs.readout_times == [0.05] * 6
+    assert all(nb.load(f).ndim == 3 for f in result.outputs.out_data)
+
+
+def test_select_pe_volumes_order(tmp_path, monkeypatch):
+    """The per-direction budget is filled across runs in the listed order."""
+    monkeypatch.chdir(tmp_path)
+    ap1 = _write_epi(tmp_path / 'ap1.nii.gz', 2)
+    ap2 = _write_epi(tmp_path / 'ap2.nii.gz', 5)
+    pa = _write_epi(tmp_path / 'pa.nii.gz', 5)
+
+    result = SelectPEVolumes(
+        in_data=[ap1, ap2, pa],
+        pe_dirs_fsl=['y', 'y', 'y-'],
+        readout_times=[0.05, 0.05, 0.05],
+        max_vols_per_pe=3,
+    ).run()
+
+    names = [Path(f).name for f in result.outputs.out_data]
+    assert result.outputs.pe_dirs_fsl == ['y', 'y', 'y', 'y-', 'y-', 'y-']
+    assert names[0].startswith('ap1') and names[1].startswith('ap1')
+    assert names[2].startswith('ap2')
+    assert names[3].startswith('pa')
 
 
 def test_sort_pe_blips(tmpdir):

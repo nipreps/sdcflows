@@ -22,26 +22,49 @@
 #
 """Test pepolar type of fieldmaps."""
 
-import pathlib
+from pathlib import Path
 
+import nibabel as nb
+import numpy as np
 import pytest
 from nipype.pipeline import engine as pe
 
-from ..pepolar import init_topup_wf
+from ..pepolar import _select_topup_config, init_topup_wf
 
 
 @pytest.mark.parametrize(
     'topup_config',
     [
-        None,
         '/path/to/custom.cnf',
-        pathlib.Path('/path/to/custom.cnf'),
+        Path('/path/to/custom.cnf'),
     ],
 )
 def test_topup_config(topup_config):
-    """Ensure the topup node always receives a str config, not a Path."""
+    """Ensure a custom topup config is passed to the node as a str, not a Path."""
     wf = init_topup_wf(topup_config=topup_config)
     assert isinstance(wf.get_node('topup').inputs.config, str), 'topup config must be str'
+
+
+@pytest.mark.parametrize(
+    ('shape', 'sloppy', 'expected'),
+    [
+        ((50, 50, 50), False, 'b02b0_2.cnf'),
+        ((51, 50, 50), False, 'b02b0_1.cnf'),
+        ((48, 48, 48), False, 'b02b0_4.cnf'),
+        ((50, 50, 50), True, 'b02b0_2_quick.cnf'),
+        ((51, 50, 50), True, 'b02b0_1_quick.cnf'),
+        ((48, 48, 48), True, 'b02b0_4_quick.cnf'),
+    ],
+)
+def test_select_topup_config(tmp_path, shape, sloppy, expected):
+    """The config selector picks an appropriate (optionally quick) config."""
+    in_file = tmp_path / 'epi.nii.gz'
+    nb.Nifti1Image(np.zeros(shape, dtype='float32'), np.eye(4)).to_filename(in_file)
+
+    selected = _select_topup_config(str(in_file), sloppy=sloppy)
+
+    assert Path(selected).name == expected
+    assert Path(selected).exists()
 
 
 @pytest.mark.slow

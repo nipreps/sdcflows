@@ -43,7 +43,7 @@ def init_topup_wf(
     debug=False,
     name='pepolar_estimate_wf',
     topup_config=None,
-    mc_method='AFNI',
+    max_vols_per_pe=3,
     **kwargs,
 ):
     """
@@ -90,8 +90,16 @@ def init_topup_wf(
         The path of mask corresponding to the ``fmap_ref`` output.
     fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`
         The path(s) of the B-Spline coefficients supporting the fieldmap.
+    xfms : :obj:`list` of :obj:`str`
+        The path(s) of the per-volume head-motion estimates.
+    out_warps : :obj:`list` of :obj:`str`
+        The path(s) of the per-volume displacement fields.
+    jacobians : :obj:`list` of :obj:`str`
+        The path(s) of the Jacobian determinant maps.
     method: :obj:`str`
         Short description of the estimation method that was run.
+    topup_config : :obj:`str`
+        The path of the config file used for TOPUP.
 
     """
     from nipype.interfaces.fsl.epi import TOPUP
@@ -99,8 +107,8 @@ def init_topup_wf(
     from niworkflows.interfaces.nibabel import MergeSeries, ReorientImage
 
     from ...interfaces.bspline import TOPUPCoeffReorient
-    from ...interfaces.epi import GetReadoutTime, SortPEBlips
-    from ...interfaces.utils import PadSlices, ReorientImageAndMetadata, UniformGrid
+    from ...interfaces.epi import GetReadoutTime, SelectPEVolumes, SortPEBlips
+    from ...interfaces.utils import ReorientImageAndMetadata, UniformGrid
     from ...utils.misc import front as _front
     from ..ancillary import init_brainextraction_wf
 
@@ -108,11 +116,6 @@ def init_topup_wf(
     workflow.__desc__ = f"""\
 {_PEPOLAR_DESC} with `topup` (@topup; FSL {TOPUP().version}).
 """
-
-    if topup_config is None:
-        topup_config = data.load(f'flirtsch/b02b0{"_quick" * sloppy}.cnf')
-    else:
-        workflow.__desc__ += ' A custom `topup` configuration file was used.'
 
     inputnode = pe.Node(niu.IdentityInterface(fields=INPUT_FIELDS), name='inputnode')
     outputnode = pe.Node(
@@ -126,6 +129,7 @@ def init_topup_wf(
                 'xfms',
                 'out_warps',
                 'method',
+                'topup_config',
             ]
         ),
         name='outputnode',
@@ -143,11 +147,10 @@ def init_topup_wf(
     )
     if fallback_total_readout_time is not None:
         readout_time.inputs.fallback = fallback_total_readout_time
-    # Average each run so that topup is not overwhelmed (see #279)
-    runwise_avg = pe.MapNode(
-        RobustAverage(num_threads=omp_nthreads),
-        name='runwise_avg',
-        iterfield='in_file',
+    # Cap volumes per PE direction so topup isn't overwhelmed (FSL: ~3 spares/dir)
+    # https://fsl.fmrib.ox.ac.uk/fsl/docs/diffusion/topup/users_guide/index.html
+    select_volumes = pe.Node(
+        SelectPEVolumes(max_vols_per_pe=max_vols_per_pe), name='select_volumes'
     )
     # Regrid all to the reference (grid_reference=0 means first averaged run)
     regrid = pe.Node(UniformGrid(reference=grid_reference), name='regrid')
@@ -155,22 +158,11 @@ def init_topup_wf(
     sort_pe_blips = pe.Node(SortPEBlips(), name='sort_pe_blips', run_without_submitting=True)
     # Merge into one 4D file
     concat_blips = pe.Node(MergeSeries(affine_tolerance=1e-4), name='concat_blips')
-    # Pad dimensions so that they meet TOPUP's expectations
-    pad_blip_slices = pe.Node(PadSlices(), name='pad_blip_slices')
-    # uses RobustAverage for consistency and to generate
-    # debugging artifacts (typically, one wants to look at the average across uncorrected runs)
-    # default to use AFNI's 3dvolreg, but allow for FSL MCFLIRT.
-    setwise_avg = pe.Node(
-        RobustAverage(mc_method=mc_method, num_threads=omp_nthreads),
-        name='setwise_avg',
-    )
-    # The core of the implementation
     # Feed the input images in LAS orientation, so FSL does not run funky reorientations
     to_las = pe.Node(ReorientImageAndMetadata(target_orientation='LAS'), name='to_las')
-    topup = pe.Node(
-        TOPUP(config=str(topup_config)),
-        name='topup',
-    )
+    # TOPUP will jointly estimate head motion and susceptibility distortion using the
+    # default configuration files.
+    topup = pe.Node(TOPUP(), name='topup')
     # "Generalize" topup coefficients and store them in a spatially-correct NIfTI file
     fix_coeff = pe.Node(TOPUPCoeffReorient(), name='fix_coeff', run_without_submitting=True)
 
@@ -180,21 +172,20 @@ def init_topup_wf(
     # Sophisticated brain extraction of fMRIPrep
     brainextraction_wf = init_brainextraction_wf()
 
-    # fmt: off
     workflow.connect([
-        (inputnode, runwise_avg, [("in_data", "in_file")]),
-        (inputnode, readout_time, [("metadata", "metadata")]),
-        (runwise_avg, regrid, [("out_file", "in_data")]),
-        (regrid, readout_time, [("out_data", "in_file")]),
+        (inputnode, readout_time, [("in_data", "in_file"),
+                                   ("metadata", "metadata")]),
+        (inputnode, select_volumes, [("in_data", "in_data")]),
+        (readout_time, select_volumes, [("pe_dir_fsl", "pe_dirs_fsl"),
+                                        ("readout_time", "readout_times")]),
+        (select_volumes, regrid, [("out_data", "in_data")]),
+        (select_volumes, sort_pe_blips, [("pe_dirs_fsl", "pe_dirs_fsl"),
+                                         ("readout_times", "readout_times")]),
         (regrid, sort_pe_blips, [("out_data", "in_data")]),
-        (readout_time, sort_pe_blips, [("readout_time", "readout_times"),
-                                       ("pe_dir_fsl", "pe_dirs_fsl")]),
         (sort_pe_blips, topup, [("readout_times", "readout_times")]),
-        (setwise_avg, fix_coeff, [("out_file", "fmap_ref")]),
+        (regrid, fix_coeff, [("reference", "fmap_ref")]),
         (sort_pe_blips, concat_blips, [("out_data", "in_files")]),
-        (concat_blips, pad_blip_slices, [("out_file", "in_file")]),
-        (pad_blip_slices, setwise_avg, [("out_file", "in_file")]),
-        (setwise_avg, to_las, [("out_hmc_volumes", "in_file")]),
+        (concat_blips, to_las, [("out_file", "in_file")]),
         (sort_pe_blips, to_las, [("pe_dirs_fsl", "pe_dir")]),
         (to_las, topup, [
             ("out_file", "in_file"),
@@ -210,8 +201,25 @@ def init_topup_wf(
             ("outputnode.out_mask", "fmap_mask")
         ]),
         (fix_coeff, outputnode, [("out_coeff", "fmap_coeff")]),
-    ])
-    # fmt: on
+    ])  # fmt: skip
+
+    # When no custom config is given, select the fastest appropriate config at runtime
+    if topup_config:
+        topup.inputs.config = str(topup_config)
+        workflow.__desc__ += ' A custom `topup` configuration file was used.'
+        outputnode.inputs.topup_config = str(topup_config)
+    else:
+        select_config = pe.Node(
+            niu.Function(function=_select_topup_config, output_names=['config']),
+            name='select_config',
+            run_without_submitting=True,
+        )
+        select_config.inputs.sloppy = sloppy
+        workflow.connect([
+            (to_las, select_config, [('out_file', 'in_file')]),
+            (select_config, topup, [('config', 'config')]),
+            (select_config, outputnode, [('config', 'topup_config')]),
+        ])  # fmt: skip
 
     if not debug:
         # Roll orientation back to original
@@ -219,8 +227,8 @@ def init_topup_wf(
         from_las_fmap = pe.Node(ReorientImage(), name='from_las_fmap')
         # fmt: off
         workflow.connect([
-            (setwise_avg, from_las, [("out_file", "target_file")]),
-            (setwise_avg, from_las_fmap, [("out_file", "target_file")]),
+            (regrid, from_las, [("reference", "target_file")]),
+            (regrid, from_las_fmap, [("reference", "target_file")]),
             (topup, from_las, [("out_corrected", "in_file")]),
             (from_las, ref_average, [("out_file", "in_file")]),
             (topup, from_las_fmap, [("out_field", "in_file")]),
@@ -232,15 +240,22 @@ def init_topup_wf(
 
     from sdcflows.interfaces.bspline import ApplyCoeffsField
 
-    # Separate the runs again, as our ApplyCoeffsField corrects them separately
     unwarp = pe.Node(ApplyCoeffsField(jacobian=True), name='unwarp')
     unwarp.interface._always_run = True
     concat_corrected = pe.Node(MergeSeries(), name='concat_corrected')
+    convert_xfms = pe.Node(
+        niu.Function(function=_topup_mats_to_world, output_names=['out_xfms']),
+        name='convert_xfms',
+        run_without_submitting=True,
+    )
 
     # fmt:off
     workflow.connect([
+        (concat_blips, unwarp, [("out_file", "in_data")]),
         (fix_coeff, unwarp, [("out_coeff", "in_coeff")]),
-        (setwise_avg, unwarp, [("out_hmc_volumes", "in_data")]),
+        (topup, convert_xfms, [("out_mats", "in_mats")]),
+        (to_las, convert_xfms, [("out_file", "in_reference")]),
+        (convert_xfms, unwarp, [("out_xfms", "in_xfms")]),
         (sort_pe_blips, unwarp, [("readout_times", "ro_time"),
                                  ("pe_dirs", "pe_dir")]),
         (unwarp, outputnode, [("out_field", "fmap")]),
@@ -397,6 +412,82 @@ def init_3dQwarp_wf(omp_nthreads=1, debug=False, name='pepolar_estimate_wf'):
     ])
     # fmt: on
     return workflow
+
+
+def _select_topup_config(in_file, sloppy=False):
+    """
+    Pick an appropriate ``topup`` configuration for the input grid.
+
+    TOPUP's ``--subsamp`` schedule collapses a ``s x s x s`` neighborhood into a
+    single voxel at each level, so *every* image dimension must be divisible by the
+    subsampling factor ``s`` used at that level (otherwise TOPUP errors out or
+    segfaults). Previously, the workaround was zero-padding the troublesome dimensions
+    to an even number of slices; however, later TOPUP releases conceded this was not ideal
+    and now recommend using the config file that best matches the grid.
+
+    The three stock configs differ **only** in two parameters; every other setting is identical:
+
+    +----------------+---------------------------+-----------------------------+
+    | config         | ``--subsamp``             | ``--lambda``                |
+    |                | (max factor → constraint) | (regularization weight)     |
+    +================+===========================+=============================+
+    | ``b02b0_1``    | ``1,1,1,1,1,1,1,1,1``     | ``0.0005, 0.0001, ...``     |
+    |                | (no subsampling; any dim) |                             |
+    +----------------+---------------------------+-----------------------------+
+    | ``b02b0_2``    | ``2,2,2,2,2,1,1,1,1``     | ``0.005, 0.001, ...``       |
+    |                | (all dims divisible by 2) |                             |
+    +----------------+---------------------------+-----------------------------+
+    | ``b02b0_4``    | ``4,4,2,2,2,1,1,1,1``     | ``0.035, 0.006, ...``       |
+    |                | (all dims divisible by 4) |                             |
+    +----------------+---------------------------+-----------------------------+
+
+    Coarser subsampling needs a heavier initial regularization weight (hence the
+    larger leading ``--lambda`` values), which is why each tier ships its own
+    ``--lambda`` schedule rather than reusing a single one. Aggressiveness (and
+    therefore speed) increases down the table, at the cost of a stricter
+    divisibility requirement, so we pick the largest factor the grid allows:
+
+    * all dimensions divisible by four → ``b02b0_4.cnf`` (fastest)
+    * all dimensions even → ``b02b0_2.cnf``
+    * otherwise (any odd dimension) → ``b02b0_1.cnf`` (always safe)
+
+    When ``sloppy`` is ``True``, the corresponding ``_quick`` variant is returned.
+    The ``_quick`` configs are 3-level versions of the above
+    (``--subsamp`` = ``1,1,1`` / ``2,2,2`` / ``4,2,1`` respectively) that keep the
+    same per-tier ``--lambda`` tiering and estimate motion only in the first two
+    levels (``--estmov=1,1,0``) to trade accuracy for speed in debug runs.
+
+    """
+    import nibabel as nb
+
+    from sdcflows.data import load as load_data
+
+    dims = nb.load(in_file).shape[:3]
+    if all(d % 4 == 0 for d in dims):
+        tier = '4'
+    elif all(d % 2 == 0 for d in dims):
+        tier = '2'
+    else:
+        tier = '1'
+
+    return str(load_data(f'flirtsch/b02b0_{tier}{"_quick" * sloppy}.cnf'))
+
+
+def _topup_mats_to_world(in_mats, in_reference):
+    """
+    Convert TOPUP's per-volume FSL motion matrices to world (RAS) affines.
+
+    ``in_reference`` MUST be the image TOPUP realigned (the LAS-reoriented input):
+    FSL matrices live in the voxel frame they were estimated in, so the same matrix
+    yields a different physical transform under a different orientation. The resulting
+    RAS-to-RAS affines are orientation-agnostic.
+    """
+    import nitransforms as nt
+
+    return [
+        nt.linear.load(mat, fmt='fsl', reference=in_reference, moving=in_reference).matrix.tolist()
+        for mat in in_mats
+    ]
 
 
 def _sorted_pe(inlist):
