@@ -320,6 +320,7 @@
 <span class="c1">#</span>
 <span class="sd">&quot;&quot;&quot;Utilities.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.ants.segmentation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -343,6 +344,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.utils.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reorient_pedir</span>
 
 <span class="n">OBLIQUE_THRESHOLD_DEG</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.interface&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_FlattenInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
@@ -431,6 +433,7 @@
         <span class="n">refaff</span> <span class="o">=</span> <span class="n">refnii</span><span class="o">.</span><span class="n">affine</span>
 
         <span class="n">resampler</span> <span class="o">=</span> <span class="n">Affine</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">refnii</span><span class="p">)</span>
+        <span class="n">resampled</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Catch differing rotational affines</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">retval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -446,12 +449,26 @@
                     <span class="n">nii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">refaff</span><span class="p">,</span> <span class="n">nii</span><span class="o">.</span><span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
                 <span class="k">continue</span>
 
+            <span class="c1"># The input is genuinely on a different sampling grid and must be resampled.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">affine</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">refaff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]):</span>
+                <span class="n">resampled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
             <span class="c1"># Hack around nitransforms&#39; unsafe cast by dropping get_data_dtype that conflicts</span>
             <span class="c1"># with effective dtype</span>
             <span class="c1"># NT23_0_1: Isssue in nitransforms.base.TransformBase.apply</span>
             <span class="n">regridded_img</span> <span class="o">=</span> <span class="n">resampler</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">nii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">),</span> <span class="n">nii</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span>
             <span class="c1"># Restore the original on-disk data type</span>
             <span class="n">nii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">regridded_img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">refaff</span><span class="p">,</span> <span class="n">nii</span><span class="o">.</span><span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">resampled</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s1">&#39;UniformGrid resampled </span><span class="si">%d</span><span class="s1"> input image(s) onto the reference grid because &#39;</span>
+                <span class="s1">&#39;they were not on a common sampling grid: </span><span class="si">%s</span><span class="s1">. When feeding TOPUP, the total &#39;</span>
+                <span class="s1">&#39;readout time is referenced to the original acquisition grid, so resampling &#39;</span>
+                <span class="s1">&#39;opposing phase-encoding runs that differ in matrix size or voxel spacing may &#39;</span>
+                <span class="s1">&#39;bias the estimated field. Verify that these inputs belong together.&#39;</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">resampled</span><span class="p">),</span>
+                <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resampled</span><span class="p">),</span>
+            <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">retval</span>
 

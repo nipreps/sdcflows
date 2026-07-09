@@ -343,7 +343,7 @@
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pepolar_estimate_wf&#39;</span><span class="p">,</span>
     <span class="n">topup_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">mc_method</span><span class="o">=</span><span class="s1">&#39;AFNI&#39;</span><span class="p">,</span>
+    <span class="n">max_vols_per_pe</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -390,8 +390,16 @@
 <span class="sd">        The path of mask corresponding to the ``fmap_ref`` output.</span>
 <span class="sd">    fmap_coeff : :obj:`str` or :obj:`list` of :obj:`str`</span>
 <span class="sd">        The path(s) of the B-Spline coefficients supporting the fieldmap.</span>
+<span class="sd">    xfms : :obj:`list` of :obj:`str`</span>
+<span class="sd">        The path(s) of the per-volume head-motion estimates.</span>
+<span class="sd">    out_warps : :obj:`list` of :obj:`str`</span>
+<span class="sd">        The path(s) of the per-volume displacement fields.</span>
+<span class="sd">    jacobians : :obj:`list` of :obj:`str`</span>
+<span class="sd">        The path(s) of the Jacobian determinant maps.</span>
 <span class="sd">    method: :obj:`str`</span>
 <span class="sd">        Short description of the estimation method that was run.</span>
+<span class="sd">    topup_config : :obj:`str`</span>
+<span class="sd">        The path of the config file used for TOPUP.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.fsl.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOPUP</span>
@@ -399,8 +407,8 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOPUPCoeffReorient</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SortPEBlips</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PadSlices</span><span class="p">,</span> <span class="n">ReorientImageAndMetadata</span><span class="p">,</span> <span class="n">UniformGrid</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">GetReadoutTime</span><span class="p">,</span> <span class="n">SelectPEVolumes</span><span class="p">,</span> <span class="n">SortPEBlips</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">...interfaces.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReorientImageAndMetadata</span><span class="p">,</span> <span class="n">UniformGrid</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">front</span> <span class="k">as</span> <span class="n">_front</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..ancillary</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
@@ -408,11 +416,6 @@
     <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> with `topup` (@topup; FSL </span><span class="si">{</span><span class="n">TOPUP</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">).</span>
 <span class="s2">&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">topup_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">topup_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0</span><span class="si">{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">&#39; A custom `topup` configuration file was used.&#39;</span>
 
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
@@ -426,6 +429,7 @@
                 <span class="s1">&#39;xfms&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;out_warps&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;method&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;topup_config&#39;</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
@@ -443,11 +447,10 @@
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">readout_time</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback_total_readout_time</span>
-    <span class="c1"># Average each run so that topup is not overwhelmed (see #279)</span>
-    <span class="n">runwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
-        <span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;runwise_avg&#39;</span><span class="p">,</span>
-        <span class="n">iterfield</span><span class="o">=</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span>
+    <span class="c1"># Cap volumes per PE direction so topup isn&#39;t overwhelmed (FSL: ~3 spares/dir)</span>
+    <span class="c1"># https://fsl.fmrib.ox.ac.uk/fsl/docs/diffusion/topup/users_guide/index.html</span>
+    <span class="n">select_volumes</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">SelectPEVolumes</span><span class="p">(</span><span class="n">max_vols_per_pe</span><span class="o">=</span><span class="n">max_vols_per_pe</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;select_volumes&#39;</span>
     <span class="p">)</span>
     <span class="c1"># Regrid all to the reference (grid_reference=0 means first averaged run)</span>
     <span class="n">regrid</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">UniformGrid</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">grid_reference</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;regrid&#39;</span><span class="p">)</span>
@@ -455,22 +458,11 @@
     <span class="n">sort_pe_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SortPEBlips</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sort_pe_blips&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Merge into one 4D file</span>
     <span class="n">concat_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(</span><span class="n">affine_tolerance</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat_blips&#39;</span><span class="p">)</span>
-    <span class="c1"># Pad dimensions so that they meet TOPUP&#39;s expectations</span>
-    <span class="n">pad_blip_slices</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">PadSlices</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pad_blip_slices&#39;</span><span class="p">)</span>
-    <span class="c1"># uses RobustAverage for consistency and to generate</span>
-    <span class="c1"># debugging artifacts (typically, one wants to look at the average across uncorrected runs)</span>
-    <span class="c1"># default to use AFNI&#39;s 3dvolreg, but allow for FSL MCFLIRT.</span>
-    <span class="n">setwise_avg</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">RobustAverage</span><span class="p">(</span><span class="n">mc_method</span><span class="o">=</span><span class="n">mc_method</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;setwise_avg&#39;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="c1"># The core of the implementation</span>
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
     <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">&#39;LAS&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_las&#39;</span><span class="p">)</span>
-    <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">TOPUP</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;topup&#39;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="c1"># TOPUP will jointly estimate head motion and susceptibility distortion using the</span>
+    <span class="c1"># default configuration files.</span>
+    <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUP</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;topup&#39;</span><span class="p">)</span>
     <span class="c1"># &quot;Generalize&quot; topup coefficients and store them in a spatially-correct NIfTI file</span>
     <span class="n">fix_coeff</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUPCoeffReorient</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fix_coeff&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -480,21 +472,20 @@
     <span class="c1"># Sophisticated brain extraction of fMRIPrep</span>
     <span class="n">brainextraction_wf</span> <span class="o">=</span> <span class="n">init_brainextraction_wf</span><span class="p">()</span>
 
-    <span class="c1"># fmt: off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">runwise_avg</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">runwise_avg</span><span class="p">,</span> <span class="n">regrid</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
+                                   <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dir_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">),</span>
+                                        <span class="p">(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">regrid</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">),</span>
+                                         <span class="p">(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">),</span>
-                                       <span class="p">(</span><span class="s2">&quot;pe_dir_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">concat_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">pad_blip_slices</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">pad_blip_slices</span><span class="p">,</span> <span class="n">setwise_avg</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_hmc_volumes&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[</span>
             <span class="p">(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
@@ -510,8 +501,25 @@
             <span class="p">(</span><span class="s2">&quot;outputnode.out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">)</span>
         <span class="p">]),</span>
         <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">)]),</span>
-    <span class="p">])</span>
-    <span class="c1"># fmt: on</span>
+    <span class="p">])</span>  <span class="c1"># fmt: skip</span>
+
+    <span class="c1"># When no custom config is given, select the fastest appropriate config at runtime</span>
+    <span class="k">if</span> <span class="n">topup_config</span><span class="p">:</span>
+        <span class="n">topup</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">&#39; A custom `topup` configuration file was used.&#39;</span>
+        <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">topup_config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">select_config</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+            <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_select_topup_config</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;select_config&#39;</span><span class="p">,</span>
+            <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">select_config</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">sloppy</span> <span class="o">=</span> <span class="n">sloppy</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
+            <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">select_config</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;topup_config&#39;</span><span class="p">)]),</span>
+        <span class="p">])</span>  <span class="c1"># fmt: skip</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">debug</span><span class="p">:</span>
         <span class="c1"># Roll orientation back to original</span>
@@ -519,8 +527,8 @@
         <span class="n">from_las_fmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;from_las_fmap&#39;</span><span class="p">)</span>
         <span class="c1"># fmt: off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
             <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
             <span class="p">(</span><span class="n">from_las</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
             <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
@@ -532,15 +540,22 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
-    <span class="c1"># Separate the runs again, as our ApplyCoeffsField corrects them separately</span>
     <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unwarp&#39;</span><span class="p">)</span>
     <span class="n">unwarp</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">concat_corrected</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat_corrected&#39;</span><span class="p">)</span>
+    <span class="n">convert_xfms</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_topup_mats_to_world</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_xfms&#39;</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;convert_xfms&#39;</span><span class="p">,</span>
+        <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
+        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">setwise_avg</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_hmc_volumes&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_mats&quot;</span><span class="p">,</span> <span class="s2">&quot;in_mats&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_reference&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">convert_xfms</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_xfms&quot;</span><span class="p">,</span> <span class="s2">&quot;in_xfms&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
                                  <span class="p">(</span><span class="s2">&quot;pe_dirs&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
@@ -701,6 +716,82 @@
     <span class="c1"># fmt: on</span>
     <span class="k">return</span> <span class="n">workflow</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_select_topup_config</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pick an appropriate ``topup`` configuration for the input grid.</span>
+
+<span class="sd">    TOPUP&#39;s ``--subsamp`` schedule collapses a ``s x s x s`` neighborhood into a</span>
+<span class="sd">    single voxel at each level, so *every* image dimension must be divisible by the</span>
+<span class="sd">    subsampling factor ``s`` used at that level (otherwise TOPUP errors out or</span>
+<span class="sd">    segfaults). Previously, the workaround was zero-padding the troublesome dimensions</span>
+<span class="sd">    to an even number of slices; however, later TOPUP releases conceded this was not ideal</span>
+<span class="sd">    and now recommend using the config file that best matches the grid.</span>
+
+<span class="sd">    The three stock configs differ **only** in two parameters; every other setting is identical:</span>
+
+<span class="sd">    +----------------+---------------------------+-----------------------------+</span>
+<span class="sd">    | config         | ``--subsamp``             | ``--lambda``                |</span>
+<span class="sd">    |                | (max factor → constraint) | (regularization weight)     |</span>
+<span class="sd">    +================+===========================+=============================+</span>
+<span class="sd">    | ``b02b0_1``    | ``1,1,1,1,1,1,1,1,1``     | ``0.0005, 0.0001, ...``     |</span>
+<span class="sd">    |                | (no subsampling; any dim) |                             |</span>
+<span class="sd">    +----------------+---------------------------+-----------------------------+</span>
+<span class="sd">    | ``b02b0_2``    | ``2,2,2,2,2,1,1,1,1``     | ``0.005, 0.001, ...``       |</span>
+<span class="sd">    |                | (all dims divisible by 2) |                             |</span>
+<span class="sd">    +----------------+---------------------------+-----------------------------+</span>
+<span class="sd">    | ``b02b0_4``    | ``4,4,2,2,2,1,1,1,1``     | ``0.035, 0.006, ...``       |</span>
+<span class="sd">    |                | (all dims divisible by 4) |                             |</span>
+<span class="sd">    +----------------+---------------------------+-----------------------------+</span>
+
+<span class="sd">    Coarser subsampling needs a heavier initial regularization weight (hence the</span>
+<span class="sd">    larger leading ``--lambda`` values), which is why each tier ships its own</span>
+<span class="sd">    ``--lambda`` schedule rather than reusing a single one. Aggressiveness (and</span>
+<span class="sd">    therefore speed) increases down the table, at the cost of a stricter</span>
+<span class="sd">    divisibility requirement, so we pick the largest factor the grid allows:</span>
+
+<span class="sd">    * all dimensions divisible by four → ``b02b0_4.cnf`` (fastest)</span>
+<span class="sd">    * all dimensions even → ``b02b0_2.cnf``</span>
+<span class="sd">    * otherwise (any odd dimension) → ``b02b0_1.cnf`` (always safe)</span>
+
+<span class="sd">    When ``sloppy`` is ``True``, the corresponding ``_quick`` variant is returned.</span>
+<span class="sd">    The ``_quick`` configs are 3-level versions of the above</span>
+<span class="sd">    (``--subsamp`` = ``1,1,1`` / ``2,2,2`` / ``4,2,1`` respectively) that keep the</span>
+<span class="sd">    same per-tier ``--lambda`` tiering and estimate motion only in the first two</span>
+<span class="sd">    levels (``--estmov=1,1,0``) to trade accuracy for speed in debug runs.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span> <span class="k">as</span> <span class="n">load_data</span>
+
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">d</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">):</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;4&#39;</span>
+    <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">d</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">):</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">load_data</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0_</span><span class="si">{</span><span class="n">tier</span><span class="si">}{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_topup_mats_to_world</span><span class="p">(</span><span class="n">in_mats</span><span class="p">,</span> <span class="n">in_reference</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert TOPUP&#39;s per-volume FSL motion matrices to world (RAS) affines.</span>
+
+<span class="sd">    ``in_reference`` MUST be the image TOPUP realigned (the LAS-reoriented input):</span>
+<span class="sd">    FSL matrices live in the voxel frame they were estimated in, so the same matrix</span>
+<span class="sd">    yields a different physical transform under a different orientation. The resulting</span>
+<span class="sd">    RAS-to-RAS affines are orientation-agnostic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nitransforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nt</span>
+
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;fsl&#39;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">in_reference</span><span class="p">,</span> <span class="n">moving</span><span class="o">=</span><span class="n">in_reference</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">mat</span> <span class="ow">in</span> <span class="n">in_mats</span>
+    <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sorted_pe</span><span class="p">(</span><span class="n">inlist</span><span class="p">):</span>

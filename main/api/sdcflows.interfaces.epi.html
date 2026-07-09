@@ -308,7 +308,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.epi.GetReadoutTime">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.epi.</span></span><span class="sig-name descname"><span class="pre">GetReadoutTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/epi.html#GetReadoutTime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.epi.GetReadoutTime" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.base.core.html#nipype.interfaces.base.core.SimpleInterface" title="(in nipype v1.11.1.dev8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.base.core.html#nipype.interfaces.base.core.SimpleInterface" title="(in nipype v1.11.1.dev9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></a></p>
 <p>Calculate the readout time from available metadata.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Mandatory Inputs<span class="colon">:</span></dt>
@@ -333,9 +333,47 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="sdcflows.interfaces.epi.SelectPEVolumes">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.epi.</span></span><span class="sig-name descname"><span class="pre">SelectPEVolumes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/epi.html#SelectPEVolumes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.epi.SelectPEVolumes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.base.core.html#nipype.interfaces.base.core.SimpleInterface" title="(in nipype v1.11.1.dev9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></a></p>
+<p>Limit the data fed into TOPUP to a few volumes per phase-encoding direction.</p>
+<p>FSL’s <code class="docutils literal notranslate"><span class="pre">topup</span></code> documentation recommends acquiring (and using) only a handful
+of volumes per PE direction, kept as “spares” against intra-volume motion that
+<code class="docutils literal notranslate"><span class="pre">topup</span></code>’s own movement model then resolves. It also notes that passing more than a
+single opposing pair <em>“doesn’t seem to make any difference, and only means that
+topup takes longer to run”</em>.</p>
+<p>This interface walks the input runs in the order they are listed, splits any 4D
+runs into their constituent 3D volumes, and keeps at most <code class="docutils literal notranslate"><span class="pre">max_vols_per_pe</span></code>
+volumes for each PE direction (e.g. 3 blip-up and 3 blip-down). Once a
+direction’s budget is full, any remaining volumes — and any additional runs of
+the same polarity — are dropped. Per-volume PE directions and readout times are
+propagated so that <code class="docutils literal notranslate"><span class="pre">topup</span></code> receives one acquisition-parameters row per volume.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Mandatory Inputs<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – List of input EPI files (3D or 4D), in the order they were listed.</p></li>
+<li><p><strong>pe_dirs_fsl</strong> (<em>a list of items which are ‘x’ or ‘x-’ or ‘y’ or ‘y-’ or ‘z’ or ‘z-’</em>) – Per-file PE directions, in FSL’s conventions.</p></li>
+<li><p><strong>readout_times</strong> (<em>a list of items which are a float</em>) – Per-file total readout times.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Optional Inputs<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>max_vols_per_pe</strong> (<em>an integer</em>) – Maximum number of volumes to keep for each PE direction.
+(Nipype <strong>default</strong> value: <code class="docutils literal notranslate"><span class="pre">3</span></code>)</p>
+</dd>
+<dt class="field-odd">Outputs<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_data</strong> (<em>a list of items which are a pathlike object or string representing an existing file</em>) – Selected 3D volumes.</p></li>
+<li><p><strong>pe_dirs_fsl</strong> (<em>a list of items which are ‘x’ or ‘x-’ or ‘y’ or ‘y-’ or ‘z’ or ‘z-’</em>) – Per-volume PE directions, in FSL’s conventions.</p></li>
+<li><p><strong>readout_times</strong> (<em>a list of items which are a float</em>) – Per-volume total readout times.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.interfaces.epi.SortPEBlips">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sdcflows.interfaces.epi.</span></span><span class="sig-name descname"><span class="pre">SortPEBlips</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_monitor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/interfaces/epi.html#SortPEBlips"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.interfaces.epi.SortPEBlips" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.base.core.html#nipype.interfaces.base.core.SimpleInterface" title="(in nipype v1.11.1.dev8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.base.core.html#nipype.interfaces.base.core.SimpleInterface" title="(in nipype v1.11.1.dev9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleInterface</span></code></a></p>
 <p>Sort PE blips so they are consistently fed into TOPUP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Mandatory Inputs<span class="colon">:</span></dt>
@@ -415,6 +453,7 @@
             <ul>
 <li><a class="reference internal" href="#">sdcflows.interfaces.epi module</a><ul>
 <li><a class="reference internal" href="#sdcflows.interfaces.epi.GetReadoutTime"><code class="docutils literal notranslate"><span class="pre">GetReadoutTime</span></code></a></li>
+<li><a class="reference internal" href="#sdcflows.interfaces.epi.SelectPEVolumes"><code class="docutils literal notranslate"><span class="pre">SelectPEVolumes</span></code></a></li>
 <li><a class="reference internal" href="#sdcflows.interfaces.epi.SortPEBlips"><code class="docutils literal notranslate"><span class="pre">SortPEBlips</span></code></a></li>
 </ul>
 </li>

@@ -308,7 +308,7 @@
 <p><p>SDCFlows 0+unknown</p>
 <p>Estimate fieldmaps available in a BIDS-compliant MRI dataset.</p>
 </p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">sdcflows</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">version</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span>
+<div class="highlight-default notranslate" id="sdcflows"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">sdcflows</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">version</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">participant</span><span class="o">-</span><span class="n">label</span> <span class="n">PARTICIPANT_LABEL</span> <span class="p">[</span><span class="n">PARTICIPANT_LABEL</span> <span class="o">...</span><span class="p">]]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">session</span><span class="o">-</span><span class="n">label</span> <span class="p">[</span><span class="n">SESSION_LABEL</span> <span class="o">...</span><span class="p">]]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">bids</span><span class="o">-</span><span class="nb">filter</span><span class="o">-</span><span class="n">file</span> <span class="n">PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">bids</span><span class="o">-</span><span class="n">database</span><span class="o">-</span><span class="nb">dir</span> <span class="n">PATH</span><span class="p">]</span>
@@ -320,8 +320,8 @@
                 <span class="p">{</span><span class="n">participant</span><span class="p">,</span><span class="n">group</span><span class="p">}</span> <span class="p">[{</span><span class="n">participant</span><span class="p">,</span><span class="n">group</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
 </pre></div>
 </div>
-<section id="sdcflows.cli.parser-_parser-positional-arguments">
-<h2>Positional Arguments<a class="headerlink" href="#sdcflows.cli.parser-_parser-positional-arguments" title="Link to this heading">¶</a></h2>
+<section id="sdcflows-positional-arguments">
+<span id="sdcflows.cli.parser-_parser-positional-arguments"></span><h2>Positional Arguments<a class="headerlink" href="#sdcflows-positional-arguments" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>bids_dir</kbd></dt>
 <dd><p>The root folder of a BIDS valid dataset (sub-XXXXX folders should be found at the top level in this folder).</p>
@@ -335,8 +335,8 @@
 </dd>
 </dl>
 </section>
-<section id="sdcflows.cli.parser-_parser-named-arguments">
-<h2>Named Arguments<a class="headerlink" href="#sdcflows.cli.parser-_parser-named-arguments" title="Link to this heading">¶</a></h2>
+<section id="sdcflows-named-arguments">
+<span id="sdcflows.cli.parser-_parser-named-arguments"></span><h2>Named Arguments<a class="headerlink" href="#sdcflows-named-arguments" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--version</kbd></dt>
 <dd><p>show program’s version number and exit</p>
@@ -347,8 +347,8 @@
 </dd>
 </dl>
 </section>
-<section id="sdcflows.cli.parser-_parser-options-related-to-bids">
-<h2>Options related to BIDS<a class="headerlink" href="#sdcflows.cli.parser-_parser-options-related-to-bids" title="Link to this heading">¶</a></h2>
+<section id="sdcflows-options-related-to-bids">
+<span id="sdcflows.cli.parser-_parser-options-related-to-bids"></span><h2>Options related to BIDS<a class="headerlink" href="#sdcflows-options-related-to-bids" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--participant-label</kbd></dt>
 <dd><p>A space delimited list of participant identifiers or a single identifier (the sub- prefix can be removed).</p>
@@ -368,8 +368,8 @@
 </dd>
 </dl>
 </section>
-<section id="sdcflows.cli.parser-_parser-options-to-handle-performance">
-<h2>Options to handle performance<a class="headerlink" href="#sdcflows.cli.parser-_parser-options-to-handle-performance" title="Link to this heading">¶</a></h2>
+<section id="sdcflows-options-to-handle-performance">
+<span id="sdcflows.cli.parser-_parser-options-to-handle-performance"></span><h2>Options to handle performance<a class="headerlink" href="#sdcflows-options-to-handle-performance" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>--nprocs</kbd></dt>
 <dd><p>Maximum number of simultaneously running parallel processes executed by <em>SDCFlows</em> (e.g., several instances of ANTs’ registration). However, when <code class="docutils literal notranslate"><span class="pre">--nprocs</span></code> is greater or equal to the <code class="docutils literal notranslate"><span class="pre">--omp-nthreads</span></code> option, it also sets the maximum number of threads that simultaneously running processes may aggregate (meaning, with <code class="docutils literal notranslate"><span class="pre">--nprocs</span> <span class="pre">16</span> <span class="pre">--omp-nthreads</span> <span class="pre">8</span></code> a maximum of two 8-CPU-threaded processes will be running at a given time). Under this mode of operation, <code class="docutils literal notranslate"><span class="pre">--nprocs</span></code> sets the maximum number of processors that can be assigned work within an <em>SDCFlows</em> job, which includes all the processors used by currently running single- and multi-threaded processes. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the number of CPUs available will be automatically assigned (which may not be what you want in, e.g., shared systems like a HPC cluster.</p>
@@ -394,8 +394,8 @@
 </dd>
 </dl>
 </section>
-<section id="sdcflows.cli.parser-_parser-instrumental-options">
-<h2>Instrumental options<a class="headerlink" href="#sdcflows.cli.parser-_parser-instrumental-options" title="Link to this heading">¶</a></h2>
+<section id="sdcflows-instrumental-options">
+<span id="sdcflows.cli.parser-_parser-instrumental-options"></span><h2>Instrumental options<a class="headerlink" href="#sdcflows-instrumental-options" title="Link to this heading">¶</a></h2>
 <dl class="option-list">
 <dt><kbd>-w, --work-dir</kbd></dt>
 <dd><p>Path where intermediate results should be stored.</p>
@@ -476,11 +476,11 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Standalone command line usage</a><ul>
-<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-positional-arguments">Positional Arguments</a></li>
-<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-named-arguments">Named Arguments</a></li>
-<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-options-related-to-bids">Options related to BIDS</a></li>
-<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-options-to-handle-performance">Options to handle performance</a></li>
-<li><a class="reference internal" href="#sdcflows.cli.parser-_parser-instrumental-options">Instrumental options</a></li>
+<li><a class="reference internal" href="#sdcflows-positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#sdcflows-named-arguments">Named Arguments</a></li>
+<li><a class="reference internal" href="#sdcflows-options-related-to-bids">Options related to BIDS</a></li>
+<li><a class="reference internal" href="#sdcflows-options-to-handle-performance">Options to handle performance</a></li>
+<li><a class="reference internal" href="#sdcflows-instrumental-options">Instrumental options</a></li>
 </ul>
 </li>
 </ul>
