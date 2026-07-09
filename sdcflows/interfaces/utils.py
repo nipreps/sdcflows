@@ -130,7 +130,7 @@ class UniformGrid(SimpleInterface):
         refaff = refnii.affine
 
         resampler = Affine(reference=refnii)
-        resampled = []
+        resampled = []  # Catch differing rotational affines
         for i, fname in enumerate(self.inputs.in_data):
             if retval[i] is not None:
                 continue
@@ -147,7 +147,8 @@ class UniformGrid(SimpleInterface):
                 continue
 
             # The input is genuinely on a different sampling grid and must be resampled.
-            resampled.append(fname)
+            if not np.allclose(nii.affine[:3, :3], refaff[:3, :3]):
+                resampled.append(fname)
             # Hack around nitransforms' unsafe cast by dropping get_data_dtype that conflicts
             # with effective dtype
             # NT23_0_1: Isssue in nitransforms.base.TransformBase.apply
