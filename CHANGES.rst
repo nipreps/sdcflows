@@ -1,3 +1,16 @@
+2.16.0 (July 20, 2026)
+======================
+Feature release in the 2.16.x series.
+
+This release includes a bug fix and a few enhancements - most prominently it
+couples head-motion and susceptibility distortion estimation within TOPUP,
+improving PEPOLAR fieldmap estimation for subjects with high head motion.
+
+* ENH: Couple head motion and susceptibility distortion within TOPUP (#548)
+* ENH: Bring-your-own topup config (#539)
+* FIX: Defer check of file existence to workflow build stage (#520)
+
+
 2.15.0 (September 26, 2025)
 ===========================
 Feature release in the 2.15.x series.
