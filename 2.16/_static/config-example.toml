@@ -1,0 +1,53 @@
+[environment]
+cpu_count = 36
+exec_env = "posix"
+free_mem = 13.7
+overcommit_policy = "heuristic"
+overcommit_limit = "50%"
+nipype_version = "1.8.7.dev0"
+templateflow_version = "23.0.0"
+total_memory = 62.51573181152344
+version = "2.6.1.dev5+gaa86b0b08f.d20231128"
+
+[execution]
+ants_float = false
+bids_dir = "/data/datasets/hcph"
+bids_database_dir = "/data/datasets/hcph/.bids-index"
+bids_database_wipe = false
+cwd = "/home/oesteban/tmp/sdcflows-hcph"
+debug = false
+dry_run = false
+layout = "BIDS Layout: .../data/datasets/hcph | Subjects: 1 | Sessions: 59 | Runs: 4"
+log_dir = "/home/oesteban/tmp/sdcflows-hcph/out/logs"
+log_level = 15
+notrack = false
+output_dir = "/home/oesteban/tmp/sdcflows-hcph/out"
+participant_label = [ "001",]
+pdb = false
+run_uuid = "20231129-112254_e9d6d38e-35ff-463e-9f7e-1ff15ecd54ac"
+templateflow_home = "/data/templateflow"
+work_dir = "/home/oesteban/tmp/sdcflows-hcph/work"
+write_graph = false
+
+[workflow]
+analysis_level = [ "participant",]
+fmapless = false
+species = "human"
+template_id = "MNI152NLin2009cAsym"
+
+[nipype]
+crashfile_format = "txt"
+get_linked_libs = false
+local_hash_check = true
+nprocs = 8
+omp_nthreads = 16
+plugin = "MultiProc"
+remove_node_directories = false
+resource_monitor = false
+stop_on_first_crash = true
+
+[execution.bids_filters]
+
+[nipype.plugin_args]
+maxtasksperchild = 1
+raise_insufficient = false

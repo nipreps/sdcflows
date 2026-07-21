@@ -1,0 +1,6 @@
+sdcflows.interfaces.brainmask module
+====================================
+
+.. automodule:: sdcflows.interfaces.brainmask
+   :members:
+   :show-inheritance:

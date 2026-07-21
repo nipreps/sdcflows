@@ -1,0 +1,6 @@
+sdcflows.utils.telemetry module
+===============================
+
+.. automodule:: sdcflows.utils.telemetry
+   :members:
+   :show-inheritance:

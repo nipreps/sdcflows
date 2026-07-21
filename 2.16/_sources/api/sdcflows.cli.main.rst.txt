@@ -1,0 +1,6 @@
+sdcflows.cli.main module
+========================
+
+.. automodule:: sdcflows.cli.main
+   :members:
+   :show-inheritance:
