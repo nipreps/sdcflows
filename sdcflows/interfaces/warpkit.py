@@ -41,7 +41,6 @@ from nipype.interfaces.base import (
     OutputMultiObject,
     SimpleInterface,
     TraitedSpec,
-    isdefined,
     traits,
 )
 
@@ -65,7 +64,9 @@ class _UnwrapPhaseInputSpec(BaseInterfaceInputSpec):
     echo_times = traits.List(traits.Float, xor=['metadata'])
     metadata = InputMultiObject(File(exists=True), xor=['echo_times'])
     out_prefix = traits.Str('unwrap', usedefault=True)
-    n_cpus = traits.Int(4, usedefault=True)
+    num_threads = traits.Int(
+        1, usedefault=True, nohash=True, desc='Number of threads to use for unwrapping'
+    )
     wrap_limit = traits.Bool(False, usedefault=True)
     debug = traits.Bool(False, usedefault=True)
 
@@ -85,19 +86,16 @@ class UnwrapPhase(WarpkitBaseInterface, SimpleInterface):
         from warpkit.api import unwrap_phase
 
         out_prefix = os.path.join(runtime.cwd, self.inputs.out_prefix)
-        try:
-            result = unwrap_phase(
-                phase=list(self.inputs.phase),
-                magnitude=list(self.inputs.magnitude),
-                out_prefix=out_prefix,
-                tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
-                metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
-                n_cpus=self.inputs.n_cpus,
-                wrap_limit=self.inputs.wrap_limit,
-                debug=self.inputs.debug,
-            )
-        except ValueError as e:
-            raise RuntimeError(str(e)) from e
+        result = unwrap_phase(
+            phase=self.inputs.phase,
+            magnitude=self.inputs.magnitude,
+            out_prefix=out_prefix,
+            tes=self.inputs.echo_times or None,
+            metadata=self.inputs.metadata or None,
+            n_cpus=self.inputs.num_threads,
+            wrap_limit=self.inputs.wrap_limit,
+            debug=self.inputs.debug,
+        )
 
         self._results['unwrapped'] = [str(p) for p in result.unwrapped]
         self._results['masks'] = str(result.masks)
@@ -136,8 +134,13 @@ class _ComputeFieldmapInputSpec(BaseInterfaceInputSpec):
         usedefault=True,
         desc='SVD components for the two-pass border filter',
     )
-    svd_filt = traits.Int(10, usedefault=True)
-    n_cpus = traits.Int(4, usedefault=True)
+    svd_filt = traits.Int(10, usedefault=True, desc='Number of singular values to truncate to')
+    num_threads = traits.Int(
+        1,
+        usedefault=True,
+        nohash=True,
+        desc='Number of threads to use for estimating the fieldmap',
+    )
 
 
 class _ComputeFieldmapOutputSpec(TraitedSpec):
@@ -156,30 +159,19 @@ class ComputeFieldmap(WarpkitBaseInterface, SimpleInterface):
         from warpkit.api import compute_fieldmap
 
         out_prefix = os.path.join(runtime.cwd, self.inputs.out_prefix)
-        try:
-            result = compute_fieldmap(
-                unwrapped=list(self.inputs.unwrapped),
-                magnitude=list(self.inputs.magnitude),
-                masks=self.inputs.masks,
-                out_prefix=out_prefix,
-                tes=(list(self.inputs.echo_times) if isdefined(self.inputs.echo_times) else None),
-                total_readout_time=(
-                    self.inputs.total_readout_time
-                    if isdefined(self.inputs.total_readout_time)
-                    else None
-                ),
-                phase_encoding_direction=(
-                    self.inputs.phase_encoding_direction
-                    if isdefined(self.inputs.phase_encoding_direction)
-                    else None
-                ),
-                metadata=(list(self.inputs.metadata) if isdefined(self.inputs.metadata) else None),
-                border_filt=tuple(self.inputs.border_filt),
-                svd_filt=self.inputs.svd_filt,
-                n_cpus=self.inputs.n_cpus,
-            )
-        except ValueError as e:
-            raise RuntimeError(str(e)) from e
+        result = compute_fieldmap(
+            unwrapped=self.inputs.unwrapped,
+            magnitude=self.inputs.magnitude,
+            masks=self.inputs.masks,
+            out_prefix=out_prefix,
+            tes=self.inputs.echo_times or None,
+            total_readout_time=self.inputs.total_readout_time or None,
+            phase_encoding_direction=self.inputs.phase_encoding_direction or None,
+            metadata=self.inputs.metadata or None,
+            border_filt=self.inputs.border_filt,
+            svd_filt=self.inputs.svd_filt,
+            n_cpus=self.inputs.num_threads,
+        )
 
         self._results['fieldmap_native'] = str(result.fieldmap_native)
         self._results['displacement_map'] = str(result.displacement_map)

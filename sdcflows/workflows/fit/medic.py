@@ -137,7 +137,7 @@ magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
     # ComputeFieldmap then consumes. The one-shot MEDIC interface bundles
     # both but doesn't materially differ for the fieldmap outputs we need.
     unwrap = pe.Node(
-        UnwrapPhase(n_cpus=omp_nthreads, debug=debug),
+        UnwrapPhase(debug=debug),
         name='unwrap',
         n_procs=omp_nthreads,
     )
@@ -145,7 +145,7 @@ magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
     # ComputeFieldmap doesn't expose a ``debug`` input — only UnwrapPhase
     # does, so the asymmetry is intentional.
     compute_fmap = pe.Node(
-        ComputeFieldmap(n_cpus=omp_nthreads),
+        ComputeFieldmap(),
         name='compute_fmap',
         n_procs=omp_nthreads,
     )
