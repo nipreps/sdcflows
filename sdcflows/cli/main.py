@@ -70,6 +70,7 @@ def main(argv=None):
                 layout=config.execution.layout,
                 subject=subject,
                 fmapless=config.workflow.fmapless,
+                no_medic=config.workflow.no_medic,
                 logger=config.loggers.cli,
             )
 

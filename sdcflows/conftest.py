@@ -41,10 +41,17 @@ test_output_dir = os.getenv('TEST_OUTPUT_DIR')
 test_workdir = os.getenv('TEST_WORK_DIR')
 _sloppy_mode = os.getenv('TEST_PRODUCTION', 'off').lower() not in ('on', '1', 'true', 'yes', 'y')
 
+# MEDIC fixtures live in full OpenNeuro trees (tens of thousands of JSON
+# sidecars) but only a few files are actually fetched via ``datalad get``.
+# Indexing those trees with ``BIDSLayout(derivatives=True)`` at collection
+# time stalled CI past the 20-minute tox watchdog. The MEDIC tests reach
+# their files via the ``datadir`` fixture directly, not via ``layouts``.
+_SKIP_LAYOUTS = {'ds006926', 'ds007637'}
+
 layouts = {
     p.name: BIDSLayout(str(p), validate=False, derivatives=True)
     for p in Path(test_data_env).glob('*')
-    if p.is_dir()
+    if p.is_dir() and p.name not in _SKIP_LAYOUTS
 }
 
 data_dir = Path(__file__).parent / 'tests' / 'data'
@@ -128,3 +135,52 @@ def dsA_dir():
 @pytest.fixture
 def sloppy_mode():
     return _sloppy_mode
+
+
+# MEDIC end-to-end fixtures, shared by the fit (``test_medic``) and apply
+# (``test_dynamic``) test modules. A handful of timepoints is enough to
+# exercise the full per-volume path; the source datasets ship 200+ volumes ×
+# 5 echoes × mag+phase, which OOM-kills CI runners when xdist schedules these
+# in parallel.
+_MEDIC_DATASETS = [
+    pytest.param(
+        (
+            'ds007637',
+            'sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz',
+        ),
+        id='ds007637',
+    ),
+    pytest.param(
+        ('ds006926', 'sub-a01/func/sub-a01_task-VisMot_acq-tr1800_echo-*_part-mag_bold.nii.gz'),
+        id='ds006926',
+    ),
+]
+
+
+@pytest.fixture
+def medic_test_volumes():
+    return 3
+
+
+@pytest.fixture(params=_MEDIC_DATASETS)
+def medic_fixture(request):
+    """Yield ``(dataset, mag_glob_under_dataset)`` for each MEDIC fixture."""
+    return request.param
+
+
+@pytest.fixture
+def truncate_to_volumes():
+    """Return a helper that slices 4D NIfTIs down to ``volumes`` timepoints."""
+
+    def _truncate(in_files, volumes, dest):
+        out = []
+        for f in in_files:
+            img = nibabel.load(str(f))
+            if img.shape[-1] > volumes:
+                img = img.slicer[..., :volumes]
+            new = dest / f.name
+            img.to_filename(new)
+            out.append(new)
+        return out
+
+    return _truncate

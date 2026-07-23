@@ -35,6 +35,8 @@ dependencies = [
     "scipy >= 1.10",
     "templateflow >= 23.1",
     "toml >= 0.10",
+    # The marker keeps Python 3.10 installs working — warpkit requires >= 3.11.
+    "warpkit >= 1.4.1; python_version >= '3.11'",
 ]
 dynamic = ["version"]
 

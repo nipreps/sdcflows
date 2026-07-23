@@ -55,6 +55,7 @@ class EstimatorType(Enum):
     PHASEDIFF = auto()
     MAPPED = auto()
     ANAT = auto()
+    MEDIC = auto()
 
 
 MODALITIES = {
@@ -75,6 +76,12 @@ MODALITIES = {
     'T2w': EstimatorType.ANAT,
 }
 
+# Estimator types that emit a per-volume 4D fieldmap on the EPI grid (and
+# therefore do not produce B-spline coefficients). Add new dynamic methods
+# here so consumers — ``init_fmap_preproc_wf`` in particular — pick them up
+# without per-method branching.
+_DYNAMIC_METHODS = frozenset({EstimatorType.MEDIC})
+
 
 def _type_setter(obj, attribute, value):
     """Make sure the type of estimation is not changed."""
@@ -88,6 +95,7 @@ def _type_setter(obj, attribute, value):
         EstimatorType.PHASEDIFF,
         EstimatorType.MAPPED,
         EstimatorType.ANAT,
+        EstimatorType.MEDIC,
     ):
         raise ValueError(f'Invalid estimation method type {value}.')
 
@@ -338,6 +346,36 @@ class FieldmapEstimation:
         suffix_list = [f.suffix for f in self.sources]
         suffix_set = set(suffix_list)
 
+        # Fieldmap option 0: MEDIC — multi-echo phase + magnitude
+        # ``bold`` / ``epi`` sources tagged with the BIDS ``part-{phase,mag}``
+        # entity. PEPOLAR uses ``dir-`` instead, so the part entity is the
+        # cleanest way to disambiguate.
+        parts = {f.entities.get('part') for f in self.sources}
+        medic_parts = parts & {'phase', 'mag'}
+        if suffix_set <= {'bold', 'epi', 'sbref'} and medic_parts:
+            # Any sources is ``part``-tagged: this is a MEDIC-shaped input.
+            # Reject incomplete sets explicitly rather than letting them slip
+            # through to the PEPOLAR branch and produce a confusing failure.
+            if parts != {'phase', 'mag'}:
+                raise ValueError(
+                    'MEDIC requires every source to be tagged ``part-mag`` or '
+                    '``part-phase``, with both present; got '
+                    f'parts={sorted(str(p) for p in parts)!r}.'
+                )
+            phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
+            mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
+            if len(phase_files) < 2:
+                raise ValueError(
+                    f'MEDIC requires at least two echoes of phase data; got {len(phase_files)}.'
+                )
+            if len(phase_files) != len(mag_files):
+                raise ValueError(
+                    f'MEDIC requires matched magnitude/phase pairs per echo; '
+                    f'got {len(phase_files)} phase and {len(mag_files)} '
+                    'magnitude file(s).'
+                )
+            self.method = EstimatorType.MEDIC
+
         # Fieldmap option 1: actual field-mapping sequences
         fmap_types = suffix_set.intersection(('fieldmap', 'phasediff', 'phase1', 'phase2'))
         if len(fmap_types) > 1 and fmap_types - {'phase1', 'phase2'}:
@@ -399,7 +437,7 @@ class FieldmapEstimation:
             > 1
         )
 
-        if _pepolar_estimation and not anat_types:
+        if self.method == EstimatorType.UNKNOWN and _pepolar_estimation and not anat_types:
             self.method = MODALITIES[pepolar_types.pop()]
             _pe = {f.metadata['PhaseEncodingDirection'] for f in self.sources}
             if len(_pe) == 1:
@@ -455,6 +493,11 @@ class FieldmapEstimation:
         # special characters are not allowed.
         self.sanitized_id = re.sub(r'[^a-zA-Z0-9]', '_', self.bids_id)
 
+    @property
+    def is_dynamic(self) -> bool:
+        """The estimator emits a per-volume 4D fieldmap and no B-spline coefficients."""
+        return self.method in _DYNAMIC_METHODS
+
     def paths(self):
         """Return a tuple of paths that are sorted."""
         return tuple(sorted(str(f.path) for f in self.sources))
@@ -502,6 +545,28 @@ class FieldmapEstimation:
             from .workflows.fit.syn import init_syn_sdc_wf
 
             self._wf = init_syn_sdc_wf(**kwargs)
+        elif self.method == EstimatorType.MEDIC:
+            from .workflows.fit.medic import init_medic_wf
+
+            for f in self.sources:
+                if not f.path.is_file():
+                    raise FileNotFoundError(
+                        f'File path <{f.path}> does not exist, '
+                        'is a broken link, or it is not a file'
+                    )
+
+            self._wf = init_medic_wf(**kwargs)
+
+            if set_inputs:
+                phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
+                mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
+                # Order both lists by EchoTime so warpkit gets aligned echo
+                # series. BIDS does not guarantee echo entity == numeric order.
+                phase_files = sorted(phase_files, key=lambda f: f.metadata['EchoTime'])
+                mag_files = sorted(mag_files, key=lambda f: f.metadata['EchoTime'])
+                self._wf.inputs.inputnode.phase = [str(f.path.absolute()) for f in phase_files]
+                self._wf.inputs.inputnode.magnitude = [str(f.path.absolute()) for f in mag_files]
+                self._wf.inputs.inputnode.metadata = [f.metadata for f in phase_files]
 
         return self._wf
 

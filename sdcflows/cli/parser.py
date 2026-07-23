@@ -248,6 +248,14 @@ not be what you want in, e.g., shared systems like a HPC cluster.""",
         help='Allow fieldmap-less estimation',
     )
     g_outputs.add_argument(
+        '--no-medic',
+        action='store_true',
+        dest='no_medic',
+        default=False,
+        help='Disable MEDIC discovery (by default MEDIC takes priority for '
+        'complex multi-echo BOLD)',
+    )
+    g_outputs.add_argument(
         '--use-plugin',
         action='store',
         default=None,

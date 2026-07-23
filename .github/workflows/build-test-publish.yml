@@ -85,6 +85,15 @@ jobs:
             dependencies: "pre"
 
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false
+        swap-storage: false
     - uses: actions/checkout@v5
     - uses: actions/cache@v4
       with:
@@ -161,7 +170,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v2
+        key: data-cache-v3
         restore-keys: |
           data-cache-
     - name: Install test data
@@ -205,6 +214,16 @@ jobs:
         datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
         datalad update -r --merge -d hcph-pilot_fieldmaps/
         datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
+
+        # ds006926 — MEDIC multi-echo mag+phase BOLD (sub-a01 only)
+        datalad install -r https://github.com/OpenNeuroDatasets/ds006926.git
+        datalad update -r --merge -d ds006926/
+        datalad get -r -J 2 -d ds006926/ ds006926/sub-a01/func/sub-a01_task-VisMot_acq-tr1800_*
+
+        # ds007637 — MEDIC multi-echo mag+phase BOLD (sub-04/ses-2 fracback only)
+        datalad install -r https://github.com/OpenNeuroDatasets/ds007637.git
+        datalad update -r --merge -d ds007637/
+        datalad get -r -J 2 -d ds007637/ ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-phase_bold.nii.gz
 
     - name: Set FreeSurfer variables
       run: |
