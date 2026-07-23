@@ -591,11 +591,18 @@ def _resample_with_fieldmap(
 ):
     """Resample ``moving`` through an on-grid Hz fieldmap (3D or 4D).
 
-    Shared core of :meth:`B0FieldTransform.apply`. The caller is responsible
-    for producing ``fmap_hz`` already on the ``moving`` grid — B-spline
-    reconstruction plus coregistration for static estimators, or a pre-gridded
-    per-frame field for dynamic estimators — and for ensuring ``moving`` has
-    positive cosines.
+    Shared core of :meth:`B0FieldTransform.apply`. ``fmap_hz`` must be:
+
+    * **co-gridded with** ``moving`` — sampled on the same voxel lattice, so the
+      per-voxel ``fmap_hz * ro_time`` scaling and the coordinate shift broadcast
+      element-wise; and
+    * valued in the **undistorted (target) sense** — one Hz value per *output*
+      voxel (the field at the true location that maps to that voxel).
+
+    Producing such a field is the caller's job — B-spline reconstruction plus
+    coregistration for static estimators, or a pre-gridded per-frame field for
+    dynamic estimators (e.g. MEDIC). The caller must also ensure ``moving`` is
+    reoriented to positive direction cosines (RAS-style axis polarity).
 
     A 3D ``fmap_hz`` is shared across all EPI volumes; a 4D ``fmap_hz`` carries
     one Hz volume per EPI frame and must match the number of volumes.
