@@ -13,13 +13,12 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Recognition",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
+requires-python = ">=3.12"
 license = "Apache-2.0"
-requires-python = ">=3.10"
 dependencies = [
     "acres >= 0.5.0",
     "attrs >= 20.1.0",
@@ -73,7 +72,7 @@ test = [
     "pytest >= 8.1",
     "pytest-cov >= 2.11",
     "pytest-env",
-    "pytest-xdist >= 2.5",
+    "pytest-xdist >= 3.3",
 ]
 
 # Aliases
