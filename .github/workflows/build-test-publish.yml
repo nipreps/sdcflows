@@ -191,7 +191,7 @@ jobs:
         datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
 
         # Brain extraction tests
-        datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
+        datalad install -r https://github.com/nipreps-data/brain-extraction-tests
         datalad update --merge -d brain-extraction-tests/
         datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
 
