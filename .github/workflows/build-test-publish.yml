@@ -48,9 +48,79 @@ jobs:
           fetch-depth: 0
       - uses: hynek/build-and-inspect-python-package@v2
 
+  cache-test-data:
+    if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
+    runs-on: ubuntu-latest
+    env:
+      TEST_DATA_HOME: /home/runner/sdcflows-tests
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Git settings (pacify DataLad)
+      run: |
+        git config --global user.name 'NiPreps Bot'
+        git config --global user.email 'nipreps@gmail.com'
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v6
+    - name: Install DataLad
+      run: |
+        uv tool install datalad \
+          --with-executables-from=datalad-next \
+          --with-executables-from=datalad-osf \
+          --with-executables-from=git-annex
+
+    - uses: actions/cache@v6
+      with:
+        path: ${{ env.TEST_DATA_HOME }}
+        key: data-cache-v2
+        restore-keys: |
+          data-cache-
+    - name: Install test data
+      run: |
+        mkdir -p ${{ env.TEST_DATA_HOME }}
+        cd ${{ env.TEST_DATA_HOME }}
+
+        # ds001600
+        datalad install -r https://github.com/nipreps-data/ds001600.git
+        datalad update -r --merge -d ds001600/
+        datalad get -r -J 2 -d ds001600/ ds001600/sub-1/
+
+        # HCP/sub-101006
+        datalad install -r https://github.com/nipreps-data/HCP101006.git
+        datalad update -r --merge -d HCP101006/
+        datalad get -r -J 2 -d HCP101006 HCP101006/*
+
+        # ds001771
+        datalad install -r https://github.com/nipreps-data/ds001771.git
+        datalad update -r --merge -d ds001771/
+        datalad get -r -J 2 -d ds001771/ ds001771/sub-36/*
+        datalad get -r -J 2 -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
+
+        # ds000054
+        datalad install -r https://github.com/nipreps-data/ds000054.git
+        datalad update --merge -d ds000054/
+        datalad get -r -d ds000054/ ds000054/sub-100185/*
+        datalad get -r -J 2 -d ds000054/ ds000054/derivatives/smriprep-0.6/sub-100185/anat/
+
+        # ds000206
+        datalad install -r https://github.com/nipreps-data/ds000206.git
+        datalad update -r --merge -d ds000206/
+        datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
+
+        # Brain extraction tests
+        datalad install -r https://github.com/nipreps-data/brain-extraction-tests
+        datalad update --merge -d brain-extraction-tests/
+        datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
+
+        # HCPH pilot
+        datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
+        datalad update -r --merge -d hcph-pilot_fieldmaps/
+        datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
+
   test:
     if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
     runs-on: ubuntu-latest
+    needs: [cache-test-data]
     env:
       TEST_DATA_HOME: /home/runner/sdcflows-tests
       FSLOUTPUTTYPE: NIFTI_GZ
@@ -112,10 +182,6 @@ jobs:
         ls -l ${AFNI_HOME}
         echo "PATH=${AFNI_HOME}:$PATH" | tee -a $GITHUB_ENV
 
-    - name: Git settings (pacify DataLad)
-      run: |
-        git config --global user.name 'NiPreps Bot'
-        git config --global user.email 'nipreps@gmail.com'
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v6
     - name: Set up Python ${{ matrix.python-version }}
@@ -134,11 +200,6 @@ jobs:
           ~/conda_pkgs_dir
           /home/runner/.cache/pip
         key: python-${{ matrix.python-version }}-${{ env.CACHE_NUM }}
-    - name: Install DataLad
-      run: |
-        conda install git-annex=*=alldep*
-        uv tool install datalad --with=datalad-next --with=datalad-osf
-        uv tool install datalad-osf --with=datalad-next
     - name: Install fsl and ANTs
       run: |
         conda install fsl-fugue fsl-topup ants
@@ -152,53 +213,10 @@ jobs:
       run: |
         uv run tools/cache_templateflow.py
 
-    - uses: actions/cache@v4
+    - uses: actions/cache/restore@v4
       with:
         path: ${{ env.TEST_DATA_HOME }}
         key: data-cache-v2
-        restore-keys: |
-          data-cache-
-    - name: Install test data
-      run: |
-        mkdir -p ${{ env.TEST_DATA_HOME }}
-        cd ${{ env.TEST_DATA_HOME }}
-
-        # ds001600
-        datalad install -r https://github.com/nipreps-data/ds001600.git
-        datalad update -r --merge -d ds001600/
-        datalad get -r -J 2 -d ds001600/ ds001600/sub-1/
-
-        # HCP/sub-101006
-        datalad install -r https://github.com/nipreps-data/HCP101006.git
-        datalad update -r --merge -d HCP101006/
-        datalad get -r -J 2 -d HCP101006 HCP101006/*
-
-        # ds001771
-        datalad install -r https://github.com/nipreps-data/ds001771.git
-        datalad update -r --merge -d ds001771/
-        datalad get -r -J 2 -d ds001771/ ds001771/sub-36/*
-        datalad get -r -J 2 -d ds001771/derivatives ds001771/derivatives/openneuro/sub-36/*
-
-        # ds000054
-        datalad install -r https://github.com/nipreps-data/ds000054.git
-        datalad update --merge -d ds000054/
-        datalad get -r -d ds000054/ ds000054/sub-100185/*
-        datalad get -r -J 2 -d ds000054/ ds000054/derivatives/smriprep-0.6/sub-100185/anat/
-
-        # ds000206
-        datalad install -r https://github.com/nipreps-data/ds000206.git
-        datalad update -r --merge -d ds000206/
-        datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
-
-        # Brain extraction tests
-        datalad install -r https://github.com/nipreps-data/brain-extraction-tests
-        datalad update --merge -d brain-extraction-tests/
-        datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
-
-        # HCPH pilot
-        datalad install -r https://github.com/nipreps-data/hcph-pilot_fieldmaps.git
-        datalad update -r --merge -d hcph-pilot_fieldmaps/
-        datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
     - name: Set FreeSurfer variables
       run: |
