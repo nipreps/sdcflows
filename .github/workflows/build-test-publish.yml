@@ -141,8 +141,7 @@ jobs:
         uv tool install datalad-osf --with=datalad-next
     - name: Install fsl and ANTs
       run: |
-        # libitk 5.4.1+ segfaults with ants 2.5.4
-        conda install fsl-fugue fsl-topup ants 'libitk=5.4.0'
+        conda install fsl-fugue fsl-topup ants
     - uses: actions/cache@v4
       with:
         path: ~/.cache/templateflow
