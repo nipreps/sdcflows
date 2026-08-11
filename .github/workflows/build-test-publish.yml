@@ -72,9 +72,7 @@ jobs:
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v2
-        restore-keys: |
-          data-cache-
+        key: data-cache-v3
     - name: Install test data
       run: |
         mkdir -p ${{ env.TEST_DATA_HOME }}
@@ -108,7 +106,7 @@ jobs:
         datalad get -r -J 2 -d ds000206/ ds000206/sub-05/
 
         # Brain extraction tests
-        datalad install -r https://gin.g-node.org/nipreps-data/brain-extraction-tests
+        datalad install -r https://github.com/nipreps-data/brain-extraction-tests
         datalad update --merge -d brain-extraction-tests/
         datalad get -r -J 2 -d brain-extraction-tests brain-extraction-tests/*
 
@@ -216,7 +214,7 @@ jobs:
     - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v2
+        key: data-cache-v3
 
     - name: Set FreeSurfer variables
       run: |
