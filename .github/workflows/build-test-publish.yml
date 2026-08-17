@@ -61,7 +61,7 @@ jobs:
         git config --global user.name 'NiPreps Bot'
         git config --global user.email 'nipreps@gmail.com'
     - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
     - name: Install DataLad
       run: |
         uv tool install datalad \
@@ -181,7 +181,7 @@ jobs:
         echo "PATH=${AFNI_HOME}:$PATH" | tee -a $GITHUB_ENV
 
     - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
       with:
