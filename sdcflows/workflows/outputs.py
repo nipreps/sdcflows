@@ -147,6 +147,7 @@ def init_fmap_derivatives_wf(
         One or more fieldmap file(s) of the BIDS dataset that will serve for naming reference.
     fieldmap
         The preprocessed fieldmap, in its original space with Hz units.
+        Can be 3D (static estimators) or 4D (dynamic estimators such as MEDIC).
     fmap_coeff
         Field coefficient(s) file(s)
     fmap_ref
@@ -160,16 +161,33 @@ def init_fmap_derivatives_wf(
     workflow = pe.Workflow(name=name)
     inputnode = pe.Node(
         niu.IdentityInterface(
-            fields=['source_files', 'fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask', 'fmap_meta']
+            fields=[
+                'source_files',
+                'fieldmap',
+                'fmap_coeff',
+                'fmap_ref',
+                'fmap_mask',
+                'fmap_meta',
+            ]
         ),
         name='inputnode',
     )
     outputnode = pe.Node(
-        niu.IdentityInterface(fields=['fieldmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask']),
+        niu.IdentityInterface(
+            fields=[
+                'fieldmap',
+                'fmap_coeff',
+                'fmap_ref',
+                'fmap_mask',
+            ]
+        ),
         name='outputnode',
     )
 
-    merge_fmap = pe.Node(MergeSeries(), name='merge_fmap')
+    # ``allow_4D`` lets MEDIC's 4D Hz fieldmap pass through alongside the
+    # 3D outputs of the static estimators — MergeSeries splits 4D inputs
+    # into per-frame 3D and re-concatenates them.
+    merge_fmap = pe.Node(MergeSeries(allow_4D=True), name='merge_fmap')
 
     ds_reference = pe.Node(
         DerivativesDataSink(

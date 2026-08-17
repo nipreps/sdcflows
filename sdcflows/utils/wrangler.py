@@ -74,6 +74,7 @@ def find_estimators(
     sessions: list[str] | None = None,
     fmapless: bool | set = True,
     force_fmapless: bool = False,
+    no_medic: bool = False,
     logger: logging.Logger | None = None,
     bids_filters: dict | None = None,
     anat_suffix: str | list[str] = 'T1w',
@@ -103,6 +104,15 @@ def find_estimators(
     force_fmapless : :obj:`bool`
         When some other fieldmap estimation methods have been found, fieldmap-less
         estimation will be skipped except if ``force_fmapless`` is ``True``.
+    no_medic : :obj:`bool`
+        Disable MEDIC discovery entirely. MEDIC is discovered like any other
+        fieldmap — only from BIDS intent metadata, never from file structure
+        alone: a complex multi-echo BOLD becomes a MEDIC estimator when it
+        carries a ``B0FieldIdentifier`` (the self-referential pattern BIDS
+        endorses for images that estimate their own B0 field, as in
+        ``pepolar``) or, on legacy datasets, ``IntendedFor``. Setting
+        ``no_medic=True`` skips those MEDIC estimators (other fieldmaps are
+        unaffected).
     logger
         The logger used to relay messages. If not provided, one will be created.
     bids_filters
@@ -118,6 +128,12 @@ def find_estimators(
         The list of :py:class:`~sdcflows.fieldmaps.FieldmapEstimation` objects that have
         successfully been built (meaning, all necessary inputs and corresponding metadata
         are present in the given layout.)
+
+        The list is returned in a deterministic order: dynamic (MEDIC)
+        estimators first — an intentional priority so that consumers selecting
+        the first applicable estimator per target prefer MEDIC over a
+        coexisting static fieldmap — then the remaining estimators ordered by
+        ``bids_id``, with fieldmap-less (ANAT) estimators last.
 
     Examples
     --------
@@ -326,7 +342,6 @@ def find_estimators(
     base_entities = {
         'subject': subject,
         'extension': ['.nii', '.nii.gz'],
-        'part': ['mag', None],
         'scope': 'raw',  # Ensure derivatives are not captured
     }
 
@@ -351,7 +366,10 @@ def find_estimators(
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            (
+                listify(ids)
+                for ids in layout.get_B0FieldIdentifiers(session=sessions, **base_entities)
+            ),
             set(),
         )
 
@@ -372,6 +390,15 @@ def find_estimators(
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
+
+            if no_medic and any(
+                fmap.entities.get('part') in ('mag', 'phase') for fmap in bare_ids + listed_ids
+            ):
+                # ``part``-tagged BOLD under a B0FieldIdentifier is a MEDIC
+                # source; ``no_medic`` suppresses it (other identifiers stand).
+                logger.debug('Skipping B0FieldIdentifier %s (MEDIC; no_medic set)', b0_id)
+                continue
+
             try:
                 e = fm.FieldmapEstimation(
                     [
@@ -444,14 +471,18 @@ def find_estimators(
                         _log_debug_estimation(logger, e, layout.root)
                         estimators.append(e)
 
-        # At this point, only single-PE _epi files WITH ``IntendedFor`` can
-        # be automatically processed.
+        # At this point, only single-PE _epi/_bold files WITH ``IntendedFor``
+        # can be automatically processed.
         has_intended = ()
         with suppress(ValueError):
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions},
+                    **{
+                        'suffix': ['epi', 'bold'],
+                        'IntendedFor': Query.REQUIRED,
+                        'session': sessions,
+                    },
                 }
             )
 
@@ -510,6 +541,89 @@ def find_estimators(
                 else:
                     _log_debug_estimation(logger, e, layout.root)
                     estimators.append(e)
+
+    # MEDIC: multi-echo BOLD with mag+phase parts — legacy ``IntendedFor`` path.
+    #
+    # MEDIC is discovered from BIDS intent metadata only, never from file
+    # structure alone. The primary, BIDS-RECOMMENDED route is
+    # ``B0FieldIdentifier`` (handled by Step 1 above, where a complex
+    # multi-echo BOLD tagged with an identifier — the self-referential pattern
+    # BIDS endorses for images that estimate their own B0 field — is built as a
+    # MEDIC estimator). This block is the legacy fallback: when no
+    # ``B0FieldIdentifier`` is present, a complex multi-echo BOLD that declares
+    # ``IntendedFor`` is picked up here. Skipped entirely when ``no_medic`` is
+    # set or when ``B0FieldIdentifier`` metadata already drove discovery.
+    if not no_medic and not b0_ids:
+        medic_seed_query = {
+            **base_entities,
+            'session': sessions,
+            'suffix': 'bold',
+            'echo': Query.REQUIRED,
+            'IntendedFor': Query.REQUIRED,
+        }
+
+        # Query both parts as seeds — datasets vary on which side carries
+        # ``IntendedFor`` — and rely on the dedup check below to keep the
+        # estimator unique per (run, echo-set). Each seed is then expanded
+        # to all matching mag+phase echo siblings of its run.
+        medic_seeds = []
+        for part in ('phase', 'mag'):
+            with suppress(ValueError):
+                medic_seeds.extend(layout.get(**{**medic_seed_query, 'part': part}))
+
+        for bold_fmap in medic_seeds:
+            # Pull every echo + part for this run. ``get_entities()`` already
+            # includes extension; we override part/echo to widen the query.
+            run_entities = {
+                k: v for k, v in bold_fmap.get_entities().items() if k not in ('part', 'echo')
+            }
+            run_entities['part'] = ['phase', 'mag']
+            run_entities['echo'] = Query.ANY
+            run_entities['scope'] = base_entities['scope']
+            complex_imgs = layout.get(**run_entities)
+            if not complex_imgs:
+                continue
+
+            # Dedup against every prior estimator's full source set, not just
+            # the first complex image — pybids ordering is not contractual,
+            # and the same run can be seeded twice (once via phase, once via
+            # mag) when both parts carry ``IntendedFor``.
+            already_claimed = {str(s.path) for est in estimators for s in est.sources}
+            if any(str(c.path) in already_claimed for c in complex_imgs):
+                logger.debug('Skipping MEDIC fmap %s (already in use)', complex_imgs[0].relpath)
+                continue
+
+            try:
+                e = fm.FieldmapEstimation(
+                    [
+                        fm.FieldmapFile(
+                            img.path,
+                            metadata=_filter_metadata(img.get_metadata(), subject),
+                        )
+                        for img in complex_imgs
+                    ]
+                )
+            except (ValueError, TypeError) as err:
+                _log_debug_estimator_fail(
+                    logger, 'unnamed MEDIC', list(complex_imgs), layout.root, str(err)
+                )
+            else:
+                _log_debug_estimation(logger, e, layout.root)
+                estimators.append(e)
+
+    # Return estimators in a stable, deterministic order so the same dataset
+    # always yields the same list (Step 1 iterates a ``set`` of
+    # ``B0FieldIdentifier``s, whose order is otherwise hash-seed dependent).
+    #
+    # The ordering encodes one intentional, documented priority: dynamic
+    # (MEDIC) estimators come first. A consumer that simply walks this list and
+    # takes the first estimator applicable to a target therefore prefers MEDIC
+    # over a coexisting static fieldmap. Ties (and all non-MEDIC estimators)
+    # are then ordered by ``bids_id`` — which preserves discovery order for the
+    # auto-named heuristic path (``auto_NNNNN`` ids are monotonic) and is
+    # alphabetical for explicitly named ``B0FieldIdentifier`` estimators.
+    # Fieldmap-less ANAT estimators are appended after this point and stay last.
+    estimators.sort(key=lambda e: (not e.is_dynamic, e.bids_id))
 
     if estimators and not force_fmapless:
         fmapless = False

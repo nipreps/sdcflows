@@ -55,6 +55,15 @@ jobs:
       TEST_DATA_HOME: /home/runner/sdcflows-tests
 
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false
+        swap-storage: false
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Git settings (pacify DataLad)
       run: |
@@ -72,7 +81,7 @@ jobs:
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v3
+        key: data-cache-v4
     - name: Install test data
       run: |
         mkdir -p ${{ env.TEST_DATA_HOME }}
@@ -115,6 +124,16 @@ jobs:
         datalad update -r --merge -d hcph-pilot_fieldmaps/
         datalad get -r -J 2 -d hcph-pilot_fieldmaps/ hcph-pilot_fieldmaps/*
 
+        # ds006926 — MEDIC multi-echo mag+phase BOLD (sub-a01 only)
+        datalad install -r https://github.com/OpenNeuroDatasets/ds006926.git
+        datalad update -r --merge -d ds006926/
+        datalad get -r -J 2 -d ds006926/ ds006926/sub-a01/func/sub-a01_task-VisMot_acq-tr1800_*
+
+        # ds007637 — MEDIC multi-echo mag+phase BOLD (sub-04/ses-2 fracback only)
+        datalad install -r https://github.com/OpenNeuroDatasets/ds007637.git
+        datalad update -r --merge -d ds007637/
+        datalad get -r -J 2 -d ds007637/ ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-mag_bold.nii.gz ds007637/sub-04/ses-2/func/sub-04_ses-2_task-fracback_acq-MBME_echo-*_part-phase_bold.nii.gz
+
   test:
     if: "!contains(github.event.head_commit.message, '[skip ci]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'nipreps/sdcflows'))"
     runs-on: ubuntu-latest
@@ -148,6 +167,15 @@ jobs:
             marks: "veryslow"
 
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false
+        swap-storage: false
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
@@ -214,7 +242,7 @@ jobs:
     - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ env.TEST_DATA_HOME }}
-        key: data-cache-v3
+        key: data-cache-v4
 
     - name: Set FreeSurfer variables
       run: |
