@@ -333,6 +333,69 @@ def test_FieldmapEstimation_missing_files(tmpdir, dsA_dir):
         )
 
 
+def _make_medic_files(dest, source_path, specs):
+    """Copy a NIfTI into part/echo-tagged filenames under ``dest``.
+
+    Returns the list of :class:`~sdcflows.fieldmaps.FieldmapFile`s built from
+    those paths with the minimum metadata required for MEDIC source files.
+    """
+    base_meta = {'PhaseEncodingDirection': 'j', 'TotalReadoutTime': 0.05}
+    files = []
+    for echo, part in specs:
+        name = f'sub-01_task-rest_echo-{echo}_part-{part}_bold.nii.gz'
+        dst = dest / name
+        shutil.copy(str(source_path), str(dst))
+        files.append(
+            fm.FieldmapFile(
+                str(dst),
+                metadata={**base_meta, 'EchoTime': 0.01 * echo},
+            )
+        )
+    return files
+
+
+def test_FieldmapEstimation_MEDIC_requires_both_parts(tmp_path, dsA_dir):
+    """MEDIC sources tagged only ``part-phase`` must reject in the part guard."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = _make_medic_files(tmp_path, src, [(1, 'phase'), (2, 'phase')])
+    with pytest.raises(ValueError, match='MEDIC requires every source'):
+        fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_MEDIC_single_echo(tmp_path, dsA_dir):
+    """One mag+phase pair (single echo) must reject in the echo-count guard."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = _make_medic_files(tmp_path, src, [(1, 'mag'), (1, 'phase')])
+    with pytest.raises(ValueError, match='at least two echoes of phase'):
+        fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_MEDIC_mismatched_pairs(tmp_path, dsA_dir):
+    """Unequal magnitude / phase echo counts must reject in the pairing guard."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = _make_medic_files(tmp_path, src, [(1, 'phase'), (2, 'phase'), (1, 'mag')])
+    with pytest.raises(ValueError, match='matched magnitude/phase pairs'):
+        fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_is_dynamic(tmp_path, dsA_dir):
+    """``is_dynamic`` flags MEDIC (4D fmap on EPI grid) and not the static estimators."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    medic_files = _make_medic_files(
+        tmp_path, src, [(1, 'mag'), (1, 'phase'), (2, 'mag'), (2, 'phase')]
+    )
+    assert fm.FieldmapEstimation(medic_files).is_dynamic is True
+
+    sub_dir = dsA_dir / 'sub-01'
+    phasediff = fm.FieldmapEstimation(
+        [
+            sub_dir / 'fmap/sub-01_phase1.nii.gz',
+            sub_dir / 'fmap/sub-01_phase2.nii.gz',
+        ]
+    )
+    assert phasediff.is_dynamic is False
+
+
 def test_FieldmapFile_filename(tmp_path, dsA_dir):
     datadir = tmp_path / 'phasediff'
     datadir.mkdir(exist_ok=True)
