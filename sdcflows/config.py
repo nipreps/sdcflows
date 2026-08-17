@@ -498,6 +498,8 @@ class workflow(_Config):
     """Level of analysis."""
     fmapless = False
     """Allow fieldmap-less estimation"""
+    no_medic = False
+    """Disable MEDIC discovery (otherwise MEDIC takes priority for complex multi-echo BOLD)"""
     species = 'human'
     """Subject species to choose most appropriate template"""
     template_id = 'MNI152NLin2009cAsym'
