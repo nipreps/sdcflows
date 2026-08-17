@@ -106,15 +106,38 @@ def _sdc_unwarp(
         prefilter=prefilter,
     )
 
-    # The Jacobian determinant image is the amount of stretching in the PE direction.
-    # Using central differences accounts for the shift in neighboring voxels.
-    # The full Jacobian at each voxel would be a 3x3 matrix, but because there is
-    # only warping in one direction, we end up with a diagonal matrix with two 1s.
-    # The following is the other entry at each voxel, and hence the determinant.
     if jacobian:
-        resampled *= 1 + np.gradient(vsm, axis=pe_info[0])
+        resampled *= fieldmap_jacobian(vsm, pe_info[0])
 
     return resampled
+
+
+def fieldmap_jacobian(
+    vsm: np.ndarray,
+    pe_axis: int,
+) -> np.ndarray:
+    r"""
+    Voxel-wise Jacobian determinant of a one-axis (PE) EPI distortion.
+
+    EPI distortion only acts along the phase-encoding axis, so the full
+    3×3 Jacobian collapses to a diagonal with two 1s and one nontrivial
+    entry: :math:`|J| \approx 1 + \partial(\mathrm{VSM})/\partial(\mathrm{PE})`
+    (central differences capture the relative shift of neighboring voxels).
+    Multiplying a resampled EPI by this scalar field preserves total signal
+    through the regions that compress and expand under unwarping.
+
+    Parameters
+    ----------
+    vsm : :class:`numpy.ndarray`
+        Voxel shift map, :math:`\mathrm{VSM} = f_{\mathrm{Hz}}\cdot t_{\mathrm{ro}}`,
+        in voxel units. 3D ``(I, J, K)`` for a static fieldmap, or 4D
+        ``(I, J, K, T)`` for a per-volume dynamic fieldmap (e.g. MEDIC). The
+        readout time already carries PE polarity and any data-orientation
+        flip, so the sign must be applied before computing the VSM.
+    pe_axis : :obj:`int`
+        Spatial axis index (``0``, ``1`` or ``2``) along which the EPI distorts.
+    """
+    return 1 + np.gradient(vsm, axis=pe_axis)
 
 
 async def worker(
@@ -159,7 +182,9 @@ async def unwarp_parallel(
         An array of shape (3, I, J, K) array providing the voxel (index) coordinates of
         the reference image (i.e., interpolated points) before SDC/HMC.
     fmap_hz : :obj:`~numpy.ndarray`
-        An array of shape (I, J, K) containing the displacement of each voxel in voxel units.
+        The :math:`B_0` field in Hz. 3D ``(I, J, K)`` for a field shared across
+        all volumes (static estimators), or 4D ``(I, J, K, T)`` for one field
+        per EPI volume (dynamic estimators, e.g. MEDIC).
     pe_info : :obj:`tuple` of (:obj:`int`, :obj:`float`)
         A tuple containing the index of the phase-encoding axis in the data array and
         the readout time (including sign, if displacements must be reversed)
@@ -201,21 +226,29 @@ async def unwarp_parallel(
     if fulldataset.ndim == 3:
         fulldataset = fulldataset[..., np.newaxis]
 
-    func = partial(
-        _sdc_unwarp,
-        jacobian=jacobian,
-        fmap_hz=fmap_hz,
-        output_dtype=output_dtype,
-        order=order,
-        mode=mode,
-        cval=cval,
-        prefilter=prefilter,
-    )
+    n_volumes = fulldataset.shape[-1]
 
-    # Create a worker task for each chunk
+    # Normalize to a per-frame 4D field: a 3D field is shared across all volumes
+    # (static estimators), so broadcast it; a 4D field already carries one Hz
+    # volume per EPI frame (dynamic estimators, e.g. MEDIC). After this, frame
+    # selection is a single, branchless ``fmap_hz[..., volid]`` below.
+    if fmap_hz.ndim == 3:
+        fmap_hz = np.broadcast_to(fmap_hz[..., np.newaxis], (*fmap_hz.shape, n_volumes))
+
+    # Create a worker task for each volume
     tasks = []
     for volid, volume in enumerate(np.rollaxis(fulldataset, -1, 0)):
         xfm = None if xfms is None else xfms[volid]
+        func = partial(
+            _sdc_unwarp,
+            jacobian=jacobian,
+            fmap_hz=fmap_hz[..., volid],
+            output_dtype=output_dtype,
+            order=order,
+            mode=mode,
+            cval=cval,
+            prefilter=prefilter,
+        )
 
         # IMPORTANT - the coordinates array must be copied every time anew per thread
         task = asyncio.create_task(
@@ -245,10 +278,15 @@ class B0FieldTransform:
 
     coeffs = attr.ib(default=None)
     """B-Spline coefficients (one value per control point)."""
-    mapped = attr.ib(default=None, init=False)
+    mapped = attr.ib(default=None)
     """
-    A cache of the interpolated field in Hz (i.e., the fieldmap *mapped* on to the
-    target image we want to correct).
+    The fieldmap in Hz, mapped onto the target image we want to correct.
+
+    Populated by :meth:`fit` from :attr:`coeffs` (static B-Spline estimators),
+    or supplied directly at construction when the field is already on the
+    target grid (dynamic estimators, e.g. MEDIC). May be 3D ``(I, J, K)`` —
+    one field shared by every EPI volume — or 4D ``(I, J, K, T)`` — one field
+    per volume.
     """
 
     def fit(
@@ -460,61 +498,31 @@ class B0FieldTransform:
         # Make sure the data array has all cosines positive (i.e., no axes are flipped)
         moving, axcodes = ensure_positive_cosines(moving)
 
-        if self.mapped is not None:
-            warn(
-                'The fieldmap has been already fit, the user is responsible for '
-                'ensuring the parameters of the EPI target are consistent.',
-                stacklevel=2,
+        if self.coeffs is None and self.mapped is None:
+            raise ValueError(
+                'B0FieldTransform needs either B-Spline coefficients (coeffs) to fit, '
+                'or a pre-gridded fieldmap in Hz (mapped) to resample with.'
             )
+
+        if self.mapped is not None and self.coeffs is None:
+            # Pre-gridded field (e.g., MEDIC dynamic): already on the target
+            # grid, nothing to reconstruct — just normalize its orientation.
+            fmap_img, _ = ensure_positive_cosines(self.mapped)
+            fmap_hz = np.asanyarray(fmap_img.dataobj, dtype='float32')
         else:
-            # Generate warp field (before ensuring positive cosines)
-            self.fit(moving, xfm_data2fmap=xfm_data2fmap, approx=approx)
+            if self.mapped is not None:
+                warn(
+                    'The fieldmap has been already fit, the user is responsible for '
+                    'ensuring the parameters of the EPI target are consistent.',
+                    stacklevel=2,
+                )
+            else:
+                # Generate warp field (before ensuring positive cosines)
+                self.fit(moving, xfm_data2fmap=xfm_data2fmap, approx=approx)
+            fmap_hz = self.mapped.get_fdata(dtype='float32')
 
-        # Squeeze non-spatial dimensions
-        newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
-        data = nb.arrayproxy.reshape_dataobj(moving.dataobj, newshape)
-        ndim = min(data.ndim, 3)
-        n_volumes = data.shape[3] if data.ndim == 4 else 1
-        output_dtype = output_dtype or moving.header.get_data_dtype()
-
-        # Prepare input parameters
-        if isinstance(pe_dir, str):
-            pe_dir = [pe_dir]
-
-        if isinstance(ro_time, float):
-            ro_time = [ro_time]
-
-        if n_volumes > 1 and len(pe_dir) == 1:
-            pe_dir *= n_volumes
-
-        if n_volumes > 1 and len(ro_time) == 1:
-            ro_time *= n_volumes
-
-        pe_info = []
-        for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time, strict=False):
-            pe_axis = 'ijk'.index(vol_pe_dir[0])
-            # Displacements are reversed if either is true (after ensuring positive cosines)
-            flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
-
-            pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
-
-        # Reference image's voxel coordinates (in voxel units)
-        voxcoords = (
-            nt.linear.Affine(reference=moving)
-            .reference.ndindex.T.reshape((ndim, *data.shape[:ndim]))
-            .astype('float32')
-        )
-
-        # Convert head-motion transforms to voxel-to-voxel:
+        # Head-motion compensation is not yet wired through the unwarp.
         if xfms is not None:
-            # if len(xfms) != n_volumes:
-            #     raise RuntimeError(
-            #         f"Number of head-motion estimates ({len(xfms)}) does not match the "
-            #         f"number of volumes ({n_volumes})"
-            #     )
-            # vox2ras = moving.affine.copy()
-            # ras2vox = np.linalg.inv(vox2ras)
-            # xfms = [ras2vox @ xfm @ vox2ras for xfm in xfms]
             xfms = None
             warn(
                 'Head-motion compensating (realignment) transforms are ignored when applying '
@@ -523,30 +531,22 @@ class B0FieldTransform:
                 stacklevel=1,
             )
 
-        # Resample
-        resampled = asyncio.run(
-            unwarp_parallel(
-                data,
-                voxcoords,
-                self.mapped.get_fdata(dtype='float32'),  # fieldmap in Hz
-                pe_info,
-                xfms,
-                jacobian,
-                output_dtype='float32',
-                order=order,
-                mode=mode,
-                cval=cval,
-                prefilter=prefilter,
-                max_concurrent=num_threads or min(os.cpu_count(), 12),
-            )
+        return _resample_with_fieldmap(
+            moving,
+            axcodes,
+            fmap_hz,
+            pe_dir,
+            ro_time,
+            xfms=xfms,
+            jacobian=jacobian,
+            order=order,
+            mode=mode,
+            cval=cval,
+            prefilter=prefilter,
+            output_dtype=output_dtype,
+            num_threads=num_threads,
+            allow_negative=allow_negative,
         )
-
-        if not allow_negative:
-            resampled[resampled < 0] = cval
-
-        moved = moving.__class__(resampled, moving.affine, moving.header)
-        moved.header.set_data_dtype(output_dtype)
-        return reorient_image(moved, axcodes)
 
     def to_displacements(self, ro_time, pe_dir, itk_format=True):
         """
@@ -570,6 +570,103 @@ class B0FieldTransform:
 
         """
         return fmap_to_disp(self.mapped, ro_time, pe_dir, itk_format=itk_format)
+
+
+def _resample_with_fieldmap(
+    moving,
+    axcodes,
+    fmap_hz: np.ndarray,
+    pe_dir,
+    ro_time,
+    *,
+    xfms: Sequence[np.ndarray] | None = None,
+    jacobian: bool = True,
+    order: int = 3,
+    mode: str = 'constant',
+    cval: float = 0.0,
+    prefilter: bool = True,
+    output_dtype: str | np.dtype | None = None,
+    num_threads: int | None = None,
+    allow_negative: bool = False,
+):
+    """Resample ``moving`` through an on-grid Hz fieldmap (3D or 4D).
+
+    Shared core of :meth:`B0FieldTransform.apply`. ``fmap_hz`` must be:
+
+    * **co-gridded with** ``moving`` — sampled on the same voxel lattice, so the
+      per-voxel ``fmap_hz * ro_time`` scaling and the coordinate shift broadcast
+      element-wise; and
+    * valued in the **undistorted (target) sense** — one Hz value per *output*
+      voxel (the field at the true location that maps to that voxel).
+
+    Producing such a field is the caller's job — B-spline reconstruction plus
+    coregistration for static estimators, or a pre-gridded per-frame field for
+    dynamic estimators (e.g. MEDIC). The caller must also ensure ``moving`` is
+    reoriented to positive direction cosines (RAS-style axis polarity).
+
+    A 3D ``fmap_hz`` is shared across all EPI volumes; a 4D ``fmap_hz`` carries
+    one Hz volume per EPI frame and must match the number of volumes.
+    """
+    # Squeeze non-spatial dimensions
+    newshape = moving.shape[:3] + tuple(dim for dim in moving.shape[3:] if dim > 1)
+    data = np.asanyarray(nb.arrayproxy.reshape_dataobj(moving.dataobj, newshape))
+    ndim = min(data.ndim, 3)
+    n_volumes = data.shape[3] if data.ndim == 4 else 1
+    output_dtype = output_dtype or moving.header.get_data_dtype()
+
+    if fmap_hz.ndim == 4 and fmap_hz.shape[-1] != n_volumes:
+        raise ValueError(
+            f'Dynamic fieldmap frame count ({fmap_hz.shape[-1]}) does not match '
+            f'EPI volumes ({n_volumes}).'
+        )
+
+    # Prepare input parameters
+    if isinstance(pe_dir, str):
+        pe_dir = [pe_dir]
+    if isinstance(ro_time, (int, float)):
+        ro_time = [float(ro_time)]
+    if n_volumes > 1 and len(pe_dir) == 1:
+        pe_dir = pe_dir * n_volumes
+    if n_volumes > 1 and len(ro_time) == 1:
+        ro_time = ro_time * n_volumes
+
+    pe_info = []
+    for vol_pe_dir, vol_ro_time in zip(pe_dir, ro_time, strict=False):
+        pe_axis = 'ijk'.index(vol_pe_dir[0])
+        # Displacements are reversed if either is true (after ensuring positive cosines)
+        flip = (axcodes[pe_axis] in 'LPI') ^ vol_pe_dir.endswith('-')
+        pe_info.append((pe_axis, -vol_ro_time if flip else vol_ro_time))
+
+    # Reference image's voxel coordinates (in voxel units)
+    voxcoords = (
+        nt.linear.Affine(reference=moving)
+        .reference.ndindex.T.reshape((ndim, *data.shape[:ndim]))
+        .astype('float32')
+    )
+
+    resampled = asyncio.run(
+        unwarp_parallel(
+            data,
+            voxcoords,
+            fmap_hz,
+            pe_info,
+            xfms,
+            jacobian,
+            output_dtype='float32',
+            order=order,
+            mode=mode,
+            cval=cval,
+            prefilter=prefilter,
+            max_concurrent=num_threads or min(os.cpu_count(), 12),
+        )
+    )
+
+    if not allow_negative:
+        resampled[resampled < 0] = cval
+
+    moved = moving.__class__(resampled, moving.affine, moving.header)
+    moved.header.set_data_dtype(output_dtype)
+    return reorient_image(moved, axcodes)
 
 
 def fmap_to_disp(fmap_nii, ro_time, pe_dir, itk_format=True):
