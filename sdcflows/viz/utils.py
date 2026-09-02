@@ -61,6 +61,9 @@ def plot_registration(
             anat_nii.get_fdata(dtype='float32').reshape(-1), plot_params
         )
 
+    # nilearn 0.12.0 changed the colorbar default to True
+    plot_params.setdefault('colorbar', False)
+
     # Plot each cut axis
     for i, mode in enumerate(list(order)):
         plot_params['display_mode'] = mode
