@@ -332,9 +332,10 @@ def find_estimators(
 
     if bids_filters:
         filters = bids_filters.copy()  # copy to avoid altering in place
-        if 'session' in bids_filters and sessions is not None:
-            raise ValueError('Filters include session, but session is already defined.')
-        sessions = listify(filters.pop('session', None))
+        if 'session' in filters:
+            if sessions is not None:
+                raise ValueError('Filters include session, but session is already defined.')
+            sessions = listify(filters.pop('session'))
         base_entities.update(filters)
 
     subject_root = Path(layout.root) / f'sub-{subject}'
@@ -346,12 +347,13 @@ def find_estimators(
     estimators = []
 
     # Step 1. Use B0FieldIdentifier metadata
+    b0_entities = {**base_entities, 'session': sessions}
     b0_ids = ()
     with suppress(BIDSEntityError):
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
+            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**b0_entities)),
             set(),
         )
 
@@ -363,12 +365,9 @@ def find_estimators(
 
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
-            b0_entities = base_entities.copy()
-            b0_entities['B0FieldIdentifier'] = b0_id
-
-            bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
+            bare_ids = layout.get(**b0_entities, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
-                **base_entities,
+                **b0_entities,
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
@@ -382,7 +381,12 @@ def find_estimators(
                 )
             except (ValueError, TypeError) as err:
                 _log_debug_estimator_fail(
-                    logger, b0_id, bare_ids + listed_ids, layout.root, str(err)
+                    logger,
+                    b0_id,
+                    bare_ids + listed_ids,
+                    layout.root,
+                    str(err),
+                    level=logging.WARNING,
                 )
             else:
                 _log_debug_estimation(logger, e, layout.root)
@@ -645,10 +649,16 @@ def _log_debug_estimation(
 
 
 def _log_debug_estimator_fail(
-    logger: logging.Logger, b0_id: str, files: list[BIDSFile], bids_root: str, message: str
+    logger: logging.Logger,
+    b0_id: str,
+    files: list[BIDSFile],
+    bids_root: str,
+    message: str,
+    level: int = logging.DEBUG,
 ) -> None:
     """A helper function to log failures to build an estimator when running with verbosity."""
-    logger.debug(
+    logger.log(
+        level,
         'Failed to construct %s estimation from %d sources:\n- %s\nError: %s',
         b0_id,
         len(files),
