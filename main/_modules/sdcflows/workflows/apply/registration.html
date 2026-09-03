@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Align the fieldmap reference map to the target EPI.</span>
 
 <span class="sd">The fieldmap reference map may be a magnitude image (or an EPI dataset,</span>
@@ -326,7 +326,7 @@
 
 <span class="sd">The target EPI is the distorted dataset (or a reference thereof).</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 
@@ -344,9 +344,9 @@
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">write_coeff</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;coeff2epi_wf&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'coeff2epi_wf'</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Move the field coefficients on to the target (distorted) EPI space.</span>
 
 <span class="sd">    Workflow Graph</span>
@@ -395,7 +395,7 @@
 <span class="sd">        ``antsApplyTransforms`` with the fieldmap as reference and the target EPI</span>
 <span class="sd">        as moving, resampling the latter into the fieldmap space.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixHeaderRegistration</span> <span class="k">as</span> <span class="n">Registration</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parseversion</span>
@@ -403,68 +403,68 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">brainmask</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
 <span class="s2">The estimated *fieldmap* was then aligned with rigid-registration to the target</span>
 <span class="s2">EPI (echo-planar imaging) reference run.</span>
 <span class="s2">The field coefficients were mapped on to the reference EPI using the transform.</span>
-<span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">"""</span>
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
-            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;target_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;target_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">]</span>
+            <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'target_ref'</span><span class="p">,</span> <span class="s1">'target_mask'</span><span class="p">,</span> <span class="s1">'fmap_ref'</span><span class="p">,</span> <span class="s1">'fmap_mask'</span><span class="p">,</span> <span class="s1">'fmap_coeff'</span><span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;target_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;target2fmap_xfm&#39;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'target_ref'</span><span class="p">,</span> <span class="s1">'fmap_coeff'</span><span class="p">,</span> <span class="s1">'target2fmap_xfm'</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Dilate only for coregistration purposes</span>
     <span class="c1"># https://github.com/nipreps/sdcflows/issues/461</span>
-    <span class="n">dilate_target_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dilate_target_mask&#39;</span><span class="p">)</span>
-    <span class="n">dilate_fmap_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dilate_fmap_mask&#39;</span><span class="p">)</span>
+    <span class="n">dilate_target_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'dilate_target_mask'</span><span class="p">)</span>
+    <span class="n">dilate_fmap_mask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">brainmask</span><span class="o">.</span><span class="n">BinaryDilation</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'dilate_fmap_mask'</span><span class="p">)</span>
 
     <span class="c1"># Register the reference of the fieldmap to the reference</span>
     <span class="c1"># of the target image (the one that shall be corrected)</span>
     <span class="n">coregister</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">Registration</span><span class="p">(</span>
-            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fmap-any_registration</span><span class="si">{</span><span class="s2">&quot;_testing&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.json&#39;</span><span class="p">),</span>
+            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">'fmap-any_registration</span><span class="si">{</span><span class="s2">"_testing"</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.json'</span><span class="p">),</span>
             <span class="n">output_warped_image</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
             <span class="n">output_inverse_warped_image</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;coregister&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'coregister'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">ver</span> <span class="o">=</span> <span class="n">coregister</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span> <span class="s1">&#39;2.2.0&#39;</span>
-    <span class="n">mask_trait_s</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span> <span class="k">if</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ver</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s1">&#39;2.2.0&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">ver</span> <span class="o">=</span> <span class="n">coregister</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">version</span> <span class="ow">or</span> <span class="s1">'2.2.0'</span>
+    <span class="n">mask_trait_s</span> <span class="o">=</span> <span class="s1">'s'</span> <span class="k">if</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ver</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s1">'2.2.0'</span><span class="p">)</span> <span class="k">else</span> <span class="s1">''</span>
 
     <span class="c1"># fmt: off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">dilate_target_mask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;target_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">dilate_fmap_mask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"fmap_coeff"</span><span class="p">,</span> <span class="s2">"fmap_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">dilate_target_mask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"target_mask"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">dilate_fmap_mask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"fmap_mask"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">coregister</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;target_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"target_ref"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"fmap_ref"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">),</span>
         <span class="p">]),</span>
         <span class="p">(</span><span class="n">dilate_target_mask</span><span class="p">,</span> <span class="n">coregister</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;moving_image_mask</span><span class="si">{</span><span class="n">mask_trait_s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"moving_image_mask</span><span class="si">{</span><span class="n">mask_trait_s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="p">]),</span>
         <span class="p">(</span><span class="n">dilate_fmap_mask</span><span class="p">,</span> <span class="n">coregister</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;fixed_image_mask</span><span class="si">{</span><span class="n">mask_trait_s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"fixed_image_mask</span><span class="si">{</span><span class="n">mask_trait_s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="p">]),</span>
         <span class="p">(</span><span class="n">coregister</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;warped_image&quot;</span><span class="p">,</span> <span class="s2">&quot;target_ref&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;forward_transforms&quot;</span><span class="p">,</span> <span class="s2">&quot;target2fmap_xfm&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"warped_image"</span><span class="p">,</span> <span class="s2">"target_ref"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"forward_transforms"</span><span class="p">,</span> <span class="s2">"target2fmap_xfm"</span><span class="p">),</span>
         <span class="p">]),</span>
     <span class="p">])</span>
     <span class="c1"># fmt: on</span>
 
     <span class="k">if</span> <span class="n">write_coeff</span><span class="p">:</span>
         <span class="n">warn</span><span class="p">(</span>
-            <span class="s1">&#39;SDCFlows does not tinker with the coefficients file anymore, &#39;</span>
-            <span class="s1">&#39;the `write_coeff` parameter will be removed in a future release.&#39;</span><span class="p">,</span>
+            <span class="s1">'SDCFlows does not tinker with the coefficients file anymore, '</span>
+            <span class="s1">'the `write_coeff` parameter will be removed in a future release.'</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
 

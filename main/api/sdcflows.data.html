@@ -354,7 +354,7 @@ a temporary directory that is cleaned up on interpreter exit.</p>
 <p>This loader accepts a fully-qualified module name or a module
 object.</p>
 <p>Expected usage:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&#39;&#39;&#39;Data package</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">'''Data package</span>
 
 <span class="sd">.. autofunction:: load_data</span>
 
@@ -363,7 +363,7 @@ object.</p>
 <span class="sd">.. automethod:: load_data.as_path</span>
 
 <span class="sd">.. automethod:: load_data.cached</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">'''</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">acres</span><span class="w"> </span><span class="kn">import</span> <span class="n">Loader</span>
 
@@ -400,9 +400,9 @@ interface, explicit methods are provided to access resources.</p>
 <p>It is also possible to use <code class="docutils literal notranslate"><span class="pre">Loader</span></code> directly:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">acres</span><span class="w"> </span><span class="kn">import</span> <span class="n">Loader</span>
 
-<span class="n">Loader</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">readable</span><span class="p">(</span><span class="s1">&#39;data/resource.ext&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+<span class="n">Loader</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">readable</span><span class="p">(</span><span class="s1">'data/resource.ext'</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
 
-<span class="k">with</span> <span class="n">Loader</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">as_path</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkgdata</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">Loader</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">as_path</span><span class="p">(</span><span class="s1">'data'</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkgdata</span><span class="p">:</span>
     <span class="c1"># Call function that requires full Path implementation</span>
     <span class="n">func</span><span class="p">(</span><span class="n">pkgdata</span><span class="p">)</span>
 
@@ -410,9 +410,9 @@ interface, explicit methods are provided to access resources.</p>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">importlib_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span><span class="p">,</span> <span class="n">as_file</span>
 
-<span class="n">files</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s1">&#39;data/resource.ext&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+<span class="n">files</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s1">'data/resource.ext'</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
 
-<span class="k">with</span> <span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkgdata</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="n">other_package</span><span class="p">)</span> <span class="o">/</span> <span class="s1">'data'</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkgdata</span><span class="p">:</span>
     <span class="n">func</span><span class="p">(</span><span class="n">pkgdata</span><span class="p">)</span>
 </pre></div>
 </div>

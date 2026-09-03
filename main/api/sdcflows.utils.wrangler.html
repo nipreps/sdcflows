@@ -369,85 +369,85 @@ are present in the given layout.)</p>
 <p>Our <code class="docutils literal notranslate"><span class="pre">ds000054</span></code> dataset, created for <em>fMRIPrep</em>, only has one <em>phasediff</em> type of fieldmap
 with <code class="docutils literal notranslate"><span class="pre">magnitude1</span></code> and <code class="docutils literal notranslate"><span class="pre">magnitude2</span></code> files:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000054'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"100185"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00000&#39;)]</span>
+<span class="go">                    bids_id='auto_00000')]</span>
 </pre></div>
 </div>
 <p>OpenNeuro’s dataset with four <em>PEPOLAR</em> EPI files, two runs per phase-encoding direction
 (AP, PA):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001771'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"36"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00001&#39;)]</span>
+<span class="go">                    bids_id='auto_00001')]</span>
 </pre></div>
 </div>
 <p>OpenNeuro’s <code class="docutils literal notranslate"><span class="pre">ds001600</span></code> is an SDC test-dataset containing many different possibilities
 for fieldmap estimation:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001600&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001600'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"1"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00002&#39;),</span>
+<span class="go">                    bids_id='auto_00002'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00003&#39;),</span>
+<span class="go">                    bids_id='auto_00003'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00004&#39;),</span>
+<span class="go">                    bids_id='auto_00004'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00005&#39;)]</span>
+<span class="go">                    bids_id='auto_00005')]</span>
 </pre></div>
 </div>
 <p>We can also pick one (simplified) HCP subject for testing purposes:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;HCP101006&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;101006&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'HCP101006'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"101006"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00006&#39;),</span>
+<span class="go">                    bids_id='auto_00006'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00007&#39;),</span>
+<span class="go">                    bids_id='auto_00007'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_00008&#39;)]</span>
+<span class="go">                    bids_id='auto_00008')]</span>
 </pre></div>
 </div>
 <p>Finally, <em>SDCFlows</em>’ “<em>dataset A</em>” and “<em>dataset B</em>” contain BIDS structures
 with zero-byte NIfTI files and some corresponding metadata:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsA'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                    bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsB&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsB'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                    bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <p>After cleaning the registry, we can see how the “<em>fieldmap-less</em>” estimation
@@ -455,69 +455,69 @@ can be forced:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">fieldmaps</span> <span class="k">as</span> <span class="n">fm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fm</span><span class="o">.</span><span class="n">clear_registry</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000054&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;100185&quot;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000054'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"100185"</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="p">{</span><span class="s2">"bold"</span><span class="p">},</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                    bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <p>Likewise in a more comprehensive dataset:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds001771&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;36&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds001771'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"36"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                   bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                   bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <p>Because “<em>dataset A</em>” contains very few metadata fields available, “<em>fieldmap-less</em>”
 heuristics come back empty (BOLD and DWI files are missing
 the mandatory <code class="docutils literal notranslate"><span class="pre">PhaseEncodingDirection</span></code>, in this case):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsA&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsA'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.MAPPED: 4&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;3 files&gt;, method=&lt;EstimatorType.PHASEDIFF: 3&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;4 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go"> FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                    bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <p>This function should also correctly investigate multi-session datasets:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000206'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"05"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
@@ -525,40 +525,40 @@ the mandatory <code class="docutils literal notranslate"><span class="pre">Phase
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;ds000206&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;05&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'ds000206'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"05"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                    bids_id=&#39;auto_...&#39;),</span>
+<span class="go">                    bids_id='auto_...'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                   bids_id='auto_...')]</span>
 </pre></div>
 </div>
 <p>When the <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> metadata is set for one or more fieldmaps, then
 the heuristics that use <code class="docutils literal notranslate"><span class="pre">IntendedFor</span></code> are dismissed:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsC&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsC'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;5 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;pepolar4pe&#39;)]</span>
+<span class="go">                    bids_id='pepolar4pe')]</span>
 </pre></div>
 </div>
 <p>The only exception to the priority of <code class="docutils literal notranslate"><span class="pre">B0FieldIdentifier</span></code> is when fieldmaps
 are searched with the <code class="docutils literal notranslate"><span class="pre">force_fmapless</span></code> argument on:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fm</span><span class="o">.</span><span class="n">clear_registry</span><span class="p">()</span>  <span class="c1"># Necessary as `pepolar4pe` is not changing.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_estimators</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">&#39;dsC&#39;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="s1">'dsC'</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">subject</span><span class="o">=</span><span class="s2">"01"</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">force_fmapless</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">[FieldmapEstimation(sources=&lt;5 files&gt;, method=&lt;EstimatorType.PEPOLAR: 2&gt;,</span>
-<span class="go">                    bids_id=&#39;pepolar4pe&#39;),</span>
+<span class="go">                    bids_id='pepolar4pe'),</span>
 <span class="go">FieldmapEstimation(sources=&lt;2 files&gt;, method=&lt;EstimatorType.ANAT: 5&gt;,</span>
-<span class="go">                   bids_id=&#39;auto_...&#39;)]</span>
+<span class="go">                   bids_id='auto_...')]</span>
 </pre></div>
 </div>
 </dd></dl>

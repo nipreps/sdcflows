@@ -312,26 +312,26 @@
 <p>A specialized <a class="reference internal" href="#sdcflows.utils.bimap.bidict" title="sdcflows.utils.bimap.bidict"><code class="xref py py-class docutils literal notranslate"><span class="pre">bidict</span></code></a> to track <a class="reference internal" href="sdcflows.fieldmaps.html#sdcflows.fieldmaps.FieldmapEstimation" title="sdcflows.fieldmaps.FieldmapEstimation"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldmapEstimation</span></code></a>.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span> <span class="o">=</span> <span class="n">EstimatorRegistry</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">&quot;file3.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;file4.txt&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"file3.txt"</span><span class="p">,</span> <span class="s2">"file4.txt"</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">sources</span>
-<span class="go">[&#39;file3.txt&#39;, &#39;file4.txt&#39;]</span>
+<span class="go">['file3.txt', 'file4.txt']</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">&quot;file1.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;file2.txt&quot;</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"file1.txt"</span><span class="p">,</span> <span class="s2">"file2.txt"</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">sources</span>
-<span class="go">[&#39;file1.txt&#39;, &#39;file2.txt&#39;, &#39;file3.txt&#39;, &#39;file4.txt&#39;]</span>
+<span class="go">['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">&quot;file3.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;file2.txt&quot;</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">estimators</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="s2">"file3.txt"</span><span class="p">,</span> <span class="s2">"file2.txt"</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">sources</span>
-<span class="go">[&#39;file1.txt&#39;, &#39;file2.txt&#39;, &#39;file3.txt&#39;, &#39;file4.txt&#39;]</span>
+<span class="go">['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="s2">&quot;file3.txt&quot;</span><span class="p">)</span>
-<span class="go">(&#39;auto_00000&#39;, &#39;auto_00002&#39;)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="s2">"file3.txt"</span><span class="p">)</span>
+<span class="go">('auto_00000', 'auto_00002')</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="s2">&quot;file5.txt&quot;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">estimators</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="s2">"file5.txt"</span><span class="p">)</span>
 <span class="go">()</span>
 </pre></div>
 </div>
@@ -354,109 +354,109 @@
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sdcflows.utils.bimap.</span></span><span class="sig-name descname"><span class="pre">bidict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/bimap.html#bidict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.bimap.bidict" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
 <p>A bidirectional hashmap.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">bidict</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">bidict</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span>
 <span class="go">1</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<span class="go">&#39;a&#39;</span>
+<span class="go">'a'</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span> <span class="ow">in</span> <span class="n">d</span>
 <span class="go">True</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot;b&quot;</span> <span class="ow">in</span> <span class="n">d</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="s2">"b"</span> <span class="ow">in</span> <span class="n">d</span>
 <span class="go">True</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span>
-<span class="go">{&#39;a&#39;: 1, &#39;b&#39;: 2, &#39;c&#39;: 3}</span>
+<span class="go">{'a': 1, 'b': 2, 'c': 3}</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;d&quot;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"d"</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">TypeError</span>: <span class="n">&#39;d&#39; &lt;&gt; &#39;d&#39; is a self-mapping</span>
+<span class="gr">TypeError</span>: <span class="n">'d' &lt;&gt; 'd' is a self-mapping</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">KeyError</span>: <span class="n">&#39;d&#39;</span>
+<span class="gr">KeyError</span>: <span class="n">'d'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">KeyError</span>: <span class="n">&#39;b&#39; is already in mapping</span>
+<span class="gr">KeyError</span>: <span class="n">'b' is already in mapping</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">KeyError</span>: <span class="n">&#39;1&#39; is already a value in mapping</span>
+<span class="gr">KeyError</span>: <span class="n">'1' is already a value in mapping</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">ValueError</span>: <span class="n">&#39;1&#39; is already in mapping</span>
+<span class="gr">ValueError</span>: <span class="n">'1' is already in mapping</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"a"</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">ValueError</span>: <span class="n">&#39;a&#39; is already a key in mapping</span>
+<span class="gr">ValueError</span>: <span class="n">'a' is already a key in mapping</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;unhashable val&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"unhashable val"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">TypeError</span>: <span class="n">value &#39;[]&#39; of unhashable type: &#39;list&#39;</span>
+<span class="gr">TypeError</span>: <span class="n">value '[]' of unhashable type: 'list'</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="nb">list</span><span class="p">()]</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">TypeError</span>: <span class="n">key &#39;[]&#39; of unhashable type: &#39;list&#39;</span>
+<span class="gr">TypeError</span>: <span class="n">key '[]' of unhashable type: 'list'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;a new value&quot;</span><span class="p">)</span>
-<span class="go">&#39;auto_00000&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"a new value"</span><span class="p">)</span>
+<span class="go">'auto_00000'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;auto_00000&quot;</span><span class="p">]</span>
-<span class="go">&#39;a new value&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"auto_00000"</span><span class="p">]</span>
+<span class="go">'a new value'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;auto_00001&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;another value&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;a new value&quot;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="p">[</span><span class="s2">"auto_00001"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"another value"</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"a new value"</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">ValueError</span>: <span class="n">&#39;a new value&#39; is already in mapping</span>
+<span class="gr">ValueError</span>: <span class="n">'a new value' is already in mapping</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;third value&quot;</span><span class="p">)</span>
-<span class="go">&#39;auto_00002&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"third value"</span><span class="p">)</span>
+<span class="go">'auto_00002'</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">==</span> <span class="n">bidict</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
 <span class="go">True</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bidict</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bidict</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">TypeError</span>: <span class="n">Bidirectional dictionary cannot contain repeated values</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;e&quot;</span><span class="p">]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s2">"e"</span><span class="p">]</span>
 <span class="gt">Traceback (most recent call last):</span>
-<span class="gr">KeyError</span>: <span class="n">&#39;e&#39;</span>
+<span class="gr">KeyError</span>: <span class="n">'e'</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-<span class="go">[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;, &#39;auto_00000&#39;, &#39;auto_00001&#39;, &#39;auto_00002&#39;]</span>
+<span class="go">['a', 'b', 'c', 'auto_00000', 'auto_00001', 'auto_00002']</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-<span class="go">[1, 2, 3, &#39;a new value&#39;, &#39;another value&#39;, &#39;third value&#39;]</span>
+<span class="go">[1, 2, 3, 'a new value', 'another value', 'third value']</span>
 </pre></div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>

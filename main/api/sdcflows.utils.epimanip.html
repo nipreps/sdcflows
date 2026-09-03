@@ -337,7 +337,7 @@ floating-point errors in the calculations.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;TotalReadoutTime&#39;</span><span class="p">:</span> <span class="mf">0.05251</span><span class="p">}</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'TotalReadoutTime'</span><span class="p">:</span> <span class="mf">0.05251</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
 <span class="go">0.05251</span>
 </pre></div>
@@ -353,10 +353,10 @@ as follows:</p>
 </div>
 <p>where <span class="math notranslate nohighlight">\(N_\text{PE}\)</span> is the number of pixels along the
 <abbr title="phase-encoding">PE</abbr> direction <strong>on the reconstructed matrix</strong>.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;EffectiveEchoSpacing&#39;</span><span class="p">:</span> <span class="mf">0.00059</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.05251&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'EffectiveEchoSpacing'</span><span class="p">:</span> <span class="mf">0.00059</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.05251'</span>
 </pre></div>
 </div>
 <p>Using nonstandard metadata, there are further options.
@@ -372,11 +372,11 @@ the readout time as:</p>
 \[T_\text{ro} = t_\text{es} \cdot
     (\left\lfloor\frac{N_\text{PE}}{f_\text{acc}} \right\rfloor - 1).\]</div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;EchoSpacing&#39;</span><span class="p">:</span> <span class="mf">0.00119341</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;ParallelReductionFactorInPlane&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.05251&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'EchoSpacing'</span><span class="p">:</span> <span class="mf">0.00119341</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'ParallelReductionFactorInPlane'</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.05251'</span>
 </pre></div>
 </div>
 <div class="admonition caution">
@@ -422,25 +422,25 @@ This second formulation seems to be preferred for the better accuracy
 of the Imaging Frequency field over the Magnetic field strength.</p>
 <p>Once the effective echo spacing is obtained, the total readout time
 can then be calculated with Eq. <span class="math notranslate nohighlight">\(\eqref{eq:rotime-ees}\)</span>.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;WaterFatShift&#39;</span><span class="p">:</span> <span class="mf">9.2227266</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;EPIFactor&#39;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;ImagingFrequency&#39;</span><span class="p">:</span> <span class="mf">127.7325</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">0.5f</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.05251&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'WaterFatShift'</span><span class="p">:</span> <span class="mf">9.2227266</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'EPIFactor'</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'ImagingFrequency'</span><span class="p">:</span> <span class="mf">127.7325</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">)</span><span class="si">:</span><span class="s2">0.5f</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.05251'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;WaterFatShift&#39;</span><span class="p">:</span> <span class="mf">9.2227266</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;EPIFactor&#39;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;MagneticFieldStrength&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">0.5f</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.05251&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'WaterFatShift'</span><span class="p">:</span> <span class="mf">9.2227266</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'EPIFactor'</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'MagneticFieldStrength'</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">)</span><span class="si">:</span><span class="s2">0.5f</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.05251'</span>
 </pre></div>
 </div>
 <p>If enough metadata is not available, raise an error:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">({</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">},</span>
-<span class="gp">... </span>        <span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">({</span><span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">},</span>
+<span class="gp">... </span>        <span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>
@@ -448,12 +448,12 @@ can then be calculated with Eq. <span class="math notranslate nohighlight">\(\eq
 <p>dcm2niix may provide “EstimatedTotalReadoutTime” or “EstimatedEffectiveEchoSpacing”
 fields when converting Philips data. In order to use these fields, pass
 <code class="docutils literal notranslate"><span class="pre">use_estimate=True</span></code>:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">({</span><span class="s1">&#39;EstimatedTotalReadoutTime&#39;</span><span class="p">:</span> <span class="mf">0.05251</span><span class="p">},</span> <span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_trt</span><span class="p">({</span><span class="s1">'EstimatedTotalReadoutTime'</span><span class="p">:</span> <span class="mf">0.05251</span><span class="p">},</span> <span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">0.05251</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;EstimatedEffectiveEchoSpacing&#39;</span><span class="p">:</span> <span class="mf">0.00059</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">:</span> <span class="s1">&#39;j-&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">&#39;epi.nii.gz&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.05251&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'EstimatedEffectiveEchoSpacing'</span><span class="p">:</span> <span class="mf">0.00059</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s1">'PhaseEncodingDirection'</span><span class="p">:</span> <span class="s1">'j-'</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">get_trt</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span><span class="w"> </span><span class="n">in_file</span><span class="o">=</span><span class="s1">'epi.nii.gz'</span><span class="p">,</span><span class="w"> </span><span class="n">use_estimate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.05251'</span>
 </pre></div>
 </div>
 <p>Finally, if a fallback value is provided, it will be used when the total readout

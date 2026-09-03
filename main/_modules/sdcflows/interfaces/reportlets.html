@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Interfaces to generate speciality reportlets.&quot;&quot;&quot;</span>
+<span class="sd">"""Interfaces to generate speciality reportlets."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -333,42 +333,42 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_FieldmapReportletInputSpec</span><span class="p">(</span><span class="n">reporting</span><span class="o">.</span><span class="n">ReportCapableInputSpec</span><span class="p">):</span>
-    <span class="n">reference</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input reference&#39;</span><span class="p">)</span>
-    <span class="n">moving</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input moving&#39;</span><span class="p">)</span>
-    <span class="n">fieldmap</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input fieldmap&#39;</span><span class="p">)</span>
-    <span class="n">max_alpha</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;maximum alpha channel&#39;</span><span class="p">)</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;brain mask&#39;</span><span class="p">)</span>
-    <span class="n">out_report</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;report.svg&#39;</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;filename for the visual report&#39;</span><span class="p">)</span>
-    <span class="n">show</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;where the fieldmap should be shown&#39;</span><span class="p">)</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input reference'</span><span class="p">)</span>
+    <span class="n">moving</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input moving'</span><span class="p">)</span>
+    <span class="n">fieldmap</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input fieldmap'</span><span class="p">)</span>
+    <span class="n">max_alpha</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'maximum alpha channel'</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'brain mask'</span><span class="p">)</span>
+    <span class="n">out_report</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s1">'report.svg'</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'filename for the visual report'</span><span class="p">)</span>
+    <span class="n">show</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'both'</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'where the fieldmap should be shown'</span><span class="p">)</span>
     <span class="n">reference_label</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
-        <span class="s1">&#39;Reference&#39;</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;a label name for the reference mosaic&#39;</span>
+        <span class="s1">'Reference'</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'a label name for the reference mosaic'</span>
     <span class="p">)</span>
     <span class="n">moving_label</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
-        <span class="s1">&#39;Fieldmap (Hz)&#39;</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;a label name for the reference mosaic&#39;</span>
+        <span class="s1">'Fieldmap (Hz)'</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'a label name for the reference mosaic'</span>
     <span class="p">)</span>
-    <span class="n">apply_mask</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;zero values outside mask&#39;</span><span class="p">)</span>
+    <span class="n">apply_mask</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'zero values outside mask'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FieldmapReportlet">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.reportlets.html#sdcflows.interfaces.reportlets.FieldmapReportlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldmapReportlet</span><span class="p">(</span><span class="n">reporting</span><span class="o">.</span><span class="n">ReportCapableInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An abstract mixin to registration nipype interfaces.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""An abstract mixin to registration nipype interfaces."""</span>
 
     <span class="n">_n_cuts</span> <span class="o">=</span> <span class="mi">7</span>
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_FieldmapReportletInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">reporting</span><span class="o">.</span><span class="n">ReportCapableOutputSpec</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate FieldmapReportlet.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;n_cuts&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Instantiate FieldmapReportlet."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'n_cuts'</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_cuts</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">generate_report</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">runtime</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_generate_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a reportlet.&quot;&quot;&quot;</span>
-        <span class="n">NIWORKFLOWS_LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Generating visual report&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Generate a reportlet."""</span>
+        <span class="n">NIWORKFLOWS_LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">'Generating visual report'</span><span class="p">)</span>
 
         <span class="n">movnii</span> <span class="o">=</span> <span class="n">load_img</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
         <span class="n">canonical_r</span> <span class="o">=</span> <span class="n">rotation2canonical</span><span class="p">(</span><span class="n">movnii</span><span class="p">)</span>
@@ -404,23 +404,23 @@
 
         <span class="n">fmap_overlay</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span>
-                <span class="s1">&#39;overlay&#39;</span><span class="p">:</span> <span class="n">fmapnii</span><span class="p">,</span>
-                <span class="s1">&#39;overlay_params&#39;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s1">&#39;cmap&#39;</span><span class="p">:</span> <span class="n">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">max_alpha</span><span class="p">),</span>
-                    <span class="s1">&#39;vmax&#39;</span><span class="p">:</span> <span class="n">vmax</span><span class="p">,</span>
-                    <span class="s1">&#39;vmin&#39;</span><span class="p">:</span> <span class="o">-</span><span class="n">vmax</span><span class="p">,</span>
+                <span class="s1">'overlay'</span><span class="p">:</span> <span class="n">fmapnii</span><span class="p">,</span>
+                <span class="s1">'overlay_params'</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">'cmap'</span><span class="p">:</span> <span class="n">coolwarm_transparent</span><span class="p">(</span><span class="n">max_alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">max_alpha</span><span class="p">),</span>
+                    <span class="s1">'vmax'</span><span class="p">:</span> <span class="n">vmax</span><span class="p">,</span>
+                    <span class="s1">'vmin'</span><span class="p">:</span> <span class="o">-</span><span class="n">vmax</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">}</span>
         <span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">show</span> <span class="o">!=</span> <span class="s1">&#39;both&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">show</span> <span class="o">!=</span> <span class="s1">'both'</span><span class="p">:</span>
             <span class="n">fmap_overlay</span><span class="p">[</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">show</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># Call composer</span>
         <span class="n">compose_view</span><span class="p">(</span>
             <span class="n">plot_registration</span><span class="p">(</span>
                 <span class="n">movnii</span><span class="p">,</span>
-                <span class="s1">&#39;moving-image&#39;</span><span class="p">,</span>
+                <span class="s1">'moving-image'</span><span class="p">,</span>
                 <span class="n">estimate_brightness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">cuts</span><span class="o">=</span><span class="n">cuts</span><span class="p">,</span>
                 <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">moving_label</span><span class="p">,</span>
@@ -430,7 +430,7 @@
             <span class="p">),</span>
             <span class="n">plot_registration</span><span class="p">(</span>
                 <span class="n">refnii</span><span class="p">,</span>
-                <span class="s1">&#39;fixed-image&#39;</span><span class="p">,</span>
+                <span class="s1">'fixed-image'</span><span class="p">,</span>
                 <span class="n">estimate_brightness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">cuts</span><span class="o">=</span><span class="n">cuts</span><span class="p">,</span>
                 <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">reference_label</span><span class="p">,</span>

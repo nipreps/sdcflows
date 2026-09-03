@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Datasets with multiple phase encoded directions.&quot;&quot;&quot;</span>
+<span class="sd">"""Datasets with multiple phase encoded directions."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
@@ -326,10 +326,10 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">...</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span>
 
-<span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;in_data&#39;</span><span class="p">)</span>
-<span class="n">_PEPOLAR_DESC</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'metadata'</span><span class="p">,</span> <span class="s1">'in_data'</span><span class="p">)</span>
+<span class="n">_PEPOLAR_DESC</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
 <span class="s2">A *B&lt;sub&gt;0&lt;/sub&gt;*-nonuniformity map (or *fieldmap*) was estimated based on two (or more)</span>
-<span class="s2">echo-planar imaging (EPI) references &quot;&quot;&quot;</span>
+<span class="s2">echo-planar imaging (EPI) references """</span>
 
 
 <div class="viewcode-block" id="init_topup_wf">
@@ -341,13 +341,13 @@
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pepolar_estimate_wf&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'pepolar_estimate_wf'</span><span class="p">,</span>
     <span class="n">topup_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">max_vols_per_pe</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Create the PEPOLAR field estimation workflow based on FSL&#39;s ``topup``.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create the PEPOLAR field estimation workflow based on FSL's ``topup``.</span>
 
 <span class="sd">    Workflow Graph</span>
 <span class="sd">        .. workflow ::</span>
@@ -401,7 +401,7 @@
 <span class="sd">    topup_config : :obj:`str`</span>
 <span class="sd">        The path of the config file used for TOPUP.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.fsl.epi</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOPUP</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">RobustAverage</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">MergeSeries</span><span class="p">,</span> <span class="n">ReorientImage</span>
@@ -413,154 +413,154 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">..ancillary</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_brainextraction_wf</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s2"> with `topup` (@topup; FSL </span><span class="si">{</span><span class="n">TOPUP</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">).</span>
-<span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">"""</span>
 
-    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
+    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s1">&#39;fmap&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;jacobians&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;xfms&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;out_warps&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;method&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;topup_config&#39;</span><span class="p">,</span>
+                <span class="s1">'fmap'</span><span class="p">,</span>
+                <span class="s1">'fmap_ref'</span><span class="p">,</span>
+                <span class="s1">'fmap_coeff'</span><span class="p">,</span>
+                <span class="s1">'fmap_mask'</span><span class="p">,</span>
+                <span class="s1">'jacobians'</span><span class="p">,</span>
+                <span class="s1">'xfms'</span><span class="p">,</span>
+                <span class="s1">'out_warps'</span><span class="p">,</span>
+                <span class="s1">'method'</span><span class="p">,</span>
+                <span class="s1">'topup_config'</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;PEB/PEPOLAR (phase-encoding based / PE-POLARity)&#39;</span>
+    <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">'PEB/PEPOLAR (phase-encoding based / PE-POLARity)'</span>
 
     <span class="c1"># Calculate the total readout time of each run</span>
     <span class="n">readout_time</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">MapNode</span><span class="p">(</span>
         <span class="n">GetReadoutTime</span><span class="p">(</span>
             <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;readout_time&#39;</span><span class="p">,</span>
-        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'readout_time'</span><span class="p">,</span>
+        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">,</span> <span class="s1">'in_file'</span><span class="p">],</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">readout_time</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback_total_readout_time</span>
-    <span class="c1"># Cap volumes per PE direction so topup isn&#39;t overwhelmed (FSL: ~3 spares/dir)</span>
+    <span class="c1"># Cap volumes per PE direction so topup isn't overwhelmed (FSL: ~3 spares/dir)</span>
     <span class="c1"># https://fsl.fmrib.ox.ac.uk/fsl/docs/diffusion/topup/users_guide/index.html</span>
     <span class="n">select_volumes</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">SelectPEVolumes</span><span class="p">(</span><span class="n">max_vols_per_pe</span><span class="o">=</span><span class="n">max_vols_per_pe</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;select_volumes&#39;</span>
+        <span class="n">SelectPEVolumes</span><span class="p">(</span><span class="n">max_vols_per_pe</span><span class="o">=</span><span class="n">max_vols_per_pe</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'select_volumes'</span>
     <span class="p">)</span>
     <span class="c1"># Regrid all to the reference (grid_reference=0 means first averaged run)</span>
-    <span class="n">regrid</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">UniformGrid</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">grid_reference</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;regrid&#39;</span><span class="p">)</span>
+    <span class="n">regrid</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">UniformGrid</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="n">grid_reference</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'regrid'</span><span class="p">)</span>
     <span class="c1"># Sort PE blips to ensure reproducibility</span>
-    <span class="n">sort_pe_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SortPEBlips</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sort_pe_blips&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sort_pe_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">SortPEBlips</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'sort_pe_blips'</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Merge into one 4D file</span>
-    <span class="n">concat_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(</span><span class="n">affine_tolerance</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat_blips&#39;</span><span class="p">)</span>
+    <span class="n">concat_blips</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(</span><span class="n">affine_tolerance</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'concat_blips'</span><span class="p">)</span>
     <span class="c1"># Feed the input images in LAS orientation, so FSL does not run funky reorientations</span>
-    <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">&#39;LAS&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_las&#39;</span><span class="p">)</span>
+    <span class="n">to_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImageAndMetadata</span><span class="p">(</span><span class="n">target_orientation</span><span class="o">=</span><span class="s1">'LAS'</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'to_las'</span><span class="p">)</span>
     <span class="c1"># TOPUP will jointly estimate head motion and susceptibility distortion using the</span>
     <span class="c1"># default configuration files.</span>
-    <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUP</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;topup&#39;</span><span class="p">)</span>
-    <span class="c1"># &quot;Generalize&quot; topup coefficients and store them in a spatially-correct NIfTI file</span>
-    <span class="n">fix_coeff</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUPCoeffReorient</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fix_coeff&#39;</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">topup</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUP</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'topup'</span><span class="p">)</span>
+    <span class="c1"># "Generalize" topup coefficients and store them in a spatially-correct NIfTI file</span>
+    <span class="n">fix_coeff</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">TOPUPCoeffReorient</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'fix_coeff'</span><span class="p">,</span> <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Average the output</span>
-    <span class="n">ref_average</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ref_average&#39;</span><span class="p">)</span>
+    <span class="n">ref_average</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">num_threads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'ref_average'</span><span class="p">)</span>
 
     <span class="c1"># Sophisticated brain extraction of fMRIPrep</span>
     <span class="n">brainextraction_wf</span> <span class="o">=</span> <span class="n">init_brainextraction_wf</span><span class="p">()</span>
 
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
-                                   <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dir_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">),</span>
-                                        <span class="p">(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">regrid</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">),</span>
-                                         <span class="p">(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_times&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">concat_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_dirs_fsl&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_data"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">),</span>
+                                   <span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_data"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">select_volumes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_dir_fsl"</span><span class="p">,</span> <span class="s2">"pe_dirs_fsl"</span><span class="p">),</span>
+                                        <span class="p">(</span><span class="s2">"readout_time"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">regrid</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_data"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">select_volumes</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_dirs_fsl"</span><span class="p">,</span> <span class="s2">"pe_dirs_fsl"</span><span class="p">),</span>
+                                         <span class="p">(</span><span class="s2">"readout_times"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">sort_pe_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_data"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_times"</span><span class="p">,</span> <span class="s2">"readout_times"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"reference"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">concat_blips</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_data"</span><span class="p">,</span> <span class="s2">"in_files"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">to_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_dirs_fsl"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;pe_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding_direction&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"pe_dir"</span><span class="p">,</span> <span class="s2">"encoding_direction"</span><span class="p">),</span>
         <span class="p">]),</span>
-        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_fieldcoef&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;pe_dir&quot;</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_jacs&quot;</span><span class="p">,</span> <span class="s2">&quot;jacobians&quot;</span><span class="p">),</span>
-                             <span class="p">(</span><span class="s2">&quot;out_mats&quot;</span><span class="p">,</span> <span class="s2">&quot;xfms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">ref_average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.in_file&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_fieldcoef"</span><span class="p">,</span> <span class="s2">"in_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">fix_coeff</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"pe_dir"</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_jacs"</span><span class="p">,</span> <span class="s2">"jacobians"</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s2">"out_mats"</span><span class="p">,</span> <span class="s2">"xfms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">ref_average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"inputnode.in_file"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">brainextraction_wf</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;outputnode.out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;outputnode.out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s2">"outputnode.out_file"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"outputnode.out_mask"</span><span class="p">,</span> <span class="s2">"fmap_mask"</span><span class="p">)</span>
         <span class="p">]),</span>
-        <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_coeff"</span><span class="p">,</span> <span class="s2">"fmap_coeff"</span><span class="p">)]),</span>
     <span class="p">])</span>  <span class="c1"># fmt: skip</span>
 
     <span class="c1"># When no custom config is given, select the fastest appropriate config at runtime</span>
     <span class="k">if</span> <span class="n">topup_config</span><span class="p">:</span>
         <span class="n">topup</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)</span>
-        <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">&#39; A custom `topup` configuration file was used.&#39;</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">+=</span> <span class="s1">' A custom `topup` configuration file was used.'</span>
         <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">topup_config</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">topup_config</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">select_config</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-            <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_select_topup_config</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]),</span>
-            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;select_config&#39;</span><span class="p">,</span>
+            <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_select_topup_config</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">'config'</span><span class="p">]),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">'select_config'</span><span class="p">,</span>
             <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">select_config</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">sloppy</span> <span class="o">=</span> <span class="n">sloppy</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">select_config</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;topup_config&#39;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">select_config</span><span class="p">,</span> <span class="p">[(</span><span class="s1">'out_file'</span><span class="p">,</span> <span class="s1">'in_file'</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">topup</span><span class="p">,</span> <span class="p">[(</span><span class="s1">'config'</span><span class="p">,</span> <span class="s1">'config'</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">select_config</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s1">'config'</span><span class="p">,</span> <span class="s1">'topup_config'</span><span class="p">)]),</span>
         <span class="p">])</span>  <span class="c1"># fmt: skip</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">debug</span><span class="p">:</span>
         <span class="c1"># Roll orientation back to original</span>
-        <span class="n">from_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;from_las&#39;</span><span class="p">)</span>
-        <span class="n">from_las_fmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;from_las_fmap&#39;</span><span class="p">)</span>
+        <span class="n">from_las</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'from_las'</span><span class="p">)</span>
+        <span class="n">from_las_fmap</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ReorientImage</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'from_las_fmap'</span><span class="p">)</span>
         <span class="c1"># fmt: off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;target_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">from_las</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_warps&quot;</span><span class="p">,</span> <span class="s2">&quot;out_warps&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">from_las_fmap</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"reference"</span><span class="p">,</span> <span class="s2">"target_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">regrid</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"reference"</span><span class="p">,</span> <span class="s2">"target_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_corrected"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">from_las</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">from_las_fmap</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_field"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_warps"</span><span class="p">,</span> <span class="s2">"out_warps"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">from_las_fmap</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"fmap"</span><span class="p">)]),</span>
         <span class="p">])</span>
         <span class="c1"># fmt: on</span>
         <span class="k">return</span> <span class="n">workflow</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.interfaces.bspline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApplyCoeffsField</span>
 
-    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unwarp&#39;</span><span class="p">)</span>
+    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'unwarp'</span><span class="p">)</span>
     <span class="n">unwarp</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">concat_corrected</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat_corrected&#39;</span><span class="p">)</span>
+    <span class="n">concat_corrected</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'concat_corrected'</span><span class="p">)</span>
     <span class="n">convert_xfms</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_topup_mats_to_world</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_xfms&#39;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;convert_xfms&#39;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_topup_mats_to_world</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">'out_xfms'</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'convert_xfms'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_mats&quot;</span><span class="p">,</span> <span class="s2">&quot;in_mats&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_reference&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">convert_xfms</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_xfms&quot;</span><span class="p">,</span> <span class="s2">&quot;in_xfms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_times&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
-                                 <span class="p">(</span><span class="s2">&quot;pe_dirs&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">concat_corrected</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">concat_corrected</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">concat_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">fix_coeff</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_coeff"</span><span class="p">,</span> <span class="s2">"in_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">topup</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_mats"</span><span class="p">,</span> <span class="s2">"in_mats"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_las</span><span class="p">,</span> <span class="n">convert_xfms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_reference"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">convert_xfms</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_xfms"</span><span class="p">,</span> <span class="s2">"in_xfms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe_blips</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_times"</span><span class="p">,</span> <span class="s2">"ro_time"</span><span class="p">),</span>
+                                 <span class="p">(</span><span class="s2">"pe_dirs"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_field"</span><span class="p">,</span> <span class="s2">"fmap"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">concat_corrected</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_corrected"</span><span class="p">,</span> <span class="s2">"in_files"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">concat_corrected</span><span class="p">,</span> <span class="n">ref_average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
     <span class="p">])</span>
     <span class="c1"># fmt:on</span>
 
@@ -570,9 +570,9 @@
 
 <div class="viewcode-block" id="init_3dQwarp_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.pepolar.html#sdcflows.workflows.fit.pepolar.init_3dQwarp_wf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init_3dQwarp_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pepolar_estimate_wf&#39;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Create the PEPOLAR field estimation workflow based on AFNI&#39;s ``3dQwarp``.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_3dQwarp_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'pepolar_estimate_wf'</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create the PEPOLAR field estimation workflow based on AFNI's ``3dQwarp``.</span>
 
 <span class="sd">    This workflow takes in two EPI files that MUST have opposed</span>
 <span class="sd">    :abbr:`PE (phase-encoding)` direction.</span>
@@ -607,7 +607,7 @@
 <span class="sd">    fmap_ref : :obj:`str`</span>
 <span class="sd">        The path of an unwarped conversion of the first element of ``in_data``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">afni</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.func.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -624,17 +624,17 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_last</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">afni_ver</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">afni</span><span class="o">.</span><span class="n">Info</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="p">()</span> <span class="ow">or</span> <span class="p">[])</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s1"> with `3dQwarp` (@afni; AFNI </span><span class="si">{</span><span class="n">afni_ver</span><span class="si">}</span><span class="s1">).&#39;</span>
+    <span class="n">afni_ver</span> <span class="o">=</span> <span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">afni</span><span class="o">.</span><span class="n">Info</span><span class="p">()</span><span class="o">.</span><span class="n">version</span><span class="p">()</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">_PEPOLAR_DESC</span><span class="si">}</span><span class="s1"> with `3dQwarp` (@afni; AFNI </span><span class="si">{</span><span class="n">afni_ver</span><span class="si">}</span><span class="s1">).'</span>
 
-    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_data&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
+    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'in_data'</span><span class="p">,</span> <span class="s1">'metadata'</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">)</span>
 
-    <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">)</span>
+    <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'fmap'</span><span class="p">,</span> <span class="s1">'fmap_ref'</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">)</span>
 
-    <span class="n">flatten</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Flatten</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten&#39;</span><span class="p">)</span>
+    <span class="n">flatten</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Flatten</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'flatten'</span><span class="p">)</span>
     <span class="n">sort_pe</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_sorted_pe</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sorted&#39;</span><span class="p">,</span> <span class="s1">&#39;qwarp_args&#39;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sort_pe&#39;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_sorted_pe</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">'sorted'</span><span class="p">,</span> <span class="s1">'qwarp_args'</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'sort_pe'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -647,71 +647,71 @@
             <span class="c1"># 7-DOF (rigid + intensity)</span>
             <span class="n">no_iteration</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">subsample_threshold</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-            <span class="n">out_file</span><span class="o">=</span><span class="s1">&#39;template.nii.gz&#39;</span><span class="p">,</span>
+            <span class="n">out_file</span><span class="o">=</span><span class="s1">'template.nii.gz'</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;merge_pes&#39;</span><span class="p">,</span>
-        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_files&#39;</span><span class="p">],</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'merge_pes'</span><span class="p">,</span>
+        <span class="n">iterfield</span><span class="o">=</span><span class="p">[</span><span class="s1">'in_files'</span><span class="p">],</span>
     <span class="p">)</span>
 
-    <span class="n">pe0_wf</span> <span class="o">=</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pe0_wf&#39;</span><span class="p">)</span>
-    <span class="n">pe1_wf</span> <span class="o">=</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pe1_wf&#39;</span><span class="p">)</span>
+    <span class="n">pe0_wf</span> <span class="o">=</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'pe0_wf'</span><span class="p">)</span>
+    <span class="n">pe1_wf</span> <span class="o">=</span> <span class="n">init_enhance_and_skullstrip_bold_wf</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'pe1_wf'</span><span class="p">)</span>
 
     <span class="n">align_pes</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">Registration</span><span class="p">(</span>
-            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;translation_rigid.json&#39;</span><span class="p">),</span>
+            <span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'translation_rigid.json'</span><span class="p">),</span>
             <span class="n">output_warped_image</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;align_pes&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'align_pes'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">qwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">afni</span><span class="o">.</span><span class="n">QwarpPlusMinus</span><span class="p">(</span>
             <span class="n">blur</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">environ</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">},</span>
+            <span class="n">environ</span><span class="o">=</span><span class="p">{</span><span class="s1">'OMP_NUM_THREADS'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
             <span class="n">minpatch</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
             <span class="n">nopadWARP</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">noweight</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">pblur</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;qwarp&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'qwarp'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">omp_nthreads</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="n">to_ants</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ConvertWarp</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;to_ants&#39;</span><span class="p">,</span> <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">to_ants</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ConvertWarp</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'to_ants'</span><span class="p">,</span> <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
 
-    <span class="n">cphdr_warp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">CopyHeader</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;cphdr_warp&#39;</span><span class="p">,</span> <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">cphdr_warp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">CopyHeader</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'cphdr_warp'</span><span class="p">,</span> <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
 
     <span class="n">unwarp_reference</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">ApplyTransforms</span><span class="p">(</span>
             <span class="n">dimension</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
             <span class="nb">float</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;LanczosWindowedSinc&#39;</span><span class="p">,</span>
+            <span class="n">interpolation</span><span class="o">=</span><span class="s1">'LanczosWindowedSinc'</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unwarp_reference&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'unwarp_reference'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># fmt: off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">flatten</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">),</span>
-                              <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;in_meta&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">flatten</span><span class="p">,</span> <span class="n">sort_pe</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_list&quot;</span><span class="p">,</span> <span class="s2">&quot;inlist&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;qwarp_args&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sort_pe</span><span class="p">,</span> <span class="n">merge_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;sorted&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">merge_pes</span><span class="p">,</span> <span class="n">pe0_wf</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">&quot;inputnode.in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">merge_pes</span><span class="p">,</span> <span class="n">pe1_wf</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="n">_last</span><span class="p">),</span> <span class="s2">&quot;inputnode.in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">pe0_wf</span><span class="p">,</span> <span class="n">align_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;outputnode.skull_stripped_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">pe1_wf</span><span class="p">,</span> <span class="n">align_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;outputnode.skull_stripped_file&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">pe0_wf</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;outputnode.skull_stripped_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">align_pes</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;warped_image&quot;</span><span class="p">,</span> <span class="s2">&quot;base_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">cphdr_warp</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;in_data&quot;</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">&quot;hdr_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">qwarp</span><span class="p">,</span> <span class="n">cphdr_warp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;source_warp&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">cphdr_warp</span><span class="p">,</span> <span class="n">to_ants</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">to_ants</span><span class="p">,</span> <span class="n">unwarp_reference</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;transforms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">unwarp_reference</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_reference&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">),</span>
-                                       <span class="p">(</span><span class="s2">&quot;in_reference&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">unwarp_reference</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">to_ants</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">flatten</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_data"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">),</span>
+                              <span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"in_meta"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">flatten</span><span class="p">,</span> <span class="n">sort_pe</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_list"</span><span class="p">,</span> <span class="s2">"inlist"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"qwarp_args"</span><span class="p">,</span> <span class="s2">"args"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sort_pe</span><span class="p">,</span> <span class="n">merge_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"sorted"</span><span class="p">,</span> <span class="s2">"in_files"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">merge_pes</span><span class="p">,</span> <span class="n">pe0_wf</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">"inputnode.in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">merge_pes</span><span class="p">,</span> <span class="n">pe1_wf</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="n">_last</span><span class="p">),</span> <span class="s2">"inputnode.in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">pe0_wf</span><span class="p">,</span> <span class="n">align_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"outputnode.skull_stripped_file"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">pe1_wf</span><span class="p">,</span> <span class="n">align_pes</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"outputnode.skull_stripped_file"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">pe0_wf</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"outputnode.skull_stripped_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">align_pes</span><span class="p">,</span> <span class="n">qwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"warped_image"</span><span class="p">,</span> <span class="s2">"base_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">cphdr_warp</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"in_data"</span><span class="p">,</span> <span class="n">_front</span><span class="p">),</span> <span class="s2">"hdr_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">qwarp</span><span class="p">,</span> <span class="n">cphdr_warp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"source_warp"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">cphdr_warp</span><span class="p">,</span> <span class="n">to_ants</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_ants</span><span class="p">,</span> <span class="n">unwarp_reference</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"transforms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">unwarp_reference</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_reference"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s2">"in_reference"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">unwarp_reference</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">to_ants</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"fmap"</span><span class="p">)]),</span>
     <span class="p">])</span>
     <span class="c1"># fmt: on</span>
     <span class="k">return</span> <span class="n">workflow</span></div>
@@ -719,10 +719,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_select_topup_config</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Pick an appropriate ``topup`` configuration for the input grid.</span>
 
-<span class="sd">    TOPUP&#39;s ``--subsamp`` schedule collapses a ``s x s x s`` neighborhood into a</span>
+<span class="sd">    TOPUP's ``--subsamp`` schedule collapses a ``s x s x s`` neighborhood into a</span>
 <span class="sd">    single voxel at each level, so *every* image dimension must be divisible by the</span>
 <span class="sd">    subsampling factor ``s`` used at that level (otherwise TOPUP errors out or</span>
 <span class="sd">    segfaults). Previously, the workaround was zero-padding the troublesome dimensions</span>
@@ -761,86 +761,86 @@
 <span class="sd">    same per-tier ``--lambda`` tiering and estimate motion only in the first two</span>
 <span class="sd">    levels (``--estmov=1,1,0``) to trade accuracy for speed in debug runs.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span> <span class="k">as</span> <span class="n">load_data</span>
 
     <span class="n">dims</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">d</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">):</span>
-        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;4&#39;</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">'4'</span>
     <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">d</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">):</span>
-        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">'2'</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">tier</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="s1">'1'</span>
 
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">load_data</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flirtsch/b02b0_</span><span class="si">{</span><span class="n">tier</span><span class="si">}{</span><span class="s2">&quot;_quick&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">load_data</span><span class="p">(</span><span class="sa">f</span><span class="s1">'flirtsch/b02b0_</span><span class="si">{</span><span class="n">tier</span><span class="si">}{</span><span class="s2">"_quick"</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.cnf'</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_topup_mats_to_world</span><span class="p">(</span><span class="n">in_mats</span><span class="p">,</span> <span class="n">in_reference</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert TOPUP&#39;s per-volume FSL motion matrices to world (RAS) affines.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Convert TOPUP's per-volume FSL motion matrices to world (RAS) affines.</span>
 
 <span class="sd">    ``in_reference`` MUST be the image TOPUP realigned (the LAS-reoriented input):</span>
 <span class="sd">    FSL matrices live in the voxel frame they were estimated in, so the same matrix</span>
 <span class="sd">    yields a different physical transform under a different orientation. The resulting</span>
 <span class="sd">    RAS-to-RAS affines are orientation-agnostic.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nitransforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nt</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;fsl&#39;</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">in_reference</span><span class="p">,</span> <span class="n">moving</span><span class="o">=</span><span class="n">in_reference</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">nt</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">'fsl'</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">in_reference</span><span class="p">,</span> <span class="n">moving</span><span class="o">=</span><span class="n">in_reference</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">mat</span> <span class="ow">in</span> <span class="n">in_mats</span>
     <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sorted_pe</span><span class="p">(</span><span class="n">inlist</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generate suitable inputs to ``3dQwarp``.</span>
 
 <span class="sd">    Example</span>
 <span class="sd">    -------</span>
 <span class="sd">    &gt;&gt;&gt; paths, args = _sorted_pe([</span>
-<span class="sd">    ...     (&quot;dir-AP_epi.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j-&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-AP_bold.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j-&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-PA_epi.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-PA_bold.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-AP_sbref.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j-&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-PA_sbref.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j&quot;}),</span>
+<span class="sd">    ...     ("dir-AP_epi.nii.gz", {"PhaseEncodingDirection": "j-"}),</span>
+<span class="sd">    ...     ("dir-AP_bold.nii.gz", {"PhaseEncodingDirection": "j-"}),</span>
+<span class="sd">    ...     ("dir-PA_epi.nii.gz", {"PhaseEncodingDirection": "j"}),</span>
+<span class="sd">    ...     ("dir-PA_bold.nii.gz", {"PhaseEncodingDirection": "j"}),</span>
+<span class="sd">    ...     ("dir-AP_sbref.nii.gz", {"PhaseEncodingDirection": "j-"}),</span>
+<span class="sd">    ...     ("dir-PA_sbref.nii.gz", {"PhaseEncodingDirection": "j"}),</span>
 <span class="sd">    ... ])</span>
 <span class="sd">    &gt;&gt;&gt; paths[0]</span>
-<span class="sd">    [&#39;dir-AP_epi.nii.gz&#39;, &#39;dir-AP_bold.nii.gz&#39;, &#39;dir-AP_sbref.nii.gz&#39;]</span>
+<span class="sd">    ['dir-AP_epi.nii.gz', 'dir-AP_bold.nii.gz', 'dir-AP_sbref.nii.gz']</span>
 
 <span class="sd">    &gt;&gt;&gt; paths[1]</span>
-<span class="sd">    [&#39;dir-PA_epi.nii.gz&#39;, &#39;dir-PA_bold.nii.gz&#39;, &#39;dir-PA_sbref.nii.gz&#39;]</span>
+<span class="sd">    ['dir-PA_epi.nii.gz', 'dir-PA_bold.nii.gz', 'dir-PA_sbref.nii.gz']</span>
 
 <span class="sd">    &gt;&gt;&gt; args</span>
-<span class="sd">    &#39;-noXdis -noZdis&#39;</span>
+<span class="sd">    '-noXdis -noZdis'</span>
 
 <span class="sd">    &gt;&gt;&gt; paths, args = _sorted_pe([</span>
-<span class="sd">    ...     (&quot;dir-AP_epi.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;j-&quot;}),</span>
-<span class="sd">    ...     (&quot;dir-LR_epi.nii.gz&quot;, {&quot;PhaseEncodingDirection&quot;: &quot;i&quot;}),</span>
+<span class="sd">    ...     ("dir-AP_epi.nii.gz", {"PhaseEncodingDirection": "j-"}),</span>
+<span class="sd">    ...     ("dir-LR_epi.nii.gz", {"PhaseEncodingDirection": "i"}),</span>
 <span class="sd">    ... ])  # doctest: +IGNORE_EXCEPTION_DETAIL</span>
 <span class="sd">    Traceback (most recent call last):</span>
 <span class="sd">    ValueError:</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out_ref</span> <span class="o">=</span> <span class="p">[</span><span class="n">inlist</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
     <span class="n">out_opp</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">ref_pe</span> <span class="o">=</span> <span class="n">inlist</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">]</span>
+    <span class="n">ref_pe</span> <span class="o">=</span> <span class="n">inlist</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s1">'PhaseEncodingDirection'</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">inlist</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-        <span class="n">pe</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;PhaseEncodingDirection&#39;</span><span class="p">]</span>
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s1">'PhaseEncodingDirection'</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">pe</span> <span class="o">==</span> <span class="n">ref_pe</span><span class="p">:</span>
             <span class="n">out_ref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ref_pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="n">out_opp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot handle orthogonal PE encodings.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Cannot handle orthogonal PE encodings.'</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">(</span>
         <span class="p">[</span><span class="n">out_ref</span><span class="p">,</span> <span class="n">out_opp</span><span class="p">],</span>
-        <span class="p">{</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="s1">&#39;-noYdis -noZdis&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">:</span> <span class="s1">&#39;-noXdis -noZdis&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="s1">&#39;-noXdis -noYdis&#39;</span><span class="p">}[</span><span class="n">ref_pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+        <span class="p">{</span><span class="s1">'i'</span><span class="p">:</span> <span class="s1">'-noYdis -noZdis'</span><span class="p">,</span> <span class="s1">'j'</span><span class="p">:</span> <span class="s1">'-noXdis -noZdis'</span><span class="p">,</span> <span class="s1">'k'</span><span class="p">:</span> <span class="s1">'-noXdis -noYdis'</span><span class="p">}[</span><span class="n">ref_pe</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
     <span class="p">)</span>
 </pre></div>
         </article>

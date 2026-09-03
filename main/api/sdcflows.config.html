@@ -316,48 +316,48 @@ the settings to hard disk in <em>ToML</em> format, which looks like:</p>
 <div class="code-block-caption"><span class="caption-number">Listing 1 </span><span class="caption-text"><strong>Example file representation of SDCFlows settings</strong>.</span><a class="headerlink" href="#sdcflows-toml" title="Link to this code">¶</a></div>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[environment]</span>
 <span class="n">cpu_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">36</span>
-<span class="n">exec_env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;posix&quot;</span>
+<span class="n">exec_env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"posix"</span>
 <span class="n">free_mem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">13.7</span>
-<span class="n">overcommit_policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;heuristic&quot;</span>
-<span class="n">overcommit_limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;50%&quot;</span>
-<span class="n">nipype_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.8.7.dev0&quot;</span>
-<span class="n">templateflow_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;23.0.0&quot;</span>
+<span class="n">overcommit_policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"heuristic"</span>
+<span class="n">overcommit_limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"50%"</span>
+<span class="n">nipype_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1.8.7.dev0"</span>
+<span class="n">templateflow_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"23.0.0"</span>
 <span class="n">total_memory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">62.51573181152344</span>
-<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2.6.1.dev5+gaa86b0b08f.d20231128&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"2.6.1.dev5+gaa86b0b08f.d20231128"</span>
 
 <span class="k">[execution]</span>
 <span class="n">ants_float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">bids_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data/datasets/hcph&quot;</span>
-<span class="n">bids_database_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data/datasets/hcph/.bids-index&quot;</span>
+<span class="n">bids_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/data/datasets/hcph"</span>
+<span class="n">bids_database_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/data/datasets/hcph/.bids-index"</span>
 <span class="n">bids_database_wipe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/home/oesteban/tmp/sdcflows-hcph&quot;</span>
+<span class="n">cwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/home/oesteban/tmp/sdcflows-hcph"</span>
 <span class="n">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">dry_run</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;BIDS Layout: .../data/datasets/hcph | Subjects: 1 | Sessions: 59 | Runs: 4&quot;</span>
-<span class="n">log_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/home/oesteban/tmp/sdcflows-hcph/out/logs&quot;</span>
+<span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"BIDS Layout: .../data/datasets/hcph | Subjects: 1 | Sessions: 59 | Runs: 4"</span>
+<span class="n">log_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/home/oesteban/tmp/sdcflows-hcph/out/logs"</span>
 <span class="n">log_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">15</span>
 <span class="n">notrack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">output_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/home/oesteban/tmp/sdcflows-hcph/out&quot;</span>
-<span class="n">participant_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;001&quot;</span><span class="p">,]</span>
+<span class="n">output_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/home/oesteban/tmp/sdcflows-hcph/out"</span>
+<span class="n">participant_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"001"</span><span class="p">,]</span>
 <span class="n">pdb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">run_uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;20231129-112254_e9d6d38e-35ff-463e-9f7e-1ff15ecd54ac&quot;</span>
-<span class="n">templateflow_home</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/data/templateflow&quot;</span>
-<span class="n">work_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/home/oesteban/tmp/sdcflows-hcph/work&quot;</span>
+<span class="n">run_uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"20231129-112254_e9d6d38e-35ff-463e-9f7e-1ff15ecd54ac"</span>
+<span class="n">templateflow_home</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/data/templateflow"</span>
+<span class="n">work_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/home/oesteban/tmp/sdcflows-hcph/work"</span>
 <span class="n">write_graph</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="k">[workflow]</span>
-<span class="n">analysis_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;participant&quot;</span><span class="p">,]</span>
+<span class="n">analysis_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"participant"</span><span class="p">,]</span>
 <span class="n">fmapless</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="n">species</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;human&quot;</span>
-<span class="n">template_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;MNI152NLin2009cAsym&quot;</span>
+<span class="n">species</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"human"</span>
+<span class="n">template_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"MNI152NLin2009cAsym"</span>
 
 <span class="k">[nipype]</span>
-<span class="n">crashfile_format</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;txt&quot;</span>
+<span class="n">crashfile_format</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"txt"</span>
 <span class="n">get_linked_libs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">local_hash_check</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">nprocs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span>
 <span class="n">omp_nthreads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span>
-<span class="n">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;MultiProc&quot;</span>
+<span class="n">plugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"MultiProc"</span>
 <span class="n">remove_node_directories</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">resource_monitor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">stop_on_first_crash</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
@@ -411,7 +411,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 <p>A config file is used to pass settings and collect information as the execution
 graph is built across processes.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
-<span class="n">config_file</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;.sdcflows.&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.toml&#39;</span><span class="p">)</span>
+<span class="n">config_file</span> <span class="o">=</span> <span class="n">mktemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">'.sdcflows.'</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'.toml'</span><span class="p">)</span>
 <span class="n">config</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 <span class="c1"># Call build_workflow(config_file, retval) in a subprocess</span>
 <span class="k">with</span> <span class="n">Manager</span><span class="p">()</span> <span class="k">as</span> <span class="n">mgr</span><span class="p">:</span>
@@ -486,13 +486,13 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.environment.free_mem">
-<span class="sig-name descname"><span class="pre">free_mem</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8.4</span></span><a class="headerlink" href="#sdcflows.config.environment.free_mem" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">free_mem</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9.1</span></span><a class="headerlink" href="#sdcflows.config.environment.free_mem" title="Link to this definition">¶</a></dt>
 <dd><p>Free memory at start.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.environment.nipype_version">
-<span class="sig-name descname"><span class="pre">nipype_version</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.11.0'</span></span><a class="headerlink" href="#sdcflows.config.environment.nipype_version" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">nipype_version</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.12.0'</span></span><a class="headerlink" href="#sdcflows.config.environment.nipype_version" title="Link to this definition">¶</a></dt>
 <dd><p>Nipype’s current version.</p>
 </dd></dl>
 
@@ -516,7 +516,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.environment.total_memory">
-<span class="sig-name descname"><span class="pre">total_memory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15.613983154296875</span></span><a class="headerlink" href="#sdcflows.config.environment.total_memory" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">total_memory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15.613971710205078</span></span><a class="headerlink" href="#sdcflows.config.environment.total_memory" title="Link to this definition">¶</a></dt>
 <dd><p>Total memory available, in GB.</p>
 </dd></dl>
 
@@ -637,7 +637,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.execution.run_uuid">
-<span class="sig-name descname"><span class="pre">run_uuid</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'20260811-183843_bf0bb23f-b14a-4b3f-98ae-88f8854c4278'</span></span><a class="headerlink" href="#sdcflows.config.execution.run_uuid" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run_uuid</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'20260903-134344_a8818f04-b8df-4917-8624-f5b2463159ba'</span></span><a class="headerlink" href="#sdcflows.config.execution.run_uuid" title="Link to this definition">¶</a></dt>
 <dd><p>Unique identifier of this particular run.</p>
 </dd></dl>
 

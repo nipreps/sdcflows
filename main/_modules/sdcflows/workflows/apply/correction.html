@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Applying a fieldmap given its B-Spline coefficients in Hz.&quot;&quot;&quot;</span>
+<span class="sd">"""Applying a fieldmap given its B-Spline coefficients in Hz."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">utility</span> <span class="k">as</span> <span class="n">niu</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span> <span class="k">as</span> <span class="n">pe</span>
@@ -335,9 +335,9 @@
     <span class="n">free_mem</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unwarp_wf&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'unwarp_wf'</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Set up a workflow that unwarps the input :abbr:`EPI (echo-planar imaging)` dataset.</span>
 
 <span class="sd">    Workflow Graph</span>
@@ -374,7 +374,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    fieldmap</span>
 <span class="sd">        the actual B\ :sub:`0` inhomogeneity map (also called *fieldmap*)</span>
-<span class="sd">        interpolated from the B-Spline coefficients into the target EPI&#39;s</span>
+<span class="sd">        interpolated from the B-Spline coefficients into the target EPI's</span>
 <span class="sd">        grid, given in Hz units.</span>
 <span class="sd">    fieldwarp</span>
 <span class="sd">        the displacements field interpolated from the B-Spline coefficients</span>
@@ -385,7 +385,7 @@
 <span class="sd">    corrected_mask</span>
 <span class="sd">        a fast mask calculated from the corrected EPI reference.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">RobustAverage</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">MergeSeries</span>
 
@@ -398,34 +398,34 @@
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s1">&#39;distorted&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;metadata&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fmap2data_xfm&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;data2fmap_xfm&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;hmc_xforms&#39;</span><span class="p">,</span>
+                <span class="s1">'distorted'</span><span class="p">,</span>
+                <span class="s1">'metadata'</span><span class="p">,</span>
+                <span class="s1">'fmap_coeff'</span><span class="p">,</span>
+                <span class="s1">'fmap2data_xfm'</span><span class="p">,</span>
+                <span class="s1">'data2fmap_xfm'</span><span class="p">,</span>
+                <span class="s1">'hmc_xforms'</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s1">&#39;fieldmap&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;fieldwarp&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;corrected&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;corrected_ref&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;corrected_mask&#39;</span><span class="p">,</span>
+                <span class="s1">'fieldmap'</span><span class="p">,</span>
+                <span class="s1">'fieldwarp'</span><span class="p">,</span>
+                <span class="s1">'corrected'</span><span class="p">,</span>
+                <span class="s1">'corrected_ref'</span><span class="p">,</span>
+                <span class="s1">'corrected_mask'</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">rotime</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">GetReadoutTime</span><span class="p">(</span>
             <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;rotime&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'rotime'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">rotime</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="n">debug</span>
@@ -446,33 +446,33 @@
     <span class="n">resample</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="n">jacobian</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="n">num_threads</span><span class="p">),</span>
         <span class="n">mem_gb</span><span class="o">=</span><span class="n">mem_per_thread</span> <span class="o">*</span> <span class="n">num_threads</span><span class="p">,</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;resample&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'resample'</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">merge</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;merge&#39;</span><span class="p">)</span>
-    <span class="n">average</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">mc_method</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">)</span>
+    <span class="n">merge</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">MergeSeries</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'merge'</span><span class="p">)</span>
+    <span class="n">average</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RobustAverage</span><span class="p">(</span><span class="n">mc_method</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'average'</span><span class="p">)</span>
 
     <span class="n">brainextraction_wf</span> <span class="o">=</span> <span class="n">init_brainextraction_wf</span><span class="p">()</span>
 
     <span class="c1"># fmt:off</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">rotime</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;distorted&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
-                             <span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;distorted&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">),</span>
-                               <span class="p">(</span><span class="s2">&quot;fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">),</span>
-                               <span class="p">(</span><span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap2data_xfm&quot;</span><span class="p">),</span>
-                               <span class="p">(</span><span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">,</span> <span class="s2">&quot;data2fmap_xfm&quot;</span><span class="p">),</span>
-                               <span class="p">(</span><span class="s2">&quot;hmc_xforms&quot;</span><span class="p">,</span> <span class="s2">&quot;in_xfms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">rotime</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
-                            <span class="p">(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fieldmap&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">rotime</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"distorted"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"in_file"</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"distorted"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">"fmap_coeff"</span><span class="p">,</span> <span class="s2">"in_coeff"</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">"fmap2data_xfm"</span><span class="p">,</span> <span class="s2">"fmap2data_xfm"</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">"data2fmap_xfm"</span><span class="p">,</span> <span class="s2">"data2fmap_xfm"</span><span class="p">),</span>
+                               <span class="p">(</span><span class="s2">"hmc_xforms"</span><span class="p">,</span> <span class="s2">"in_xfms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">rotime</span><span class="p">,</span> <span class="n">resample</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_time"</span><span class="p">,</span> <span class="s2">"ro_time"</span><span class="p">),</span>
+                            <span class="p">(</span><span class="s2">"pe_direction"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_corrected"</span><span class="p">,</span> <span class="s2">"in_files"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">average</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">average</span><span class="p">,</span> <span class="n">brainextraction_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"inputnode.in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"corrected"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">resample</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_field"</span><span class="p">,</span> <span class="s2">"fieldmap"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">brainextraction_wf</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">&quot;outputnode.out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected_ref&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;outputnode.out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;corrected_mask&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"outputnode.out_file"</span><span class="p">,</span> <span class="s2">"corrected_ref"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"outputnode.out_mask"</span><span class="p">,</span> <span class="s2">"corrected_mask"</span><span class="p">),</span>
         <span class="p">]),</span>
     <span class="p">])</span>
     <span class="c1"># fmt:on</span>

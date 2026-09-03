@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,9 +318,9 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Estimating the susceptibility distortions without fieldmaps.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
@@ -332,11 +332,11 @@
 
 <span class="n">DEFAULT_MEMORY_MIN_GB</span> <span class="o">=</span> <span class="mf">0.01</span>
 <span class="n">INPUT_FIELDS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s1">&#39;epi_ref&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;epi_mask&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;anat_ref&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;anat_mask&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;sd_prior&#39;</span><span class="p">,</span>
+    <span class="s1">'epi_ref'</span><span class="p">,</span>
+    <span class="s1">'epi_mask'</span><span class="p">,</span>
+    <span class="s1">'anat_ref'</span><span class="p">,</span>
+    <span class="s1">'anat_mask'</span><span class="p">,</span>
+    <span class="s1">'sd_prior'</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">MAX_LAPLACIAN_WEIGHT</span> <span class="o">=</span> <span class="mf">0.5</span>
 
@@ -349,12 +349,12 @@
     <span class="n">fallback_total_readout_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">sloppy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;syn_sdc_wf&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'syn_sdc_wf'</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">laplacian_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Build the *fieldmap-less* susceptibility-distortion estimation workflow.</span>
 
 <span class="sd">    SyN deformation is restricted to the phase-encoding (PE) direction.</span>
@@ -411,7 +411,7 @@
 <span class="sd">    method: :obj:`str`</span>
 <span class="sd">        Short description of the estimation method that was run.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.interfaces.ants</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImageMath</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
@@ -438,35 +438,35 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">last</span> <span class="k">as</span> <span class="n">_pull</span>
 
     <span class="n">ants_version</span> <span class="o">=</span> <span class="n">Registration</span><span class="p">()</span><span class="o">.</span><span class="n">version</span>
-    <span class="k">if</span> <span class="n">ants_version</span> <span class="ow">and</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ants_version</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="s1">&#39;2.2.0&#39;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Please upgrade ANTs to 2.2 or older (</span><span class="si">{</span><span class="n">ants_version</span><span class="si">}</span><span class="s1"> found).&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ants_version</span> <span class="ow">and</span> <span class="n">parseversion</span><span class="p">(</span><span class="n">ants_version</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="s1">'2.2.0'</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Please upgrade ANTs to 2.2 or older (</span><span class="si">{</span><span class="n">ants_version</span><span class="si">}</span><span class="s1"> found).'</span><span class="p">)</span>
 
     <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">__desc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">A deformation field to correct for susceptibility distortions was estimated</span>
-<span class="s2">based on *SDCFlows*&#39; *fieldmap-less* approach.</span>
+<span class="s2">based on *SDCFlows*' *fieldmap-less* approach.</span>
 <span class="s2">The deformation field is that resulting from co-registering the EPI reference</span>
-<span class="s2">to the same-subject&#39;s T1w-reference [@fieldmapless1; @fieldmapless2].</span>
+<span class="s2">to the same-subject's T1w-reference [@fieldmapless1; @fieldmapless2].</span>
 <span class="s2">Registration is performed with `antsRegistration`</span>
-<span class="s2">(ANTs </span><span class="si">{</span><span class="n">ants_version</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;-- version unknown&#39;</span><span class="si">}</span><span class="s2">), and</span>
+<span class="s2">(ANTs </span><span class="si">{</span><span class="n">ants_version</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-- version unknown'</span><span class="si">}</span><span class="s2">), and</span>
 <span class="s2">the process regularized by constraining deformation to be nonzero only</span>
 <span class="s2">along the phase-encoding direction.</span>
-<span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">"""</span>
 
-    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">)</span>
+    <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">INPUT_FIELDS</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
-            <span class="p">[</span><span class="s1">&#39;fmap&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_coeff&#39;</span><span class="p">,</span> <span class="s1">&#39;fmap_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;out_warp&#39;</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">]</span>
+            <span class="p">[</span><span class="s1">'fmap'</span><span class="p">,</span> <span class="s1">'fmap_ref'</span><span class="p">,</span> <span class="s1">'fmap_coeff'</span><span class="p">,</span> <span class="s1">'fmap_mask'</span><span class="p">,</span> <span class="s1">'out_warp'</span><span class="p">,</span> <span class="s1">'method'</span><span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;FLB (&quot;fieldmap-less&quot;, SyN-based)&#39;</span>
+    <span class="n">outputnode</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s1">'FLB ("fieldmap-less", SyN-based)'</span>
 
     <span class="n">readout_time</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">GetReadoutTime</span><span class="p">(</span>
             <span class="n">use_estimate</span><span class="o">=</span><span class="n">use_metadata_estimates</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;readout_time&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'readout_time'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">fallback_total_readout_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -475,65 +475,65 @@
     <span class="n">warp_dir</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_warp_dir</span><span class="p">),</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;warp_dir&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'warp_dir'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">warp_dir</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">nlevels</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">anat_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anat_dilmsk&#39;</span><span class="p">)</span>
+    <span class="n">anat_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'anat_dilmsk'</span><span class="p">)</span>
     <span class="n">amask2epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;MultiLabel&#39;</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">&#39;identity&#39;</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;amask2epi&#39;</span><span class="p">,</span>
+        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">'MultiLabel'</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">'identity'</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'amask2epi'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Calculate laplacian maps</span>
     <span class="n">lap_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ImageMath</span><span class="p">(</span><span class="n">operation</span><span class="o">=</span><span class="s1">&#39;Laplacian&#39;</span><span class="p">,</span> <span class="n">op2</span><span class="o">=</span><span class="s1">&#39;1.5 1&#39;</span><span class="p">,</span> <span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;lap_anat&#39;</span>
+        <span class="n">ImageMath</span><span class="p">(</span><span class="n">operation</span><span class="o">=</span><span class="s1">'Laplacian'</span><span class="p">,</span> <span class="n">op2</span><span class="o">=</span><span class="s1">'1.5 1'</span><span class="p">,</span> <span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'lap_anat'</span>
     <span class="p">)</span>
-    <span class="n">lap_anat_norm</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_norm_lap</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;lap_anat_norm&#39;</span><span class="p">)</span>
+    <span class="n">lap_anat_norm</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_norm_lap</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'lap_anat_norm'</span><span class="p">)</span>
     <span class="n">anat_merge</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anat_merge&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'anat_merge'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">clip_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntensityClip</span><span class="p">(</span><span class="n">p_min</span><span class="o">=</span><span class="mf">35.0</span><span class="p">,</span> <span class="n">p_max</span><span class="o">=</span><span class="mf">99.9</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip_epi&#39;</span><span class="p">)</span>
+    <span class="n">clip_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntensityClip</span><span class="p">(</span><span class="n">p_min</span><span class="o">=</span><span class="mf">35.0</span><span class="p">,</span> <span class="n">p_max</span><span class="o">=</span><span class="mf">99.9</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'clip_epi'</span><span class="p">)</span>
     <span class="n">lap_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ImageMath</span><span class="p">(</span><span class="n">operation</span><span class="o">=</span><span class="s1">&#39;Laplacian&#39;</span><span class="p">,</span> <span class="n">op2</span><span class="o">=</span><span class="s1">&#39;1.5 1&#39;</span><span class="p">,</span> <span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;lap_epi&#39;</span>
+        <span class="n">ImageMath</span><span class="p">(</span><span class="n">operation</span><span class="o">=</span><span class="s1">'Laplacian'</span><span class="p">,</span> <span class="n">op2</span><span class="o">=</span><span class="s1">'1.5 1'</span><span class="p">,</span> <span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'lap_epi'</span>
     <span class="p">)</span>
-    <span class="n">lap_epi_norm</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_norm_lap</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;lap_epi_norm&#39;</span><span class="p">)</span>
+    <span class="n">lap_epi_norm</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_norm_lap</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'lap_epi_norm'</span><span class="p">)</span>
     <span class="n">epi_merge</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;epi_merge&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'epi_merge'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">epi_umask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Union</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;epi_umask&#39;</span><span class="p">)</span>
+    <span class="n">epi_umask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Union</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'epi_umask'</span><span class="p">)</span>
     <span class="n">moving_masks</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;moving_masks&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'moving_masks'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">moving_masks</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in1</span> <span class="o">=</span> <span class="s1">&#39;NULL&#39;</span>
+    <span class="n">moving_masks</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in1</span> <span class="o">=</span> <span class="s1">'NULL'</span>
 
     <span class="n">fixed_masks</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fixed_masks&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'fixed_masks'</span><span class="p">,</span>
         <span class="n">mem_gb</span><span class="o">=</span><span class="n">DEFAULT_MEMORY_MIN_GB</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Set a manageable size for the epi reference</span>
-    <span class="n">find_zooms</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_adjust_zooms</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;find_zooms&#39;</span><span class="p">)</span>
-    <span class="n">zooms_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RegridToZooms</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;zooms_epi&#39;</span><span class="p">)</span>
+    <span class="n">find_zooms</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_adjust_zooms</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'find_zooms'</span><span class="p">)</span>
+    <span class="n">zooms_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">RegridToZooms</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'zooms_epi'</span><span class="p">)</span>
 
-    <span class="n">syn_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;sd_syn</span><span class="si">{</span><span class="s2">&quot;_sloppy&quot;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.json&#39;</span><span class="p">)</span>
+    <span class="n">syn_config</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s1">'sd_syn</span><span class="si">{</span><span class="s2">"_sloppy"</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sloppy</span><span class="si">}</span><span class="s1">.json'</span><span class="p">)</span>
 
-    <span class="n">vox_params</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_mm2vox</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;vox_params&#39;</span><span class="p">)</span>
+    <span class="n">vox_params</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_mm2vox</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'vox_params'</span><span class="p">)</span>
     <span class="n">vox_params</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">registration_config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">syn_config</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 
     <span class="c1"># SyN Registration Core</span>
     <span class="n">syn</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">Registration</span><span class="p">(</span><span class="n">from_file</span><span class="o">=</span><span class="n">syn_config</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;syn&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'syn'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_warped_image</span> <span class="o">=</span> <span class="n">debug</span>
@@ -550,27 +550,27 @@
         <span class="p">]</span>
 
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;--write-interval-volumes 2&#39;</span>
+        <span class="n">syn</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="s1">'--write-interval-volumes 2'</span>
 
     <span class="c1"># Extract the corresponding fieldmap in Hz</span>
-    <span class="n">extract_field</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">DisplacementsField2Fieldmap</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;extract_field&#39;</span><span class="p">)</span>
+    <span class="n">extract_field</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">DisplacementsField2Fieldmap</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'extract_field'</span><span class="p">)</span>
 
-    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;unwarp&#39;</span><span class="p">)</span>
+    <span class="n">unwarp</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyCoeffsField</span><span class="p">(</span><span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'unwarp'</span><span class="p">)</span>
 
     <span class="c1"># Check zooms (avoid very expensive B-Splines fitting)</span>
     <span class="n">zooms_field</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;BSpline&#39;</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">&#39;identity&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s1">&#39;-u float&#39;</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;zooms_field&#39;</span><span class="p">,</span>
+        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">'BSpline'</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">'identity'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s1">'-u float'</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'zooms_field'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">zooms_bmask</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;MultiLabel&#39;</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">&#39;identity&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s1">&#39;-u uchar&#39;</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;zooms_bmask&#39;</span><span class="p">,</span>
+        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s1">'MultiLabel'</span><span class="p">,</span> <span class="n">transforms</span><span class="o">=</span><span class="s1">'identity'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s1">'-u uchar'</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'zooms_bmask'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Regularize with B-Splines</span>
     <span class="n">bs_filter</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">BSplineApprox</span><span class="p">(</span><span class="n">recenter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="ow">not</span> <span class="n">debug</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bs_filter&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'bs_filter'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">bs_filter</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_always_run</span> <span class="o">=</span> <span class="n">debug</span>
     <span class="n">bs_filter</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">bs_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">]</span>
@@ -579,61 +579,61 @@
         <span class="n">bs_filter</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">zooms_min</span> <span class="o">=</span> <span class="mf">4.0</span>
 
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
-                                   <span class="p">((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pull</span><span class="p">),</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">clip_epi</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">amask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;epi_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">zooms_bmask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">fixed_masks</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in1&quot;</span><span class="p">),</span>
-                                  <span class="p">(</span><span class="s2">&quot;sd_prior&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;in1&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">lap_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;op1&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">find_zooms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;anat_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;in_anat&quot;</span><span class="p">),</span>
-                                 <span class="p">((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;in_epi&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">zooms_field</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;epi_ref&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">epi_umask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;epi_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in1&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">lap_anat</span><span class="p">,</span> <span class="n">lap_anat_norm</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">lap_anat_norm</span><span class="p">,</span> <span class="n">anat_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi_umask</span><span class="p">,</span> <span class="n">moving_masks</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">epi_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in1&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">lap_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;op1&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">zooms_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">lap_epi</span><span class="p">,</span> <span class="n">lap_epi_norm</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">lap_epi_norm</span><span class="p">,</span> <span class="n">epi_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">find_zooms</span><span class="p">,</span> <span class="n">zooms_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;zooms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">anat_dilmsk</span><span class="p">,</span> <span class="n">amask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">amask2epi</span><span class="p">,</span> <span class="n">epi_umask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">warp_dir</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;restrict_deformation&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">anat_merge</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">fixed_masks</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image_masks&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi_merge</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">moving_masks</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image_masks&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">vox_params</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;transform_parameters&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[((</span><span class="s2">&quot;forward_transforms&quot;</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">&quot;transform&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;epi&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
-                                       <span class="p">(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">extract_field</span><span class="p">,</span> <span class="n">zooms_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">zooms_field</span><span class="p">,</span> <span class="n">zooms_bmask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">zooms_field</span><span class="p">,</span> <span class="n">bs_filter</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in_data&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">readout_time</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"in_file"</span><span class="p">),</span>
+                                   <span class="p">((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pull</span><span class="p">),</span> <span class="s2">"metadata"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">clip_epi</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">amask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"epi_mask"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">zooms_bmask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_mask"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">fixed_masks</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_mask"</span><span class="p">,</span> <span class="s2">"in1"</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s2">"sd_prior"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_mask"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_ref"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_ref"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_ref"</span><span class="p">,</span> <span class="s2">"in1"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">lap_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_ref"</span><span class="p">,</span> <span class="s2">"op1"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">find_zooms</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"anat_ref"</span><span class="p">,</span> <span class="s2">"in_anat"</span><span class="p">),</span>
+                                 <span class="p">((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"in_epi"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">zooms_field</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"epi_ref"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">epi_umask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"epi_mask"</span><span class="p">,</span> <span class="s2">"in1"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">lap_anat</span><span class="p">,</span> <span class="n">lap_anat_norm</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">lap_anat_norm</span><span class="p">,</span> <span class="n">anat_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi_umask</span><span class="p">,</span> <span class="n">moving_masks</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">epi_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in1"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">lap_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"op1"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">zooms_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">lap_epi</span><span class="p">,</span> <span class="n">lap_epi_norm</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">lap_epi_norm</span><span class="p">,</span> <span class="n">epi_merge</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">find_zooms</span><span class="p">,</span> <span class="n">zooms_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"zooms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">anat_dilmsk</span><span class="p">,</span> <span class="n">amask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">amask2epi</span><span class="p">,</span> <span class="n">epi_umask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_direction"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"pe_direction"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">warp_dir</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">vox_params</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">warp_dir</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"restrict_deformation"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">anat_merge</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">fixed_masks</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"fixed_image_masks"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi_merge</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">moving_masks</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"moving_image_masks"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">vox_params</span><span class="p">,</span> <span class="n">syn</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"transform_parameters"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">syn</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[((</span><span class="s2">"forward_transforms"</span><span class="p">,</span> <span class="n">_pop</span><span class="p">),</span> <span class="s2">"transform"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_epi</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"epi"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">extract_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_time"</span><span class="p">,</span> <span class="s2">"ro_time"</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s2">"pe_direction"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">extract_field</span><span class="p">,</span> <span class="n">zooms_field</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">zooms_field</span><span class="p">,</span> <span class="n">zooms_bmask</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">zooms_field</span><span class="p">,</span> <span class="n">bs_filter</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in_data"</span><span class="p">)]),</span>
         <span class="c1"># Setting a mask ends up over-fitting the field</span>
-        <span class="c1"># - it&#39;s better to have all those ~zero around.</span>
-        <span class="c1"># (zooms_bmask, bs_filter, [(&quot;output_image&quot;, &quot;in_mask&quot;)]),</span>
-        <span class="p">(</span><span class="n">bs_filter</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;in_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;readout_time&quot;</span><span class="p">,</span> <span class="s2">&quot;ro_time&quot;</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;pe_direction&quot;</span><span class="p">,</span> <span class="s2">&quot;pe_dir&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">zooms_bmask</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_mask&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">bs_filter</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_coeff&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_corrected&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap_ref&quot;</span><span class="p">),</span>
-                              <span class="p">(</span><span class="s2">&quot;out_field&quot;</span><span class="p">,</span> <span class="s2">&quot;fmap&quot;</span><span class="p">)]),</span>
+        <span class="c1"># - it's better to have all those ~zero around.</span>
+        <span class="c1"># (zooms_bmask, bs_filter, [("output_image", "in_mask")]),</span>
+        <span class="p">(</span><span class="n">bs_filter</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_coeff"</span><span class="p">,</span> <span class="s2">"in_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">readout_time</span><span class="p">,</span> <span class="n">unwarp</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"readout_time"</span><span class="p">,</span> <span class="s2">"ro_time"</span><span class="p">),</span>
+                                <span class="p">(</span><span class="s2">"pe_direction"</span><span class="p">,</span> <span class="s2">"pe_dir"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">zooms_bmask</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"fmap_mask"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">bs_filter</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_coeff"</span><span class="p">,</span> <span class="s2">"fmap_coeff"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">unwarp</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_corrected"</span><span class="p">,</span> <span class="s2">"fmap_ref"</span><span class="p">),</span>
+                              <span class="p">(</span><span class="s2">"out_field"</span><span class="p">,</span> <span class="s2">"fmap"</span><span class="p">)]),</span>
     <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
@@ -646,13 +646,13 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">atlas_threshold</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;syn_preprocessing_wf&#39;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'syn_preprocessing_wf'</span><span class="p">,</span>
     <span class="n">omp_nthreads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">auto_bold_nss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">t1w_inversion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">sd_prior</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Prepare EPI references and co-registration to anatomical for SyN.</span>
 
 <span class="sd">    Workflow Graph</span>
@@ -713,7 +713,7 @@
 <span class="sd">        A template map of areas with strong susceptibility distortions (SD) to regularize</span>
 <span class="sd">        the cost function of SyN.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.fixes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">FixHeaderApplyTransforms</span> <span class="k">as</span> <span class="n">ApplyTransforms</span><span class="p">,</span>
     <span class="p">)</span>
@@ -735,76 +735,76 @@
     <span class="n">inputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
             <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s1">&#39;in_epis&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;t_masks&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;in_meta&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;in_anat&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;mask_anat&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;std2anat_xfm&#39;</span><span class="p">,</span>
+                <span class="s1">'in_epis'</span><span class="p">,</span>
+                <span class="s1">'t_masks'</span><span class="p">,</span>
+                <span class="s1">'in_meta'</span><span class="p">,</span>
+                <span class="s1">'in_anat'</span><span class="p">,</span>
+                <span class="s1">'mask_anat'</span><span class="p">,</span>
+                <span class="s1">'std2anat_xfm'</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputnode&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'inputnode'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">outputnode</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;epi_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;epi_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;sd_prior&#39;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputnode&#39;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'epi_ref'</span><span class="p">,</span> <span class="s1">'epi_mask'</span><span class="p">,</span> <span class="s1">'anat_ref'</span><span class="p">,</span> <span class="s1">'anat_mask'</span><span class="p">,</span> <span class="s1">'sd_prior'</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'outputnode'</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">deob_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Deoblique</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;deob_epi&#39;</span><span class="p">)</span>
+    <span class="n">deob_epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Deoblique</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'deob_epi'</span><span class="p">)</span>
 
     <span class="n">anat2epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">invert_transform_flags</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anat2epi&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'anat2epi'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
         <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">mask2epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">invert_transform_flags</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;MultiLabel&#39;</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mask2epi&#39;</span><span class="p">,</span>
+        <span class="n">ApplyTransforms</span><span class="p">(</span><span class="n">invert_transform_flags</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">'MultiLabel'</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'mask2epi'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
         <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">mask_dtype</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_set_dtype</span><span class="p">,</span> <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;dtype&#39;</span><span class="p">]),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mask_dtype&#39;</span><span class="p">,</span>
+        <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_set_dtype</span><span class="p">,</span> <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">'in_file'</span><span class="p">,</span> <span class="s1">'dtype'</span><span class="p">]),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'mask_dtype'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">mask_dtype</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;uint8&#39;</span>
+    <span class="n">mask_dtype</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="s1">'uint8'</span>
 
     <span class="n">epi_reference_wf</span> <span class="o">=</span> <span class="n">init_epi_reference_wf</span><span class="p">(</span>
         <span class="n">omp_nthreads</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
         <span class="n">auto_bold_nss</span><span class="o">=</span><span class="n">auto_bold_nss</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">epi_brain</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BrainExtraction</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;epi_brain&#39;</span><span class="p">)</span>
+    <span class="n">epi_brain</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BrainExtraction</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'epi_brain'</span><span class="p">)</span>
     <span class="n">merge_output</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
         <span class="n">niu</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">_merge_meta</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;merge_output&#39;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'merge_output'</span><span class="p">,</span>
         <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">mask_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyMask</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mask_anat&#39;</span><span class="p">)</span>
-    <span class="n">clip_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntensityClip</span><span class="p">(</span><span class="n">p_min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">p_max</span><span class="o">=</span><span class="mf">99.8</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip_anat&#39;</span><span class="p">)</span>
-    <span class="n">ref_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">DenoiseImage</span><span class="p">(</span><span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ref_anat&#39;</span><span class="p">,</span> <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">)</span>
+    <span class="n">mask_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">ApplyMask</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'mask_anat'</span><span class="p">)</span>
+    <span class="n">clip_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">IntensityClip</span><span class="p">(</span><span class="n">p_min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">p_max</span><span class="o">=</span><span class="mf">99.8</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'clip_anat'</span><span class="p">)</span>
+    <span class="n">ref_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">DenoiseImage</span><span class="p">(</span><span class="n">copy_header</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'ref_anat'</span><span class="p">,</span> <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">)</span>
 
     <span class="n">epi2anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-        <span class="n">Registration</span><span class="p">(</span><span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;affine.json&#39;</span><span class="p">)),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;epi2anat&#39;</span><span class="p">,</span>
+        <span class="n">Registration</span><span class="p">(</span><span class="n">from_file</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'affine.json'</span><span class="p">)),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">'epi2anat'</span><span class="p">,</span>
         <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">epi2anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_warped_image</span> <span class="o">=</span> <span class="n">debug</span>
     <span class="n">epi2anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_inverse_warped_image</span> <span class="o">=</span> <span class="n">debug</span>
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="n">epi2anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;--write-interval-volumes 5&#39;</span>
+        <span class="n">epi2anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="s1">'--write-interval-volumes 5'</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_remove_first_mask</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="n">in_file</span> <span class="o">=</span> <span class="p">[</span><span class="n">in_file</span><span class="p">]</span>
 
-        <span class="n">in_file</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;NULL&#39;</span><span class="p">)</span>
+        <span class="n">in_file</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">'NULL'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">in_file</span>
 
-    <span class="n">anat_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anat_dilmsk&#39;</span><span class="p">)</span>
-    <span class="n">epi_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;epi_dilmsk&#39;</span><span class="p">)</span>
+    <span class="n">anat_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'anat_dilmsk'</span><span class="p">)</span>
+    <span class="n">epi_dilmsk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">BinaryDilation</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'epi_dilmsk'</span><span class="p">)</span>
 
-    <span class="n">sampling_ref</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">GenerateSamplingReference</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sampling_ref&#39;</span><span class="p">)</span>
+    <span class="n">sampling_ref</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">GenerateSamplingReference</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'sampling_ref'</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">sd_prior</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Binarize</span>
@@ -814,95 +814,95 @@
         <span class="c1"># 1) MNI -&gt; anat; 2) ATLAS -&gt; MNI</span>
         <span class="n">transform_list</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
             <span class="n">niu</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
-            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;transform_list&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">'transform_list'</span><span class="p">,</span>
             <span class="n">mem_gb</span><span class="o">=</span><span class="n">DEFAULT_MEMORY_MIN_GB</span><span class="p">,</span>
             <span class="n">run_without_submitting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">transform_list</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in3</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;fmap_atlas_2_MNI152NLin2009cAsym_affine.mat&#39;</span><span class="p">)</span>
+        <span class="n">transform_list</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in3</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'fmap_atlas_2_MNI152NLin2009cAsym_affine.mat'</span><span class="p">)</span>
         <span class="n">prior2epi</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
             <span class="n">ApplyTransforms</span><span class="p">(</span>
                 <span class="n">invert_transform_flags</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
-                <span class="n">input_image</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;fmap_atlas.nii.gz&#39;</span><span class="p">)),</span>
+                <span class="n">input_image</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'fmap_atlas.nii.gz'</span><span class="p">)),</span>
             <span class="p">),</span>
-            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prior2epi&#39;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">'prior2epi'</span><span class="p">,</span>
             <span class="n">n_procs</span><span class="o">=</span><span class="n">omp_nthreads</span><span class="p">,</span>
             <span class="n">mem_gb</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">prior_msk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Binarize</span><span class="p">(</span><span class="n">thresh_low</span><span class="o">=</span><span class="n">atlas_threshold</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;prior_msk&#39;</span><span class="p">)</span>
+        <span class="n">prior_msk</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">Binarize</span><span class="p">(</span><span class="n">thresh_low</span><span class="o">=</span><span class="n">atlas_threshold</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'prior_msk'</span><span class="p">)</span>
 
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">transform_list</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;std2anat_xfm&quot;</span><span class="p">,</span> <span class="s2">&quot;in2&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">transform_list</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;forward_transforms&quot;</span><span class="p">,</span> <span class="s2">&quot;in1&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">transform_list</span><span class="p">,</span> <span class="n">prior2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;transforms&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">prior2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">prior2epi</span><span class="p">,</span> <span class="n">prior_msk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">prior_msk</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;sd_prior&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">transform_list</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"std2anat_xfm"</span><span class="p">,</span> <span class="s2">"in2"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">transform_list</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"forward_transforms"</span><span class="p">,</span> <span class="s2">"in1"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">transform_list</span><span class="p">,</span> <span class="n">prior2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"transforms"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">prior2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">prior2epi</span><span class="p">,</span> <span class="n">prior_msk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">prior_msk</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_mask"</span><span class="p">,</span> <span class="s2">"sd_prior"</span><span class="p">)]),</span>
         <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># no prior to be used -&gt; set anatomical mask as prior</span>
-        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mask_dtype</span><span class="p">,</span> <span class="s1">&#39;out&#39;</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="s1">&#39;sd_prior&#39;</span><span class="p">)</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mask_dtype</span><span class="p">,</span> <span class="s1">'out'</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="s1">'sd_prior'</span><span class="p">)</span>
 
     <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">epi_reference_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_epis&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.in_files&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">merge_output</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_meta&quot;</span><span class="p">,</span> <span class="s2">&quot;meta_list&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;mask_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">mask_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">),</span>
-                                <span class="p">(</span><span class="s2">&quot;mask_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;in_mask&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;mask_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi_reference_wf</span><span class="p">,</span> <span class="n">deob_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;outputnode.epi_ref_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">merge_output</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;epi_ref&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">mask_anat</span><span class="p">,</span> <span class="n">clip_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">clip_anat</span><span class="p">,</span> <span class="n">ref_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">epi_brain</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi_brain</span><span class="p">,</span> <span class="n">epi_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">ref_anat</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">anat_dilmsk</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image_masks&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">epi_reference_wf</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_epis"</span><span class="p">,</span> <span class="s2">"inputnode.in_files"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">merge_output</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_meta"</span><span class="p">,</span> <span class="s2">"meta_list"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">anat_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"mask_anat"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">mask_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_anat"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">),</span>
+                                <span class="p">(</span><span class="s2">"mask_anat"</span><span class="p">,</span> <span class="s2">"in_mask"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"mask_anat"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi_reference_wf</span><span class="p">,</span> <span class="n">deob_epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"outputnode.epi_ref_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">merge_output</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"epi_ref"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">mask_anat</span><span class="p">,</span> <span class="n">clip_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">clip_anat</span><span class="p">,</span> <span class="n">ref_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">epi_brain</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi_brain</span><span class="p">,</span> <span class="n">epi_dilmsk</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_mask"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">ref_anat</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">anat_dilmsk</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"fixed_image_masks"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
         <span class="p">(</span><span class="n">epi_dilmsk</span><span class="p">,</span> <span class="n">epi2anat</span><span class="p">,</span> <span class="p">[</span>
-            <span class="p">((</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="n">_remove_first_mask</span><span class="p">),</span> <span class="s2">&quot;moving_image_masks&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;fixed_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">ref_anat</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;input_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;forward_transforms&quot;</span><span class="p">,</span> <span class="s2">&quot;transforms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;forward_transforms&quot;</span><span class="p">,</span> <span class="s2">&quot;transforms&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;reference_image&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">mask2epi</span><span class="p">,</span> <span class="n">mask_dtype</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">anat2epi</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;output_image&quot;</span><span class="p">,</span> <span class="s2">&quot;anat_ref&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">mask_dtype</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;anat_mask&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">merge_output</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;epi_ref&quot;</span><span class="p">)]),</span>
-        <span class="p">(</span><span class="n">epi_brain</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;epi_mask&quot;</span><span class="p">)]),</span>
+            <span class="p">((</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="n">_remove_first_mask</span><span class="p">),</span> <span class="s2">"moving_image_masks"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">deob_epi</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"fixed_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">ref_anat</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"input_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"forward_transforms"</span><span class="p">,</span> <span class="s2">"transforms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">anat2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi2anat</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"forward_transforms"</span><span class="p">,</span> <span class="s2">"transforms"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">sampling_ref</span><span class="p">,</span> <span class="n">mask2epi</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"reference_image"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">mask2epi</span><span class="p">,</span> <span class="n">mask_dtype</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">anat2epi</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"output_image"</span><span class="p">,</span> <span class="s2">"anat_ref"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">mask_dtype</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"anat_mask"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">merge_output</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out"</span><span class="p">,</span> <span class="s2">"epi_ref"</span><span class="p">)]),</span>
+        <span class="p">(</span><span class="n">epi_brain</span><span class="p">,</span> <span class="n">outputnode</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_mask"</span><span class="p">,</span> <span class="s2">"epi_mask"</span><span class="p">)]),</span>
     <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.interfaces.nibabel</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegridToZooms</span>
 
         <span class="n">regrid_anat</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span>
-            <span class="n">RegridToZooms</span><span class="p">(</span><span class="n">zooms</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;regrid_anat&#39;</span>
+            <span class="n">RegridToZooms</span><span class="p">(</span><span class="n">zooms</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'regrid_anat'</span>
         <span class="p">)</span>
         <span class="c1"># fmt:off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">regrid_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;in_file&quot;</span><span class="p">)]),</span>
-            <span class="p">(</span><span class="n">regrid_anat</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;out_file&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">regrid_anat</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_anat"</span><span class="p">,</span> <span class="s2">"in_file"</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">regrid_anat</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"out_file"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
         <span class="p">])</span>
         <span class="c1"># fmt:on</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># fmt:off</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
-            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;in_anat&quot;</span><span class="p">,</span> <span class="s2">&quot;moving_image&quot;</span><span class="p">)]),</span>
+            <span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="n">sampling_ref</span><span class="p">,</span> <span class="p">[(</span><span class="s2">"in_anat"</span><span class="p">,</span> <span class="s2">"moving_image"</span><span class="p">)]),</span>
         <span class="p">])</span>
         <span class="c1"># fmt:on</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">auto_bold_nss</span><span class="p">:</span>
-        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="s1">&#39;t_masks&#39;</span><span class="p">,</span> <span class="n">epi_reference_wf</span><span class="p">,</span> <span class="s1">&#39;inputnode.t_masks&#39;</span><span class="p">)</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">inputnode</span><span class="p">,</span> <span class="s1">'t_masks'</span><span class="p">,</span> <span class="n">epi_reference_wf</span><span class="p">,</span> <span class="s1">'inputnode.t_masks'</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">workflow</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_warp_dir</span><span class="p">(</span><span class="n">moving_image</span><span class="p">,</span> <span class="n">fixed_image</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">nlevels</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the ``restrict_deformation`` argument from metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Extract the ``restrict_deformation`` argument from metadata."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -912,14 +912,14 @@
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">obliquity</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">logging</span>
 
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.interface&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s1">&#39;Running fieldmap-less registration on an oblique dataset&#39;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'nipype.interface'</span><span class="p">)</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">'Running fieldmap-less registration on an oblique dataset'</span>
         <span class="p">)</span>
 
-    <span class="n">moving_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">moving</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;RR&#39;</span><span class="p">,</span> <span class="s1">&#39;AA&#39;</span><span class="p">,</span> <span class="s1">&#39;SS&#39;</span><span class="p">])</span>
-    <span class="n">moving_pe_axis</span> <span class="o">=</span> <span class="n">moving_axcodes</span><span class="p">[</span><span class="s1">&#39;ijk&#39;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+    <span class="n">moving_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">moving</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">'RR'</span><span class="p">,</span> <span class="s1">'AA'</span><span class="p">,</span> <span class="s1">'SS'</span><span class="p">])</span>
+    <span class="n">moving_pe_axis</span> <span class="o">=</span> <span class="n">moving_axcodes</span><span class="p">[</span><span class="s1">'ijk'</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
 
-    <span class="n">fixed_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;RR&#39;</span><span class="p">,</span> <span class="s1">&#39;AA&#39;</span><span class="p">,</span> <span class="s1">&#39;SS&#39;</span><span class="p">])</span>
+    <span class="n">fixed_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">'RR'</span><span class="p">,</span> <span class="s1">'AA'</span><span class="p">,</span> <span class="s1">'SS'</span><span class="p">])</span>
 
     <span class="n">deformation</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
     <span class="n">deformation</span><span class="p">[</span><span class="n">fixed_axcodes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">moving_pe_axis</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -930,15 +930,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_mm2vox</span><span class="p">(</span><span class="n">moving_image</span><span class="p">,</span> <span class="n">fixed_image</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">registration_config</span><span class="p">):</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
-    <span class="n">params</span> <span class="o">=</span> <span class="n">registration_config</span><span class="p">[</span><span class="s1">&#39;transform_parameters&#39;</span><span class="p">]</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">registration_config</span><span class="p">[</span><span class="s1">'transform_parameters'</span><span class="p">]</span>
 
     <span class="n">moving</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">moving_image</span><span class="p">)</span>
     <span class="c1"># Use duplicate axcodes to ignore sign</span>
-    <span class="n">moving_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">moving</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;RR&#39;</span><span class="p">,</span> <span class="s1">&#39;AA&#39;</span><span class="p">,</span> <span class="s1">&#39;SS&#39;</span><span class="p">])</span>
-    <span class="n">moving_pe_axis</span> <span class="o">=</span> <span class="n">moving_axcodes</span><span class="p">[</span><span class="s1">&#39;ijk&#39;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+    <span class="n">moving_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">moving</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">'RR'</span><span class="p">,</span> <span class="s1">'AA'</span><span class="p">,</span> <span class="s1">'SS'</span><span class="p">])</span>
+    <span class="n">moving_pe_axis</span> <span class="o">=</span> <span class="n">moving_axcodes</span><span class="p">[</span><span class="s1">'ijk'</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
 
     <span class="n">fixed</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fixed_image</span><span class="p">)</span>
-    <span class="n">fixed_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;RR&#39;</span><span class="p">,</span> <span class="s1">&#39;AA&#39;</span><span class="p">,</span> <span class="s1">&#39;SS&#39;</span><span class="p">])</span>
+    <span class="n">fixed_axcodes</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="p">[</span><span class="s1">'RR'</span><span class="p">,</span> <span class="s1">'AA'</span><span class="p">,</span> <span class="s1">'SS'</span><span class="p">])</span>
 
     <span class="n">zooms</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">voxel_sizes</span><span class="p">(</span><span class="n">fixed</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
     <span class="n">pe_res</span> <span class="o">=</span> <span class="n">zooms</span><span class="p">[</span><span class="n">fixed_axcodes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">moving_pe_axis</span><span class="p">)]</span>
@@ -947,12 +947,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_merge_meta</span><span class="p">(</span><span class="n">epi_ref</span><span class="p">,</span> <span class="n">meta_list</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare a tuple of EPI reference and metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Prepare a tuple of EPI reference and metadata."""</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">epi_ref</span><span class="p">,</span> <span class="n">meta_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_set_dtype</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int16&#39;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Change the dtype of an image.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_dtype</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'int16'</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Change the dtype of an image."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -962,7 +962,7 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s1">'_</span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
@@ -984,7 +984,7 @@
 <div class="viewcode-block" id="match_histogram">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.syn.html#sdcflows.workflows.fit.syn.match_histogram">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">match_histogram</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">ref_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">img_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Match the histogram of the T2-like anatomical with the EPI.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Match the histogram of the T2-like anatomical with the EPI."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
@@ -1008,7 +1008,7 @@
         <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">img_mask</span><span class="p">)</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="p">)</span>
 
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_matched&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_matched'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
     <span class="n">img_data</span><span class="p">[</span><span class="n">img_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">match_histograms</span><span class="p">(</span>
         <span class="n">img_data</span><span class="p">[</span><span class="n">img_mask</span><span class="p">],</span>
         <span class="n">ref_data</span><span class="p">[</span><span class="n">ref_mask</span><span class="p">],</span>
@@ -1024,7 +1024,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_norm_lap</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Brought over from nirodents.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Brought over from nirodents."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
@@ -1041,11 +1041,11 @@
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
-        <span class="n">Path</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_norm&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_norm'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
     <span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
-    <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
+    <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_file</span>
 </pre></div>
         </article>

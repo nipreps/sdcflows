@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,13 +318,13 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Build a dataset-wide estimation workflow.&quot;&quot;&quot;</span>
+<span class="sd">"""Build a dataset-wide estimation workflow."""</span>
 
 
 <div class="viewcode-block" id="init_sdcflows_wf">
 <a class="viewcode-back" href="../../../../api/sdcflows.workflows.fit.base.html#sdcflows.workflows.fit.base.init_sdcflows_wf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init_sdcflows_wf</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a multi-subject, multi-estimator *SDCFlows* workflow.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a multi-subject, multi-estimator *SDCFlows* workflow."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.pipeline.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">Workflow</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">niworkflows.utils.bids</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_participants</span>
 
@@ -333,7 +333,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_fmap_derivatives_wf</span><span class="p">,</span> <span class="n">init_fmap_reports_wf</span>
 
     <span class="c1"># Create parent workflow</span>
-    <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;sdcflows_wf&#39;</span><span class="p">)</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'sdcflows_wf'</span><span class="p">)</span>
     <span class="n">workflow</span><span class="o">.</span><span class="n">base_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">work_dir</span>
 
     <span class="n">subjects</span> <span class="o">=</span> <span class="n">collect_participants</span><span class="p">(</span>
@@ -362,7 +362,7 @@
                 <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
                 <span class="n">write_coeff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">write_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fmap_derivatives_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">'fmap_derivatives_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="n">source_paths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">estim</span><span class="o">.</span><span class="n">sources</span><span class="p">]</span>
@@ -373,21 +373,21 @@
                 <span class="n">fmap_type</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
                 <span class="n">output_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
                 <span class="n">bids_fmap_id</span><span class="o">=</span><span class="n">estim</span><span class="o">.</span><span class="n">bids_id</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fmap_reports_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">'fmap_reports_</span><span class="si">{</span><span class="n">estim</span><span class="o">.</span><span class="n">sanitized_id</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">reportlets_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">inputnode</span><span class="o">.</span><span class="n">source_files</span> <span class="o">=</span> <span class="n">source_paths</span>
 
             <span class="n">workflow</span><span class="o">.</span><span class="n">connect</span><span class="p">([</span>
                 <span class="p">(</span><span class="n">estim_wf</span><span class="p">,</span> <span class="n">derivs_wf</span><span class="p">,</span> <span class="p">[</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fieldmap&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_ref&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_coeff&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_coeff&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_mask&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap"</span><span class="p">,</span> <span class="s2">"inputnode.fieldmap"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap_ref"</span><span class="p">,</span> <span class="s2">"inputnode.fmap_ref"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap_coeff"</span><span class="p">,</span> <span class="s2">"inputnode.fmap_coeff"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap_mask"</span><span class="p">,</span> <span class="s2">"inputnode.fmap_mask"</span><span class="p">),</span>
                 <span class="p">]),</span>
                 <span class="p">(</span><span class="n">estim_wf</span><span class="p">,</span> <span class="n">reportlets_wf</span><span class="p">,</span> <span class="p">[</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fieldmap&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_ref&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_ref&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="s2">&quot;outputnode.fmap_mask&quot;</span><span class="p">,</span> <span class="s2">&quot;inputnode.fmap_mask&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap"</span><span class="p">,</span> <span class="s2">"inputnode.fieldmap"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap_ref"</span><span class="p">,</span> <span class="s2">"inputnode.fmap_ref"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">"outputnode.fmap_mask"</span><span class="p">,</span> <span class="s2">"inputnode.fmap_mask"</span><span class="p">),</span>
                 <span class="p">]),</span>
             <span class="p">])</span>  <span class="c1"># fmt:skip</span>
 

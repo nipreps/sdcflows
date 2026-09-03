@@ -316,22 +316,22 @@
 <span class="sig-prename descclassname"><span class="pre">sdcflows.utils.phasemanip.</span></span><span class="sig-name descname"><span class="pre">delta_te</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sdcflows/utils/phasemanip.html#delta_te"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.utils.phasemanip.delta_te" title="Link to this definition">¶</a></dt>
 <dd><p>Read <span class="math notranslate nohighlight">\(\Delta_\text{TE}\)</span> from BIDS metadata dict.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s2">&quot;EchoTime1&quot;</span><span class="p">:</span> <span class="mf">0.00522</span><span class="p">,</span> <span class="s2">&quot;EchoTime2&quot;</span><span class="p">:</span> <span class="mf">0.00768</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.00246&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s2">"EchoTime1"</span><span class="p">:</span> <span class="mf">0.00522</span><span class="p">,</span> <span class="s2">"EchoTime2"</span><span class="p">:</span> <span class="mf">0.00768</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.00246'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s1">&#39;EchoTimeDifference&#39;</span><span class="p">:</span> <span class="mf">0.00246</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="go">&#39;0.00246&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">delta_te</span><span class="p">({</span><span class="s1">'EchoTimeDifference'</span><span class="p">:</span> <span class="mf">0.00246</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">"</span>
+<span class="go">'0.00246'</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">&quot;EchoTime1&quot;</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">"EchoTime1"</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">&quot;EchoTime2&quot;</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">"EchoTime2"</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>
@@ -341,7 +341,7 @@
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">&quot;EchoTimeDifference&quot;</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">})</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">delta_te</span><span class="p">({</span><span class="s2">"EchoTimeDifference"</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">})</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="gr">ValueError</span><span class="w">:</span>
 </pre></div>

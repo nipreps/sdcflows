@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2023 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,17 +318,17 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Build the SDCFlows&#39; standalone workflow.&quot;&quot;&quot;</span>
+<span class="sd">"""Build the SDCFlows' standalone workflow."""</span>
 
 
 <div class="viewcode-block" id="build_workflow">
 <a class="viewcode-back" href="../../../api/sdcflows.cli.workflow.html#sdcflows.cli.workflow.build_workflow">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_workflow</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="n">retval</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the Nipype Workflow that supports the whole execution graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create the Nipype Workflow that supports the whole execution graph."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
     <span class="c1"># We do not need OMP &gt; 1 for workflow creation</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'OMP_NUM_THREADS'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'1'</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.workflows.fit.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_sdcflows_wf</span>
@@ -341,18 +341,18 @@
 
     <span class="n">config</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
         <span class="mi">25</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+        <span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">Running SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">:</span>
 <span class="s2">             * BIDS dataset path: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">bids_dir</span><span class="si">}</span><span class="s2">.</span>
 <span class="s2">             * Output folder: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">.</span>
 <span class="s2">             * Analysis levels: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">analysis_level</span><span class="si">}</span><span class="s2">.</span>
-<span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+<span class="s2">"""</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;return_code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_sdcflows_wf</span><span class="p">()</span>
-    <span class="n">retval</span><span class="p">[</span><span class="s1">&#39;return_code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">'return_code'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">'workflow'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">'workflow'</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_sdcflows_wf</span><span class="p">()</span>
+    <span class="n">retval</span><span class="p">[</span><span class="s1">'return_code'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retval</span><span class="p">[</span><span class="s1">'workflow'</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">retval</span></div>
 
 </pre></div>

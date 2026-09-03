@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2023 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Standalone command line executable for estimation of fieldmaps.&quot;&quot;&quot;</span>
+<span class="sd">"""Standalone command line executable for estimation of fieldmaps."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span><span class="p">,</span> <span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">,</span> <span class="n">ArgumentParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
@@ -328,47 +328,47 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_participant_labels</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Drop ``sub-`` prefix of participant labels.</span>
 
-<span class="sd">    &gt;&gt;&gt; _parse_participant_labels(&quot;s060&quot;)</span>
-<span class="sd">    [&#39;s060&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; _parse_participant_labels(&quot;sub-s060&quot;)</span>
-<span class="sd">    [&#39;s060&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; _parse_participant_labels(&quot;s060 sub-s050&quot;)</span>
-<span class="sd">    [&#39;s050&#39;, &#39;s060&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; _parse_participant_labels(&quot;s060 sub-s060&quot;)</span>
-<span class="sd">    [&#39;s060&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; _parse_participant_labels(&quot;s060\tsub-s060&quot;)</span>
-<span class="sd">    [&#39;s060&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; _parse_participant_labels("s060")</span>
+<span class="sd">    ['s060']</span>
+<span class="sd">    &gt;&gt;&gt; _parse_participant_labels("sub-s060")</span>
+<span class="sd">    ['s060']</span>
+<span class="sd">    &gt;&gt;&gt; _parse_participant_labels("s060 sub-s050")</span>
+<span class="sd">    ['s050', 's060']</span>
+<span class="sd">    &gt;&gt;&gt; _parse_participant_labels("s060 sub-s060")</span>
+<span class="sd">    ['s060']</span>
+<span class="sd">    &gt;&gt;&gt; _parse_participant_labels("s060\tsub-s060")</span>
+<span class="sd">    ['s060']</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">item</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s1">&#39;sub-&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">()})</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">item</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s1">'sub-'</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">()})</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parser</span><span class="p">():</span>
     <span class="k">class</span><span class="w"> </span><span class="nc">ParticipantLabelAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
         <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">option_string</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">_parse_participant_labels</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)))</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">_parse_participant_labels</span><span class="p">(</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_path_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure a given path exists.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Ensure a given path exists."""</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Path does not exist: &lt;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&gt;.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Path does not exist: &lt;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">&gt;.'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_min_one</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure an argument is not lower than 1.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Ensure an argument is not lower than 1."""</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Argument can&#39;t be less than one.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Argument can't be less than one."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_to_gb</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mf">1e-9</span><span class="p">}</span>
-        <span class="n">digits</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()])</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'G'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'T'</span><span class="p">:</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span><span class="p">,</span> <span class="s1">'M'</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s1">'K'</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s1">'B'</span><span class="p">:</span> <span class="mf">1e-9</span><span class="p">}</span>
+        <span class="n">digits</span> <span class="o">=</span> <span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()])</span>
         <span class="n">n_digits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span>
-        <span class="n">units</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">n_digits</span><span class="p">:]</span> <span class="ow">or</span> <span class="s1">&#39;G&#39;</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">n_digits</span><span class="p">:]</span> <span class="ow">or</span> <span class="s1">'G'</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span><span class="p">[</span><span class="n">units</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_bids_filter</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
@@ -378,102 +378,102 @@
             <span class="k">return</span> <span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span>
 
-<span class="s2">Estimate fieldmaps available in a BIDS-compliant MRI dataset.&quot;&quot;&quot;</span><span class="p">,</span>
+<span class="s2">Estimate fieldmaps available in a BIDS-compliant MRI dataset."""</span><span class="p">,</span>
         <span class="n">formatter_class</span><span class="o">=</span><span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">PathExists</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_path_exists</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="n">parser</span><span class="p">)</span>
     <span class="n">PositiveInt</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_min_one</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="n">parser</span><span class="p">)</span>
 
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;bids_dir&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'bids_dir'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">PathExists</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The root folder of a BIDS valid dataset (sub-XXXXX folders should &#39;</span>
-        <span class="s1">&#39;be found at the top level in this folder).&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'The root folder of a BIDS valid dataset (sub-XXXXX folders should '</span>
+        <span class="s1">'be found at the top level in this folder).'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;output_dir&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'output_dir'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The directory where the output files &#39;</span>
-        <span class="s1">&#39;should be stored. If you are running group level analysis &#39;</span>
-        <span class="s1">&#39;this folder should be prepopulated with the results of the &#39;</span>
-        <span class="s1">&#39;participant level analysis.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'The directory where the output files '</span>
+        <span class="s1">'should be stored. If you are running group level analysis '</span>
+        <span class="s1">'this folder should be prepopulated with the results of the '</span>
+        <span class="s1">'participant level analysis.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;analysis_level&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
-        <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Level of the analysis that will be performed. &#39;</span>
-        <span class="s1">&#39;Multiple participant level analyses can be run independently &#39;</span>
-        <span class="s1">&#39;(in parallel) using the same output_dir.&#39;</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;participant&#39;</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">],</span>
+        <span class="s1">'analysis_level'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s1">'+'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Level of the analysis that will be performed. '</span>
+        <span class="s1">'Multiple participant level analyses can be run independently '</span>
+        <span class="s1">'(in parallel) using the same output_dir.'</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">'participant'</span><span class="p">,</span> <span class="s1">'group'</span><span class="p">],</span>
     <span class="p">)</span>
 
     <span class="c1"># optional arguments</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--version&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="s1">'--version'</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">'version'</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="sa">f</span><span class="s1">'SDCFlows </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s1">'</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;-v&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;--verbose&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;verbose_count&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;count&#39;</span><span class="p">,</span>
+        <span class="s1">'-v'</span><span class="p">,</span>
+        <span class="s1">'--verbose'</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">'verbose_count'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'count'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Increases log verbosity for each occurrence, debug level is -vvv.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Increases log verbosity for each occurrence, debug level is -vvv.'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># main options</span>
-    <span class="n">g_bids</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;Options related to BIDS&#39;</span><span class="p">)</span>
+    <span class="n">g_bids</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">'Options related to BIDS'</span><span class="p">)</span>
     <span class="n">g_bids</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--participant-label&#39;</span><span class="p">,</span>
+        <span class="s1">'--participant-label'</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="n">ParticipantLabelAction</span><span class="p">,</span>
-        <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;A space delimited list of participant identifiers or a single &#39;</span>
-        <span class="s1">&#39;identifier (the sub- prefix can be removed).&#39;</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s1">'+'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'A space delimited list of participant identifiers or a single '</span>
+        <span class="s1">'identifier (the sub- prefix can be removed).'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_bids</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--session-label&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
-        <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span>
+        <span class="s1">'--session-label'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s1">'*'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Filter input dataset by session label.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Filter input dataset by session label.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_bids</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--bids-filter-file&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'--bids-filter-file'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;PATH&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;a JSON file describing custom BIDS input filter using pybids &#39;</span>
-        <span class="s1">&#39;{&lt;suffix&gt;:{&lt;entity&gt;:&lt;filter&gt;,...},...} &#39;</span>
-        <span class="s1">&#39;(https://github.com/bids-standard/pybids/blob/master/bids/layout/config/bids.json)&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s1">'PATH'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'a JSON file describing custom BIDS input filter using pybids '</span>
+        <span class="s1">'{&lt;suffix&gt;:{&lt;entity&gt;:&lt;filter&gt;,...},...} '</span>
+        <span class="s1">'(https://github.com/bids-standard/pybids/blob/master/bids/layout/config/bids.json)'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_bids</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--bids-database-dir&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;PATH&#39;</span><span class="p">,</span>
+        <span class="s1">'--bids-database-dir'</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s1">'PATH'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">PathExists</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to an existing PyBIDS database folder, for faster indexing &#39;</span>
-        <span class="s1">&#39;(especially useful for large datasets).&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Path to an existing PyBIDS database folder, for faster indexing '</span>
+        <span class="s1">'(especially useful for large datasets).'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_bids</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--bids-database-wipe&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'--bids-database-wipe'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Wipe out previously existing BIDS indexing caches, forcing re-indexing.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Wipe out previously existing BIDS indexing caches, forcing re-indexing.'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># General performance</span>
-    <span class="n">g_perfm</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;Options to handle performance&#39;</span><span class="p">)</span>
+    <span class="n">g_perfm</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">'Options to handle performance'</span><span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--nprocs&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'--nprocs'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">PositiveInt</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">Maximum number of simultaneously running parallel processes executed by *SDCFlows* </span><span class="se">\</span>
-<span class="s2">(e.g., several instances of ANTs&#39; registration). </span><span class="se">\</span>
+<span class="s2">(e.g., several instances of ANTs' registration). </span><span class="se">\</span>
 <span class="s2">However, when ``--nprocs`` is greater or equal to the ``--omp-nthreads`` option, </span><span class="se">\</span>
 <span class="s2">it also sets the maximum number of threads that simultaneously running processes </span><span class="se">\</span>
 <span class="s2">may aggregate (meaning, with ``--nprocs 16 --omp-nthreads 8`` a maximum of two </span><span class="se">\</span>
@@ -482,82 +482,82 @@
 <span class="s2">that can be assigned work within an *SDCFlows* job, which includes all the processors </span><span class="se">\</span>
 <span class="s2">used by currently running single- and multi-threaded processes. </span><span class="se">\</span>
 <span class="s2">If ``None``, the number of CPUs available will be automatically assigned (which may </span><span class="se">\</span>
-<span class="s2">not be what you want in, e.g., shared systems like a HPC cluster.&quot;&quot;&quot;</span><span class="p">,</span>
+<span class="s2">not be what you want in, e.g., shared systems like a HPC cluster."""</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--omp-nthreads&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'--omp-nthreads'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">PositiveInt</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"""</span><span class="se">\</span>
 <span class="s2">Maximum number of threads that multi-threaded processes executed by *SDCFlows* </span><span class="se">\</span>
-<span class="s2">(e.g., ANTs&#39; registration) can use. </span><span class="se">\</span>
+<span class="s2">(e.g., ANTs' registration) can use. </span><span class="se">\</span>
 <span class="s2">If ``None``, the number of CPUs available will be automatically assigned (which may </span><span class="se">\</span>
-<span class="s2">not be what you want in, e.g., shared systems like a HPC cluster.&quot;&quot;&quot;</span><span class="p">,</span>
+<span class="s2">not be what you want in, e.g., shared systems like a HPC cluster."""</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--mem-gb&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;memory_gb&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'--mem-gb'</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">'memory_gb'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">_to_gb</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Upper bound memory limit for SDCFlows processes.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Upper bound memory limit for SDCFlows processes.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--debug&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'--debug'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Enable changes to processing to aid in debugging&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Enable changes to processing to aid in debugging'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--pdb&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;pdb&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'--pdb'</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">'pdb'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Open Python debugger (pdb) on exceptions.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Open Python debugger (pdb) on exceptions.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_perfm</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--sloppy&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'--sloppy'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Use sloppy mode for minimal footprint.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Use sloppy mode for minimal footprint.'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Control instruments</span>
-    <span class="n">g_outputs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;Instrumental options&#39;</span><span class="p">)</span>
+    <span class="n">g_outputs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">'Instrumental options'</span><span class="p">)</span>
     <span class="n">g_outputs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;-w&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;--work-dir&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'-w'</span><span class="p">,</span>
+        <span class="s1">'--work-dir'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s1">&#39;work&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path where intermediate results should be stored.&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s1">'work'</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Path where intermediate results should be stored.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_outputs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;-n&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;--dry-run&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="s1">'-n'</span><span class="p">,</span>
+        <span class="s1">'--dry-run'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;only find estimable fieldmaps (that is, estimation is not triggered)&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'only find estimable fieldmaps (that is, estimation is not triggered)'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_outputs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--no-fmapless&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_false&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;fmapless&#39;</span><span class="p">,</span>
+        <span class="s1">'--no-fmapless'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_false'</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s1">'fmapless'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Allow fieldmap-less estimation&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Allow fieldmap-less estimation'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_outputs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--use-plugin&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="s1">'--use-plugin'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store'</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Nipype plugin configuration file.&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Nipype plugin configuration file.'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">g_outputs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s1">&#39;--notrack&#39;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Opt-out of sending tracking information of this run to the NiPreps developers. &#39;</span>
-        <span class="s1">&#39;This information helps to improve SDCFlows and provides an indicator of &#39;</span>
-        <span class="s1">&#39;real world usage for obtaining funding.&#39;</span><span class="p">,</span>
+        <span class="s1">'--notrack'</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">'store_true'</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">'Opt-out of sending tracking information of this run to the NiPreps developers. '</span>
+        <span class="s1">'This information helps to improve SDCFlows and provides an indicator of '</span>
+        <span class="s1">'real world usage for obtaining funding.'</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parser</span>
@@ -566,7 +566,7 @@
 <div class="viewcode-block" id="parse_args">
 <a class="viewcode-back" href="../../../api/sdcflows.cli.parser.html#sdcflows.cli.parser.parse_args">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_args</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse args and run further checks on the command line.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Parse args and run further checks on the command line."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">loads</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEBUG</span>
 
@@ -581,11 +581,11 @@
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">use_plugin</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">plugin_settings</span> <span class="o">=</span> <span class="n">loadyml</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">_plugin</span> <span class="o">=</span> <span class="n">plugin_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span>
+        <span class="n">_plugin</span> <span class="o">=</span> <span class="n">plugin_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'plugin'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">_plugin</span><span class="p">:</span>
             <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="n">_plugin</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span> <span class="o">=</span> <span class="n">plugin_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;plugin_args&#39;</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nprocs&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span> <span class="o">=</span> <span class="n">plugin_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'plugin_args'</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">plugin_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'nprocs'</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">nipype</span><span class="o">.</span><span class="n">nprocs</span><span class="p">)</span>
 
     <span class="c1"># Load BIDS filters</span>
     <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">bids_filter_file</span><span class="p">:</span>
@@ -598,20 +598,20 @@
 
     <span class="c1"># Ensure input and output folders are not the same</span>
     <span class="k">if</span> <span class="n">output_dir</span> <span class="o">==</span> <span class="n">bids_dir</span><span class="p">:</span>
-        <span class="n">suggested_path</span> <span class="o">=</span> <span class="n">bids_dir</span> <span class="o">/</span> <span class="s1">&#39;derivatives&#39;</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">&#39;sdcflows_</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">suggested_path</span> <span class="o">=</span> <span class="n">bids_dir</span> <span class="o">/</span> <span class="s1">'derivatives'</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'sdcflows_</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-            <span class="s1">&#39;The selected output folder is the same as the input BIDS folder. &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;Please modify the output path (suggestion: </span><span class="si">{</span><span class="n">suggested_path</span><span class="si">}</span><span class="s1">).&#39;</span>
+            <span class="s1">'The selected output folder is the same as the input BIDS folder. '</span>
+            <span class="sa">f</span><span class="s1">'Please modify the output path (suggestion: </span><span class="si">{</span><span class="n">suggested_path</span><span class="si">}</span><span class="s1">).'</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">bids_dir</span> <span class="ow">in</span> <span class="n">work_dir</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-            <span class="s1">&#39;The selected working directory is a subdirectory of the input BIDS folder. &#39;</span>
-            <span class="s1">&#39;Please modify the output path.&#39;</span>
+            <span class="s1">'The selected working directory is a subdirectory of the input BIDS folder. '</span>
+            <span class="s1">'Please modify the output path.'</span>
         <span class="p">)</span>
 
     <span class="c1"># Setup directories</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s1">&#39;logs&#39;</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s1">'logs'</span>
     <span class="c1"># Check and create output and working directories</span>
     <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">log_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -626,8 +626,8 @@
         <span class="n">missing_subjects</span> <span class="o">=</span> <span class="n">selected_label</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">participant_label</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">missing_subjects</span><span class="p">:</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s1">&#39;One or more participant labels were not found in the BIDS directory: &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_subjects</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
+                <span class="s1">'One or more participant labels were not found in the BIDS directory: '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_subjects</span><span class="p">)</span><span class="si">}</span><span class="s1">.'</span>
             <span class="p">)</span>
         <span class="n">participant_label</span> <span class="o">=</span> <span class="n">selected_label</span>
 

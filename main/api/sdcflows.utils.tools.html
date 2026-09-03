@@ -356,32 +356,32 @@ reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)</p>
 from a to b can be passed as the “source” orientation.</p>
 <p>Passing only a source orientation will rotate into RAS:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">nibabel.orientations</span><span class="w"> </span><span class="kn">import</span> <span class="n">axcodes2ornt</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;RAS&quot;</span><span class="p">))</span>
-<span class="go">&#39;j&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;PSL&quot;</span><span class="p">))</span>
-<span class="go">&#39;j-&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"RAS"</span><span class="p">))</span>
+<span class="go">'j'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"PSL"</span><span class="p">))</span>
+<span class="go">'j-'</span>
 </pre></div>
 </div>
 <p>Passing only a target_ornt will rotate from RAS:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;RAS&quot;</span><span class="p">))</span>
-<span class="go">&#39;j&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;PSL&quot;</span><span class="p">))</span>
-<span class="go">&#39;k-&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"RAS"</span><span class="p">))</span>
+<span class="go">'j'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"PSL"</span><span class="p">))</span>
+<span class="go">'k-'</span>
 </pre></div>
 </div>
 <p>Passing both will rotate from source to target.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;LPS&quot;</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;AIR&quot;</span><span class="p">))</span>
-<span class="go">&#39;i-&#39;</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"LPS"</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"AIR"</span><span class="p">))</span>
+<span class="go">'i-'</span>
 </pre></div>
 </div>
 <p>Passing a transform orientation as source_ornt will perform the transform,
 and passing it as <code class="docutils literal notranslate"><span class="pre">target_ornt</span></code> will invert the transform:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">nibabel.orientations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ornt_transform</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">xfm</span> <span class="o">=</span> <span class="n">ornt_transform</span><span class="p">(</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;LPS&quot;</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">&quot;AIR&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">xfm</span><span class="p">)</span>
-<span class="go">&#39;i-&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">&quot;j&quot;</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">xfm</span><span class="p">)</span>
-<span class="go">&#39;k-&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xfm</span> <span class="o">=</span> <span class="n">ornt_transform</span><span class="p">(</span><span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"LPS"</span><span class="p">),</span> <span class="n">axcodes2ornt</span><span class="p">(</span><span class="s2">"AIR"</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">xfm</span><span class="p">)</span>
+<span class="go">'i-'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reorient_pedir</span><span class="p">(</span><span class="s2">"j"</span><span class="p">,</span> <span class="n">source_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="n">xfm</span><span class="p">)</span>
+<span class="go">'k-'</span>
 </pre></div>
 </div>
 </dd></dl>

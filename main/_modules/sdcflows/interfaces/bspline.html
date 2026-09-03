@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Filtering of :math:`B_0` field mappings with B-Splines.&quot;&quot;&quot;</span>
+<span class="sd">"""Filtering of :math:`B_0` field mappings with B-Splines."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -347,40 +347,40 @@
 <span class="n">DEFAULT_ZOOMS_MM</span> <span class="o">=</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>  <span class="c1"># For human adults (mid-frequency), in mm</span>
 <span class="n">DEFAULT_LF_ZOOMS_MM</span> <span class="o">=</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">)</span>  <span class="c1"># For human adults (low-frequency), in mm</span>
 <span class="n">DEFAULT_HF_ZOOMS_MM</span> <span class="o">=</span> <span class="p">(</span><span class="mf">16.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span>  <span class="c1"># For human adults (high-frequency), in mm</span>
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.interface&#39;</span><span class="p">)</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'nipype.interface'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_BSplineApproxInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_data</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;path to a fieldmap&#39;</span><span class="p">)</span>
-    <span class="n">in_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;path to a brain mask&#39;</span><span class="p">)</span>
+    <span class="n">in_data</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'path to a fieldmap'</span><span class="p">)</span>
+    <span class="n">in_mask</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'path to a brain mask'</span><span class="p">)</span>
     <span class="n">bs_spacing</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="p">[</span><span class="n">DEFAULT_HF_ZOOMS_MM</span><span class="p">],</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">),</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;spacing between B-Spline control points&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'spacing between B-Spline control points'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">ridge_alpha</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;controls the regularization&#39;</span><span class="p">)</span>
+    <span class="n">ridge_alpha</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'controls the regularization'</span><span class="p">)</span>
     <span class="n">recenter</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span>
-        <span class="s1">&#39;median&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;mode&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+        <span class="s1">'median'</span><span class="p">,</span>
+        <span class="s1">'mode'</span><span class="p">,</span>
+        <span class="s1">'mean'</span><span class="p">,</span>
         <span class="kc">False</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;strategy to recenter the distribution of the input fieldmap&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'strategy to recenter the distribution of the input fieldmap'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">extrapolate</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
         <span class="kc">True</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;generate a field, extrapolated outside the brain mask&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'generate a field, extrapolated outside the brain mask'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">zooms_min</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Union</span><span class="p">(</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">),</span>
         <span class="n">default_value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;limit minimum image zooms, set 0.0 to use the original image&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'limit minimum image zooms, set 0.0 to use the original image'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">debug</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;generate extra assets for debugging&#39;</span><span class="p">)</span>
+    <span class="n">debug</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'generate extra assets for debugging'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_BSplineApproxOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
@@ -394,7 +394,7 @@
 <div class="viewcode-block" id="BSplineApprox">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.bspline.html#sdcflows.interfaces.bspline.BSplineApprox">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BSplineApprox</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Approximate the :math:`B_0` field using tensor-product B-Splines.</span>
 
 <span class="sd">    The approximation effectively smooths the data, removing spikes and other</span>
@@ -409,8 +409,8 @@
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    .. [Unser1999] M. Unser, &quot;`Splines: A Perfect Fit for Signal and Image Processing</span>
-<span class="sd">        &lt;http://bigwww.epfl.ch/publications/unser9902.pdf&gt;`__,&quot; IEEE Signal Processing</span>
+<span class="sd">    .. [Unser1999] M. Unser, "`Splines: A Perfect Fit for Signal and Image Processing</span>
+<span class="sd">        &lt;http://bigwww.epfl.ch/publications/unser9902.pdf&gt;`__," IEEE Signal Processing</span>
 <span class="sd">        Magazine 16(6):22-38, 1999.</span>
 
 <span class="sd">    See Also</span>
@@ -420,7 +420,7 @@
 <span class="sd">    formalized in</span>
 <span class="sd">    `Eq. (2) of the transform module &lt;sdcflows.transform.html#bspline-tensor&gt;`_.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_BSplineApproxInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_BSplineApproxOutputSpec</span>
@@ -430,7 +430,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">linear_model</span> <span class="k">as</span> <span class="n">lm</span>
 
         <span class="c1"># Output name baseline</span>
-        <span class="n">out_name</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_field&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_field'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
 
         <span class="c1"># Load in the fieldmap</span>
         <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">)</span>
@@ -453,16 +453,16 @@
             <span class="n">target_zooms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">zooms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">zooms_min</span><span class="p">)</span>
 
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Resampling image with resolution exceeding &#39;zooms_min&#39; &quot;</span>
-                <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="s2">&quot;x&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">zooms</span><span class="p">)</span><span class="si">}</span><span class="s1"> → &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;x&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">target_zooms</span><span class="p">)</span><span class="si">}</span><span class="s1">).&#39;</span>
+                <span class="s2">"Resampling image with resolution exceeding 'zooms_min' "</span>
+                <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="s2">"x"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">zooms</span><span class="p">)</span><span class="si">}</span><span class="s1"> → '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"x"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">target_zooms</span><span class="p">)</span><span class="si">}</span><span class="s1">).'</span>
             <span class="p">)</span>
             <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">target_zooms</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">masknii</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">masknii</span> <span class="o">=</span> <span class="n">resample_to_zooms</span><span class="p">(</span><span class="n">masknii</span><span class="p">,</span> <span class="n">target_zooms</span><span class="p">)</span>
 
-        <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">'float32'</span><span class="p">)</span>
 
         <span class="c1"># Generate a numpy array with the mask</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span>
@@ -473,16 +473,16 @@
 
         <span class="c1"># Recenter the fieldmap</span>
         <span class="n">center</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">'mode'</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">mode</span>
 
             <span class="c1"># Handle pre- and post-1.9 mode behavior.</span>
             <span class="c1"># squeeze can be dropped when the minimum version reaches 1.9</span>
             <span class="c1"># Will become: data -= mode(data[mask], keepdims=False).mode</span>
             <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">mode</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">&#39;median&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">'median'</span><span class="p">:</span>
             <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">recenter</span> <span class="o">==</span> <span class="s1">'mean'</span><span class="p">:</span>
             <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
 
         <span class="n">data</span> <span class="o">-=</span> <span class="n">center</span>
@@ -491,12 +491,12 @@
         <span class="c1"># Calculate collocation matrix from (possibly resized) image and knot grids</span>
         <span class="n">colmat</span> <span class="o">=</span> <span class="n">sparse_hstack</span><span class="p">([</span><span class="n">grid_bspline_weights</span><span class="p">(</span><span class="n">fmapnii</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span><span class="p">])</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
 
-        <span class="n">bs_grids_str</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span><span class="p">]</span>
-        <span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;and </span><span class="si">{</span><span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">bs_grids_str</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'x'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">bs_grids</span><span class="p">]</span>
+        <span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'and </span><span class="si">{</span><span class="n">bs_grids_str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Approximating B-Splines grids (</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bs_grids_str</span><span class="p">)</span><span class="si">}</span><span class="s1"> [knots]) on a grid of &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;x&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s1">) voxels,&#39;</span>
-            <span class="sa">f</span><span class="s1">&#39; of which </span><span class="si">{</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s1"> fall within the mask.&#39;</span>
+            <span class="sa">f</span><span class="s1">'Approximating B-Splines grids (</span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bs_grids_str</span><span class="p">)</span><span class="si">}</span><span class="s1"> [knots]) on a grid of '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"x"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">fmapnii</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s1">) voxels,'</span>
+            <span class="sa">f</span><span class="s1">' of which </span><span class="si">{</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s1"> fall within the mask.'</span>
         <span class="p">)</span>
 
         <span class="c1"># Fit the model</span>
@@ -504,38 +504,38 @@
         <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
             <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">colmat</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
             <span class="n">extreme</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Model fit attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s1">: max(|coeffs|) = </span><span class="si">{</span><span class="n">extreme</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Model fit attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s1">: max(|coeffs|) = </span><span class="si">{</span><span class="n">extreme</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
             <span class="c1"># Normal values seem to be ~1e2, bad ~1e8. May want to tweak this if</span>
             <span class="c1"># these distributions are wider than I think.</span>
             <span class="k">if</span> <span class="n">extreme</span> <span class="o">&lt;</span> <span class="mf">1e4</span><span class="p">:</span>
                 <span class="k">break</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;Spline fit of input file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="si">}</span><span class="s1"> failed. &#39;</span>
-                <span class="sa">f</span><span class="s1">&#39;Extreme value </span><span class="si">{</span><span class="n">extreme</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span><span class="s1"> detected in spline coefficients.&#39;</span>
+                <span class="sa">f</span><span class="s1">'Spline fit of input file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="si">}</span><span class="s1"> failed. '</span>
+                <span class="sa">f</span><span class="s1">'Extreme value </span><span class="si">{</span><span class="n">extreme</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span><span class="s1"> detected in spline coefficients.'</span>
             <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_intercept&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">intercept_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_intercept'</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">intercept_</span>
 
         <span class="c1"># Store coefficients</span>
         <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_coeff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_coeff'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bsl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bs_grids</span><span class="p">):</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">bsl</span><span class="o">.</span><span class="n">dataobj</span><span class="o">.</span><span class="n">size</span>
-            <span class="n">out_level</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_field.&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;_coeff</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">03</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+            <span class="n">out_level</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_field.'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'_coeff</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">03</span><span class="si">}</span><span class="s1">.'</span><span class="p">)</span>
             <span class="n">bsl</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)[</span><span class="n">index</span> <span class="p">:</span> <span class="n">index</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bsl</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'float32'</span><span class="p">)[</span><span class="n">index</span> <span class="p">:</span> <span class="n">index</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">bsl</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
                 <span class="n">bsl</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
                 <span class="n">bsl</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_level</span><span class="p">)</span>
             <span class="n">index</span> <span class="o">+=</span> <span class="n">n</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_coeff&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_level</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_coeff'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_level</span><span class="p">)</span>
 
         <span class="c1"># Interpolating in the original grid will require a new collocation matrix</span>
         <span class="k">if</span> <span class="n">need_resize</span><span class="p">:</span>
             <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">)</span>
             <span class="c1"># fmapnii = nb.as_closest_canonical(fmapnii)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">center</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">'float32'</span><span class="p">)</span> <span class="o">-</span> <span class="n">center</span>
             <span class="k">if</span> <span class="n">masknii</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">masknii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_mask</span><span class="p">)</span>
                 <span class="c1"># masknii = nb.as_closest_canonical(masknii)</span>
@@ -553,76 +553,76 @@
 
         <span class="c1"># Store interpolated field</span>
         <span class="n">hdr</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+        <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
         <span class="n">outnii</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">interp_data</span><span class="p">,</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span>
-        <span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">outnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-        <span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span>
+        <span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_max'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">outnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_min'</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">outnii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_max'</span><span class="p">]</span>
         <span class="n">outnii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_field&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_field'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span>
 
         <span class="c1"># Write out fitting-error map</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_field.&#39;</span><span class="p">,</span> <span class="s1">&#39;_error.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_error'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_field.'</span><span class="p">,</span> <span class="s1">'_error.'</span><span class="p">)</span>
         <span class="n">errornii</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">((</span><span class="n">data</span> <span class="o">-</span> <span class="n">interp_data</span><span class="p">)</span> <span class="o">*</span> <span class="n">mask</span><span class="p">,</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
-        <span class="n">errornii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">errornii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">errornii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span>
-        <span class="n">errornii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_error&#39;</span><span class="p">])</span>
+        <span class="n">errornii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_min'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">errornii</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_max'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">errornii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span>
+        <span class="n">errornii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_error'</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">extrapolate</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">runtime</span>
 
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_extrapolated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_field&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_extrapolated'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_field'</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">runtime</span>
 
         <span class="n">extrapolators</span> <span class="o">=</span> <span class="n">colmat</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">:]</span>
         <span class="n">interp_data</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">extrapolators</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">coef_</span>  <span class="c1"># Extrapolation</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_extrapolated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_field.&#39;</span><span class="p">,</span> <span class="s1">&#39;_extra.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_extrapolated'</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_field.'</span><span class="p">,</span> <span class="s1">'_extra.'</span><span class="p">)</span>
         <span class="n">fmapnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">interp_data</span><span class="p">,</span> <span class="n">fmapnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_extrapolated&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_extrapolated'</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_ApplyCoeffsFieldInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_data</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input EPI data to be corrected&#39;</span><span class="p">)</span>
+    <span class="n">in_data</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input EPI data to be corrected'</span><span class="p">)</span>
     <span class="n">in_coeff</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input coefficients as calculated in the estimation stage&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'input coefficients as calculated in the estimation stage'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">fmap2data_xfm</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the transform by which the target EPI can be resampled on the fieldmap&#39;s grid.&quot;</span><span class="p">,</span>
-        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;data2fmap_xfm&#39;</span><span class="p">],</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"the transform by which the target EPI can be resampled on the fieldmap's grid."</span><span class="p">,</span>
+        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s1">'data2fmap_xfm'</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">data2fmap_xfm</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;the transform by which the fieldmap can be resampled on the target EPI&#39;s grid.&quot;</span><span class="p">,</span>
-        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;fmap2data_xfm&#39;</span><span class="p">],</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s2">"the transform by which the fieldmap can be resampled on the target EPI's grid."</span><span class="p">,</span>
+        <span class="n">xor</span><span class="o">=</span><span class="p">[</span><span class="s1">'fmap2data_xfm'</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">in_xfms</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
         <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">)),</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;list of head-motion correction matrices&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'list of head-motion correction matrices'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">ro_time</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;EPI readout time (s).&#39;</span><span class="p">)</span>
+    <span class="n">ro_time</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'EPI readout time (s).'</span><span class="p">)</span>
     <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
-        <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;i-&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;j-&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">),</span>
+        <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s1">'i'</span><span class="p">,</span> <span class="s1">'i-'</span><span class="p">,</span> <span class="s1">'j'</span><span class="p">,</span> <span class="s1">'j-'</span><span class="p">,</span> <span class="s1">'k'</span><span class="p">,</span> <span class="s1">'k-'</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the phase-encoding direction corresponding to in_data&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'the phase-encoding direction corresponding to in_data'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">jacobian</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;apply Jacobian determinant correction after unwarping&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'apply Jacobian determinant correction after unwarping'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">num_threads</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">nohash</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;number of threads&#39;</span><span class="p">)</span>
+    <span class="n">num_threads</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">nohash</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'number of threads'</span><span class="p">)</span>
     <span class="n">approx</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
         <span class="kc">True</span><span class="p">,</span>
         <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">desc</span><span class="o">=</span><span class="p">(</span>
-            <span class="s1">&#39;reconstruct the fieldmap on its original grid and then interpolate on the &#39;</span>
-            <span class="s1">&#39;rotated grid, rather than reconstructing directly on the rotated grid.&#39;</span>
+            <span class="s1">'reconstruct the fieldmap on its original grid and then interpolate on the '</span>
+            <span class="s1">'rotated grid, rather than reconstructing directly on the rotated grid.'</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -635,18 +635,18 @@
 <div class="viewcode-block" id="ApplyCoeffsField">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.bspline.html#sdcflows.interfaces.bspline.ApplyCoeffsField">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ApplyCoeffsField</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Undistort a target, distorted image with a fieldmap, formalized by its B-Spline coefficients.</span>
 
 <span class="sd">    Preconditions:</span>
 
-<span class="sd">    * We have a &quot;target EPI&quot; - a BOLD or DWI dataset (or even MPRAGE, same principle),</span>
+<span class="sd">    * We have a "target EPI" - a BOLD or DWI dataset (or even MPRAGE, same principle),</span>
 <span class="sd">      without having gone through HMC or SDC.</span>
 <span class="sd">    * We have also the list of HMC matrices that *accounts for* head-motion, so after resampling</span>
 <span class="sd">      the dataset through this list of transforms *the head does not move anymore*.</span>
-<span class="sd">    * We have estimated the fieldmap&#39;s coefficients</span>
-<span class="sd">    * We have the &quot;fieldmap-to-data&quot; affine transform that aligns the target dataset (e.g., EPI)</span>
-<span class="sd">      and the fieldmap&#39;s &quot;magnitude&quot; (phasediff et al.) or &quot;reference&quot; (pepolar, syn).</span>
+<span class="sd">    * We have estimated the fieldmap's coefficients</span>
+<span class="sd">    * We have the "fieldmap-to-data" affine transform that aligns the target dataset (e.g., EPI)</span>
+<span class="sd">      and the fieldmap's "magnitude" (phasediff et al.) or "reference" (pepolar, syn).</span>
 
 <span class="sd">    The algorithm is implemented in the :obj:`~sdcflows.transform.B0FieldTransform` object.</span>
 <span class="sd">    First, we will call :obj:`~sdcflows.transform.B0FieldTransform.fit`, which</span>
@@ -669,21 +669,21 @@
 <span class="sd">    -------</span>
 
 <span class="sd">    &gt;&gt;&gt; from sdcflows.interfaces.bspline import ApplyCoeffsField</span>
-<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir=&#39;j&#39;, ro_time=0.03125)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / &#39;epi.nii.gz&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / &#39;topup-coeff.nii.gz&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.data2fmap_xfm = str(data_dir / &#39;epi2fmap_xfm.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir='j', ro_time=0.03125)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / 'epi.nii.gz')</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / 'topup-coeff.nii.gz')</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.data2fmap_xfm = str(data_dir / 'epi2fmap_xfm.txt')</span>
 <span class="sd">    &gt;&gt;&gt; result = unwarp.run()  # doctest: +SKIP</span>
 
 <span class="sd">    Inverse transforms may be used instead:</span>
 
-<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir=&#39;j&#39;, ro_time=0.03125)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / &#39;epi.nii.gz&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / &#39;topup-coeff.nii.gz&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; unwarp.inputs.fmap2data_xfm = str(data_dir / &#39;fmap2epi_xfm.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp = ApplyCoeffsField(pe_dir='j', ro_time=0.03125)</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_data = str(data_dir / 'epi.nii.gz')</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.in_coeff = str(data_dir / 'topup-coeff.nii.gz')</span>
+<span class="sd">    &gt;&gt;&gt; unwarp.inputs.fmap2data_xfm = str(data_dir / 'fmap2epi_xfm.txt')</span>
 <span class="sd">    &gt;&gt;&gt; result = unwarp.run()  # doctest: +SKIP</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_ApplyCoeffsFieldInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_ApplyCoeffsFieldOutputSpec</span>
@@ -698,7 +698,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">data2fmap_xfm</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">data2fmap_xfm</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
                 <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">data2fmap_xfm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;itk&#39;</span><span class="p">,</span>
+                <span class="n">fmt</span><span class="o">=</span><span class="s1">'itk'</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">matrix</span>
         <span class="k">elif</span> <span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap2data_xfm</span><span class="p">):</span>
             <span class="c1"># Same, but inverting direction</span>
@@ -707,7 +707,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap2data_xfm</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap2data_xfm</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
                     <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap2data_xfm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                    <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;itk&#39;</span><span class="p">,</span>
+                    <span class="n">fmt</span><span class="o">=</span><span class="s1">'itk'</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">matrix</span>
 
@@ -715,15 +715,15 @@
         <span class="n">unwarp</span> <span class="o">=</span> <span class="n">B0FieldTransform</span><span class="p">(</span><span class="n">coeffs</span><span class="o">=</span><span class="p">[</span><span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cname</span><span class="p">)</span> <span class="k">for</span> <span class="n">cname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_coeff</span><span class="p">])</span>
 
         <span class="c1"># We can now write out the fieldmap</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_field&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_field'</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span>
-            <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_field&#39;</span><span class="p">,</span>
+            <span class="n">suffix</span><span class="o">=</span><span class="s1">'_field'</span><span class="p">,</span>
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_corrected&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_corrected'</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_data</span><span class="p">,</span>
-            <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_sdc&#39;</span><span class="p">,</span>
+            <span class="n">suffix</span><span class="o">=</span><span class="s1">'_sdc'</span><span class="p">,</span>
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -736,29 +736,29 @@
             <span class="n">xfm_data2fmap</span><span class="o">=</span><span class="n">data2fmap_xfm</span><span class="p">,</span>
             <span class="n">approx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">approx</span><span class="p">,</span>
             <span class="n">num_threads</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">num_threads</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_corrected&#39;</span><span class="p">])</span>
-        <span class="n">unwarp</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_field&#39;</span><span class="p">])</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_corrected'</span><span class="p">])</span>
+        <span class="n">unwarp</span><span class="o">.</span><span class="n">mapped</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_field'</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TransformCoefficientsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_coeff</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
-        <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input coefficients file(s)&#39;</span>
+        <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input coefficients file(s)'</span>
     <span class="p">)</span>
-    <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the fieldmap reference&#39;</span><span class="p">)</span>
-    <span class="n">transform</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;rigid-body transform file&#39;</span><span class="p">)</span>
-    <span class="n">fmap_target</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the distorted EPI target (feed to set debug mode on)&#39;</span><span class="p">)</span>
+    <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'the fieldmap reference'</span><span class="p">)</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'rigid-body transform file'</span><span class="p">)</span>
+    <span class="n">fmap_target</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'the distorted EPI target (feed to set debug mode on)'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TransformCoefficientsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_coeff</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;moved coefficients&#39;</span><span class="p">)</span>
+    <span class="n">out_coeff</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'moved coefficients'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TransformCoefficients">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.bspline.html#sdcflows.interfaces.bspline.TransformCoefficients">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformCoefficients</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Project coefficients files to another space through a rigid-body transform.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Project coefficients files to another space through a rigid-body transform."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_TransformCoefficientsInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_TransformCoefficientsOutputSpec</span>
@@ -766,7 +766,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">_move_coeff</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_coeff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_coeff'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_coeff</span><span class="p">:</span>
             <span class="n">movednii</span> <span class="o">=</span> <span class="n">_move_coeff</span><span class="p">(</span>
@@ -775,46 +775,46 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
                 <span class="n">fmap_target</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_target</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_space-target&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
+            <span class="n">out_file</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_space-target'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
             <span class="n">movednii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_coeff&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_coeff'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TOPUPCoeffReorientInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
     <span class="n">in_coeff</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
-        <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input coefficients file(s) from TOPUP&#39;</span>
+        <span class="n">File</span><span class="p">(</span><span class="n">exist</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input coefficients file(s) from TOPUP'</span>
     <span class="p">)</span>
-    <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the fieldmap reference&#39;</span><span class="p">)</span>
+    <span class="n">fmap_ref</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'the fieldmap reference'</span><span class="p">)</span>
     <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span>
-        <span class="o">*</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="s1">&#39;ijkxyz&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">))],</span>
+        <span class="o">*</span><span class="p">[</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="s1">'ijkxyz'</span><span class="p">,</span> <span class="p">(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">))],</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;phase encoding direction&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'phase encoding direction'</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TOPUPCoeffReorientOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_coeff</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;patched coefficients&#39;</span><span class="p">)</span>
+    <span class="n">out_coeff</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'patched coefficients'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TOPUPCoeffReorient">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.bspline.html#sdcflows.interfaces.bspline.TOPUPCoeffReorient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TOPUPCoeffReorient</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Revise the orientation of TOPUP-generated B-Spline coefficients.</span>
 
-<span class="sd">    TOPUP-generated &quot;fieldcoeff&quot; files are just B-Spline fields, where the shape</span>
+<span class="sd">    TOPUP-generated "fieldcoeff" files are just B-Spline fields, where the shape</span>
 <span class="sd">    of the field is fixated to be a decimated grid of the original image by an</span>
 <span class="sd">    integer factor and added 3 pixels on each dimension.</span>
 <span class="sd">    This is one root reason why TOPUP errors (FSL 6) or segfaults (FSL 5), when the</span>
 <span class="sd">    input image has odd number of voxels along one or more directions.</span>
 
-<span class="sd">    These &quot;fieldcoeff&quot; are fixated to be zero-centered, and have &quot;plumb&quot; orientation</span>
+<span class="sd">    These "fieldcoeff" are fixated to be zero-centered, and have "plumb" orientation</span>
 <span class="sd">    (as in, aligned with cardinal/imaging axes).</span>
 <span class="sd">    The q-form of these NIfTI files is always diagonal, with the decimation factors</span>
 <span class="sd">    set on the diagonal (and hence, the voxel zooms).</span>
-<span class="sd">    The origin of the q-form is set to the reference image&#39;s shape.</span>
+<span class="sd">    The origin of the q-form is set to the reference image's shape.</span>
 <span class="sd">    All the director cosines of the output coefficients will be positive.</span>
 <span class="sd">    In other words, the output orientation is either RAS, ARS, ASR, SAR, or SRA.</span>
 
@@ -826,19 +826,19 @@
 
 <span class="sd">    The q-form retains the original header and is marked with code 0.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_TOPUPCoeffReorientInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_TOPUPCoeffReorientOutputSpec</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_coeff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_coeff'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="nb">str</span><span class="p">(</span>
                 <span class="n">_fix_topup_fieldcoeff</span><span class="p">(</span>
                     <span class="n">in_coeff</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">fmap_ref</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">pe_dir</span><span class="p">,</span>
-                    <span class="n">out_file</span><span class="o">=</span><span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_fixed&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">),</span>
+                    <span class="n">out_file</span><span class="o">=</span><span class="n">fname_presuffix</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_fixed'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">in_coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_coeff</span>
@@ -850,7 +850,7 @@
 <div class="viewcode-block" id="bspline_grid">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.bspline.html#sdcflows.interfaces.bspline.bspline_grid">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">bspline_grid</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">control_zooms_mm</span><span class="o">=</span><span class="n">DEFAULT_ZOOMS_MM</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :obj:`~nibabel.nifti1.Nifti1Image` embedding the location of control points.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a :obj:`~nibabel.nifti1.Nifti1Image` embedding the location of control points."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
         <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 
@@ -874,19 +874,19 @@
         <span class="n">bs_affine</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">bs_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bs_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">),</span> <span class="n">bs_affine</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bs_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'float32'</span><span class="p">),</span> <span class="n">bs_affine</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fix_topup_fieldcoeff</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">,</span> <span class="n">fmap_ref</span><span class="p">,</span> <span class="n">pe_dir</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read in a coefficients file generated by TOPUP and fix x-form headers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read in a coefficients file generated by TOPUP and fix x-form headers."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
     <span class="k">if</span> <span class="n">out_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;coefficients.nii.gz&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+        <span class="n">out_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">'coefficients.nii.gz'</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 
     <span class="n">refnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmap_ref</span><span class="p">)</span>
     <span class="n">coeffnii</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_coeff</span><span class="p">)</span>
@@ -903,7 +903,7 @@
     <span class="c1"># always is implicit.</span>
     <span class="c1"># If the PE direction is x/i, the flip in the axis direction causes that the</span>
     <span class="c1"># fieldmap estimation must also be inverted in direction (multiply by -1.0)</span>
-    <span class="n">reverse_pe</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">coeff_pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;i&#39;</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">reverse_pe</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">coeff_pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'i'</span> <span class="k">else</span> <span class="mf">1.0</span>
     <span class="n">coeffnii</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
         <span class="n">reverse_pe</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
         <span class="n">coeffnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
@@ -912,15 +912,15 @@
 
     <span class="c1"># Get matrix of B-Spline control knots</span>
     <span class="n">coeff_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
-    <span class="c1"># Get factors (w.r.t. reference&#39;s pixel sizes) to calculate separation btw control points</span>
+    <span class="c1"># Get factors (w.r.t. reference's pixel sizes) to calculate separation btw control points</span>
     <span class="n">factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[:</span><span class="mi">3</span><span class="p">])</span>
     <span class="c1"># Shape checking</span>
     <span class="n">ref_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">refnii_ras</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
     <span class="n">exp_shape</span> <span class="o">=</span> <span class="n">ref_shape</span> <span class="o">//</span> <span class="n">factors</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">factors</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">coeff_shape</span> <span class="o">==</span> <span class="n">exp_shape</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Shape of coefficients file </span><span class="si">{</span><span class="n">coeff_shape</span><span class="si">}</span><span class="s1"> does not meet the &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;expected shape </span><span class="si">{</span><span class="n">exp_shape</span><span class="si">}</span><span class="s1"> (toupup factors are </span><span class="si">{</span><span class="n">factors</span><span class="si">}</span><span class="s1">).&#39;</span>
+            <span class="sa">f</span><span class="s1">'Shape of coefficients file </span><span class="si">{</span><span class="n">coeff_shape</span><span class="si">}</span><span class="s1"> does not meet the '</span>
+            <span class="sa">f</span><span class="s1">'expected shape </span><span class="si">{</span><span class="n">exp_shape</span><span class="si">}</span><span class="s1"> (toupup factors are </span><span class="si">{</span><span class="n">factors</span><span class="si">}</span><span class="s1">).'</span>
         <span class="p">)</span>
 
     <span class="c1"># Contextualize the control points in space with a proper NIfTI affine</span>
@@ -930,18 +930,18 @@
     <span class="n">c_coeff</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">affines</span><span class="o">.</span><span class="n">apply_affine</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">coeff_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">newaff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">c_ref</span> <span class="o">-</span> <span class="n">c_coeff</span>
 
-    <span class="c1"># Edit coefficient&#39;s header</span>
+    <span class="c1"># Edit coefficient's header</span>
     <span class="n">header</span> <span class="o">=</span> <span class="n">coeffnii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">header</span><span class="o">.</span><span class="n">set_qform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">header</span><span class="o">.</span><span class="n">set_sform</span><span class="p">(</span><span class="n">newaff</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">'cal_max'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
         <span class="p">(</span>
             <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
             <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;cal_max&#39;</span><span class="p">]</span>
-    <span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s1">&#39;estimate&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;B-Spline coefficients&#39;</span><span class="p">)</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">'cal_min'</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">header</span><span class="p">[</span><span class="s1">'cal_max'</span><span class="p">]</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">set_intent</span><span class="p">(</span><span class="s1">'estimate'</span><span class="p">,</span> <span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">'B-Spline coefficients'</span><span class="p">)</span>
 
     <span class="c1"># Write out fixed (generalized) coefficients</span>
     <span class="n">coeffnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">coeffnii</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">newaff</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
@@ -956,21 +956,21 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_chunks</span><span class="p">(</span><span class="n">inlist</span><span class="p">,</span> <span class="n">chunksize</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">inlist</span><span class="p">),</span> <span class="n">chunksize</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">header</span><span class="p">]</span> <span class="o">+</span> <span class="n">inlist</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">])</span>
+            <span class="k">yield</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">header</span><span class="p">]</span> <span class="o">+</span> <span class="n">inlist</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">])</span>
 
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xfm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_chunks</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="mi">4</span><span class="p">)):</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">05</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">05</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
         <span class="n">p</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">xfm</span><span class="p">)</span>
         <span class="k">yield</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_b0_resampler</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">ro</span><span class="p">,</span> <span class="n">hmc_xfm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwarp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Outsource the resampler into a separate callable function to allow parallelization.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Outsource the resampler into a separate callable function to allow parallelization."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 
     <span class="c1"># Prepare output names</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">fname_presuffix</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">newpath</span><span class="p">)</span>
-    <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;_unwarped&#39;</span><span class="p">,</span> <span class="s1">&#39;_xfm&#39;</span><span class="p">,</span> <span class="s1">&#39;_field&#39;</span><span class="p">)]</span>
+    <span class="n">retval</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'_unwarped'</span><span class="p">,</span> <span class="s1">'_xfm'</span><span class="p">,</span> <span class="s1">'_field'</span><span class="p">)]</span>
 
     <span class="k">if</span> <span class="n">unwarp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">B0FieldTransform</span>

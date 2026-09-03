@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Image processing tools.&quot;&quot;&quot;</span>
+<span class="sd">"""Image processing tools."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
@@ -332,7 +332,7 @@
     <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">factor_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generate a sampling reference aligned with in_reference fully covering oblique.</span>
 
 <span class="sd">    Parameters</span>
@@ -350,7 +350,7 @@
 <span class="sd">    factor_tol : :obj:`float`</span>
 <span class="sd">        Absolute tolerance to determine whether factor is one.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -397,7 +397,7 @@
 <div class="viewcode-block" id="resample_to_zooms">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.tools.html#sdcflows.utils.tools.resample_to_zooms">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resample_to_zooms</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">zooms</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample the input data to a new grid with the requested zooms.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resample the input data to a new grid with the requested zooms."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
@@ -437,14 +437,14 @@
 <div class="viewcode-block" id="ensure_positive_cosines">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.tools.html#sdcflows.utils.tools.ensure_positive_cosines">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_positive_cosines</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Reorient axes polarity to have all positive direction cosines.</span>
 
 <span class="sd">    In other words, this interface will reorient the image polarities to be all</span>
 <span class="sd">    *positive*, respecting the axes ordering.</span>
 <span class="sd">    For instance, *LAS* -&gt; *RAS* or *ALS* -&gt; *ARS*.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
 
     <span class="n">in_ornt</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">io_orientation</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
@@ -460,7 +460,7 @@
 <div class="viewcode-block" id="brain_masker">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.tools.html#sdcflows.utils.tools.brain_masker">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">brain_masker</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use grayscale morphological operations to obtain a quick mask of EPI data.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Use grayscale morphological operations to obtain a quick mask of EPI data."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -473,7 +473,7 @@
 
     <span class="c1"># Load data</span>
     <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">),</span> <span class="n">padding</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">'float32'</span><span class="p">),</span> <span class="n">padding</span><span class="p">)</span>
     <span class="n">hdr</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="c1"># Cleanup background and invert intensity</span>
@@ -491,16 +491,16 @@
     <span class="c1"># Rough binary mask</span>
     <span class="n">closedbin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">closed</span><span class="p">)</span>
     <span class="n">closedbin</span><span class="p">[</span><span class="n">closed</span> <span class="o">&lt;</span> <span class="n">th</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">closedbin</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_opening</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+    <span class="n">closedbin</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_opening</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'uint8'</span><span class="p">)</span>
 
     <span class="n">label_im</span><span class="p">,</span> <span class="n">nb_labels</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">closedbin</span><span class="p">)</span>
     <span class="n">sizes</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">label_im</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_labels</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">sizes</span> <span class="o">==</span> <span class="n">sizes</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="n">closedbin</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span><span class="n">label_im</span><span class="p">]</span>
-    <span class="n">closedbin</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_closing</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+    <span class="n">closedbin</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_closing</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'uint8'</span><span class="p">)</span>
 
     <span class="c1"># Prepare markers</span>
-    <span class="n">markers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">closed</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int8&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">markers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">closed</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'int8'</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
     <span class="n">markers</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">closedbin_dil</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">closedbin</span><span class="p">,</span> <span class="n">ball</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
     <span class="n">markers</span><span class="p">[</span><span class="n">closedbin_dil</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -514,17 +514,17 @@
         <span class="n">segtarget</span><span class="p">,</span> <span class="n">markers</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">return_full_prob</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span><span class="o">-</span><span class="n">padding</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span><span class="o">-</span><span class="n">padding</span><span class="p">,</span> <span class="n">padding</span><span class="p">:</span><span class="o">-</span><span class="n">padding</span><span class="p">]</span>
 
-    <span class="n">out_mask</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_file</span> <span class="ow">or</span> <span class="s1">&#39;brain_mask.nii.gz&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+    <span class="n">out_mask</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_file</span> <span class="ow">or</span> <span class="s1">'brain_mask.nii.gz'</span><span class="p">)</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
 
-    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
-    <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">((</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span>
+    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">'uint8'</span><span class="p">)</span>
+    <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">((</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'uint8'</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span>
 
-    <span class="n">out_probseg</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\.nii(\.gz)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;_probseg.nii\1&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_mask.&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">))</span>
-    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+    <span class="n">out_probseg</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">'\.nii(\.gz)$'</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'_probseg.nii\1'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_mask.'</span><span class="p">,</span> <span class="s1">'.'</span><span class="p">))</span>
+    <span class="n">hdr</span><span class="o">.</span><span class="n">set_data_dtype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
     <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">((</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">hdr</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_probseg</span><span class="p">)</span>
 
     <span class="n">out_brain</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
-        <span class="sa">r</span><span class="s1">&#39;\.nii(\.gz)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;_brainmasked.nii\1&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_mask.&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="sa">r</span><span class="s1">'\.nii(\.gz)$'</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'_brainmasked.nii\1'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_mask</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'_mask.'</span><span class="p">,</span> <span class="s1">'.'</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -537,7 +537,7 @@
 <div class="viewcode-block" id="reorient_pedir">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.tools.html#sdcflows.utils.tools.reorient_pedir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">reorient_pedir</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">,</span> <span class="n">source_ornt</span><span class="p">,</span> <span class="n">target_ornt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return updated PhaseEncodingDirection to account for an image data array rotation</span>
+<span class="w">    </span><span class="sd">"""Return updated PhaseEncodingDirection to account for an image data array rotation</span>
 
 <span class="sd">    Orientations form a natural group with identity, product and inverse.</span>
 <span class="sd">    This function thus has the following properties (here ``e`` is the identity,</span>
@@ -549,38 +549,38 @@
 <span class="sd">        reorient(pe_dir, a, b) == reorient(pe_dir, a * -b, e)</span>
 
 <span class="sd">    Therefore, this function accepts one or two orientations, and precomputed transforms</span>
-<span class="sd">    from a to b can be passed as the &quot;source&quot; orientation.</span>
+<span class="sd">    from a to b can be passed as the "source" orientation.</span>
 
 <span class="sd">    Passing only a source orientation will rotate into RAS:</span>
 
 <span class="sd">    &gt;&gt;&gt; from nibabel.orientations import axcodes2ornt</span>
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;j&quot;, axcodes2ornt(&quot;RAS&quot;))</span>
-<span class="sd">    &#39;j&#39;</span>
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;i&quot;, axcodes2ornt(&quot;PSL&quot;))</span>
-<span class="sd">    &#39;j-&#39;</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("j", axcodes2ornt("RAS"))</span>
+<span class="sd">    'j'</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("i", axcodes2ornt("PSL"))</span>
+<span class="sd">    'j-'</span>
 
 <span class="sd">    Passing only a target_ornt will rotate from RAS:</span>
 
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;j&quot;, source_ornt=None, target_ornt=axcodes2ornt(&quot;RAS&quot;))</span>
-<span class="sd">    &#39;j&#39;</span>
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;i&quot;, source_ornt=None, target_ornt=axcodes2ornt(&quot;PSL&quot;))</span>
-<span class="sd">    &#39;k-&#39;</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("j", source_ornt=None, target_ornt=axcodes2ornt("RAS"))</span>
+<span class="sd">    'j'</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("i", source_ornt=None, target_ornt=axcodes2ornt("PSL"))</span>
+<span class="sd">    'k-'</span>
 
 <span class="sd">    Passing both will rotate from source to target.</span>
 
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;j&quot;, axcodes2ornt(&quot;LPS&quot;), axcodes2ornt(&quot;AIR&quot;))</span>
-<span class="sd">    &#39;i-&#39;</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("j", axcodes2ornt("LPS"), axcodes2ornt("AIR"))</span>
+<span class="sd">    'i-'</span>
 
 <span class="sd">    Passing a transform orientation as source_ornt will perform the transform,</span>
 <span class="sd">    and passing it as ``target_ornt`` will invert the transform:</span>
 
 <span class="sd">    &gt;&gt;&gt; from nibabel.orientations import ornt_transform</span>
-<span class="sd">    &gt;&gt;&gt; xfm = ornt_transform(axcodes2ornt(&quot;LPS&quot;), axcodes2ornt(&quot;AIR&quot;))</span>
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;j&quot;, xfm)</span>
-<span class="sd">    &#39;i-&#39;</span>
-<span class="sd">    &gt;&gt;&gt; reorient_pedir(&quot;j&quot;, source_ornt=None, target_ornt=xfm)</span>
-<span class="sd">    &#39;k-&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; xfm = ornt_transform(axcodes2ornt("LPS"), axcodes2ornt("AIR"))</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("j", xfm)</span>
+<span class="sd">    'i-'</span>
+<span class="sd">    &gt;&gt;&gt; reorient_pedir("j", source_ornt=None, target_ornt=xfm)</span>
+<span class="sd">    'k-'</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nibabel.orientations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ornt_transform</span>
 
     <span class="k">if</span> <span class="n">source_ornt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -590,17 +590,17 @@
 
     <span class="n">xfm</span> <span class="o">=</span> <span class="n">ornt_transform</span><span class="p">(</span><span class="n">source_ornt</span><span class="p">,</span> <span class="n">target_ornt</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># shape: (3, 2)</span>
 
-    <span class="n">directions</span> <span class="o">=</span> <span class="s1">&#39;ijk&#39;</span> <span class="k">if</span> <span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;ijk&#39;</span> <span class="k">else</span> <span class="s1">&#39;xyz&#39;</span>
+    <span class="n">directions</span> <span class="o">=</span> <span class="s1">'ijk'</span> <span class="k">if</span> <span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">'ijk'</span> <span class="k">else</span> <span class="s1">'xyz'</span>
 
     <span class="n">source_axis</span> <span class="o">=</span> <span class="n">directions</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pe_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">source_flip</span> <span class="o">=</span> <span class="n">pe_dir</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span>
+    <span class="n">source_flip</span> <span class="o">=</span> <span class="n">pe_dir</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">'-'</span>
 
     <span class="n">axis_xfm</span> <span class="o">=</span> <span class="n">xfm</span><span class="p">[</span><span class="n">source_axis</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># shape: (2,)</span>
 
     <span class="n">target_axis</span> <span class="o">=</span> <span class="n">directions</span><span class="p">[</span><span class="n">axis_xfm</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
     <span class="n">target_flip</span> <span class="o">=</span> <span class="n">source_flip</span> <span class="o">^</span> <span class="p">(</span><span class="n">axis_xfm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">target_axis</span><span class="si">}</span><span class="s1">-&#39;</span> <span class="k">if</span> <span class="n">target_flip</span> <span class="k">else</span> <span class="n">target_axis</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">target_axis</span><span class="si">}</span><span class="s1">-'</span> <span class="k">if</span> <span class="n">target_flip</span> <span class="k">else</span> <span class="n">target_axis</span></div>
 
 </pre></div>
         </article>

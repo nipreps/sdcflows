@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2021 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -318,7 +318,7 @@
 <span class="c1">#</span>
 <span class="c1">#     https://www.nipreps.org/community/licensing/</span>
 <span class="c1">#</span>
-<span class="sd">&quot;&quot;&quot;Interfaces to deal with the various types of fieldmap sources.&quot;&quot;&quot;</span>
+<span class="sd">"""Interfaces to deal with the various types of fieldmap sources."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
@@ -338,21 +338,21 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">nipype.utils.filemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">fname_presuffix</span>
 
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;nipype.interface&#39;</span><span class="p">)</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'nipype.interface'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_PhaseMap2radsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input (wrapped) phase map&#39;</span><span class="p">)</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input (wrapped) phase map'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_PhaseMap2radsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the phase map in the range 0 - 6.28&#39;</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">'the phase map in the range 0 - 6.28'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PhaseMap2rads">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.PhaseMap2rads">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseMap2rads</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a phase map given in a.u. (e.g., 0-4096) to radians.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert a phase map given in a.u. (e.g., 0-4096) to radians."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_PhaseMap2radsInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_PhaseMap2radsOutputSpec</span>
@@ -360,25 +360,25 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.phasemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">au2rads</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">au2rads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">]</span> <span class="o">=</span> <span class="n">au2rads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_SubtractPhasesInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_phases</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input phase maps&#39;</span><span class="p">)</span>
-    <span class="n">in_meta</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;metadata corresponding to the inputs&#39;</span><span class="p">)</span>
+    <span class="n">in_phases</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input phase maps'</span><span class="p">)</span>
+    <span class="n">in_meta</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'metadata corresponding to the inputs'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_SubtractPhasesOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">phase_diff</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;phase difference map&#39;</span><span class="p">)</span>
-    <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;output metadata&#39;</span><span class="p">)</span>
+    <span class="n">phase_diff</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'phase difference map'</span><span class="p">)</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">'output metadata'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SubtractPhases">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.SubtractPhases">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubtractPhases</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate a phase difference map.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Calculate a phase difference map."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_SubtractPhasesInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_SubtractPhasesOutputSpec</span>
@@ -386,18 +386,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_phases</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s1">&#39;Length of input phase-difference maps and metadata files should match.&#39;</span>
+                <span class="s1">'Length of input phase-difference maps and metadata files should match.'</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_phases</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;phase_diff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'phase_diff'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_phases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">runtime</span>
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.phasemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">subtract_phases</span> <span class="k">as</span> <span class="n">_subtract_phases</span>
 
         <span class="c1"># Discard in_meta traits with copy(), so that pop() works.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;phase_diff&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_subtract_phases</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'phase_diff'</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'metadata'</span><span class="p">]</span> <span class="o">=</span> <span class="n">_subtract_phases</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_phases</span><span class="p">,</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_meta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()),</span>
             <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span>
@@ -408,18 +408,18 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Phasediff2FieldmapInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input fieldmap&#39;</span><span class="p">)</span>
-    <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;BIDS metadata dictionary&#39;</span><span class="p">)</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input fieldmap'</span><span class="p">)</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'BIDS metadata dictionary'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Phasediff2FieldmapOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the output fieldmap&#39;</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">'the output fieldmap'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Phasediff2Fieldmap">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.Phasediff2Fieldmap">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Phasediff2Fieldmap</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a phase difference map into a fieldmap in Hz.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert a phase difference map into a fieldmap in Hz."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_Phasediff2FieldmapInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_Phasediff2FieldmapOutputSpec</span>
@@ -428,7 +428,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.phasemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">delta_te</span> <span class="k">as</span> <span class="n">_delta_te</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.phasemanip</span><span class="w"> </span><span class="kn">import</span> <span class="n">phdiff2fmap</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">phdiff2fmap</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">]</span> <span class="o">=</span> <span class="n">phdiff2fmap</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">_delta_te</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">metadata</span><span class="p">),</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
@@ -436,58 +436,58 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_CheckB0UnitsInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input fieldmap&#39;</span><span class="p">)</span>
-    <span class="n">units</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s1">&#39;Hz&#39;</span><span class="p">,</span> <span class="s1">&#39;rad/s&#39;</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;fieldmap units&#39;</span><span class="p">)</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input fieldmap'</span><span class="p">)</span>
+    <span class="n">units</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span><span class="s1">'Hz'</span><span class="p">,</span> <span class="s1">'rad/s'</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'fieldmap units'</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_CheckB0UnitsOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;output fieldmap in Hz&#39;</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'output fieldmap in Hz'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="CheckB0Units">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.CheckB0Units">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CheckB0Units</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the input fieldmap is given in Hz.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Ensure the input fieldmap is given in Hz."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_CheckB0UnitsInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_CheckB0UnitsOutputSpec</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">units</span> <span class="o">==</span> <span class="s1">&#39;Hz&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">units</span> <span class="o">==</span> <span class="s1">'Hz'</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span>
             <span class="k">return</span> <span class="n">runtime</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_Hz&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_Hz'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
         <span class="p">)</span>
         <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
-        <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+        <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_DisplacementsField2FieldmapInputSpec</span><span class="p">(</span><span class="n">BaseInterfaceInputSpec</span><span class="p">):</span>
-    <span class="n">transform</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;input displacements field&#39;</span><span class="p">)</span>
-    <span class="n">epi</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;source EPI image&#39;</span><span class="p">)</span>
-    <span class="n">ro_time</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;total readout time&#39;</span><span class="p">)</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'input displacements field'</span><span class="p">)</span>
+    <span class="n">epi</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'source EPI image'</span><span class="p">)</span>
+    <span class="n">ro_time</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span><span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'total readout time'</span><span class="p">)</span>
     <span class="n">pe_dir</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Enum</span><span class="p">(</span>
-        <span class="s1">&#39;j-&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;i-&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;phase encoding direction&#39;</span>
+        <span class="s1">'j-'</span><span class="p">,</span> <span class="s1">'j'</span><span class="p">,</span> <span class="s1">'i'</span><span class="p">,</span> <span class="s1">'i-'</span><span class="p">,</span> <span class="s1">'k'</span><span class="p">,</span> <span class="s1">'k-'</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'phase encoding direction'</span>
     <span class="p">)</span>
-    <span class="n">demean</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;regress field to the mean&#39;</span><span class="p">)</span>
+    <span class="n">demean</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'regress field to the mean'</span><span class="p">)</span>
     <span class="n">itk_transform</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Bool</span><span class="p">(</span>
-        <span class="kc">True</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;whether this is an ITK/ANTs transform&#39;</span>
+        <span class="kc">True</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'whether this is an ITK/ANTs transform'</span>
     <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_DisplacementsField2FieldmapOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
-    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;output fieldmap in Hz&#39;</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'output fieldmap in Hz'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DisplacementsField2Fieldmap">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.DisplacementsField2Fieldmap">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DisplacementsField2Fieldmap</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert from a transform to a B0 fieldmap in Hz.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert from a transform to a B0 fieldmap in Hz."""</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_DisplacementsField2FieldmapInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_DisplacementsField2FieldmapOutputSpec</span>
@@ -495,8 +495,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">disp_to_fmap</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_Hz&#39;</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">]</span> <span class="o">=</span> <span class="n">fname_presuffix</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'_Hz'</span><span class="p">,</span> <span class="n">newpath</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span>
         <span class="p">)</span>
         <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">disp_to_fmap</span><span class="p">(</span>
             <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">),</span>
@@ -511,12 +511,12 @@
             <span class="n">data</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
             <span class="n">fmapnii</span> <span class="o">=</span> <span class="n">fmapnii</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
-                <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">),</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">),</span>
                 <span class="n">fmapnii</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span>
                 <span class="n">fmapnii</span><span class="o">.</span><span class="n">header</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="n">fmapnii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+        <span class="n">fmapnii</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="s1">'out_file'</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">runtime</span></div>
 
 
@@ -527,60 +527,60 @@
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">minlen</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">maxlen</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Magnitude image(s) to verify registration&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'Magnitude image(s) to verify registration'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">fmap_files</span> <span class="o">=</span> <span class="n">InputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">minlen</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">maxlen</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Phase(diff) or fieldmap image(s) to update affines&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'Phase(diff) or fieldmap image(s) to update affines'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">rot_thresh</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span>
-        <span class="mf">0.02</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;rotation threshold in radians&#39;</span>
+        <span class="mf">0.02</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'rotation threshold in radians'</span>
     <span class="p">)</span>
     <span class="n">trans_thresh</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Float</span><span class="p">(</span>
-        <span class="mf">1.0</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;translation threshold in mm&#39;</span>
+        <span class="mf">1.0</span><span class="p">,</span> <span class="n">usedefault</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">'translation threshold in mm'</span>
     <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_CheckRegisterOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
     <span class="n">mag_files</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Magnitude image(s) verified to be in register, with consistent affines&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'Magnitude image(s) verified to be in register, with consistent affines'</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">fmap_files</span> <span class="o">=</span> <span class="n">OutputMultiObject</span><span class="p">(</span>
         <span class="n">File</span><span class="p">,</span>
-        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Fieldmap files with consistent affines&#39;</span><span class="p">,</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">'Fieldmap files with consistent affines'</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="CheckRegister">
 <a class="viewcode-back" href="../../../api/sdcflows.interfaces.fmap.html#sdcflows.interfaces.fmap.CheckRegister">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CheckRegister</span><span class="p">(</span><span class="n">SimpleInterface</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check registration of one or more images and paired files</span>
+<span class="w">    </span><span class="sd">"""Check registration of one or more images and paired files</span>
 
 <span class="sd">    Use cases:</span>
 
 <span class="sd">    Phase1 + Phase2:</span>
 
-<span class="sd">        &gt;&gt;&gt; fmap_files = [&#39;*_phase1.nii.gz&#39;, &#39;*_phase2.nii.gz&#39;]</span>
-<span class="sd">        &gt;&gt;&gt; mag_files = [&#39;*_magnitude1.nii.gz&#39;, &#39;*_magnitude2.nii.gz&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phase1.nii.gz', '*_phase2.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']</span>
 
 <span class="sd">    Phasediff (2 magnitude):</span>
 
-<span class="sd">        &gt;&gt;&gt; fmap_files = [&#39;*_phasediff.nii.gz&#39;]</span>
-<span class="sd">        &gt;&gt;&gt; mag_files = [&#39;*_magnitude1.nii.gz&#39;, &#39;*_magnitude2.nii.gz&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phasediff.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz', '*_magnitude2.nii.gz']</span>
 
 <span class="sd">    Phasediff (1 magnitude):</span>
 
-<span class="sd">        &gt;&gt;&gt; fmap_files = [&#39;*_phasediff.nii.gz&#39;]</span>
-<span class="sd">        &gt;&gt;&gt; mag_files = [&#39;*_magnitude1.nii.gz&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_phasediff.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude1.nii.gz']</span>
 
 <span class="sd">    Fieldmap (1 magnitude):</span>
 
-<span class="sd">        &gt;&gt;&gt; fmap_files = [&#39;*_fieldmap.nii.gz&#39;]</span>
-<span class="sd">        &gt;&gt;&gt; mag_files = [&#39;*_magnitude.nii.gz&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; fmap_files = ['*_fieldmap.nii.gz']</span>
+<span class="sd">        &gt;&gt;&gt; mag_files = ['*_magnitude.nii.gz']</span>
 
 <span class="sd">    In general, we expect all files to have the same affine and shape,</span>
 <span class="sd">    and this will be a pass-through interface. If there are two magnitude</span>
@@ -591,7 +591,7 @@
 
 <span class="sd">    This may run ``mri_robust_register``, so should not be run without</span>
 <span class="sd">    submitting.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">input_spec</span> <span class="o">=</span> <span class="n">_CheckRegisterInputSpec</span>
     <span class="n">output_spec</span> <span class="o">=</span> <span class="n">_CheckRegisterOutputSpec</span>
@@ -636,12 +636,12 @@
 
                 <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">angles</span> <span class="o">&gt;</span> <span class="n">rot_thresh</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">vec</span> <span class="o">&gt;</span> <span class="n">trans_thresh</span><span class="p">):</span>
                     <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span>
-                        <span class="s1">&#39;Magnitude files </span><span class="si">{mag_files}</span><span class="s1"> are not in register with rotation &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;threshold </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">rot_thresh</span><span class="si">}</span><span class="s1"> and translation threshold &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trans_thresh</span><span class="si">}</span><span class="s1">. Please manually verify images &#39;</span>
-                        <span class="s1">&#39;are in register and update the image headers before running SDC.&#39;</span>
+                        <span class="s1">'Magnitude files </span><span class="si">{mag_files}</span><span class="s1"> are not in register with rotation '</span>
+                        <span class="sa">f</span><span class="s1">'threshold </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">rot_thresh</span><span class="si">}</span><span class="s1"> and translation threshold '</span>
+                        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">trans_thresh</span><span class="si">}</span><span class="s1">. Please manually verify images '</span>
+                        <span class="s1">'are in register and update the image headers before running SDC.'</span>
                     <span class="p">)</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Magnitude 1/2 orientation mismatch too big to ignore.&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Magnitude 1/2 orientation mismatch too big to ignore.'</span><span class="p">)</span>
 
         <span class="c1"># Probably redundant, but we could hit this error</span>
         <span class="c1"># with phase1/magnitude1 + wonky phase2 + no magnitude2</span>
@@ -656,8 +656,8 @@
         <span class="n">out_fmaps</span> <span class="o">=</span> <span class="p">[</span><span class="n">_conform_img</span><span class="p">(</span><span class="n">fmap</span><span class="p">,</span> <span class="n">mag_imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">runtime</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span> <span class="k">for</span> <span class="n">fmap</span> <span class="ow">in</span> <span class="n">fmap_imgs</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;mag_files&#39;</span><span class="p">:</span> <span class="n">out_mags</span><span class="p">,</span>
-            <span class="s1">&#39;fmap_files&#39;</span><span class="p">:</span> <span class="n">out_fmaps</span><span class="p">,</span>
+            <span class="s1">'mag_files'</span><span class="p">:</span> <span class="n">out_mags</span><span class="p">,</span>
+            <span class="s1">'fmap_files'</span><span class="p">:</span> <span class="n">out_fmaps</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">runtime</span></div>
@@ -669,17 +669,17 @@
     <span class="n">target_img</span><span class="p">:</span> <span class="n">nb</span><span class="o">.</span><span class="n">spatialimages</span><span class="o">.</span><span class="n">SpatialImage</span><span class="p">,</span>
     <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return path to image matching target_img geometry</span>
+<span class="w">    </span><span class="sd">"""Return path to image matching target_img geometry</span>
 
 <span class="sd">    Copy target_affine to a new image if necessary.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">target_img</span><span class="o">.</span><span class="n">affine</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">img</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span>
 
     <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">get_filename</span><span class="p">())</span>
     <span class="n">out_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
 
-    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Copying affine to </span><span class="si">{</span><span class="n">basename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Copying affine to </span><span class="si">{</span><span class="n">basename</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
     <span class="n">new_img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">dataobj</span><span class="p">,</span> <span class="n">target_img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
     <span class="n">new_img</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
 
@@ -692,15 +692,15 @@
 <span class="p">):</span>
     <span class="k">if</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s1">&#39;Images have shape mismatch: &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">, &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="s1">'Images have shape mismatch: '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">, '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">'</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img2</span><span class="o">.</span><span class="n">affine</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s1">&#39;Images have orientation mismatch: &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s1">, &#39;</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img2</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="s1">'Images have orientation mismatch: '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">img1</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s1">, '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">img2</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">aff2axcodes</span><span class="p">(</span><span class="n">img2</span><span class="o">.</span><span class="n">affine</span><span class="p">))</span><span class="si">}</span><span class="s1">'</span>
         <span class="p">)</span>
 </pre></div>
         </article>

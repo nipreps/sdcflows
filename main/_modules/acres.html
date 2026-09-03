@@ -298,14 +298,14 @@
           <h1>Source code for acres</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -326,24 +326,24 @@
 <span class="c1">#     potentially leaking memory.</span>
 <span class="c1">#</span>
 <span class="c1"># Future modifications will be tracked in the change log.</span>
-<span class="sd">&quot;&quot;&quot;Data loading utility for Python packages.</span>
+<span class="sd">"""Data loading utility for Python packages.</span>
 
 <span class="sd">This module provides a class that wraps :mod:`importlib.resources` to</span>
 <span class="sd">provide resource retrieval functions with commonly-needed scoping,</span>
 <span class="sd">including interpreter-lifetime caching.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">typ</span> <span class="k">as</span> <span class="n">t</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Loader&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Loader'</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="Loader">
 <a class="viewcode-back" href="../api/sdcflows.data.html#sdcflows.data.Loader">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Loader</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A loader for package files relative to a module</span>
+<span class="w">    </span><span class="sd">"""A loader for package files relative to a module</span>
 
 <span class="sd">    This class wraps :mod:`importlib.resources` to provide a getter</span>
 <span class="sd">    function with an interpreter-lifetime scope. For typical packages</span>
@@ -356,7 +356,7 @@
 
 <span class="sd">    Expected usage::</span>
 
-<span class="sd">        &#39;&#39;&#39;Data package</span>
+<span class="sd">        '''Data package</span>
 
 <span class="sd">        .. autofunction:: load_data</span>
 
@@ -365,7 +365,7 @@
 <span class="sd">        .. automethod:: load_data.as_path</span>
 
 <span class="sd">        .. automethod:: load_data.cached</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        '''</span>
 
 <span class="sd">        from acres import Loader</span>
 
@@ -392,9 +392,9 @@
 
 <span class="sd">        from acres import Loader</span>
 
-<span class="sd">        Loader(other_package).readable(&#39;data/resource.ext&#39;).read_text()</span>
+<span class="sd">        Loader(other_package).readable('data/resource.ext').read_text()</span>
 
-<span class="sd">        with Loader(other_package).as_path(&#39;data&#39;) as pkgdata:</span>
+<span class="sd">        with Loader(other_package).as_path('data') as pkgdata:</span>
 <span class="sd">            # Call function that requires full Path implementation</span>
 <span class="sd">            func(pkgdata)</span>
 
@@ -402,16 +402,16 @@
 
 <span class="sd">        from importlib_resources import files, as_file</span>
 
-<span class="sd">        files(other_package).joinpath(&#39;data/resource.ext&#39;).read_text()</span>
+<span class="sd">        files(other_package).joinpath('data/resource.ext').read_text()</span>
 
-<span class="sd">        with as_file(files(other_package) / &#39;data&#39;) as pkgdata:</span>
+<span class="sd">        with as_file(files(other_package) / 'data') as pkgdata:</span>
 <span class="sd">            func(pkgdata)</span>
 
 <span class="sd">    When creating a :class:`Loader` as a module attribute, it is frequently</span>
 <span class="sd">    useful for the docstring to list the contents of the package.</span>
 <span class="sd">    There is a slight cost to updating the docstring, so this is disabled by</span>
 <span class="sd">    default, for better performance in short-lived :class:`Loader` instances.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">t</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">list_contents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span> <span class="o">=</span> <span class="n">anchor</span>
@@ -419,60 +419,60 @@
         <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span><span class="p">(</span><span class="n">list_contents</span><span class="o">=</span><span class="n">list_contents</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_contents</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct docstring for instances</span>
+<span class="w">        </span><span class="sd">"""Construct docstring for instances</span>
 
 <span class="sd">        Optionally lists the public top-level paths inside the location, where</span>
-<span class="sd">        non-public means has a `.` or `_` prefix or is a &#39;tests&#39; directory.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">docstring</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Load package files relative to ``</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="si">}</span><span class="s1">``.&#39;</span>
+<span class="sd">        non-public means has a `.` or `_` prefix or is a 'tests' directory.</span>
+<span class="sd">        """</span>
+        <span class="n">docstring</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'Load package files relative to ``</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="si">}</span><span class="s1">``.'</span>
 
         <span class="k">if</span> <span class="n">list_contents</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
 
             <span class="n">top_level</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&#39;</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/'</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
                 <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;tests&#39;</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'.'</span><span class="p">,</span> <span class="s1">'_'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">'tests'</span>
             <span class="p">)</span>
             <span class="n">doclines</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">docstring</span><span class="p">,</span>
-                <span class="s1">&#39;&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;This package contains the following (top-level) files/directories:&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;&#39;</span><span class="p">,</span>
-                <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;* ``</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">``&#39;</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">top_level</span><span class="p">),</span>
+                <span class="s1">''</span><span class="p">,</span>
+                <span class="s1">'This package contains the following (top-level) files/directories:'</span><span class="p">,</span>
+                <span class="s1">''</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s1">'* ``</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">``'</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">top_level</span><span class="p">),</span>
             <span class="p">]</span>
-            <span class="n">docstring</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doclines</span><span class="p">)</span>
+            <span class="n">docstring</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doclines</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">docstring</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">readable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Traversable</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide read access to a resource through a Path-like interface.</span>
+<span class="w">        </span><span class="sd">"""Provide read access to a resource through a Path-like interface.</span>
 
 <span class="sd">        This file may or may not exist on the filesystem, and may be</span>
 <span class="sd">        efficiently used for read operations, including directory traversal.</span>
 
 <span class="sd">        This result is not cached or copied to the filesystem in cases where</span>
 <span class="sd">        that would be necessary.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
 
         <span class="k">return</span> <span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">as_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data is available as a :class:`~pathlib.Path`.</span>
+<span class="w">        </span><span class="sd">"""Ensure data is available as a :class:`~pathlib.Path`.</span>
 
 <span class="sd">        This method generates a context manager that yields a Path when</span>
 <span class="sd">        entered.</span>
 
 <span class="sd">        This result is not cached, and any temporary files that are created</span>
 <span class="sd">        are deleted when the context is exited.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">._compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_file</span><span class="p">,</span> <span class="n">files</span>
 
         <span class="k">return</span> <span class="n">as_file</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure data resource is available as a :class:`~pathlib.Path`.</span>
+<span class="w">        </span><span class="sd">"""Ensure data resource is available as a :class:`~pathlib.Path`.</span>
 
 <span class="sd">        Any temporary files that are created remain available throughout</span>
 <span class="sd">        the duration of the program, and are deleted when Python exits.</span>
@@ -480,7 +480,7 @@
 <span class="sd">        Results are cached so that multiple calls do not unpack the same</span>
 <span class="sd">        data multiple times, but directories and their contents being</span>
 <span class="sd">        requested separately may result in some duplication.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_resource</span>
 
         <span class="k">return</span> <span class="n">cached_resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>

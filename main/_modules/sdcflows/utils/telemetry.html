@@ -301,14 +301,14 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright 2023 The NiPreps Developers &lt;nipreps@gmail.com&gt;</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -322,38 +322,38 @@
 <span class="c1"># and this file has been changed.</span>
 <span class="c1"># The original file this work derives from is found at:</span>
 <span class="c1"># https://github.com/nipreps/mriqc/blob/8ceadba8669cc2a86119a97b9311ab968f11c6eb/mriqc/utils/telemetry.py</span>
-<span class="sd">&quot;&quot;&quot;Ping MIGAS for telemetry.&quot;&quot;&quot;</span>
+<span class="sd">"""Ping MIGAS for telemetry."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">migas</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">sdcflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
 
-<span class="n">MIGAS_PACKAGE</span> <span class="o">=</span> <span class="s1">&#39;nipreps/sdcflows&#39;</span>
+<span class="n">MIGAS_PACKAGE</span> <span class="o">=</span> <span class="s1">'nipreps/sdcflows'</span>
 
 
 <div class="viewcode-block" id="setup_migas">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.telemetry.html#sdcflows.utils.telemetry.setup_migas">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">setup_migas</span><span class="p">(</span><span class="n">init_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">exit_ping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Prepare the migas python client to communicate with a migas server.</span>
 <span class="sd">    If ``init`` is ``True``, send an initial breadcrumb.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># generate session UUID from generated run UUID</span>
     <span class="n">session_id</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">run_uuid</span><span class="p">:</span>
-        <span class="n">session_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">run_uuid</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">session_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">execution</span><span class="o">.</span><span class="n">run_uuid</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'_'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="n">migas</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">session_id</span><span class="o">=</span><span class="n">session_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">init_ping</span><span class="p">:</span>
         <span class="c1"># send initial status ping</span>
-        <span class="n">send_crumb</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">status_desc</span><span class="o">=</span><span class="s1">&#39;workflow start&#39;</span><span class="p">)</span>
+        <span class="n">send_crumb</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'R'</span><span class="p">,</span> <span class="n">status_desc</span><span class="o">=</span><span class="s1">'workflow start'</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">exit_ping</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">migas.error.nipype</span><span class="w"> </span><span class="kn">import</span> <span class="n">node_execution_error</span>
 
         <span class="n">migas</span><span class="o">.</span><span class="n">track_exit</span><span class="p">(</span>
             <span class="n">MIGAS_PACKAGE</span><span class="p">,</span>
             <span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
-            <span class="p">{</span><span class="s1">&#39;NodeExecutionError&#39;</span><span class="p">:</span> <span class="n">node_execution_error</span><span class="p">},</span>
+            <span class="p">{</span><span class="s1">'NodeExecutionError'</span><span class="p">:</span> <span class="n">node_execution_error</span><span class="p">},</span>
         <span class="p">)</span></div>
 
 
@@ -361,9 +361,9 @@
 <div class="viewcode-block" id="send_crumb">
 <a class="viewcode-back" href="../../../api/sdcflows.utils.telemetry.html#sdcflows.utils.telemetry.send_crumb">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">send_crumb</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Communicate with the migas telemetry server. This requires `migas.setup()` to be called.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">migas</span><span class="o">.</span><span class="n">add_breadcrumb</span><span class="p">(</span><span class="n">MIGAS_PACKAGE</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 </pre></div>
