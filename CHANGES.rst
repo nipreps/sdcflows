@@ -1,3 +1,15 @@
+2.17.0 (September 2, 2026)
+==========================
+Feature release in the 2.17.x series.
+
+This release explicitly disables the colorbar after the default switch to avoid confusion in the reportlets.
+Additionally, it adopts SPEC 0, dropping support for Python 3.11 and earlier.
+
+It also includes a fix to the reportlet colorbar.
+* FIX: Disable colorbar after default switch (#552)
+* MAINT: Bump dependency minimums following SPEC-0 (#549)
+
+
 2.16.0 (July 20, 2026)
 ======================
 Feature release in the 2.16.x series.
