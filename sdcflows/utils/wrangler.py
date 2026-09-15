@@ -347,13 +347,12 @@ def find_estimators(
     estimators = []
 
     # Step 1. Use B0FieldIdentifier metadata
-    b0_entities = {**base_entities, 'session': sessions}
     b0_ids = ()
     with suppress(BIDSEntityError):
         # flatten lists from json (tupled in pybids for hashing), then unique
         b0_ids = reduce(
             set.union,
-            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**b0_entities)),
+            (listify(ids) for ids in layout.get_B0FieldIdentifiers(**base_entities)),
             set(),
         )
 
@@ -365,9 +364,9 @@ def find_estimators(
 
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
-            bare_ids = layout.get(**b0_entities, B0FieldIdentifier=b0_id)
+            bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
-                **b0_entities,
+                **base_entities,
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )

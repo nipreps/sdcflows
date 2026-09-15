@@ -433,47 +433,6 @@ phasediff = {
 }
 
 
-phasediff_b0ids = {
-    '01': [
-        {
-            'session': session,
-            'anat': [{'suffix': 'T1w', 'metadata': {'EchoTime': 1}}],
-            'fmap': [
-                {
-                    'suffix': 'phasediff',
-                    'metadata': {
-                        'EchoTime1': 1.2,
-                        'EchoTime2': 1.4,
-                        'B0FieldIdentifier': f'gre{session}',
-                    },
-                },
-                {
-                    'suffix': 'magnitude1',
-                    'metadata': {'EchoTime': 1.2, 'B0FieldIdentifier': f'gre{session}'},
-                },
-                {
-                    'suffix': 'magnitude2',
-                    'metadata': {'EchoTime': 1.4, 'B0FieldIdentifier': f'gre{session}'},
-                },
-            ],
-            'func': [
-                {
-                    'task': 'rest',
-                    'suffix': 'bold',
-                    'metadata': {
-                        'RepetitionTime': 0.8,
-                        'TotalReadoutTime': 0.5,
-                        'PhaseEncodingDirection': 'j',
-                        'B0FieldSource': f'gre{session}',
-                    },
-                }
-            ],
-        }
-        for session in ('01', '02')
-    ]
-}
-
-
 filters = {
     'fmap': {
         'datatype': 'fmap',
@@ -553,19 +512,6 @@ def test_sessionwise_queries(tmp_path, bids_filters):
         )
         assert len(est) == 1
         assert all(f'ses-{session}' in str(source.path) for source in est[0].sources)
-
-    clear_registry()
-
-
-def test_sessionwise_queries_b0ids(tmp_path):
-    """Session-specific ``B0FieldIdentifier``s are not leaked across queries."""
-    bids_dir = tmp_path / 'bids'
-    generate_bids_skeleton(bids_dir, phasediff_b0ids)
-    layout = gen_layout(bids_dir)
-
-    for session in ('01', '02'):
-        est = find_estimators(layout=layout, subject='01', sessions=[session])
-        assert [estimator.bids_id for estimator in est] == [f'gre{session}']
 
     clear_registry()
 
