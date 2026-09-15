@@ -443,7 +443,7 @@ graph is built across processes.</p>
 <li><p>Switching Python’s <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multiprocessing</span></code></a> to <em>forkserver</em> mode.</p></li>
 <li><p>Set up a filter for warnings as early as possible.</p></li>
 <li><p>Automated I/O magic operations. Some conversions need to happen in the
-store/load processes (e.g., from/to <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a> &lt;-&gt; <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>,
+store/load processes (e.g., from/to <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a> &lt;-&gt; <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>,
 <a class="reference external" href="https://bids-standard.github.io/pybids/generated/bids.layout.BIDSLayout.html#bids.layout.BIDSLayout" title="(in PyBIDS v0.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BIDSLayout</span></code></a>, etc.)</p></li>
 </ul>
 </div></blockquote>
@@ -486,7 +486,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.environment.free_mem">
-<span class="sig-name descname"><span class="pre">free_mem</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9.1</span></span><a class="headerlink" href="#sdcflows.config.environment.free_mem" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">free_mem</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span><a class="headerlink" href="#sdcflows.config.environment.free_mem" title="Link to this definition">¶</a></dt>
 <dd><p>Free memory at start.</p>
 </dd></dl>
 
@@ -516,7 +516,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.environment.total_memory">
-<span class="sig-name descname"><span class="pre">total_memory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15.613971710205078</span></span><a class="headerlink" href="#sdcflows.config.environment.total_memory" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">total_memory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15.613975524902344</span></span><a class="headerlink" href="#sdcflows.config.environment.total_memory" title="Link to this definition">¶</a></dt>
 <dd><p>Total memory available, in GB.</p>
 </dd></dl>
 
@@ -637,7 +637,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.execution.run_uuid">
-<span class="sig-name descname"><span class="pre">run_uuid</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'20260903-134344_a8818f04-b8df-4917-8624-f5b2463159ba'</span></span><a class="headerlink" href="#sdcflows.config.execution.run_uuid" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run_uuid</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'20260915-145951_1d51db14-d44f-4f81-bec6-9e31e933543b'</span></span><a class="headerlink" href="#sdcflows.config.execution.run_uuid" title="Link to this definition">¶</a></dt>
 <dd><p>Unique identifier of this particular run.</p>
 </dd></dl>
 
@@ -700,7 +700,7 @@ opt-out using the <code class="docutils literal notranslate"><span class="pre">-
 <dl class="py class">
 <dt class="sig sig-object py" id="sdcflows.config.loggers">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sdcflows.config.</span></span><span class="sig-name descname"><span class="pre">loggers</span></span><a class="reference internal" href="../_modules/sdcflows/config.html#loggers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sdcflows.config.loggers" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Keep loggers easily accessible (see <a class="reference internal" href="#sdcflows.config.loggers.init" title="sdcflows.config.loggers.init"><code class="xref py py-func docutils literal notranslate"><span class="pre">init()</span></code></a>).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sdcflows.config.loggers.cli">
