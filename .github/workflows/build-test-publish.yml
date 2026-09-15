@@ -149,12 +149,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      with:
-        path: /var/lib/apt
-        key: apt-cache-v3
-        restore-keys: |
-          apt-cache-v3
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -186,7 +180,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
       with:
         auto-update-conda: true
-        auto-activate-base: true
         python-version: ${{ matrix.python-version }}
         channels: https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/,conda-forge,defaults
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
