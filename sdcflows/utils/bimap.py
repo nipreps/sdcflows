@@ -23,6 +23,7 @@
 """A bidirectional hashmap."""
 
 import re
+import warnings
 
 _autokey_pat = re.compile(r'^auto_(\d+)$')
 
@@ -144,8 +145,10 @@ class bidict(dict):
         if self.__contains__(key):
             raise KeyError(f"'{key}' is already {'a value' * (key in self._inverse)} in mapping")
         if self.__contains__(value):
-            raise ValueError(
-                f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping"
+            warnings.warn(
+                f"'{value}' is already {'a key' * (value not in self._inverse)} in mapping",
+                UserWarning,
+                stacklevel=2,
             )
 
         super().__setitem__(key, value)
