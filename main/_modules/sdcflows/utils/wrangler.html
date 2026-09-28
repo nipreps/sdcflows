@@ -632,9 +632,10 @@
 
     <span class="k">if</span> <span class="n">bids_filters</span><span class="p">:</span>
         <span class="n">filters</span> <span class="o">=</span> <span class="n">bids_filters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># copy to avoid altering in place</span>
-        <span class="k">if</span> <span class="s1">'session'</span> <span class="ow">in</span> <span class="n">bids_filters</span> <span class="ow">and</span> <span class="n">sessions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Filters include session, but session is already defined.'</span><span class="p">)</span>
-        <span class="n">sessions</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'session'</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">if</span> <span class="s1">'session'</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sessions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Filters include session, but session is already defined.'</span><span class="p">)</span>
+            <span class="n">sessions</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'session'</span><span class="p">))</span>
         <span class="n">base_entities</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
 
     <span class="n">subject_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s1">'sub-</span><span class="si">{</span><span class="n">subject</span><span class="si">}</span><span class="s1">'</span>
@@ -663,9 +664,6 @@
 
         <span class="k">for</span> <span class="n">b0_id</span> <span class="ow">in</span> <span class="n">b0_ids</span><span class="p">:</span>
             <span class="c1"># Found B0FieldIdentifier metadata entries</span>
-            <span class="n">b0_entities</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">b0_entities</span><span class="p">[</span><span class="s1">'B0FieldIdentifier'</span><span class="p">]</span> <span class="o">=</span> <span class="n">b0_id</span>
-
             <span class="n">bare_ids</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">base_entities</span><span class="p">,</span> <span class="n">B0FieldIdentifier</span><span class="o">=</span><span class="n">b0_id</span><span class="p">)</span>
             <span class="n">listed_ids</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="o">**</span><span class="n">base_entities</span><span class="p">,</span>
