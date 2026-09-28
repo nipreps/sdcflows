@@ -496,6 +496,26 @@ def test_wrangler_URIs(tmpdir, name, skeleton, session, estimations, total_estim
     clear_registry()
 
 
+@pytest.mark.parametrize('bids_filters', [None, {'datatype': 'fmap'}])
+def test_sessionwise_queries(tmp_path, bids_filters):
+    """One query per session must find that session's fieldmap."""
+    bids_dir = tmp_path / 'bids'
+    generate_bids_skeleton(bids_dir, phasediff)
+    layout = gen_layout(bids_dir)
+
+    for session in ('01', '02', '03'):
+        est = find_estimators(
+            layout=layout,
+            subject='01',
+            sessions=[session],
+            bids_filters=bids_filters,
+        )
+        assert len(est) == 1
+        assert all(f'ses-{session}' in str(source.path) for source in est[0].sources)
+
+    clear_registry()
+
+
 def test_single_reverse_pedir(tmp_path):
     bids_dir = tmp_path / 'bids'
     generate_bids_skeleton(bids_dir, pepolar)

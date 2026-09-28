@@ -332,9 +332,10 @@ def find_estimators(
 
     if bids_filters:
         filters = bids_filters.copy()  # copy to avoid altering in place
-        if 'session' in bids_filters and sessions is not None:
-            raise ValueError('Filters include session, but session is already defined.')
-        sessions = listify(filters.pop('session', None))
+        if 'session' in filters:
+            if sessions is not None:
+                raise ValueError('Filters include session, but session is already defined.')
+            sessions = listify(filters.pop('session'))
         base_entities.update(filters)
 
     subject_root = Path(layout.root) / f'sub-{subject}'
@@ -363,9 +364,6 @@ def find_estimators(
 
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
-            b0_entities = base_entities.copy()
-            b0_entities['B0FieldIdentifier'] = b0_id
-
             bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
                 **base_entities,
