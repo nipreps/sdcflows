@@ -73,7 +73,7 @@ test = [
     "pytest >= 8.1",
     "pytest-cov >= 2.11",
     "pytest-env",
-    "pytest-xdist >= 2.5",
+    "pytest-xdist >= 3.3",
 ]
 
 # Aliases
