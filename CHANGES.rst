@@ -11,6 +11,15 @@ improving PEPOLAR fieldmap estimation for subjects with high head motion.
 * FIX: Defer check of file existence to workflow build stage (#520)
 
 
+2.15.1 (September 28, 2026)
+===========================
+Patch release in the 2.15.x series.
+
+This includes a fix for ``find_estimators`` ignoring the requested ``sessions`` whenever ``bids_filters`` were provided.
+
+* FIX: respect sessions during estimator wrangling (#559)
+
+
 2.15.0 (September 26, 2025)
 ===========================
 Feature release in the 2.15.x series.
