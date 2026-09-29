@@ -655,6 +655,9 @@ def test_fieldmapless(tmp_path):
     est = find_estimators(layout=layout, subject='01', sessions=['01'], fmapless=True)
     assert len(est) == 1
     assert len(est[0].sources) == 2
-    assert any(source.suffix == 'T1w' and source.entities.get('session') is None for source in est[0].sources)
+    assert any(
+        source.suffix == 'T1w' and source.entities.get('session') is None
+        for source in est[0].sources
+    )
     clear_registry()
     rmtree(bids_dir)
