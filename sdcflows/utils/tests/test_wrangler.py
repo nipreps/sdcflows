@@ -637,3 +637,24 @@ def test_fieldmapless(tmp_path):
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
+
+    # Sessioned EPI should be able to use a subject-level/sessionless T1w
+    spec = {
+        '01': [
+            {
+                'anat': [T1w],
+            },
+            {
+                'session': '01',
+                'func': [bold],
+            },
+        ],
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject='01', sessions=['01'], fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    assert any(source.suffix == 'T1w' and source.entities.get('session') is None for source in est[0].sources)
+    clear_registry()
+    rmtree(bids_dir)
