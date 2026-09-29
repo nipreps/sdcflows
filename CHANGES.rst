@@ -1,3 +1,12 @@
+2.17.1 (September 29, 2026)
+===========================
+Patch release in the 2.17.x series.
+
+This includes a fix for ``find_estimators`` ignoring the requested ``sessions`` whenever ``bids_filters`` were provided.
+
+* FIX: respect sessions during estimator wrangling (#559)
+
+
 2.17.0 (September 2, 2026)
 ==========================
 Feature release in the 2.17.x series.
