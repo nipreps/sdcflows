@@ -1,0 +1,6 @@
+sdcflows.data package
+=====================
+
+.. automodule:: sdcflows.data
+   :members:
+   :show-inheritance:

@@ -1,0 +1,16 @@
+sdcflows.cli package
+====================
+
+.. automodule:: sdcflows.cli
+   :members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   sdcflows.cli.main
+   sdcflows.cli.parser
+   sdcflows.cli.workflow
