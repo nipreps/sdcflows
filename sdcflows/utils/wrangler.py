@@ -515,6 +515,10 @@ def find_estimators(
     # Find fieldmap-less schemes
     anat_file = layout.get(**{**base_entities, **{'suffix': anat_suffix, 'session': sessions}})
 
+    # Fall back to a subject-level/sessionless anatomical reference.
+    if not anat_file:
+        anat_file = layout.get(**{**base_entities, **{'suffix': anat_suffix, 'session': Query.NONE}})
+    
     if not fmapless or not anat_file:
         logger.debug('Skipping fmap-less estimation')
         return estimators
