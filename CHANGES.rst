@@ -1,3 +1,23 @@
+2.15.2 (October 1, 2026)
+========================
+Patch release in the 2.15.x series.
+
+This includes two fixes for fieldmap-less estimation:
+
+- In multi-session datasets, a subject-level anatomical reference (i.e., without
+  a ``session`` entity) was not found for session-specific EPI data.
+  A session-matched anatomical image is still preferred when available.
+- ``bids_filters`` intended for fieldmaps (e.g., ``{"datatype": "fmap"}``) were also
+  applied when searching for the anatomical reference and EPI targets, silently
+  preventing fieldmap-less estimation (nipreps/fmriprep#3632).
+
+It also fixes the PEPOLAR heuristics ignoring ``acquisition`` filters, and
+finding no estimators when filtering on a single ``ceagent``.
+
+* FIX: Do not apply fieldmap filters to fieldmap-less queries (#563)
+* FIX: Allow sessionless anatomical references for fieldmap-less estimation (#562)
+
+
 2.15.1 (September 28, 2026)
 ===========================
 Patch release in the 2.15.x series.
