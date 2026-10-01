@@ -341,3 +341,27 @@ def test_grid_bspline_weights():
     assert np.isclose(weights[-1, -1], 0.18919244)
     assert np.isclose(weights.sum(axis=0).max(), 129.3907)
     assert np.isclose(weights.sum(axis=0).min(), 0.0052327816)
+
+
+@pytest.mark.parametrize(
+    ('shape', 'shift', 'valid'),
+    [
+        ((6, 6, 3), (0, 0, 0), True),
+        ((8, 8, 4), (0, 0, 0), False),
+        ((6, 6, 3), (1.5, 0, 0), False),
+    ],
+    ids=['matching', 'shape', 'affine'],
+)
+def test_apply_pregridded_checks_grid(shape, shift, valid):
+    """A pre-gridded field (no fit) must share the EPI voxel grid."""
+    epi = nb.Nifti1Image(np.ones((6, 6, 3, 2), dtype='float32'), np.eye(4))
+    fmap_affine = np.eye(4)
+    fmap_affine[:3, 3] = shift
+    fmap = nb.Nifti1Image(np.zeros((*shape, 2), dtype='float32'), fmap_affine)
+
+    xfm = tf.B0FieldTransform(mapped=fmap)
+    if valid:
+        xfm.apply(epi, pe_dir='j', ro_time=0.05)
+    else:
+        with pytest.raises(ValueError, match='voxel grid'):
+            xfm.apply(epi, pe_dir='j', ro_time=0.05)

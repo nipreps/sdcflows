@@ -150,6 +150,10 @@ async def worker(
 ) -> np.ndarray:
     """Create one worker and attach it to the execution loop."""
     async with semaphore:
+        # IMPORTANT - the coordinates array must be copied every time anew per thread.
+        # Copy only once the semaphore is held, so at most ``max_concurrent`` copies
+        # are alive at a time instead of one per queued volume.
+        coordinates = coordinates.copy()
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, func, data, coordinates, pe_info, hmc_xfm)
         return result
@@ -250,11 +254,10 @@ async def unwarp_parallel(
             prefilter=prefilter,
         )
 
-        # IMPORTANT - the coordinates array must be copied every time anew per thread
         task = asyncio.create_task(
             worker(
                 volume,
-                coordinates.copy(),
+                coordinates,
                 pe_info[volid],
                 xfm,
                 func,
@@ -508,6 +511,16 @@ class B0FieldTransform:
             # Pre-gridded field (e.g., MEDIC dynamic): already on the target
             # grid, nothing to reconstruct — just normalize its orientation.
             fmap_img, _ = ensure_positive_cosines(self.mapped)
+            # Without a fit there is no resampling onto the target, so a field
+            # on any other lattice would be silently applied to the wrong voxels.
+            if fmap_img.shape[:3] != moving.shape[:3] or not np.allclose(
+                fmap_img.affine, moving.affine, atol=1e-4
+            ):
+                raise ValueError(
+                    'Pre-gridded fieldmap must share the voxel grid of the EPI target; got '
+                    f'shape {fmap_img.shape[:3]} vs. {moving.shape[:3]} and affines\n'
+                    f'{fmap_img.affine}\nvs.\n{moving.affine}'
+                )
             fmap_hz = np.asanyarray(fmap_img.dataobj, dtype='float32')
         else:
             if self.mapped is not None:
