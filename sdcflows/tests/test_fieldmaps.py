@@ -24,6 +24,7 @@
 
 import shutil
 from collections import namedtuple
+from pathlib import Path
 
 import bids
 import pytest
@@ -376,6 +377,35 @@ def test_FieldmapEstimation_MEDIC_mismatched_pairs(tmp_path, dsA_dir):
     files = _make_medic_files(tmp_path, src, [(1, 'phase'), (2, 'phase'), (1, 'mag')])
     with pytest.raises(ValueError, match='matched magnitude/phase pairs'):
         fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_MEDIC_mismatched_echoes(tmp_path, dsA_dir):
+    """Equal counts with different echo labels must still reject."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = _make_medic_files(tmp_path, src, [(1, 'phase'), (2, 'phase'), (1, 'mag'), (3, 'mag')])
+    with pytest.raises(ValueError, match='matched magnitude/phase pairs per echo'):
+        fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_MEDIC_mismatched_echo_times(tmp_path, dsA_dir):
+    """A phase/magnitude pair of the same echo must share its EchoTime."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = _make_medic_files(tmp_path, src, [(1, 'phase'), (2, 'phase'), (1, 'mag'), (2, 'mag')])
+    files[3].metadata['EchoTime'] = 0.05
+    with pytest.raises(ValueError, match='matching EchoTime'):
+        fm.FieldmapEstimation(files)
+
+
+def test_FieldmapEstimation_MEDIC_pairs_echoes(tmp_path, dsA_dir):
+    """``get_workflow`` must hand warpkit phase/magnitude lists aligned per echo."""
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    specs = [(2, 'mag'), (1, 'phase'), (3, 'mag'), (3, 'phase'), (1, 'mag'), (2, 'phase')]
+    files = _make_medic_files(tmp_path, src, specs)
+    inputs = fm.FieldmapEstimation(files).get_workflow().inputs.inputnode
+    phase_echoes = [Path(f).name.split('_')[2] for f in inputs.phase]
+    mag_echoes = [Path(f).name.split('_')[2] for f in inputs.magnitude]
+    assert phase_echoes == mag_echoes == ['echo-1', 'echo-2', 'echo-3']
+    assert [m['EchoTime'] for m in inputs.metadata] == pytest.approx([0.01, 0.02, 0.03])
 
 
 def test_FieldmapEstimation_is_dynamic(tmp_path, dsA_dir):
