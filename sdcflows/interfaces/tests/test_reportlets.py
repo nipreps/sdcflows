@@ -51,3 +51,24 @@ def test_FieldmapReportlet(tmpdir, outdir, testdata_dir, mask, apply_mask):
         report.inputs.mask = epi_mask(str(testdata_dir / 'epi.nii.gz'))
 
     report.run()
+
+
+def test_FieldmapReportlet_dynamic(tmpdir, testdata_dir):
+    """A 4D fieldmap with per-frame reference and mask (e.g., MEDIC) must render."""
+    import nibabel as nb
+
+    tmpdir.chdir()
+
+    def _as_4d(path, name):
+        img = nb.load(path)
+        out = Path.cwd() / name
+        nb.concat_images([img, img]).to_filename(out)
+        return str(out)
+
+    report = FieldmapReportlet(
+        reference=_as_4d(testdata_dir / 'epi.nii.gz', 'ref.nii.gz'),
+        fieldmap=_as_4d(testdata_dir / 'topup-field.nii.gz', 'fmap.nii.gz'),
+        mask=_as_4d(epi_mask(str(testdata_dir / 'epi.nii.gz')), 'mask.nii.gz'),
+        out_report='test-fieldmap-dynamic.svg',
+    )
+    report.run()
