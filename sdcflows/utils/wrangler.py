@@ -382,12 +382,15 @@ def find_estimators(
 
         for b0_id in b0_ids:
             # Found B0FieldIdentifier metadata entries
-            bare_ids = layout.get(**base_entities, B0FieldIdentifier=b0_id)
+            bare_ids = layout.get(**base_entities, session=sessions, B0FieldIdentifier=b0_id)
             listed_ids = layout.get(
                 **base_entities,
                 B0FieldIdentifier=f'"{b0_id}"',  # Double quotes to match JSON, not Python repr
                 regex_search=True,
             )
+            # Filter sessions after the fact: under ``regex_search`` a session
+            # label would match as a substring (e.g., ``01`` in ``101``).
+            listed_ids = [f for f in listed_ids if f.entities.get('session') in sessions]
 
             if no_medic and any(
                 fmap.entities.get('part') in ('mag', 'phase') for fmap in bare_ids + listed_ids
