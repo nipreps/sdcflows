@@ -589,6 +589,27 @@ def test_sessionwise_queries(tmp_path, bids_filters):
     clear_registry()
 
 
+def test_wrangler_b0_identifier_sessionwise(tmp_path):
+    """A ``B0FieldIdentifier`` reused across sessions must not pull in other sessions."""
+    skeleton = _build_medic_skeleton(intent='b0_identifier')
+    for session in skeleton['01']:
+        for img in session['func']:
+            img['metadata']['B0FieldIdentifier'] = 'medic'
+            if 'B0FieldSource' in img['metadata']:
+                img['metadata']['B0FieldSource'] = 'medic'
+
+    bids_dir = tmp_path / 'medic_shared_id'
+    generate_bids_skeleton(bids_dir, skeleton)
+    layout = gen_layout(bids_dir)
+
+    for session in ('01', '02', '03'):
+        est = find_estimators(layout=layout, subject='01', sessions=[session], fmapless=False)
+        assert len(est) == 1
+        assert len(est[0].sources) == 6
+        assert all(f'ses-{session}' in str(source.path) for source in est[0].sources)
+        clear_registry()
+
+
 def test_wrangler_medic_no_intent_does_not_fire(tmp_path):
     """Structure alone must not trigger MEDIC.
 
