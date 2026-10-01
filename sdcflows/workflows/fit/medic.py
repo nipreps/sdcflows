@@ -43,6 +43,8 @@ def init_medic_wf(
     sloppy=False,
     debug=False,
     name='medic_wf',
+    use_metadata_estimates=False,
+    fallback_total_readout_time=None,
     **kwargs,
 ):
     """
@@ -67,6 +69,13 @@ def init_medic_wf(
         Pass through to :class:`~sdcflows.interfaces.warpkit.UnwrapPhase`.
     name : :obj:`str`
         Workflow name.
+    use_metadata_estimates : :obj:`bool`
+        Allow estimation of the total readout time from metadata when
+        ``TotalReadoutTime`` and ``EffectiveEchoSpacing`` are unavailable
+        (see :func:`~sdcflows.utils.epimanip.get_trt`).
+    fallback_total_readout_time : :obj:`float`
+        A fallback value for the total readout time, used when it cannot
+        be determined from metadata.
 
     Inputs
     ------
@@ -75,8 +84,10 @@ def init_medic_wf(
     magnitude : :obj:`list` of :obj:`str`
         Magnitude NIfTI per echo.
     metadata : :obj:`list` of :obj:`dict`
-        BIDS sidecar dicts, one per echo. Must contain ``EchoTime``,
-        ``TotalReadoutTime``, and ``PhaseEncodingDirection``.
+        BIDS sidecar dicts, one per echo. Must contain ``EchoTime`` and
+        ``PhaseEncodingDirection``, plus enough timing information for
+        :func:`~sdcflows.utils.epimanip.get_trt` to resolve the total
+        readout time.
 
     Outputs
     -------
@@ -125,13 +136,15 @@ magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
     # upstream sdcflows layer passes dicts.)
     extract_meta = pe.Node(
         niu.Function(
-            input_names=['metadata'],
+            input_names=['metadata', 'in_files', 'use_estimate', 'fallback'],
             output_names=['echo_times', 'total_readout_time', 'phase_encoding_direction'],
             function=_unpack_metadata,
         ),
         name='extract_meta',
         run_without_submitting=True,
     )
+    extract_meta.inputs.use_estimate = use_metadata_estimates
+    extract_meta.inputs.fallback = fallback_total_readout_time
 
     # Two-stage warpkit path: UnwrapPhase exposes per-frame masks, which
     # ComputeFieldmap then consumes. The one-shot MEDIC interface bundles
@@ -166,7 +179,8 @@ magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
 
     # fmt: off
     workflow.connect([
-        (inputnode, extract_meta, [('metadata', 'metadata')]),
+        (inputnode, extract_meta, [('metadata', 'metadata'),
+                                   ('phase', 'in_files')]),
         (inputnode, unwrap, [('phase', 'phase'),
                              ('magnitude', 'magnitude')]),
         (extract_meta, unwrap, [('echo_times', 'echo_times')]),
@@ -188,8 +202,10 @@ magnitude and phase EPI series using MEDIC [@van2026medic], as implemented in
     return workflow
 
 
-def _unpack_metadata(metadata):
+def _unpack_metadata(metadata, in_files=None, use_estimate=False, fallback=None):
     """Pull echo times (s→ms), TRT, and PE direction from BIDS sidecars."""
+    from sdcflows.utils.epimanip import get_trt
+
     if not metadata:
         raise ValueError('MEDIC requires per-echo metadata.')
     if len(metadata) < 2:
@@ -199,12 +215,22 @@ def _unpack_metadata(metadata):
             'this guard catches direct callers that bypass it.)'
         )
     echo_times = [float(m['EchoTime']) * 1000.0 for m in metadata]
-    total_readout_time = float(metadata[0]['TotalReadoutTime'])
     phase_encoding_direction = metadata[0]['PhaseEncodingDirection']
     peds = {m['PhaseEncodingDirection'] for m in metadata}
     if len(peds) > 1:
         raise ValueError(f'MEDIC echoes must share PhaseEncodingDirection; got {sorted(peds)}.')
-    return echo_times, total_readout_time, phase_encoding_direction
+
+    # Resolve the readout time per echo the same way the other estimators do
+    # (``EffectiveEchoSpacing`` needs the image to count PE voxels), and
+    # refuse to silently pick one when the echoes disagree.
+    in_files = in_files or [None] * len(metadata)
+    trts = [
+        get_trt(m, in_file=f, use_estimate=use_estimate, fallback=fallback)
+        for m, f in zip(metadata, in_files, strict=True)
+    ]
+    if any(abs(trt - trts[0]) > 1e-6 for trt in trts):
+        raise ValueError(f'MEDIC echoes must share the total readout time; got {trts}.')
+    return echo_times, trts[0], phase_encoding_direction
 
 
 def _first(in_list):
