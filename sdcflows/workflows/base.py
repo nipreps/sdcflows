@@ -81,6 +81,8 @@ def init_fmap_preproc_wf(
         The preprocessed fieldmap coefficients.
 
     """
+    from nipype.interfaces.base import isdefined
+
     from sdcflows.fieldmaps import EstimatorType
     from sdcflows.workflows.fit.medic import INPUT_FIELDS as _medic_fields
     from sdcflows.workflows.fit.pepolar import INPUT_FIELDS as _pepolar_fields
@@ -170,6 +172,16 @@ def init_fmap_preproc_wf(
                 niu.IdentityInterface(fields=fields),
                 name=f'in_{estimator.sanitized_id}',
             )
+            # The connection below replaces whatever ``get_workflow`` set on the
+            # estimator's inputnode. Unlike PEPOLAR/ANAT, whose raw sources need
+            # ad-hoc preprocessing by the caller, dynamic estimators consume
+            # their raw sources directly: seed this node with them (callers may
+            # still override).
+            if is_dynamic:
+                est_inputs = est_wf.inputs.inputnode
+                for f in fields:
+                    if isdefined(value := getattr(est_inputs, f)):
+                        setattr(inputnode.inputs, f, value)
             workflow.connect([
                 (inputnode, est_wf, [(f, f"inputnode.{f}") for f in fields])
             ])  # fmt:skip

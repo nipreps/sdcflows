@@ -73,3 +73,42 @@ def test_fmap_wf(tmpdir, workdir, outdir, bids_layouts, dataset, subject):
         for node in res.nodes
         if node.name.startswith('out_merge_')
     )
+
+
+def test_fmap_preproc_wf_medic(tmp_path, dsA_dir):
+    """MEDIC's raw inputs survive the outer ``in_<id>`` node, and no coeffs are sunk."""
+    import shutil
+
+    src = dsA_dir / 'sub-01' / 'func' / 'sub-01_task-rest_bold.nii.gz'
+    files = []
+    for echo in (1, 2):
+        for part in ('mag', 'phase'):
+            dst = tmp_path / f'sub-01_task-rest_echo-{echo}_part-{part}_bold.nii.gz'
+            shutil.copy(src, dst)
+            metadata = {
+                'EchoTime': 0.01 * echo,
+                'TotalReadoutTime': 0.05,
+                'PhaseEncodingDirection': 'j',
+            }
+            files.append(fm.FieldmapFile(dst, metadata=metadata))
+
+    fm.clear_registry()
+    try:
+        estimator = fm.FieldmapEstimation(files)
+        wf = init_fmap_preproc_wf(
+            estimators=[estimator],
+            omp_nthreads=1,
+            output_dir=str(tmp_path / 'out'),
+            subject='01',
+        )
+    finally:
+        fm.clear_registry()
+
+    est_inputs = estimator.get_workflow().inputs.inputnode
+    inputnode = wf.get_node(f'in_{estimator.sanitized_id}')
+    assert inputnode.inputs.phase == est_inputs.phase
+    assert inputnode.inputs.magnitude == est_inputs.magnitude
+    assert inputnode.inputs.metadata == est_inputs.metadata
+
+    derivs = wf.get_node(f'fmap_derivatives_wf_{estimator.sanitized_id}')
+    assert derivs.get_node('ds_coeff') is None
