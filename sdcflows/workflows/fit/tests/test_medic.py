@@ -62,6 +62,16 @@ def test_medic_construct():
         assert wf.get_node(name) is not None, f'missing node {name!r}'
 
 
+def test_medic_passes_threads():
+    """``omp_nthreads`` must reach warpkit, not only Nipype's ``n_procs``.
+
+    Nipype's ``Node`` forwards ``n_procs`` into an interface's ``num_threads``.
+    """
+    wf = init_medic_wf(omp_nthreads=4)
+    assert wf.get_node('unwrap').inputs.num_threads == 4
+    assert wf.get_node('compute_fmap').inputs.num_threads == 4
+
+
 def test_unpack_metadata_converts_te_to_ms():
     metadata = [
         {'EchoTime': 0.0142, 'TotalReadoutTime': 0.5, 'PhaseEncodingDirection': 'j'},
@@ -91,6 +101,39 @@ def test_unpack_metadata_rejects_mixed_pe():
 def test_unpack_metadata_rejects_empty():
     with pytest.raises(ValueError, match='per-echo metadata'):
         _unpack_metadata([])
+
+
+def test_unpack_metadata_effective_echo_spacing(tmp_path):
+    """TRT is resolved with ``get_trt``, so ``EffectiveEchoSpacing`` suffices."""
+    import nibabel as nb
+    import numpy as np
+
+    in_file = tmp_path / 'phase.nii.gz'
+    nb.Nifti1Image(np.zeros((10, 11, 4), dtype='float32'), np.eye(4)).to_filename(in_file)
+    metadata = [
+        {'EchoTime': 0.0142, 'EffectiveEchoSpacing': 0.001, 'PhaseEncodingDirection': 'j'},
+        {'EchoTime': 0.03893, 'EffectiveEchoSpacing': 0.001, 'PhaseEncodingDirection': 'j'},
+    ]
+    _, trt, _ = _unpack_metadata(metadata, in_files=[str(in_file)] * 2)
+    assert trt == pytest.approx(0.010)
+
+
+def test_unpack_metadata_fallback_trt():
+    metadata = [
+        {'EchoTime': 0.0142, 'PhaseEncodingDirection': 'j'},
+        {'EchoTime': 0.03893, 'PhaseEncodingDirection': 'j'},
+    ]
+    _, trt, _ = _unpack_metadata(metadata, fallback=0.03)
+    assert trt == 0.03
+
+
+def test_unpack_metadata_rejects_mixed_trt():
+    metadata = [
+        {'EchoTime': 0.0142, 'TotalReadoutTime': 0.5, 'PhaseEncodingDirection': 'j'},
+        {'EchoTime': 0.03893, 'TotalReadoutTime': 0.4, 'PhaseEncodingDirection': 'j'},
+    ]
+    with pytest.raises(ValueError, match='total readout time'):
+        _unpack_metadata(metadata)
 
 
 def test_first_helper():
