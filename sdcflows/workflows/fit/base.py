@@ -45,6 +45,7 @@ def init_sdcflows_wf():
         estimators_record[subject] = find_estimators(
             layout=config.execution.layout,
             subject=subject,
+            sessions=config.execution.session_label,
             fmapless=config.workflow.fmapless,
             logger=config.loggers.cli,
         )
