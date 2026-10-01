@@ -374,6 +374,29 @@ class FieldmapEstimation:
                     f'got {len(phase_files)} phase and {len(mag_files)} '
                     'magnitude file(s).'
                 )
+            # Counts alone would let phase echoes 1/2 pair with magnitude
+            # echoes 1/3: require one file per part for each echo, with
+            # matching EchoTime, so ``get_workflow`` can align them.
+            phase_echoes = {f.entities.get('echo'): f for f in phase_files}
+            mag_echoes = {f.entities.get('echo'): f for f in mag_files}
+            if len(phase_echoes) != len(phase_files) or len(mag_echoes) != len(mag_files):
+                raise ValueError(
+                    'MEDIC requires exactly one phase and one magnitude file per ``echo`` entity.'
+                )
+            if phase_echoes.keys() != mag_echoes.keys():
+                raise ValueError(
+                    'MEDIC requires matched magnitude/phase pairs per echo; got '
+                    f'phase echoes {sorted(map(str, phase_echoes))} and magnitude '
+                    f'echoes {sorted(map(str, mag_echoes))}.'
+                )
+            for echo, phase_file in phase_echoes.items():
+                phase_te = phase_file.metadata.get('EchoTime')
+                mag_te = mag_echoes[echo].metadata.get('EchoTime')
+                if phase_te is None or mag_te is None or abs(phase_te - mag_te) > 1e-6:
+                    raise ValueError(
+                        f'MEDIC echo {echo} requires matching EchoTime on its phase '
+                        f'and magnitude files; got {phase_te} and {mag_te}.'
+                    )
             self.method = EstimatorType.MEDIC
 
         # Fieldmap option 1: actual field-mapping sequences
@@ -559,11 +582,16 @@ class FieldmapEstimation:
 
             if set_inputs:
                 phase_files = [f for f in self.sources if f.entities.get('part') == 'phase']
-                mag_files = [f for f in self.sources if f.entities.get('part') == 'mag']
-                # Order both lists by EchoTime so warpkit gets aligned echo
-                # series. BIDS does not guarantee echo entity == numeric order.
+                mag_echoes = {
+                    f.entities.get('echo'): f
+                    for f in self.sources
+                    if f.entities.get('part') == 'mag'
+                }
+                # Order by EchoTime (BIDS does not guarantee echo entity ==
+                # numeric order) and pair each magnitude with its phase echo,
+                # as validated in ``__attrs_post_init__``.
                 phase_files = sorted(phase_files, key=lambda f: f.metadata['EchoTime'])
-                mag_files = sorted(mag_files, key=lambda f: f.metadata['EchoTime'])
+                mag_files = [mag_echoes[f.entities.get('echo')] for f in phase_files]
                 self._wf.inputs.inputnode.phase = [str(f.path.absolute()) for f in phase_files]
                 self._wf.inputs.inputnode.magnitude = [str(f.path.absolute()) for f in mag_files]
                 self._wf.inputs.inputnode.metadata = [f.metadata for f in phase_files]
