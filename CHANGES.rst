@@ -1,4 +1,4 @@
-2.15.2 (October 1, 2026)
+2.15.2 (October 2, 2026)
 ========================
 Patch release in the 2.15.x series.
 
