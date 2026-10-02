@@ -333,6 +333,25 @@ improving PEPOLAR fieldmap estimation for subjects with high head motion.</p>
 <li><p>FIX: Defer check of file existence to workflow build stage (#520)</p></li>
 </ul>
 </section>
+<section id="october-2-2026">
+<h2>2.15.2 (October 2, 2026)<a class="headerlink" href="#october-2-2026" title="Link to this heading">¶</a></h2>
+<p>Patch release in the 2.15.x series.</p>
+<p>This includes two fixes for fieldmap-less estimation:</p>
+<ul class="simple">
+<li><p>In multi-session datasets, a subject-level anatomical reference (i.e., without
+a <code class="docutils literal notranslate"><span class="pre">session</span></code> entity) was not found for session-specific EPI data.
+A session-matched anatomical image is still preferred when available.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bids_filters</span></code> intended for fieldmaps (e.g., <code class="docutils literal notranslate"><span class="pre">{&quot;datatype&quot;:</span> <span class="pre">&quot;fmap&quot;}</span></code>) were also
+applied when searching for the anatomical reference and EPI targets, silently
+preventing fieldmap-less estimation (nipreps/fmriprep#3632).</p></li>
+</ul>
+<p>It also fixes the PEPOLAR heuristics ignoring <code class="docutils literal notranslate"><span class="pre">acquisition</span></code> filters, and
+finding no estimators when filtering on a single <code class="docutils literal notranslate"><span class="pre">ceagent</span></code>.</p>
+<ul class="simple">
+<li><p>FIX: Do not apply fieldmap filters to fieldmap-less queries (#563)</p></li>
+<li><p>FIX: Allow sessionless anatomical references for fieldmap-less estimation (#562)</p></li>
+</ul>
+</section>
 <section id="september-28-2026">
 <h2>2.15.1 (September 28, 2026)<a class="headerlink" href="#september-28-2026" title="Link to this heading">¶</a></h2>
 <p>Patch release in the 2.15.x series.</p>
@@ -1178,6 +1197,7 @@ and <a class="reference external" href="https://github.com/nipreps/sdcflows/comm
 <li><a class="reference internal" href="#september-29-2026">2.17.1 (September 29, 2026)</a></li>
 <li><a class="reference internal" href="#september-2-2026">2.17.0 (September 2, 2026)</a></li>
 <li><a class="reference internal" href="#july-20-2026">2.16.0 (July 20, 2026)</a></li>
+<li><a class="reference internal" href="#october-2-2026">2.15.2 (October 2, 2026)</a></li>
 <li><a class="reference internal" href="#september-28-2026">2.15.1 (September 28, 2026)</a></li>
 <li><a class="reference internal" href="#september-26-2025">2.15.0 (September 26, 2025)</a></li>
 <li><a class="reference internal" href="#september-22-2025">2.14.0 (September 22, 2025)</a></li>

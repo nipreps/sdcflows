@@ -407,7 +407,9 @@
 <span class="sd">        The logger used to relay messages. If not provided, one will be created.</span>
 <span class="sd">    bids_filters</span>
 <span class="sd">        Optional dictionary of key/values to filter the entities on.</span>
-<span class="sd">        This allows lower level file inclusion/exclusion.</span>
+<span class="sd">        This allows lower level file inclusion/exclusion of fieldmap files.</span>
+<span class="sd">        Except for ``session``, filters are not applied when querying the</span>
+<span class="sd">        anatomical reference and targets of fieldmap-less estimation.</span>
 <span class="sd">    anat_suffix : :obj:`str` or :obj:`list`</span>
 <span class="sd">        String or list of strings to filter anatomical images for fieldmap-less</span>
 <span class="sd">        approaches. If not provided, ``T1w`` is used.</span>
@@ -629,6 +631,7 @@
         <span class="s1">'part'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'mag'</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
         <span class="s1">'scope'</span><span class="p">:</span> <span class="s1">'raw'</span><span class="p">,</span>  <span class="c1"># Ensure derivatives are not captured</span>
     <span class="p">}</span>
+    <span class="n">no_filter_entities</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">bids_filters</span><span class="p">:</span>
         <span class="n">filters</span> <span class="o">=</span> <span class="n">bids_filters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># copy to avoid altering in place</span>
@@ -711,12 +714,16 @@
                 <span class="n">estimators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="c1"># A bunch of heuristics to select EPI fieldmaps</span>
-        <span class="n">acqs</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'acquisitions'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_acquisitions</span><span class="p">(</span>
-            <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'epi'</span>
-        <span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
-        <span class="n">contrasts</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ceagent'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_ceagents</span><span class="p">(</span>
-            <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'epi'</span>
-        <span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">acqs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">listify</span><span class="p">(</span><span class="n">base_entities</span><span class="p">[</span><span class="s1">'acquisition'</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s1">'acquisition'</span> <span class="ow">in</span> <span class="n">base_entities</span>
+            <span class="k">else</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_acquisitions</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'epi'</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">contrasts</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">listify</span><span class="p">(</span><span class="n">base_entities</span><span class="p">[</span><span class="s1">'ceagent'</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s1">'ceagent'</span> <span class="ow">in</span> <span class="n">base_entities</span>
+            <span class="k">else</span> <span class="n">layout</span><span class="o">.</span><span class="n">get_ceagents</span><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'epi'</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="k">for</span> <span class="n">ses</span><span class="p">,</span> <span class="n">acq</span><span class="p">,</span> <span class="n">ce</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">acqs</span><span class="p">,</span> <span class="n">contrasts</span><span class="p">):</span>
             <span class="n">entities</span> <span class="o">=</span> <span class="n">base_entities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">entities</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="s1">'epi'</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">ses</span><span class="p">,</span> <span class="s1">'acquisition'</span><span class="p">:</span> <span class="n">acq</span><span class="p">,</span> <span class="s1">'ceagent'</span><span class="p">:</span> <span class="n">ce</span><span class="p">})</span>
@@ -813,7 +820,15 @@
         <span class="n">fmapless</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># Find fieldmap-less schemes</span>
-    <span class="n">anat_file</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">base_entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="n">anat_suffix</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">sessions</span><span class="p">}})</span>
+    <span class="n">anat_file</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">no_filter_entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="n">anat_suffix</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">sessions</span><span class="p">}}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fall back to a subject-level/sessionless anatomical reference.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">anat_file</span><span class="p">:</span>
+        <span class="n">anat_file</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">no_filter_entities</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s1">'suffix'</span><span class="p">:</span> <span class="n">anat_suffix</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">:</span> <span class="n">Query</span><span class="o">.</span><span class="n">NONE</span><span class="p">}}</span>
+        <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">fmapless</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">anat_file</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">'Skipping fmap-less estimation'</span><span class="p">)</span>
@@ -825,7 +840,7 @@
         <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
         <span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span>
         <span class="n">sessions</span><span class="o">=</span><span class="n">sessions</span><span class="p">,</span>
-        <span class="n">base_entities</span><span class="o">=</span><span class="n">base_entities</span><span class="p">,</span>
+        <span class="n">base_entities</span><span class="o">=</span><span class="n">no_filter_entities</span><span class="p">,</span>
         <span class="n">suffixes</span><span class="o">=</span><span class="n">fmapless</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">estimator_specs</span><span class="p">:</span>
