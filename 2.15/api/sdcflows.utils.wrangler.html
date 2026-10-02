@@ -351,7 +351,9 @@ When <code class="docutils literal notranslate"><span class="pre">fmapless</span
 estimation will be skipped except if <code class="docutils literal notranslate"><span class="pre">force_fmapless</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>logger</strong> – The logger used to relay messages. If not provided, one will be created.</p></li>
 <li><p><strong>bids_filters</strong> – Optional dictionary of key/values to filter the entities on.
-This allows lower level file inclusion/exclusion.</p></li>
+This allows lower level file inclusion/exclusion of fieldmap files.
+Except for <code class="docutils literal notranslate"><span class="pre">session</span></code>, filters are not applied when querying the
+anatomical reference and targets of fieldmap-less estimation.</p></li>
 <li><p><strong>anat_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>) – String or list of strings to filter anatomical images for fieldmap-less
 approaches. If not provided, <code class="docutils literal notranslate"><span class="pre">T1w</span></code> is used.</p></li>
 </ul>
