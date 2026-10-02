@@ -5,7 +5,7 @@ from shutil import rmtree
 import pytest
 from niworkflows.utils.testing import generate_bids_skeleton
 
-from sdcflows.fieldmaps import clear_registry, get_identifier
+from sdcflows.fieldmaps import EstimatorType, clear_registry, get_identifier
 from sdcflows.utils.wrangler import find_estimators
 
 
@@ -637,3 +637,88 @@ def test_fieldmapless(tmp_path):
     assert len(est[0].sources) == 2
     clear_registry()
     rmtree(bids_dir)
+
+    # Sessioned EPI should be able to use a subject-level/sessionless T1w
+    spec = {
+        '01': [
+            {
+                'anat': [T1w],
+            },
+            {
+                'session': '01',
+                'func': [bold],
+            },
+        ],
+    }
+    generate_bids_skeleton(bids_dir, spec)
+    layout = gen_layout(bids_dir)
+    est = find_estimators(layout=layout, subject='01', sessions=['01'], fmapless=True)
+    assert len(est) == 1
+    assert len(est[0].sources) == 2
+    assert any(
+        source.suffix == 'T1w' and source.entities.get('session') is None
+        for source in est[0].sources
+    )
+    clear_registry()
+    rmtree(bids_dir)
+
+
+ANAT = (EstimatorType.ANAT, None)
+PEPOLAR_A = (EstimatorType.PEPOLAR, 'A')
+PEPOLAR_B = (EstimatorType.PEPOLAR, 'B')
+
+
+@pytest.mark.parametrize(
+    ('bids_filters', 'expected'),
+    [
+        (None, {ANAT, PEPOLAR_A, PEPOLAR_B}),
+        ({'datatype': 'fmap'}, {ANAT, PEPOLAR_A, PEPOLAR_B}),
+        ({'datatype': 'fmap', 'run': '9999'}, {ANAT}),
+        ({'acquisition': 'A'}, {ANAT, PEPOLAR_A}),
+        ({'ceagent': 'gad'}, {ANAT, PEPOLAR_A, PEPOLAR_B}),
+    ],
+    ids=['none', 'datatype', 'run', 'acquisition', 'ceagent'],
+)
+def test_filters(tmp_path, bids_filters, expected):
+    """Filters restrict fieldmaps, but not fieldmap-less anatomical references or targets."""
+    epi = {'suffix': 'epi', 'ce': 'gad', 'metadata': {'TotalReadoutTime': 0.05}}
+
+    spec = {
+        '01': {
+            'anat': [{'suffix': 'T1w'}],
+            'fmap': [
+                {
+                    **epi,
+                    'acq': acq,
+                    'dir': pedir,
+                    'metadata': {**epi['metadata'], 'PhaseEncodingDirection': pe},
+                }
+                for acq in ('A', 'B')
+                for pedir, pe in (('AP', 'j'), ('PA', 'j-'))
+            ],
+            'func': [
+                {
+                    'task': 'rest',
+                    'suffix': 'bold',
+                    'metadata': {
+                        'RepetitionTime': 0.8,
+                        'TotalReadoutTime': 0.5,
+                        'PhaseEncodingDirection': 'j',
+                    },
+                }
+            ],
+        },
+    }
+    bids_dir = tmp_path / 'bids'
+    generate_bids_skeleton(bids_dir, spec)
+    est = find_estimators(
+        layout=gen_layout(bids_dir),
+        subject='01',
+        fmapless=True,
+        force_fmapless=True,
+        bids_filters=bids_filters,
+    )
+    assert len(est) == len(expected)
+    # The first source is the T1w for ANAT, and an EPI fieldmap for PEPOLAR
+    assert {(e.method, e.sources[0].entities.get('acquisition')) for e in est} == expected
+    clear_registry()

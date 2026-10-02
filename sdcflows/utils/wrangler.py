@@ -107,7 +107,9 @@ def find_estimators(
         The logger used to relay messages. If not provided, one will be created.
     bids_filters
         Optional dictionary of key/values to filter the entities on.
-        This allows lower level file inclusion/exclusion.
+        This allows lower level file inclusion/exclusion of fieldmap files.
+        Except for ``session``, filters are not applied when querying the
+        anatomical reference and targets of fieldmap-less estimation.
     anat_suffix : :obj:`str` or :obj:`list`
         String or list of strings to filter anatomical images for fieldmap-less
         approaches. If not provided, ``T1w`` is used.
@@ -329,6 +331,7 @@ def find_estimators(
         'part': ['mag', None],
         'scope': 'raw',  # Ensure derivatives are not captured
     }
+    no_filter_entities = base_entities.copy()
 
     if bids_filters:
         filters = bids_filters.copy()  # copy to avoid altering in place
@@ -411,12 +414,16 @@ def find_estimators(
                 estimators.append(e)
 
         # A bunch of heuristics to select EPI fieldmaps
-        acqs = base_entities.get('acquisitions') or layout.get_acquisitions(
-            subject=subject, suffix='epi'
-        ) + [None]
-        contrasts = base_entities.get('ceagent') or layout.get_ceagents(
-            subject=subject, suffix='epi'
-        ) + [None]
+        acqs = (
+            listify(base_entities['acquisition'])
+            if 'acquisition' in base_entities
+            else layout.get_acquisitions(subject=subject, suffix='epi') + [None]
+        )
+        contrasts = (
+            listify(base_entities['ceagent'])
+            if 'ceagent' in base_entities
+            else layout.get_ceagents(subject=subject, suffix='epi') + [None]
+        )
         for ses, acq, ce in product(sessions, acqs, contrasts):
             entities = base_entities.copy()
             entities.update({'suffix': 'epi', 'session': ses, 'acquisition': acq, 'ceagent': ce})
@@ -513,7 +520,15 @@ def find_estimators(
         fmapless = False
 
     # Find fieldmap-less schemes
-    anat_file = layout.get(**{**base_entities, **{'suffix': anat_suffix, 'session': sessions}})
+    anat_file = layout.get(
+        **{**no_filter_entities, **{'suffix': anat_suffix, 'session': sessions}}
+    )
+
+    # Fall back to a subject-level/sessionless anatomical reference.
+    if not anat_file:
+        anat_file = layout.get(
+            **{**no_filter_entities, **{'suffix': anat_suffix, 'session': Query.NONE}}
+        )
 
     if not fmapless or not anat_file:
         logger.debug('Skipping fmap-less estimation')
@@ -525,7 +540,7 @@ def find_estimators(
         layout=layout,
         subject=subject,
         sessions=sessions,
-        base_entities=base_entities,
+        base_entities=no_filter_entities,
         suffixes=fmapless,
     )
     for spec in estimator_specs:
