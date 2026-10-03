@@ -81,7 +81,10 @@ def init_fmap_preproc_wf(
         The preprocessed fieldmap coefficients.
 
     """
+    from nipype.interfaces.base import isdefined
+
     from sdcflows.fieldmaps import EstimatorType
+    from sdcflows.workflows.fit.medic import INPUT_FIELDS as _medic_fields
     from sdcflows.workflows.fit.pepolar import INPUT_FIELDS as _pepolar_fields
     from sdcflows.workflows.fit.syn import INPUT_FIELDS as _syn_fields
     from sdcflows.workflows.outputs import init_fmap_derivatives_wf, init_fmap_reports_wf
@@ -89,11 +92,19 @@ def init_fmap_preproc_wf(
     INPUT_FIELDS = {
         EstimatorType.ANAT: _syn_fields,
         EstimatorType.PEPOLAR: _pepolar_fields,
+        EstimatorType.MEDIC: _medic_fields,
     }
 
     workflow = Workflow(name=name)
 
-    out_fields = ('fmap', 'fmap_coeff', 'fmap_ref', 'fmap_mask', 'fmap_id', 'method')
+    out_fields = (
+        'fmap',
+        'fmap_coeff',
+        'fmap_ref',
+        'fmap_mask',
+        'fmap_id',
+        'method',
+    )
     out_merge = {f: pe.Node(niu.Merge(len(estimators)), name=f'out_merge_{f}') for f in out_fields}
     # Fieldmaps and coefficient files can come in pairs, ensure they are not flattened
     out_merge['fmap'].inputs.no_flatten = True
@@ -134,9 +145,12 @@ def init_fmap_preproc_wf(
         )
         out_map.inputs.fmap_id = estimator.bids_id
 
+        # Dynamic estimators (currently MEDIC) emit a 4D fieldmap directly on
+        # the EPI grid; no B-spline coefficient representation is produced.
+        is_dynamic = estimator.is_dynamic
         fmap_derivatives_wf = init_fmap_derivatives_wf(
             output_dir=str(output_dir),
-            write_coeff=True,
+            write_coeff=not is_dynamic,
             write_mask=True,
             bids_fmap_id=estimator.bids_id,
             name=f'fmap_derivatives_wf_{estimator.sanitized_id}',
@@ -158,17 +172,39 @@ def init_fmap_preproc_wf(
                 niu.IdentityInterface(fields=fields),
                 name=f'in_{estimator.sanitized_id}',
             )
+            # The connection below replaces whatever ``get_workflow`` set on the
+            # estimator's inputnode. Unlike PEPOLAR/ANAT, whose raw sources need
+            # ad-hoc preprocessing by the caller, dynamic estimators consume
+            # their raw sources directly: seed this node with them (callers may
+            # still override).
+            if is_dynamic:
+                est_inputs = est_wf.inputs.inputnode
+                for f in fields:
+                    if isdefined(value := getattr(est_inputs, f)):
+                        setattr(inputnode.inputs, f, value)
             workflow.connect([
                 (inputnode, est_wf, [(f, f"inputnode.{f}") for f in fields])
             ])  # fmt:skip
 
+        deriv_conns = [
+            ('outputnode.fmap', 'inputnode.fieldmap'),
+            ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+            ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
+        ]
+        out_map_conns = [
+            ('outputnode.fieldmap', 'fmap'),
+            ('outputnode.fmap_ref', 'fmap_ref'),
+            ('outputnode.fmap_mask', 'fmap_mask'),
+        ]
+        if not is_dynamic:
+            deriv_conns.append(('outputnode.fmap_coeff', 'inputnode.fmap_coeff'))
+            out_map_conns.append(('outputnode.fmap_coeff', 'fmap_coeff'))
+        else:
+            # Keep the merge node aligned across estimators that don't emit coeffs.
+            out_map.inputs.fmap_coeff = None
+
         workflow.connect([
-            (est_wf, fmap_derivatives_wf, [
-                ("outputnode.fmap", "inputnode.fieldmap"),
-                ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
-                ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-            ]),
+            (est_wf, fmap_derivatives_wf, deriv_conns),
             (est_wf, fmap_reports_wf, [
                 ("outputnode.fmap", "inputnode.fieldmap"),
                 ("outputnode.fmap_ref", "inputnode.fmap_ref"),
@@ -177,12 +213,7 @@ def init_fmap_preproc_wf(
             (est_wf, out_map, [
                 ("outputnode.method", "method")
             ]),
-            (fmap_derivatives_wf, out_map, [
-                ("outputnode.fieldmap", "fmap"),
-                ("outputnode.fmap_ref", "fmap_ref"),
-                ("outputnode.fmap_coeff", "fmap_coeff"),
-                ("outputnode.fmap_mask", "fmap_mask"),
-            ]),
+            (fmap_derivatives_wf, out_map, out_map_conns),
         ])  # fmt:skip
 
         for field, mergenode in out_merge.items():

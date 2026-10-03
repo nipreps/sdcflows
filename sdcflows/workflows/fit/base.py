@@ -46,6 +46,7 @@ def init_sdcflows_wf():
             layout=config.execution.layout,
             subject=subject,
             fmapless=config.workflow.fmapless,
+            no_medic=config.workflow.no_medic,
             logger=config.loggers.cli,
         )
 
@@ -60,7 +61,8 @@ def init_sdcflows_wf():
             derivs_wf = init_fmap_derivatives_wf(
                 output_dir=config.execution.output_dir,
                 bids_fmap_id=estim.bids_id,
-                write_coeff=True,
+                # Dynamic estimators (e.g., MEDIC) produce no B-spline coefficients
+                write_coeff=not estim.is_dynamic,
                 write_mask=True,
                 name=f'fmap_derivatives_{estim.sanitized_id}',
             )
@@ -77,13 +79,16 @@ def init_sdcflows_wf():
             )
             reportlets_wf.inputs.inputnode.source_files = source_paths
 
+            deriv_conns = [
+                ('outputnode.fmap', 'inputnode.fieldmap'),
+                ('outputnode.fmap_ref', 'inputnode.fmap_ref'),
+                ('outputnode.fmap_mask', 'inputnode.fmap_mask'),
+            ]
+            if not estim.is_dynamic:
+                deriv_conns.append(('outputnode.fmap_coeff', 'inputnode.fmap_coeff'))
+
             workflow.connect([
-                (estim_wf, derivs_wf, [
-                    ("outputnode.fmap", "inputnode.fieldmap"),
-                    ("outputnode.fmap_ref", "inputnode.fmap_ref"),
-                    ("outputnode.fmap_coeff", "inputnode.fmap_coeff"),
-                    ("outputnode.fmap_mask", "inputnode.fmap_mask"),
-                ]),
+                (estim_wf, derivs_wf, deriv_conns),
                 (estim_wf, reportlets_wf, [
                     ("outputnode.fmap", "inputnode.fieldmap"),
                     ("outputnode.fmap_ref", "inputnode.fmap_ref"),

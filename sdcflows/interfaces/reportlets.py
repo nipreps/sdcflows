@@ -76,18 +76,26 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
 
         fmapnii = nb.squeeze_image(rotate_affine(load_img(self.inputs.fieldmap), rot=canonical_r))
 
+        frame = 0
         if fmapnii.dataobj.ndim == 4:
-            for tstep in nb.four_to_three(fmapnii):
+            for idx, tstep in enumerate(nb.four_to_three(fmapnii)):
                 if np.any(np.asanyarray(tstep.dataobj) != 0):
-                    fmapnii = tstep
+                    fmapnii, frame = tstep, idx
                     break
+
+        # Dynamic estimators (e.g., MEDIC) pair a 4D fieldmap with a per-frame
+        # reference and mask; show the frame that matches the fieldmap snapshot.
+        movnii = refnii = _pick_frame(movnii, frame)
 
         if isdefined(self.inputs.moving):
             movnii = rotate_affine(load_img(self.inputs.moving), rot=canonical_r)
+            movnii = _pick_frame(movnii, frame)
 
         contour_nii = mask_nii = None
         if isdefined(self.inputs.mask):
-            contour_nii = rotate_affine(load_img(self.inputs.mask), rot=canonical_r)
+            contour_nii = _pick_frame(
+                rotate_affine(load_img(self.inputs.mask), rot=canonical_r), frame
+            )
             maskdata = contour_nii.get_fdata() > 0
         else:
             mask_nii = threshold_img(refnii, 1e-3)
@@ -140,3 +148,11 @@ class FieldmapReportlet(reporting.ReportCapableInterface):
             ),
             out_file=self._out_report,
         )
+
+
+def _pick_frame(img, frame):
+    """Return ``frame`` of a 4D image (clamped to its length), or ``img`` if 3D."""
+    img = nb.squeeze_image(img)
+    if img.ndim < 4:
+        return img
+    return img.slicer[..., min(frame, img.shape[3] - 1)]
