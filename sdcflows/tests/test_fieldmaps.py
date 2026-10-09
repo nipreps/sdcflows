@@ -333,6 +333,57 @@ def test_FieldmapEstimation_missing_files(tmpdir, dsA_dir):
         )
 
 
+def test_FieldmapFile_dangling_symlinks(tmp_path, caplog):
+    """Dangling symlinks (e.g., datalad annexes) do not break metadata-only handling."""
+    datadir = tmp_path / 'dangling'
+    datadir.mkdir()
+
+    # A broken link still goes through path validation, and missing data are found
+    epi = datadir / 'sub-01_dir-AP_epi.nii.gz'
+    epi.symlink_to(datadir / 'missing-epi.nii.gz')
+    (datadir / 'sub-01_dir-AP_epi.json').write_text(
+        '{"PhaseEncodingDirection": "j", "TotalReadoutTime": 0.05}'
+    )
+
+    f = fm.FieldmapFile(epi)
+    assert f.metadata['TotalReadoutTime'] == 0.05
+
+    # Total readout time estimation requiring access to the data only warns
+    (datadir / 'sub-01_dir-PA_epi.json').write_text(
+        '{"PhaseEncodingDirection": "j-", "EffectiveEchoSpacing": 0.00059}'
+    )
+    epi2 = datadir / 'sub-01_dir-PA_epi.nii.gz'
+    epi2.symlink_to(datadir / 'missing-epi2.nii.gz')
+    with caplog.at_level('WARNING', 'sdcflows.fieldmaps'):
+        f = fm.FieldmapFile(epi2)
+    assert 'Missing readout timing information' in caplog.text
+
+    # A PEPOLAR estimator can be fully described with broken links
+    fe = fm.FieldmapEstimation([epi, epi2])
+    assert fe.method == fm.EstimatorType.PEPOLAR
+
+    # A phase-difference estimation is correctly inferred from broken links
+    for suffix, metadata in (
+        ('phasediff', '{"EchoTime1": 0.005, "EchoTime2": 0.00746}'),
+        ('magnitude1', '{}'),
+        ('magnitude2', '{}'),
+    ):
+        (datadir / f'sub-01_{suffix}.json').write_text(metadata)
+        (datadir / f'sub-01_{suffix}.nii.gz').symlink_to(datadir / f'missing-{suffix}.nii.gz')
+
+    fe = fm.FieldmapEstimation(fm.FieldmapFile(datadir / 'sub-01_phasediff.nii.gz'))
+    assert fe.method == fm.EstimatorType.PHASEDIFF
+    assert len(fe.sources) == 3
+
+    # Existence is checked when the estimation is actually used
+    with pytest.raises(FileNotFoundError, match='does not exist'):
+        fe.get_workflow()
+
+    # Files that do not exist at all (not even as broken links) are still rejected
+    with pytest.raises(FileNotFoundError, match='does not exist'):
+        fm.FieldmapFile(datadir / 'sub-01_dir-LR_epi.nii.gz')
+
+
 def test_FieldmapFile_filename(tmp_path, dsA_dir):
     datadir = tmp_path / 'phasediff'
     datadir.mkdir(exist_ok=True)
