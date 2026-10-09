@@ -253,7 +253,12 @@ def get_trt(
     } > {'PhaseEncodingDirection'}:
         # npe = N voxels PE direction
         pe_index = 'ijk'.index(in_meta['PhaseEncodingDirection'][0])
-        npe = nb.load(in_file).shape[pe_index]
+        try:
+            npe = nb.load(in_file).shape[pe_index]
+        except OSError as exc:
+            raise ValueError(
+                f'Cannot calculate total readout time without access to <{in_file}>.'
+            ) from exc
 
         # Use case 2: EES is defined
         ees = in_meta.get('EffectiveEchoSpacing')
