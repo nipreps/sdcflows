@@ -395,7 +395,8 @@ def find_estimators(
         for fmap in layout.get(
             **{
                 **base_entities,
-                **{'suffix': ['fieldmap', 'phasediff', 'phase1'], 'session': sessions},
+                'suffix': ['fieldmap', 'phasediff', 'phase1'],
+                'session': sessions,
             }
         ):
             try:
@@ -430,7 +431,7 @@ def find_estimators(
             dirs = layout.get_directions(**entities)
             if len(dirs) > 1:
                 by_intent = {}
-                for fmap in layout.get(**{**entities, **{'direction': dirs}}):
+                for fmap in layout.get(**{**entities, 'direction': dirs}):
                     fmapfile = fm.FieldmapFile(
                         fmap.path,
                         metadata=_filter_metadata(fmap.get_metadata(), subject),
@@ -456,7 +457,9 @@ def find_estimators(
             has_intended = layout.get(
                 **{
                     **base_entities,
-                    **{'suffix': 'epi', 'IntendedFor': Query.REQUIRED, 'session': sessions},
+                    'suffix': 'epi',
+                    'IntendedFor': Query.REQUIRED,
+                    'session': sessions,
                 }
             )
 
@@ -520,14 +523,12 @@ def find_estimators(
         fmapless = False
 
     # Find fieldmap-less schemes
-    anat_file = layout.get(
-        **{**no_filter_entities, **{'suffix': anat_suffix, 'session': sessions}}
-    )
+    anat_file = layout.get(**{**no_filter_entities, 'suffix': anat_suffix, 'session': sessions})
 
     # Fall back to a subject-level/sessionless anatomical reference.
     if not anat_file:
         anat_file = layout.get(
-            **{**no_filter_entities, **{'suffix': anat_suffix, 'session': Query.NONE}}
+            **{**no_filter_entities, 'suffix': anat_suffix, 'session': Query.NONE}
         )
 
     if not fmapless or not anat_file:
@@ -603,7 +604,9 @@ def find_anatomical_estimators(
         candidates = layout.get(
             **{
                 **base_entities,
-                **{'suffix': suffixes, 'session': ses, 'datatype': datatype},
+                'suffix': suffixes,
+                'session': ses,
+                'datatype': datatype,
             }
         )
 
