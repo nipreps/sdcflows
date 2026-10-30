@@ -15,7 +15,7 @@ bids-validator==1.14.7.post0
     # via pybids
 bidsschematools==1.1.0
     # via bids-validator
-certifi==2025.8.3
+certifi==2026.10.18
     # via requests
 charset-normalizer==3.4.3
     # via requests
