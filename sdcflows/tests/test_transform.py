@@ -341,3 +341,60 @@ def test_grid_bspline_weights():
     assert np.isclose(weights[-1, -1], 0.18919244)
     assert np.isclose(weights.sum(axis=0).max(), 129.3907)
     assert np.isclose(weights.sum(axis=0).min(), 0.0052327816)
+
+
+@pytest.mark.parametrize(
+    ('target_rot', 'xfm_rot', 'xfm_trans'),
+    [
+        # Oblique target with translation-only data2fmap transform
+        ((0.0, 0.0, 0.25), (0.0, 0.0, 0.0), (5.0, -3.0, 4.0)),
+        # Oblique target with full rigid data2fmap transform
+        ((0.0, 0.0, 0.25), (0.18, 0.0, 0.0), (5.0, -3.0, 4.0)),
+        # Grid-aligned target with rotational data2fmap transform
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 0.25), (3.0, -2.0, 1.0)),
+        # Oblique target with no data2fmap transform (identity)
+        ((0.0, 0.0, 0.25), None, None),
+    ],
+)
+def test_fit_approx_xfm_data2fmap(target_rot, xfm_rot, xfm_trans):
+    """Ensure B0FieldTransform.fit(..., approx=True) honors xfm_data2fmap and obliquity."""
+    fmap_aff = np.diag([2.0, 2.0, 2.0, 1.0])
+    fmap_aff[:3, 3] = [-20.0, -20.0, -20.0]
+    fmap_ref = nb.Nifti1Image(np.zeros((20, 20, 20), dtype='float32'), fmap_aff)
+    coeff_grid = bspline_grid(fmap_ref, control_zooms_mm=(10.0, 10.0, 10.0))
+
+    # Cubic B-splines reproduce linear fields f(x, y, z) = x + 2y + 3z exactly inside support
+    c_ijk = np.indices(coeff_grid.shape).reshape(3, -1).T
+    c_xyz = nb.affines.apply_affine(coeff_grid.affine, c_ijk)
+    coeff_vals = (c_xyz[:, 0] + 2.0 * c_xyz[:, 1] + 3.0 * c_xyz[:, 2]).reshape(coeff_grid.shape)
+    coeff_nii = nb.Nifti1Image(coeff_vals.astype('float32'), coeff_grid.affine, coeff_grid.header)
+
+    t_rot = nb.affines.from_matvec(
+        nb.eulerangles.euler2mat(x=target_rot[0], y=target_rot[1], z=target_rot[2])
+    )
+    target_aff = t_rot @ np.diag([2.0, 2.0, 2.0, 1.0])
+    target_aff[:3, 3] = [-10.0, -10.0, -10.0]
+    target_ref = nb.Nifti1Image(np.zeros((10, 10, 10), dtype='float32'), target_aff)
+
+    if xfm_rot is None:
+        xfm = None
+        xfm_mat = np.eye(4)
+    else:
+        xfm = nb.affines.from_matvec(
+            nb.eulerangles.euler2mat(x=xfm_rot[0], y=xfm_rot[1], z=xfm_rot[2]),
+            xfm_trans,
+        )
+        xfm_mat = xfm
+
+    t_ijk = np.indices(target_ref.shape).reshape(3, -1).T
+    t_xyz_fmap = nb.affines.apply_affine(xfm_mat @ target_ref.affine, t_ijk)
+    expected = (t_xyz_fmap[:, 0] + 2.0 * t_xyz_fmap[:, 1] + 3.0 * t_xyz_fmap[:, 2]).reshape(
+        target_ref.shape
+    )
+
+    b0 = tf.B0FieldTransform(coeffs=coeff_nii)
+    b0.fit(target_ref, xfm_data2fmap=xfm, approx=True)
+
+    assert np.allclose(b0.mapped.affine, target_ref.affine)
+    interior = (slice(2, 8), slice(2, 8), slice(2, 8))
+    assert np.allclose(b0.mapped.get_fdata()[interior], expected[interior], atol=1e-2)

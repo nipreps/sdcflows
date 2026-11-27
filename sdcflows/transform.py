@@ -295,7 +295,6 @@ class B0FieldTransform:
         if isinstance(target_reference, (str, bytes, Path)):
             target_reference = nb.load(target_reference)
 
-        approx &= xfm_data2fmap is not None  # Approximate iff xfm_data2fmap is defined
         xfm_data2fmap = xfm_data2fmap if xfm_data2fmap is not None else np.eye(4)
         # Project the reference's grid onto the fieldmap's
         projected_reference = target_reference.__class__(
@@ -313,7 +312,7 @@ class B0FieldTransform:
             np.linalg.norm(
                 np.cross(
                     coeffs[-1].affine[:-1, :-1].T,
-                    target_reference.affine[:-1, :-1].T,
+                    projected_reference.affine[:-1, :-1].T,
                 ),
                 axis=1,
             ),
@@ -325,10 +324,10 @@ class B0FieldTransform:
             from sdcflows.utils.tools import deoblique_and_zooms
 
             # Generate a sampling reference on the fieldmap's space that fully covers
-            # the target_reference's grid.
+            # the projected target grid.
             projected_reference = deoblique_and_zooms(
                 coeffs[-1],
-                target_reference,
+                projected_reference,
             )
 
         # Generate tensor-product B-Spline weights
@@ -360,9 +359,9 @@ class B0FieldTransform:
                 target_reference.affine,
                 target_reference.header,
             )
-            # Interpolate fmap given on target_reference in the original target_reference
+            # Interpolate fmap given on projected_reference in the original target_reference
             # voxel locations (overwrite fmap)
-            self.mapped = Affine(reference=_tmp_reference).apply(self.mapped)
+            self.mapped = Affine(matrix=xfm_data2fmap, reference=_tmp_reference).apply(self.mapped)
 
         return True
 
